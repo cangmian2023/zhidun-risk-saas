@@ -94,30 +94,69 @@ export default function Console() {
     document.body.style.cursor = 'col-resize'
   }
 
-  function menuIcon(key: string): IconName {
-    if (key.endsWith('overview')) return 'dashboard'
-    if (key.includes('query')) return 'search'
-    if (key.includes('batch')) return 'list'
-    if (key.includes('api')) return 'plug'
-    if (key.includes('pre-application')) return 'audit'
-    if (key.includes('pre-verify')) return 'verify'
-    if (key.includes('pre-credit')) return 'shield'
-    if (key.includes('pre-fraud')) return 'shield'
-    if (key.includes('pre-report')) return 'report'
-    if (key.includes('pre-manual')) return 'check'
-    if (key.includes('mid-')) return key.includes('alert') ? 'bell' : key.includes('ops') ? 'users' : key.includes('output') ? 'share' : key.includes('task') ? 'list' : 'monitor'
-    if (key.includes('st-')) return key.includes('indicators') ? 'chart' : key.includes('rules') ? 'list' : key.includes('flow') ? 'share' : key.includes('models') ? 'model' : key.includes('lists') ? 'list' : key.includes('external') ? 'plug' : 'database'
-    if (key.includes('data-')) return key.includes('field') ? 'sliders' : key.includes('list') ? 'list' : key.includes('api') ? 'plug' : 'database'
-    if (key.includes('stat-') || key.includes('report-') || key.includes('reject') || key.includes('vintage') || key.includes('approve') || key.includes('dist')) return 'chart'
-    if (key.includes('scorecard') || key.includes('variable')) return 'sliders'
-    if (key.includes('model')) return 'model'
-    if (key.includes('mon-')) return key.includes('alert') || key.includes('report') ? 'bell' : key.includes('stability') || key.includes('disc') ? 'chart' : 'monitor'
-    if (key.includes('users') || key.includes('role')) return 'users'
-    if (key.includes('channel')) return 'settings'
-    if (key.includes('log')) return 'list'
-    if (key.includes('set-')) return 'settings'
-    return 'dashboard'
+  // 每个菜单 key 映射唯一图标，杜绝重复（同一子系统内互不重复）
+  const MENU_ICON: Record<string, IconName> = {
+    // 零售信贷风控
+    'cr:overview': 'dashboard',
+    'cr:pre-application': 'audit',
+    'cr:pre-verify': 'verify',
+    'cr:pre-credit': 'shield',
+    'cr:pre-fraud': 'alert',
+    'cr:pre-report': 'report',
+    'cr:pre-manual': 'check',
+    'cr:mid-cockpit': 'gauge',
+    'cr:mid-task': 'cube',
+    'cr:mid-alert': 'bell',
+    'cr:mid-alert-detail': 'flag',
+    'cr:mid-ops': 'users',
+    'cr:mid-output': 'inbox',
+    'cr:st-indicators': 'chart',
+    'cr:st-rules': 'filter',
+    'cr:st-flow': 'work_flow',
+    'cr:st-models': 'model',
+    'cr:st-lists': 'tag',
+    'cr:st-external': 'plug',
+    'cr:data-source': 'database',
+    'cr:data-field': 'sliders',
+    'cr:data-api': 'link',
+    'cr:stat-overview': 'pie',
+    'cr:stat-rules': 'bars',
+    'cr:stat-decision': 'analytics',
+    'cr:set-users': 'id',
+    'cr:set-channel': 'settings',
+    'cr:set-log': 'clock',
+    // 评分产品
+    'sc:overview': 'dashboard',
+    'sc:zhicha-query': 'search',
+    'sc:zhicha-batch': 'stack',
+    'sc:zhicha-api': 'plug',
+    'sc:zhixin-query': 'zoom',
+    'sc:zhixin-batch': 'layers',
+    'sc:zhixin-api': 'cloud',
+    'sc:zhirong-query': 'eye',
+    'sc:zhirong-batch': 'grid',
+    'sc:zhirong-api': 'code',
+    'sc:model-list': 'model',
+    'sc:model-config': 'wrench',
+    'sc:mon-auto': 'monitor',
+    'sc:scorecard': 'sliders',
+    'sc:variable': 'braces',
+    'sc:mon-auto': 'monitor',
+    'sc:mon-stability': 'gauge',
+    'sc:mon-disc': 'pulse',
+    'sc:mon-alert': 'bell',
+    'sc:mon-report': 'bars',
+    'sc:data-source': 'database',
+    'sc:data-list': 'tag',
+    'sc:data-api': 'link',
+    'sc:report-dist': 'pie',
+    'sc:report-reject': 'analytics',
+    'sc:report-vintage': 'trend',
+    'sc:report-approve': 'check',
+    'sc:set-users': 'id',
+    'sc:set-log': 'clock',
   }
+  const menuIcon = (key: string): IconName => MENU_ICON[key] ?? 'dashboard'
 
   const menu: MenuGroup[] =
     sub === 'cr' ? creditRiskMenu : sub === 'sc' ? scoringMenu : []
@@ -189,10 +228,15 @@ export default function Console() {
             <button
               onClick={toggle}
               title={collapsed ? '展开菜单' : '收起菜单'}
-              className="grid h-8 w-8 place-items-center rounded-lg text-slate-500 transition hover:bg-slate-100 hover:text-brand-700"
+              aria-label={collapsed ? '展开菜单' : '收起菜单'}
+              className={
+                collapsed
+                  ? 'grid h-10 w-10 place-items-center rounded-xl bg-brand-600 text-white shadow-lg shadow-brand-600/30 ring-1 ring-brand-700/20 transition hover:bg-brand-700 hover:shadow-brand-600/40'
+                  : 'grid h-8 w-8 place-items-center rounded-lg border border-brand-200 bg-brand-50 text-brand-700 transition hover:bg-brand-100 hover:border-brand-300'
+              }
             >
               {collapsed ? (
-                <MenuIcon name="dashboard" className="h-5 w-5" />
+                <MenuIcon name="menu" className="h-5 w-5" />
               ) : (
                 <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M15 6l-6 6 6 6" />
@@ -205,7 +249,7 @@ export default function Console() {
             collapsed ? (
               <div className="flex justify-center pt-1">
                 <span title={`${subName[sub]}（规划中）`} className="text-slate-300">
-                  <MenuIcon name="dashboard" className="h-5 w-5" />
+                  <MenuIcon name="lock" className="h-5 w-5" />
                 </span>
               </div>
             ) : (
