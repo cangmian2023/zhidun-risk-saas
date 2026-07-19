@@ -595,3 +595,166 @@ export function getReport(r: AppRow, detail: DetailData): ProductReport {
       }
   }
 }
+
+/* ============ 信息核验（申贷审核详情页「信息核验区」与独立核验页共用） ============ */
+export type VResult = 'pass' | 'fail' | 'pending' | 'warn'
+export interface InfoVerifyVM {
+  conclusion: '通过' | '不通过' | '待人工确认'
+  mode: string
+  verifyTime: string
+  handler: string
+  format: { label: string; value: string; result: VResult; note?: string }[]
+  identity: { label: string; result: string; time: string }[]
+  liveness: { live: string; score: string; threshold: string; judge: string }
+  ocr: { confidence: string; antiFake: string }
+  logic: { pass: boolean; conflicts: string[] }
+  hasManual: boolean
+  manual: { time: string; party: string; action: string; content: string }[]
+}
+function maskName(s: string): string {
+  return s ? s.slice(0, 1) + '**' : '-'
+}
+/**
+ * 信息核验结论（自动为主、人工兜底）：
+ * - 由欺诈分派生演示结论（>70 不通过 / >55 待人工 / 其余通过），对应「宽松 / 标准 / 严格」核验模式。
+ * - 输出 4 组核验条目（格式校验 / 身份要素 / 活体人脸 / 逻辑一致性），作为申贷审核详情页「信息核验区」与独立核验页的统一数据源。
+ */
+export function buildInfoVerify(r: AppRow, idx: number): InfoVerifyVM {
+  const c = r.fraudScore
+  const conclusion: InfoVerifyVM['conclusion'] = c > 70 ? '不通过' : c > 55 ? '待人工确认' : '通过'
+  const mode =
+    r.product === '现金贷'
+      ? '宽松模式'
+      : r.product === '汽车金融' || r.product === '经营贷'
+        ? '严格模式'
+        : '标准模式'
+  const verifyTime = String(r.applyTime).slice(0, 10) + ' 10:23'
+  const handler = conclusion === '通过' ? '自动（STP）' : '人工兜底'
+  const idInconsistent = conclusion === '不通过'
+  const bankTail = String(((idx * 137 + 1234) % 9000) + 1000)
+  const format = [
+    { label: '姓名', value: maskName(r.name), result: 'pass' as VResult },
+    {
+      label: '身份证号',
+      value: maskId(r.idNo),
+      result: (idInconsistent ? 'fail' : 'pass') as VResult,
+      note: idInconsistent ? '与申请填写年龄不一致' : undefined,
+    },
+    { label: '手机号', value: maskPhone(r.phone), result: 'pass' as VResult },
+    {
+      label: '银行卡号',
+      value: '**** **** **** ' + bankTail,
+      result: (conclusion === '不通过' ? 'fail' : 'pass') as VResult,
+    },
+  ]
+  const identity = [
+    { label: '二要素（姓名+身份证）', result: idInconsistent ? '不一致' : '一致', time: verifyTime },
+    { label: '三要素（+银行卡）', result: idInconsistent ? '不一致' : '一致', time: verifyTime },
+    {
+      label: '四要素（+手机号）',
+      result: conclusion === '待人工确认' ? '无法核实' : idInconsistent ? '不一致' : '一致',
+      time: verifyTime,
+    },
+  ]
+  const liveness = {
+    live: conclusion === '不通过' ? '未通过' : '通过',
+    score: conclusion === '待人工确认' ? '82.3%' : conclusion === '不通过' ? '61.2%' : '98.6%',
+    threshold: '≥ 90%',
+    judge: conclusion === '待人工确认' ? '临界·待人工目视复核' : conclusion === '不通过' ? '非同一人' : '同一人',
+  }
+  const ocr = {
+    confidence: conclusion === '待人工确认' ? '76%' : conclusion === '不通过' ? '58%' : '98%',
+    antiFake: conclusion === '不通过' ? '疑似伪造/篡改' : '正常',
+  }
+  const logic = {
+    pass: !idInconsistent,
+    conflicts: idInconsistent
+      ? [`身份证推算年龄 23 岁 与 申请填写年龄 ${r.age} 岁 不一致`, '证件照与活体照相似度低于阈值']
+      : [],
+  }
+  const hasManual = conclusion !== '通过'
+  const manual = hasManual
+    ? [
+        {
+          time: verifyTime,
+          party: '系统',
+          action: '自动核验',
+          content: '格式 / OCR / 要素核验完成，落入「待人工确认」区间，自动转入异常件队列。',
+        },
+        {
+          time: verifyTime + ':40',
+          party: '复核员·李杭',
+          action: '目视比对',
+          content: `活体照与证件照相似度 ${liveness.score}，处于临界区间，人工目视复核中。`,
+        },
+        {
+          time: verifyTime + ':55',
+          party: '复核员·李杭',
+          action: '处置结论',
+          content:
+            conclusion === '不通过'
+              ? '证件疑似篡改，判定不通过并上报欺诈识别模块。'
+              : '临界但可确认同一人，人工确认通过，结论回流引擎。',
+        },
+      ]
+    : []
+  return { conclusion, mode, verifyTime, handler, format, identity, liveness, ocr, logic, hasManual, manual }
+}
+
+/* ============ 信用风控区（多头 / 共债 / 联防联控） ============ */
+export interface CreditRiskVM {
+  level: 'green' | 'amber' | 'red'
+  multiOrg: number
+  samePerson: string
+  coDebt: { label: string; value: string; level: 'green' | 'amber' | 'red' }
+  jointDefense: { label: string; value: string; level: 'green' | 'amber' | 'red' }
+  items: { label: string; value: string; level: 'green' | 'amber' | 'red' }[]
+}
+export function buildCreditRisk(r: AppRow, detail: DetailData): CreditRiskVM {
+  const multiOrg = r.multiOrgs
+  const samePerson = detail.association.find((a) => a.label === '同人历史进件')?.value ?? '0 笔'
+  const coLevel: 'green' | 'amber' | 'red' = multiOrg >= 6 ? 'red' : multiOrg >= 3 ? 'amber' : 'green'
+  const coDebt = {
+    label: '共债评估',
+    value: coLevel === 'red' ? '共债偏高 · 多机构叠加负债' : coLevel === 'amber' ? '共债中等 · 需关注' : '共债可控',
+    level: coLevel,
+  }
+  const jointHit = detail.deviceRisk.some((t) => t.includes('群控') || t.includes('名单'))
+  const jointDefense = {
+    label: '联防联控',
+    value: jointHit ? '命中联防联控名单' : '未命中联防联控名单',
+    level: jointHit ? 'red' : 'green',
+  }
+  const level: 'green' | 'amber' | 'red' = coLevel === 'red' || jointHit ? 'red' : coLevel === 'amber' ? 'amber' : 'green'
+  const items = [
+    { label: '多头借贷机构数', value: `${multiOrg} 家（近 30 天）`, level: multiOrg >= 6 ? 'red' : multiOrg >= 3 ? 'amber' : 'green' },
+    { label: '同人历史进件', value: samePerson, level: 'green' },
+    { label: '共债率', value: coLevel === 'red' ? '> 60%' : coLevel === 'amber' ? '30% ~ 60%' : '< 30%', level: coLevel },
+    { label: '联防联控', value: jointHit ? '已命中' : '未命中', level: jointHit ? 'red' : 'green' },
+  ]
+  return { level, multiOrg, samePerson, coDebt, jointDefense, items }
+}
+
+/* ============ 欺诈识别区（含「设备与环境」） ============ */
+export interface FraudRiskVM {
+  device: { label: string; value: string }[]
+  deviceRisk: string[]
+  gang: { label: string; hit: boolean; note: string }[]
+  behavior: { label: string; hit: boolean; note: string }[]
+}
+export function buildFraudRisk(r: AppRow, detail: DetailData): FraudRiskVM {
+  const device = detail.device
+  const deviceRisk = detail.deviceRisk
+  const sameDevice = r.sameDevice
+  const gang = [
+    { label: '设备聚集', hit: sameDevice >= 3, note: `同设备近 30 天申请 ${sameDevice} 笔${sameDevice >= 3 ? '（命中聚集特征）' : ''}` },
+    { label: '关系网络', hit: r.multiOrgs >= 6, note: r.multiOrgs >= 6 ? '多机构借贷，疑似共债团伙' : '未见显著关系网络聚集' },
+  ]
+  const seg = detail.device.find((d) => d.label === '申请时段')?.value ?? ''
+  const behavior = [
+    { label: '群控 / 模拟器', hit: deviceRisk.some((t) => t.includes('群控')), note: deviceRisk.some((t) => t.includes('群控')) ? '设备命中群控特征库' : '未检出群控 / 模拟器特征' },
+    { label: '异地 / IP 不一致', hit: deviceRisk.some((t) => t.includes('IP 归属')), note: deviceRisk.some((t) => t.includes('IP 归属')) ? 'IP 归属地与申请定位不一致' : 'IP 与定位一致' },
+    { label: '异常时段', hit: ['凌晨 03:21', '周末 22:47'].includes(seg), note: ['凌晨 03:21', '周末 22:47'].includes(seg) ? '深夜 / 凌晨高频申请，需关注' : '常规时段申请' },
+  ]
+  return { device, deviceRisk, gang, behavior }
+}

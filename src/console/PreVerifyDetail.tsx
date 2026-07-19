@@ -1,133 +1,18 @@
 import { useMemo, useState, type ReactNode } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Badge, Button, DetailHeader, Panel } from '../components/ui'
-import { getPreApps, type AppRow } from './preApp'
+import { getPreApps, buildInfoVerify, type AppRow, type InfoVerifyVM, type VResult } from './preApp'
 
-/* ---------- 工具 ---------- */
-function maskId(s: string) {
-  return s ? s.slice(0, 4) + '**********' + s.slice(-4) : '-'
-}
-function maskPhone(s: string) {
-  return s ? s.slice(0, 3) + '****' + s.slice(-4) : '-'
-}
+/* ---------- 内部小组件 ---------- */
 function maskName(s: string) {
   return s ? s.slice(0, 1) + '**' : '-'
 }
 
-type VResult = 'pass' | 'fail' | 'pending' | 'warn'
-
-interface VerifyVM {
-  conclusion: '通过' | '不通过' | '待人工确认'
-  mode: string
-  verifyTime: string
-  handler: string
-  format: { label: string; value: string; result: VResult; note?: string }[]
-  identity: { label: string; result: string; time: string }[]
-  liveness: { live: string; score: string; threshold: string; judge: string }
-  ocr: { confidence: string; antiFake: string }
-  logic: { pass: boolean; conflicts: string[] }
-  hasManual: boolean
-  manual: { time: string; party: string; action: string; content: string }[]
+/** 信息核验结论（自动为主、人工兜底）：复用 preApp.ts 的 buildInfoVerify，与申贷审核详情页「信息核验区」共用单一数据源 */
+function buildVerify(r: AppRow, idx: number): InfoVerifyVM {
+  return buildInfoVerify(r, idx)
 }
-
-function buildVerify(r: AppRow, idx: number): VerifyVM {
-  const c = r.fraudScore
-  const conclusion: VerifyVM['conclusion'] = c > 70 ? '不通过' : c > 55 ? '待人工确认' : '通过'
-  const mode =
-    r.product === '现金贷'
-      ? '宽松模式'
-      : r.product === '汽车金融' || r.product === '经营贷'
-        ? '严格模式'
-        : '标准模式'
-  const verifyTime = String(r.applyTime).slice(0, 10) + ' 10:23'
-  const handler = conclusion === '通过' ? '自动（STP）' : '人工兜底'
-  const idInconsistent = conclusion === '不通过'
-  const bankTail = String(((idx * 137 + 1234) % 9000) + 1000)
-
-  const format = [
-    { label: '姓名', value: maskName(r.name), result: 'pass' as VResult },
-    {
-      label: '身份证号',
-      value: maskId(r.idNo),
-      result: (idInconsistent ? 'fail' : 'pass') as VResult,
-      note: idInconsistent ? '与申请填写年龄不一致' : undefined,
-    },
-    { label: '手机号', value: maskPhone(r.phone), result: 'pass' as VResult },
-    {
-      label: '银行卡号',
-      value: '**** **** **** ' + bankTail,
-      result: (conclusion === '不通过' ? 'fail' : 'pass') as VResult,
-    },
-  ]
-
-  const identity = [
-    { label: '二要素（姓名+身份证）', result: idInconsistent ? '不一致' : '一致', time: verifyTime },
-    { label: '三要素（+银行卡）', result: idInconsistent ? '不一致' : '一致', time: verifyTime },
-    {
-      label: '四要素（+手机号）',
-      result: conclusion === '待人工确认' ? '无法核实' : idInconsistent ? '不一致' : '一致',
-      time: verifyTime,
-    },
-  ]
-
-  const liveness = {
-    live: conclusion === '不通过' ? '未通过' : '通过',
-    score: conclusion === '待人工确认' ? '82.3%' : conclusion === '不通过' ? '61.2%' : '98.6%',
-    threshold: '≥ 90%',
-    judge: conclusion === '待人工确认' ? '临界·待人工目视复核' : conclusion === '不通过' ? '非同一人' : '同一人',
-  }
-
-  const ocr = {
-    confidence: conclusion === '待人工确认' ? '76%' : conclusion === '不通过' ? '58%' : '98%',
-    antiFake: conclusion === '不通过' ? '疑似伪造/篡改' : '正常',
-  }
-
-  const logic = {
-    pass: !idInconsistent,
-    conflicts: idInconsistent
-      ? [`身份证推算年龄 23 岁 与 申请填写年龄 ${r.age} 岁 不一致`, '证件照与活体照相似度低于阈值']
-      : [],
-  }
-
-  const hasManual = conclusion !== '通过'
-  const manual = hasManual
-    ? [
-        {
-          time: verifyTime,
-          party: '系统',
-          action: '自动核验',
-          content: '格式 / OCR / 要素核验完成，落入「待人工确认」区间，自动转入异常件队列。',
-        },
-        {
-          time: verifyTime + ':40',
-          party: '复核员·李杭',
-          action: '目视比对',
-          content: `活体照与证件照相似度 ${liveness.score}，处于临界区间，人工目视复核中。`,
-        },
-        {
-          time: verifyTime + ':55',
-          party: '复核员·李杭',
-          action: '处置结论',
-          content:
-            conclusion === '不通过'
-              ? '证件疑似篡改，判定不通过并上报欺诈识别模块。'
-              : '临界但可确认同一人，人工确认通过，结论回流引擎。',
-        },
-      ]
-    : []
-
-  return { conclusion, mode, verifyTime, handler, format, identity, liveness, ocr, logic, hasManual, manual }
-}
-
-/* ---------- 内部小组件 ---------- */
-function Field({ label, value }: { label: string; value: ReactNode }) {
-  return (
-    <div>
-      <dt className="text-xs text-slate-400">{label}</dt>
-      <dd className="mt-0.5 text-sm font-medium text-slate-700">{value}</dd>
-    </div>
-  )
-}
+type VerifyVM = InfoVerifyVM
 
 const RESULT_MAP = {
   pass: { t: '通过', k: 'green' as const },
@@ -160,7 +45,6 @@ function Metric({ label, value, danger }: { label: string; value: string; danger
     </div>
   )
 }
-
 /* ---------- 页面 ---------- */
 export default function PreVerifyDetail() {
   const [params] = useSearchParams()
@@ -194,7 +78,6 @@ export default function PreVerifyDetail() {
 
   const conclusionKind = vm.conclusion === '通过' ? 'green' : vm.conclusion === '不通过' ? 'red' : 'amber'
   const backToList = () => nav('/console/cr/pre-verify')
-
   return (
     <div className="space-y-4">
       <DetailHeader
@@ -207,10 +90,24 @@ export default function PreVerifyDetail() {
       {/* 1. 核验结论总览 */}
       <Panel title="核验结论总览" id="v-overview">
         <dl className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <Field label="总结论" value={<Badge kind={conclusionKind}>{vm.conclusion}</Badge>} />
-          <Field label="核验模式" value={vm.mode} />
-          <Field label="核验时间" value={vm.verifyTime} />
-          <Field label="处理方式" value={vm.handler} />
+          <div>
+            <dt className="text-xs text-slate-400">总结论</dt>
+            <dd className="mt-0.5 font-medium text-slate-700">
+              <Badge kind={conclusionKind}>{vm.conclusion}</Badge>
+            </dd>
+          </div>
+          <div>
+            <dt className="text-xs text-slate-400">核验模式</dt>
+            <dd className="mt-0.5 font-medium text-slate-700">{vm.mode}</dd>
+          </div>
+          <div>
+            <dt className="text-xs text-slate-400">核验时间</dt>
+            <dd className="mt-0.5 font-medium text-slate-700">{vm.verifyTime}</dd>
+          </div>
+          <div>
+            <dt className="text-xs text-slate-400">处理方式</dt>
+            <dd className="mt-0.5 font-medium text-slate-700">{vm.handler}</dd>
+          </div>
         </dl>
       </Panel>
 
@@ -287,7 +184,7 @@ export default function PreVerifyDetail() {
             />
             <Metric label="防伪检测" value={vm.ocr.antiFake} danger={vm.ocr.antiFake !== '正常'} />
             <div className="rounded-xl border border-slate-100 p-3 text-xs text-slate-500">
-              结构化字段：姓名 {maskName(row.name)} / 证件号 {maskId(row.idNo)} / 有效期 2026.01 - 2036.01
+              结构化字段：姓名 {maskName(row.name)} / 证件号 {row.idNo ? row.idNo.slice(0, 4) + '**********' + row.idNo.slice(-4) : '-'} / 有效期 2026.01 - 2036.01
             </div>
           </div>
         </div>

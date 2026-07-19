@@ -13,10 +13,16 @@ import {
   rowDecisionGroup,
   reviewerInfo,
   reviewerText,
+  buildInfoVerify,
+  buildCreditRisk,
+  buildFraudRisk,
   type AppRow,
   type AuditStatus,
   type DecisionGroup,
   type ReviewEntry,
+  type InfoVerifyVM,
+  type CreditRiskVM,
+  type FraudRiskVM,
 } from './preApp'
 
 type Kind = 'red' | 'orange' | 'amber' | 'green' | 'blue' | 'cyan' | 'violet' | 'gray'
