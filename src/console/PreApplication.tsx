@@ -1067,7 +1067,7 @@ function DetailView({
                 <th className="py-1.5 pr-2">阈值标准</th>
                 <th className="py-1.5 pr-2">权重</th>
                 <th className="py-1.5 pr-2">对决策影响</th>
-                <th className="py-1.5 text-right">操作</th>
+                <th className="py-1.5 text-center">操作</th>
               </tr>
             </thead>
             <tbody>

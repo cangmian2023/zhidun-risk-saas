@@ -191,7 +191,7 @@ export default function ListPage({
                   {c.label}
                 </th>
               ))}
-              <th style={{ width: OP_W }} className="sticky right-0 z-20 bg-slate-50 px-3 py-3 text-right">
+              <th style={{ width: OP_W }} className="sticky right-0 z-20 bg-slate-50 px-3 py-3 text-center">
                 操作
               </th>
             </tr>
