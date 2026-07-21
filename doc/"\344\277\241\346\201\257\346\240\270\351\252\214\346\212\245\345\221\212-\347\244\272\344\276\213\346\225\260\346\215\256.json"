@@ -1,0 +1,125 @@
+{
+  "report_id": "R20260721001",
+  "apply_no": "AP20260721-000123",
+  "product": "个人消费贷",
+  "status": "已拒绝",
+  "applicant": {
+    "name": "张三",
+    "id_no": "110101199003071234",
+    "phone": "13800001234",
+    "bank_card": "6222021234567890123",
+    "bank_name": "工商银行",
+    "address": "北京市朝阳区建国路88号",
+    "employer": "北京某某科技有限公司",
+    "monthly_income": 20000
+  },
+  "raw_submission": {
+    "structured_fields": {
+      "name": "张三",
+      "id_no": "110101199003071234",
+      "phone": "13800001234",
+      "bank_card": "6222021234567890123",
+      "bank_name": "工商银行",
+      "address": "北京市朝阳区建国路88号",
+      "employer": "北京某某科技有限公司",
+      "monthly_income": "20000元"
+    },
+    "images": [
+      { "type": "id_card_front", "file": "id_front.jpg", "watermark": true },
+      { "type": "id_card_back", "file": "id_back.jpg", "watermark": true },
+      { "type": "face_liveness", "file": "face_frame.png", "watermark": true },
+      { "type": "salary_flow", "file": "salary_flow.png", "watermark": true }
+    ],
+    "env_capture": {
+      "device_fingerprint": "FP-9f2a7c",
+      "ip": "203.0.113.45",
+      "gps": "境外(代理)",
+      "os": "Android",
+      "apply_time": "2026-07-21T09:12:03+08:00",
+      "is_emulator": true
+    }
+  },
+  "structured": [
+    { "field": "name", "raw": "张三", "parsed": "张三", "diff": false },
+    { "field": "id_no", "raw": "110101199003071234", "parsed": "110101199003071234", "diff": false },
+    { "field": "id_expiry", "raw": "(未填)", "parsed": "2015.01-2025.01", "diff": true, "note": "证件已过期" },
+    { "field": "employer", "raw": "北京某某科技有限公司", "parsed": "上海某某贸易有限公司(流水OCR)", "diff": true, "note": "单位不一致" },
+    { "field": "face", "raw": "活体视频", "parsed": "翻拍攻击疑似, 活体评分32", "diff": true, "note": "非活体" },
+    { "field": "salary_flow_employer", "raw": "-", "parsed": "上海某某贸易有限公司", "diff": true, "note": "与填报冲突" }
+  ],
+  "single_results": [
+    {
+      "source": "police", "name": "公安实名核验", "status": "fail",
+      "outputs": { "id_verify_result": "证件过期", "receipt_no": "GA20260721-7781", "valid": false },
+      "receipt_code": "0000", "cost_ms": 1210,
+      "tags": ["证件过期"]
+    },
+    {
+      "source": "operator", "name": "运营商实名核验", "status": "fail",
+      "outputs": { "phone_real_name_match": false, "real_name": "李四", "carrier": "河南移动", "in_net_days": 7, "is_virtual": false },
+      "receipt_code": "1001", "cost_ms": 1980,
+      "tags": ["手机号实名非本人", "新办手机号"]
+    },
+    {
+      "source": "unionpay", "name": "银联银行卡四要素", "status": "fail",
+      "outputs": { "bank_card_4match_result": "不匹配", "card_owner": "王五", "card_type": "储蓄卡", "issuer": "工商银行" },
+      "receipt_code": "2002", "cost_ms": 920,
+      "tags": ["银行卡户主不符"]
+    },
+    {
+      "source": "device", "name": "设备库核验", "status": "fail",
+      "outputs": { "risk_level": "high", "is_emulator": true, "is_root": true, "is_proxy_ip": true },
+      "receipt_code": "3003", "cost_ms": 280,
+      "tags": ["模拟器", "高危设备", "翻墙IP"]
+    },
+    {
+      "source": "joint_db", "name": "跨行业联防数据库", "status": "fail",
+      "outputs": { "apply_count_30d": 12, "apply_count_15d": 8, "related_black_id": 3, "fraud_history": true, "related_phones": ["13900000001", "13900000002"] },
+      "receipt_code": "4004", "cost_ms": 750,
+      "tags": ["多头申贷", "团伙关联", "历史骗贷"]
+    }
+  ],
+  "verify_process": {
+    "submit_time": "2026-07-21T09:12:03+08:00",
+    "parallel_threads": [
+      { "tid": "T1", "source": "police", "start": "00:00.000", "end": "00:01.21", "cost_ms": 1210, "code": "0000" },
+      { "tid": "T2", "source": "operator", "start": "00:00.000", "end": "00:01.98", "cost_ms": 1980, "code": "1001" },
+      { "tid": "T3", "source": "unionpay", "start": "00:00.000", "end": "00:00.92", "cost_ms": 920, "code": "2002" },
+      { "tid": "T4", "source": "device", "start": "00:00.000", "end": "00:00.28", "cost_ms": 280, "code": "3003" },
+      { "tid": "T5", "source": "joint_db", "start": "00:00.000", "end": "00:00.75", "cost_ms": 750, "code": "4004" }
+    ],
+    "circuit_breaker": [],
+    "aggregate_time": "00:01.98"
+  },
+  "cross_check": {
+    "cross_contradict_list": [
+      { "severity": "red", "sources": ["police", "operator"], "desc": "公安身份=张三，但运营商实名=李四" },
+      { "severity": "red", "sources": ["police", "unionpay"], "desc": "姓名=张三，但银行卡开户人=王五" },
+      { "severity": "red", "sources": ["device", "joint_db"], "desc": "正常身份+设备为模拟器+联防多头12次" },
+      { "severity": "red", "sources": ["operator", "joint_db"], "desc": "手机号入网7天+近15天8家机构申请" },
+      { "severity": "yellow", "sources": ["police", "operator", "ip"], "desc": "户籍四川/手机号归属河南/申请IP境外" }
+    ],
+    "risk_score": 94,
+    "risk_tags": ["证件过期", "手机号实名非本人", "银行卡户主不符", "模拟器", "多头申贷", "团伙关联"],
+    "decision": "reject",
+    "decision_label": "直接拒绝"
+  },
+  "item_actions": [
+    { "source": "operator", "action": "reverify", "operator": "信审-王五", "note": "已二次确认非本人", "result": "维持失败" },
+    { "source": "device", "action": "mark_fraud+blacklist", "operator": "信审-王五", "note": "模拟器确认为欺诈设备", "result": "设备入黑" },
+    { "source": "unionpay", "action": "mark_true", "operator": "信审-王五", "note": "确认银行卡冒用", "result": "维持失败" },
+    { "source": "police", "action": "mark_true", "operator": "信审-王五", "note": "客户确填过期证件", "result": "维持失败" }
+  ],
+  "report_actions": [
+    { "action": "reject", "operator": "风控审核员-赵六", "note": "多源重度冲突, 直接拒贷" },
+    { "action": "add_blacklist", "operator": "风控审核员-赵六", "note": "身份证/手机号/设备入黑名单" },
+    { "action": "evidence_onchain", "operator": "system", "note": "影像+回执+日志存证" },
+    { "action": "archive", "operator": "system", "note": "存入信贷档案, 留存≥5年" }
+  ],
+  "audit_trail": [
+    { "time": "2026-07-21T09:12:03+08:00", "actor": "system", "event": "submit_received" },
+    { "time": "2026-07-21T09:12:05+08:00", "actor": "system", "event": "cross_check_done score=94" },
+    { "time": "2026-07-21T09:20:11+08:00", "actor": "信审-王五", "event": "item_action operator/reverify" },
+    { "time": "2026-07-21T09:25:40+08:00", "actor": "风控审核员-赵六", "event": "report_action reject" }
+  ]
+}

@@ -5,6 +5,8 @@ import Logo from '../components/Logo'
 import ModulePage from './ModulePage'
 import PreApplication from './PreApplication'
 import PreVerifyDetail from './PreVerifyDetail'
+import CreditReportDetail from './CreditReportDetail'
+import FraudReportDetail from './FraudReportDetail'
 import ScoreQueryPage from './ScoreQueryPage'
 import { creditRiskMenu, scoringMenu, type MenuGroup } from './menus'
 import { MenuIcon, type IconName } from '../components/icons'
@@ -328,6 +330,10 @@ export default function Console() {
               <PreApplication />
             ) : key === 'cr:pre-verify-detail' ? (
               <PreVerifyDetail />
+            ) : key === 'cr:credit-report-detail' ? (
+              <CreditReportDetail />
+            ) : key === 'cr:pre-fraud-detail' ? (
+              <FraudReportDetail />
             ) : isQuery && queryProd ? (
               <ScoreQueryPage product={queryProd} />
             ) : (

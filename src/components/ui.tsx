@@ -50,7 +50,7 @@ export function Panel({
       {(title || actions) && (
         <div className="mb-4 flex items-center justify-between gap-3">
           <div>
-            {title && <h3 className="text-base font-semibold text-ink-900">{title}</h3>}
+            {title && (typeof title === 'string' ? <h3 className="text-base font-semibold text-ink-900">{title}</h3> : <h3 className="text-base font-semibold text-ink-900">{title}</h3>)}
             {desc && <p className="mt-0.5 text-xs text-slate-400">{desc}</p>}
           </div>
           {actions}
