@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState, useEffect, Fragment } from 'react'
-import { PageHeader, DetailHeader, Panel, Badge, DecisionTag, StatusTag, Drawer, Modal, Button, StatCard, SingleSelect, type SelectOption, type BadgeVal } from '../components/ui'
+import { PageHeader, DetailHeader, Panel, Badge, DecisionTag, StatusTag, Drawer, Modal, Button, StatCard, SingleSelect, ProgressBar, type SelectOption, type BadgeVal } from '../components/ui'
 import {
   getPreApps,
   getDetail,
@@ -181,6 +181,8 @@ export default function PreApplication() {
   const [reviewRecordFor, setReviewRecordFor] = useState<AppRow | null>(null)
   const [relatedFor, setRelatedFor] = useState<AppRow | null>(null)
   const [addedReviews, setAddedReviews] = useState<Record<string, ReviewEntry[]>>({})
+  const [reconsiderFor, setReconsiderFor] = useState<AppRow | null>(null)
+  const [progressFor, setProgressFor] = useState<AppRow | null>(null)
 
   const rows = useMemo(
     () =>
@@ -311,6 +313,9 @@ export default function PreApplication() {
         {selected.size > 0 && (
           <div className="flex flex-wrap items-center gap-3 rounded-xl border border-brand-100 bg-brand-50/60 px-4 py-3 text-sm">
             <span className="font-medium text-brand-700">已选 {selected.size} 笔</span>
+            <Button variant="secondary" onClick={() => { applyStatus([...selected], '待人工复核'); flash('已批量转人工复核'); setSelected(new Set()) }}>
+              批量转人工
+            </Button>
             <Button variant="secondary" onClick={() => { applyStatus([...selected], '已关闭'); flash('已批量关闭'); setSelected(new Set()) }}>
               批量关闭
             </Button>
@@ -463,6 +468,10 @@ export default function PreApplication() {
       onRelated={() => setRelatedFor(detailRow)}
       onAddReview={() => setReviewRecordFor(detailRow)}
       onReport={() => setReportFor(detailRow)}
+      onSetStatus={(s) => { applyStatus([detailRow.id], s); flash(`已更新审核状态：${s}`) }}
+      onReconsider={() => setReconsiderFor(detailRow)}
+      onExport={() => exportReport(detailRow, flash)}
+      onProgress={() => setProgressFor(detailRow)}
       extraReviews={addedReviews[detailRow.id] ?? []}
       flash={flash}
     />
@@ -515,6 +524,26 @@ export default function PreApplication() {
         }}
       />
       <RelatedModal row={relatedFor} onClose={() => setRelatedFor(null)} onPick={(id) => { setRelatedFor(null); openDetail(id) }} />
+      <ReconsiderModal
+        row={reconsiderFor}
+        onClose={() => setReconsiderFor(null)}
+        onSubmit={(v) => {
+          const id = reconsiderFor!.id
+          const entry: ReviewEntry = {
+            time: new Date().toLocaleString('zh-CN', { hour12: false }),
+            party: v.type === '客户申诉' ? '申请人' : '复核员',
+            action: '发起复议',
+            content: `复议类型：${v.type}。${v.content}`,
+            fromStatus: reconsiderFor!.auditStatus,
+            toStatus: reconsiderFor!.auditStatus,
+            internal: v.type !== '客户申诉',
+          }
+          setAddedReviews((prev) => ({ ...prev, [id]: [entry, ...(prev[id] ?? [])] }))
+          flash('已发起复议，已留痕合规')
+          setReconsiderFor(null)
+        }}
+      />
+      <ProgressModal row={progressFor} onClose={() => setProgressFor(null)} />
     </>
   )
 }
@@ -716,6 +745,10 @@ function DetailView({
   onRelated,
   onAddReview,
   onReport,
+  onSetStatus,
+  onReconsider,
+  onExport,
+  onProgress,
   extraReviews,
   flash,
 }: {
@@ -725,6 +758,10 @@ function DetailView({
   onRelated: () => void
   onAddReview: () => void
   onReport: () => void
+  onSetStatus: (s: AuditStatus) => void
+  onReconsider: () => void
+  onExport: () => void
+  onProgress: () => void
   extraReviews: ReviewEntry[]
   flash: (msg: string) => void
 }) {
@@ -819,6 +856,15 @@ function DetailView({
         title={`申请编号 · ${row.id}`}
         backLabel="← 返回列表"
         onBack={onBack}
+      />
+
+      <DetailActionBar
+        row={row}
+        onReview={onReview}
+        onSetStatus={onSetStatus}
+        onReconsider={onReconsider}
+        onExport={onExport}
+        onProgress={onProgress}
       />
 
       <div className="lg:flex lg:gap-6">
@@ -1712,4 +1758,122 @@ function ScorePill({ value, high, low }: { value: number; high: number; low: num
 function maskName(name: string): string {
   if (!name) return '-'
   return name.length <= 1 ? name : name[0] + '*' + name.slice(-1)
+}
+
+/* ============ 详情页操作动作栏（按审核状态动态显示） ============ */
+function DetailActionBar({
+  row, onReview, onSetStatus, onReconsider, onExport, onProgress,
+}: {
+  row: AppRow
+  onReview: () => void
+  onSetStatus: (s: AuditStatus) => void
+  onReconsider: () => void
+  onExport: () => void
+  onProgress: () => void
+}) {
+  const s = row.auditStatus
+  const canDecide = s === '待审核' || s === '待人工复核'
+  const isFinal = s === '已通过' || s === '已拒绝'
+  if (!canDecide && s !== '审核中' && !isFinal) return null
+  const actions: { label: string; onClick: () => void; variant: 'primary' | 'secondary' | 'ghost' }[] = []
+  if (canDecide) {
+    actions.push({ label: '通过', onClick: onReview, variant: 'primary' })
+    actions.push({ label: '拒绝', onClick: onReview, variant: 'secondary' })
+    actions.push({ label: '挂起', onClick: onReview, variant: 'secondary' })
+  }
+  if (s === '待审核') actions.push({ label: '转人工复核', onClick: () => onSetStatus('待人工复核'), variant: 'secondary' })
+  if (s === '审核中') actions.push({ label: '查看进度', onClick: onProgress, variant: 'secondary' })
+  if (isFinal) {
+    actions.push({ label: '导出报告', onClick: onExport, variant: 'secondary' })
+    actions.push({ label: '发起复议', onClick: onReconsider, variant: 'secondary' })
+    actions.push({ label: '关闭', onClick: () => onSetStatus('已关闭'), variant: 'ghost' })
+  }
+  return (
+    <div className="rounded-2xl border border-slate-100 bg-white p-3 shadow-sm">
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="mr-1 text-xs font-medium text-slate-400">审核操作</span>
+        {actions.map((a) => (
+          <Button key={a.label} variant={a.variant} onClick={a.onClick}>{a.label}</Button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+/* ============ 决策引擎运行进度弹窗 ============ */
+function ProgressModal({ row, onClose }: { row: AppRow | null; onClose: () => void }) {
+  const steps = [
+    { name: '进件提交', pct: 100 },
+    { name: '要素核验', pct: 100 },
+    { name: '反欺诈识别', pct: 72 },
+    { name: '信用评估', pct: 45 },
+    { name: '决策输出', pct: 12 },
+  ]
+  if (!row) return null
+  return (
+    <Modal open title={`决策引擎运行进度 · ${row.id}`} onClose={onClose} footer={<Button variant="ghost" onClick={onClose}>关闭</Button>}>
+      <p className="mb-4 text-sm text-slate-500">该申请正在由自动审核引擎处理，预计 86ms 内完成。以下为各阶段实时进度（模拟）。</p>
+      <div className="space-y-4">
+        {steps.map((st) => (
+          <div key={st.name}>
+            <div className="mb-1 flex justify-between text-sm">
+              <span className="text-slate-700">{st.name}</span>
+              <span className="text-slate-400">{st.pct}%</span>
+            </div>
+            <ProgressBar value={st.pct} color={st.pct >= 100 ? 'bg-emerald-500' : 'bg-brand-500'} />
+          </div>
+        ))}
+      </div>
+    </Modal>
+  )
+}
+
+/* ============ 发起复议弹窗（合规留痕） ============ */
+function ReconsiderModal({ row, onClose, onSubmit }: { row: AppRow | null; onClose: () => void; onSubmit: (v: { type: string; content: string }) => void }) {
+  const [type, setType] = useState('内部复议')
+  const [content, setContent] = useState('')
+  useEffect(() => { if (row) { setType('内部复议'); setContent('') } }, [row])
+  if (!row) return null
+  return (
+    <Modal open title={`发起复议 · ${row.id}`} onClose={onClose} footer={<>
+      <Button variant="ghost" onClick={onClose}>取消</Button>
+      <Button variant="primary" disabled={!content.trim()} onClick={() => onSubmit({ type, content })}>提交复议</Button>
+    </>}>
+      <div className="space-y-4 text-sm">
+        <div>
+          <p className="mb-2 text-xs text-slate-400">复议类型</p>
+          <div className="flex gap-2">
+            {(['内部复议', '客户申诉'] as const).map((t) => (
+              <button key={t} type="button" onClick={() => setType(t)} className={`rounded-lg border px-4 py-2 ${type === t ? 'border-brand-300 bg-brand-50 text-brand-700' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}>{t}</button>
+            ))}
+          </div>
+        </div>
+        <div>
+          <p className="mb-2 text-xs text-slate-400">复议说明（必填，合规留痕）</p>
+          <textarea value={content} onChange={(e) => setContent(e.target.value)} rows={4} placeholder="请填写复议原因与补充说明…" className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand-300" />
+        </div>
+        <p className="text-xs text-slate-400">复议将写入审计日志，结果回流决策引擎并通知相关方。</p>
+      </div>
+    </Modal>
+  )
+}
+
+/* ============ 报告导出（HTML 下载） ============ */
+function exportReport(row: AppRow, flash: (m: string) => void) {
+  const idx = Number(row.id.replace(/\D/g, '')) || 0
+  const detail = getDetail(row, idx)
+  const report = getReport(row, detail)
+  const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const modulesHtml = report.modules.map((m) => `<h3>${esc(m.title)}</h3><ul>${m.items.map((it) => `<li>${esc(it)}</li>`).join('')}</ul>`).join('')
+  const html = `<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><title>自动审核报告 ${esc(row.id)}</title><style>body{font-family:-apple-system,"Segoe UI",Roboto,sans-serif;max-width:880px;margin:24px auto;padding:0 16px;color:#0f172a}h1{font-size:20px}h3{margin:18px 0 6px;font-size:15px;color:#1e293b}ul{margin:0;padding-left:18px;line-height:1.7;color:#475569}.muted{color:#94a3b8}.box{border:1px solid #e2e8f0;border-radius:12px;padding:12px;margin-top:10px}.advice{background:#eff6ff;padding:10px 12px;border-radius:10px;margin-top:14px}</style></head><body><h1>自动审核报告 · ${esc(row.id)}</h1><p class="muted">报告版本 v2.3 · 生成时间 2026-07-19 · 产品 ${esc(row.product)}</p><div class="box">差异化侧重：${esc(report.emphasis)}</div>${modulesHtml}<div class="advice"><strong>决策建议：</strong>${esc(report.advice)}</div></body></html>`
+  const blob = new Blob([html], { type: 'text/html;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `审核报告_${row.id}.html`
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(url)
+  flash(`已导出审核报告（HTML）：${row.id}`)
 }
