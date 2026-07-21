@@ -156,9 +156,9 @@ const badgeStyles: Record<string, string> = {
   violet: 'bg-violet-50 text-violet-700 ring-violet-200',
   gray: 'bg-slate-100 text-slate-600 ring-slate-200',
 }
-export function Badge({ kind = 'gray', children }: { kind?: keyof typeof badgeStyles; children: ReactNode }) {
+export function Badge({ kind = 'gray', children, className }: { kind?: keyof typeof badgeStyles; children: ReactNode; className?: string }) {
   return (
-    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset ${badgeStyles[kind]}`}>
+    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset ${badgeStyles[kind]} ${className ?? ''}`}>
       {children}
     </span>
   )
@@ -360,18 +360,23 @@ function renderCell(v: CellVal, c: Column) {
 /* ---------- Button ---------- */
 export function Button({
   variant = 'primary',
+  size = 'md',
   className = '',
   ...rest
-}: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: 'primary' | 'secondary' | 'ghost' }) {
+}: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: 'primary' | 'secondary' | 'ghost'; size?: 'sm' | 'md' }) {
   const variants: Record<string, string> = {
     primary: 'bg-brand-600 text-white hover:bg-brand-700',
     secondary: 'border border-slate-200 bg-white text-slate-700 hover:bg-slate-50',
     ghost: 'text-slate-600 hover:bg-slate-100',
   }
+  const sizes: Record<string, string> = {
+    sm: 'px-2.5 py-1.5 text-xs',
+    md: 'px-3.5 py-2 text-sm',
+  }
   return (
     <button
       {...rest}
-      className={`inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-sm font-medium transition ${variants[variant]} ${className}`}
+      className={`inline-flex items-center gap-1.5 rounded-lg font-medium transition ${sizes[size]} ${variants[variant]} ${className}`}
     />
   )
 }

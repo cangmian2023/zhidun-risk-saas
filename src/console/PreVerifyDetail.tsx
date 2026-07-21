@@ -1,13 +1,12 @@
 // 信息核验报告页
 // 依据 doc/信息核验报告功能设计.md 与 doc/信息核验报告-示例数据.json 实现
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Badge, Button, DetailHeader, Panel } from '../components/ui'
 import {
   buildInfoVerifyReport,
   type Conclusion,
   type RiskLevel,
-  type VerifyThread,
   type SingleResult,
   type RulePromptType,
   type OpLog,
@@ -154,7 +153,7 @@ function ExemptModal({ open, target, onClose, onSubmit }: { open: boolean; targe
               二级复核人须为独立审核人员，不得为豁免申请人本人。请确认复核人身份后填写姓名确认。
             </div>
             <input
-              className="mb-3 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand-400"
+              className="mb-3 w-full rounded-lg border border-slate-200 px-3 py-3 text-sm outline-none focus:border-brand-400"
               placeholder="复核人姓名"
               value={reviewer}
               onChange={(e) => setReviewer(e.target.value)}
@@ -260,7 +259,7 @@ function ActionDropdown({
               <button
                 key={a.label}
                 type="button"
-                className="w-full px-3 py-2 text-left text-xs text-slate-600 transition hover:bg-slate-50 hover:text-ink-900"
+                className="w-full px-3 py-3 text-left text-xs text-slate-600 transition hover:bg-slate-50 hover:text-ink-900"
                 onClick={() => { a.onClick(); onToggle() }}
               >
                 {a.label}
@@ -278,7 +277,7 @@ function RuleTooltip({ type }: { type: RulePromptType }) {
   return (
     <span className="group relative ml-1.5 cursor-help text-[10px] text-slate-400">
       ⓘ 处置规则
-      <span className="pointer-events-none absolute bottom-full left-1/2 z-30 mb-1.5 -translate-x-1/2 whitespace-nowrap rounded-lg bg-slate-800 px-3 py-2 text-[11px] leading-relaxed text-white opacity-0 transition group-hover:opacity-100" style={{ minWidth: '320px', whiteSpace: 'normal' }}>
+      <span className="pointer-events-none absolute bottom-full left-1/2 z-30 mb-1.5 -translate-x-1/2 whitespace-nowrap rounded-lg bg-slate-800 px-3 py-3 text-[11px] leading-relaxed text-white opacity-0 transition group-hover:opacity-100" style={{ minWidth: '320px', whiteSpace: 'normal' }}>
         {type === 'reject'
           ? '当前项为重度欺诈风险，系统默认拦截，仅可双人复核后手动推翻拒贷结论。'
           : '当前项为轻度风险，多条预警叠加将提升综合风险分，必须人工电话核实客户信息，核实无误可标记豁免。'}
@@ -360,7 +359,7 @@ function SingleCard({
       </div>
 
       {/* 风险结论文案 */}
-      <p className="mb-3 rounded-lg bg-slate-50 px-3 py-2 text-xs leading-relaxed text-slate-600">
+      <p className="mb-3 rounded-lg bg-slate-50 px-3 py-3 text-xs leading-relaxed text-slate-600">
         {s.reason}
       </p>
 
@@ -386,7 +385,9 @@ function SingleCard({
 
 export default function PreVerifyDetail() {
   const nav = useNavigate()
-  const d = buildInfoVerifyReport()
+  const [params] = useSearchParams()
+  const sampleId = params.get('id') ?? undefined
+  const d = buildInfoVerifyReport(sampleId)
 
   // 模态框状态
   type ModalType = 'note' | 'receipt' | 'exempt' | 'weights' | null
@@ -400,14 +401,13 @@ export default function PreVerifyDetail() {
   }
 
   // 章节导航
-  const navCards: { id: string; label: string; alert: boolean }[] = [
-    { id: 'basic', label: '用户基本信息', alert: d.basic.some((f) => !f.valid) },
-    { id: 'photos', label: '用户证件照', alert: false },
-    { id: 'single', label: '多源核验单项报告', alert: d.single.some((s) => s.conclusion !== 'pass') },
-    { id: 'process', label: '核验过程', alert: false },
-    { id: 'cross', label: '交叉融合综合报告', alert: d.cross.finalConclusion === 'reject' },
-    { id: 'merged-ops', label: '全量操作日志', alert: d.itemActions.length > 0 || logs.length > 0 },
-    { id: 'report-actions', label: '整体操作', alert: false },
+  const navCards: { id: string; label: string; tone: 'ok' | 'alert' | 'normal' }[] = [
+    { id: 'basic', label: '用户基本信息', tone: d.basic.some((f) => !f.valid) ? 'alert' : 'ok' },
+    { id: 'photos', label: '用户证件照', tone: 'ok' },
+    { id: 'single', label: '多源核验单项报告', tone: d.single.some((s) => s.conclusion !== 'pass') ? 'alert' : 'ok' },
+    { id: 'cross', label: '交叉融合综合报告', tone: d.cross.finalConclusion === 'reject' || d.cross.finalConclusion === 'warning' ? 'alert' : 'ok' },
+    { id: 'merged-ops', label: '全量操作日志', tone: 'normal' },
+    { id: 'report-actions', label: '整体操作', tone: 'normal' },
   ]
 
   return (
@@ -416,24 +416,62 @@ export default function PreVerifyDetail() {
         title="信息核验报告"
         subtitle={`进件号 ${d.appId} · 申请人 ${d.name} · ${d.idNo}`}
         backLabel="返回信息核验"
-        onBack={() => nav('/console/cr:pre-verify')}
-        actions={
-          <div className="flex items-center gap-2">
-            <Button variant="ghost">复核</Button>
-            <Button variant="primary">提交终审</Button>
-          </div>
-        }
+        onBack={() => nav('/console/cr/pre-verify')}
       />
-
-      {/* 结论横幅 */}
-      <div className="flex flex-wrap items-center gap-3 rounded-xl border border-slate-200 bg-white px-5 py-4 shadow-sm">
-        <Badge kind={conclKind[d.decision]} className="px-3 py-1 text-sm">{conclText[d.decision]}</Badge>
-        <span className="text-sm text-slate-500">{d.summary}</span>
-      </div>
 
       <div className="lg:flex lg:gap-6">
         {/* ============ 左侧主内容区 ============ */}
         <div className="min-w-0 flex-1 space-y-4">
+          {/* 结论与终审操作（合并，无标题，样式与其他卡片统一） */}
+          <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-card">
+            <div className="flex flex-wrap items-center gap-3">
+              <Badge kind={conclKind[d.decision]} className="px-3 py-1 text-sm">{conclText[d.decision]}</Badge>
+              <span className="text-sm text-slate-500">{d.summary}</span>
+            </div>
+            <FinalOpsCard
+              decision={
+                d.decision === 'reject'
+                  ? 'reject'
+                  : d.decision === 'warning' || d.decision === 'pending'
+                    ? 'pending'
+                    : 'pass'
+              }
+            />
+            {/* 核验过程（原「四、核验过程」卡片，弱化、横向置于卡底） */}
+            <div className="mt-4 border-t border-slate-100 pt-3">
+              <div className="mb-2 text-[11px] font-medium text-slate-400">核验过程</div>
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
+                {d.threads.map((t) => {
+                  // 与下方「多源并行核验单项报告」结果保持一致：按对应 single 的 conclusion 上色
+                  const s = d.single.find((x) => x.icon === t.icon)
+                  const tone = (s ? s.conclusion : t.icon === 'rule' ? d.cross.finalConclusion : 'pass') as Conclusion
+                  const dot =
+                    tone === 'reject'
+                      ? 'bg-rose-500'
+                      : tone === 'warning'
+                        ? 'bg-amber-500'
+                        : tone === 'pending'
+                          ? 'bg-slate-400'
+                          : 'bg-emerald-500'
+                  const res =
+                    tone === 'reject'
+                      ? 'text-rose-600'
+                      : tone === 'warning'
+                        ? 'text-amber-600'
+                        : tone === 'pending'
+                          ? 'text-slate-500'
+                          : 'text-emerald-600'
+                  return (
+                    <div key={t.id} className="flex items-center gap-1.5 text-[11px]">
+                      <span className={cn('h-1.5 w-1.5 rounded-full', dot)} />
+                      <span className="text-slate-500">{t.name}</span>
+                      <span className={res}>{t.result}</span>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          </div>
 
           {/* 一、用户基本信息 */}
           <Panel title="一、用户基本信息" id="basic">
@@ -525,15 +563,6 @@ export default function PreVerifyDetail() {
             </div>
           </Panel>
 
-          {/* 四、核验过程 */}
-          <Panel title="四、核验过程" id="process">
-            <div className="space-y-3">
-              {d.threads.map((t, i) => (
-                <ThreadRow key={t.id} t={t} last={i === d.threads.length - 1} />
-              ))}
-            </div>
-          </Panel>
-
           {/* 五、数据交叉融合综合报告 · 5项 */}
           <Panel title="五、数据交叉融合综合报告 · 5项" id="cross">
             {/* ===== 全局操作按钮组（查看打分权重明细） ===== */}
@@ -596,7 +625,7 @@ export default function PreVerifyDetail() {
               </div>
 
               {/* 判定规则说明 */}
-              <p className="mt-3 rounded-lg bg-slate-50 px-3 py-2 text-xs leading-relaxed text-slate-500">
+              <p className="mt-3 rounded-lg bg-slate-50 px-3 py-3 text-xs leading-relaxed text-slate-500">
                 {d.cross.ruleBasis}
               </p>
 
@@ -633,22 +662,7 @@ export default function PreVerifyDetail() {
             <MergedOpTable itemActions={d.itemActions} opLogs={logs} />
           </Panel>
 
-          {/* 七、终审操作 */}
-          <Panel title="七、终审操作" id="final-ops">
-            <FinalOpsCard
-              decision={d.decision === 'reject' ? 'reject' : 'pass'}
-              initialRecords={d.reportActions.map((a) => ({
-                id: a.id,
-                action: a.action,
-                badge: a.actionKind === 'reject' ? 'red' : a.actionKind === 'pass' ? 'green' : a.actionKind === 'warning' ? 'amber' : 'gray',
-                operator: a.operator,
-                time: a.time,
-                before: a.before,
-                after: a.after,
-                reason: a.reason,
-              }))}
-            />
-          </Panel>
+
 
           {/* 返回顶部 */}
           <button
@@ -668,24 +682,29 @@ export default function PreVerifyDetail() {
         <nav className="hidden lg:block lg:w-44 lg:shrink-0">
           <div className="sticky top-32 flex flex-col gap-1">
             <p className="px-2 pb-1 text-[11px] font-medium uppercase tracking-wide text-slate-400">页面导航</p>
-            {navCards.map((c) => (
-              <button
-                key={c.id}
-                type="button"
-                onClick={() => {
-                  const el = document.getElementById(c.id)
-                  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
-                }}
-                className={`flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-xs transition ${
-                  c.alert
-                    ? 'bg-rose-50 font-medium text-rose-600'
+            {navCards.map((c) => {
+              const toneCls =
+                c.tone === 'alert'
+                  ? 'bg-rose-50 font-medium text-rose-600'
+                  : c.tone === 'ok'
+                    ? 'bg-emerald-50 font-medium text-emerald-600'
                     : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700'
-                }`}
-              >
-                {c.alert && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-rose-500" />}
-                <span className={c.alert ? '' : 'pl-3.5'}>{c.label}</span>
-              </button>
-            ))}
+              const dot = c.tone === 'alert' ? 'bg-rose-500' : c.tone === 'ok' ? 'bg-emerald-500' : ''
+              return (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={() => {
+                    const el = document.getElementById(c.id)
+                    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                  }}
+                  className={`flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-xs transition ${toneCls}`}
+                >
+                  {dot && <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${dot}`} />}
+                  <span className={dot ? '' : 'pl-3.5'}>{c.label}</span>
+                </button>
+              )
+            })}
           </div>
         </nav>
       </div>
@@ -721,75 +740,7 @@ export default function PreVerifyDetail() {
 
 // ========================= 子组件 =========================
 
-function ThreadRow({ t, last }: { t: VerifyThread; last: boolean }) {
-  const dot = t.status === 'done' ? 'bg-emerald-500' : t.status === 'fail' ? 'bg-rose-500' : 'bg-sky-400 animate-pulse'
-  return (
-    <div className="flex gap-3">
-      <div className="flex flex-col items-center">
-        <span className={cn('mt-1 h-2.5 w-2.5 rounded-full', dot)} />
-        {!last && <span className="w-px flex-1 bg-slate-200" />}
-      </div>
-      <div className="flex-1 pb-1">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-sm font-medium text-ink-900">
-            <SrcIcon name={t.icon} />
-            {t.name}
-          </div>
-          <span className="text-xs text-slate-400">{t.start.slice(11)} → {t.end.slice(11)}</span>
-        </div>
-        <div className="mt-0.5 text-xs text-slate-500">{t.result}</div>
-      </div>
-    </div>
-  )
-}
-
-function ActionTable({
-  rows,
-}: {
-  rows: { id: string; target?: string; action: string; actionKind: string; operator: string; time: string; before: string; after: string; reason: string }[]
-}) {
-  const actKind: Record<string, 'red' | 'amber' | 'blue' | 'gray'> = {
-    reject: 'red', pass: 'blue', warning: 'amber', neutral: 'gray',
-  }
-  return (
-    <div className="overflow-x-auto">
-      <table className="w-full border-collapse text-sm">
-        <thead>
-          <tr className="border-b border-slate-200 text-left text-xs text-slate-500">
-            <th className="px-3 py-2 font-medium">对象</th>
-            <th className="px-3 py-2 font-medium">操作</th>
-            <th className="px-3 py-2 font-medium">操作人</th>
-            <th className="px-3 py-2 font-medium">时间</th>
-            <th className="px-3 py-2 font-medium">变更前</th>
-            <th className="px-3 py-2 font-medium">变更后</th>
-            <th className="px-3 py-2 font-medium">原因</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.length === 0 ? (
-            <tr>
-              <td colSpan={7} className="px-3 py-8 text-center text-xs text-slate-400">暂无操作记录</td>
-            </tr>
-          ) : (
-            rows.map((r) => (
-              <tr key={r.id} className="border-b border-slate-100 align-top">
-                <td className="px-3 py-2 font-medium text-slate-700">{r.target ?? '报告'}</td>
-                <td className="px-3 py-2"><Badge kind={actKind[r.actionKind] ?? 'gray'}>{r.action}</Badge></td>
-                <td className="px-3 py-2 text-slate-500">{r.operator}</td>
-                <td className="px-3 py-2 text-slate-500">{r.time}</td>
-                <td className="px-3 py-2 text-slate-400">{r.before}</td>
-                <td className="px-3 py-2 text-slate-900">{r.after}</td>
-                <td className="px-3 py-2 text-slate-500">{r.reason}</td>
-              </tr>
-            ))
-          )}
-        </tbody>
-      </table>
-    </div>
-  )
-}
-
-function MergedOpTable({ itemActions, opLogs }: { itemActions: typeof d.itemActions; opLogs: OpLog[] }) {
+function MergedOpTable({ itemActions, opLogs }: { itemActions: any[]; opLogs: OpLog[] }) {
   interface MergedRow {
     id: string; target: string; action: string; badgeKind: 'red' | 'amber' | 'blue' | 'gray' | 'green'
     operator: string; time: string; before: string; after: string; remark: string; attachments?: string[]
@@ -821,19 +772,19 @@ function MergedOpTable({ itemActions, opLogs }: { itemActions: typeof d.itemActi
   ].sort((a, b) => a.time.localeCompare(b.time))
 
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full border-collapse text-sm">
+    <div className="overflow-x-auto rounded-2xl border border-slate-100 bg-white shadow-sm">
+      <table className="w-full min-w-[860px] text-sm">
         <thead>
-          <tr className="border-b border-slate-200 text-left text-xs text-slate-500">
-            <th className="px-3 py-2 font-medium">操作对象（数据源）</th>
-            <th className="px-3 py-2 font-medium">操作类型</th>
-            <th className="px-3 py-2 font-medium">操作标签</th>
-            <th className="px-3 py-2 font-medium">操作人</th>
-            <th className="px-3 py-2 font-medium">操作时间</th>
-            <th className="px-3 py-2 font-medium">变更前判定</th>
-            <th className="px-3 py-2 font-medium">变更后判定</th>
-            <th className="px-3 py-2 font-medium">操作原因 / 备注 &amp; 附件</th>
-            <th className="px-3 py-2 font-medium">复核状态</th>
+          <tr className="sticky top-0 z-30 border-b border-slate-100 bg-slate-50 text-left text-xs font-semibold text-slate-500">
+            <th className="px-3 py-3 font-medium">操作对象（数据源）</th>
+            <th className="px-3 py-3 font-medium">操作类型</th>
+            <th className="px-3 py-3 font-medium">操作标签</th>
+            <th className="px-3 py-3 font-medium">操作人</th>
+            <th className="px-3 py-3 font-medium">操作时间</th>
+            <th className="px-3 py-3 font-medium">变更前判定</th>
+            <th className="px-3 py-3 font-medium">变更后判定</th>
+            <th className="px-3 py-3 font-medium">操作原因 / 备注 &amp; 附件</th>
+            <th className="px-3 py-3 font-medium">复核状态</th>
           </tr>
         </thead>
         <tbody>
@@ -843,15 +794,15 @@ function MergedOpTable({ itemActions, opLogs }: { itemActions: typeof d.itemActi
             </tr>
           ) : (
             merged.map((r) => (
-              <tr key={r.id} className="border-b border-slate-100 align-top">
-                <td className="px-3 py-2 text-xs font-medium text-slate-700">{r.target}</td>
-                <td className="px-3 py-2 text-xs text-slate-600">{r.action}</td>
-                <td className="px-3 py-2"><Badge kind={r.badgeKind === 'green' ? 'green' : r.badgeKind as any}>{r.badgeKind === 'red' ? '拒绝' : r.badgeKind === 'blue' ? '操作' : r.badgeKind === 'amber' ? '豁免' : r.badgeKind === 'green' ? '放行' : '操作'}</Badge></td>
-                <td className="px-3 py-2 text-xs text-slate-500">{r.operator}</td>
-                <td className="px-3 py-2 text-xs text-slate-500 whitespace-nowrap">{r.time}</td>
-                <td className="px-3 py-2 text-xs text-slate-400">{r.before}</td>
-                <td className="px-3 py-2 text-xs text-slate-700">{r.after}</td>
-                <td className="px-3 py-2 max-w-[200px] text-xs text-slate-600">
+              <tr key={r.id} className="border-b border-slate-50 last:border-0 hover:bg-slate-50/60 align-top">
+                <td className="px-3 py-3 text-xs font-medium text-slate-700">{r.target}</td>
+                <td className="px-3 py-3 text-xs text-slate-600">{r.action}</td>
+                <td className="px-3 py-3"><Badge kind={r.badgeKind === 'green' ? 'green' : r.badgeKind as any}>{r.badgeKind === 'red' ? '拒绝' : r.badgeKind === 'blue' ? '操作' : r.badgeKind === 'amber' ? '豁免' : r.badgeKind === 'green' ? '放行' : '操作'}</Badge></td>
+                <td className="px-3 py-3 text-xs text-slate-500">{r.operator}</td>
+                <td className="px-3 py-3 text-xs text-slate-500 whitespace-nowrap">{r.time}</td>
+                <td className="px-3 py-3 text-xs text-slate-400">{r.before}</td>
+                <td className="px-3 py-3 text-xs text-slate-700">{r.after}</td>
+                <td className="px-3 py-3 max-w-[200px] text-xs text-slate-600">
                   <div className="leading-relaxed">{r.remark}</div>
                   {r.attachments && r.attachments.length > 0 && (
                     <div className="mt-1 flex flex-wrap gap-1">
@@ -861,7 +812,7 @@ function MergedOpTable({ itemActions, opLogs }: { itemActions: typeof d.itemActi
                     </div>
                   )}
                 </td>
-                <td className="px-3 py-2 text-xs">
+                <td className="px-3 py-3 text-xs">
                   {r.reviewStatus ? (
                     r.reviewStatus === '已复核' ? (
                       <div>
@@ -898,7 +849,7 @@ function RiskLevelBadge({ level, noTooltip }: { level: RiskLevel; noTooltip?: bo
     <span className="group relative cursor-help">
       <Badge kind={color}>{label}</Badge>
       {!noTooltip && (
-        <span className="pointer-events-none absolute bottom-full left-1/2 z-30 mb-1.5 -translate-x-1/2 whitespace-nowrap rounded-lg bg-slate-800 px-3 py-2 text-[11px] leading-relaxed text-white opacity-0 transition group-hover:opacity-100">
+        <span className="pointer-events-none absolute bottom-full left-1/2 z-30 mb-1.5 -translate-x-1/2 whitespace-nowrap rounded-lg bg-slate-800 px-3 py-3 text-[11px] leading-relaxed text-white opacity-0 transition group-hover:opacity-100">
           {tooltip}
           <span className="absolute left-1/2 top-full -translate-x-1/2 border-[5px] border-transparent border-t-slate-800" />
         </span>
@@ -1025,7 +976,7 @@ function AtomicCard({ a, conflicts }: { a: AtomicResult; conflicts: VerifyConfli
       </div>
       <div className={cn('mt-1 text-base font-bold', textCls)}>{a.value}</div>
       {mergedTooltip && (
-        <span className="pointer-events-none absolute bottom-full left-1/2 z-30 mb-1.5 -translate-x-1/2 whitespace-nowrap rounded-lg bg-slate-800 px-3 py-2 text-[11px] leading-relaxed text-white opacity-0 transition group-hover:opacity-100" style={{ minWidth: '240px', whiteSpace: 'normal' }}>
+        <span className="pointer-events-none absolute bottom-full left-1/2 z-30 mb-1.5 -translate-x-1/2 whitespace-nowrap rounded-lg bg-slate-800 px-3 py-3 text-[11px] leading-relaxed text-white opacity-0 transition group-hover:opacity-100" style={{ minWidth: '240px', whiteSpace: 'normal' }}>
           {mergedTooltip.split('\n').map((line, i) => (
             <span key={i}>{line}<br /></span>
           ))}

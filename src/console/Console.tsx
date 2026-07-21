@@ -143,7 +143,6 @@ export default function Console() {
     'sc:mon-auto': 'monitor',
     'sc:scorecard': 'sliders',
     'sc:variable': 'braces',
-    'sc:mon-auto': 'monitor',
     'sc:mon-stability': 'gauge',
     'sc:mon-disc': 'pulse',
     'sc:mon-alert': 'bell',

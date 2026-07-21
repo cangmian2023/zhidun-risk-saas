@@ -220,8 +220,8 @@ export default function ListPage({
                       </td>
                     )
                   })}
-                  <td className="sticky right-0 z-10 bg-white px-3 py-3 text-right group-hover:bg-slate-50/60">
-                    <div className="flex items-center justify-end gap-2 text-xs">
+                  <td className="sticky right-0 z-10 bg-white px-3 py-3 text-center group-hover:bg-slate-50/60">
+                    <div className="flex items-center justify-center gap-2 text-xs">
                       {onViewRow && (
                         <button onClick={() => onViewRow(r)} className="font-medium text-brand-600 hover:underline">
                           查看

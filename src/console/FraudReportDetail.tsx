@@ -2,16 +2,43 @@
 // 依据 doc/欺诈识别报告功能设计.md 实现
 import { useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { Badge, Button, DetailHeader, Panel } from '../components/ui'
-import { buildFraudReport, type FraudReport, type SingleFraudResult, type FraudConclusionStatus, type CrossFusion, type FraudThread } from './fraudReport'
+import { Badge, DetailHeader, Panel } from '../components/ui'
+import { ScoreBar } from '../components/scoreBar'
+import { buildFraudReport, FRAUD_SAMPLES, type FraudReport, type SingleFraudResult, type FraudConclusionStatus, type CrossFusion } from './fraudReport'
 import { FinalOpsCard } from './FinalOps'
 
 const cn = (...c: (string | false | undefined)[]) => c.filter(Boolean).join(' ')
 
+// 欺诈分刻度（越高越危险）：0~100，50 存疑线 / 80 拒绝线
+const FRAUD_MARKS: { at: number; label: string; color: 'red' | 'amber' | 'green' }[] = [
+  { at: 50, label: '存疑', color: 'amber' },
+  { at: 80, label: '拒绝', color: 'red' },
+]
+
 const conclBadge: Record<FraudConclusionStatus, 'green' | 'amber' | 'red'> = { '通过': 'green', '存疑': 'amber', '命中': 'red' }
 
-const statusColor: Record<string, string> = {
-  '通过': 'text-emerald-600', '存疑': 'text-amber-600', '命中': 'text-rose-600',
+// 设备 / 团伙 / 材料 概览卡（Q7：结构化特征可视化）
+function FeatCard({ title, data }: { title: string; data: Record<string, string | number> }) {
+  const entries = Object.entries(data)
+  const anomaly = entries.some(([, v]) => {
+    const s = String(v)
+    return s.includes('是') || s.includes('疑似') || s.includes('高') || s.includes('>') || s.includes('命中') || s.includes('黑') || s.includes('团伙')
+  })
+  const main = entries[0]
+  return (
+    <div className={cn('rounded-xl border p-3', anomaly ? 'border-rose-200 bg-rose-50/40' : 'border-slate-200 bg-white')}>
+      <div className="flex items-center gap-1.5">
+        <span className={cn('h-2 w-2 rounded-full', anomaly ? 'bg-rose-500' : 'bg-emerald-500')} />
+        <span className="text-xs font-semibold text-ink-900">{title}</span>
+      </div>
+      {main && (
+        <div className="mt-1.5 text-[11px] text-slate-500">
+          {main[0]}：
+          <span className={cn('font-medium', anomaly ? 'text-rose-600' : 'text-slate-700')}>{String(main[1])}</span>
+        </div>
+      )}
+    </div>
+  )
 }
 
 // ========================= 主页面 =========================
@@ -19,20 +46,21 @@ export default function FraudReportDetail() {
   const nav = useNavigate()
   const [params] = useSearchParams()
   const reportId = params.get('id') ?? 'FR20260721001'
-  const d = buildFraudReport()
+  const [sampleId, setSampleId] = useState(reportId)
+  const d = buildFraudReport(sampleId)
 
-  const navCards: { id: string; label: string; alert: boolean }[] = [
-    { id: 'raw', label: '用户提交与入参', alert: false },
-    { id: 'structured', label: '结构化欺诈特征', alert: d.single_results.some((s) => s.status !== '通过') },
-    { id: 'single', label: '单项欺诈判断', alert: d.single_results.some((s) => s.status !== '通过') },
-    { id: 'process', label: '欺诈识别过程', alert: false },
-    { id: 'conclusion', label: '欺诈结论', alert: d.fraud_conclusion.decision !== '自动通过' },
-    { id: 'item-actions', label: '单条异常操作', alert: d.item_actions.length > 0 },
-    { id: 'final-ops', label: '终审操作', alert: false },
+  const navCards: { id: string; label: string; tone: 'ok' | 'alert' | 'normal' }[] = [
+    { id: 'raw', label: '用户提交与入参', tone: 'normal' },
+    { id: 'structured', label: '结构化欺诈特征', tone: d.single_results.some((s) => s.status !== '通过') ? 'alert' : 'ok' },
+    { id: 'single', label: '单项欺诈判断', tone: d.single_results.some((s) => s.status !== '通过') ? 'alert' : 'ok' },
+    { id: 'process', label: '欺诈识别过程', tone: 'ok' },
+    { id: 'conclusion', label: '欺诈结论', tone: d.fraud_conclusion.decision !== '自动通过' ? 'alert' : 'ok' },
+    { id: 'item-actions', label: '单条异常操作', tone: 'normal' },
+    { id: 'final-ops', label: '终审操作', tone: 'normal' },
+    { id: 'audit', label: '操作与审计', tone: 'normal' },
   ]
 
   const con = d.fraud_conclusion
-  const isPass = con.decision === '自动通过'
   const isReview = con.decision === '人工复核' || con.decision === '退回补件'
   const isReject = con.decision === '直接拒绝'
 
@@ -43,27 +71,43 @@ export default function FraudReportDetail() {
         subtitle={`报告编号 ${d.report_id} · 进件号 ${d.apply_no} · ${d.applicant.name} · ${d.applicant.id_no}`}
         backLabel="返回欺诈识别"
         onBack={() => nav('/console/cr/pre-fraud')}
-        actions={
-          <div className="flex items-center gap-2">
-            <Button variant="ghost">复核</Button>
-            <Button variant="primary">提交终审</Button>
-          </div>
-        }
       />
 
-      {/* 结论横幅 */}
+      {/* 样例状态切换（演示三态 / 按 id 取数） */}
+      <div className="mb-4 flex flex-wrap gap-2">
+        {FRAUD_SAMPLES.map((s) => (
+          <button
+            key={s.id}
+            onClick={() => setSampleId(s.id)}
+            className={cn(
+              'rounded-lg border px-3 py-1.5 text-xs font-medium transition',
+              sampleId === s.id
+                ? 'border-brand-300 bg-brand-50 text-brand-700'
+                : 'border-slate-200 bg-white text-slate-500 hover:border-slate-300',
+            )}
+          >
+            {s.label}
+          </button>
+        ))}
+      </div>
+
+      {/* 结论与终审操作（合并，无标题） */}
       <div className={cn(
-        'flex flex-wrap items-center gap-3 rounded-xl border px-5 py-4 shadow-sm',
+        'mb-6 flex flex-wrap items-center gap-3 rounded-xl border px-5 py-4 shadow-sm',
         isReject ? 'border-rose-200 bg-rose-50' : isReview ? 'border-amber-200 bg-amber-50' : 'border-emerald-200 bg-emerald-50'
       )}>
         <Badge kind={isReject ? 'red' : isReview ? 'amber' : 'green'} className="px-3 py-1 text-sm font-semibold">
-          {con.decision}
+          {String(con.decision)}
         </Badge>
         <span className="text-sm text-slate-600">{con.decision_detail}</span>
         <div className="ml-auto flex items-center gap-3 text-xs text-slate-400">
           <span>欺诈分：<span className={cn('font-semibold', con.fraud_score >= 80 ? 'text-rose-600' : con.fraud_score >= 50 ? 'text-amber-600' : 'text-emerald-600')}>{con.fraud_score}</span></span>
           <span>风险等级：{con.risk_level}</span>
         </div>
+        <FinalOpsCard
+          decision={isReject ? 'reject' : isReview ? 'pending' : 'pass'}
+          reviewNote={isReview ? con.decision_detail : undefined}
+        />
       </div>
 
       <div className="lg:flex lg:gap-6">
@@ -112,6 +156,12 @@ export default function FraudReportDetail() {
 
           {/* 二、结构化欺诈特征 */}
           <Panel title="二、结构化欺诈特征" id="structured">
+            {/* 设备 / 团伙 / 材料 可视化概览（Q7） */}
+            <div className="mb-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
+              <FeatCard title="设备风险" data={d.structured['设备风险']} />
+              <FeatCard title="团伙关联" data={d.structured['团伙关联']} />
+              <FeatCard title="材料真伪" data={d.structured['材料真伪']} />
+            </div>
             <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
               {Object.entries(d.structured).map(([cat, fields]) => {
                 const hasAnomaly = Object.values(fields).some((v) => String(v).includes('是') || String(v).includes('疑似') || String(v).includes('高'))
@@ -170,11 +220,7 @@ export default function FraudReportDetail() {
                       </div>
                     </div>
                     <div className="flex items-center gap-1.5">
-                      <span className={cn('inline-block h-6 w-20 rounded text-center text-[10px] font-medium leading-6', {
-                        'bg-emerald-100 text-emerald-600': t.cost_ms < 500,
-                        'bg-amber-100 text-amber-600': t.cost_ms >= 500 && t.cost_ms < 1000,
-                        'bg-rose-100 text-rose-600': t.cost_ms >= 1000,
-                      })}>{t.cost_ms}ms</span>
+                      <span className={cn('inline-block h-6 w-20 rounded text-center text-[10px] font-medium leading-6', t.cost_ms < 500 ? 'bg-emerald-100 text-emerald-600' : t.cost_ms < 1000 ? 'bg-amber-100 text-amber-600' : 'bg-rose-100 text-rose-600')}>{t.cost_ms}ms</span>
                     </div>
                   </div>
                 ))}
@@ -209,8 +255,15 @@ export default function FraudReportDetail() {
                     ))}
                   </div>
                 </div>
-                <Badge kind={isReject ? 'red' : isReview ? 'amber' : 'green'} className="px-3 py-1 text-sm font-semibold">{con.decision}</Badge>
+                <Badge kind={isReject ? 'red' : isReview ? 'amber' : 'green'} className="px-3 py-1 text-sm font-semibold">{String(con.decision)}</Badge>
               </div>
+              <ScoreBar
+                value={con.fraud_score}
+                floor={0}
+                max={100}
+                kind={con.fraud_score >= 80 ? 'red' : con.fraud_score >= 50 ? 'amber' : 'green'}
+                marks={FRAUD_MARKS}
+              />
               <p className="mt-3 rounded-lg bg-slate-50 px-3 py-2 text-xs leading-relaxed text-slate-600">{con.decision_detail}</p>
             </div>
 
@@ -237,21 +290,11 @@ export default function FraudReportDetail() {
             <ItemActionTable rows={d.item_actions} />
           </Panel>
 
-          {/* 七、终审操作 */}
-          <Panel title="七、终审操作" id="final-ops">
-            <FinalOpsCard
-              decision={isReject ? 'reject' : 'pass'}
-              initialRecords={d.report_actions.map((a) => ({
-                id: `fr-${a.action}-${a.time}`,
-                action: a.action,
-                badge: a.action.includes('拒绝') ? 'red' : a.action.includes('通过') || a.action.includes('放行') ? 'green' : 'amber',
-                operator: a.operator,
-                time: a.time,
-                before: '—',
-                after: '—',
-                reason: a.note,
-              }))}
-            />
+
+
+          {/* 八、操作记录与审计（Q8：原缺失，现补回） */}
+          <Panel title="八、操作记录与审计" id="audit">
+            <ReportActionTable rows={d.report_actions} audit={d.audit_trail} />
           </Panel>
 
           {/* 返回顶部 */}
@@ -271,19 +314,26 @@ export default function FraudReportDetail() {
         <nav className="hidden lg:block lg:w-44 lg:shrink-0">
           <div className="sticky top-32 flex flex-col gap-1">
             <p className="px-2 pb-1 text-[11px] font-medium uppercase tracking-wide text-slate-400">页面导航</p>
-            {navCards.map((c) => (
-              <button
-                key={c.id}
-                type="button"
-                onClick={() => { const el = document.getElementById(c.id); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }) }}
-                className={`flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-xs transition ${
-                  c.alert ? 'bg-rose-50 font-medium text-rose-600' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700'
-                }`}
-              >
-                {c.alert && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-rose-500" />}
-                <span className={c.alert ? '' : 'pl-3.5'}>{c.label}</span>
-              </button>
-            ))}
+            {navCards.map((c) => {
+              const toneCls =
+                c.tone === 'alert'
+                  ? 'bg-rose-50 font-medium text-rose-600'
+                  : c.tone === 'ok'
+                    ? 'bg-emerald-50 font-medium text-emerald-600'
+                    : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700'
+              const dot = c.tone === 'alert' ? 'bg-rose-500' : c.tone === 'ok' ? 'bg-emerald-500' : ''
+              return (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={() => { const el = document.getElementById(c.id); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }) }}
+                  className={`flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-xs transition ${toneCls}`}
+                >
+                  {dot && <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${dot}`} />}
+                  <span className={dot ? '' : 'pl-3.5'}>{c.label}</span>
+                </button>
+              )
+            })}
           </div>
         </nav>
       </div>

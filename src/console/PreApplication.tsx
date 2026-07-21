@@ -1,5 +1,6 @@
 import { useMemo, useRef, useState, useEffect, Fragment } from 'react'
 import { PageHeader, DetailHeader, Panel, Badge, DecisionTag, StatusTag, Drawer, Modal, Button, StatCard, SingleSelect, ProgressBar, type SelectOption, type BadgeVal } from '../components/ui'
+import { ScoreBar } from '../components/scoreBar'
 import {
   getPreApps,
   getDetail,
@@ -13,16 +14,10 @@ import {
   rowDecisionGroup,
   reviewerInfo,
   reviewerText,
-  buildInfoVerify,
-  buildCreditRisk,
-  buildFraudRisk,
   type AppRow,
   type AuditStatus,
   type DecisionGroup,
   type ReviewEntry,
-  type InfoVerifyVM,
-  type CreditRiskVM,
-  type FraudRiskVM,
 } from './preApp'
 
 type Kind = 'red' | 'orange' | 'amber' | 'green' | 'blue' | 'cyan' | 'violet' | 'gray'
@@ -35,43 +30,6 @@ function lvlKind(s: string): 'red' | 'amber' | 'green' {
   if (s.includes('未命中') || s.includes('正常') || s.includes('优') || s.includes('通过') || s.includes('低风险') || s === '低') return 'green'
   if (s.includes('高') || s === '弱' || s.includes('偏弱') || s.includes('命中')) return 'red'
   return 'amber'
-}
-/** 进度条颜色：kind → 填充/刻度色 */
-const barFill: Record<'red' | 'amber' | 'green', string> = {
-  red: 'bg-rose-400',
-  amber: 'bg-amber-400',
-  green: 'bg-emerald-400',
-}
-const markColor: Record<'red' | 'amber' | 'green', string> = {
-  red: 'bg-rose-500',
-  amber: 'bg-amber-500',
-  green: 'bg-emerald-500',
-}
-/** 带阈值刻度线的分数进度条 */
-function ScoreBar({ value, floor, max, kind, marks }: {
-  value: number
-  floor: number
-  max: number
-  kind: 'red' | 'amber' | 'green'
-  marks: { at: number; label: string; color: 'red' | 'amber' | 'green' }[]
-}) {
-  const span = Math.max(1, max - floor)
-  const pct = (n: number) => Math.max(0, Math.min(100, ((n - floor) / span) * 100))
-  return (
-    <div className="mt-2">
-      <div className="relative h-2 rounded-full bg-slate-100">
-        <div className={`absolute inset-y-0 left-0 rounded-full ${barFill[kind]}`} style={{ width: `${pct(value)}%` }} />
-        {marks.map((m) => (
-          <div key={m.at} className={`absolute top-[-2px] h-3 w-0.5 ${markColor[m.color]}`} style={{ left: `${pct(m.at)}%` }} />
-        ))}
-      </div>
-      <div className="relative mt-1 h-3 text-[10px] text-slate-400">
-        {marks.map((m) => (
-          <span key={m.at} className="absolute -translate-x-1/2 whitespace-nowrap" style={{ left: `${pct(m.at)}%` }}>{m.at} {m.label}</span>
-        ))}
-      </div>
-    </div>
-  )
 }
 /** 生成内联 SVG 数据 URI，用于证件 / 活体等图片与视频封面的真实预览 */
 function svgDataUri(svg: string): string {

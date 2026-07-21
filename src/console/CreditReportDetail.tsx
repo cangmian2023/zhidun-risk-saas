@@ -2,6 +2,8 @@
 // 依据 doc/信用风控报告功能设计.md 与 doc/信用风控报告-示例数据.json 实现
 import { useLocation, useNavigate } from 'react-router-dom'
 import { Badge, Button, DetailHeader, Panel } from '../components/ui'
+import { ScoreBar } from '../components/scoreBar'
+import { FinalOpsCard } from './FinalOps'
 import {
   conclKind,
   getCreditReport,
@@ -11,17 +13,66 @@ import {
   type CreditReport,
 } from './creditReport'
 
-const cn = (...c: (string | false | undefined)[]) => c.filter(Boolean).join(' ')
+// 信用分刻度（低分=高风险）：300~900，580 预警线 / 720 准入线
+const CREDIT_MARKS: { at: number; label: string; color: 'red' | 'amber' | 'green' }[] = [
+  { at: 580, label: '预警', color: 'red' },
+  { at: 720, label: '准入', color: 'amber' },
+]
+
+// 风险标签按等级着色（C3）
+function riskTagKind(t: string): 'red' | 'amber' | 'green' {
+  if (t.includes('高')) return 'red'
+  if (t.includes('低')) return 'green'
+  if (t.includes('中')) return 'amber'
+  return 'amber'
+}
+
+// 整体决策 → 终审状态机（7.8）
+function decisionKindOf(d: string): 'pass' | 'reject' | 'pending' {
+  if (d.includes('拒绝')) return 'reject'
+  if (d.includes('通过') || d.includes('授信')) return 'pass'
+  return 'pending'
+}
+
+// 交叉比对结论 → 溯源锚点（B3）
+function locateAnchor(sources: string): string {
+  if (sources.includes('原始')) return 'raw'
+  if (sources.includes('单条') || sources.includes('规则')) return 'single'
+  if (sources.includes('过程')) return 'process'
+  return 'struct'
+}
+
+
+
+function scrollTo(id: string) {
+  document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
+
+// 信用分刻度条着色（仅 红/黄/绿）
+function scoreKindOf(level: string): 'red' | 'amber' | 'green' {
+  if (level.includes('高')) return 'red'
+  if (level.includes('低')) return 'green'
+  return 'amber'
+}
 
 export default function CreditReportDetail() {
   const nav = useNavigate()
   const id = new URLSearchParams(useLocation().search).get('id')
   const r = getCreditReport(id)
-  return <ReportView r={r} onBack={() => nav('/console/cr:pre-credit')} />
+  return <ReportView r={r} onBack={() => nav('/console/cr/pre-credit')} />
 }
 
 function ReportView({ r, onBack }: { r: CreditReport; onBack: () => void }) {
   const cc = r.credit_conclusion
+  const NAV: { id: string; label: string; tone: 'ok' | 'alert' | 'normal' }[] = [
+    { id: 'raw', label: '原始输入', tone: 'normal' },
+    { id: 'struct', label: '结构化', tone: 'normal' },
+    { id: 'single', label: '单项判断', tone: r.single_results.some((s) => !s.status.includes('通过')) ? 'alert' : 'ok' },
+    { id: 'process', label: '核验过程', tone: 'ok' },
+    { id: 'cross', label: '核验结果', tone: cc.cross_fusion.length > 0 ? 'alert' : 'ok' },
+    { id: 'item-actions', label: '单项操作', tone: 'normal' },
+    { id: 'report-actions', label: '报告操作', tone: 'normal' },
+  ]
   return (
     <div>
       <DetailHeader
@@ -45,24 +96,45 @@ function ReportView({ r, onBack }: { r: CreditReport; onBack: () => void }) {
         }
       />
 
-      {/* 结论横幅 */}
-      <div className="mb-4 flex flex-wrap items-center gap-3 rounded-xl border border-slate-200 bg-white px-5 py-4 shadow-sm">
-        <Badge kind={conclKind(cc.decision)} className="px-3 py-1 text-sm">
-          {cc.decision}
-        </Badge>
-        <Badge kind={riskKind(cc.risk_level)}>{cc.risk_level}</Badge>
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-slate-500">信用分</span>
-          <span className="text-lg font-semibold text-rose-600">{cc.credit_score}</span>
+      <div className="lg:flex lg:items-start lg:gap-6">
+        <div className="min-w-0 flex-1">
+
+      {/* 结论与终审操作（合并，无标题） */}
+      <div className="mb-6 rounded-xl border border-slate-200 bg-white px-5 py-4 shadow-sm">
+        <div className="flex flex-wrap items-center gap-3">
+          <Badge kind={conclKind(cc.decision)} className="px-3 py-1 text-sm">
+            {cc.decision}
+          </Badge>
+          <Badge kind={riskKind(cc.risk_level)}>{cc.risk_level}</Badge>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-slate-500">信用分</span>
+            <span
+              className={`text-lg font-semibold ${
+                riskKind(cc.risk_level) === 'red'
+                  ? 'text-rose-600'
+                  : riskKind(cc.risk_level) === 'amber'
+                    ? 'text-amber-600'
+                    : 'text-emerald-600'
+              }`}
+            >
+              {cc.credit_score}
+            </span>
+          </div>
+          <div className="flex flex-1 flex-wrap items-center gap-1.5">
+            {[...new Set(cc.risk_tags)].map((t) => (
+              <Badge key={t} kind={riskTagKind(t)}>
+                {t}
+              </Badge>
+            ))}
+          </div>
+          <span className="text-xs text-slate-400">报告号 {r.report_id} · 状态 {r.status}</span>
         </div>
-        <div className="flex flex-1 flex-wrap items-center gap-1.5">
-          {cc.risk_tags.map((t) => (
-            <Badge key={t} kind="amber">
-              {t}
-            </Badge>
-          ))}
-        </div>
-        <span className="text-xs text-slate-400">报告号 {r.report_id} · 状态 {r.status}</span>
+        <ScoreBar value={cc.credit_score} floor={300} max={900} kind={scoreKindOf(cc.risk_level)} marks={CREDIT_MARKS} />
+        <p className="mt-1 text-[11px] text-slate-400">信用分区间 300~900 · 越低风险越高 · 580 预警线 / 720 准入线</p>
+        <FinalOpsCard
+          decision={decisionKindOf(cc.decision)}
+          disableRejectPassing={decisionKindOf(cc.decision) === 'reject'}
+        />
       </div>
 
       {/* 一、用户提交内容（原始） */}
@@ -148,17 +220,28 @@ function ReportView({ r, onBack }: { r: CreditReport; onBack: () => void }) {
             </div>
             <div className="flex items-center gap-2">
               <span className="text-xs text-slate-500">信用分</span>
-              <span className="text-lg font-semibold text-rose-600">{cc.credit_score}</span>
+              <span
+                className={`text-lg font-semibold ${
+                  riskKind(cc.risk_level) === 'red'
+                    ? 'text-rose-600'
+                    : riskKind(cc.risk_level) === 'amber'
+                      ? 'text-amber-600'
+                      : 'text-emerald-600'
+                }`}
+              >
+                {cc.credit_score}
+              </span>
             </div>
             <div className="flex flex-1 flex-wrap items-center gap-1.5">
-              {cc.risk_tags.map((t) => (
-                <Badge key={t} kind="amber">
+              {[...new Set(cc.risk_tags)].map((t) => (
+                <Badge key={t} kind={riskTagKind(t)}>
                   {t}
                 </Badge>
               ))}
             </div>
           </div>
-          <p className="mt-3 rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-600">
+          <ScoreBar value={cc.credit_score} floor={300} max={900} kind={scoreKindOf(cc.risk_level)} marks={CREDIT_MARKS} />
+          <p className="mt-2 rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-600">
             {cc.decision_detail}
           </p>
         </div>
@@ -171,7 +254,12 @@ function ReportView({ r, onBack }: { r: CreditReport; onBack: () => void }) {
                 <Badge kind={severityKind(c.severity)}>{c.severity}标</Badge>
                 <span className="text-sm text-ink-900">{c.desc}</span>
               </div>
-              <div className="text-xs text-slate-400">冲突来源：{c.sources}</div>
+              <button
+                onClick={() => scrollTo(locateAnchor(c.sources))}
+                className="text-xs text-brand-600 hover:underline"
+              >
+                冲突来源：{c.sources} · 点击溯源
+              </button>
             </div>
           ))}
           {cc.cross_fusion.length === 0 && (
@@ -197,21 +285,8 @@ function ReportView({ r, onBack }: { r: CreditReport; onBack: () => void }) {
         />
       </Panel>
 
-      {/* 七、整体报告的进一步操作 */}
-      <Panel title="七、整体报告的进一步操作" id="report-actions" className="mb-4">
-        <div className="mb-4 space-y-2">
-          {r.report_actions.map((a, i) => (
-            <div key={i} className="flex items-start gap-3 rounded-lg border border-slate-100 px-3 py-2.5">
-              <Badge kind="blue">{a.action}</Badge>
-              <div className="flex-1 text-sm text-slate-700">{a.note}</div>
-              <div className="text-right text-xs text-slate-400">
-                <div>{a.operator}</div>
-                <div>{a.time}</div>
-              </div>
-            </div>
-          ))}
-        </div>
-        <div className="mb-2 text-xs font-medium text-slate-500">操作审计轨迹</div>
+      {/* 操作审计轨迹 */}
+      <Panel title="操作审计轨迹" id="report-actions" className="mb-4">
         <ActionTable
           rows={r.audit_trail}
           cols={[
@@ -223,6 +298,31 @@ function ReportView({ r, onBack }: { r: CreditReport; onBack: () => void }) {
           ]}
         />
       </Panel>
+        </div>
+        <aside className="hidden w-40 shrink-0 lg:block">
+          <div className="sticky top-4 space-y-1 rounded-xl border border-slate-200 bg-white p-2">
+            {NAV.map((n) => {
+              const toneCls =
+                n.tone === 'alert'
+                  ? 'bg-rose-50 font-medium text-rose-600'
+                  : n.tone === 'ok'
+                    ? 'bg-emerald-50 font-medium text-emerald-600'
+                    : 'text-slate-600 hover:bg-brand-50 hover:text-brand-700'
+              const dot = n.tone === 'alert' ? 'bg-rose-500' : n.tone === 'ok' ? 'bg-emerald-500' : ''
+              return (
+                <button
+                  key={n.id}
+                  onClick={() => scrollTo(n.id)}
+                  className={`block w-full rounded-lg px-3 py-1.5 text-left text-xs font-medium transition ${toneCls}`}
+                >
+                  {dot && <span className={`mr-1.5 inline-block h-1.5 w-1.5 shrink-0 rounded-full ${dot}`} />}
+                  {n.label}
+                </button>
+              )
+            })}
+          </div>
+        </aside>
+      </div>
     </div>
   )
 }

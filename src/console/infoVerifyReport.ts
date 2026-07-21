@@ -167,7 +167,7 @@ export interface InfoVerifyReport {
   opLogs: OpLog[]
 }
 
-export function buildInfoVerifyReport(): InfoVerifyReport {
+export function buildBaseInfoVerifyReport(): InfoVerifyReport {
   return {
     appId: 'J20260718X0001',
     name: '张*伟',
@@ -566,4 +566,58 @@ export function buildInfoVerifyReport(): InfoVerifyReport {
       },
     ],
   }
+}
+
+function clone<T>(o: T): T {
+  return JSON.parse(JSON.stringify(o)) as T
+}
+
+// 依据样例 id 返回对应状态：含 MANUAL→人工审核，含 REJECT→拒绝，含 PASS→通过，缺省→拒绝
+export function buildInfoVerifyReport(id?: string): InfoVerifyReport {
+  const status: 'pass' | 'reject' | 'manual' = id
+    ? id.includes('MANUAL')
+      ? 'manual'
+      : id.includes('REJECT')
+        ? 'reject'
+        : 'pass'
+    : 'pass'
+  if (status === 'reject') return buildBaseInfoVerifyReport()
+
+  const r = clone(buildBaseInfoVerifyReport())
+  if (status === 'pass') {
+    r.decision = 'pass'
+    r.decisionText = '通过'
+    r.summary = '申请人身份信息在公安、银联、运营商、设备、关联库 5 个数据源完成单项核验，全部一致，无风险冲突。综合判定：通过。'
+    r.cross.finalConclusion = 'pass'
+    r.cross.finalReason = '全部单项核验通过，设备无异常、无关联逾期，综合判定通过。'
+    r.cross.overallRisk = 'low'
+    r.cross.riskScore = 24
+    r.cross.riskTags = [
+      { label: '身份真实', kind: 'blue' },
+      { label: '设备正常', kind: 'blue' },
+      { label: '关联无风险', kind: 'blue' },
+    ]
+    r.cross.conflicts = []
+    r.cross.atomic = r.cross.atomic.map((a) => ({ ...a, status: 'ok' as const, conflictIds: [] }))
+    r.single = r.single.map((s) => ({ ...s, conclusion: 'pass' as const, rulePromptType: 'pass' as const }))
+    return r
+  }
+
+  // manual：人工审核（待定）
+  r.decision = 'warning'
+  r.decisionText = '人工审核'
+  r.summary = '申请人身份信息核验基本通过，但运营商入网时长不足且关联库命中历史逾期，需人工电核后判定。综合判定：人工审核（待定）。'
+  r.cross.finalConclusion = 'warning'
+  r.cross.finalReason = '身份真实、银行卡本人，但入网时长不足叠加关联逾期预警，需人工核实后判定。'
+  r.cross.overallRisk = 'medium'
+  r.cross.riskScore = 58
+  r.cross.riskTags = [
+    { label: '入网时长短', kind: 'amber' },
+    { label: '关联逾期', kind: 'amber' },
+    { label: '身份真实', kind: 'blue' },
+  ]
+  r.cross.conflicts = r.cross.conflicts.filter((c) => c.level === 'medium')
+  r.cross.atomic = r.cross.atomic.map((a) => (a.status === 'fail' ? { ...a, status: 'warn' as const } : a))
+  r.single = r.single.map((s) => (s.conclusion === 'reject' ? { ...s, conclusion: 'warning' as const, rulePromptType: 'warning' as const } : s))
+  return r
 }
