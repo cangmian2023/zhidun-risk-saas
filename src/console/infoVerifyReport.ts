@@ -83,6 +83,8 @@ export interface VerifyThread {
   start: string
   end: string
   result: string
+  // 该步骤自身的结论，用于按「预警黄 / 拒绝红 / 通过绿」上色
+  conclusion?: Conclusion
 }
 
 export interface AtomicResult {
@@ -109,6 +111,17 @@ export interface RiskTag {
   kind: 'red' | 'amber' | 'blue' | 'gray'
 }
 
+// 异常值模型的一个构成项（可复加、可追溯）
+export interface ScoreComponent {
+  name: string
+  situation: string
+  score: number
+  weight: number
+  level: RiskLevel
+  traceTo?: string
+  core?: boolean
+}
+
 export interface CrossCheck {
   finalConclusion: Conclusion
   finalReason: string
@@ -122,6 +135,7 @@ export interface CrossCheck {
   auditTime: string
   ruleVersion: string
   reportId: string
+  scoreComponents: ScoreComponent[]
 }
 
 export interface ItemAction {
@@ -167,7 +181,67 @@ export interface InfoVerifyReport {
   opLogs: OpLog[]
 }
 
-export function buildBaseInfoVerifyReport(): InfoVerifyReport {
+export // 核验过程新流程：用户填报→活体→设备指纹→环境→格式→OCR→多源单项→交叉融合→模型打分
+// 每步 conclusion：预警=黄 / 拒绝=红 / 通过=绿，随报告状态变化
+const mkThread = (
+  id: string,
+  name: string,
+  icon: VerifyThread['icon'],
+  conclusion: Conclusion,
+  result: string,
+): VerifyThread => ({
+  id,
+  name,
+  icon,
+  status: conclusion === 'reject' ? 'fail' : 'done',
+  start: '2026-07-18 14:22:01.000',
+  end: '2026-07-18 14:22:02.000',
+  result,
+  conclusion,
+})
+
+function buildThreads(variant: 'pass' | 'warning' | 'reject'): VerifyThread[] {
+  if (variant === 'pass') {
+    return [
+      mkThread('t1', '用户填报资料提交申请', 'police', 'pass', '资料完整提交'),
+      mkThread('t2', '活体检测', 'police', 'pass', '活体通过 · 人脸一致'),
+      mkThread('t3', '设备指纹', 'device', 'pass', '设备指纹正常'),
+      mkThread('t4', '环境风险采集', 'network', 'pass', '环境正常'),
+      mkThread('t5', '格式校验', 'rule', 'pass', '格式校验通过'),
+      mkThread('t6', 'OCR识别', 'operator', 'pass', 'OCR 识别一致'),
+      mkThread('t7', '多源并行核验单项报告（三要素、四要素）', 'unionpay', 'pass', '三/四要素一致'),
+      mkThread('t8', '数据交叉融合综合报告（规则引擎执行规则碰撞）', 'rule', 'pass', '规则碰撞无冲突'),
+      mkThread('t9', '模型打分', 'network', 'pass', '低风险通过'),
+    ]
+  }
+  if (variant === 'warning') {
+    return [
+      mkThread('t1', '用户填报资料提交申请', 'police', 'pass', '资料完整提交'),
+      mkThread('t2', '活体检测', 'police', 'pass', '活体通过 · 人脸一致'),
+      mkThread('t3', '设备指纹', 'device', 'warning', '设备风险存疑'),
+      mkThread('t4', '环境风险采集', 'network', 'pass', '环境正常'),
+      mkThread('t5', '格式校验', 'rule', 'pass', '格式校验通过'),
+      mkThread('t6', 'OCR识别', 'operator', 'warning', 'OCR 存在差异待核'),
+      mkThread('t7', '多源并行核验单项报告（三要素、四要素）', 'unionpay', 'warning', '部分项预警'),
+      mkThread('t8', '数据交叉融合综合报告（规则引擎执行规则碰撞）', 'rule', 'warning', '规则碰撞命中预警'),
+      mkThread('t9', '模型打分', 'network', 'warning', '中风险预警'),
+    ]
+  }
+  // reject
+  return [
+    mkThread('t1', '用户填报资料提交申请', 'police', 'pass', '资料完整提交'),
+    mkThread('t2', '活体检测', 'police', 'pass', '活体通过 · 人脸一致'),
+    mkThread('t3', '设备指纹', 'device', 'reject', '设备关联 3 身份（高危）'),
+    mkThread('t4', '环境风险采集', 'network', 'pass', '环境正常'),
+    mkThread('t5', '格式校验', 'rule', 'pass', '格式校验通过'),
+    mkThread('t6', 'OCR识别', 'operator', 'warning', 'OCR 存在差异待核'),
+    mkThread('t7', '多源并行核验单项报告（三要素、四要素）', 'unionpay', 'reject', '设备项拒绝'),
+    mkThread('t8', '数据交叉融合综合报告（规则引擎执行规则碰撞）', 'rule', 'reject', '规则碰撞触发拒绝'),
+    mkThread('t9', '模型打分', 'network', 'reject', '高风险拒绝'),
+  ]
+}
+
+function buildBaseInfoVerifyReport(): InfoVerifyReport {
   return {
     appId: 'J20260718X0001',
     name: '张*伟',
@@ -370,62 +444,7 @@ export function buildBaseInfoVerifyReport(): InfoVerifyReport {
         rulePromptType: 'warning',
       },
     ],
-    threads: [
-      {
-        id: 't1',
-        name: '公安人口库核验',
-        icon: 'police',
-        status: 'done',
-        start: '2026-07-18 14:22:01.102',
-        end: '2026-07-18 14:22:01.422',
-        result: '三要素一致',
-      },
-      {
-        id: 't2',
-        name: '银联持卡人核验',
-        icon: 'unionpay',
-        status: 'done',
-        start: '2026-07-18 14:22:01.110',
-        end: '2026-07-18 14:22:01.520',
-        result: '四要素一致',
-      },
-      {
-        id: 't3',
-        name: '运营商实名核验',
-        icon: 'operator',
-        status: 'done',
-        start: '2026-07-18 14:22:01.115',
-        end: '2026-07-18 14:22:01.665',
-        result: '实名一致 / 入网 21 天',
-      },
-      {
-        id: 't4',
-        name: '设备风险核验',
-        icon: 'device',
-        status: 'done',
-        start: '2026-07-18 14:22:01.120',
-        end: '2026-07-18 14:22:01.300',
-        result: '设备关联 3 身份',
-      },
-      {
-        id: 't5',
-        name: '关联库交叉核验',
-        icon: 'network',
-        status: 'done',
-        start: '2026-07-18 14:22:01.130',
-        end: '2026-07-18 14:22:01.390',
-        result: '命中 1 条历史逾期',
-      },
-      {
-        id: 't6',
-        name: '逻辑规则引擎',
-        icon: 'rule',
-        status: 'done',
-        start: '2026-07-18 14:22:01.400',
-        end: '2026-07-18 14:22:01.880',
-        result: '生成 2 项冲突',
-      },
-    ],
+    threads: buildThreads('reject'),
     cross: {
       finalConclusion: 'reject',
       finalReason:
@@ -433,10 +452,15 @@ export function buildBaseInfoVerifyReport(): InfoVerifyReport {
       overallRisk: 'high',
       riskScore: 82,
       scoreCap: 100,
-      ruleBasis: '判定规则：单一项高风险（设备群控）直接触发系统拦截，叠加2项中风险，综合风险分≥80分自动拒绝',
+      ruleBasis: '判定规则：单一项高风险（设备群控）直接触发系统拦截，叠加2项中风险，异常值≥80自动拒绝',
       auditTime: '2026-07-21 15:00:22',
       ruleVersion: 'V2.6风控策略集',
       reportId: 'CR20260721001',
+      scoreComponents: [
+        { name: '设备群控', situation: '设备指纹7日内关联3个身份，存在群控/设备农场', score: 60, weight: 60, level: 'high', traceTo: 'c1', core: true },
+        { name: '新手机号', situation: '入网仅21天，不足30天', score: 14, weight: 14, level: 'medium', traceTo: 'c3' },
+        { name: '关联逾期', situation: '跨行业联防联控命中1条历史逾期', score: 8, weight: 8, level: 'medium', traceTo: 'c2' },
+      ],
       riskTags: [
         { label: '设备群控', kind: 'red' },
         { label: '入网时长短', kind: 'amber' },
@@ -572,13 +596,15 @@ function clone<T>(o: T): T {
   return JSON.parse(JSON.stringify(o)) as T
 }
 
-// 依据样例 id 返回对应状态：含 MANUAL→人工审核，含 REJECT→拒绝，含 PASS→通过，缺省→拒绝
+// 依据样例 id 返回对应状态：
+//   含 REJECT → 拒绝（红）；含 MANUAL / WARNING → 预警（黄）；缺省 → 通过（绿）
+// 列表页会按行状态传入对应关键字，确保「列表是预警/拒绝，报告也是预警/拒绝」。
 export function buildInfoVerifyReport(id?: string): InfoVerifyReport {
-  const status: 'pass' | 'reject' | 'manual' = id
-    ? id.includes('MANUAL')
-      ? 'manual'
-      : id.includes('REJECT')
-        ? 'reject'
+  const status: 'pass' | 'reject' | 'warning' = id
+    ? id.includes('REJECT')
+      ? 'reject'
+      : id.includes('MANUAL') || id.includes('WARNING')
+        ? 'warning'
         : 'pass'
     : 'pass'
   if (status === 'reject') return buildBaseInfoVerifyReport()
@@ -587,11 +613,16 @@ export function buildInfoVerifyReport(id?: string): InfoVerifyReport {
   if (status === 'pass') {
     r.decision = 'pass'
     r.decisionText = '通过'
+    r.threads = buildThreads('pass')
     r.summary = '申请人身份信息在公安、银联、运营商、设备、关联库 5 个数据源完成单项核验，全部一致，无风险冲突。综合判定：通过。'
     r.cross.finalConclusion = 'pass'
     r.cross.finalReason = '全部单项核验通过，设备无异常、无关联逾期，综合判定通过。'
     r.cross.overallRisk = 'low'
-    r.cross.riskScore = 24
+    r.cross.riskScore = 0
+    r.cross.scoreComponents = [
+      { name: '无风险证据', situation: '全部单项核验通过，未累计到风险证据', score: 0, weight: 0, level: 'low' },
+    ]
+    r.cross.ruleBasis = '判定规则：异常值 0（未累计到风险证据），低于 20 阈值，自动判通过。'
     r.cross.riskTags = [
       { label: '身份真实', kind: 'blue' },
       { label: '设备正常', kind: 'blue' },
@@ -603,14 +634,20 @@ export function buildInfoVerifyReport(id?: string): InfoVerifyReport {
     return r
   }
 
-  // manual：人工审核（待定）
+  // warning：预警（黄）
   r.decision = 'warning'
-  r.decisionText = '人工审核'
-  r.summary = '申请人身份信息核验基本通过，但运营商入网时长不足且关联库命中历史逾期，需人工电核后判定。综合判定：人工审核（待定）。'
+  r.decisionText = '预警'
+  r.threads = buildThreads('warning')
+  r.summary = '申请人身份信息核验基本通过，但运营商入网时长不足且关联库命中历史逾期，需人工电核后判定。综合判定：预警。'
   r.cross.finalConclusion = 'warning'
   r.cross.finalReason = '身份真实、银行卡本人，但入网时长不足叠加关联逾期预警，需人工核实后判定。'
   r.cross.overallRisk = 'medium'
   r.cross.riskScore = 58
+  r.cross.scoreComponents = [
+    { name: '设备', situation: '设备风险存疑，需人工确认', score: 30, weight: 30, level: 'medium' },
+    { name: '新手机号', situation: '入网仅21天，不足30天', score: 18, weight: 18, level: 'medium', traceTo: 'c3' },
+    { name: '关联逾期', situation: '跨行业联防联控命中1条历史逾期', score: 10, weight: 10, level: 'medium', traceTo: 'c2' },
+  ]
   r.cross.riskTags = [
     { label: '入网时长短', kind: 'amber' },
     { label: '关联逾期', kind: 'amber' },

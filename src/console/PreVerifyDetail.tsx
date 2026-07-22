@@ -12,6 +12,8 @@ import {
   type OpLog,
   type AtomicResult,
   type VerifyConflict,
+  type ScoreComponent,
+  type CrossCheck,
 } from './infoVerifyReport'
 import { useModule } from '../store'
 import { VerifyActionBar, type VerifyRow, type WorkStatus, type SysResult } from './VerifyOps'
@@ -174,14 +176,16 @@ function ExemptModal({ open, target, onClose, onSubmit }: { open: boolean; targe
 
 // ---- 全局操作弹窗：查看打分权重明细 ----
 function WeightsModal({
-  open, onClose, score, scoreCap, ruleVersion,
-}: { open: boolean; onClose: () => void; score: number; scoreCap: number; ruleVersion: string }) {
+  open, onClose, score, scoreCap, ruleVersion, components,
+}: { open: boolean; onClose: () => void; score: number; scoreCap: number; ruleVersion: string; components: ScoreComponent[] }) {
   if (!open) return null
-  const rows = [
-    { name: '设备群控（核心拒贷因子）', weight: 60, got: 60, cls: 'text-rose-600', bar: 'bg-rose-500' },
-    { name: '新手机号（入网不足 30 天）', weight: 20, got: 14, cls: 'text-amber-600', bar: 'bg-amber-500' },
-    { name: '关联逾期（跨行业联防联控）', weight: 20, got: 8, cls: 'text-amber-600', bar: 'bg-amber-500' },
-  ]
+  const levelCls: Record<RiskLevel, string> = {
+    high: 'text-rose-600', medium: 'text-amber-600', low: 'text-emerald-600',
+  }
+  const barCls: Record<RiskLevel, string> = {
+    high: 'bg-rose-500', medium: 'bg-amber-500', low: 'bg-emerald-500',
+  }
+  const compTotal = components.reduce((s, c) => s + c.score, 0)
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30" onClick={onClose}>
       <div className="w-full max-w-xl rounded-2xl bg-white p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
@@ -190,25 +194,27 @@ function WeightsModal({
 
         <div className="mb-4 rounded-lg bg-slate-50 p-3 text-sm">
           <div className="flex items-center justify-between">
-            <span className="text-slate-500">综合风险分</span>
+            <span className="text-slate-500">异常值</span>
             <span className="text-lg font-bold text-rose-600">{score}<span className="text-xs font-normal text-slate-400">/{scoreCap}</span></span>
           </div>
-          <div className="mt-1 text-[11px] text-slate-400">计算明细：60（设备群控）+ 14（新手机号）+ 8（关联逾期）= 82</div>
+          <div className="mt-1 text-[11px] text-slate-400">计算明细：Σ 各风险项得分 = {compTotal}{compTotal === 0 ? '（未累计到风险证据）' : ''}</div>
         </div>
 
         <div className="mb-3 text-xs font-medium text-slate-500">① 各风险项权重占比</div>
         <div className="space-y-2.5">
-          {rows.map((r) => (
-            <div key={r.name}>
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-slate-600">{r.name}</span>
-                <span className={cn('font-semibold', r.cls)}>权重 {r.weight}% · 得分 {r.got}</span>
+          {components.length === 0
+            ? <div className="rounded-lg bg-slate-50 px-3 py-3 text-xs text-slate-400">无风险证据累计，异常值为 0。</div>
+            : components.map((c) => (
+              <div key={c.name}>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-slate-600">{c.name}{c.core ? '（核心因子）' : ''}</span>
+                  <span className={cn('font-semibold', levelCls[c.level])}>权重 {c.weight}% · 得分 {c.score}</span>
+                </div>
+                <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
+                  <div className={cn('h-full rounded-full', barCls[c.level])} style={{ width: `${(c.score / scoreCap) * 100}%` }} />
+                </div>
               </div>
-              <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
-                <div className={cn('h-full rounded-full', r.bar)} style={{ width: `${(r.got / scoreCap) * 100}%` }} />
-              </div>
-            </div>
-          ))}
+            ))}
         </div>
 
         <div className="mb-2 mt-4 text-xs font-medium text-slate-500">② 对应风控策略版本规则原文（{ruleVersion}）</div>
@@ -216,7 +222,7 @@ function WeightsModal({
 `策略 V2.6（节选）
 R1 单一项命中【高危】（如设备群控），权重 60%，直接触发系统拦截；
 R2 命中【中风险】（新手机号 / 关联逾期），各权重 20%，叠加高风险升级为自动拒绝；
-R3 综合风险分 = Σ(单项得分)，≥80 分自动拒绝，需双人复核推翻。`
+R3 异常值 = Σ(风险项得分)，≥80 自动拒绝，需双人复核推翻。`
         }</pre>
 
         <div className="mt-4 flex justify-end gap-2">
@@ -281,7 +287,7 @@ function RuleTooltip({ type }: { type: RulePromptType }) {
       <span className="pointer-events-none absolute bottom-full left-1/2 z-30 mb-1.5 -translate-x-1/2 whitespace-nowrap rounded-lg bg-slate-800 px-3 py-3 text-[11px] leading-relaxed text-white opacity-0 transition group-hover:opacity-100" style={{ minWidth: '320px', whiteSpace: 'normal' }}>
         {type === 'reject'
           ? '当前项为重度欺诈风险，系统默认拦截，仅可双人复核后手动推翻拒贷结论。'
-          : '当前项为轻度风险，多条预警叠加将提升综合风险分，必须人工电话核实客户信息，核实无误可标记豁免。'}
+          : '当前项为轻度风险，多条预警叠加将提升异常值，必须人工电话核实客户信息，核实无误可标记豁免。'}
         <span className="absolute left-1/2 top-full -translate-x-1/2 border-[5px] border-transparent border-t-slate-800" />
       </span>
     </span>
@@ -387,30 +393,30 @@ function SingleCard({
 export default function PreVerifyDetail() {
   const nav = useNavigate()
   const [params] = useSearchParams()
+  // 由列表跳转带来的参数还原该行的「自动审核 / 人工审核 / 操作人员 / 编号」，确保详情页与列表完全一致
+  const sysParam = (params.get('sys') as SysResult) ?? '处理中'
+  const workParam = (params.get('work') as WorkStatus) ?? '核验计算中'
+  const opParam = params.get('op') ?? '--'
   const sampleId = params.get('id') ?? undefined
-  const d = buildInfoVerifyReport(sampleId)
+  // 报告内容（核验过程/交叉报告）按自动审核结果选套餐：拒绝→红 / 预警→黄 / 通过·处理中→绿
+  const variant = sysParam === '拒绝' ? 'REJECT' : sysParam === '预警' ? 'WARNING' : 'PASS'
+  const d = buildInfoVerifyReport(variant)
 
-  const [verifyRow, setVerifyRow] = useState<VerifyRow>(() => {
-    const map: Record<Conclusion, { sys: SysResult; work: WorkStatus; op: string }> = {
-      pass: { sys: '通过', work: '待确认归档', op: '初审：审核员 1' },
-      reject: { sys: '拒绝', work: '待确认归档', op: '初审：审核员 1' },
-      warning: { sys: '预警', work: '待审核处置', op: '初审：审核员 1' },
-      pending: { sys: '处理中', work: '核验计算中', op: '--' },
-    }
-    const m = map[d.decision]
-    return {
-      id: d.id,
-      name: d.name,
-      product: d.product,
-      channel: d.channel,
-      amount: d.amount,
-      fraudScore: d.fraudScore,
-      creditScore: d.creditScore,
-      sysResult: m.sys,
-      workStatus: m.work,
-      operator: m.op,
-    }
-  })
+  // 详情页第二卡片仅用 VerifyRow 的「自动审核 / 人工审核 / 审核人 / 编号」驱动操作按钮；
+  // product/channel/amount/分 等字段 VerifyActionBar 不展示，用占位兜底以满足类型
+  const [verifyRow, setVerifyRow] = useState<VerifyRow>(() => ({
+    id: sampleId ?? d.appId,
+    name: d.name,
+    product: '—',
+    channel: '—',
+    amount: 0,
+    fraudScore: 0,
+    creditScore: 0,
+    sysResult: sysParam,
+    workStatus: workParam,
+    operator: opParam,
+    auditTime: '—',
+  }))
   const applyVerify = (next: Partial<VerifyRow>) => setVerifyRow((r) => ({ ...r, ...next }))
   const { flash } = useModule()
 
@@ -427,6 +433,7 @@ export default function PreVerifyDetail() {
 
   // 章节导航
   const navCards: { id: string; label: string; tone: 'ok' | 'alert' | 'normal' }[] = [
+    { id: 'score', label: '异常值', tone: d.cross.overallRisk === 'high' ? 'alert' : 'ok' },
     { id: 'basic', label: '用户基本信息', tone: d.basic.some((f) => !f.valid) ? 'alert' : 'ok' },
     { id: 'photos', label: '用户证件照', tone: 'ok' },
     { id: 'single', label: '多源核验单项报告', tone: d.single.some((s) => s.conclusion !== 'pass') ? 'alert' : 'ok' },
@@ -447,6 +454,9 @@ export default function PreVerifyDetail() {
       <div className="lg:flex lg:gap-6">
         {/* ============ 左侧主内容区 ============ */}
         <div className="min-w-0 flex-1 space-y-4">
+          {/* 异常值模型卡（结论级，领衔整份报告） */}
+          <ScoreModelCard cross={d.cross} />
+
           {/* 结论与终审操作（与列表一致：系统结果 / 工单状态 / 操作人员 + 操作按钮） */}
           <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-card">
             <VerifyActionBar row={verifyRow} onApply={applyVerify} flash={flash} showView={false} />
@@ -454,10 +464,9 @@ export default function PreVerifyDetail() {
             <div className="mt-4 border-t border-slate-100 pt-3">
               <div className="mb-2 text-[11px] font-medium text-slate-400">核验过程</div>
               <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
-                {d.threads.map((t) => {
-                  // 与下方「多源并行核验单项报告」结果保持一致：按对应 single 的 conclusion 上色
-                  const s = d.single.find((x) => x.icon === t.icon)
-                  const tone = (s ? s.conclusion : t.icon === 'rule' ? d.cross.finalConclusion : 'pass') as Conclusion
+                {d.threads.map((t, i) => {
+                  // 每步按自身 conclusion 上色：预警=黄 / 拒绝=红 / 通过=绿
+                  const tone = (t.conclusion ?? 'pass') as Conclusion
                   const dot =
                     tone === 'reject'
                       ? 'bg-rose-500'
@@ -476,6 +485,7 @@ export default function PreVerifyDetail() {
                           : 'text-emerald-600'
                   return (
                     <div key={t.id} className="flex items-center gap-1.5 text-[11px]">
+                      <span className="w-3 shrink-0 text-right tabular-nums text-slate-400">{i + 1}</span>
                       <span className={cn('h-1.5 w-1.5 rounded-full', dot)} />
                       <span className="text-slate-500">{t.name}</span>
                       <span className={res}>{t.result}</span>
@@ -577,12 +587,11 @@ export default function PreVerifyDetail() {
           </Panel>
 
           {/* 五、数据交叉融合综合报告 · 5项 */}
-          <Panel title="五、数据交叉融合综合报告 · 5项" id="cross">
-            {/* ===== 全局操作按钮组（查看打分权重明细） ===== */}
-            <div className="-mt-2 mb-4 flex flex-wrap items-center justify-end gap-1.5">
-              <Button variant="ghost" size="sm" onClick={() => setModal({ type: 'weights', target: '' })}>查看打分权重明细</Button>
-            </div>
-
+          <Panel
+            title="五、数据交叉融合综合报告 · 5项"
+            id="cross"
+            actions={<Button variant="ghost" size="sm" onClick={() => setModal({ type: 'weights', target: '' })}>查看打分权重明细</Button>}
+          >
             {/* ===== 顶层总览区：5 项评估维度 ===== */}
             <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-5">
               {d.cross.atomic.map((a) => (
@@ -601,7 +610,7 @@ export default function PreVerifyDetail() {
                   <RiskLevelBadge level={d.cross.overallRisk} />
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-slate-400">风险分</span>
+                  <span className="text-xs text-slate-400">异常值</span>
                   <span className="text-xl font-bold text-rose-600">
                     {d.cross.riskScore}<span className="text-xs font-normal text-slate-300">/{d.cross.scoreCap}</span>
                   </span>
@@ -746,6 +755,7 @@ export default function PreVerifyDetail() {
         score={d.cross.riskScore}
         scoreCap={d.cross.scoreCap}
         ruleVersion={d.cross.ruleVersion}
+        components={d.cross.scoreComponents}
       />
     </div>
   )
@@ -850,11 +860,141 @@ function MergedOpTable({ itemActions, opLogs }: { itemActions: any[]; opLogs: Op
 
 // ========================= 交叉融合综合报告子组件 =========================
 
+// ========================= 异常值模型卡（顶部结论级） =========================
+function ScoreModelCard({ cross }: { cross: CrossCheck }) {
+  const { riskScore, scoreCap, overallRisk, scoreComponents, ruleVersion, ruleBasis, auditTime, reportId } = cross
+  // 阈值分段：≤20 低(绿) / 20–80 中(黄) / ≥80 高(红)
+  const scorePct = Math.min(100, Math.max(0, (riskScore / scoreCap) * 100))
+  const bandColor = overallRisk === 'high' ? 'text-rose-600' : overallRisk === 'medium' ? 'text-amber-600' : 'text-emerald-600'
+  const levelCls: Record<RiskLevel, string> = {
+    high: 'bg-rose-100 text-rose-700',
+    medium: 'bg-amber-100 text-amber-700',
+    low: 'bg-emerald-100 text-emerald-700',
+  }
+  const compTotal = scoreComponents.reduce((s, c) => s + c.score, 0)
+  const jump = (id?: string) => {
+    if (!id) return
+    const el = document.getElementById(`conflict-${id}`)
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }
+
+  return (
+    <div id="score" className="rounded-2xl border border-slate-100 bg-white p-5 shadow-card">
+      {/* 标识行 */}
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <span className="inline-flex h-6 items-center rounded-md bg-slate-800 px-2 text-[11px] font-medium text-white">异常值</span>
+          <span className="text-sm font-semibold text-ink-900">信息核验综合风险模型</span>
+          <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[11px] text-slate-500">规则版本 {ruleVersion}</span>
+        </div>
+        <span className="text-[11px] text-slate-400">分值越大风险越高 · 满分 {scoreCap}</span>
+      </div>
+
+      {/* 总分 + 刻度条 */}
+      <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-center">
+        <div className="flex items-end gap-3">
+          <div className="flex items-baseline">
+            <span className={cn('text-5xl font-bold leading-none', bandColor)}>{riskScore}</span>
+            <span className="ml-1 text-sm font-normal text-slate-300">/ {scoreCap}</span>
+          </div>
+          <div className="mb-1">
+            <span className={cn('rounded-full px-2.5 py-0.5 text-xs font-semibold', levelCls[overallRisk])}>
+              {riskText[overallRisk]}风险
+            </span>
+          </div>
+        </div>
+
+        {/* 阈值刻度条 */}
+        <div className="min-w-0 flex-1">
+          <div className="relative h-2.5 w-full overflow-visible rounded-full">
+            <div className="absolute inset-0 flex overflow-hidden rounded-full">
+              <div className="h-full bg-emerald-400" style={{ width: '20%' }} />
+              <div className="h-full bg-amber-400" style={{ width: '60%' }} />
+              <div className="h-full bg-rose-400" style={{ width: '20%' }} />
+            </div>
+            {/* 指针 */}
+            <div
+              className="absolute top-1/2 -translate-x-1/2 -translate-y-1/2"
+              style={{ left: `${scorePct}%` }}
+            >
+              <div className="h-4 w-4 rounded-full border-2 border-white bg-slate-800 shadow" />
+            </div>
+          </div>
+          <div className="mt-1.5 flex justify-between text-[10px] text-slate-400">
+            <span>0 · 低风险</span>
+            <span>20</span>
+            <span>80</span>
+            <span>100 · 高风险</span>
+          </div>
+        </div>
+      </div>
+
+      {/* 构成项分解表 */}
+      <div className="mt-4 overflow-hidden rounded-xl border border-slate-100">
+        <table className="w-full text-left text-xs">
+          <thead>
+            <tr className="bg-slate-50 text-slate-400">
+              <th className="px-3 py-2 font-medium">风险维度</th>
+              <th className="px-3 py-2 font-medium">用户情况</th>
+              <th className="px-3 py-2 text-right font-medium">得分</th>
+              <th className="px-3 py-2 text-right font-medium">权重</th>
+              <th className="px-3 py-2 text-center font-medium">等级</th>
+            </tr>
+          </thead>
+          <tbody>
+            {scoreComponents.map((c) => (
+              <tr
+                key={c.name}
+                className={cn(
+                  'border-t border-slate-100 align-top transition',
+                  c.traceTo ? 'cursor-pointer hover:bg-slate-50' : '',
+                  c.core ? 'bg-rose-50/40' : '',
+                )}
+                onClick={() => jump(c.traceTo)}
+                title={c.traceTo ? '点击定位到对应疑点详情' : undefined}
+              >
+                <td className="px-3 py-2.5">
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-medium text-ink-900">{c.name}</span>
+                    {c.core && (
+                      <span className="rounded bg-rose-100 px-1.5 py-0.5 text-[10px] font-medium text-rose-700">核心因子</span>
+                    )}
+                  </div>
+                </td>
+                <td className="px-3 py-2.5 text-slate-500">{c.situation}</td>
+                <td className={cn('px-3 py-2.5 text-right font-semibold', c.level === 'high' ? 'text-rose-600' : c.level === 'medium' ? 'text-amber-600' : 'text-emerald-600')}>
+                  +{c.score}
+                </td>
+                <td className="px-3 py-2.5 text-right text-slate-400">{c.weight}</td>
+                <td className="px-3 py-2.5 text-center">
+                  <span className={cn('rounded px-1.5 py-0.5 text-[10px] font-medium', levelCls[c.level])}>{riskText[c.level]}</span>
+                </td>
+              </tr>
+            ))}
+            {/* 合计行 */}
+            <tr className="border-t border-slate-200 bg-slate-50">
+              <td className="px-3 py-2.5 font-semibold text-ink-900" colSpan={2}>异常值（各风险项累加）</td>
+              <td className={cn('px-3 py-2.5 text-right text-sm font-bold', bandColor)}>{compTotal}</td>
+              <td className="px-3 py-2.5" colSpan={2} />
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      {/* 判定规则 + 审计栏 */}
+      <p className="mt-3 rounded-lg bg-slate-50 px-3 py-2.5 text-[11px] leading-relaxed text-slate-500">{ruleBasis}</p>
+      <div className="mt-2 border-t border-slate-100 pt-2 text-[11px] leading-relaxed text-slate-400">
+        计算时间：{auditTime} | 规则版本：{ruleVersion} | 综合报告ID：{reportId}
+      </div>
+    </div>
+  )
+}
+
 function RiskLevelBadge({ level, noTooltip }: { level: RiskLevel; noTooltip?: boolean }) {
   const label = riskText[level]
   const color = riskKind[level]
   const tooltip = level === 'high'
-    ? '单条命中直接拉高综合分，多条叠加系统自动拒贷'
+    ? '单条命中直接拉高异常值，多条叠加系统自动拒贷'
     : level === 'medium'
       ? '单独存在仅人工复核，叠加高风险则升级拦截'
       : '风险较低，纳入常规监控'
@@ -955,7 +1095,7 @@ function AtomicCard({ a, conflicts }: { a: AtomicResult; conflicts: VerifyConfli
   const linkedConflict = hasConflict ? conflicts.find((c) => c.id === a.conflictIds[0]) : undefined
   const level: RiskLevel = a.status === 'fail' ? 'high' : a.status === 'warn' ? 'medium' : 'low'
   const riskTooltip = level === 'high'
-    ? '单条命中直接拉高综合分，多条叠加系统自动拒贷'
+    ? '单条命中直接拉高异常值，多条叠加系统自动拒贷'
     : level === 'medium'
       ? '单独存在仅人工复核，叠加高风险则升级拦截'
       : ''

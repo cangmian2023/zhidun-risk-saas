@@ -7,12 +7,12 @@ import { Badge, Button, Modal } from '../components/ui'
 export type SysResult = '处理中' | '通过' | '拒绝' | '预警'
 export type WorkStatus =
   | '核验计算中'
-  | '待确认归档'
-  | '已办结确认'
-  | '待审核处置'
+  | '待确认'
+  | '已确认'
+  | '待审核'
   | '已提交双人复核'
-  | '双人复核-放行办结'
-  | '双人复核-拒绝办结'
+  | '双人复核-通过'
+  | '双人复核-拒绝'
   | '强制放行办结'
 
 export interface VerifyRow {
@@ -47,23 +47,20 @@ export const OP_LABEL: Record<OpKey, string> = {
 }
 
 /** 按（系统自动审核结果 × 工单人工状态）推导该工单可执行的按钮 */
+// 操作矩阵严格对齐交互说明：系统自动审核结果 × 工单人工状态 → 可执行按钮
 export function opsFor(sys: SysResult, work: WorkStatus): OpKey[] {
-  if (work === '核验计算中') return ['view'] // 查看置灰
-  if (
-    work === '已办结确认' ||
-    work === '双人复核-放行办结' ||
-    work === '双人复核-拒绝办结' ||
-    work === '强制放行办结'
-  ) {
-    return ['view']
+  if (work === '核验计算中') return ['view'] // 接口计算中：仅查看（置灰）
+  if (sys === '通过') {
+    return work === '待确认' ? ['view', 'reportConfirm'] : ['view'] // 待确认=报告确认；已确认=闭环
   }
-  if (work === '待确认归档') {
-    // 拒绝场景下额外开放高敏感的「强制复审」
-    return sys === '拒绝' ? ['view', 'reportConfirm', 'forceRecheck'] : ['view', 'reportConfirm']
+  if (sys === '拒绝') {
+    if (work === '待确认') return ['view', 'reportConfirm', 'forceRecheck'] // 报告确认 / 强制复审（推翻拦截）
+    return ['view'] // 已确认 / 强制放行办结 = 闭环
   }
-  if (work === '待审核处置') return ['view', 'submitDual']
-  if (work === '已提交双人复核') return ['view', 'confirmPass', 'confirmReject', 'submitDual']
-  return ['view']
+  // 预警：待审核 仅可提交双人复核；已提交双人复核 由主管终审放行/拒绝
+  if (work === '待审核') return ['view', 'submitDual']
+  if (work === '已提交双人复核') return ['view', 'confirmPass', 'confirmReject']
+  return ['view'] // 双人复核-通过 / 双人复核-拒绝 = 已办结
 }
 
 export function viewLocked(work: WorkStatus): boolean {
@@ -78,12 +75,12 @@ const SYS_KIND: Record<SysResult, 'gray' | 'green' | 'red' | 'amber'> = {
 }
 const WORK_KIND: Record<WorkStatus, 'gray' | 'blue' | 'green' | 'amber' | 'red' | 'violet'> = {
   核验计算中: 'gray',
-  待确认归档: 'blue',
-  已办结确认: 'green',
-  待审核处置: 'amber',
+  待确认: 'blue',
+  已确认: 'green',
+  待审核: 'amber',
   已提交双人复核: 'amber',
-  '双人复核-放行办结': 'green',
-  '双人复核-拒绝办结': 'red',
+  '双人复核-通过': 'green',
+  '双人复核-拒绝': 'red',
   强制放行办结: 'violet',
 }
 
@@ -408,32 +405,35 @@ function useVerifyActions(
 
   const applyReportConfirm = (note: string) => {
     void note
-    onApply({ workStatus: '已办结确认' })
+    onApply({ workStatus: '已确认', operator: '初审：审核员 1' })
     flash?.('已提交整体报告确认，工单归档')
     close()
   }
   const applyForceRecheck = (reason: string) => {
     void reason
-    onApply({ sysResult: '通过', workStatus: '强制放行办结', operator: '初审：审核员 1；终审：主管 1' })
+    // 强制复审：推翻系统拒贷，保持自动审核=拒绝，工单置为强制放行办结（双人审批）
+    onApply({ workStatus: '强制放行办结', operator: '初审：审核员 1；终审：主管 1' })
     flash?.('已强制放行，生成高亮敏感操作日志')
     close()
   }
   const applySubmitDual = (note: string) => {
     void note
-    onApply({ workStatus: '已提交双人复核' })
+    onApply({ workStatus: '已提交双人复核', operator: '初审：审核员 1' })
     flash?.('已提交双人复核，工单锁定流转至主管')
     close()
   }
   const applyConfirmPass = (note: string) => {
     void note
-    onApply({ sysResult: '通过', workStatus: '双人复核-放行办结', operator: '初审：审核员 1；终审：主管 1' })
-    flash?.('主管确认放行，工单放行办结')
+    // 确认放行：双人复核终审通过，工单办结
+    onApply({ workStatus: '双人复核-通过', operator: '初审：审核员 1；终审：主管 1' })
+    flash?.('双人复核通过，工单办结')
     close()
   }
   const applyConfirmReject = (reason: string) => {
     void reason
-    onApply({ workStatus: '双人复核-拒绝办结', operator: '初审：审核员 1；终审：主管 1' })
-    flash?.('主管确认拒绝，工单拒绝办结')
+    // 确认拒绝：双人复核终审拒绝，工单办结
+    onApply({ workStatus: '双人复核-拒绝', operator: '初审：审核员 1；终审：主管 1' })
+    flash?.('双人复核拒绝，工单办结')
     close()
   }
 
@@ -470,19 +470,21 @@ export function VerifyRowActions({
   const { ops, locked, open, renderModals } = useVerifyActions(row, onApply, onView, flash)
   return (
     <>
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-wrap items-center justify-start gap-3">
         {ops.map((op) => {
-          if (op === 'view') {
-            return (
-              <Button key={op} variant="secondary" size="sm" disabled={locked} onClick={() => open(op)}>
-                {OP_LABEL[op]}
-              </Button>
-            )
-          }
+          const isViewLocked = op === 'view' && locked
           return (
-            <Button key={op} variant={opVariant(op)} size="sm" onClick={() => open(op)}>
+            <button
+              key={op}
+              type="button"
+              disabled={isViewLocked}
+              onClick={() => open(op)}
+              className={`whitespace-nowrap text-xs font-medium ${
+                isViewLocked ? 'cursor-not-allowed text-slate-300' : 'text-brand-600 hover:underline'
+              }`}
+            >
               {OP_LABEL[op]}
-            </Button>
+            </button>
           )
         })}
       </div>
