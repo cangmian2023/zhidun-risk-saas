@@ -26,6 +26,7 @@ export interface VerifyRow {
   sysResult: SysResult
   workStatus: WorkStatus
   operator: string
+  auditTime: string
 }
 
 export type OpKey =

@@ -1,11 +1,24 @@
 // 信息核验列表页
-// 列：申请编号 / 申请人 / 产品 / 渠道 / 申请额度 / 欺诈分 / 信用分 / 系统自动审核结果 / 工单人工状态 / 操作人员 / 操作
+// 列：申请编号 / 申请人 / 产品 / 渠道 / 申请额度 / 欺诈分 / 信用分 / 审核时间 / 系统自动审核结果 / 工单人工状态 / 操作人员 / 操作
 // 操作按钮按（系统自动审核结果 × 工单人工状态）动态显示，点击查看进入报告详情页
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useModule } from '../store'
 import { PageHeader, Panel, SingleSelect } from '../components/ui'
 import { VerifyRowActions, SysResultBadge, WorkStatusBadge, type VerifyRow, type WorkStatus, type SysResult } from './VerifyOps'
+
+const AUDIT_TIMES = [
+  '2026-07-22 09:14',
+  '2026-07-22 10:02',
+  '2026-07-21 16:48',
+  '2026-07-22 11:27',
+  '2026-07-22 08:55',
+  '2026-07-21 14:33',
+  '2026-07-22 13:41',
+  '2026-07-21 19:06',
+  '2026-07-22 09:50',
+  '2026-07-20 17:22',
+]
 
 const WORK_OPTIONS = [
   { value: 'all', label: '全部工单状态' },
@@ -44,7 +57,7 @@ function seedRows(): VerifyRow[] {
     { sysResult: '预警', workStatus: '双人复核-放行办结', operator: '初审：审核员 1；终审：主管 1' },
     { sysResult: '预警', workStatus: '双人复核-拒绝办结', operator: '初审：审核员 1；终审：主管 1' },
   ]
-  return base.map((b, i) => ({ ...b, ...status[i] }))
+  return base.map((b, i) => ({ ...b, ...status[i], auditTime: AUDIT_TIMES[i] }))
 }
 
 const fmtAmount = (n: number) => '¥' + n.toLocaleString('zh-CN')
@@ -95,7 +108,7 @@ export default function InfoVerifyList() {
         }
       >
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[1080px] border-collapse text-sm">
+          <table className="w-full min-w-[1200px] border-collapse text-sm">
             <thead>
               <tr className="border-b border-slate-100 text-left text-xs text-slate-400">
                 <th className="px-3 py-2.5 font-medium">申请编号</th>
@@ -105,6 +118,7 @@ export default function InfoVerifyList() {
                 <th className="px-3 py-2.5 text-right font-medium">申请额度</th>
                 <th className="px-3 py-2.5 text-right font-medium">欺诈分</th>
                 <th className="px-3 py-2.5 text-right font-medium">信用分</th>
+                <th className="w-[160px] px-3 py-2.5 font-medium">审核时间</th>
                 <th className="px-3 py-2.5 font-medium">系统自动审核结果</th>
                 <th className="px-3 py-2.5 font-medium">工单人工状态</th>
                 <th className="px-3 py-2.5 font-medium">操作人员</th>
@@ -121,6 +135,7 @@ export default function InfoVerifyList() {
                   <td className="px-3 py-3 text-right tabular-nums text-slate-700">{fmtAmount(r.amount)}</td>
                   <td className="px-3 py-3 text-right tabular-nums text-slate-700">{r.fraudScore}</td>
                   <td className="px-3 py-3 text-right tabular-nums text-slate-700">{r.creditScore}</td>
+                  <td className="px-3 py-3 text-slate-500">{r.auditTime}</td>
                   <td className="px-3 py-3"><SysResultBadge value={r.sysResult} /></td>
                   <td className="px-3 py-3"><WorkStatusBadge value={r.workStatus} /></td>
                   <td className="px-3 py-3 text-slate-500">{r.operator}</td>
@@ -131,7 +146,7 @@ export default function InfoVerifyList() {
               ))}
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={11} className="px-3 py-10 text-center text-sm text-slate-400">
+                  <td colSpan={12} className="px-3 py-10 text-center text-sm text-slate-400">
                     无符合条件的工单
                   </td>
                 </tr>
