@@ -5,6 +5,7 @@ import Logo from '../components/Logo'
 import ModulePage from './ModulePage'
 import PreApplication from './PreApplication'
 import PreVerifyDetail from './PreVerifyDetail'
+import InfoVerifyList from './InfoVerifyList'
 import CreditReportDetail from './CreditReportDetail'
 import FraudReportDetail from './FraudReportDetail'
 import ScoreQueryPage from './ScoreQueryPage'
@@ -327,6 +328,8 @@ export default function Console() {
               <PlannedPlaceholder name={subName[sub] ?? '该子系统'} />
             ) : key === 'cr:pre-application' ? (
               <PreApplication />
+            ) : key === 'cr:pre-verify' ? (
+              <InfoVerifyList />
             ) : key === 'cr:pre-verify-detail' ? (
               <PreVerifyDetail />
             ) : key === 'cr:credit-report-detail' ? (

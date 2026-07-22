@@ -13,7 +13,8 @@ import {
   type AtomicResult,
   type VerifyConflict,
 } from './infoVerifyReport'
-import { FinalOpsCard } from './FinalOps'
+import { useModule } from '../store'
+import { VerifyActionBar, type VerifyRow, type WorkStatus, type SysResult } from './VerifyOps'
 
 const cn = (...c: (string | false | undefined)[]) => c.filter(Boolean).join(' ')
 
@@ -389,6 +390,30 @@ export default function PreVerifyDetail() {
   const sampleId = params.get('id') ?? undefined
   const d = buildInfoVerifyReport(sampleId)
 
+  const [verifyRow, setVerifyRow] = useState<VerifyRow>(() => {
+    const map: Record<Conclusion, { sys: SysResult; work: WorkStatus; op: string }> = {
+      pass: { sys: '通过', work: '待确认归档', op: '初审：审核员 1' },
+      reject: { sys: '拒绝', work: '待确认归档', op: '初审：审核员 1' },
+      warning: { sys: '预警', work: '待审核处置', op: '初审：审核员 1' },
+      pending: { sys: '处理中', work: '核验计算中', op: '--' },
+    }
+    const m = map[d.decision]
+    return {
+      id: d.id,
+      name: d.name,
+      product: d.product,
+      channel: d.channel,
+      amount: d.amount,
+      fraudScore: d.fraudScore,
+      creditScore: d.creditScore,
+      sysResult: m.sys,
+      workStatus: m.work,
+      operator: m.op,
+    }
+  })
+  const applyVerify = (next: Partial<VerifyRow>) => setVerifyRow((r) => ({ ...r, ...next }))
+  const { flash } = useModule()
+
   // 模态框状态
   type ModalType = 'note' | 'receipt' | 'exempt' | 'weights' | null
   const [modal, setModal] = useState<{ type: ModalType; target: string }>({ type: null, target: '' })
@@ -422,21 +447,9 @@ export default function PreVerifyDetail() {
       <div className="lg:flex lg:gap-6">
         {/* ============ 左侧主内容区 ============ */}
         <div className="min-w-0 flex-1 space-y-4">
-          {/* 结论与终审操作（合并，无标题，样式与其他卡片统一） */}
+          {/* 结论与终审操作（与列表一致：系统结果 / 工单状态 / 操作人员 + 操作按钮） */}
           <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-card">
-            <div className="flex flex-wrap items-center gap-3">
-              <Badge kind={conclKind[d.decision]} className="px-3 py-1 text-sm">{conclText[d.decision]}</Badge>
-              <span className="text-sm text-slate-500">{d.summary}</span>
-            </div>
-            <FinalOpsCard
-              decision={
-                d.decision === 'reject'
-                  ? 'reject'
-                  : d.decision === 'warning' || d.decision === 'pending'
-                    ? 'pending'
-                    : 'pass'
-              }
-            />
+            <VerifyActionBar row={verifyRow} onApply={applyVerify} flash={flash} showView={false} />
             {/* 核验过程（原「四、核验过程」卡片，弱化、横向置于卡底） */}
             <div className="mt-4 border-t border-slate-100 pt-3">
               <div className="mb-2 text-[11px] font-medium text-slate-400">核验过程</div>
