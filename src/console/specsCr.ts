@@ -197,55 +197,6 @@ export const crSpecs: Record<string, ModuleSpec> = {
     })),
   },
 
-  'cr:pre-fraud': {
-    title: '欺诈识别',
-    crumb: '零售信贷风控 / 贷前审核',
-    subtitle: '设备指纹、动态欺诈模型与异常行为检测，识别骗贷风险团伙。',
-    stats: [
-      { label: '设备风险命中', value: '596', delta: '+9.1%', deltaType: 'down', accent: 'rose' },
-      { label: '群控/模拟器', value: '183', delta: '+22', deltaType: 'down', accent: 'orange' },
-      { label: '异常行为', value: '741', delta: '+5.4%', deltaType: 'down', accent: 'amber' },
-      { label: '欺诈团伙', value: '14 个', delta: '新增 3', deltaType: 'flat', accent: 'violet' },
-    ],
-    charts: [
-      {
-        type: 'donut',
-        title: '欺诈识别信号构成',
-        centerLabel: '欺诈信号',
-        centerValue: '1,520',
-        donut: [
-          { label: '设备环境异常', value: 596, color: '#ef4444' },
-          { label: '群控/模拟器', value: 183, color: '#f59e0b' },
-          { label: '异常行为', value: 741, color: '#8b5cf6' },
-        ],
-      },
-    ],
-    reportKey: 'id',
-    viewNavigate: 'pre-fraud-detail',
-    columns: [
-      { key: 'id', label: '进件号', width: '140px' },
-      { key: 'name', label: '申请人', type: 'mask-name' as const, width: '90px' },
-      { key: 'device', label: '设备环境', type: 'badge' as const, width: '100px' },
-      { key: 'simu', label: '群控/模拟器', type: 'badge' as const, width: '110px' },
-      { key: 'beh', label: '异常行为', type: 'badge' as const, width: '100px' },
-      { key: 'gang', label: '团伙', type: 'badge' as const, width: '80px' },
-      { key: 'fraudScore', label: '欺诈分', type: 'badge' as const, width: '80px' },
-      { key: 'status', label: '报告状态', type: 'badge' as const, width: '100px' },
-      { key: 'decision', label: '决策结果', type: 'badge' as const, width: '110px' },
-    ],
-    rows: applications.slice(0, 12).map((r, i) => ({
-      id: r.id,
-      name: r.name,
-      device: { v: i % 4 === 0 ? '高风险' : '正常', kind: i % 4 === 0 ? 'red' : 'green' },
-      simu: { v: i % 6 === 0 ? '疑似' : '否', kind: i % 6 === 0 ? 'orange' : 'gray' },
-      beh: { v: i % 5 === 0 ? '异地高频' : '正常', kind: i % 5 === 0 ? 'amber' : 'green' },
-      gang: { v: i % 8 === 0 ? 'G-014' : '—', kind: i % 8 === 0 ? 'violet' : 'gray' },
-      fraudScore: { v: i === 0 ? '8' : i === 1 ? '58' : i === 2 ? '95' : i === 3 ? '90' : i === 4 ? '82' : i === 5 ? '78' : i === 6 ? '52' : i === 7 ? '75' : i === 8 ? '18' : i === 9 ? '88' : i === 10 ? '69' : '22', kind: i >= 2 && i <= 5 ? 'red' : i >= 1 && i <= 7 ? 'amber' : 'green' },
-      status: { v: i === 0 ? '已通过' : i === 1 ? '审核中' : i === 8 || i === 9 ? '待审核' : i === 11 ? '已归档' : i === 6 ? '已退回' : '已拒绝', kind: i === 0 || i === 11 ? 'green' : i === 1 || i === 8 || i === 9 ? 'amber' : 'red' },
-      decision: { v: i === 0 || i === 11 ? '自动通过' : i === 1 || i === 10 ? '人工复核' : i === 7 ? '人工放行' : i === 6 ? '退回补件' : '拒绝', kind: i === 7 ? 'green' : i === 0 || i === 11 ? 'green' : i === 1 || i === 10 ? 'amber' : 'red' },
-    })),
-  },
-
   'cr:pre-report': {
     title: '决策报告',
     crumb: '零售信贷风控 / 贷前审核',

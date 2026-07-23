@@ -62,7 +62,7 @@ const TIME_OPTIONS: SelectOption[] = [
   { value: '90', label: '近 90 天' },
 ]
 
-// 异常值列展示欺诈分（0-100）；颜色随「自动审核」列：通过绿 / 预警黄 / 拒绝红 / 处理中灰
+// 信用值列 = 100 − 欺诈分（0-100）；分值越高越安全：高绿 / 中黄 / 低红
 // 自动审核 / 人工审核 两套独立标签体系，沿用申贷审核的 DecisionTag（实色胶囊）/ StatusTag（带点描边）
 const SYS_KIND: Record<SysResult, 'gray' | 'green' | 'red' | 'amber'> = {
   处理中: 'gray', 通过: 'green', 拒绝: 'red', 预警: 'amber',
@@ -158,7 +158,7 @@ export default function InfoVerifyList() {
   const [sysResults, setSysResults] = useState<SysResult[]>([]) // 自动审核
   const [workStatuses, setWorkStatuses] = useState<WorkStatus[]>([]) // 人工审核
   const [opKw, setOpKw] = useState('') // 审核人
-  const [scoreMin, setScoreMin] = useState('') // 综合打分 ≥
+  const [creditMax, setCreditMax] = useState('') // 信用值 ≤
   const [amountMax, setAmountMax] = useState('') // 申请额度 ≤
   const [timeRange, setTimeRange] = useState('') // 申请时间
 
@@ -210,7 +210,7 @@ export default function InfoVerifyList() {
       if (sysResults.length && !sysResults.includes(r.sysResult)) return false
       if (workStatuses.length && !workStatuses.includes(r.workStatus)) return false
       if (opKw && !r.operator.toLowerCase().includes(opKw.toLowerCase())) return false
-      if (scoreMin && r.fraudScore < Number(scoreMin)) return false
+      if (creditMax && 100 - r.fraudScore > Number(creditMax)) return false
       if (amountMax && r.amount > Number(amountMax)) return false
       if (timeRange) {
         const t = new Date(r.auditTime.replace(' ', 'T')).getTime()
@@ -218,7 +218,7 @@ export default function InfoVerifyList() {
       }
       return true
     })
-  }, [rows, kw, products, channels, sysResults, workStatuses, opKw, scoreMin, amountMax, timeRange])
+  }, [rows, kw, products, channels, sysResults, workStatuses, opKw, creditMax, amountMax, timeRange])
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize))
   const safePage = Math.min(page, totalPages)
@@ -226,7 +226,7 @@ export default function InfoVerifyList() {
 
   const resetFilters = () => {
     setKw(''); setProducts([]); setChannels([]); setSysResults([]); setWorkStatuses([])
-    setOpKw(''); setScoreMin(''); setAmountMax(''); setTimeRange('')
+    setOpKw(''); setCreditMax(''); setAmountMax(''); setTimeRange('')
   }
 
   return (
@@ -270,7 +270,7 @@ export default function InfoVerifyList() {
             {/* 弹性占位：仅宽屏时把右侧条件推到最右，避免小屏换行出现巨大空隙 */}
             <div className="hidden min-w-[1rem] flex-1 xl:block" />
             <div className="flex flex-wrap items-center gap-3">
-              <input value={scoreMin} onChange={(e) => setScoreMin(e.target.value)} placeholder="异常值 ≥" className="w-28 rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-violet-400" />
+              <input value={creditMax} onChange={(e) => setCreditMax(e.target.value)} placeholder="信用值 ≤" className="w-28 rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-violet-400" />
               <input value={amountMax} onChange={(e) => setAmountMax(e.target.value)} placeholder="申请额度 ≤" className="w-28 rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-violet-400" />
               <SingleSelect label="申请时间" options={TIME_OPTIONS} value={timeRange} onChange={setTimeRange} clearable />
               <Button variant="ghost" onClick={resetFilters}>重置</Button>
@@ -289,7 +289,7 @@ export default function InfoVerifyList() {
                   <th style={headStyle(C.product, null)} className="border-b border-slate-200 bg-slate-50 px-3 py-3 text-left font-medium">产品</th>
                   <th style={headStyle(C.channel, null)} className="border-b border-slate-200 bg-slate-50 px-3 py-3 text-left font-medium">渠道</th>
                   <th style={headStyle(C.amount, null)} className="border-b border-slate-200 bg-slate-50 px-3 py-3 text-right font-medium">申请额度</th>
-                  <th style={headStyle(C.score, null)} className="border-b border-slate-200 bg-slate-50 px-3 py-3 text-right font-medium">综合打分</th>
+                  <th style={headStyle(C.score, null)} className="border-b border-slate-200 bg-slate-50 px-3 py-3 text-right font-medium">信用值</th>
                   <th style={headStyle(C.sys, null)} className="border-b border-slate-200 bg-slate-50 px-3 py-3 text-center font-medium">自动审核</th>
                   <th style={headStyle(C.work, null)} className="border-b border-slate-200 bg-slate-50 px-3 py-3 text-center font-medium">人工审核</th>
                   <th style={headStyle(C.operator, null)} className="border-b border-slate-200 bg-slate-50 px-3 py-3 text-left font-medium">审核人</th>
@@ -299,7 +299,7 @@ export default function InfoVerifyList() {
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {pageRows.map((r) => {
-                  const s = r.fraudScore
+                  const credit = 100 - r.fraudScore
                   return (
                     <tr key={r.id} className="group hover:bg-slate-50/60">
                       <td style={bodyStyle(C.id, 'left', 0)} className="whitespace-nowrap bg-white px-3 py-3 font-mono text-xs text-slate-700 group-hover:bg-slate-50/60">
@@ -310,7 +310,7 @@ export default function InfoVerifyList() {
                       <td style={bodyStyle(C.channel, null)} className="whitespace-nowrap px-3 py-3 text-slate-600">{r.channel}</td>
                       <td style={bodyStyle(C.amount, null)} className="whitespace-nowrap px-3 py-3 text-right tabular-nums text-slate-700">¥{r.amount.toLocaleString()}</td>
                       <td style={bodyStyle(C.score, null)} className="whitespace-nowrap px-3 py-3 text-right">
-                        <span className={`tabular-nums font-semibold ${SYS_KIND[r.sysResult] === 'green' ? 'text-emerald-600' : SYS_KIND[r.sysResult] === 'amber' ? 'text-amber-600' : SYS_KIND[r.sysResult] === 'red' ? 'text-rose-600' : 'text-slate-400'}`}>{s}</span>
+                        <span className={`tabular-nums font-semibold ${credit >= 80 ? 'text-emerald-600' : credit >= 20 ? 'text-amber-600' : 'text-rose-600'}`}>{credit}</span>
                       </td>
                       {/* 自动审核：沿用申贷审核「决策结果」体系（DecisionTag 实色胶囊） */}
                       <td style={bodyStyle(C.sys, null)} className="whitespace-nowrap px-3 py-3 text-center">

@@ -7,7 +7,6 @@ import PreApplication from './PreApplication'
 import PreVerifyDetail from './PreVerifyDetail'
 import InfoVerifyList from './InfoVerifyList'
 import CreditReportDetail from './CreditReportDetail'
-import FraudReportDetail from './FraudReportDetail'
 import FraudScheme1List from './FraudScheme1List'
 import FraudScheme1Detail from './FraudScheme1Detail'
 import FraudScheme2List from './FraudScheme2List'
@@ -119,8 +118,6 @@ export default function Console() {
     'cr:fraud-s2-detail': 'alert',
     'cr:fraud-s3': 'alert',
     'cr:fraud-s3-detail': 'alert',
-    'cr:fraud-s4': 'alert',
-    'cr:fraud-s4-detail': 'alert',
     'cr:pre-report': 'report',
     'cr:pre-manual': 'check',
     'cr:mid-cockpit': 'gauge',
@@ -350,8 +347,10 @@ export default function Console() {
               <PreVerifyDetail />
             ) : key === 'cr:credit-report-detail' ? (
               <CreditReportDetail />
+            ) : key === 'cr:pre-fraud' ? (
+              <FraudScheme4List />
             ) : key === 'cr:pre-fraud-detail' ? (
-              <FraudReportDetail />
+              <FraudScheme4Detail />
             ) : key === 'cr:fraud-s1' ? (
               <FraudScheme1List />
             ) : key === 'cr:fraud-s1-detail' ? (
@@ -364,10 +363,6 @@ export default function Console() {
               <FraudScheme3List />
             ) : key === 'cr:fraud-s3-detail' ? (
               <FraudScheme3Detail />
-            ) : key === 'cr:fraud-s4' ? (
-              <FraudScheme4List />
-            ) : key === 'cr:fraud-s4-detail' ? (
-              <FraudScheme4Detail />
             ) : isQuery && queryProd ? (
               <ScoreQueryPage product={queryProd} />
             ) : (

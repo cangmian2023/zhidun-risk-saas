@@ -1,34 +1,29 @@
 // 欺诈识别（方案4 · 完整版）· 列表页
-// 平行、独立、不破坏现有 cr:pre-fraud。框架/交互 1:1 复用信息核验体系（统计卡片 / 多筛选 / 冻结列宽表格 / 行内操作矩阵）。
+// 平行、独立、已作为 cr:pre-fraud 模块（原 FraudReportDetail 已退役）。框架/交互 1:1 复用信息核验体系（统计卡片 / 多筛选 / 冻结列宽表格 / 行内操作矩阵）。
 // 内容承载方案4 文档的列表设计：4 张顶部统计卡 + 9 个筛选条件 + 13 列富表格；人工处置状态按方案4 独立状态机流转。
 import { useMemo, useRef, useState, type CSSProperties } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { PageHeader, Panel, Badge, StatCard, SingleSelect, Button, type SelectOption } from '../components/ui'
 import type {
   FraudS4ScoreBand,
-  FraudS4RuleType,
   FraudS4AutoDecision,
   FraudS4WorkStatus,
 } from './fraudScheme4Report'
 import {
   FraudScheme4RowActions,
-  FraudScheme4BandBadge,
-  FraudScheme4AutoBadge,
-  FraudScheme4WorkBadge,
+  FraudScheme4BandTag,
+  FraudScheme4AutoTag,
+  FraudScheme4WorkTag,
   type FraudScheme4Row,
 } from './FraudScheme4Ops'
 
 /* ───────────────────────── 取值与筛选常量（对齐文档 1.3 / 1.5） ───────────────────────── */
 // 欺诈风险等级（四档：极低/低(0-39)·中(40-59)·高(60-79)·极高(80-100)）
 const BANDS: FraudS4ScoreBand[] = ['极低', '低', '中', '高', '极高']
-// 命中规则类型（六类）
-const RULE_TYPES: FraudS4RuleType[] = ['设备欺诈', '身份欺诈', '团伙欺诈', '行为欺诈', '信息伪造', '黑名单命中']
-// 自动决策
-const AUTO_DECISIONS: FraudS4AutoDecision[] = ['通过', '拒绝', '转人工', '观察']
-// 人工处置状态（方案4 独立状态机）
-const WORK_STATUS: FraudS4WorkStatus[] = ['待复核', '复核中', '已确认欺诈', '误判放行', '已归档']
-// 团伙标签候选（来自样例数据）
-const GANG_TAGS: string[] = ['未关联团伙', '团伙A', '团伙B（疑似）', '团伙C']
+// 自动审核（按欺诈等级：低→通过 / 中→预警 / 高·极高→拒绝；结果计算前为 处理中）
+const AUTO_DECISIONS: FraudS4AutoDecision[] = ['通过', '拒绝', '预警', '处理中']
+// 人工审核（方案4 独立状态机，按 N8 矩阵）
+const WORK_STATUS: FraudS4WorkStatus[] = ['核验计算中', '待确认', '已确认', '初审确认拒贷办结', '强制放行办结', '加入黑名单', '待审核', '已提交双人复核', '双人复核-放行办结', '双人复核-拒绝办结']
 // 命中黑名单（命中 = 命中黑名单命中类规则）
 const BLACKLIST_OPTS: SelectOption[] = [
   { value: 'hit', label: '已命中黑名单' },
@@ -44,22 +39,22 @@ const TIME_OPTIONS: SelectOption[] = [
 type S4ListRow = FraudScheme4Row & { applyTime: string; disposeTime: string }
 
 const seedRows: S4ListRow[] = [
-  { id: 'FA-20260618-003', name: '王*强', product: '信用贷', amount: 30000, fraudScore: 88, scoreBand: '极高', hitRuleCount: 5, ruleTypes: ['设备欺诈', '团伙欺诈', '黑名单命中'], autoDecision: '拒绝', workStatus: '待复核', operator: '--', gangTag: '团伙A', applyTime: '2026-07-21 14:55', disposeTime: '' },
-  { id: 'FA-20260618-004', name: '赵*敏', product: '经营贷', amount: 200000, fraudScore: 52, scoreBand: '中', hitRuleCount: 2, ruleTypes: ['设备欺诈', '团伙欺诈'], autoDecision: '转人工', workStatus: '待复核', operator: '--', gangTag: '团伙B（疑似）', applyTime: '2026-07-21 13:15', disposeTime: '' },
-  { id: 'FA-20260620-011', name: '冯*雪', product: '信用贷', amount: 60000, fraudScore: 91, scoreBand: '极高', hitRuleCount: 6, ruleTypes: ['设备欺诈', '身份欺诈', '团伙欺诈', '黑名单命中'], autoDecision: '拒绝', workStatus: '复核中', operator: '风控专员-张磊', gangTag: '团伙C', applyTime: '2026-07-20 09:50', disposeTime: '2026-07-20 18:20' },
-  { id: 'FA-20260619-010', name: '郑*浩', product: '抵押贷', amount: 680000, fraudScore: 95, scoreBand: '极高', hitRuleCount: 7, ruleTypes: ['设备欺诈', '团伙欺诈', '行为欺诈', '黑名单命中'], autoDecision: '拒绝', workStatus: '已确认欺诈', operator: '风控专员-张磊；主管-王芳', gangTag: '团伙A', applyTime: '2026-07-19 14:30', disposeTime: '2026-07-19 17:10' },
-  { id: 'FA-20260619-007', name: '孙*丽', product: '信用贷', amount: 120000, fraudScore: 61, scoreBand: '高', hitRuleCount: 3, ruleTypes: ['行为欺诈', '信息伪造'], autoDecision: '转人工', workStatus: '误判放行', operator: '初审：审核员 1', gangTag: '未关联团伙', applyTime: '2026-07-19 10:03', disposeTime: '2026-07-20 09:40' },
-  { id: 'FA-20260620-012', name: '蒋*磊', product: '经营贷', amount: 150000, fraudScore: 44, scoreBand: '中', hitRuleCount: 1, ruleTypes: ['行为欺诈'], autoDecision: '观察', workStatus: '已归档', operator: '初审：审核员 1', gangTag: '未关联团伙', applyTime: '2026-07-20 10:25', disposeTime: '2026-07-21 11:15' },
-  { id: 'FA-20260618-001', name: '张*伟', product: '信用贷', amount: 80000, fraudScore: 8, scoreBand: '低', hitRuleCount: 0, ruleTypes: [], autoDecision: '通过', workStatus: '待复核', operator: '--', gangTag: '未关联团伙', applyTime: '2026-07-18 11:20', disposeTime: '' },
-  { id: 'FA-20260618-002', name: '李*娜', product: '抵押贷', amount: 500000, fraudScore: 15, scoreBand: '低', hitRuleCount: 0, ruleTypes: [], autoDecision: '通过', workStatus: '待复核', operator: '--', gangTag: '未关联团伙', applyTime: '2026-07-18 15:10', disposeTime: '' },
-  { id: 'FA-20260620-013', name: '韩*梅', product: '信用贷', amount: 35000, fraudScore: 56, scoreBand: '中', hitRuleCount: 2, ruleTypes: ['设备欺诈', '行为欺诈'], autoDecision: '转人工', workStatus: '复核中', operator: '初审：审核员 1', gangTag: '未关联团伙', applyTime: '2026-07-20 11:15', disposeTime: '2026-07-21 09:00' },
-  { id: 'FA-20260618-005', name: '陈*刚', product: '信用贷', amount: 50000, fraudScore: 9, scoreBand: '低', hitRuleCount: 0, ruleTypes: [], autoDecision: '通过', workStatus: '待复核', operator: '--', gangTag: '未关联团伙', applyTime: '2026-07-18 16:40', disposeTime: '' },
-  { id: 'FA-20260619-008', name: '周*杰', product: '经营贷', amount: 90000, fraudScore: 16, scoreBand: '低', hitRuleCount: 0, ruleTypes: [], autoDecision: '通过', workStatus: '待复核', operator: '--', gangTag: '未关联团伙', applyTime: '2026-07-19 11:20', disposeTime: '' },
-  { id: 'FA-20260620-014', name: '杨*柳', product: '抵押贷', amount: 420000, fraudScore: 88, scoreBand: '极高', hitRuleCount: 5, ruleTypes: ['设备欺诈', '团伙欺诈', '黑名单命中'], autoDecision: '拒绝', workStatus: '待复核', operator: '--', gangTag: '团伙A', applyTime: '2026-07-20 14:08', disposeTime: '' },
-  { id: 'FA-20260619-009', name: '吴*婷', product: '信用贷', amount: 45000, fraudScore: 11, scoreBand: '低', hitRuleCount: 0, ruleTypes: [], autoDecision: '通过', workStatus: '已归档', operator: '初审：审核员 1', gangTag: '未关联团伙', applyTime: '2026-07-19 13:45', disposeTime: '2026-07-20 16:30' },
-  { id: 'FA-20260620-015', name: '何*强', product: '信用贷', amount: 70000, fraudScore: 67, scoreBand: '高', hitRuleCount: 3, ruleTypes: ['行为欺诈', '信息伪造', '设备欺诈'], autoDecision: '转人工', workStatus: '复核中', operator: '初审：审核员 1', gangTag: '团伙B（疑似）', applyTime: '2026-07-21 08:42', disposeTime: '' },
+  { id: 'FA-20260618-003', name: '王*强', product: '信用贷', amount: 30000, fraudScore: 88, scoreBand: '极高', hitRuleCount: 5, ruleTypes: ['设备欺诈', '团伙欺诈', '黑名单命中'], autoDecision: '拒绝', workStatus: '待确认', operator: '--', gangTag: '团伙A', applyTime: '2026-07-21 14:55', disposeTime: '' },
+  { id: 'FA-20260618-004', name: '赵*敏', product: '经营贷', amount: 200000, fraudScore: 52, scoreBand: '中', hitRuleCount: 2, ruleTypes: ['设备欺诈', '团伙欺诈'], autoDecision: '预警', workStatus: '待审核', operator: '--', gangTag: '团伙B（疑似）', applyTime: '2026-07-21 13:15', disposeTime: '' },
+  { id: 'FA-20260620-011', name: '冯*雪', product: '信用贷', amount: 60000, fraudScore: 91, scoreBand: '极高', hitRuleCount: 6, ruleTypes: ['设备欺诈', '身份欺诈', '团伙欺诈', '黑名单命中'], autoDecision: '拒绝', workStatus: '初审确认拒贷办结', operator: '风控专员-张磊', gangTag: '团伙C', applyTime: '2026-07-20 09:50', disposeTime: '2026-07-20 18:20' },
+  { id: 'FA-20260619-010', name: '郑*浩', product: '抵押贷', amount: 680000, fraudScore: 95, scoreBand: '极高', hitRuleCount: 7, ruleTypes: ['设备欺诈', '团伙欺诈', '行为欺诈', '黑名单命中'], autoDecision: '拒绝', workStatus: '加入黑名单', operator: '风控专员-张磊；主管-王芳', gangTag: '团伙A', applyTime: '2026-07-19 14:30', disposeTime: '2026-07-19 17:10' },
+  { id: 'FA-20260619-007', name: '孙*丽', product: '信用贷', amount: 120000, fraudScore: 61, scoreBand: '高', hitRuleCount: 3, ruleTypes: ['行为欺诈', '信息伪造'], autoDecision: '拒绝', workStatus: '初审确认拒贷办结', operator: '风控专员-张磊', gangTag: '未关联团伙', applyTime: '2026-07-19 10:03', disposeTime: '2026-07-19 17:10' },
+  { id: 'FA-20260620-012', name: '蒋*磊', product: '经营贷', amount: 150000, fraudScore: 44, scoreBand: '中', hitRuleCount: 1, ruleTypes: ['行为欺诈'], autoDecision: '预警', workStatus: '待审核', operator: '初审：审核员 1', gangTag: '未关联团伙', applyTime: '2026-07-20 10:25', disposeTime: '2026-07-21 11:15' },
+  { id: 'FA-20260618-001', name: '张*伟', product: '信用贷', amount: 80000, fraudScore: 8, scoreBand: '低', hitRuleCount: 0, ruleTypes: [], autoDecision: '通过', workStatus: '待确认', operator: '--', gangTag: '未关联团伙', applyTime: '2026-07-18 11:20', disposeTime: '' },
+  { id: 'FA-20260618-002', name: '李*娜', product: '抵押贷', amount: 500000, fraudScore: 15, scoreBand: '低', hitRuleCount: 0, ruleTypes: [], autoDecision: '通过', workStatus: '已确认', operator: '--', gangTag: '未关联团伙', applyTime: '2026-07-18 15:10', disposeTime: '' },
+  { id: 'FA-20260620-013', name: '韩*梅', product: '信用贷', amount: 35000, fraudScore: 56, scoreBand: '中', hitRuleCount: 2, ruleTypes: ['设备欺诈', '行为欺诈'], autoDecision: '预警', workStatus: '待审核', operator: '初审：审核员 1', gangTag: '未关联团伙', applyTime: '2026-07-20 11:15', disposeTime: '2026-07-21 09:00' },
+  { id: 'FA-20260618-005', name: '陈*刚', product: '信用贷', amount: 50000, fraudScore: 9, scoreBand: '低', hitRuleCount: 0, ruleTypes: [], autoDecision: '通过', workStatus: '已确认', operator: '--', gangTag: '未关联团伙', applyTime: '2026-07-18 16:40', disposeTime: '' },
+  { id: 'FA-20260619-008', name: '周*杰', product: '经营贷', amount: 90000, fraudScore: 16, scoreBand: '低', hitRuleCount: 0, ruleTypes: [], autoDecision: '通过', workStatus: '已确认', operator: '初审：审核员 1', gangTag: '未关联团伙', applyTime: '2026-07-19 11:20', disposeTime: '' },
+  { id: 'FA-20260620-014', name: '杨*柳', product: '抵押贷', amount: 420000, fraudScore: 88, scoreBand: '极高', hitRuleCount: 5, ruleTypes: ['设备欺诈', '团伙欺诈', '黑名单命中'], autoDecision: '拒绝', workStatus: '初审确认拒贷办结', operator: '--', gangTag: '团伙A', applyTime: '2026-07-20 14:08', disposeTime: '' },
+  { id: 'FA-20260619-009', name: '吴*婷', product: '信用贷', amount: 45000, fraudScore: 11, scoreBand: '低', hitRuleCount: 0, ruleTypes: [], autoDecision: '通过', workStatus: '已确认', operator: '初审：审核员 1', gangTag: '未关联团伙', applyTime: '2026-07-19 13:45', disposeTime: '2026-07-20 16:30' },
+  { id: 'FA-20260620-015', name: '何*强', product: '信用贷', amount: 70000, fraudScore: 67, scoreBand: '高', hitRuleCount: 3, ruleTypes: ['行为欺诈', '信息伪造', '设备欺诈'], autoDecision: '拒绝', workStatus: '强制放行办结', operator: '初审：审核员 1', gangTag: '团伙B（疑似）', applyTime: '2026-07-21 08:42', disposeTime: '' },
+  { id: 'FA-20260621-016', name: '钱*润', product: '信用贷', amount: 25000, fraudScore: 0, scoreBand: '低', hitRuleCount: 0, ruleTypes: [], autoDecision: '处理中', workStatus: '核验计算中', operator: '--', gangTag: '未关联团伙', applyTime: '2026-07-21 20:00', disposeTime: '' },
 ]
-
 /* ───────────────────────── 多选项下拉（沿用信息核验筛选卡外观） ───────────────────────── */
 function MultiChip<T extends string>({
   label,
@@ -110,7 +105,7 @@ function MultiChip<T extends string>({
 /* ───────────────────────── 冻结列 ───────────────────────── */
 type Side = 'left' | 'right' | null
 const C = {
-  id: 168, name: 104, product: 96, amount: 128, band: 112, hits: 96, rule: 200, score: 104, auto: 104, work: 128, operator: 208, gang: 144, op: 224,
+  id: 168, name: 104, product: 96, amount: 128, hits: 96, score: 104, band: 112, auto: 104, work: 128, operator: 208, disposeTime: 144, op: 224,
 }
 const headStyle = (w: number, side: Side, offset = 0): CSSProperties => {
   const s: CSSProperties = { width: w, minWidth: w, maxWidth: w, position: 'sticky', top: 0 }
@@ -133,11 +128,9 @@ export default function FraudScheme4List() {
 
   const [kw, setKw] = useState('')
   const [bands, setBands] = useState<FraudS4ScoreBand[]>([])
-  const [ruleTypes, setRuleTypes] = useState<FraudS4RuleType[]>([])
   const [auto, setAuto] = useState('')
   const [works, setWorks] = useState<FraudS4WorkStatus[]>([])
   const [blacklist, setBlacklist] = useState('')
-  const [gang, setGang] = useState('')
   const [applyTime, setApplyTime] = useState('')
   const [disposeTime, setDisposeTime] = useState('')
 
@@ -149,7 +142,7 @@ export default function FraudScheme4List() {
 
   const goReport = (r: S4ListRow) =>
     nav(
-      `/console/cr/fraud-s4-detail?sys=${encodeURIComponent(r.scoreBand)}&work=${encodeURIComponent(
+      `/console/cr/pre-fraud-detail?sys=${encodeURIComponent(r.scoreBand)}&work=${encodeURIComponent(
         r.workStatus,
       )}&op=${encodeURIComponent(r.operator)}&id=${encodeURIComponent(r.id)}`,
     )
@@ -165,15 +158,15 @@ export default function FraudScheme4List() {
 
   const stats = useMemo(() => {
     const total = rows.length
-    const pending = rows.filter((r) => r.workStatus === '待复核' || r.workStatus === '复核中').length
+    const pending = rows.filter((r) => ['待确认', '待审核', '已提交双人复核'].includes(r.workStatus)).length
     const reject = rows.filter((r) => r.autoDecision === '拒绝').length
-    const gang = rows.filter((r) => r.gangTag !== '未关联团伙').length
+    const gangCount = rows.filter((r) => r.gangTag !== '未关联团伙').length
     const today = '2026-07-21'
     const todayNew = rows.filter((r) => r.applyTime.startsWith(today)).length
     return [
-      { label: '待处置欺诈案件', value: String(pending), hint: '待复核 / 复核中 待人工处置', accent: 'amber' as const },
+      { label: '待处置欺诈案件', value: String(pending), hint: '待确认 / 待审核 / 已提交复核 待人工处置', accent: 'amber' as const },
       { label: '欺诈拦截率', value: total ? `${Math.round((reject / total) * 100)}%` : '0%', hint: `自动拒绝 ${reject} / 共 ${total} 笔`, accent: 'rose' as const },
-      { label: '团伙欺诈预警', value: String(gang), hint: '已关联欺诈团伙案件', accent: 'rose' as const },
+      { label: '团伙欺诈预警', value: String(gangCount), hint: '已关联欺诈团伙案件', accent: 'rose' as const },
       { label: '今日新增欺诈', value: String(todayNew), hint: '今日（07-21）新增申请', accent: 'violet' as const },
     ]
   }, [rows])
@@ -184,12 +177,10 @@ export default function FraudScheme4List() {
     return rows.filter((r) => {
       if (kw && !`${r.id} ${r.name}`.toLowerCase().includes(kw.toLowerCase())) return false
       if (bands.length && !bands.includes(r.scoreBand)) return false
-      if (ruleTypes.length && !ruleTypes.some((t) => r.ruleTypes.includes(t))) return false
       if (auto && r.autoDecision !== auto) return false
       if (works.length && !works.includes(r.workStatus)) return false
       if (blacklist === 'hit' && !r.ruleTypes.includes('黑名单命中')) return false
       if (blacklist === 'miss' && r.ruleTypes.includes('黑名单命中')) return false
-      if (gang && r.gangTag !== gang) return false
       if (applyTime) {
         const t = new Date(r.applyTime.replace(' ', 'T')).getTime()
         if (refApply - t > Number(applyTime) * 86400000) return false
@@ -201,15 +192,15 @@ export default function FraudScheme4List() {
       }
       return true
     })
-  }, [rows, kw, bands, ruleTypes, auto, works, blacklist, gang, applyTime, disposeTime])
+  }, [rows, kw, bands, auto, works, blacklist, applyTime, disposeTime])
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize))
   const safePage = Math.min(page, totalPages)
   const pageRows = filtered.slice((safePage - 1) * pageSize, safePage * pageSize)
 
   const resetFilters = () => {
-    setKw(''); setBands([]); setRuleTypes([]); setAuto(''); setWorks([])
-    setBlacklist(''); setGang(''); setApplyTime(''); setDisposeTime('')
+    setKw(''); setBands([]); setAuto(''); setWorks([])
+    setBlacklist(''); setApplyTime(''); setDisposeTime('')
   }
 
   return (
@@ -237,11 +228,9 @@ export default function FraudScheme4List() {
                 className="w-64 rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-rose-400 focus:ring-2 focus:ring-rose-100"
               />
               <MultiChip label="欺诈风险等级" options={BANDS} selected={bands} onChange={setBands} />
-              <MultiChip label="命中规则类型" options={RULE_TYPES} selected={ruleTypes} onChange={setRuleTypes} />
-              <SingleSelect label="自动决策" options={AUTO_DECISIONS.map((a) => ({ value: a, label: a }))} value={auto} onChange={setAuto} clearable />
-              <MultiChip label="人工处置状态" options={WORK_STATUS} selected={works} onChange={setWorks} />
+              <SingleSelect label="自动审核" options={AUTO_DECISIONS.map((a) => ({ value: a, label: a }))} value={auto} onChange={setAuto} clearable />
+              <MultiChip label="人工审核" options={WORK_STATUS} selected={works} onChange={setWorks} />
               <SingleSelect label="命中黑名单" options={BLACKLIST_OPTS} value={blacklist} onChange={setBlacklist} clearable />
-              <SingleSelect label="团伙标签" options={GANG_TAGS.map((g) => ({ value: g, label: g }))} value={gang} onChange={setGang} clearable />
             </div>
             <div className="hidden min-w-[1rem] flex-1 xl:block" />
             <div className="flex flex-wrap items-center gap-3">
@@ -261,14 +250,13 @@ export default function FraudScheme4List() {
                   <th style={headStyle(C.name, 'left', C.id)} className="border-b border-slate-200 bg-slate-50 px-3 py-3 text-left font-medium">申请人</th>
                   <th style={headStyle(C.product, null)} className="border-b border-slate-200 bg-slate-50 px-3 py-3 text-left font-medium">产品</th>
                   <th style={headStyle(C.amount, null)} className="border-b border-slate-200 bg-slate-50 px-3 py-3 text-right font-medium">申请额度</th>
-                  <th style={headStyle(C.band, null)} className="border-b border-slate-200 bg-slate-50 px-3 py-3 text-center font-medium">欺诈风险等级</th>
                   <th style={headStyle(C.hits, null)} className="border-b border-slate-200 bg-slate-50 px-3 py-3 text-center font-medium">命中规则数</th>
-                  <th style={headStyle(C.rule, null)} className="border-b border-slate-200 bg-slate-50 px-3 py-3 text-left font-medium">命中规则类型</th>
-                  <th style={headStyle(C.score, null)} className="border-b border-slate-200 bg-slate-50 px-3 py-3 text-right font-medium">欺诈评分</th>
-                  <th style={headStyle(C.auto, null)} className="border-b border-slate-200 bg-slate-50 px-3 py-3 text-center font-medium">自动决策</th>
-                  <th style={headStyle(C.work, null)} className="border-b border-slate-200 bg-slate-50 px-3 py-3 text-center font-medium">人工处置状态</th>
-                  <th style={headStyle(C.operator, null)} className="border-b border-slate-200 bg-slate-50 px-3 py-3 text-left font-medium">处置人</th>
-                  <th style={headStyle(C.gang, null)} className="border-b border-slate-200 bg-slate-50 px-3 py-3 text-left font-medium">团伙标签</th>
+                  <th style={headStyle(C.score, null)} className="border-b border-slate-200 bg-slate-50 px-3 py-3 text-right font-medium">欺诈分</th>
+                  <th style={headStyle(C.band, null)} className="border-b border-slate-200 bg-slate-50 px-3 py-3 text-center font-medium">欺诈风险等级</th>
+                  <th style={headStyle(C.auto, null)} className="border-b border-slate-200 bg-slate-50 px-3 py-3 text-center font-medium">自动审核</th>
+                  <th style={headStyle(C.work, null)} className="border-b border-slate-200 bg-slate-50 px-3 py-3 text-center font-medium">人工审核</th>
+                  <th style={headStyle(C.operator, null)} className="border-b border-slate-200 bg-slate-50 px-3 py-3 text-left font-medium">审核人</th>
+                  <th style={headStyle(C.disposeTime, null)} className="border-b border-slate-200 bg-slate-50 px-3 py-3 text-left font-medium">审核时间</th>
                   <th style={headStyle(C.op, 'right', 0)} className="border-b border-slate-200 bg-slate-50 px-3 py-3 pr-[22px] text-left font-medium">操作</th>
                 </tr>
               </thead>
@@ -281,37 +269,28 @@ export default function FraudScheme4List() {
                     <td style={bodyStyle(C.name, 'left', C.id)} className="whitespace-nowrap bg-white px-3 py-3 text-slate-800 group-hover:bg-slate-50/60">{r.name}</td>
                     <td style={bodyStyle(C.product, null)} className="whitespace-nowrap px-3 py-3 text-slate-600">{r.product}</td>
                     <td style={bodyStyle(C.amount, null)} className="whitespace-nowrap px-3 py-3 text-right tabular-nums text-slate-700">¥{r.amount.toLocaleString()}</td>
-                    <td style={bodyStyle(C.band, null)} className="whitespace-nowrap px-3 py-3 text-center">
-                      <FraudScheme4BandBadge value={r.scoreBand} />
-                    </td>
                     <td style={bodyStyle(C.hits, null)} className="whitespace-nowrap px-3 py-3 text-center tabular-nums font-semibold text-ink-900">{r.hitRuleCount}</td>
-                    <td style={bodyStyle(C.rule, null)} className="whitespace-nowrap px-3 py-3">
-                      {r.ruleTypes.length === 0 ? (
-                        <span className="text-xs text-slate-300">无</span>
-                      ) : (
-                        <div className="flex flex-wrap gap-1">
-                          {r.ruleTypes.map((t) => <Badge key={t} kind="blue">{t}</Badge>)}
-                        </div>
-                      )}
-                    </td>
                     <td style={bodyStyle(C.score, null)} className="whitespace-nowrap px-3 py-3 text-right">
                       <span className={`tabular-nums font-semibold ${scoreColor(r.fraudScore)}`}>{r.fraudScore}</span>
                     </td>
+                    <td style={bodyStyle(C.band, null)} className="whitespace-nowrap px-3 py-3 text-center">
+                      <FraudScheme4BandTag value={r.scoreBand} />
+                    </td>
                     <td style={bodyStyle(C.auto, null)} className="whitespace-nowrap px-3 py-3 text-center">
-                      <FraudScheme4AutoBadge value={r.autoDecision} />
+                      <FraudScheme4AutoTag value={r.autoDecision} />
                     </td>
                     <td style={bodyStyle(C.work, null)} className="whitespace-nowrap px-3 py-3 text-center">
-                      <FraudScheme4WorkBadge value={r.workStatus} />
+                      <FraudScheme4WorkTag value={r.workStatus} />
                     </td>
                     <td style={bodyStyle(C.operator, null)} className="whitespace-nowrap px-3 py-3 text-slate-600">{r.operator}</td>
-                    <td style={bodyStyle(C.gang, null)} className="whitespace-nowrap px-3 py-3 text-slate-700">{r.gangTag}</td>
+                    <td style={bodyStyle(C.disposeTime, null)} className="whitespace-nowrap px-3 py-3 text-slate-600">{r.disposeTime || '--'}</td>
                     <td style={bodyStyle(C.op, 'right', 0)} className="whitespace-nowrap bg-white px-3 py-3 pr-[22px] text-left group-hover:bg-slate-50/60">
                       <FraudScheme4RowActions row={r} onApply={(next) => applyRow(r.id, next)} onView={() => goReport(r)} flash={showToast} />
                     </td>
                   </tr>
                 ))}
                 {pageRows.length === 0 && (
-                  <tr><td colSpan={13} className="whitespace-nowrap px-3 py-10 text-center text-sm text-slate-400">暂无符合条件的记录</td></tr>
+                  <tr><td colSpan={12} className="whitespace-nowrap px-3 py-10 text-center text-sm text-slate-400">暂无符合条件的记录</td></tr>
                 )}
               </tbody>
             </table>

@@ -17,6 +17,7 @@ import {
 } from './infoVerifyReport'
 import { useModule } from '../store'
 import { VerifyActionBar, type VerifyRow, type WorkStatus, type SysResult } from './VerifyOps'
+import { MergedOpTable } from '../components/MergedOpTable'
 
 const cn = (...c: (string | false | undefined)[]) => c.filter(Boolean).join(' ')
 
@@ -27,6 +28,8 @@ const conclKind: Record<Conclusion, 'green' | 'red' | 'amber' | 'blue'> = {
   pass: 'green', reject: 'red', warning: 'amber', pending: 'blue',
 }
 const riskText: Record<RiskLevel, string> = { high: '高', medium: '中', low: '低' }
+// 信用值卡：风险高 = 信用低（与颜色 / 数值 信用值=满分−风险值 自洽）
+const levelText: Record<RiskLevel, string> = { high: '低', medium: '中', low: '高' }
 const riskKind: Record<RiskLevel, 'red' | 'amber' | 'blue'> = {
   high: 'red', medium: 'amber', low: 'blue',
 }
@@ -194,16 +197,16 @@ function WeightsModal({
 
         <div className="mb-4 rounded-lg bg-slate-50 p-3 text-sm">
           <div className="flex items-center justify-between">
-            <span className="text-slate-500">异常值</span>
-            <span className="text-lg font-bold text-rose-600">{score}<span className="text-xs font-normal text-slate-400">/{scoreCap}</span></span>
+            <span className="text-slate-500">信用值</span>
+            <span className="text-lg font-bold text-emerald-600">{scoreCap - score}<span className="text-xs font-normal text-slate-400">/{scoreCap}</span></span>
           </div>
-          <div className="mt-1 text-[11px] text-slate-400">计算明细：Σ 各风险项得分 = {compTotal}{compTotal === 0 ? '（未累计到风险证据）' : ''}</div>
+          <div className="mt-1 text-[11px] text-slate-400">计算明细：满分 − Σ 各风险项得分 = {Math.max(0, scoreCap - compTotal)}{compTotal === 0 ? '（未累计到风险证据）' : ''}</div>
         </div>
 
         <div className="mb-3 text-xs font-medium text-slate-500">① 各风险项权重占比</div>
         <div className="space-y-2.5">
           {components.length === 0
-            ? <div className="rounded-lg bg-slate-50 px-3 py-3 text-xs text-slate-400">无风险证据累计，异常值为 0。</div>
+            ? <div className="rounded-lg bg-slate-50 px-3 py-3 text-xs text-slate-400">无风险证据累计，信用值为满分。</div>
             : components.map((c) => (
               <div key={c.name}>
                 <div className="flex items-center justify-between text-xs">
@@ -222,7 +225,7 @@ function WeightsModal({
 `策略 V2.6（节选）
 R1 单一项命中【高危】（如设备群控），权重 60%，直接触发系统拦截；
 R2 命中【中风险】（新手机号 / 关联逾期），各权重 20%，叠加高风险升级为自动拒绝；
-R3 异常值 = Σ(风险项得分)，≥80 自动拒绝，需双人复核推翻。`
+R3 信用值 = 满分 − Σ(风险项得分)，≤20 自动拒绝，需双人复核推翻。`
         }</pre>
 
         <div className="mt-4 flex justify-end gap-2">
@@ -287,7 +290,7 @@ function RuleTooltip({ type }: { type: RulePromptType }) {
       <span className="pointer-events-none absolute bottom-full left-1/2 z-30 mb-1.5 -translate-x-1/2 whitespace-nowrap rounded-lg bg-slate-800 px-3 py-3 text-[11px] leading-relaxed text-white opacity-0 transition group-hover:opacity-100" style={{ minWidth: '320px', whiteSpace: 'normal' }}>
         {type === 'reject'
           ? '当前项为重度欺诈风险，系统默认拦截，仅可双人复核后手动推翻拒贷结论。'
-          : '当前项为轻度风险，多条预警叠加将提升异常值，必须人工电话核实客户信息，核实无误可标记豁免。'}
+          : '当前项为轻度风险，多条预警叠加将进一步降低信用值，必须人工电话核实客户信息，核实无误可标记豁免。'}
         <span className="absolute left-1/2 top-full -translate-x-1/2 border-[5px] border-transparent border-t-slate-800" />
       </span>
     </span>
@@ -410,8 +413,8 @@ export default function PreVerifyDetail() {
     product: '—',
     channel: '—',
     amount: 0,
-    fraudScore: 0,
-    creditScore: 0,
+    fraudScore: d.cross.riskScore,
+    creditScore: Math.max(0, d.cross.scoreCap - d.cross.riskScore),
     sysResult: sysParam,
     workStatus: workParam,
     operator: opParam,
@@ -433,13 +436,13 @@ export default function PreVerifyDetail() {
 
   // 章节导航
   const navCards: { id: string; label: string; tone: 'ok' | 'alert' | 'normal' }[] = [
-    { id: 'score', label: '异常值', tone: d.cross.overallRisk === 'high' ? 'alert' : 'ok' },
+    { id: 'score', label: '信用值', tone: d.cross.overallRisk === 'low' ? 'ok' : 'alert' },
     { id: 'basic', label: '用户基本信息', tone: d.basic.some((f) => !f.valid) ? 'alert' : 'ok' },
     { id: 'photos', label: '用户证件照', tone: 'ok' },
     { id: 'single', label: '多源核验单项报告', tone: d.single.some((s) => s.conclusion !== 'pass') ? 'alert' : 'ok' },
     { id: 'cross', label: '交叉融合综合报告', tone: d.cross.finalConclusion === 'reject' || d.cross.finalConclusion === 'warning' ? 'alert' : 'ok' },
     { id: 'merged-ops', label: '全量操作日志', tone: 'normal' },
-    { id: 'report-actions', label: '整体操作', tone: 'normal' },
+    { id: 'report-actions', label: '操作日志', tone: 'normal' },
   ]
 
   return (
@@ -454,7 +457,7 @@ export default function PreVerifyDetail() {
       <div className="lg:flex lg:gap-6">
         {/* ============ 左侧主内容区 ============ */}
         <div className="min-w-0 flex-1 space-y-4">
-          {/* 异常值模型卡（结论级，领衔整份报告） */}
+          {/* 信用值模型卡（结论级，领衔整份报告） */}
           <ScoreModelCard cross={d.cross} />
 
           {/* 结论与终审操作（与列表一致：系统结果 / 工单状态 / 操作人员 + 操作按钮） */}
@@ -610,9 +613,9 @@ export default function PreVerifyDetail() {
                   <RiskLevelBadge level={d.cross.overallRisk} />
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-slate-400">异常值</span>
-                  <span className="text-xl font-bold text-rose-600">
-                    {d.cross.riskScore}<span className="text-xs font-normal text-slate-300">/{d.cross.scoreCap}</span>
+                  <span className="text-xs text-slate-400">信用值</span>
+                  <span className="text-xl font-bold text-emerald-600">
+                    {d.cross.scoreCap - d.cross.riskScore}<span className="text-xs font-normal text-slate-300">/{d.cross.scoreCap}</span>
                   </span>
                 </div>
                 <div className="flex flex-wrap items-center gap-1.5">
@@ -761,110 +764,17 @@ export default function PreVerifyDetail() {
   )
 }
 
-// ========================= 子组件 =========================
+// ========================= 子组件（MergedOpTable 已抽取至 ../components/MergedOpTable 共享） =========================
 
-function MergedOpTable({ itemActions, opLogs }: { itemActions: any[]; opLogs: OpLog[] }) {
-  interface MergedRow {
-    id: string; target: string; action: string; badgeKind: 'red' | 'amber' | 'blue' | 'gray' | 'green'
-    operator: string; time: string; before: string; after: string; remark: string; attachments?: string[]
-    reviewStatus?: string; reviewer?: string; reviewTime?: string
-  }
-  const opBadge: Record<string, 'red' | 'amber' | 'blue' | 'gray' | 'green'> = {
-    '重新核验': 'blue', '录入备注': 'blue', '标记豁免': 'amber', '查看回执': 'gray', '关联电核': 'blue',
-  }
-  const actKind: Record<string, 'red' | 'amber' | 'blue' | 'gray'> = {
-    reject: 'red', pass: 'blue', warning: 'amber', neutral: 'gray',
-  }
-  const merged: MergedRow[] = [
-    ...itemActions.map((a) => ({
-      id: a.id, target: a.target, action: a.action,
-      badgeKind: actKind[a.actionKind] ?? 'gray' as const,
-      operator: a.operator, time: a.time,
-      before: a.before, after: a.after,
-      remark: a.reason,
-    })),
-    ...opLogs.map((l) => ({
-      id: l.id, target: l.target, action: l.actionType,
-      badgeKind: opBadge[l.actionType] ?? 'gray' as const,
-      operator: l.operator, time: l.time,
-      before: '-', after: '-',
-      remark: l.remark,
-      attachments: l.attachments,
-      reviewStatus: l.reviewStatus, reviewer: l.reviewer, reviewTime: l.reviewTime,
-    })),
-  ].sort((a, b) => a.time.localeCompare(b.time))
-
-  return (
-    <div className="overflow-x-auto rounded-2xl border border-slate-100 bg-white shadow-sm">
-      <table className="w-full min-w-[860px] text-sm">
-        <thead>
-          <tr className="sticky top-0 z-30 border-b border-slate-100 bg-slate-50 text-left text-xs font-semibold text-slate-500">
-            <th className="px-3 py-3 font-medium">操作对象（数据源）</th>
-            <th className="px-3 py-3 font-medium">操作类型</th>
-            <th className="px-3 py-3 font-medium">操作标签</th>
-            <th className="px-3 py-3 font-medium">操作人</th>
-            <th className="px-3 py-3 font-medium">操作时间</th>
-            <th className="px-3 py-3 font-medium">变更前判定</th>
-            <th className="px-3 py-3 font-medium">变更后判定</th>
-            <th className="px-3 py-3 font-medium">操作原因 / 备注 &amp; 附件</th>
-            <th className="px-3 py-3 font-medium">复核状态</th>
-          </tr>
-        </thead>
-        <tbody>
-          {merged.length === 0 ? (
-            <tr>
-              <td colSpan={9} className="px-3 py-8 text-center text-xs text-slate-400">暂无操作记录</td>
-            </tr>
-          ) : (
-            merged.map((r) => (
-              <tr key={r.id} className="border-b border-slate-50 last:border-0 hover:bg-slate-50/60 align-top">
-                <td className="px-3 py-3 text-xs font-medium text-slate-700">{r.target}</td>
-                <td className="px-3 py-3 text-xs text-slate-600">{r.action}</td>
-                <td className="px-3 py-3"><Badge kind={r.badgeKind === 'green' ? 'green' : r.badgeKind as any}>{r.badgeKind === 'red' ? '拒绝' : r.badgeKind === 'blue' ? '操作' : r.badgeKind === 'amber' ? '豁免' : r.badgeKind === 'green' ? '放行' : '操作'}</Badge></td>
-                <td className="px-3 py-3 text-xs text-slate-500">{r.operator}</td>
-                <td className="px-3 py-3 text-xs text-slate-500 whitespace-nowrap">{r.time}</td>
-                <td className="px-3 py-3 text-xs text-slate-400">{r.before}</td>
-                <td className="px-3 py-3 text-xs text-slate-700">{r.after}</td>
-                <td className="px-3 py-3 max-w-[200px] text-xs text-slate-600">
-                  <div className="leading-relaxed">{r.remark}</div>
-                  {r.attachments && r.attachments.length > 0 && (
-                    <div className="mt-1 flex flex-wrap gap-1">
-                      {r.attachments.map((a, i) => (
-                        <span key={i} className="inline-block rounded bg-slate-100 px-1.5 py-0.5 text-[10px] text-slate-500">📎 {a}</span>
-                      ))}
-                    </div>
-                  )}
-                </td>
-                <td className="px-3 py-3 text-xs">
-                  {r.reviewStatus ? (
-                    r.reviewStatus === '已复核' ? (
-                      <div>
-                        <Badge kind="green">已复核</Badge>
-                        <div className="mt-0.5 text-[11px] text-slate-400">{r.reviewer} · {r.reviewTime}</div>
-                      </div>
-                    ) : (
-                      <Badge kind="amber">待复核</Badge>
-                    )
-                  ) : (
-                    <span className="text-slate-300">-</span>
-                  )}
-                </td>
-              </tr>
-            ))
-          )}
-        </tbody>
-      </table>
-    </div>
-  )
-}
 
 // ========================= 交叉融合综合报告子组件 =========================
 
-// ========================= 异常值模型卡（顶部结论级） =========================
+// ========================= 信用值模型卡（顶部结论级） =========================
 function ScoreModelCard({ cross }: { cross: CrossCheck }) {
   const { riskScore, scoreCap, overallRisk, scoreComponents, ruleVersion, ruleBasis, auditTime, reportId } = cross
-  // 阈值分段：≤20 低(绿) / 20–80 中(黄) / ≥80 高(红)
-  const scorePct = Math.min(100, Math.max(0, (riskScore / scoreCap) * 100))
+  // 信用值 = 满分 − 风险值（越高越安全）；阈值分段：≥80 高(绿) / 20–80 中(黄) / <20 低(红)
+  const creditScore = scoreCap - riskScore
+  const creditPct = Math.min(100, Math.max(0, (creditScore / scoreCap) * 100))
   const bandColor = overallRisk === 'high' ? 'text-rose-600' : overallRisk === 'medium' ? 'text-amber-600' : 'text-emerald-600'
   const levelCls: Record<RiskLevel, string> = {
     high: 'bg-rose-100 text-rose-700',
@@ -883,23 +793,23 @@ function ScoreModelCard({ cross }: { cross: CrossCheck }) {
       {/* 标识行 */}
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <span className="inline-flex h-6 items-center rounded-md bg-slate-800 px-2 text-[11px] font-medium text-white">异常值</span>
-          <span className="text-sm font-semibold text-ink-900">信息核验综合风险模型</span>
+          <span className="inline-flex h-6 items-center rounded-md bg-slate-800 px-2 text-[11px] font-medium text-white">信用值</span>
+          <span className="text-sm font-semibold text-ink-900">信息核验综合信用模型</span>
           <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[11px] text-slate-500">规则版本 {ruleVersion}</span>
         </div>
-        <span className="text-[11px] text-slate-400">分值越大风险越高 · 满分 {scoreCap}</span>
+        <span className="text-[11px] text-slate-400">分值越大越安全 · 满分 {scoreCap}</span>
       </div>
 
       {/* 总分 + 刻度条 */}
       <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-center">
         <div className="flex items-end gap-3">
           <div className="flex items-baseline">
-            <span className={cn('text-5xl font-bold leading-none', bandColor)}>{riskScore}</span>
+            <span className={cn('text-5xl font-bold leading-none', bandColor)}>{creditScore}</span>
             <span className="ml-1 text-sm font-normal text-slate-300">/ {scoreCap}</span>
           </div>
           <div className="mb-1">
             <span className={cn('rounded-full px-2.5 py-0.5 text-xs font-semibold', levelCls[overallRisk])}>
-              {riskText[overallRisk]}风险
+              {levelText[overallRisk]}信用
             </span>
           </div>
         </div>
@@ -908,23 +818,23 @@ function ScoreModelCard({ cross }: { cross: CrossCheck }) {
         <div className="min-w-0 flex-1">
           <div className="relative h-2.5 w-full overflow-visible rounded-full">
             <div className="absolute inset-0 flex overflow-hidden rounded-full">
-              <div className="h-full bg-emerald-400" style={{ width: '20%' }} />
-              <div className="h-full bg-amber-400" style={{ width: '60%' }} />
               <div className="h-full bg-rose-400" style={{ width: '20%' }} />
+              <div className="h-full bg-amber-400" style={{ width: '60%' }} />
+              <div className="h-full bg-emerald-400" style={{ width: '20%' }} />
             </div>
             {/* 指针 */}
             <div
               className="absolute top-1/2 -translate-x-1/2 -translate-y-1/2"
-              style={{ left: `${scorePct}%` }}
+              style={{ left: `${creditPct}%` }}
             >
               <div className="h-4 w-4 rounded-full border-2 border-white bg-slate-800 shadow" />
             </div>
           </div>
           <div className="mt-1.5 flex justify-between text-[10px] text-slate-400">
-            <span>0 · 低风险</span>
+            <span>0 · 低信用</span>
             <span>20</span>
             <span>80</span>
-            <span>100 · 高风险</span>
+            <span>100 · 高信用</span>
           </div>
         </div>
       </div>
@@ -973,8 +883,8 @@ function ScoreModelCard({ cross }: { cross: CrossCheck }) {
             ))}
             {/* 合计行 */}
             <tr className="border-t border-slate-200 bg-slate-50">
-              <td className="px-3 py-2.5 font-semibold text-ink-900" colSpan={2}>异常值（各风险项累加）</td>
-              <td className={cn('px-3 py-2.5 text-right text-sm font-bold', bandColor)}>{compTotal}</td>
+              <td className="px-3 py-2.5 font-semibold text-ink-900" colSpan={2}>信用值（满分−风险项累加）</td>
+              <td className={cn('px-3 py-2.5 text-right text-sm font-bold', bandColor)}>{Math.max(0, scoreCap - compTotal)}</td>
               <td className="px-3 py-2.5" colSpan={2} />
             </tr>
           </tbody>
@@ -994,7 +904,7 @@ function RiskLevelBadge({ level, noTooltip }: { level: RiskLevel; noTooltip?: bo
   const label = riskText[level]
   const color = riskKind[level]
   const tooltip = level === 'high'
-    ? '单条命中直接拉高异常值，多条叠加系统自动拒贷'
+    ? '单条命中直接降低信用值，多条叠加系统自动拒贷'
     : level === 'medium'
       ? '单独存在仅人工复核，叠加高风险则升级拦截'
       : '风险较低，纳入常规监控'
@@ -1095,7 +1005,7 @@ function AtomicCard({ a, conflicts }: { a: AtomicResult; conflicts: VerifyConfli
   const linkedConflict = hasConflict ? conflicts.find((c) => c.id === a.conflictIds[0]) : undefined
   const level: RiskLevel = a.status === 'fail' ? 'high' : a.status === 'warn' ? 'medium' : 'low'
   const riskTooltip = level === 'high'
-    ? '单条命中直接拉高异常值，多条叠加系统自动拒贷'
+    ? '单条命中直接降低信用值，多条叠加系统自动拒贷'
     : level === 'medium'
       ? '单独存在仅人工复核，叠加高风险则升级拦截'
       : ''

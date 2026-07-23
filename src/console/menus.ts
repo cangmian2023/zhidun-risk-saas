@@ -25,7 +25,6 @@ export const creditRiskMenu: MenuGroup[] = [
       { label: '欺诈识别·方案1', key: 'cr:fraud-s1' },
       { label: '欺诈识别·方案2', key: 'cr:fraud-s2' },
       { label: '欺诈识别·方案3', key: 'cr:fraud-s3' },
-      { label: '欺诈识别·方案4', key: 'cr:fraud-s4' },
       { label: '决策报告', key: 'cr:pre-report' },
       { label: '存疑进件', key: 'cr:pre-manual' },
     ],
