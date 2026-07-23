@@ -8,6 +8,8 @@ import PreVerifyDetail from './PreVerifyDetail'
 import InfoVerifyList from './InfoVerifyList'
 import CreditReportDetail from './CreditReportDetail'
 import FraudReportDetail from './FraudReportDetail'
+import FraudScheme1List from './FraudScheme1List'
+import FraudScheme1Detail from './FraudScheme1Detail'
 import ScoreQueryPage from './ScoreQueryPage'
 import { creditRiskMenu, scoringMenu, type MenuGroup } from './menus'
 import { MenuIcon, type IconName } from '../components/icons'
@@ -105,6 +107,8 @@ export default function Console() {
     'cr:pre-verify': 'verify',
     'cr:pre-credit': 'shield',
     'cr:pre-fraud': 'alert',
+    'cr:fraud-s1': 'alert',
+    'cr:fraud-s1-detail': 'alert',
     'cr:pre-report': 'report',
     'cr:pre-manual': 'check',
     'cr:mid-cockpit': 'gauge',
@@ -336,6 +340,10 @@ export default function Console() {
               <CreditReportDetail />
             ) : key === 'cr:pre-fraud-detail' ? (
               <FraudReportDetail />
+            ) : key === 'cr:fraud-s1' ? (
+              <FraudScheme1List />
+            ) : key === 'cr:fraud-s1-detail' ? (
+              <FraudScheme1Detail />
             ) : isQuery && queryProd ? (
               <ScoreQueryPage product={queryProd} />
             ) : (

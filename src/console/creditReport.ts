@@ -142,7 +142,7 @@ export function riskKind(level: string): 'green' | 'red' | 'amber' | 'blue' {
 }
 
 // 交叉比对严重度 -> 徽标配色
-export function severityKind(sev: string): 'green' | 'red' | 'amber' | 'blue' {
+export function severityKind(sev: string): 'green' | 'red' | 'amber' | 'blue' | 'gray' {
   if (sev === '红') return 'red'
   if (sev === '黄') return 'amber'
   if (sev === '蓝') return 'blue'
