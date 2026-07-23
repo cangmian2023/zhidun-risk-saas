@@ -703,12 +703,12 @@ export function buildInfoVerify(r: AppRow, idx: number): InfoVerifyVM {
 
 /* ============ 信用风控区（多头 / 共债 / 联防联控） ============ */
 export interface CreditRiskVM {
-  level: 'green' | 'amber' | 'red'
+  level: string
   multiOrg: number
   samePerson: string
-  coDebt: { label: string; value: string; level: 'green' | 'amber' | 'red' }
-  jointDefense: { label: string; value: string; level: 'green' | 'amber' | 'red' }
-  items: { label: string; value: string; level: 'green' | 'amber' | 'red' }[]
+  coDebt: { label: string; value: string; level: string }
+  jointDefense: { label: string; value: string; level: string }
+  items: { label: string; value: string; level: string }[]
 }
 export function buildCreditRisk(r: AppRow, detail: DetailData): CreditRiskVM {
   const multiOrg = r.multiOrgs
@@ -726,11 +726,13 @@ export function buildCreditRisk(r: AppRow, detail: DetailData): CreditRiskVM {
     level: jointHit ? 'red' : 'green',
   }
   const level: 'green' | 'amber' | 'red' = coLevel === 'red' || jointHit ? 'red' : coLevel === 'amber' ? 'amber' : 'green'
+  const green: 'green' = 'green'
+  const jointLevel: 'red' | 'green' = jointHit ? 'red' : 'green'
   const items = [
-    { label: '多头借贷机构数', value: `${multiOrg} 家（近 30 天）`, level: multiOrg >= 6 ? 'red' : multiOrg >= 3 ? 'amber' : 'green' },
-    { label: '同人历史进件', value: samePerson, level: 'green' },
+    { label: '多头借贷机构数', value: `${multiOrg} 家（近 30 天）`, level: coLevel },
+    { label: '同人历史进件', value: samePerson, level: green },
     { label: '共债率', value: coLevel === 'red' ? '> 60%' : coLevel === 'amber' ? '30% ~ 60%' : '< 30%', level: coLevel },
-    { label: '联防联控', value: jointHit ? '已命中' : '未命中', level: jointHit ? 'red' : 'green' },
+    { label: '联防联控', value: jointHit ? '已命中' : '未命中', level: jointLevel },
   ]
   return { level, multiOrg, samePerson, coDebt, jointDefense, items }
 }
