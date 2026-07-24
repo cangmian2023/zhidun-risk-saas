@@ -7,8 +7,8 @@ export type FraudS4ScoreBand = '极低' | '低' | '中' | '高' | '极高'
 // 自动决策（自动审核）按欺诈等级映射（见 N7）：低→通过 / 中→预警 / 高→拒绝 / 极高→拒绝；结果计算前为 处理中
 export type FraudS4AutoDecision = '通过' | '拒绝' | '预警' | '处理中'
 export type FraudS4RuleType = '设备欺诈' | '身份欺诈' | '团伙欺诈' | '行为欺诈' | '信息伪造' | '黑名单命中'
-// 人工处置状态（方案4 独立状态机，按 N8 矩阵）：核验计算中 / 待确认 / 已确认 / 初审确认拒贷办结 / 强制放行办结 / 加入黑名单 / 待审核 / 已提交双人复核 / 双人复核-放行办结 / 双人复核-拒绝办结
-export type FraudS4WorkStatus = '核验计算中' | '待确认' | '已确认' | '初审确认拒贷办结' | '强制放行办结' | '加入黑名单' | '待审核' | '已提交双人复核' | '双人复核-放行办结' | '双人复核-拒绝办结'
+// 人工处置状态（方案4 独立状态机，按 N8 矩阵）：核验计算中 / 待确认 / 已确认 / 初审拒贷 / 强制放行 / 加入黑名单 / 待审核 / 已提交双人复核 / 双人复核-放行办结 / 双人复核-拒绝办结
+export type FraudS4WorkStatus = '核验计算中' | '待确认' | '已确认' | '初审拒贷' | '强制放行' | '加入黑名单' | '待审核' | '已提交双人复核' | '双人复核-放行办结' | '双人复核-拒绝办结'
 export type FraudS4Level = '极高' | '高' | '中' | '低'
 
 export interface FraudS4Factor {
@@ -488,6 +488,6 @@ export const S4_AUTO_KIND: Record<FraudS4AutoDecision, 'green' | 'red' | 'amber'
 }
 export const S4_WORK_KIND: Record<FraudS4WorkStatus, 'red' | 'amber' | 'green' | 'blue' | 'gray'> = {
   核验计算中: 'gray', 待确认: 'amber', 已确认: 'green',
-  初审确认拒贷办结: 'gray', 强制放行办结: 'gray', 加入黑名单: 'red',
+  初审拒贷: 'gray', 强制放行: 'gray', 加入黑名单: 'red',
   待审核: 'amber', 已提交双人复核: 'blue', '双人复核-放行办结': 'gray', '双人复核-拒绝办结': 'gray',
 }

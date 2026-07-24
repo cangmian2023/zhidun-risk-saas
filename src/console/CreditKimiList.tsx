@@ -42,10 +42,14 @@ const seedRows: CreditKimiRow[] = [
   { id: 'PA-20260618-002', name: '张*伟', product: '信用贷', channel: 'APP', amount: 80000, creditScore: 15, riskLevel: '低', sysResult: '通过', workStatus: '待确认', operator: '--', auditTime: '2026-06-18 15:10' },
   { id: 'PA-20260618-005', name: '陈刚', product: '抵押贷', channel: '线下', amount: 500000, creditScore: 12, riskLevel: '低', sysResult: '通过', workStatus: '已确认', operator: '初审：审核员 1', auditTime: '2026-06-18 16:40' },
   { id: 'PA-20260618-004', name: '赵*敏', product: '经营贷', channel: 'APP', amount: 200000, creditScore: 52, riskLevel: '中', sysResult: '预警', workStatus: '待审核', operator: '--', auditTime: '2026-06-18 16:05' },
-  { id: 'PA-20260618-006', name: '刘洋', product: '抵押贷', channel: '线下', amount: 350000, creditScore: 45, riskLevel: '中', sysResult: '预警', workStatus: '已确认', operator: '初审：审核员 1', auditTime: '2026-06-19 09:12' },
-  { id: 'PA-20260619-007', name: '孙丽', product: '信用贷', channel: 'APP', amount: 120000, creditScore: 68, riskLevel: '高', sysResult: '拒绝', workStatus: '已提交双人复核', operator: '初审：审核员 1', auditTime: '2026-06-19 10:03' },
-  { id: 'PA-20260620-012', name: '蒋磊', product: '经营贷', channel: 'H5', amount: 150000, creditScore: 72, riskLevel: '高', sysResult: '预警', workStatus: '双人复核-通过', operator: '初审：审核员 1；终审：主管 1', auditTime: '2026-06-20 10:25' },
-  { id: 'PA-20260620-013', name: '韩梅', product: '信用贷', channel: '小程序', amount: 35000, creditScore: 85, riskLevel: '极高', sysResult: '拒绝', workStatus: '双人复核-拒绝', operator: '初审：审核员 1；终审：主管 1', auditTime: '2026-06-20 11:15' },
+  // 中风险·预警 → 待审核 → 已提交双人复核（审核人初分派，待主管终审）
+  { id: 'PA-20260618-006', name: '刘洋', product: '抵押贷', channel: '线下', amount: 350000, creditScore: 45, riskLevel: '中', sysResult: '预警', workStatus: '已提交双人复核', operator: '初审：审核员 1', auditTime: '2026-06-19 09:12' },
+  // 高风险·拒绝·待确认 → 查看 / 报告确认 / 强制复审（审核人尚未分派）
+  { id: 'PA-20260619-007', name: '孙丽', product: '信用贷', channel: 'APP', amount: 120000, creditScore: 68, riskLevel: '高', sysResult: '拒绝', workStatus: '待确认', operator: '--', auditTime: '2026-06-19 10:03' },
+  // 中风险·预警·双人复核-通过（初审+终审两级办结，仅查看）— 评分落在中风险区间
+  { id: 'PA-20260620-012', name: '蒋磊', product: '经营贷', channel: 'H5', amount: 150000, creditScore: 56, riskLevel: '中', sysResult: '预警', workStatus: '双人复核-通过', operator: '初审：审核员 1；终审：主管 1', auditTime: '2026-06-20 10:25' },
+  // 极高风险·拒绝·已确认（对应文档「初审确认拒贷办结」，仅查看）
+  { id: 'PA-20260620-013', name: '韩梅', product: '信用贷', channel: '小程序', amount: 35000, creditScore: 85, riskLevel: '极高', sysResult: '拒绝', workStatus: '已确认', operator: '初审：审核员 1', auditTime: '2026-06-20 11:15' },
   { id: 'PA-20260619-009', name: '吴婷', product: '信用贷', channel: '小程序', amount: 45000, creditScore: 18, riskLevel: '低', sysResult: '通过', workStatus: '待确认', operator: '--', auditTime: '2026-06-19 13:45' },
   { id: 'PA-20260619-008', name: '周杰', product: '经营贷', channel: 'H5', amount: 90000, creditScore: 22, riskLevel: '低', sysResult: '通过', workStatus: '已确认', operator: '初审：审核员 1', auditTime: '2026-06-19 11:20' },
   { id: 'PA-20260620-014', name: '杨柳', product: '抵押贷', channel: '线下', amount: 420000, creditScore: 90, riskLevel: '极高', sysResult: '拒绝', workStatus: '已确认', operator: '初审：审核员 1', auditTime: '2026-06-20 14:08' },
@@ -100,7 +104,7 @@ function MultiChip<T extends string>({ label, options, selected, onChange }: { l
 /* ───────────────────────── 冻结列 ───────────────────────── */
 type Side = 'left' | 'right' | null
 const C = {
-  id: 168, name: 104, product: 96, channel: 84, amount: 128, score: 100, risk: 104, sys: 116, work: 148, operator: 208, op: 224,
+  id: 168, name: 104, product: 96, channel: 84, amount: 128, score: 100, risk: 104, sys: 116, work: 148, operator: 208, auditTime: 160, op: 224,
 }
 const headStyle = (w: number, side: Side, offset = 0): CSSProperties => {
   const s: CSSProperties = { width: w, minWidth: w, maxWidth: w, position: 'sticky', top: 0 }
@@ -238,6 +242,7 @@ export default function CreditKimiList() {
                   <th style={headStyle(C.sys, null)} className="border-b border-slate-200 bg-slate-50 px-3 py-3 text-center font-medium">自动审批</th>
                   <th style={headStyle(C.work, null)} className="border-b border-slate-200 bg-slate-50 px-3 py-3 text-center font-medium">人工审核</th>
                   <th style={headStyle(C.operator, null)} className="border-b border-slate-200 bg-slate-50 px-3 py-3 text-left font-medium">审核人</th>
+                  <th style={headStyle(C.auditTime, null)} className="border-b border-slate-200 bg-slate-50 px-3 py-3 text-left font-medium">审核时间</th>
                   <th style={headStyle(C.op, 'right', 0)} className="border-b border-slate-200 bg-slate-50 px-3 py-3 pr-[22px] text-left font-medium">操作</th>
                 </tr>
               </thead>
@@ -259,6 +264,7 @@ export default function CreditKimiList() {
                       <td style={bodyStyle(C.sys, null)} className="whitespace-nowrap px-3 py-3 text-center"><CreditSysResultBadge value={r.sysResult} /></td>
                       <td style={bodyStyle(C.work, null)} className="whitespace-nowrap px-3 py-3 text-center"><CreditWorkStatusBadge value={r.workStatus} /></td>
                       <td style={bodyStyle(C.operator, null)} className="whitespace-nowrap px-3 py-3 text-slate-600">{r.operator}</td>
+                      <td style={bodyStyle(C.auditTime, null)} className="whitespace-nowrap px-3 py-3 text-slate-600">{r.auditTime || '--'}</td>
                       <td style={bodyStyle(C.op, 'right', 0)} className="whitespace-nowrap bg-white px-3 py-3 pr-[22px] text-left group-hover:bg-slate-50/60">
                         <CreditKimiRowActions row={r} onApply={(next) => applyRow(r.id, next)} onView={() => goReport(r)} flash={showToast} />
                       </td>
@@ -266,7 +272,7 @@ export default function CreditKimiList() {
                   )
                 })}
                 {pageRows.length === 0 && (
-                  <tr><td colSpan={11} className="whitespace-nowrap px-3 py-10 text-center text-sm text-slate-400">暂无符合条件的信用风控记录</td></tr>
+                  <tr><td colSpan={12} className="whitespace-nowrap px-3 py-10 text-center text-sm text-slate-400">暂无符合条件的信用风控记录</td></tr>
                 )}
               </tbody>
             </table>

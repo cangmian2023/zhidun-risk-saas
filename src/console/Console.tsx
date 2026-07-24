@@ -7,18 +7,12 @@ import PreApplication from './PreApplication'
 import PreVerifyDetail from './PreVerifyDetail'
 import InfoVerifyList from './InfoVerifyList'
 import CreditReportDetail from './CreditReportDetail'
-import FraudScheme1List from './FraudScheme1List'
-import FraudScheme1Detail from './FraudScheme1Detail'
-import FraudScheme2List from './FraudScheme2List'
-import FraudScheme2Detail from './FraudScheme2Detail'
-import FraudScheme3List from './FraudScheme3List'
-import FraudScheme3Detail from './FraudScheme3Detail'
 import FraudScheme4List from './FraudScheme4List'
 import FraudScheme4Detail from './FraudScheme4Detail'
 import CreditKimiList from './CreditKimiList'
 import CreditKimiDetail from './CreditKimiDetail'
 import ScoreQueryPage from './ScoreQueryPage'
-import { creditRiskMenu, scoringMenu, type MenuGroup } from './menus'
+import { creditRiskMenu, scoringMenu, entMenu, dmMenu, cmMenu, type MenuGroup } from './menus'
 import { MenuIcon, type IconName } from '../components/icons'
 import { moduleSpecs } from './specs'
 
@@ -27,14 +21,16 @@ const subName: Record<string, string> = {
   sc: '评分产品',
   ep: '企业风控',
   dm: '数字营销',
+  cm: '公共模块',
 }
 
-// 4 个子系统（可在 banner 中一键切换）
+// 5 个子系统（可在 banner 中一键切换）
 const subsystems = [
   { key: 'cr', name: '零售信贷风控', open: true },
   { key: 'sc', name: '评分产品', open: true },
   { key: 'ep', name: '企业风控', open: false },
   { key: 'dm', name: '数字营销', open: false },
+  { key: 'cm', name: '公共模块', open: true },
 ]
 
 // 用户名下拉：SaaS 服务应用到基础用户功能
@@ -106,79 +102,144 @@ export default function Console() {
     document.body.style.cursor = 'col-resize'
   }
 
-  // 每个菜单 key 映射唯一图标，杜绝重复（同一子系统内互不重复）
+  // 每个菜单 key 映射图标（沿用既有合法图标名，未命中的回退 dashboard）
   const MENU_ICON: Record<string, IconName> = {
     // 零售信贷风控
     'cr:overview': 'dashboard',
+    // 零售信贷风控
     'cr:pre-application': 'audit',
     'cr:pre-verify': 'verify',
-    'cr:pre-credit': 'shield',
-    'cr:pre-fraud': 'alert',
-    'cr:fraud-s1': 'alert',
-    'cr:fraud-s1-detail': 'alert',
-    'cr:fraud-s2': 'alert',
-    'cr:fraud-s2-detail': 'alert',
-    'cr:fraud-s3': 'alert',
-    'cr:fraud-s3-detail': 'alert',
+    'cr:pre-verify-config': 'filter',
     'cr:credit-kimi': 'shield',
-    'cr:credit-kimi-detail': 'shield',
+    'cr:credit-kimi-config': 'sliders',
+    'cr:pre-fraud': 'alert',
+    'cr:fraud-rules': 'layers',
+    'cr:fraud-blacklist': 'plug',
+    'cr:fraud-gang': 'link',
     'cr:pre-report': 'report',
-    'cr:pre-manual': 'check',
-    'cr:mid-cockpit': 'gauge',
+    'cr:pre-report-template': 'stack',
+    'cr:pre-report-detail': 'eye',
     'cr:mid-task': 'cube',
+    'cr:mid-task-config': 'settings',
+    'cr:mid-task-log': 'clock',
     'cr:mid-alert': 'bell',
-    'cr:mid-alert-detail': 'flag',
-    'cr:mid-ops': 'users',
-    'cr:mid-output': 'inbox',
-    'cr:st-indicators': 'chart',
-    'cr:st-rules': 'filter',
-    'cr:st-flow': 'work_flow',
-    'cr:st-models': 'model',
-    'cr:st-lists': 'tag',
-    'cr:st-external': 'plug',
-    'cr:data-source': 'database',
-    'cr:data-field': 'sliders',
-    'cr:data-api': 'link',
-    'cr:stat-overview': 'pie',
-    'cr:stat-rules': 'bars',
-    'cr:stat-decision': 'analytics',
-    'cr:set-users': 'id',
-    'cr:set-channel': 'settings',
-    'cr:set-log': 'clock',
+    'cr:mid-alert-config': 'zoom',
+    'cr:mid-crowd': 'chart',
+    'cr:mid-crowd-single': 'flag',
+    'cr:mid-crowd-trend': 'trend',
+    'cr:mid-dispose': 'gauge',
+    'cr:mid-dispose-record': 'inbox',
+    'cr:mid-dispose-strategy': 'work_flow',
+    'cr:mid-output-api': 'cloud',
+    'cr:mid-output-push': 'link',
+    'cr:mid-output-download': 'grid',
     // 评分产品
-    'sc:overview': 'dashboard',
     'sc:zhicha-query': 'search',
     'sc:zhicha-batch': 'stack',
-    'sc:zhicha-api': 'plug',
+    'sc:zhicha-dist': 'pie',
+    'sc:zhicha-eval': 'analytics',
+    'sc:zhicha-tune': 'wrench',
+    'sc:zhicha-bill-query': 'bars',
+    'sc:zhicha-bill-hit': 'tag',
+    'sc:zhicha-bill': 'id',
+    'sc:zhicha-detail': 'eye',
     'sc:zhixin-query': 'zoom',
     'sc:zhixin-batch': 'layers',
-    'sc:zhixin-api': 'cloud',
-    'sc:zhirong-query': 'eye',
-    'sc:zhirong-batch': 'grid',
-    'sc:zhirong-api': 'code',
-    'sc:model-list': 'model',
-    'sc:model-config': 'wrench',
-    'sc:mon-auto': 'monitor',
-    'sc:scorecard': 'sliders',
-    'sc:variable': 'braces',
-    'sc:mon-stability': 'gauge',
-    'sc:mon-disc': 'pulse',
-    'sc:mon-alert': 'bell',
-    'sc:mon-report': 'bars',
-    'sc:data-source': 'database',
-    'sc:data-list': 'tag',
-    'sc:data-api': 'link',
-    'sc:report-dist': 'pie',
-    'sc:report-reject': 'analytics',
-    'sc:report-vintage': 'trend',
-    'sc:report-approve': 'check',
-    'sc:set-users': 'id',
-    'sc:set-log': 'clock',
+    'sc:zhixin-dist': 'chart',
+    'sc:zhixin-eval': 'trend',
+    'sc:zhixin-tune': 'code',
+    'sc:zhixin-bill-query': 'filter',
+    'sc:zhixin-bill-hit': 'grid',
+    'sc:zhixin-bill': 'plug',
+    'sc:zhixin-detail': 'cloud',
+    'sc:zhirong-query': 'search',
+    'sc:zhirong-batch': 'stack',
+    'sc:zhirong-dist': 'pie',
+    'sc:zhirong-eval': 'analytics',
+    'sc:zhirong-tune': 'wrench',
+    'sc:zhirong-sc-default': 'sliders',
+    'sc:zhirong-sc-credit': 'settings',
+    'sc:zhirong-sc-interest': 'work_flow',
+    'sc:zhirong-bill-query': 'bars',
+    'sc:zhirong-bill-hit': 'tag',
+    'sc:zhirong-bill': 'id',
+    'sc:zhirong-detail': 'eye',
+    // 企业风控
+    'ep:overview': 'dashboard',
+    'ep:ent-verify': 'verify',
+    'ep:ent-verify-config': 'filter',
+    'ep:ent-credit': 'shield',
+    'ep:ent-credit-config': 'sliders',
+    'ep:ent-graph': 'link',
+    'ep:ent-graph-gang': 'plug',
+    'ep:ent-mid-task': 'cube',
+    'ep:ent-mid-alert': 'bell',
+    'ep:ent-mid-board': 'chart',
+    'ep:ent-verify-detail': 'eye',
+    'ep:ent-credit-detail': 'cloud',
+    'ep:ent-graph-detail': 'link',
+    // 数字营销
+    'dm:overview': 'dashboard',
+    'dm:radar-query': 'search',
+    'dm:radar-batch': 'stack',
+    'dm:radar-model': 'model',
+    'dm:radar-model-custom': 'model',
+    'dm:radar-eval': 'analytics',
+    'dm:radar-tag': 'tag',
+    'dm:radar-tag-config': 'filter',
+    'dm:radar-bill-query': 'bars',
+    'dm:radar-bill-hit': 'grid',
+    'dm:radar-bill': 'id',
+    'dm:herald-task': 'plug',
+    'dm:herald-task-create': 'flag',
+    'dm:herald-crowd': 'users',
+    'dm:herald-crowd-preview': 'eye',
+    'dm:herald-crowd-save': 'cloud',
+    'dm:herald-sms': 'link',
+    'dm:herald-aicall': 'braces',
+    'dm:herald-complaint': 'plug',
+    'dm:herald-effect': 'chart',
+    'dm:herald-funnel': 'filter',
+    'dm:herald-ab': 'check',
+    'dm:rta-query': 'cloud',
+    'dm:rta-media': 'link',
+    'dm:rta-media-test': 'zoom',
+    'dm:rta-concurrency': 'gauge',
+    'dm:rta-model': 'model',
+    'dm:rta-model-custom': 'model',
+    'dm:rta-eval': 'analytics',
+    'dm:rta-bill-query': 'bars',
+    'dm:rta-bill-year': 'id',
+    'dm:rta-bill': 'plug',
+    'dm:rta-strategy': 'sliders',
+    'dm:rta-strategy-effect': 'chart',
+    'dm:rta-strategy-tune': 'wrench',
+    'dm:herald-task-detail': 'eye',
+    'dm:rta-detail': 'cloud',
+    // 公共模块
+    'cm:overview': 'dashboard',
+    'cm:user-list': 'users',
+    'cm:user-role': 'id',
+    'cm:user-profile': 'users',
+    'cm:sys-datasource': 'database',
+    'cm:sys-rule-engine': 'filter',
+    'cm:sys-notify': 'bell',
+    'cm:sys-audit': 'clock',
+    'cm:dash-biz': 'chart',
+    'cm:dash-realtime': 'monitor',
+    'cm:dash-report': 'report',
+    'cm:help-doc': 'report',
+    'cm:help-faq': 'flag',
+    'cm:help-service': 'bell',
   }
   const menuIcon = (key: string): IconName => MENU_ICON[key] ?? 'dashboard'
 
   const menu: MenuGroup[] =
-    sub === 'cr' ? creditRiskMenu : sub === 'sc' ? scoringMenu : []
+    sub === 'cr' ? creditRiskMenu :
+    sub === 'sc' ? scoringMenu :
+    sub === 'ep' ? entMenu :
+    sub === 'dm' ? dmMenu :
+    sub === 'cm' ? cmMenu : []
   const cur = (loc.pathname.split('/')[3] as string) || 'overview'
   const key = `${sub}:${cur}`
 
@@ -189,7 +250,7 @@ export default function Console() {
       ? (prod as 'zhicha' | 'zhixin' | 'zhirong')
       : null
 
-  const supported = sub === 'cr' || sub === 'sc'
+  const supported = sub === 'cr' || sub === 'sc' || sub === 'ep' || sub === 'dm' || sub === 'cm'
 
   function onLogout() {
     logout()
@@ -355,18 +416,6 @@ export default function Console() {
               <FraudScheme4List />
             ) : key === 'cr:pre-fraud-detail' ? (
               <FraudScheme4Detail />
-            ) : key === 'cr:fraud-s1' ? (
-              <FraudScheme1List />
-            ) : key === 'cr:fraud-s1-detail' ? (
-              <FraudScheme1Detail />
-            ) : key === 'cr:fraud-s2' ? (
-              <FraudScheme2List />
-            ) : key === 'cr:fraud-s2-detail' ? (
-              <FraudScheme2Detail />
-            ) : key === 'cr:fraud-s3' ? (
-              <FraudScheme3List />
-            ) : key === 'cr:fraud-s3-detail' ? (
-              <FraudScheme3Detail />
             ) : key === 'cr:credit-kimi' ? (
               <CreditKimiList />
             ) : key === 'cr:credit-kimi-detail' ? (

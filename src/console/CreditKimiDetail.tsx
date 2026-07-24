@@ -4,9 +4,9 @@
 import { useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Badge, DetailHeader, Panel } from '../components/ui'
+import { MergedOpTable } from '../components/MergedOpTable'
 import {
   buildCreditKimiReport,
-  CREDIT_LEVEL_KIND,
   type CreditKimiReport,
   type CreditDimension,
   type CreditImageItem,
@@ -19,6 +19,7 @@ import {
   type CreditKimiRow,
   type CreditKimiLog,
 } from './CreditKimiOps'
+import type { OpLog, OpActionType } from './infoVerifyReport'
 
 const cn = (...c: (string | false | undefined)[]) => c.filter(Boolean).join(' ')
 
@@ -29,6 +30,18 @@ const levelCls: Record<CreditLevel, string> = {
   极高: 'bg-rose-100 text-rose-700',
 }
 const levelText: Record<CreditLevel, string> = { 低: '低', 中: '中', 高: '高', 极高: '极高' }
+// 风险等级 → 文字色（与「预警/风险」徽标配色一致：低绿/中黄/高橙/极高红）
+const bandText: Record<CreditLevel, string> = {
+  低: 'text-emerald-600',
+  中: 'text-amber-600',
+  高: 'text-orange-600',
+  极高: 'text-rose-600',
+}
+
+// 点击列表项定位到对应维度分析模块（与欺诈识别报告因子表交互一致）
+const jumpTo = (id?: string) => {
+  if (id) document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
 
 /* ========================= 影像资料（复用信息核验证件照展示） ========================= */
 function ImageCard({ img }: { img: CreditImageItem }) {
@@ -70,8 +83,7 @@ function ImageCard({ img }: { img: CreditImageItem }) {
 
 /* ========================= 顶部：信用评分总览 ========================= */
 function ScoreOverviewCard({ d }: { d: CreditKimiReport }) {
-  const bandColor = CREDIT_LEVEL_KIND[d.riskLevel]
-  const penaltyHit = d.penalty.filter((p) => p.hit).reduce((s, p) => s + p.add, 0)
+  const bandColor = bandText[d.riskLevel]
   return (
     <div id="score" className="rounded-2xl border border-slate-100 bg-white p-5 shadow-card">
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -94,48 +106,66 @@ function ScoreOverviewCard({ d }: { d: CreditKimiReport }) {
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <span className="rounded-lg bg-slate-50 px-3 py-1.5 text-xs text-slate-500">自动审批：<b className={cn('font-semibold', bandColor)}>{d.autoDecision}</b></span>
-          <span className="rounded-lg bg-slate-50 px-3 py-1.5 text-xs text-slate-500">授信建议：<b className="font-semibold text-ink-900">{d.creditAdvice}</b></span>
         </div>
       </div>
 
-      {/* 六大维度得分卡片 */}
-      <div className="mt-5 mb-1 text-xs font-medium text-slate-500">评分维度分布（六维加权）</div>
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
-        {d.dimensions.map((dim) => (
-          <div key={dim.key} className="rounded-xl border border-slate-100 bg-slate-50/60 p-3">
-            <div className="text-xs text-slate-400">{dim.name}</div>
-            <div className={cn('mt-1 text-xl font-bold', CREDIT_LEVEL_KIND[dim.level])}>{dim.score}</div>
-            <div className="mt-1 flex items-center justify-between text-[10px] text-slate-400">
-              <span>权重 {dim.weight}%</span>
-              <span className={cn('rounded px-1.5 py-0.5 font-medium', levelCls[dim.level])}>{levelText[dim.level]}</span>
-            </div>
+      {/* 得分进度条（阈值刻度，对齐欺诈识别报告第一个卡片） */}
+      <div className="mt-4">
+        <div className="relative h-2.5 w-full overflow-visible rounded-full">
+          <div className="absolute inset-0 flex overflow-hidden rounded-full">
+            <div className="h-full bg-emerald-400" style={{ width: '40%' }} />
+            <div className="h-full bg-amber-400" style={{ width: '20%' }} />
+            <div className="h-full bg-orange-400" style={{ width: '20%' }} />
+            <div className="h-full bg-rose-400" style={{ width: '20%' }} />
           </div>
-        ))}
+          <div
+            className="absolute top-1/2 -translate-x-1/2 -translate-y-1/2"
+            style={{ left: `${d.creditScore}%` }}
+          >
+            <div className="h-4 w-4 rounded-full border-2 border-white bg-slate-800 shadow" />
+          </div>
+        </div>
+        <div className="mt-1.5 flex justify-between text-[10px] text-slate-400">
+          <span>0 · 极低</span>
+          <span>40</span>
+          <span>60</span>
+          <span>80</span>
+          <span>100 · 极高</span>
+        </div>
       </div>
 
-      {/* 计算明细 */}
-      <div className="mt-5 rounded-xl border border-slate-100 p-4">
-        <div className="mb-2 text-xs font-medium text-slate-500">信用评分计算公式</div>
-        <pre className="overflow-auto whitespace-pre-wrap rounded-lg bg-slate-900 p-3 text-[11px] leading-relaxed text-emerald-400">{`信用评分 = 身份真实性×20% + 还款能力×25% + 信用历史×25%
-         + 行为稳定性×10% + 设备安全性×10% + 关联风险×10%
-         = ${d.dimensions.map((x) => `${x.score}×${x.weight / 100}`).join(' + ')}
-         = ${d.baseScore.toFixed(2)}（基础加权得分）`}</pre>
-        <div className="mt-3 text-xs font-medium text-slate-500">叠加惩罚机制（多维度同时中高风险时额外加分）</div>
-        <div className="mt-1.5 space-y-1.5">
-          {d.penalty.map((p, i) => (
-            <div key={i} className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2 text-xs">
-              <span className={cn(p.hit ? 'text-rose-600' : 'text-slate-400')}>{p.condition}</span>
-              <span className={cn('font-semibold', p.hit ? 'text-rose-600' : 'text-slate-300')}>{p.hit ? `+${(d.baseScore + penaltyHit).toFixed(2)}` : '+0'}（{p.hit ? '已触发' : '未触发'}）</span>
-            </div>
-          ))}
-        </div>
-        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
-          <span className="text-slate-500">基础分 <b className="text-ink-900">{d.baseScore.toFixed(2)}</b></span>
-          <span className="text-slate-500">叠加惩罚 <b className="text-rose-600">+{penaltyHit}</b></span>
-          <span className="text-slate-500">最终评分 <b className="text-ink-900">{d.finalComputed.toFixed(2)}</b></span>
-          <span className="text-slate-500">实际评定 <b className={cn('font-bold', bandColor)}>{d.creditScore} 分（{d.riskLevel}风险）</b></span>
-        </div>
+      {/* 评分维度分布（六维加权）— 列表，样式与欺诈识别报告「因子构成表」一致 */}
+      <div className="mt-5 mb-1 text-xs font-medium text-slate-500">评分维度分布（六维加权）</div>
+      <div className="overflow-hidden rounded-xl border border-slate-100">
+        <table className="w-full text-left text-xs">
+          <thead>
+            <tr className="bg-slate-50 text-slate-400">
+              <th className="px-3 py-2 font-medium">维度</th>
+              <th className="px-3 py-2 text-right font-medium">得分</th>
+              <th className="px-3 py-2 text-right font-medium">权重</th>
+              <th className="px-3 py-2 text-center font-medium">等级</th>
+              <th className="px-3 py-2 font-medium">说明</th>
+            </tr>
+          </thead>
+          <tbody>
+            {d.dimensions.map((dim) => (
+              <tr
+                key={dim.key}
+                className="cursor-pointer border-t border-slate-100 transition hover:bg-slate-50"
+                onClick={() => jumpTo(dim.key)}
+                title="点击定位到对应维度分析"
+              >
+                <td className="px-3 py-2.5 font-medium text-ink-900">{dim.name}</td>
+                <td className={cn('px-3 py-2.5 text-right font-semibold', bandText[dim.level])}>{dim.score}</td>
+                <td className="px-3 py-2.5 text-right text-slate-400">{dim.weight}%</td>
+                <td className="px-3 py-2.5 text-center"><span className={cn('rounded px-1.5 py-0.5 text-[10px] font-medium', levelCls[dim.level])}>{levelText[dim.level]}</span></td>
+                <td className="px-3 py-2.5 text-slate-500">{dim.note}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
+
     </div>
   )
 }
@@ -195,77 +225,6 @@ function DimensionPanel({ d, images }: { d: CreditDimension; images?: CreditImag
   )
 }
 
-/* ========================= 授信建议 ========================= */
-function RecommendationPanel({ d }: { d: CreditKimiReport }) {
-  const r = d.recommendation
-  return (
-    <div className="space-y-4">
-      <div className="rounded-xl border border-slate-100 bg-slate-50 p-4">
-        <div className="text-sm font-semibold text-ink-900">{r.advice}</div>
-        <div className="mt-1 text-xs text-slate-500">建议理由：{r.reason}</div>
-      </div>
-      <div className="grid gap-3 sm:grid-cols-2">
-        <div className="rounded-lg border border-emerald-100 bg-emerald-50/50 p-3">
-          <div className="mb-1 text-xs font-medium text-emerald-700">正向因素</div>
-          <div className="text-xs text-slate-600">{r.positive}</div>
-        </div>
-        <div className="rounded-lg border border-rose-100 bg-rose-50/50 p-3">
-          <div className="mb-1 text-xs font-medium text-rose-700">风险因素</div>
-          <div className="text-xs text-slate-600">{r.risk}</div>
-        </div>
-      </div>
-      <div className="rounded-lg border border-slate-100 p-3 text-xs">
-        <span className="text-slate-500">参考授信额度：</span><b className="text-ink-900">{r.creditLimit}</b>
-      </div>
-      <div className="overflow-hidden rounded-xl border border-slate-100">
-        <table className="w-full text-left text-xs">
-          <thead>
-            <tr className="bg-slate-50 text-slate-400">
-              <th className="px-3 py-2 font-medium">信用评分</th>
-              <th className="px-3 py-2 font-medium">风险等级</th>
-              <th className="px-3 py-2 font-medium">建议授信额度</th>
-              <th className="px-3 py-2 font-medium">建议利率浮动</th>
-            </tr>
-          </thead>
-          <tbody>
-            {r.limitTable.map((row, i) => (
-              <tr key={i} className="border-t border-slate-100">
-                <td className="px-3 py-2.5 text-slate-700">{row.scoreRange}</td>
-                <td className="px-3 py-2.5"><span className={cn('rounded px-1.5 py-0.5 text-[10px] font-medium', levelCls[(row.level.replace('风险', '') as CreditLevel) || '低'])}>{row.level}</span></td>
-                <td className="px-3 py-2.5 text-slate-600">{row.limit}</td>
-                <td className="px-3 py-2.5 text-slate-500">{row.rate}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  )
-}
-
-/* ========================= 操作日志时间线 ========================= */
-function TimelineLog({ logs }: { logs: CreditKimiLog[] }) {
-  return (
-    <ol className="relative space-y-4 border-l border-slate-200 pl-5">
-      {logs.map((l) => (
-        <li key={l.id} className="relative">
-          <span className="absolute -left-[1.4rem] top-1 h-2.5 w-2.5 rounded-full bg-brand-500 ring-4 ring-white" />
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-sm font-medium text-ink-900">{l.type}</span>
-            {l.result && (
-              <span className={cn('rounded px-1.5 py-0.5 text-[10px] font-medium', l.result === '命中' ? 'bg-rose-100 text-rose-700' : l.result === '通过' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600')}>{l.result}</span>
-            )}
-            <span className="text-[11px] text-slate-400">{l.time}</span>
-            <span className="text-[11px] text-slate-400">· {l.operator}</span>
-          </div>
-          <div className="mt-0.5 text-xs text-slate-600">{l.content}</div>
-          {l.remark && <div className="mt-0.5 text-[11px] text-slate-400">备注：{l.remark}</div>}
-        </li>
-      ))}
-    </ol>
-  )
-}
-
 /* ========================= 主页面 ========================= */
 export default function CreditKimiDetail() {
   const nav = useNavigate()
@@ -303,6 +262,16 @@ export default function CreditKimiDetail() {
   const addLog = (entry: Omit<CreditKimiLog, 'id'>) =>
     setLogs((prev) => [{ ...entry, id: `log${Date.now()}` }, ...prev])
 
+  // 操作日志复用信息核验「整体操作」合并表格：将信用日志映射为 OpLog（与欺诈识别报告九、操作日志一致）
+  const opLogRows: OpLog[] = logs.map((l, i) => ({
+    id: `${d.appId}-op-${i}`,
+    target: d.name,
+    actionType: l.type as OpActionType,
+    operator: l.operator,
+    time: l.time,
+    remark: [l.content, l.remark].filter(Boolean).join(' · '),
+  }))
+
   const toneFor = (lv: CreditLevel): 'ok' | 'alert' | 'normal' =>
     lv === '低' ? 'ok' : 'alert'
 
@@ -332,7 +301,38 @@ export default function CreditKimiDetail() {
         <div className="min-w-0 flex-1 space-y-4">
           <ScoreOverviewCard d={d} />
 
-          <CreditKimiActionBar row={row} onApply={applyRow} flash={flash} showView={false} />
+          {/* 系统状态 / 处置操作栏（第二个卡片）：操作按钮 + 授信建议（对齐欺诈识别报告「处置建议」） */}
+          <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-card">
+            <CreditKimiActionBar row={row} onApply={applyRow} flash={flash} showView={false} />
+            {/* 授信建议（原第七部分：移至第二卡片，删除独立标题） */}
+            <div id="recommend" className="mt-4 border-t border-slate-100 pt-3">
+              <div className="rounded-xl border border-rose-200 bg-rose-50/50 p-4">
+                <div className="text-sm font-semibold text-ink-900">授信建议：{d.creditAdvice}</div>
+                <p className="mt-1 text-xs leading-relaxed text-slate-600">建议理由：{d.recommendation.reason}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* 授信补充说明（原「七、授信建议」：删除标题与额度列表，保留因素与处置区，置于第二个卡片下方） */}
+          <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-card">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="rounded-lg border border-emerald-100 bg-emerald-50/50 p-3">
+                <div className="mb-1 text-xs font-medium text-emerald-700">正向因素</div>
+                <div className="text-xs text-slate-600">{d.recommendation.positive}</div>
+              </div>
+              <div className="rounded-lg border border-rose-100 bg-rose-50/50 p-3">
+                <div className="mb-1 text-xs font-medium text-rose-700">风险因素</div>
+                <div className="text-xs text-slate-600">{d.recommendation.risk}</div>
+              </div>
+            </div>
+            <div className="mt-3 rounded-lg border border-slate-100 p-3 text-xs">
+              <span className="text-slate-500">参考授信额度：</span><b className="text-ink-900">{d.recommendation.creditLimit}</b>
+            </div>
+            <div className="mt-3 border-t border-slate-100 pt-3">
+              <div className="mb-2 text-xs font-medium text-slate-500">处置操作区</div>
+              <CreditKimiDispositionBar row={row} onApply={applyRow} onLog={addLog} flash={flash} />
+            </div>
+          </div>
 
           <Panel title="一、身份真实性" id="identity">
             <DimensionPanel d={d.dimensions[0]} images={d.images} />
@@ -358,17 +358,9 @@ export default function CreditKimiDetail() {
             <DimensionPanel d={d.dimensions[5]} />
           </Panel>
 
-          <Panel title="七、授信建议" id="recommend">
-            <RecommendationPanel d={d} />
-            <div className="mt-4 border-t border-slate-100 pt-4">
-              <div className="mb-2 text-xs font-medium text-slate-500">处置操作区</div>
-              <CreditKimiDispositionBar row={row} onApply={applyRow} onLog={addLog} flash={flash} />
-            </div>
-          </Panel>
-
-          <Panel title="八、信用评估操作日志" id="logs">
-            <TimelineLog logs={logs} />
-          </Panel>
+        <Panel title="七、操作日志" id="logs">
+          <MergedOpTable itemActions={[]} opLogs={opLogRows} />
+        </Panel>
 
           <button
             type="button"

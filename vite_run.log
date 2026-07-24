@@ -1,0 +1,53 @@
+Re-optimizing dependencies because vite config has changed
+
+  [32m[1mVITE[22m v5.4.21[39m  [2mready in [0m[1m2370[22m[2m[0m ms[22m
+
+  [32m➜[39m  [1mLocal[22m:   [36mhttp://localhost:[1m5173[22m/[39m
+  [32m➜[39m  [1mNetwork[22m: [36mhttp://192.168.1.53:[1m5173[22m/[39m
+[2m10:39:48[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/console/FraudScheme4Detail.tsx, /src/index.css[22m
+[2m10:47:39[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/console/CreditKimiOps.tsx, /src/index.css[22m
+[2m10:47:40[22m [36m[1m[vite][22m[39m [33mhmr invalidate [39m[2m/src/console/CreditKimiOps.tsx[22m Could not Fast Refresh ("CREDIT_OP_LABEL" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+[2m10:47:40[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/index.css, /src/console/CreditKimiDetail.tsx, /src/console/CreditKimiList.tsx[22m
+[2m10:48:59[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/console/CreditKimiOps.tsx, /src/index.css[22m
+[2m10:49:00[22m [36m[1m[vite][22m[39m [33mhmr invalidate [39m[2m/src/console/CreditKimiOps.tsx[22m Could not Fast Refresh ("CREDIT_OP_LABEL" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+[2m10:49:00[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/index.css, /src/console/CreditKimiDetail.tsx, /src/console/CreditKimiList.tsx[22m
+[2m10:49:04[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/console/CreditKimiOps.tsx, /src/index.css[22m
+[2m10:49:05[22m [36m[1m[vite][22m[39m [33mhmr invalidate [39m[2m/src/console/CreditKimiOps.tsx[22m Could not Fast Refresh ("CREDIT_OP_LABEL" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+[2m10:49:05[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/index.css, /src/console/CreditKimiDetail.tsx, /src/console/CreditKimiList.tsx[22m
+[2m10:49:10[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/console/CreditKimiList.tsx, /src/index.css[22m
+[2m10:49:18[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/console/CreditKimiList.tsx, /src/index.css[22m
+[2m10:49:23[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/console/CreditKimiList.tsx, /src/index.css[22m
+[2m10:49:30[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/console/CreditKimiList.tsx, /src/index.css[22m
+[2m11:01:18[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/console/CreditKimiDetail.tsx, /src/index.css[22m
+[2m11:01:20[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/console/CreditKimiDetail.tsx, /src/index.css[22m
+[2m11:01:39[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/console/CreditKimiDetail.tsx, /src/index.css[22m
+[2m11:08:55[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/console/CreditKimiList.tsx, /src/index.css[22m
+[2m11:15:40[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/console/CreditKimiDetail.tsx, /src/index.css[22m
+[2m11:15:50[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/console/CreditKimiDetail.tsx, /src/index.css[22m
+[2m11:16:01[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/console/CreditKimiDetail.tsx, /src/index.css[22m
+[2m11:16:41[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/console/CreditKimiDetail.tsx, /src/index.css[22m
+[2m11:16:41[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/console/CreditKimiDetail.tsx, /src/index.css[22m
+[2m11:16:45[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/console/CreditKimiDetail.tsx, /src/index.css[22m
+[2m11:16:47[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/console/CreditKimiDetail.tsx, /src/index.css[22m
+[2m11:16:48[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/console/CreditKimiDetail.tsx, /src/index.css[22m
+[2m11:20:03[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/console/CreditKimiDetail.tsx, /src/index.css[22m
+[2m11:20:09[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/console/CreditKimiDetail.tsx, /src/index.css[22m
+[2m11:20:18[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/console/CreditKimiDetail.tsx, /src/index.css[22m
+[2m14:41:51[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/console/CreditKimiDetail.tsx, /src/index.css[22m
+[2m14:42:03[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/console/CreditKimiDetail.tsx, /src/index.css[22m
+[2m14:51:07[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/console/CreditKimiDetail.tsx, /src/index.css[22m
+[2m14:51:15[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/console/CreditKimiDetail.tsx, /src/index.css[22m
+[2m14:51:20[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/console/CreditKimiDetail.tsx, /src/index.css[22m
+[2m14:52:16[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/console/CreditKimiDetail.tsx, /src/index.css[22m
+[2m14:52:22[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/console/CreditKimiDetail.tsx, /src/index.css[22m
+[2m15:17:10[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/index.css, /src/console/Console.tsx[22m
+[2m15:17:20[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/index.css, /src/console/Console.tsx[22m
+[2m15:19:43[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/console/Console.tsx, /src/index.css[22m
+[2m15:19:51[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/console/Console.tsx, /src/index.css[22m
+[2m15:19:59[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/console/Console.tsx, /src/index.css[22m
+[2m15:20:06[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/console/Console.tsx, /src/index.css[22m
+[2m15:20:13[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/console/Console.tsx, /src/index.css[22m
+[2m15:21:17[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/console/Console.tsx, /src/index.css[22m
+[2m15:22:06[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/console/Console.tsx, /src/index.css[22m
+[2m15:25:56[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/index.css, /src/console/Console.tsx[22m
+[2m15:26:50[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/index.css, /src/console/Console.tsx[22m

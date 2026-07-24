@@ -1,6 +1,6 @@
 // 欺诈识别（方案4 · 完整版）· 状态/操作矩阵与操作弹窗
 // 采用方案4 文档定义的独立欺诈处置状态机（非复用信息核验 VerifyOps）：
-//   人工处置状态：核验计算中 / 待确认 / 已确认 / 初审确认拒贷办结 / 强制放行办结 / 加入黑名单 /
+//   人工处置状态：核验计算中 / 待确认 / 已确认 / 初审拒贷 / 强制放行 / 加入黑名单 /
 //                 待审核 / 已提交双人复核 / 双人复核-放行办结 / 双人复核-拒绝办结
 //   行内操作：查看 / 报告确认 / 强制复审 / 加入黑名单 / 提交双人复核 / 录入备注 / 确认放行 / 确认拒绝
 // 交互逻辑（弹窗 / 状态流转 / 日志追加）与信息核验体系 1:1 对齐。
@@ -56,8 +56,8 @@ export function fraudScheme4OpsFor(work: FraudScheme4WorkStatus, band?: FraudS4S
       return isHigh ? ['view', 'reportConfirm', 'addBlacklist'] : ['view', 'reportConfirm']
     case '已确认': // 仅查看
       return ['view']
-    case '初审确认拒贷办结':
-    case '强制放行办结':
+    case '初审拒贷':
+    case '强制放行':
     case '加入黑名单': // 办结态，仅查看
       return ['view']
     case '待审核': // 中风险预警：查看/提交双人复核/录入备注
@@ -76,7 +76,7 @@ export function fraudScheme4ViewLocked(work: FraudS4WorkStatus): boolean {
 
 const WORK_KIND: Record<FraudS4WorkStatus, 'red' | 'amber' | 'green' | 'blue' | 'gray'> = {
   核验计算中: 'gray', 待确认: 'amber', 已确认: 'green',
-  初审确认拒贷办结: 'gray', 强制放行办结: 'gray', 加入黑名单: 'red',
+  初审拒贷: 'gray', 强制放行: 'gray', 加入黑名单: 'red',
   待审核: 'amber', 已提交双人复核: 'blue', '双人复核-放行办结': 'gray', '双人复核-拒绝办结': 'gray',
 }
 const BAND_KIND: Record<FraudS4ScoreBand, 'green' | 'amber' | 'orange' | 'red'> = {

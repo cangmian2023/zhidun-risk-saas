@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import type { ReactNode, ButtonHTMLAttributes } from 'react'
+import { createPortal } from 'react-dom'
 
 /* ---------- Page header ---------- */
 export function PageHeader({
@@ -396,7 +397,7 @@ export function Drawer({
   width?: string
 }) {
   if (!open) return null
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex justify-end">
       <div className="absolute inset-0 bg-slate-900/40" onClick={onClose} />
       <div className={`relative h-full w-full ${width} overflow-y-auto bg-white shadow-2xl`}>
@@ -413,7 +414,8 @@ export function Drawer({
         </div>
         <div className="px-6 py-5">{children}</div>
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }
 
@@ -432,7 +434,7 @@ export function Modal({
   footer?: ReactNode
 }) {
   if (!open) return null
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-slate-900/40" onClick={onClose} />
       <div className="relative w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl">
@@ -450,7 +452,8 @@ export function Modal({
         <div className="max-h-[70vh] overflow-y-auto px-6 py-5">{children}</div>
         {footer && <div className="flex justify-end gap-2 border-t border-slate-100 px-6 py-4">{footer}</div>}
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }
 

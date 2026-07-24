@@ -218,7 +218,7 @@ function RuleTable({ rules, onExempt }: { rules: FraudS4Rule[]; onExempt: (name:
                   <td className="px-3 py-2.5 whitespace-nowrap">
                     <button type="button" onClick={() => setDetail(r)} className="text-brand-600 transition hover:underline">详情</button>
                     {hit && pol.canExempt && (
-                      <button type="button" onClick={() => onExempt(r.name)} className="ml-2 text-slate-500 transition hover:underline">豁免</button>
+                      <button type="button" onClick={() => onExempt(r.name)} className="ml-2 text-brand-600 transition hover:underline">豁免</button>
                     )}
                   </td>
                 </tr>
@@ -230,6 +230,39 @@ function RuleTable({ rules, onExempt }: { rules: FraudS4Rule[]; onExempt: (name:
       {detail && <RuleDetailModal rule={detail} onClose={() => setDetail(null)} />}
     </>
   )
+}
+
+/* ========================= 字段预警配色 / 豁免可用态 ========================= */
+type FieldState = 'abnormal' | 'normal' | 'none'
+const FIELD_STATE_COLOR: Record<FieldState, string> = {
+  abnormal: 'text-rose-600',
+  normal: 'text-emerald-600',
+  none: 'text-slate-400',
+}
+function deviceFieldState(k: string, raw: string): FieldState {
+  const value = (raw ?? '').trim()
+  if (!value || value === '—') return 'none'
+  const neg = /未 ?Root|未越狱|未检测到|正常/i
+  const hit = (re: RegExp) => re.test(value) && !neg.test(value)
+  switch (k) {
+    case 'Root/越狱状态': return hit(/已 ?Root|已越狱|越狱|Root/i) ? 'abnormal' : 'normal'
+    case '模拟器检测': return hit(/模拟器/i) ? 'abnormal' : 'normal'
+    case '代理/VPN检测': return hit(/VPN|代理/i) ? 'abnormal' : 'normal'
+    case '设备关联身份数': return Number(value.replace(/[^\d]/g, '')) > 1 ? 'abnormal' : 'normal'
+    default: return 'normal'
+  }
+}
+function behaviorFieldState(k: string, raw: string): FieldState {
+  const value = (raw ?? '').trim()
+  if (!value || value === '—') return 'none'
+  const neg = /正常|未检测到/i
+  const hit = (re: RegExp) => re.test(value) && !neg.test(value)
+  switch (k) {
+    case '填写速度异常': return hit(/异常|快|慢/i) ? 'abnormal' : 'normal'
+    case 'GPS定位异常': return hit(/异常|漂移|不一致|偏差|可疑/i) ? 'abnormal' : 'normal'
+    case '操作轨迹异常': return value !== '—' ? 'abnormal' : 'normal'
+    default: return 'normal'
+  }
 }
 
 /* ========================= 主页面 ========================= */
@@ -502,17 +535,23 @@ export default function FraudScheme4Detail() {
                 { k: '设备关联身份数', v: `${d.device.relatedIdentities} 个`, exempt: true },
                 { k: '设备关联申请数', v: `${d.device.relatedApplications} 次` },
                 { k: '设备首次出现时间', v: d.device.firstSeen },
-              ] as Array<{ k: string; v: string; exempt?: boolean }>).map((e) => (
-                <div key={e.k} className="flex items-center justify-between gap-2 rounded-lg bg-slate-50 px-3.5 py-2">
-                  <span className="text-sm text-slate-500">{e.k}</span>
-                  <span className="flex items-center gap-2">
-                    <span className="text-right text-sm font-medium text-ink-900">{e.v}</span>
-                    {e.exempt && (
-                      <button type="button" onClick={() => setModal({ type: 'exempt', target: e.k })} className="whitespace-nowrap text-xs text-brand-600 transition hover:underline">豁免</button>
-                    )}
-                  </span>
-                </div>
-              ))}
+              ] as Array<{ k: string; v: string; exempt?: boolean }>).map((e) => {
+                const st = deviceFieldState(e.k, e.v)
+                const disabled = e.exempt && st !== 'abnormal'
+                return (
+                  <div key={e.k} className="flex items-center justify-between gap-2 rounded-lg bg-slate-50 px-3.5 py-2">
+                    <span className="text-sm text-slate-500">{e.k}</span>
+                    <span className="flex items-center gap-2">
+                      <span className={cn('text-right text-sm font-medium', FIELD_STATE_COLOR[st])}>{e.v}</span>
+                      {e.exempt && (
+                        disabled
+                          ? <span className="whitespace-nowrap text-xs text-slate-300 cursor-not-allowed">豁免</span>
+                          : <button type="button" onClick={() => setModal({ type: 'exempt', target: e.k })} className="whitespace-nowrap text-xs text-brand-600 transition hover:underline">豁免</button>
+                      )}
+                    </span>
+                  </div>
+                )
+              })}
             </div>
             <div className="mt-3 flex flex-wrap gap-1.5">
               {d.device.riskTags.map((t) => <span key={t} className="rounded-full bg-rose-100 px-2.5 py-0.5 text-xs font-medium text-rose-700">{t}</span>)}
@@ -525,24 +564,33 @@ export default function FraudScheme4Detail() {
 
           {/* 五、行为欺诈详情（原行为轨迹分析） */}
           <Panel title="五、行为欺诈详情" id="behavior">
-            <div className="grid grid-cols-1 gap-x-8 gap-y-2 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid grid-cols-1 gap-x-8 gap-y-2 sm:grid-cols-2">
               {([
                 { k: '申请耗时', v: d_b(d).duration },
                 { k: '填写速度异常', v: d_b(d).fillSpeed, exempt: true },
                 { k: '页面停留分布', v: d_b(d).dwell },
-                { k: '操作路径', v: d_b(d).path },
                 { k: '操作轨迹异常', v: d_b(d).anomalies.join('、') || '—', exempt: true },
                 { k: '与正常用户对比', v: d_b(d).deviation },
                 { k: 'GPS定位异常', v: d.behavior.gps, exempt: true },
-              ] as Array<{ k: string; v: string; exempt?: boolean }>).map((e) => (
-                <div key={e.k} className="flex flex-col gap-0.5 rounded-lg bg-slate-50 px-3.5 py-2">
-                  <span className="text-xs text-slate-400">{e.k}</span>
-                  <span className="text-sm font-medium text-ink-900">{e.v}</span>
-                  {e.exempt && (
-                    <button type="button" onClick={() => setModal({ type: 'exempt', target: e.k })} className="mt-0.5 self-start whitespace-nowrap text-xs text-brand-600 transition hover:underline">豁免</button>
-                  )}
-                </div>
-              ))}
+              ] as Array<{ k: string; v: string; exempt?: boolean }>).map((e) => {
+                const st = behaviorFieldState(e.k, e.v)
+                const disabled = e.exempt && st !== 'abnormal'
+                return (
+                  <div key={e.k} className="flex flex-col gap-0.5 rounded-lg bg-slate-50 px-3.5 py-2">
+                    <span className="text-xs text-slate-400">{e.k}</span>
+                    <span className={cn('text-sm font-medium', FIELD_STATE_COLOR[st])}>{e.v}</span>
+                    {e.exempt && (
+                      disabled
+                        ? <span className="mt-0.5 self-start whitespace-nowrap text-xs text-slate-300 cursor-not-allowed">豁免</span>
+                        : <button type="button" onClick={() => setModal({ type: 'exempt', target: e.k })} className="mt-0.5 self-start whitespace-nowrap text-xs text-brand-600 transition hover:underline">豁免</button>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+            <div className="mt-2 flex flex-col gap-0.5 rounded-lg bg-slate-50 px-3.5 py-2">
+              <span className="text-xs text-slate-400">操作路径</span>
+              <span className="text-sm font-medium text-ink-900">{d_b(d).path}</span>
             </div>
             <div className="mt-4">
               <div className="mb-2 text-xs font-medium text-slate-500">行为轨迹时间线</div>

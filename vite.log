@@ -1,16 +1,104 @@
-Re-optimizing dependencies because vite config has changed
-Port 5173 is in use, trying another one...
+ERROR: Input redirection is not supported, exiting the process immediately.
+ERROR: Input redirection is not supported, exiting the process immediately.
 
-  [32m[1mVITE[22m v5.4.21[39m  [2mready in [0m[1m1143[22m[2m[0m ms[22m
+  [32m[1mVITE[22m v5.4.21[39m  [2mready in [0m[1m7593[22m[2m[0m ms[22m
 
-  [32m➜[39m  [1mLocal[22m:   [36mhttp://localhost:[1m5174[22m/[39m
-  [32m➜[39m  [1mNetwork[22m: [36mhttp://192.168.1.53:[1m5174[22m/[39m
-[2m16:39:41[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/console/VerifyOps.tsx, /@fs/D:/yuexin/project/risk/saas/src/index.css[22m
-[2m16:39:41[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/console/VerifyOps.tsx, /@fs/D:/yuexin/project/risk/saas/src/index.css[22m
-[2m16:39:55[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/console/InfoVerifyList.tsx, /@fs/D:/yuexin/project/risk/saas/src/index.css[22m
-[2m16:40:01[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/console/InfoVerifyList.tsx, /@fs/D:/yuexin/project/risk/saas/src/index.css[22m
-[2m16:40:10[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/console/InfoVerifyList.tsx, /@fs/D:/yuexin/project/risk/saas/src/index.css[22m
-[2m16:40:16[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/console/InfoVerifyList.tsx, /@fs/D:/yuexin/project/risk/saas/src/index.css[22m
-[2m16:40:22[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/console/InfoVerifyList.tsx, /@fs/D:/yuexin/project/risk/saas/src/index.css[22m
-[2m16:40:32[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/console/InfoVerifyList.tsx, /@fs/D:/yuexin/project/risk/saas/src/index.css[22m
-[2m16:40:34[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/console/InfoVerifyList.tsx, /@fs/D:/yuexin/project/risk/saas/src/index.css[22m
+  [32m➜[39m  [1mLocal[22m:   [36mhttp://localhost:[1m5173[22m/[39m
+  [32m➜[39m  [1mNetwork[22m: [36mhttp://192.168.1.53:[1m5173[22m/[39m
+[2m09:38:53[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/ui.tsx, /@fs/D:/yuexin/project/risk/saas/src/index.css[22m
+[2m09:38:53[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/ui.tsx, /@fs/D:/yuexin/project/risk/saas/src/index.css[22m
+[2m09:39:03[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/ui.tsx, /@fs/D:/yuexin/project/risk/saas/src/index.css[22m
+[2m09:39:14[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/ui.tsx, /@fs/D:/yuexin/project/risk/saas/src/index.css[22m
+[2m09:39:22[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/@fs/D:/yuexin/project/risk/saas/src/index.css, /src/console/FraudScheme4Detail.tsx[22m
+[2m09:39:24[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/@fs/D:/yuexin/project/risk/saas/src/index.css, /src/console/FraudScheme4Detail.tsx[22m
+[2m09:39:27[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/console/FraudScheme4Ops.tsx, /@fs/D:/yuexin/project/risk/saas/src/index.css[22m
+[2m09:39:28[22m [36m[1m[vite][22m[39m [33mhmr invalidate [39m[2m/src/console/FraudScheme4Ops.tsx[22m Could not Fast Refresh ("FRAUD_S4_OP_LABEL" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+[2m09:39:28[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/@fs/D:/yuexin/project/risk/saas/src/index.css, /src/console/FraudScheme4Detail.tsx, /src/console/FraudScheme4List.tsx[22m
+[2m09:39:30[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/console/FraudScheme4Ops.tsx, /@fs/D:/yuexin/project/risk/saas/src/index.css[22m
+[2m09:39:31[22m [36m[1m[vite][22m[39m [33mhmr invalidate [39m[2m/src/console/FraudScheme4Ops.tsx[22m Could not Fast Refresh ("FRAUD_S4_OP_LABEL" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+[2m09:39:31[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/@fs/D:/yuexin/project/risk/saas/src/index.css, /src/console/FraudScheme4Detail.tsx, /src/console/FraudScheme4List.tsx[22m
+[2m09:39:39[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/console/FraudScheme4List.tsx, /@fs/D:/yuexin/project/risk/saas/src/index.css[22m
+[2m09:40:23[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/console/FraudScheme4List.tsx, /@fs/D:/yuexin/project/risk/saas/src/index.css[22m
+[2m09:40:25[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/console/FraudScheme4List.tsx, /@fs/D:/yuexin/project/risk/saas/src/index.css[22m
+[2m09:40:51[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/console/FraudScheme4List.tsx, /@fs/D:/yuexin/project/risk/saas/src/index.css[22m
+[2m09:44:42[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/console/FraudScheme4Detail.tsx, /@fs/D:/yuexin/project/risk/saas/src/index.css[22m
+[2m09:48:32[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/console/FraudScheme4Detail.tsx, /@fs/D:/yuexin/project/risk/saas/src/index.css[22m
+[2m09:48:59[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/console/FraudScheme4Detail.tsx, /@fs/D:/yuexin/project/risk/saas/src/index.css[22m
+[2m09:49:25[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/console/FraudScheme4Detail.tsx, /@fs/D:/yuexin/project/risk/saas/src/index.css[22m
+[2m09:50:08[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/console/FraudScheme4Detail.tsx, /@fs/D:/yuexin/project/risk/saas/src/index.css[22m
+[2m09:50:30[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/@fs/D:/yuexin/project/risk/saas/src/index.css, /src/console/FraudScheme4Detail.tsx[22m
+[2m09:50:33[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/console/FraudScheme4Ops.tsx, /@fs/D:/yuexin/project/risk/saas/src/index.css[22m
+[2m09:50:33[22m [36m[1m[vite][22m[39m [33mhmr invalidate [39m[2m/src/console/FraudScheme4Ops.tsx[22m Could not Fast Refresh ("FRAUD_S4_OP_LABEL" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+[2m09:50:33[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/@fs/D:/yuexin/project/risk/saas/src/index.css, /src/console/FraudScheme4Detail.tsx, /src/console/FraudScheme4List.tsx[22m
+[2m09:51:23[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/console/FraudScheme4Detail.tsx, /@fs/D:/yuexin/project/risk/saas/src/index.css[22m
+[2m09:52:55[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/console/FraudScheme4Detail.tsx, /@fs/D:/yuexin/project/risk/saas/src/index.css[22m
+[2m09:55:54[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/ui.tsx, /@fs/D:/yuexin/project/risk/saas/src/index.css[22m
+[2m09:55:54[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/@fs/D:/yuexin/project/risk/saas/src/console/Console.tsx, /@fs/D:/yuexin/project/risk/saas/src/index.css[22m
+[2m09:55:54[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/console/FraudScheme4List.tsx, /@fs/D:/yuexin/project/risk/saas/src/index.css[22m
+[2m09:55:54[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/console/FraudScheme4Detail.tsx, /@fs/D:/yuexin/project/risk/saas/src/index.css[22m
+[2m09:55:54[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/console/FraudScheme4Ops.tsx, /@fs/D:/yuexin/project/risk/saas/src/index.css[22m
+[2m09:55:54[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/ui.tsx, /@fs/D:/yuexin/project/risk/saas/src/index.css[22m
+[2m09:55:54[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/@fs/D:/yuexin/project/risk/saas/src/index.css, /@fs/D:/yuexin/project/risk/saas/src/console/Console.tsx[22m
+[2m09:55:54[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/@fs/D:/yuexin/project/risk/saas/src/index.css, /src/console/FraudScheme4Detail.tsx[22m
+[2m09:56:02[22m [36m[1m[vite][22m[39m [33mhmr invalidate [39m[2m/src/console/FraudScheme4Ops.tsx[22m Could not Fast Refresh ("FRAUD_S4_OP_LABEL" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+[2m09:56:02[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/@fs/D:/yuexin/project/risk/saas/src/index.css, /src/console/FraudScheme4Detail.tsx, /src/console/FraudScheme4List.tsx[22m
+[2m09:57:26[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/console/FraudScheme1Detail.tsx, /@fs/D:/yuexin/project/risk/saas/src/index.css[22m
+[2m09:57:26[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/console/FraudScheme1List.tsx, /@fs/D:/yuexin/project/risk/saas/src/index.css[22m
+[2m09:57:26[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/console/FraudScheme2List.tsx, /@fs/D:/yuexin/project/risk/saas/src/index.css[22m
+[2m09:57:26[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/console/FraudScheme2Detail.tsx, /@fs/D:/yuexin/project/risk/saas/src/index.css[22m
+[2m09:57:26[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/console/FraudScheme1Ops.tsx, /@fs/D:/yuexin/project/risk/saas/src/index.css[22m
+[2m09:57:26[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/console/FraudScheme3List.tsx, /@fs/D:/yuexin/project/risk/saas/src/index.css[22m
+[2m09:57:26[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/console/FraudScheme3Detail.tsx, /@fs/D:/yuexin/project/risk/saas/src/index.css[22m
+[2m09:57:26[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/console/FraudScheme2Ops.tsx, /@fs/D:/yuexin/project/risk/saas/src/index.css[22m
+[2m09:57:26[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/@fs/D:/yuexin/project/risk/saas/src/index.css, /src/console/FraudScheme1Detail.tsx[22m
+[2m09:57:26[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/@fs/D:/yuexin/project/risk/saas/src/index.css, /src/console/FraudScheme3Detail.tsx[22m
+[2m09:57:26[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/@fs/D:/yuexin/project/risk/saas/src/index.css, /src/console/FraudScheme2Detail.tsx[22m
+[2m09:57:26[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/console/FraudScheme1Detail.tsx, /@fs/D:/yuexin/project/risk/saas/src/index.css[22m
+[2m09:57:29[22m [36m[1m[vite][22m[39m [33mhmr invalidate [39m[2m/src/console/FraudScheme1Ops.tsx[22m Could not Fast Refresh ("FRAUD_OP_LABEL" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+[2m09:57:29[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/@fs/D:/yuexin/project/risk/saas/src/index.css, /src/console/FraudScheme1List.tsx, /src/console/FraudScheme1Detail.tsx[22m
+[2m09:57:29[22m [36m[1m[vite][22m[39m [33mhmr invalidate [39m[2m/src/console/FraudScheme2Ops.tsx[22m Could not Fast Refresh ("FRAUD_OP_LABEL" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+[2m09:57:29[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/@fs/D:/yuexin/project/risk/saas/src/index.css, /src/console/FraudScheme2List.tsx, /src/console/FraudScheme2Detail.tsx[22m
+[2m10:05:45[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/@fs/D:/yuexin/project/risk/saas/src/console/Console.tsx, /@fs/D:/yuexin/project/risk/saas/src/index.css[22m
+[2m10:05:45[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/@fs/D:/yuexin/project/risk/saas/src/console/Console.tsx, /@fs/D:/yuexin/project/risk/saas/src/index.css[22m
+[2m10:06:10[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/@fs/D:/yuexin/project/risk/saas/src/index.css, /@fs/D:/yuexin/project/risk/saas/src/console/Console.tsx[22m
+[2m10:09:10[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/console/CreditKimiDetail.tsx, /@fs/D:/yuexin/project/risk/saas/src/index.css[22m
+[2m10:09:10[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/console/CreditKimiOps.tsx, /@fs/D:/yuexin/project/risk/saas/src/index.css[22m
+[2m10:09:11[22m [36m[1m[vite][22m[39m [33mhmr invalidate [39m[2m/src/console/CreditKimiOps.tsx[22m Could not Fast Refresh ("CREDIT_OP_LABEL" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+[2m10:09:11[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/@fs/D:/yuexin/project/risk/saas/src/index.css, /src/console/CreditKimiList.tsx, /src/console/CreditKimiDetail.tsx[22m
+[2m10:24:45[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/@fs/D:/yuexin/project/risk/saas/src/index.css, /@fs/D:/yuexin/project/risk/saas/src/console/Console.tsx[22m
+[2m10:24:46[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/ui.tsx, /@fs/D:/yuexin/project/risk/saas/src/index.css[22m
+[2m10:25:05[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/ui.tsx, /@fs/D:/yuexin/project/risk/saas/src/index.css[22m
+[2m10:25:07[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/ui.tsx, /@fs/D:/yuexin/project/risk/saas/src/index.css[22m
+[2m10:25:13[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/ui.tsx, /@fs/D:/yuexin/project/risk/saas/src/index.css[22m
+[2m10:25:54[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/ui.tsx, /@fs/D:/yuexin/project/risk/saas/src/index.css[22m
+[2m10:26:08[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/@fs/D:/yuexin/project/risk/saas/src/console/Console.tsx, /@fs/D:/yuexin/project/risk/saas/src/index.css[22m
+[2m10:26:11[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/@fs/D:/yuexin/project/risk/saas/src/console/Console.tsx, /@fs/D:/yuexin/project/risk/saas/src/index.css[22m
+[2m10:26:14[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/@fs/D:/yuexin/project/risk/saas/src/console/Console.tsx, /@fs/D:/yuexin/project/risk/saas/src/index.css[22m
+[2m10:26:26[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/console/FraudScheme1List.tsx, /@fs/D:/yuexin/project/risk/saas/src/index.css[22m
+[2m10:26:26[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/console/FraudScheme1Detail.tsx, /@fs/D:/yuexin/project/risk/saas/src/index.css[22m
+[2m10:26:28[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/console/FraudScheme2List.tsx, /@fs/D:/yuexin/project/risk/saas/src/index.css[22m
+[2m10:26:29[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/console/FraudScheme2Detail.tsx, /@fs/D:/yuexin/project/risk/saas/src/index.css[22m
+[2m10:26:31[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/console/FraudScheme3List.tsx, /@fs/D:/yuexin/project/risk/saas/src/index.css[22m
+[2m10:26:33[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2mD:/yuexin/project/risk/saas/src/console/fraudScheme1Report.ts[22m
+[2m10:26:33[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/console/FraudScheme3Detail.tsx, /@fs/D:/yuexin/project/risk/saas/src/index.css[22m
+[2m10:26:35[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2mD:/yuexin/project/risk/saas/src/console/fraudScheme3Report.ts[22m
+[2m10:26:35[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2mD:/yuexin/project/risk/saas/src/console/fraudScheme2Report.ts[22m
+[2m10:27:18[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/@fs/D:/yuexin/project/risk/saas/src/index.css, /src/console/FraudScheme4Detail.tsx[22m
+[2m10:27:19[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/@fs/D:/yuexin/project/risk/saas/src/index.css, /src/console/FraudScheme4Detail.tsx[22m
+[2m10:27:21[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/console/FraudScheme4Ops.tsx, /@fs/D:/yuexin/project/risk/saas/src/index.css[22m
+[2m10:27:21[22m [36m[1m[vite][22m[39m [33mhmr invalidate [39m[2m/src/console/FraudScheme4Ops.tsx[22m Could not Fast Refresh ("FRAUD_S4_OP_LABEL" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+[2m10:27:21[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/@fs/D:/yuexin/project/risk/saas/src/index.css, /src/console/FraudScheme4Detail.tsx, /src/console/FraudScheme4List.tsx[22m
+[2m10:27:24[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/console/FraudScheme4Ops.tsx, /@fs/D:/yuexin/project/risk/saas/src/index.css[22m
+[2m10:27:24[22m [36m[1m[vite][22m[39m [33mhmr invalidate [39m[2m/src/console/FraudScheme4Ops.tsx[22m Could not Fast Refresh ("FRAUD_S4_OP_LABEL" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+[2m10:27:24[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/@fs/D:/yuexin/project/risk/saas/src/index.css, /src/console/FraudScheme4Detail.tsx, /src/console/FraudScheme4List.tsx[22m
+[2m10:27:25[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/console/FraudScheme4List.tsx, /@fs/D:/yuexin/project/risk/saas/src/index.css[22m
+[2m10:27:26[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/console/FraudScheme4List.tsx, /@fs/D:/yuexin/project/risk/saas/src/index.css[22m
+[2m10:27:37[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/console/FraudScheme4List.tsx, /@fs/D:/yuexin/project/risk/saas/src/index.css[22m
+[2m10:27:40[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/console/FraudScheme4List.tsx, /@fs/D:/yuexin/project/risk/saas/src/index.css[22m
+[2m10:28:46[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/console/FraudScheme4Detail.tsx, /@fs/D:/yuexin/project/risk/saas/src/index.css[22m
+[2m10:29:04[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/console/FraudScheme4Detail.tsx, /@fs/D:/yuexin/project/risk/saas/src/index.css[22m
+[2m10:29:19[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/console/FraudScheme4Detail.tsx, /@fs/D:/yuexin/project/risk/saas/src/index.css[22m
+[2m10:29:21[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/console/FraudScheme4Detail.tsx, /@fs/D:/yuexin/project/risk/saas/src/index.css[22m
+[2m10:31:25[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/console/FraudScheme1Ops.tsx, /@fs/D:/yuexin/project/risk/saas/src/index.css[22m
+[2m10:31:26[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/console/FraudScheme3Ops.tsx, /@fs/D:/yuexin/project/risk/saas/src/index.css[22m
+[2m10:31:26[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/console/FraudScheme2Ops.tsx, /@fs/D:/yuexin/project/risk/saas/src/index.css[22m

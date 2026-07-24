@@ -23,7 +23,7 @@ const BANDS: FraudS4ScoreBand[] = ['极低', '低', '中', '高', '极高']
 // 自动审核（按欺诈等级：低→通过 / 中→预警 / 高·极高→拒绝；结果计算前为 处理中）
 const AUTO_DECISIONS: FraudS4AutoDecision[] = ['通过', '拒绝', '预警', '处理中']
 // 人工审核（方案4 独立状态机，按 N8 矩阵）
-const WORK_STATUS: FraudS4WorkStatus[] = ['核验计算中', '待确认', '已确认', '初审确认拒贷办结', '强制放行办结', '加入黑名单', '待审核', '已提交双人复核', '双人复核-放行办结', '双人复核-拒绝办结']
+const WORK_STATUS: FraudS4WorkStatus[] = ['核验计算中', '待确认', '已确认', '初审拒贷', '强制放行', '加入黑名单', '待审核', '已提交双人复核', '双人复核-放行办结', '双人复核-拒绝办结']
 // 命中黑名单（命中 = 命中黑名单命中类规则）
 const BLACKLIST_OPTS: SelectOption[] = [
   { value: 'hit', label: '已命中黑名单' },
@@ -41,18 +41,18 @@ type S4ListRow = FraudScheme4Row & { applyTime: string; disposeTime: string }
 const seedRows: S4ListRow[] = [
   { id: 'FA-20260618-003', name: '王*强', product: '信用贷', amount: 30000, fraudScore: 88, scoreBand: '极高', hitRuleCount: 5, ruleTypes: ['设备欺诈', '团伙欺诈', '黑名单命中'], autoDecision: '拒绝', workStatus: '待确认', operator: '--', gangTag: '团伙A', applyTime: '2026-07-21 14:55', disposeTime: '' },
   { id: 'FA-20260618-004', name: '赵*敏', product: '经营贷', amount: 200000, fraudScore: 52, scoreBand: '中', hitRuleCount: 2, ruleTypes: ['设备欺诈', '团伙欺诈'], autoDecision: '预警', workStatus: '待审核', operator: '--', gangTag: '团伙B（疑似）', applyTime: '2026-07-21 13:15', disposeTime: '' },
-  { id: 'FA-20260620-011', name: '冯*雪', product: '信用贷', amount: 60000, fraudScore: 91, scoreBand: '极高', hitRuleCount: 6, ruleTypes: ['设备欺诈', '身份欺诈', '团伙欺诈', '黑名单命中'], autoDecision: '拒绝', workStatus: '初审确认拒贷办结', operator: '风控专员-张磊', gangTag: '团伙C', applyTime: '2026-07-20 09:50', disposeTime: '2026-07-20 18:20' },
+  { id: 'FA-20260620-011', name: '冯*雪', product: '信用贷', amount: 60000, fraudScore: 91, scoreBand: '极高', hitRuleCount: 6, ruleTypes: ['设备欺诈', '身份欺诈', '团伙欺诈', '黑名单命中'], autoDecision: '拒绝', workStatus: '初审拒贷', operator: '风控专员-张磊', gangTag: '团伙C', applyTime: '2026-07-20 09:50', disposeTime: '2026-07-20 18:20' },
   { id: 'FA-20260619-010', name: '郑*浩', product: '抵押贷', amount: 680000, fraudScore: 95, scoreBand: '极高', hitRuleCount: 7, ruleTypes: ['设备欺诈', '团伙欺诈', '行为欺诈', '黑名单命中'], autoDecision: '拒绝', workStatus: '加入黑名单', operator: '风控专员-张磊；主管-王芳', gangTag: '团伙A', applyTime: '2026-07-19 14:30', disposeTime: '2026-07-19 17:10' },
-  { id: 'FA-20260619-007', name: '孙*丽', product: '信用贷', amount: 120000, fraudScore: 61, scoreBand: '高', hitRuleCount: 3, ruleTypes: ['行为欺诈', '信息伪造'], autoDecision: '拒绝', workStatus: '初审确认拒贷办结', operator: '风控专员-张磊', gangTag: '未关联团伙', applyTime: '2026-07-19 10:03', disposeTime: '2026-07-19 17:10' },
+  { id: 'FA-20260619-007', name: '孙*丽', product: '信用贷', amount: 120000, fraudScore: 61, scoreBand: '高', hitRuleCount: 3, ruleTypes: ['行为欺诈', '信息伪造'], autoDecision: '拒绝', workStatus: '初审拒贷', operator: '风控专员-张磊', gangTag: '未关联团伙', applyTime: '2026-07-19 10:03', disposeTime: '2026-07-19 17:10' },
   { id: 'FA-20260620-012', name: '蒋*磊', product: '经营贷', amount: 150000, fraudScore: 44, scoreBand: '中', hitRuleCount: 1, ruleTypes: ['行为欺诈'], autoDecision: '预警', workStatus: '待审核', operator: '初审：审核员 1', gangTag: '未关联团伙', applyTime: '2026-07-20 10:25', disposeTime: '2026-07-21 11:15' },
   { id: 'FA-20260618-001', name: '张*伟', product: '信用贷', amount: 80000, fraudScore: 8, scoreBand: '低', hitRuleCount: 0, ruleTypes: [], autoDecision: '通过', workStatus: '待确认', operator: '--', gangTag: '未关联团伙', applyTime: '2026-07-18 11:20', disposeTime: '' },
   { id: 'FA-20260618-002', name: '李*娜', product: '抵押贷', amount: 500000, fraudScore: 15, scoreBand: '低', hitRuleCount: 0, ruleTypes: [], autoDecision: '通过', workStatus: '已确认', operator: '--', gangTag: '未关联团伙', applyTime: '2026-07-18 15:10', disposeTime: '' },
   { id: 'FA-20260620-013', name: '韩*梅', product: '信用贷', amount: 35000, fraudScore: 56, scoreBand: '中', hitRuleCount: 2, ruleTypes: ['设备欺诈', '行为欺诈'], autoDecision: '预警', workStatus: '待审核', operator: '初审：审核员 1', gangTag: '未关联团伙', applyTime: '2026-07-20 11:15', disposeTime: '2026-07-21 09:00' },
   { id: 'FA-20260618-005', name: '陈*刚', product: '信用贷', amount: 50000, fraudScore: 9, scoreBand: '低', hitRuleCount: 0, ruleTypes: [], autoDecision: '通过', workStatus: '已确认', operator: '--', gangTag: '未关联团伙', applyTime: '2026-07-18 16:40', disposeTime: '' },
   { id: 'FA-20260619-008', name: '周*杰', product: '经营贷', amount: 90000, fraudScore: 16, scoreBand: '低', hitRuleCount: 0, ruleTypes: [], autoDecision: '通过', workStatus: '已确认', operator: '初审：审核员 1', gangTag: '未关联团伙', applyTime: '2026-07-19 11:20', disposeTime: '' },
-  { id: 'FA-20260620-014', name: '杨*柳', product: '抵押贷', amount: 420000, fraudScore: 88, scoreBand: '极高', hitRuleCount: 5, ruleTypes: ['设备欺诈', '团伙欺诈', '黑名单命中'], autoDecision: '拒绝', workStatus: '初审确认拒贷办结', operator: '--', gangTag: '团伙A', applyTime: '2026-07-20 14:08', disposeTime: '' },
+  { id: 'FA-20260620-014', name: '杨*柳', product: '抵押贷', amount: 420000, fraudScore: 88, scoreBand: '极高', hitRuleCount: 5, ruleTypes: ['设备欺诈', '团伙欺诈', '黑名单命中'], autoDecision: '拒绝', workStatus: '初审拒贷', operator: '--', gangTag: '团伙A', applyTime: '2026-07-20 14:08', disposeTime: '' },
   { id: 'FA-20260619-009', name: '吴*婷', product: '信用贷', amount: 45000, fraudScore: 11, scoreBand: '低', hitRuleCount: 0, ruleTypes: [], autoDecision: '通过', workStatus: '已确认', operator: '初审：审核员 1', gangTag: '未关联团伙', applyTime: '2026-07-19 13:45', disposeTime: '2026-07-20 16:30' },
-  { id: 'FA-20260620-015', name: '何*强', product: '信用贷', amount: 70000, fraudScore: 67, scoreBand: '高', hitRuleCount: 3, ruleTypes: ['行为欺诈', '信息伪造', '设备欺诈'], autoDecision: '拒绝', workStatus: '强制放行办结', operator: '初审：审核员 1', gangTag: '团伙B（疑似）', applyTime: '2026-07-21 08:42', disposeTime: '' },
+  { id: 'FA-20260620-015', name: '何*强', product: '信用贷', amount: 70000, fraudScore: 67, scoreBand: '高', hitRuleCount: 3, ruleTypes: ['行为欺诈', '信息伪造', '设备欺诈'], autoDecision: '拒绝', workStatus: '强制放行', operator: '初审：审核员 1', gangTag: '团伙B（疑似）', applyTime: '2026-07-21 08:42', disposeTime: '' },
   { id: 'FA-20260621-016', name: '钱*润', product: '信用贷', amount: 25000, fraudScore: 0, scoreBand: '低', hitRuleCount: 0, ruleTypes: [], autoDecision: '处理中', workStatus: '核验计算中', operator: '--', gangTag: '未关联团伙', applyTime: '2026-07-21 20:00', disposeTime: '' },
 ]
 /* ───────────────────────── 多选项下拉（沿用信息核验筛选卡外观） ───────────────────────── */
@@ -105,7 +105,7 @@ function MultiChip<T extends string>({
 /* ───────────────────────── 冻结列 ───────────────────────── */
 type Side = 'left' | 'right' | null
 const C = {
-  id: 168, name: 104, product: 96, amount: 128, hits: 96, score: 104, band: 112, auto: 104, work: 128, operator: 208, disposeTime: 144, op: 224,
+  id: 168, name: 104, product: 96, amount: 128, hits: 84, score: 92, band: 112, auto: 104, work: 128, operator: 208, disposeTime: 144, op: 224,
 }
 const headStyle = (w: number, side: Side, offset = 0): CSSProperties => {
   const s: CSSProperties = { width: w, minWidth: w, maxWidth: w, position: 'sticky', top: 0 }
@@ -207,7 +207,7 @@ export default function FraudScheme4List() {
     <div className="min-h-screen bg-slate-50 text-slate-800">
       <PageHeader
         crumb="零售信贷风控 / 贷前审核"
-        title="欺诈识别（方案4）"
+        title="欺诈识别"
         subtitle="完整版设计文档实现 · 四档风险等级 + 六类规则命中 + 独立欺诈处置状态机（确认欺诈 / 误判放行 / 加入黑名单 / 提交复核 / 录入备注 / 归档）"
       />
 

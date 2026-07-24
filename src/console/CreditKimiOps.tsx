@@ -45,14 +45,24 @@ export const CREDIT_OP_LABEL: Record<CreditOpKey, string> = {
   note: '录入备注',
 }
 
-/** 列表操作矩阵：严格对齐文档 1.6（系统自动审批结果 × 人工审核状态 → 可执行按钮） */
-export function creditOpsFor(sys: CreditKimiSysResult, work: CreditKimiWorkStatus): CreditOpKey[] {
+/**
+ * 列表操作矩阵：参照 docs/fraud-scheme4-status-ops-matrix.md「状态—操作对应矩阵」登记。
+ * 由（信用风险等级 × 自动审批 × 人工审核）推导可用操作：
+ *  - 处理中 / 核验计算中：仅查看（按钮置灰，见 creditViewLocked）
+ *  - 已确认 / 双人复核办结：仅查看
+ *  - 已提交双人复核：查看 + 审核通过 / 拒绝授信 / 录入备注（终审）
+ *  - 中风险·预警·待审核：查看 + 提交双人复核 + 录入备注
+ *  - 待确认：查看 + 报告确认；高 / 极高·拒绝类额外给「强制复审」
+ */
+export function creditOpsFor(sys: CreditKimiSysResult, work: CreditKimiWorkStatus, risk?: CreditLevel): CreditOpKey[] {
   if (sys === '处理中') return ['view']
-  if (work === '待确认') return ['view', 'reportConfirm']
-  if (sys === '预警' && work === '待审核') return ['view', 'reportConfirm', 'forceRecheck']
-  if (work === '已提交双人复核') return ['view']
-  if (work === '双人复核-通过' || work === '双人复核-拒绝' || work === '已确认') return ['view']
-  // 处理中 或 其它
+  if (work === '已确认' || work === '双人复核-通过' || work === '双人复核-拒绝') return ['view']
+  if (work === '已提交双人复核') return ['view', 'auditPass', 'rejectCredit', 'note']
+  if (sys === '预警' && work === '待审核') return ['view', 'submitDual', 'note']
+  if (work === '待确认') {
+    if ((risk === '高' || risk === '极高') && sys === '拒绝') return ['view', 'reportConfirm', 'forceRecheck']
+    return ['view', 'reportConfirm']
+  }
   return ['view']
 }
 
@@ -63,8 +73,9 @@ export function creditDispositionOpsFor(work: CreditKimiWorkStatus): CreditOpKey
   return ['note']
 }
 
-export function creditViewLocked(_work: CreditKimiWorkStatus): boolean {
-  return false
+/** 查看按钮是否置灰：仅「处理中 / 核验计算中」行禁止查看（参照欺诈方案4登记 §3） */
+export function creditViewLocked(sys: CreditKimiSysResult): boolean {
+  return sys === '处理中'
 }
 
 export function CreditSysResultBadge({ value }: { value: CreditKimiSysResult }) {
@@ -277,9 +288,9 @@ export function useCreditKimiActions(
   flash?: (m: string) => void,
 ) {
   const [modal, setModal] = useState<CreditOpKey | null>(null)
-  const ops = creditOpsFor(row.sysResult, row.workStatus)
+  const ops = creditOpsFor(row.sysResult, row.workStatus, row.riskLevel)
   const dispOps = creditDispositionOpsFor(row.workStatus)
-  const locked = creditViewLocked(row.workStatus)
+  const locked = creditViewLocked(row.sysResult)
 
   const open = (op: CreditOpKey) => {
     if (op === 'view') { onView?.(); return }
