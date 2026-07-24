@@ -1,10 +1,10 @@
-// 信用风控（方案Kimi） · 状态/操作矩阵与操作弹窗
-// 页面交互与「信息核验」(VerifyOps) 保持一致：系统自动审批结果 × 人工审核状态 → 操作按钮
-// 自动审批 / 人工审核 标签配色与信息核验完全对齐（处理中灰/通过绿/拒绝红/预警橙；待确认蓝/已确认绿/待审核橙/双人复核蓝或红）
+// 信用风控 · 状态/操作矩阵与操作弹窗
+// 评分越高信用越好（300-900）：优秀/良好→自动通过；一般→预警进入人工审核；差→自动拒绝
+// 人工审核流程（仅「一般/预警」）：待审核 → 提交复核 → 复核放行/复核拒绝
 import { useEffect, useState } from 'react'
 import { Badge, Button, Modal } from '../components/ui'
-import type { CreditSysResult, CreditWorkStatus, CreditLevel } from './creditKimiReport'
-import { CREDIT_SYS_KIND, CREDIT_WORK_KIND, CREDIT_LEVEL_KIND } from './creditKimiReport'
+import type { CreditSysResult, CreditWorkStatus, CreditGrade } from './creditKimiReport'
+import { CREDIT_SYS_KIND, CREDIT_WORK_KIND, CREDIT_GRADE_KIND } from './creditKimiReport'
 
 /* ===================== 状态模型 ===================== */
 export type CreditKimiSysResult = CreditSysResult
@@ -16,8 +16,7 @@ export interface CreditKimiRow {
   product: string
   channel: string
   amount: number
-  creditScore: number
-  riskLevel: CreditLevel
+  creditScore: number // 300-900，处理中时为 0（展示为 —）
   sysResult: CreditKimiSysResult
   workStatus: CreditKimiWorkStatus
   operator: string
@@ -26,54 +25,39 @@ export interface CreditKimiRow {
 
 export type CreditOpKey =
   | 'view'
-  | 'reportConfirm'
-  | 'forceRecheck'
-  | 'submitDual'
-  | 'auditPass'
-  | 'rejectCredit'
-  | 'limitAmount'
+  | 'submitReview'
+  | 'confirmPass'
+  | 'confirmReject'
   | 'note'
 
 export const CREDIT_OP_LABEL: Record<CreditOpKey, string> = {
   view: '查看',
-  reportConfirm: '报告确认',
-  forceRecheck: '强制复审',
-  submitDual: '提交双人复核',
-  auditPass: '审核通过',
-  rejectCredit: '拒绝授信',
-  limitAmount: '限制额度',
+  submitReview: '提交复核',
+  confirmPass: '确认放行',
+  confirmReject: '确认拒绝',
   note: '录入备注',
 }
 
 /**
- * 列表操作矩阵：参照 docs/fraud-scheme4-status-ops-matrix.md「状态—操作对应矩阵」登记。
- * 由（信用风险等级 × 自动审批 × 人工审核）推导可用操作：
- *  - 处理中 / 核验计算中：仅查看（按钮置灰，见 creditViewLocked）
- *  - 已确认 / 双人复核办结：仅查看
- *  - 已提交双人复核：查看 + 审核通过 / 拒绝授信 / 录入备注（终审）
- *  - 中风险·预警·待审核：查看 + 提交双人复核 + 录入备注
- *  - 待确认：查看 + 报告确认；高 / 极高·拒绝类额外给「强制复审」
+ * 列表操作矩阵（信用评分 → 自动审核 × 人工审核）：
+ *  - 处理中：仅查看（按钮置灰，见 creditViewLocked）
+ *  - 优秀/良好（自动通过）、差（自动拒绝）：仅查看
+ *  - 一般/预警：
+ *      · 待审核  → 查看、提交复核、录入备注
+ *      · 提交复核 → 查看、确认放行、确认拒绝、录入备注
+ *      · 复核放行 / 复核拒绝 → 仅查看
  */
-export function creditOpsFor(sys: CreditKimiSysResult, work: CreditKimiWorkStatus, risk?: CreditLevel): CreditOpKey[] {
+export function creditOpsFor(sys: CreditKimiSysResult, work: CreditKimiWorkStatus): CreditOpKey[] {
   if (sys === '处理中') return ['view']
-  if (work === '已确认' || work === '双人复核-通过' || work === '双人复核-拒绝') return ['view']
-  if (work === '已提交双人复核') return ['view', 'auditPass', 'rejectCredit', 'note']
-  if (sys === '预警' && work === '待审核') return ['view', 'submitDual', 'note']
-  if (work === '待确认') {
-    if ((risk === '高' || risk === '极高') && sys === '拒绝') return ['view', 'reportConfirm', 'forceRecheck']
-    return ['view', 'reportConfirm']
-  }
+  if (sys === '通过' || sys === '拒绝') return ['view']
+  // sys === '预警'（一般）
+  if (work === '待审核') return ['view', 'submitReview', 'note']
+  if (work === '提交复核') return ['view', 'confirmPass', 'confirmReject', 'note']
+  // 复核放行 / 复核拒绝
   return ['view']
 }
 
-/** 详情页「授信建议」处置操作区：对齐文档第八段（审核通过/拒绝授信/限制额度/提交双人复核/录入备注） */
-export function creditDispositionOpsFor(work: CreditKimiWorkStatus): CreditOpKey[] {
-  if (work === '待确认' || work === '待审核') return ['auditPass', 'rejectCredit', 'limitAmount', 'submitDual', 'note']
-  // 已提交双人复核 / 已确认 / 双人复核通过或拒绝：仅可录入备注（闭环）
-  return ['note']
-}
-
-/** 查看按钮是否置灰：仅「处理中 / 核验计算中」行禁止查看（参照欺诈方案4登记 §3） */
+/** 查看按钮是否置灰：仅「处理中」行禁止查看 */
 export function creditViewLocked(sys: CreditKimiSysResult): boolean {
   return sys === '处理中'
 }
@@ -84,8 +68,8 @@ export function CreditSysResultBadge({ value }: { value: CreditKimiSysResult }) 
 export function CreditWorkStatusBadge({ value }: { value: CreditKimiWorkStatus }) {
   return <Badge kind={CREDIT_WORK_KIND[value]}>{value}</Badge>
 }
-export function CreditLevelBadge({ value }: { value: CreditLevel }) {
-  return <Badge kind={CREDIT_LEVEL_KIND[value]}>{value}</Badge>
+export function CreditGradeBadge({ value }: { value: CreditGrade }) {
+  return <Badge kind={CREDIT_GRADE_KIND[value]}>{value}</Badge>
 }
 
 /* ===================== 附件上传（模拟） ===================== */
@@ -120,57 +104,12 @@ function AttachmentDrop({ required, label }: { required?: boolean; label: string
 
 /* ===================== 操作弹窗 ===================== */
 
-// 整体报告确认
-function ReportConfirmModal({ row, open, onClose, onConfirm }: { row: CreditKimiRow; open: boolean; onClose: () => void; onConfirm: (note: string) => void }) {
+// 提交复核（初审提交，流转至主管终审）
+function SubmitReviewModal({ row, open, onClose, onSubmit }: { row: CreditKimiRow; open: boolean; onClose: () => void; onSubmit: (note: string) => void }) {
   const [note, setNote] = useState('')
   useEffect(() => { if (open) setNote('') }, [open])
   return (
-    <Modal open={open} onClose={onClose} title={`整体报告确认 · ${row.id}`}
-      footer={<><Button variant="ghost" onClick={onClose}>取消</Button><Button variant="primary" onClick={() => onConfirm(note)}>提交确认</Button></>}>
-      <div className="space-y-4 text-sm">
-        <div>
-          <p className="mb-2 text-xs text-slate-400">本次信用评估终审说明（简述整体风险判断）</p>
-          <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={4} placeholder="请填写本工单的整体风险判断与终审说明…"
-            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand-300" />
-        </div>
-        <AttachmentDrop label="附件上传区" />
-        <p className="text-xs text-slate-400">提交后将锁定当前报告所有数据，写入终审日志，工单按原有系统结果正常流转。</p>
-      </div>
-    </Modal>
-  )
-}
-
-// 强制复审（推翻系统自动拒绝，重新提交复审流程）
-function ForceRecheckModal({ row, open, onClose, onConfirm }: { row: CreditKimiRow; open: boolean; onClose: () => void; onConfirm: (reason: string) => void }) {
-  const [reason, setReason] = useState('')
-  const [agree, setAgree] = useState(false)
-  useEffect(() => { if (open) { setReason(''); setAgree(false) } }, [open])
-  return (
-    <Modal open={open} onClose={onClose} title={`强制复审 · ${row.id}`}
-      footer={<><Button variant="ghost" onClick={onClose}>取消</Button><Button variant="primary" disabled={!reason.trim() || !agree} onClick={() => onConfirm(reason)}>确认强制复审</Button></>}>
-      <div className="space-y-4 text-sm">
-        <div className="rounded-lg bg-rose-50 px-3 py-2 text-xs text-rose-700">本操作将推翻系统风控拦截，把申请重新提交复审流程，请谨慎操作。</div>
-        <div>
-          <p className="mb-2 text-xs text-slate-400">理由：详细写明系统拦截风险为误判的合理解释<span className="ml-1 text-rose-500">*</span></p>
-          <textarea value={reason} onChange={(e) => setReason(e.target.value)} rows={4} placeholder="请详细写明判定为误判的理由…"
-            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand-300" />
-        </div>
-        <AttachmentDrop required label="强制上传：客户佐证材料、沟通凭证" />
-        <label className="flex items-start gap-2 text-xs text-slate-600">
-          <input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} className="mt-0.5" />
-          <span>知悉本次操作豁免系统风控拦截，本人承担对应风控责任</span>
-        </label>
-      </div>
-    </Modal>
-  )
-}
-
-// 提交双人复核
-function SubmitDualReviewModal({ row, open, onClose, onSubmit }: { row: CreditKimiRow; open: boolean; onClose: () => void; onSubmit: (note: string) => void }) {
-  const [note, setNote] = useState('')
-  useEffect(() => { if (open) setNote('') }, [open])
-  return (
-    <Modal open={open} onClose={onClose} title={`提交双人复核 · ${row.id}`}
+    <Modal open={open} onClose={onClose} title={`提交复核 · ${row.id}`}
       footer={<><Button variant="ghost" onClick={onClose}>取消</Button><Button variant="primary" disabled={!note.trim()} onClick={() => onSubmit(note)}>提交推送</Button></>}>
       <div className="space-y-4 text-sm">
         <div>
@@ -185,17 +124,17 @@ function SubmitDualReviewModal({ row, open, onClose, onSubmit }: { row: CreditKi
   )
 }
 
-// 审核通过
-function AuditPassModal({ row, open, onClose, onConfirm }: { row: CreditKimiRow; open: boolean; onClose: () => void; onConfirm: (note: string) => void }) {
+// 确认放行（主管终审通过）
+function ConfirmPassModal({ row, open, onClose, onConfirm }: { row: CreditKimiRow; open: boolean; onClose: () => void; onConfirm: (note: string) => void }) {
   const [note, setNote] = useState('')
   useEffect(() => { if (open) setNote('') }, [open])
   return (
-    <Modal open={open} onClose={onClose} title={`审核通过 · ${row.id}`}
-      footer={<><Button variant="ghost" onClick={onClose}>关闭</Button><Button variant="primary" disabled={!note.trim()} onClick={() => onConfirm(note)}>确认通过</Button></>}>
+    <Modal open={open} onClose={onClose} title={`确认放行 · ${row.id}`}
+      footer={<><Button variant="ghost" onClick={onClose}>关闭</Button><Button variant="primary" disabled={!note.trim()} onClick={() => onConfirm(note)}>确认放行</Button></>}>
       <div className="space-y-4 text-sm">
         <div>
-          <p className="mb-2 text-xs text-slate-400">通过依据、授信说明<span className="ml-1 text-rose-500">*</span></p>
-          <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={4} placeholder="请填写授信通过依据与已核实的风险点…"
+          <p className="mb-2 text-xs text-slate-400">放行依据、授信说明<span className="ml-1 text-rose-500">*</span></p>
+          <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={4} placeholder="请填写终审放行依据与已核实的风险点…"
             className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand-300" />
         </div>
         <AttachmentDrop required label="佐证材料上传（收入证明、资料佐证等）" />
@@ -204,12 +143,12 @@ function AuditPassModal({ row, open, onClose, onConfirm }: { row: CreditKimiRow;
   )
 }
 
-// 拒绝授信
-function RejectCreditModal({ row, open, onClose, onConfirm }: { row: CreditKimiRow; open: boolean; onClose: () => void; onConfirm: (reason: string) => void }) {
+// 确认拒绝（主管终审拒绝）
+function ConfirmRejectModal({ row, open, onClose, onConfirm }: { row: CreditKimiRow; open: boolean; onClose: () => void; onConfirm: (reason: string) => void }) {
   const [reason, setReason] = useState('')
   useEffect(() => { if (open) setReason('') }, [open])
   return (
-    <Modal open={open} onClose={onClose} title={`拒绝授信 · ${row.id}`}
+    <Modal open={open} onClose={onClose} title={`确认拒绝 · ${row.id}`}
       footer={<><Button variant="ghost" onClick={onClose}>关闭</Button><Button variant="primary" disabled={!reason.trim()} onClick={() => onConfirm(reason)}>确认拒绝</Button></>}>
       <div className="space-y-4 text-sm">
         <div>
@@ -218,30 +157,6 @@ function RejectCreditModal({ row, open, onClose, onConfirm }: { row: CreditKimiR
             className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand-300" />
         </div>
         <AttachmentDrop label="附件（可选）：留存风险证据截图" />
-      </div>
-    </Modal>
-  )
-}
-
-// 限制额度
-function LimitAmountModal({ row, open, onClose, onConfirm }: { row: CreditKimiRow; open: boolean; onClose: () => void; onConfirm: (note: string) => void }) {
-  const [amount, setAmount] = useState('')
-  const [note, setNote] = useState('')
-  useEffect(() => { if (open) { setAmount(''); setNote('') } }, [open])
-  return (
-    <Modal open={open} onClose={onClose} title={`限制额度 · ${row.id}`}
-      footer={<><Button variant="ghost" onClick={onClose}>关闭</Button><Button variant="primary" disabled={!amount.trim() || !note.trim()} onClick={() => onConfirm(`限制授信额度 ¥${amount}；${note}`)}>确认限制</Button></>}>
-      <div className="space-y-4 text-sm">
-        <div>
-          <p className="mb-2 text-xs text-slate-400">限制后授信额度（元）<span className="ml-1 text-rose-500">*</span></p>
-          <input value={amount} onChange={(e) => setAmount(e.target.value)} placeholder={`申请额度 ${row.amount.toLocaleString()}`}
-            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand-300" />
-        </div>
-        <div>
-          <p className="mb-2 text-xs text-slate-400">限制理由<span className="ml-1 text-rose-500">*</span></p>
-          <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={3} placeholder="请填写限制额度的理由…"
-            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand-300" />
-        </div>
       </div>
     </Modal>
   )
@@ -269,7 +184,7 @@ function NoteModal({ open, target, onClose, onSubmit }: { open: boolean; target:
   )
 }
 
-/* ===================== 操作逻辑（列表行 / 详情栏 / 处置区 共用） ===================== */
+/* ===================== 操作逻辑（列表行 / 详情栏 共用） ===================== */
 export interface CreditKimiLog {
   id: string
   type: string
@@ -288,8 +203,7 @@ export function useCreditKimiActions(
   flash?: (m: string) => void,
 ) {
   const [modal, setModal] = useState<CreditOpKey | null>(null)
-  const ops = creditOpsFor(row.sysResult, row.workStatus, row.riskLevel)
-  const dispOps = creditDispositionOpsFor(row.workStatus)
+  const ops = creditOpsFor(row.sysResult, row.workStatus)
   const locked = creditViewLocked(row.sysResult)
 
   const open = (op: CreditOpKey) => {
@@ -301,40 +215,22 @@ export function useCreditKimiActions(
   const log = (type: string, content: string, result?: string, remark?: string) =>
     onLog?.({ type, content, operator: '当前用户', time: now(), result, remark })
 
-  const applyReportConfirm = (note: string) => {
-    onApply({ workStatus: '已确认', operator: '初审：审核员 1' })
-    log('整体报告确认', `确认报告内容（${note || '无说明'}）`, '已确认')
-    flash?.('已提交整体报告确认，工单归档')
+  const applySubmitReview = (note: string) => {
+    onApply({ workStatus: '提交复核', operator: '初审：审核员 1' })
+    log('提交复核', `初审提交主管复核：${note || '无说明'}`, '提交复核')
+    flash?.('已提交复核，工单锁定流转至主管')
     close()
   }
-  const applyForceRecheck = (reason: string) => {
-    onApply({ workStatus: '已提交双人复核', operator: '初审：审核员 1' })
-    log('强制复审', '推翻系统自动结果，重新提交复审流程', '已提交双人复核', reason)
-    flash?.('已强制复审，工单流转至主管')
+  const applyConfirmPass = (note: string) => {
+    onApply({ workStatus: '复核放行', operator: '初审：审核员 1；终审：主管 1' })
+    log('确认放行', `主管终审放行授信（${note || '无说明'}）`, '复核放行')
+    flash?.('已确认放行，允许授信')
     close()
   }
-  const applySubmitDual = (note: string) => {
-    onApply({ workStatus: '已提交双人复核', operator: '初审：审核员 1' })
-    log('提交双人复核', `推送主管复核：${note || '无说明'}`, '已提交双人复核')
-    flash?.('已提交双人复核，工单锁定流转至主管')
-    close()
-  }
-  const applyAuditPass = (note: string) => {
-    onApply({ workStatus: '已确认', operator: '初审：审核员 1；终审：主管 1' })
-    log('审核通过', `人工复核通过授信（${note || '无说明'}）`, '已确认')
-    flash?.('审核通过，允许授信')
-    close()
-  }
-  const applyRejectCredit = (reason: string) => {
-    onApply({ workStatus: '已确认', operator: '初审：审核员 1；终审：主管 1' })
-    log('拒绝授信', `人工复核拒绝申请（${reason}）`, '已确认')
-    flash?.('拒绝授信，工单办结')
-    close()
-  }
-  const applyLimitAmount = (note: string) => {
-    onApply({ workStatus: '已确认', operator: '初审：审核员 1；终审：主管 1' })
-    log('限制额度', note, '已确认')
-    flash?.('已限制额度，按限制额度授信')
+  const applyConfirmReject = (reason: string) => {
+    onApply({ workStatus: '复核拒绝', operator: '初审：审核员 1；终审：主管 1' })
+    log('确认拒绝', `主管终审拒绝申请（${reason}）`, '复核拒绝')
+    flash?.('已确认拒绝，工单办结')
     close()
   }
   const applyNote = (text: string) => {
@@ -345,22 +241,20 @@ export function useCreditKimiActions(
 
   const renderModals = (
     <>
-      <ReportConfirmModal row={row} open={modal === 'reportConfirm'} onClose={close} onConfirm={applyReportConfirm} />
-      <ForceRecheckModal row={row} open={modal === 'forceRecheck'} onClose={close} onConfirm={applyForceRecheck} />
-      <SubmitDualReviewModal row={row} open={modal === 'submitDual'} onClose={close} onSubmit={applySubmitDual} />
-      <AuditPassModal row={row} open={modal === 'auditPass'} onClose={close} onConfirm={applyAuditPass} />
-      <RejectCreditModal row={row} open={modal === 'rejectCredit'} onClose={close} onConfirm={applyRejectCredit} />
-      <LimitAmountModal row={row} open={modal === 'limitAmount'} onClose={close} onConfirm={applyLimitAmount} />
+      <SubmitReviewModal row={row} open={modal === 'submitReview'} onClose={close} onSubmit={applySubmitReview} />
+      <ConfirmPassModal row={row} open={modal === 'confirmPass'} onClose={close} onConfirm={applyConfirmPass} />
+      <ConfirmRejectModal row={row} open={modal === 'confirmReject'} onClose={close} onConfirm={applyConfirmReject} />
       <NoteModal open={modal === 'note'} target={row.id} onClose={close} onSubmit={applyNote} />
     </>
   )
 
-  return { ops, dispOps, locked, open, renderModals }
+  return { ops, locked, open, renderModals }
 }
 
 function opVariant(op: CreditOpKey): 'primary' | 'secondary' | 'ghost' {
-  if (op === 'auditPass' || op === 'reportConfirm') return 'primary'
-  if (op === 'rejectCredit') return 'ghost'
+  if (op === 'confirmPass') return 'primary'
+  if (op === 'confirmReject') return 'ghost'
+  if (op === 'note') return 'ghost'
   return 'secondary'
 }
 
@@ -386,8 +280,8 @@ export function CreditKimiRowActions({ row, onApply, onView, flash }: { row: Cre
 }
 
 /** 详情页顶部操作栏（系统结果 / 人工审核 / 操作人员 + 操作按钮，与列表一致） */
-export function CreditKimiActionBar({ row, onApply, onView, flash, showView = true }: { row: CreditKimiRow; onApply: (next: Partial<CreditKimiRow>) => void; onView?: () => void; flash?: (m: string) => void; showView?: boolean }) {
-  const base = useCreditKimiActions(row, onApply, undefined, onView, flash)
+export function CreditKimiActionBar({ row, onApply, onLog, onView, flash, showView = true }: { row: CreditKimiRow; onApply: (next: Partial<CreditKimiRow>) => void; onLog?: (entry: Omit<CreditKimiLog, 'id'>) => void; onView?: () => void; flash?: (m: string) => void; showView?: boolean }) {
+  const base = useCreditKimiActions(row, onApply, onLog, onView, flash)
   const ops = showView ? base.ops : base.ops.filter((o) => o !== 'view')
   const { locked, open, renderModals } = base
   return (
@@ -403,22 +297,6 @@ export function CreditKimiActionBar({ row, onApply, onView, flash, showView = tr
           })}
         </div>
       </div>
-      {renderModals}
-    </div>
-  )
-}
-
-/** 详情页「授信建议」处置操作区（文档第八段：审核通过/拒绝授信/限制额度/提交双人复核/录入备注） */
-export function CreditKimiDispositionBar({ row, onApply, onLog, flash }: { row: CreditKimiRow; onApply: (next: Partial<CreditKimiRow>) => void; onLog?: (entry: Omit<CreditKimiLog, 'id'>) => void; flash?: (m: string) => void }) {
-  const { dispOps, open, renderModals } = useCreditKimiActions(row, onApply, onLog, undefined, flash)
-  return (
-    <div className="flex flex-wrap items-center gap-2">
-      {dispOps.map((op) => {
-        if (op === 'note') return <Button key={op} variant="ghost" onClick={() => open(op)}>{CREDIT_OP_LABEL[op]}</Button>
-        if (op === 'auditPass') return <Button key={op} variant="primary" onClick={() => open(op)}>{CREDIT_OP_LABEL[op]}</Button>
-        if (op === 'rejectCredit') return <Button key={op} variant="ghost" onClick={() => open(op)}>{CREDIT_OP_LABEL[op]}</Button>
-        return <Button key={op} variant="secondary" onClick={() => open(op)}>{CREDIT_OP_LABEL[op]}</Button>
-      })}
       {renderModals}
     </div>
   )

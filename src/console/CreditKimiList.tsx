@@ -1,4 +1,4 @@
-// 信用风控（方案Kimi）列表页
+// 信用风控列表页
 // 页面样式与「信息核验列表页」(InfoVerifyList) 保持一致：顶部导航/统计卡片/筛选区域/表格布局/冻结列/右导航
 import { useMemo, useRef, useState, type CSSProperties } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -9,51 +9,43 @@ import {
   type CreditKimiSysResult,
   type CreditKimiWorkStatus,
 } from './CreditKimiOps'
-import { CreditSysResultBadge, CreditWorkStatusBadge, CreditLevelBadge } from './CreditKimiOps'
+import { CreditSysResultBadge, CreditWorkStatusBadge, CreditGradeBadge } from './CreditKimiOps'
+import { gradeFromScore, type CreditGrade } from './creditKimiReport'
 
 /* ───────────────────────── 样例数据（覆盖多状态） ───────────────────────── */
-const RISK_LEVELS: CreditLevelLabel[] = ['低风险', '中风险', '高风险', '极高风险']
-type CreditLevelLabel = '低风险' | '中风险' | '高风险' | '极高风险'
+const GRADES: CreditGrade[] = ['差', '一般', '良好', '优秀']
 const SYS_RESULTS: CreditKimiSysResult[] = ['处理中', '通过', '拒绝', '预警']
-const WORK_STATUSES: CreditKimiWorkStatus[] = [
-  '待确认',
-  '已确认',
-  '待审核',
-  '已提交双人复核',
-  '双人复核-通过',
-  '双人复核-拒绝',
-]
+const WORK_STATUSES: CreditKimiWorkStatus[] = ['—', '待审核', '提交复核', '复核放行', '复核拒绝']
 
-function riskLabelFromScore(score: number): CreditLevelLabel {
-  if (score >= 80) return '极高风险'
-  if (score >= 60) return '高风险'
-  if (score >= 40) return '中风险'
-  return '低风险'
-}
-function riskLevelFromScore(score: number): '低' | '中' | '高' | '极高' {
-  if (score >= 80) return '极高'
-  if (score >= 60) return '高'
-  if (score >= 40) return '中'
-  return '低'
+// 信用评分越高越好：优秀绿 / 良好青 / 一般黄 / 差红
+const scoreColorByGrade: Record<CreditGrade, string> = {
+  优秀: 'text-emerald-600',
+  良好: 'text-cyan-600',
+  一般: 'text-amber-600',
+  差: 'text-rose-600',
 }
 
 const seedRows: CreditKimiRow[] = [
-  { id: 'PA-20260618-003', name: '王强', product: '信用贷', channel: 'H5', amount: 30000, creditScore: 88, riskLevel: '极高', sysResult: '拒绝', workStatus: '待确认', operator: '--', auditTime: '2026-06-18 15:48' },
-  { id: 'PA-20260618-002', name: '张*伟', product: '信用贷', channel: 'APP', amount: 80000, creditScore: 15, riskLevel: '低', sysResult: '通过', workStatus: '待确认', operator: '--', auditTime: '2026-06-18 15:10' },
-  { id: 'PA-20260618-005', name: '陈刚', product: '抵押贷', channel: '线下', amount: 500000, creditScore: 12, riskLevel: '低', sysResult: '通过', workStatus: '已确认', operator: '初审：审核员 1', auditTime: '2026-06-18 16:40' },
-  { id: 'PA-20260618-004', name: '赵*敏', product: '经营贷', channel: 'APP', amount: 200000, creditScore: 52, riskLevel: '中', sysResult: '预警', workStatus: '待审核', operator: '--', auditTime: '2026-06-18 16:05' },
-  // 中风险·预警 → 待审核 → 已提交双人复核（审核人初分派，待主管终审）
-  { id: 'PA-20260618-006', name: '刘洋', product: '抵押贷', channel: '线下', amount: 350000, creditScore: 45, riskLevel: '中', sysResult: '预警', workStatus: '已提交双人复核', operator: '初审：审核员 1', auditTime: '2026-06-19 09:12' },
-  // 高风险·拒绝·待确认 → 查看 / 报告确认 / 强制复审（审核人尚未分派）
-  { id: 'PA-20260619-007', name: '孙丽', product: '信用贷', channel: 'APP', amount: 120000, creditScore: 68, riskLevel: '高', sysResult: '拒绝', workStatus: '待确认', operator: '--', auditTime: '2026-06-19 10:03' },
-  // 中风险·预警·双人复核-通过（初审+终审两级办结，仅查看）— 评分落在中风险区间
-  { id: 'PA-20260620-012', name: '蒋磊', product: '经营贷', channel: 'H5', amount: 150000, creditScore: 56, riskLevel: '中', sysResult: '预警', workStatus: '双人复核-通过', operator: '初审：审核员 1；终审：主管 1', auditTime: '2026-06-20 10:25' },
-  // 极高风险·拒绝·已确认（对应文档「初审确认拒贷办结」，仅查看）
-  { id: 'PA-20260620-013', name: '韩梅', product: '信用贷', channel: '小程序', amount: 35000, creditScore: 85, riskLevel: '极高', sysResult: '拒绝', workStatus: '已确认', operator: '初审：审核员 1', auditTime: '2026-06-20 11:15' },
-  { id: 'PA-20260619-009', name: '吴婷', product: '信用贷', channel: '小程序', amount: 45000, creditScore: 18, riskLevel: '低', sysResult: '通过', workStatus: '待确认', operator: '--', auditTime: '2026-06-19 13:45' },
-  { id: 'PA-20260619-008', name: '周杰', product: '经营贷', channel: 'H5', amount: 90000, creditScore: 22, riskLevel: '低', sysResult: '通过', workStatus: '已确认', operator: '初审：审核员 1', auditTime: '2026-06-19 11:20' },
-  { id: 'PA-20260620-014', name: '杨柳', product: '抵押贷', channel: '线下', amount: 420000, creditScore: 90, riskLevel: '极高', sysResult: '拒绝', workStatus: '已确认', operator: '初审：审核员 1', auditTime: '2026-06-20 14:08' },
-  { id: 'PA-20260618-001', name: '张伟', product: '信用贷', channel: 'APP', amount: 80000, creditScore: 8, riskLevel: '低', sysResult: '处理中', workStatus: '待确认', operator: '--', auditTime: '2026-06-18 14:32' },
+  // 处理中：评分/等级为 —，仅查看（置灰）
+  { id: 'PA-20260618-001', name: '张伟', product: '信用贷', channel: 'APP', amount: 80000, creditScore: 0, sysResult: '处理中', workStatus: '—', operator: '--', auditTime: '2026-06-18 14:32' },
+  // 优秀（801-900）自动通过 → 仅查看
+  { id: 'PA-20260618-005', name: '陈刚', product: '抵押贷', channel: '线下', amount: 500000, creditScore: 862, sysResult: '通过', workStatus: '—', operator: '--', auditTime: '2026-06-18 16:40' },
+  { id: 'PA-20260620-014', name: '杨柳', product: '抵押贷', channel: '线下', amount: 420000, creditScore: 820, sysResult: '通过', workStatus: '—', operator: '--', auditTime: '2026-06-20 14:08' },
+  // 良好（651-800）自动通过 → 仅查看
+  { id: 'PA-20260618-002', name: '张*伟', product: '信用贷', channel: 'APP', amount: 80000, creditScore: 728, sysResult: '通过', workStatus: '—', operator: '--', auditTime: '2026-06-18 15:10' },
+  { id: 'PA-20260619-008', name: '周杰', product: '经营贷', channel: 'H5', amount: 90000, creditScore: 682, sysResult: '通过', workStatus: '—', operator: '--', auditTime: '2026-06-19 11:20' },
+  { id: 'PA-20260619-009', name: '吴婷', product: '信用贷', channel: '小程序', amount: 45000, creditScore: 705, sysResult: '通过', workStatus: '—', operator: '--', auditTime: '2026-06-19 13:45' },
+  // 差（300-500）自动拒绝 → 仅查看
+  { id: 'PA-20260618-003', name: '王强', product: '信用贷', channel: 'H5', amount: 30000, creditScore: 430, sysResult: '拒绝', workStatus: '—', operator: '--', auditTime: '2026-06-18 15:48' },
+  { id: 'PA-20260620-013', name: '韩梅', product: '信用贷', channel: '小程序', amount: 35000, creditScore: 386, sysResult: '拒绝', workStatus: '—', operator: '--', auditTime: '2026-06-20 11:15' },
+  // 一般（501-650）预警 · 待审核 → 查看 / 提交复核 / 录入备注
+  { id: 'PA-20260618-004', name: '赵*敏', product: '经营贷', channel: 'APP', amount: 200000, creditScore: 580, sysResult: '预警', workStatus: '待审核', operator: '--', auditTime: '2026-06-18 16:05' },
+  // 一般 · 预警 · 提交复核（初审已提交，待主管终审）→ 查看 / 确认放行 / 确认拒绝 / 录入备注
+  { id: 'PA-20260618-006', name: '刘洋', product: '抵押贷', channel: '线下', amount: 350000, creditScore: 560, sysResult: '预警', workStatus: '提交复核', operator: '初审：审核员 1', auditTime: '2026-06-19 09:12' },
+  // 一般 · 预警 · 复核放行（初审+终审办结，仅查看）
+  { id: 'PA-20260620-012', name: '蒋磊', product: '经营贷', channel: 'H5', amount: 150000, creditScore: 612, sysResult: '预警', workStatus: '复核放行', operator: '初审：审核员 1；终审：主管 1', auditTime: '2026-06-20 10:25' },
+  // 一般 · 预警 · 复核拒绝（初审+终审办结，仅查看）
+  { id: 'PA-20260619-007', name: '孙丽', product: '信用贷', channel: 'APP', amount: 120000, creditScore: 538, sysResult: '预警', workStatus: '复核拒绝', operator: '初审：审核员 1；终审：主管 1', auditTime: '2026-06-19 10:03' },
 ]
 
 const PRODUCTS = ['信用贷', '抵押贷', '经营贷']
@@ -126,8 +118,8 @@ export default function CreditKimiList() {
   const [kw, setKw] = useState('')
   const [products, setProducts] = useState<string[]>([])
   const [channels, setChannels] = useState<string[]>([])
-  const [riskLevels, setRiskLevels] = useState<CreditLevelLabel[]>([]) // 信用风险等级
-  const [autoResults, setAutoResults] = useState<CreditKimiSysResult[]>([]) // 自动审批
+  const [grades, setGrades] = useState<CreditGrade[]>([]) // 信用等级
+  const [autoResults, setAutoResults] = useState<CreditKimiSysResult[]>([]) // 自动审核
   const [workStatuses, setWorkStatuses] = useState<CreditKimiWorkStatus[]>([]) // 人工审核
   const [opKw, setOpKw] = useState('') // 审核人
   const [scoreMin, setScoreMin] = useState('') // 信用评分 ≥
@@ -153,15 +145,15 @@ export default function CreditKimiList() {
 
   const stats = useMemo(() => {
     const total = rows.length
-    const pending = rows.filter((r) => r.workStatus === '待确认' || r.workStatus === '待审核').length
-    const review = rows.filter((r) => r.workStatus === '已提交双人复核').length
+    const pending = rows.filter((r) => r.workStatus === '待审核').length
+    const review = rows.filter((r) => r.workStatus === '提交复核').length
     const passed = rows.filter((r) => r.sysResult === '通过').length
-    const highRisk = rows.filter((r) => r.creditScore >= 60).length
+    const highRisk = rows.filter((r) => r.sysResult === '拒绝' || r.sysResult === '预警').length
     return [
-      { label: '待人工审核', value: String(pending), hint: '待确认 / 待审核', accent: 'amber' as const },
-      { label: '自动审批通过率', value: total ? `${Math.round((passed / total) * 100)}%` : '0%', hint: `系统通过 ${passed} / 共 ${total} 笔`, accent: 'emerald' as const },
-      { label: '待双人复核', value: String(review), hint: '已提交双人复核等待终审', accent: 'violet' as const },
-      { label: '高风险预警', value: String(highRisk), hint: '信用评分 ≥ 60 分', accent: 'rose' as const },
+      { label: '待人工审核', value: String(pending), hint: '一般 / 预警 · 待审核', accent: 'amber' as const },
+      { label: '自动审核通过率', value: total ? `${Math.round((passed / total) * 100)}%` : '0%', hint: `系统通过 ${passed} / 共 ${total} 笔`, accent: 'emerald' as const },
+      { label: '待复核', value: String(review), hint: '提交复核等待主管终审', accent: 'violet' as const },
+      { label: '拒绝 / 预警', value: String(highRisk), hint: '信用评分 ＜ 651 分', accent: 'rose' as const },
     ]
   }, [rows])
 
@@ -171,7 +163,10 @@ export default function CreditKimiList() {
       if (kw && !`${r.id} ${r.name}`.toLowerCase().includes(kw.toLowerCase())) return false
       if (products.length && !products.includes(r.product)) return false
       if (channels.length && !channels.includes(r.channel)) return false
-      if (riskLevels.length && !riskLevels.includes(riskLabelFromScore(r.creditScore))) return false
+      if (grades.length) {
+        const g = r.sysResult === '处理中' ? null : gradeFromScore(r.creditScore)
+        if (!g || !grades.includes(g)) return false
+      }
       if (autoResults.length && !autoResults.includes(r.sysResult)) return false
       if (workStatuses.length && !workStatuses.includes(r.workStatus)) return false
       if (opKw && !r.operator.toLowerCase().includes(opKw.toLowerCase())) return false
@@ -183,13 +178,13 @@ export default function CreditKimiList() {
       }
       return true
     })
-  }, [rows, kw, products, channels, riskLevels, autoResults, workStatuses, opKw, scoreMin, amountMax, timeRange])
+  }, [rows, kw, products, channels, grades, autoResults, workStatuses, opKw, scoreMin, amountMax, timeRange])
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize))
   const safePage = Math.min(page, totalPages)
   const pageRows = filtered.slice((safePage - 1) * pageSize, safePage * pageSize)
   const resetFilters = () => {
-    setKw(''); setProducts([]); setChannels([]); setRiskLevels([]); setAutoResults([]); setWorkStatuses([])
+    setKw(''); setProducts([]); setChannels([]); setGrades([]); setAutoResults([]); setWorkStatuses([])
     setOpKw(''); setScoreMin(''); setAmountMax(''); setTimeRange('')
   }
 
@@ -197,8 +192,8 @@ export default function CreditKimiList() {
     <div className="min-h-screen bg-slate-50 text-slate-800">
       <PageHeader
         crumb="零售信贷风控 / 贷前审核"
-        title="信用风控（方案Kimi）"
-        subtitle="贷前审核 · 信用评分 / 六维评估 / 授信决策 + 工单人工处置（操作随审核状态动态变化）"
+        title="信用风控"
+        subtitle="贷前审核 · 信用评分（300-900，越高越好）/ 六维评估 / 授信决策 + 工单人工处置（操作随审核状态动态变化）"
       />
 
       <div className="mx-auto max-w-[1400px] space-y-5 px-4 pb-10">
@@ -212,8 +207,8 @@ export default function CreditKimiList() {
               <input value={kw} onChange={(e) => setKw(e.target.value)} placeholder="搜索申请编号 / 申请人" className="w-64 rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100" />
               <MultiChip label="产品" options={PRODUCTS} selected={products} onChange={setProducts} />
               <MultiChip label="渠道" options={CHANNELS} selected={channels} onChange={setChannels} />
-              <MultiChip label="信用风险等级" options={RISK_LEVELS} selected={riskLevels} onChange={setRiskLevels} />
-              <MultiChip label="自动审批" options={SYS_RESULTS} selected={autoResults} onChange={setAutoResults} />
+              <MultiChip label="信用等级" options={GRADES} selected={grades} onChange={setGrades} />
+              <MultiChip label="自动审核" options={SYS_RESULTS} selected={autoResults} onChange={setAutoResults} />
               <MultiChip label="人工审核" options={WORK_STATUSES} selected={workStatuses} onChange={setWorkStatuses} />
               <input value={opKw} onChange={(e) => setOpKw(e.target.value)} placeholder="搜索审核人" className="w-40 rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100" />
             </div>
@@ -238,8 +233,8 @@ export default function CreditKimiList() {
                   <th style={headStyle(C.channel, null)} className="border-b border-slate-200 bg-slate-50 px-3 py-3 text-left font-medium">渠道</th>
                   <th style={headStyle(C.amount, null)} className="border-b border-slate-200 bg-slate-50 px-3 py-3 text-right font-medium">申请额度</th>
                   <th style={headStyle(C.score, null)} className="border-b border-slate-200 bg-slate-50 px-3 py-3 text-right font-medium">信用评分</th>
-                  <th style={headStyle(C.risk, null)} className="border-b border-slate-200 bg-slate-50 px-3 py-3 text-center font-medium">信用风险等级</th>
-                  <th style={headStyle(C.sys, null)} className="border-b border-slate-200 bg-slate-50 px-3 py-3 text-center font-medium">自动审批</th>
+                  <th style={headStyle(C.risk, null)} className="border-b border-slate-200 bg-slate-50 px-3 py-3 text-center font-medium">信用等级</th>
+                  <th style={headStyle(C.sys, null)} className="border-b border-slate-200 bg-slate-50 px-3 py-3 text-center font-medium">自动审核</th>
                   <th style={headStyle(C.work, null)} className="border-b border-slate-200 bg-slate-50 px-3 py-3 text-center font-medium">人工审核</th>
                   <th style={headStyle(C.operator, null)} className="border-b border-slate-200 bg-slate-50 px-3 py-3 text-left font-medium">审核人</th>
                   <th style={headStyle(C.auditTime, null)} className="border-b border-slate-200 bg-slate-50 px-3 py-3 text-left font-medium">审核时间</th>
@@ -248,8 +243,9 @@ export default function CreditKimiList() {
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {pageRows.map((r) => {
-                  const lvl = riskLevelFromScore(r.creditScore)
-                  const scoreColor = r.creditScore >= 80 ? 'text-rose-600' : r.creditScore >= 60 ? 'text-orange-600' : r.creditScore >= 40 ? 'text-amber-600' : 'text-emerald-600'
+                  const processing = r.sysResult === '处理中'
+                  const grade = processing ? null : gradeFromScore(r.creditScore)
+                  const scoreColor = grade ? scoreColorByGrade[grade] : 'text-slate-400'
                   return (
                     <tr key={r.id} className="group hover:bg-slate-50/60">
                       <td style={bodyStyle(C.id, 'left', 0)} className="whitespace-nowrap bg-white px-3 py-3 font-mono text-xs text-slate-700 group-hover:bg-slate-50/60">
@@ -259,8 +255,8 @@ export default function CreditKimiList() {
                       <td style={bodyStyle(C.product, null)} className="whitespace-nowrap px-3 py-3 text-slate-600">{r.product}</td>
                       <td style={bodyStyle(C.channel, null)} className="whitespace-nowrap px-3 py-3 text-slate-600">{r.channel}</td>
                       <td style={bodyStyle(C.amount, null)} className="whitespace-nowrap px-3 py-3 text-right tabular-nums text-slate-700">¥{r.amount.toLocaleString()}</td>
-                      <td style={bodyStyle(C.score, null)} className="whitespace-nowrap px-3 py-3 text-right"><span className={`tabular-nums font-semibold ${scoreColor}`}>{r.creditScore}</span></td>
-                      <td style={bodyStyle(C.risk, null)} className="whitespace-nowrap px-3 py-3 text-center"><CreditLevelBadge value={lvl} /></td>
+                      <td style={bodyStyle(C.score, null)} className="whitespace-nowrap px-3 py-3 text-right"><span className={`tabular-nums font-semibold ${scoreColor}`}>{processing ? '—' : r.creditScore}</span></td>
+                      <td style={bodyStyle(C.risk, null)} className="whitespace-nowrap px-3 py-3 text-center">{grade ? <CreditGradeBadge value={grade} /> : <span className="text-slate-400">—</span>}</td>
                       <td style={bodyStyle(C.sys, null)} className="whitespace-nowrap px-3 py-3 text-center"><CreditSysResultBadge value={r.sysResult} /></td>
                       <td style={bodyStyle(C.work, null)} className="whitespace-nowrap px-3 py-3 text-center"><CreditWorkStatusBadge value={r.workStatus} /></td>
                       <td style={bodyStyle(C.operator, null)} className="whitespace-nowrap px-3 py-3 text-slate-600">{r.operator}</td>

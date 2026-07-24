@@ -364,8 +364,17 @@ export default function Console() {
               })}
             </nav>
           ) : (
-            menu.map((g) => (
+            menu.map((g, i) => {
+              const prev = menu[i - 1]
+              const showSection = !!g.section && g.section !== prev?.section
+              return (
               <div key={g.group} className="mb-4">
+                {showSection && (
+                  <div className="mb-1.5 flex items-center gap-2 px-5">
+                    <span className="h-1.5 w-1.5 rounded-full bg-brand-500" />
+                    <span className="text-[11px] font-bold tracking-[0.2em] text-brand-700">{g.section}</span>
+                  </div>
+                )}
                 <p className="px-5 text-xs font-semibold uppercase tracking-wide text-slate-400">{g.group}</p>
                 <nav className="mt-1">
                   {g.items.map((it) => {
@@ -388,7 +397,8 @@ export default function Console() {
                   })}
                 </nav>
               </div>
-            ))
+              )
+            })
           )}
         </aside>
 

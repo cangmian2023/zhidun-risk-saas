@@ -1,0 +1,416 @@
+[2m15:47:18[22m [31m[1m[vite][22m[39m [31mInternal server error: D:\yuexin\project\risk\saas\src\console\Console.tsx: Missing semicolon. (400:13)
+
+[0m [90m 398 |[31m                 [33m<[31m[33m/[31m[33mnav[31m[33m>[31m
+ [90m 399 |[31m               [33m<[31m[33m/[31m[33mdiv[31m[33m>[31m
+[31m[1m>[22m[31m[90m 400 |[31m             ))
+ [90m     |[31m              [31m[1m^[22m[31m
+ [90m 401 |[31m           )}
+ [90m 402 |[31m         [33m<[31m[33m/[31m[33maside[31m[33m>[31m
+ [90m 403 |[31m[0m[39m
+  Plugin: [35mvite:react-babel[39m
+  File: [36mD:/yuexin/project/risk/saas/src/console/Console.tsx[39m:400:13
+[33m  412|          <main className="min-w-0 flex-1 px-4 py-6 lg:px-8">
+  413|            <div className="mx-auto w-full max-w-[1320px]">
+  414|              {!supported ? (
+     |                   ^
+  415|                <PlannedPlaceholder name={subName[sub] ?? '该子系统'} />
+  416|              ) : key === 'cr:pre-application' ? ([39m
+      at constructor (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:365:19)
+      at TypeScriptParserMixin.raise (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:6616:19)
+      at TypeScriptParserMixin.semicolon (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:6912:10)
+      at TypeScriptParserMixin.parseReturnStatement (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:13160:12)
+      at TypeScriptParserMixin.parseStatementContent (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:12815:21)
+      at TypeScriptParserMixin.parseStatementContent (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:9525:18)
+      at TypeScriptParserMixin.parseStatementLike (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:12784:17)
+      at TypeScriptParserMixin.parseStatementListItem (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:12764:17)
+      at TypeScriptParserMixin.parseBlockOrModuleBlockBody (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:13333:61)
+      at TypeScriptParserMixin.parseBlockBody (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:13326:10)
+      at TypeScriptParserMixin.parseBlock (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:13314:10)
+      at TypeScriptParserMixin.parseFunctionBody (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:12117:24)
+      at TypeScriptParserMixin.parseArrowExpression (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:12092:10)
+      at TypeScriptParserMixin.parseParenAndDistinguishExpression (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:11704:12)
+      at TypeScriptParserMixin.parseExprAtom (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:11348:23)
+      at TypeScriptParserMixin.parseExprAtom (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:4776:20)
+      at TypeScriptParserMixin.parseExprSubscripts (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:11098:23)
+      at TypeScriptParserMixin.parseUpdate (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:11083:21)
+      at TypeScriptParserMixin.parseMaybeUnary (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:11063:23)
+      at TypeScriptParserMixin.parseMaybeUnary (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:9854:18)
+      at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:10916:61)
+      at TypeScriptParserMixin.parseExprOps (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:10921:23)
+      at TypeScriptParserMixin.parseMaybeConditional (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:10898:23)
+      at TypeScriptParserMixin.parseMaybeAssign (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:10848:21)
+      at TypeScriptParserMixin.parseMaybeAssign (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:9803:20)
+      at D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:10817:39
+      at TypeScriptParserMixin.allowInAnd (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:12443:12)
+      at TypeScriptParserMixin.parseMaybeAssignAllowIn (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:10817:17)
+      at TypeScriptParserMixin.parseMaybeAssignAllowInOrVoidPattern (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:12510:17)
+      at TypeScriptParserMixin.parseExprListItem (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:12192:18)
+      at TypeScriptParserMixin.parseCallExpressionArguments (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:11269:22)
+      at TypeScriptParserMixin.parseCoverCallAndAsyncArrowHead (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:11203:29)
+      at TypeScriptParserMixin.parseSubscript (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:11137:19)
+      at TypeScriptParserMixin.parseSubscript (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:9289:18)
+      at TypeScriptParserMixin.parseSubscripts (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:11111:19)
+      at TypeScriptParserMixin.parseExprSubscripts (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:11102:17)
+      at TypeScriptParserMixin.parseUpdate (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:11083:21)
+      at TypeScriptParserMixin.parseMaybeUnary (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:11063:23)
+      at TypeScriptParserMixin.parseMaybeUnary (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:9854:18)
+      at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:10916:61)
+      at TypeScriptParserMixin.parseExprOps (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:10921:23)
+      at TypeScriptParserMixin.parseMaybeConditional (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:10898:23)
+      at TypeScriptParserMixin.parseMaybeAssign (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:10848:21)
+      at TypeScriptParserMixin.parseMaybeAssign (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:9803:20)
+      at D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:10817:39
+      at TypeScriptParserMixin.allowInAnd (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:12443:12)
+      at TypeScriptParserMixin.parseMaybeAssignAllowIn (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:10817:17)
+      at TypeScriptParserMixin.parseMaybeAssignAllowInOrVoidPattern (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:12510:17)
+      at TypeScriptParserMixin.parseParenAndDistinguishExpression (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:11692:28)
+      at TypeScriptParserMixin.parseExprAtom (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:11348:23)
+[2m15:47:20[22m [31m[1m[vite][22m[39m [31mInternal server error: D:\yuexin\project\risk\saas\src\console\Console.tsx: Missing semicolon. (400:13)
+
+[0m [90m 398 |[31m                 [33m<[31m[33m/[31m[33mnav[31m[33m>[31m
+ [90m 399 |[31m               [33m<[31m[33m/[31m[33mdiv[31m[33m>[31m
+[31m[1m>[22m[31m[90m 400 |[31m             ))
+ [90m     |[31m              [31m[1m^[22m[31m
+ [90m 401 |[31m           )}
+ [90m 402 |[31m         [33m<[31m[33m/[31m[33maside[31m[33m>[31m
+ [90m 403 |[31m[0m[39m
+  Plugin: [35mvite:react-babel[39m
+  File: [36mD:/yuexin/project/risk/saas/src/console/Console.tsx[39m:400:13
+[33m  412|          <main className="min-w-0 flex-1 px-4 py-6 lg:px-8">
+  413|            <div className="mx-auto w-full max-w-[1320px]">
+  414|              {!supported ? (
+     |                   ^
+  415|                <PlannedPlaceholder name={subName[sub] ?? '该子系统'} />
+  416|              ) : key === 'cr:pre-application' ? ([39m
+      at constructor (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:365:19)
+      at TypeScriptParserMixin.raise (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:6616:19)
+      at TypeScriptParserMixin.semicolon (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:6912:10)
+      at TypeScriptParserMixin.parseReturnStatement (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:13160:12)
+      at TypeScriptParserMixin.parseStatementContent (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:12815:21)
+      at TypeScriptParserMixin.parseStatementContent (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:9525:18)
+      at TypeScriptParserMixin.parseStatementLike (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:12784:17)
+      at TypeScriptParserMixin.parseStatementListItem (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:12764:17)
+      at TypeScriptParserMixin.parseBlockOrModuleBlockBody (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:13333:61)
+      at TypeScriptParserMixin.parseBlockBody (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:13326:10)
+      at TypeScriptParserMixin.parseBlock (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:13314:10)
+      at TypeScriptParserMixin.parseFunctionBody (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:12117:24)
+      at TypeScriptParserMixin.parseArrowExpression (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:12092:10)
+      at TypeScriptParserMixin.parseParenAndDistinguishExpression (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:11704:12)
+      at TypeScriptParserMixin.parseExprAtom (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:11348:23)
+      at TypeScriptParserMixin.parseExprAtom (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:4776:20)
+      at TypeScriptParserMixin.parseExprSubscripts (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:11098:23)
+      at TypeScriptParserMixin.parseUpdate (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:11083:21)
+      at TypeScriptParserMixin.parseMaybeUnary (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:11063:23)
+      at TypeScriptParserMixin.parseMaybeUnary (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:9854:18)
+      at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:10916:61)
+      at TypeScriptParserMixin.parseExprOps (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:10921:23)
+      at TypeScriptParserMixin.parseMaybeConditional (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:10898:23)
+      at TypeScriptParserMixin.parseMaybeAssign (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:10848:21)
+      at TypeScriptParserMixin.parseMaybeAssign (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:9803:20)
+      at D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:10817:39
+      at TypeScriptParserMixin.allowInAnd (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:12443:12)
+      at TypeScriptParserMixin.parseMaybeAssignAllowIn (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:10817:17)
+      at TypeScriptParserMixin.parseMaybeAssignAllowInOrVoidPattern (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:12510:17)
+      at TypeScriptParserMixin.parseExprListItem (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:12192:18)
+      at TypeScriptParserMixin.parseCallExpressionArguments (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:11269:22)
+      at TypeScriptParserMixin.parseCoverCallAndAsyncArrowHead (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:11203:29)
+      at TypeScriptParserMixin.parseSubscript (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:11137:19)
+      at TypeScriptParserMixin.parseSubscript (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:9289:18)
+      at TypeScriptParserMixin.parseSubscripts (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:11111:19)
+      at TypeScriptParserMixin.parseExprSubscripts (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:11102:17)
+      at TypeScriptParserMixin.parseUpdate (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:11083:21)
+      at TypeScriptParserMixin.parseMaybeUnary (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:11063:23)
+      at TypeScriptParserMixin.parseMaybeUnary (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:9854:18)
+      at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:10916:61)
+      at TypeScriptParserMixin.parseExprOps (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:10921:23)
+      at TypeScriptParserMixin.parseMaybeConditional (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:10898:23)
+      at TypeScriptParserMixin.parseMaybeAssign (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:10848:21)
+      at TypeScriptParserMixin.parseMaybeAssign (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:9803:20)
+      at D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:10817:39
+      at TypeScriptParserMixin.allowInAnd (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:12443:12)
+      at TypeScriptParserMixin.parseMaybeAssignAllowIn (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:10817:17)
+      at TypeScriptParserMixin.parseMaybeAssignAllowInOrVoidPattern (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:12510:17)
+      at TypeScriptParserMixin.parseParenAndDistinguishExpression (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:11692:28)
+      at TypeScriptParserMixin.parseExprAtom (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:11348:23)
+[2m15:47:35[22m [31m[1m[vite][22m[39m [31mInternal server error: D:\yuexin\project\risk\saas\src\console\Console.tsx: Unexpected token, expected "," (401:14)
+
+[0m [90m 399 |[31m               [33m<[31m[33m/[31m[33mdiv[31m[33m>[31m
+ [90m 400 |[31m               )
+[31m[1m>[22m[31m[90m 401 |[31m             })}
+ [90m     |[31m               [31m[1m^[22m[31m
+ [90m 402 |[31m           )}
+ [90m 403 |[31m         [33m<[31m[33m/[31m[33maside[31m[33m>[31m
+ [90m 404 |[31m[0m[39m
+  Plugin: [35mvite:react-babel[39m
+  File: [36mD:/yuexin/project/risk/saas/src/console/Console.tsx[39m:401:14
+[33m  413|          <main className="min-w-0 flex-1 px-4 py-6 lg:px-8">
+  414|            <div className="mx-auto w-full max-w-[1320px]">
+  415|              {!supported ? (
+     |                    ^
+  416|                <PlannedPlaceholder name={subName[sub] ?? '该子系统'} />
+  417|              ) : key === 'cr:pre-application' ? ([39m
+      at constructor (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:365:19)
+      at TypeScriptParserMixin.raise (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:6616:19)
+      at TypeScriptParserMixin.unexpected (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:6636:16)
+      at TypeScriptParserMixin.expect (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:6916:12)
+      at TypeScriptParserMixin.parseParenAndDistinguishExpression (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:11678:14)
+      at TypeScriptParserMixin.parseExprAtom (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:11348:23)
+      at TypeScriptParserMixin.parseExprAtom (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:4776:20)
+      at TypeScriptParserMixin.parseExprSubscripts (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:11098:23)
+      at TypeScriptParserMixin.parseUpdate (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:11083:21)
+      at TypeScriptParserMixin.parseMaybeUnary (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:11063:23)
+      at TypeScriptParserMixin.parseMaybeUnary (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:9854:18)
+      at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:10916:61)
+      at TypeScriptParserMixin.parseExprOps (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:10921:23)
+      at TypeScriptParserMixin.parseMaybeConditional (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:10898:23)
+      at TypeScriptParserMixin.parseMaybeAssign (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:10848:21)
+      at TypeScriptParserMixin.parseMaybeAssign (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:9803:20)
+      at TypeScriptParserMixin.parseConditional (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:10910:29)
+      at TypeScriptParserMixin.parseConditional (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:9620:18)
+      at TypeScriptParserMixin.parseMaybeConditional (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:10902:17)
+      at TypeScriptParserMixin.parseMaybeAssign (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:10848:21)
+      at TypeScriptParserMixin.parseMaybeAssign (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:9803:20)
+      at TypeScriptParserMixin.parseConditional (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:10910:29)
+      at TypeScriptParserMixin.parseConditional (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:9620:18)
+      at TypeScriptParserMixin.parseMaybeConditional (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:10902:17)
+      at TypeScriptParserMixin.parseMaybeAssign (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:10848:21)
+      at TypeScriptParserMixin.parseMaybeAssign (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:9803:20)
+      at TypeScriptParserMixin.parseExpressionBase (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:10801:23)
+      at D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:10797:39
+      at TypeScriptParserMixin.allowInAnd (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:12443:12)
+      at TypeScriptParserMixin.parseExpression (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:10797:17)
+      at TypeScriptParserMixin.jsxParseExpressionContainer (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:4644:31)
+      at TypeScriptParserMixin.jsxParseElementAt (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:4723:36)
+      at TypeScriptParserMixin.jsxParseElementAt (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:4710:32)
+      at TypeScriptParserMixin.jsxParseElementAt (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:4710:32)
+      at TypeScriptParserMixin.jsxParseElement (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:4761:17)
+      at TypeScriptParserMixin.parseExprAtom (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:4771:19)
+      at TypeScriptParserMixin.parseExprSubscripts (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:11098:23)
+      at TypeScriptParserMixin.parseUpdate (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:11083:21)
+      at TypeScriptParserMixin.parseMaybeUnary (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:11063:23)
+      at TypeScriptParserMixin.parseMaybeUnary (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:9854:18)
+      at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:10916:61)
+      at TypeScriptParserMixin.parseExprOps (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:10921:23)
+      at TypeScriptParserMixin.parseMaybeConditional (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:10898:23)
+      at TypeScriptParserMixin.parseMaybeAssign (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:10848:21)
+      at D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:9792:39
+      at TypeScriptParserMixin.tryParse (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:6924:20)
+      at TypeScriptParserMixin.parseMaybeAssign (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:9792:18)
+      at D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:10817:39
+      at TypeScriptParserMixin.allowInAnd (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:12443:12)
+      at TypeScriptParserMixin.parseMaybeAssignAllowIn (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:10817:17)
+[2m15:47:36[22m [31m[1m[vite][22m[39m [31mInternal server error: D:\yuexin\project\risk\saas\src\console\Console.tsx: Unexpected token, expected "," (401:14)
+
+[0m [90m 399 |[31m               [33m<[31m[33m/[31m[33mdiv[31m[33m>[31m
+ [90m 400 |[31m               )
+[31m[1m>[22m[31m[90m 401 |[31m             })}
+ [90m     |[31m               [31m[1m^[22m[31m
+ [90m 402 |[31m           )}
+ [90m 403 |[31m         [33m<[31m[33m/[31m[33maside[31m[33m>[31m
+ [90m 404 |[31m[0m[39m
+  Plugin: [35mvite:react-babel[39m
+  File: [36mD:/yuexin/project/risk/saas/src/console/Console.tsx[39m:401:14
+[33m  413|          <main className="min-w-0 flex-1 px-4 py-6 lg:px-8">
+  414|            <div className="mx-auto w-full max-w-[1320px]">
+  415|              {!supported ? (
+     |                    ^
+  416|                <PlannedPlaceholder name={subName[sub] ?? '该子系统'} />
+  417|              ) : key === 'cr:pre-application' ? ([39m
+      at constructor (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:365:19)
+      at TypeScriptParserMixin.raise (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:6616:19)
+      at TypeScriptParserMixin.unexpected (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:6636:16)
+      at TypeScriptParserMixin.expect (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:6916:12)
+      at TypeScriptParserMixin.parseParenAndDistinguishExpression (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:11678:14)
+      at TypeScriptParserMixin.parseExprAtom (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:11348:23)
+      at TypeScriptParserMixin.parseExprAtom (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:4776:20)
+      at TypeScriptParserMixin.parseExprSubscripts (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:11098:23)
+      at TypeScriptParserMixin.parseUpdate (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:11083:21)
+      at TypeScriptParserMixin.parseMaybeUnary (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:11063:23)
+      at TypeScriptParserMixin.parseMaybeUnary (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:9854:18)
+      at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:10916:61)
+      at TypeScriptParserMixin.parseExprOps (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:10921:23)
+      at TypeScriptParserMixin.parseMaybeConditional (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:10898:23)
+      at TypeScriptParserMixin.parseMaybeAssign (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:10848:21)
+      at TypeScriptParserMixin.parseMaybeAssign (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:9803:20)
+      at TypeScriptParserMixin.parseConditional (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:10910:29)
+      at TypeScriptParserMixin.parseConditional (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:9620:18)
+      at TypeScriptParserMixin.parseMaybeConditional (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:10902:17)
+      at TypeScriptParserMixin.parseMaybeAssign (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:10848:21)
+      at TypeScriptParserMixin.parseMaybeAssign (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:9803:20)
+      at TypeScriptParserMixin.parseConditional (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:10910:29)
+      at TypeScriptParserMixin.parseConditional (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:9620:18)
+      at TypeScriptParserMixin.parseMaybeConditional (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:10902:17)
+      at TypeScriptParserMixin.parseMaybeAssign (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:10848:21)
+      at TypeScriptParserMixin.parseMaybeAssign (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:9803:20)
+      at TypeScriptParserMixin.parseExpressionBase (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:10801:23)
+      at D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:10797:39
+      at TypeScriptParserMixin.allowInAnd (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:12443:12)
+      at TypeScriptParserMixin.parseExpression (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:10797:17)
+      at TypeScriptParserMixin.jsxParseExpressionContainer (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:4644:31)
+      at TypeScriptParserMixin.jsxParseElementAt (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:4723:36)
+      at TypeScriptParserMixin.jsxParseElementAt (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:4710:32)
+      at TypeScriptParserMixin.jsxParseElementAt (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:4710:32)
+      at TypeScriptParserMixin.jsxParseElement (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:4761:17)
+      at TypeScriptParserMixin.parseExprAtom (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:4771:19)
+      at TypeScriptParserMixin.parseExprSubscripts (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:11098:23)
+      at TypeScriptParserMixin.parseUpdate (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:11083:21)
+      at TypeScriptParserMixin.parseMaybeUnary (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:11063:23)
+      at TypeScriptParserMixin.parseMaybeUnary (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:9854:18)
+      at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:10916:61)
+      at TypeScriptParserMixin.parseExprOps (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:10921:23)
+      at TypeScriptParserMixin.parseMaybeConditional (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:10898:23)
+      at TypeScriptParserMixin.parseMaybeAssign (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:10848:21)
+      at D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:9792:39
+      at TypeScriptParserMixin.tryParse (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:6924:20)
+      at TypeScriptParserMixin.parseMaybeAssign (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:9792:18)
+      at D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:10817:39
+      at TypeScriptParserMixin.allowInAnd (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:12443:12)
+      at TypeScriptParserMixin.parseMaybeAssignAllowIn (D:\yuexin\project\risk\saas\node_modules\@babel\parser\lib\index.js:10817:17)
+[2m15:56:33[22m [31m[1m[vite][22m[39m Pre-transform error: Transform failed with 1 error:
+D:/yuexin/project/risk/saas/src/console/menus.ts:31:5: ERROR: Expected "]" but found ":"
+[2m15:56:33[22m [31m[1m[vite][22m[39m [31mInternal server error: Transform failed with 1 error:
+D:/yuexin/project/risk/saas/src/console/menus.ts:31:5: ERROR: Expected "]" but found ":"[39m
+  Plugin: [35mvite:esbuild[39m
+  File: [36mD:/yuexin/project/risk/saas/src/console/menus.ts[39m:31:5
+[33m  
+  [33mExpected "]" but found ":"[33m
+  29 |  export const creditRiskMenu: MenuGroup[] = [
+  30 |    { group: '工作台', items: [{ label: '概览看板', key: 'cr:overview', desc: '展示零售信贷风控核心指标的实时概览看板', keep: true }] },
+  31 |  label: '申贷审核', key: 'cr:pre-application', desc: '展示所有申贷申请进件，支持按渠道、产品、状态筛选与审核' }] },
+     |       ^
+  32 |    {
+  33 |      group: '信息核验',
+  [39m
+      at failureErrorWithLog (D:\yuexin\project\risk\saas\node_modules\esbuild\lib\main.js:1472:15)
+      at D:\yuexin\project\risk\saas\node_modules\esbuild\lib\main.js:755:50
+      at responseCallbacks.<computed> (D:\yuexin\project\risk\saas\node_modules\esbuild\lib\main.js:622:9)
+      at handleIncomingPacket (D:\yuexin\project\risk\saas\node_modules\esbuild\lib\main.js:677:12)
+      at Socket.readFromStdout (D:\yuexin\project\risk\saas\node_modules\esbuild\lib\main.js:600:7)
+      at Socket.emit (node:events:509:28)
+      at addChunk (node:internal/streams/readable:563:12)
+      at readableAddChunkPushByteMode (node:internal/streams/readable:514:3)
+      at Readable.push (node:internal/streams/readable:394:5)
+      at Pipe.onStreamRead (node:internal/stream_base_commons:189:23)
+[2m15:56:33[22m [31m[1m[vite][22m[39m Pre-transform error: Transform failed with 1 error:
+D:/yuexin/project/risk/saas/src/console/menus.ts:31:5: ERROR: Expected "]" but found ":"
+[2m15:56:40[22m [31m[1m[vite][22m[39m [31mInternal server error: Transform failed with 1 error:
+D:/yuexin/project/risk/saas/src/console/menus.ts:31:5: ERROR: Expected "]" but found ":"[39m
+  Plugin: [35mvite:esbuild[39m
+  File: [36mD:/yuexin/project/risk/saas/src/console/menus.ts[39m:31:5
+[33m  
+  [33mExpected "]" but found ":"[33m
+  29 |  export const creditRiskMenu: MenuGroup[] = [
+  30 |    { group: '工作台', items: [{ label: '概览看板', key: 'cr:overview', desc: '展示零售信贷风控核心指标的实时概览看板', keep: true }] },
+  31 |  label: '申贷审核', key: 'cr:pre-application', desc: '展示所有申贷申请进件，支持按渠道、产品、状态筛选与审核' }] },
+     |       ^
+  32 |    {
+  33 |      group: '信息核验',
+  [39m
+      at failureErrorWithLog (D:\yuexin\project\risk\saas\node_modules\esbuild\lib\main.js:1472:15)
+      at D:\yuexin\project\risk\saas\node_modules\esbuild\lib\main.js:755:50
+      at responseCallbacks.<computed> (D:\yuexin\project\risk\saas\node_modules\esbuild\lib\main.js:622:9)
+      at handleIncomingPacket (D:\yuexin\project\risk\saas\node_modules\esbuild\lib\main.js:677:12)
+      at Socket.readFromStdout (D:\yuexin\project\risk\saas\node_modules\esbuild\lib\main.js:600:7)
+      at Socket.emit (node:events:509:28)
+      at addChunk (node:internal/streams/readable:563:12)
+      at readableAddChunkPushByteMode (node:internal/streams/readable:514:3)
+      at Readable.push (node:internal/streams/readable:394:5)
+      at Pipe.onStreamRead (node:internal/stream_base_commons:189:23)
+[2m15:57:02[22m [31m[1m[vite][22m[39m Pre-transform error: Transform failed with 1 error:
+D:/yuexin/project/risk/saas/src/console/menus.ts:31:5: ERROR: Expected "]" but found ":"
+[2m15:57:02[22m [31m[1m[vite][22m[39m Pre-transform error: Transform failed with 1 error:
+D:/yuexin/project/risk/saas/src/console/menus.ts:31:5: ERROR: Expected "]" but found ":"
+[2m15:57:02[22m [31m[1m[vite][22m[39m [31mInternal server error: Transform failed with 1 error:
+D:/yuexin/project/risk/saas/src/console/menus.ts:31:5: ERROR: Expected "]" but found ":"[39m
+  Plugin: [35mvite:esbuild[39m
+  File: [36mD:/yuexin/project/risk/saas/src/console/menus.ts[39m:31:5
+[33m  
+  [33mExpected "]" but found ":"[33m
+  29 |  export const creditRiskMenu: MenuGroup[] = [
+  30 |    { group: '工作台', items: [{ label: '概览看板', key: 'cr:overview', desc: '展示零售信贷风控核心指标的实时概览看板', keep: true }] },
+  31 |  label: '申贷审核', key: 'cr:pre-application', desc: '展示所有申贷申请进件，支持按渠道、产品、状态筛选与审核' }] },
+     |       ^
+  32 |    {
+  33 |      group: '信息核验',
+  [39m
+      at failureErrorWithLog (D:\yuexin\project\risk\saas\node_modules\esbuild\lib\main.js:1472:15)
+      at D:\yuexin\project\risk\saas\node_modules\esbuild\lib\main.js:755:50
+      at responseCallbacks.<computed> (D:\yuexin\project\risk\saas\node_modules\esbuild\lib\main.js:622:9)
+      at handleIncomingPacket (D:\yuexin\project\risk\saas\node_modules\esbuild\lib\main.js:677:12)
+      at Socket.readFromStdout (D:\yuexin\project\risk\saas\node_modules\esbuild\lib\main.js:600:7)
+      at Socket.emit (node:events:509:28)
+      at addChunk (node:internal/streams/readable:563:12)
+      at readableAddChunkPushByteMode (node:internal/streams/readable:514:3)
+      at Readable.push (node:internal/streams/readable:394:5)
+      at Pipe.onStreamRead (node:internal/stream_base_commons:189:23)
+[2m15:57:02[22m [31m[1m[vite][22m[39m [31mInternal server error: Transform failed with 1 error:
+D:/yuexin/project/risk/saas/src/console/menus.ts:31:5: ERROR: Expected "]" but found ":"[39m
+  Plugin: [35mvite:esbuild[39m
+  File: [36mD:/yuexin/project/risk/saas/src/console/menus.ts[39m:31:5
+[33m  
+  [33mExpected "]" but found ":"[33m
+  29 |  export const creditRiskMenu: MenuGroup[] = [
+  30 |    { group: '工作台', items: [{ label: '概览看板', key: 'cr:overview', desc: '展示零售信贷风控核心指标的实时概览看板', keep: true }] },
+  31 |  label: '申贷审核', key: 'cr:pre-application', desc: '展示所有申贷申请进件，支持按渠道、产品、状态筛选与审核' }] },
+     |       ^
+  32 |    {
+  33 |      group: '信息核验',
+  [39m
+      at failureErrorWithLog (D:\yuexin\project\risk\saas\node_modules\esbuild\lib\main.js:1472:15)
+      at D:\yuexin\project\risk\saas\node_modules\esbuild\lib\main.js:755:50
+      at responseCallbacks.<computed> (D:\yuexin\project\risk\saas\node_modules\esbuild\lib\main.js:622:9)
+      at handleIncomingPacket (D:\yuexin\project\risk\saas\node_modules\esbuild\lib\main.js:677:12)
+      at Socket.readFromStdout (D:\yuexin\project\risk\saas\node_modules\esbuild\lib\main.js:600:7)
+      at Socket.emit (node:events:509:28)
+      at addChunk (node:internal/streams/readable:563:12)
+      at readableAddChunkPushByteMode (node:internal/streams/readable:514:3)
+      at Readable.push (node:internal/streams/readable:394:5)
+      at Pipe.onStreamRead (node:internal/stream_base_commons:189:23)
+[2m16:00:06[22m [31m[1m[vite][22m[39m Pre-transform error: Transform failed with 1 error:
+D:/yuexin/project/risk/saas/src/console/menus.ts:31:5: ERROR: Expected "]" but found ":"
+[2m16:00:08[22m [31m[1m[vite][22m[39m [31mInternal server error: Transform failed with 1 error:
+D:/yuexin/project/risk/saas/src/console/menus.ts:31:5: ERROR: Expected "]" but found ":"[39m
+  Plugin: [35mvite:esbuild[39m
+  File: [36mD:/yuexin/project/risk/saas/src/console/menus.ts[39m:31:5
+[33m  
+  [33mExpected "]" but found ":"[33m
+  29 |  export const creditRiskMenu: MenuGroup[] = [
+  30 |    { group: '工作台', items: [{ label: '概览看板', key: 'cr:overview', desc: '展示零售信贷风控核心指标的实时概览看板', keep: true }] },
+  31 |  label: '申贷审核', key: 'cr:pre-application', desc: '展示所有申贷申请进件，支持按渠道、产品、状态筛选与审核' }] },
+     |       ^
+  32 |    {
+  33 |      group: '信息核验',
+  [39m
+      at failureErrorWithLog (D:\yuexin\project\risk\saas\node_modules\esbuild\lib\main.js:1472:15)
+      at D:\yuexin\project\risk\saas\node_modules\esbuild\lib\main.js:755:50
+      at responseCallbacks.<computed> (D:\yuexin\project\risk\saas\node_modules\esbuild\lib\main.js:622:9)
+      at handleIncomingPacket (D:\yuexin\project\risk\saas\node_modules\esbuild\lib\main.js:677:12)
+      at Socket.readFromStdout (D:\yuexin\project\risk\saas\node_modules\esbuild\lib\main.js:600:7)
+      at Socket.emit (node:events:509:28)
+      at addChunk (node:internal/streams/readable:563:12)
+      at readableAddChunkPushByteMode (node:internal/streams/readable:514:3)
+      at Readable.push (node:internal/streams/readable:394:5)
+      at Pipe.onStreamRead (node:internal/stream_base_commons:189:23)
+[2m16:00:13[22m [31m[1m[vite][22m[39m [31mInternal server error: Transform failed with 1 error:
+D:/yuexin/project/risk/saas/src/console/menus.ts:31:5: ERROR: Expected "]" but found ":"[39m
+  Plugin: [35mvite:esbuild[39m
+  File: [36mD:/yuexin/project/risk/saas/src/console/menus.ts[39m:31:5
+[33m  
+  [33mExpected "]" but found ":"[33m
+  29 |  export const creditRiskMenu: MenuGroup[] = [
+  30 |    { group: '工作台', items: [{ label: '概览看板', key: 'cr:overview', desc: '展示零售信贷风控核心指标的实时概览看板', keep: true }] },
+  31 |  label: '申贷审核', key: 'cr:pre-application', desc: '展示所有申贷申请进件，支持按渠道、产品、状态筛选与审核' }] },
+     |       ^
+  32 |    {
+  33 |      group: '信息核验',
+  [39m
+      at failureErrorWithLog (D:\yuexin\project\risk\saas\node_modules\esbuild\lib\main.js:1472:15)
+      at D:\yuexin\project\risk\saas\node_modules\esbuild\lib\main.js:755:50
+      at responseCallbacks.<computed> (D:\yuexin\project\risk\saas\node_modules\esbuild\lib\main.js:622:9)
+      at handleIncomingPacket (D:\yuexin\project\risk\saas\node_modules\esbuild\lib\main.js:677:12)
+      at Socket.readFromStdout (D:\yuexin\project\risk\saas\node_modules\esbuild\lib\main.js:600:7)
+      at Socket.emit (node:events:509:28)
+      at addChunk (node:internal/streams/readable:563:12)
+      at readableAddChunkPushByteMode (node:internal/streams/readable:514:3)
+      at Readable.push (node:internal/streams/readable:394:5)
+      at Pipe.onStreamRead (node:internal/stream_base_commons:189:23)

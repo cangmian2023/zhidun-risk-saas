@@ -1,16 +1,31 @@
-// 信用风控报告（方案Kimi） - 数据模型与示例数据
+// 信用风控报告 - 数据模型与示例数据
 // 依据 doc/信息风控报告详情-kimi版.md（V2.0，2026-07-24）构建
 // 页面结构与「信息核验」(PreVerifyDetail) 保持一致，本模型聚焦信用风控自有字段，不继承信息核验类型
 
-export type CreditLevel = '低' | '中' | '高' | '极高'
+export type CreditLevel = '低' | '中' | '高' | '极高' // 维度子项风险等级（沿用）
+// 整体信用等级：分数越高信用越好（300-900 分区间）
+export type CreditGrade = '差' | '一般' | '良好' | '优秀'
 export type CreditSysResult = '处理中' | '通过' | '拒绝' | '预警'
 export type CreditWorkStatus =
-  | '待确认'
-  | '已确认'
+  | '—'
   | '待审核'
-  | '已提交双人复核'
-  | '双人复核-通过'
-  | '双人复核-拒绝'
+  | '提交复核'
+  | '复核放行'
+  | '复核拒绝'
+
+// 评分区间 → 信用等级（300-900，越高越好）
+export function gradeFromScore(score: number): CreditGrade {
+  if (score >= 801) return '优秀'
+  if (score >= 651) return '良好'
+  if (score >= 501) return '一般'
+  return '差'
+}
+// 信用等级 → 系统自动审核结果
+export function autoDecisionFromGrade(grade: CreditGrade): CreditSysResult {
+  if (grade === '优秀' || grade === '良好') return '通过'
+  if (grade === '一般') return '预警'
+  return '拒绝'
+}
 
 export interface CreditItem {
   name: string
@@ -68,9 +83,9 @@ export interface CreditKimiReport {
   name: string
   idNo: string // 脱敏身份证号
   reportTime: string
-  creditScore: number // 信用评分 0-100，分数越高风险越高
-  riskLevel: CreditLevel // 信用风险等级
-  autoDecision: CreditSysResult // 自动审批结果
+  creditScore: number // 信用评分 300-900，分数越高信用越好
+  grade: CreditGrade // 信用等级（差/一般/良好/优秀）
+  autoDecision: CreditSysResult // 自动审核结果
   creditAdvice: string // 授信建议
   dimensions: CreditDimension[] // 六大维度
   baseScore: number // 基础加权得分
@@ -87,12 +102,27 @@ export interface CreditKimiReport {
   operator: string
 }
 
-// ========================= 配色映射（与信息核验一致：低绿/中黄/高橙/极高红） =========================
+// ========================= 配色映射 =========================
+// 维度子项风险等级（低绿/中黄/高橙/极高红，沿用）
 export const CREDIT_LEVEL_KIND: Record<CreditLevel, 'green' | 'amber' | 'orange' | 'red'> = {
   低: 'green',
   中: 'amber',
   高: 'orange',
   极高: 'red',
+}
+// 整体信用等级徽标配色：差红/一般黄/良好青/优秀绿
+export const CREDIT_GRADE_KIND: Record<CreditGrade, 'red' | 'amber' | 'cyan' | 'green'> = {
+  差: 'red',
+  一般: 'amber',
+  良好: 'cyan',
+  优秀: 'green',
+}
+// 整体信用等级文字色（与徽标配色一致，用于分数值上色）
+export const CREDIT_GRADE_TEXT: Record<CreditGrade, string> = {
+  差: 'text-rose-600',
+  一般: 'text-amber-600',
+  良好: 'text-cyan-600',
+  优秀: 'text-emerald-600',
 }
 export const CREDIT_SYS_KIND: Record<CreditSysResult, 'gray' | 'green' | 'red' | 'amber'> = {
   处理中: 'gray',
@@ -101,12 +131,11 @@ export const CREDIT_SYS_KIND: Record<CreditSysResult, 'gray' | 'green' | 'red' |
   预警: 'amber',
 }
 export const CREDIT_WORK_KIND: Record<CreditWorkStatus, 'gray' | 'blue' | 'green' | 'amber' | 'red'> = {
-  待确认: 'blue',
-  已确认: 'green',
+  '—': 'gray',
   待审核: 'amber',
-  已提交双人复核: 'blue',
-  '双人复核-通过': 'green',
-  '双人复核-拒绝': 'red',
+  提交复核: 'blue',
+  复核放行: 'green',
+  复核拒绝: 'red',
 }
 
 // ========================= 基础样本（王强 · 极高风险/拒绝，文档主样例） =========================
@@ -116,10 +145,10 @@ function buildBaseCreditReport(): CreditKimiReport {
     name: '王强',
     idNo: '110101********0314',
     reportTime: '2026-07-21 15:00:22',
-    creditScore: 88,
-    riskLevel: '极高',
+    creditScore: 430,
+    grade: '差',
     autoDecision: '拒绝',
-    creditAdvice: '建议拒绝，风险过高',
+    creditAdvice: '建议拒绝：信用极差，违约概率极高',
     dimensions: [
       {
         key: 'identity',
@@ -251,23 +280,20 @@ function buildBaseCreditReport(): CreditKimiReport {
       },
     ],
     recommendation: {
-      advice: '建议拒绝，风险过高',
+      advice: '建议拒绝：信用极差，违约概率极高',
       reason: '信用历史差（命中逾期）+ 设备安全性低（Root+群控）+ 行为稳定性不足（新手机号）',
       positive: '身份真实性良好（92 分），还款能力尚可（65 分）',
       risk: '信用历史 38 分（命中逾期）、设备安全性 28 分（Root+群控）、行为稳定性 55 分（新手机号）',
-      creditLimit: '--（本例为高风险，不建议授信）',
+      creditLimit: '——（信用评分 430 分 / 差，违约概率极高，不予授信）',
       limitTable: [
-        { scoreRange: '0-20', level: '低风险', limit: '申请额度的 100%', rate: '基准利率' },
-        { scoreRange: '21-39', level: '低风险', limit: '申请额度的 80%', rate: '基准利率 +5%' },
-        { scoreRange: '40-49', level: '中风险', limit: '申请额度的 50%', rate: '基准利率 +10%' },
-        { scoreRange: '50-59', level: '中风险', limit: '申请额度的 30%', rate: '基准利率 +15%' },
-        { scoreRange: '60-69', level: '高风险', limit: '申请额度的 10% 或拒绝', rate: '基准利率 +20%' },
-        { scoreRange: '70-79', level: '高风险', limit: '拒绝', rate: '—' },
-        { scoreRange: '80-100', level: '极高风险', limit: '拒绝', rate: '—' },
+        { scoreRange: '801-900', level: '优秀', limit: '申请额度 100%，可提额', rate: '基准利率' },
+        { scoreRange: '651-800', level: '良好', limit: '申请额度 100%', rate: '基准利率' },
+        { scoreRange: '501-650', level: '一般', limit: '申请额度 30%', rate: '基准利率 +10%' },
+        { scoreRange: '300-500', level: '差', limit: '拒绝', rate: '—' },
       ],
     },
     opLogs: [
-      { id: 'ck1', type: '信用报告生成', content: '系统自动生成信用风控报告', operator: '系统', time: '2026-07-21 15:00:22', remark: '信用评分 88 分，极高风险' },
+      { id: 'ck1', type: '信用报告生成', content: '系统自动生成信用风控报告', operator: '系统', time: '2026-07-21 15:00:22', remark: '信用评分 430 分，信用等级：差' },
       { id: 'ck2', type: '关联风险检测', content: '设备关联 3 个身份，存在群控嫌疑', operator: '系统', time: '2026-07-21 14:58:30', result: '命中', remark: '关联身份：李某、张某、王某' },
       { id: 'ck3', type: '设备安全检测', content: '设备存在 Root/越狱', operator: '系统', time: '2026-07-21 14:57:45', result: '命中', remark: '设备指纹：DV-9F2A-77C1' },
       { id: 'ck4', type: '信用历史检测', content: '跨行业联防联控库命中 1 条逾期', operator: '系统', time: '2026-07-21 14:56:50', result: '命中', remark: '疑似号码共用' },
@@ -279,7 +305,7 @@ function buildBaseCreditReport(): CreditKimiReport {
     product: '信用贷',
     channel: 'H5',
     amount: 30000,
-    workStatus: '待确认',
+    workStatus: '—',
     operator: '--',
   }
 }
@@ -288,7 +314,7 @@ function clone<T>(o: T): T {
   return JSON.parse(JSON.stringify(o)) as T
 }
 
-// 依据样例 id 返回对应状态：含 REJECT → 极高风险/拒绝；含 WARNING → 中风险/预警；含 PASS → 低风险/通过；缺省 → 极高风险样例
+// 依据样例 id 返回对应状态：含 REJECT → 差/拒绝；含 WARNING → 一般/预警；含 PASS → 良好/通过；缺省 → 差样例
 export function buildCreditKimiReport(id?: string): CreditKimiReport {
   const status: 'high' | 'warning' | 'pass' =
     id
@@ -311,10 +337,10 @@ export function buildCreditKimiReport(id?: string): CreditKimiReport {
     r.name = '赵*敏'
     r.idNo = '320***********2628'
     r.reportTime = '2026-07-21 15:00:22'
-    r.creditScore = 52
-    r.riskLevel = '中'
+    r.creditScore = 580
+    r.grade = '一般'
     r.autoDecision = '预警'
-    r.creditAdvice = '建议人工审核，限制额度或降级'
+    r.creditAdvice = '建议限制额度：信用一般，存在一定违约风险'
     r.product = '经营贷'
     r.channel = 'APP'
     r.amount = 200000
@@ -373,15 +399,15 @@ export function buildCreditKimiReport(id?: string): CreditKimiReport {
     ]
     r.finalComputed = 52
     r.recommendation = {
-      advice: '建议人工审核，限制额度或降级',
-      reason: '综合评分 52 分（中风险），无显著高风险项，但还款能力与资产偏弱',
+      advice: '建议限制额度：信用一般，存在一定违约风险',
+      reason: '综合评分 580 分（一般），无显著高风险项，但还款能力与资产偏弱',
       positive: '身份真实性良好（88 分）、设备安全性正常（72 分）、无历史逾期',
       risk: '还款能力中等（60 分）、资产情况较弱（无房产）',
-      creditLimit: '建议授信额度：申请额度的 30%（约 ¥60,000）',
+      creditLimit: '建议限制额度：申请额度的 30%（约 ¥60,000）',
       limitTable: buildBaseCreditReport().recommendation.limitTable,
     }
     r.opLogs = [
-      { id: 'ckw1', type: '信用报告生成', content: '系统自动生成信用风控报告', operator: '系统', time: '2026-07-21 15:00:22', remark: '信用评分 52 分，中风险' },
+      { id: 'ckw1', type: '信用报告生成', content: '系统自动生成信用风控报告', operator: '系统', time: '2026-07-21 15:00:22', remark: '信用评分 580 分，信用等级：一般' },
       { id: 'ckw2', type: '还款能力评估', content: '月收入 18,000 元，负债率 28%', operator: '系统', time: '2026-07-21 14:54:10', result: '通过', remark: '还款能力中等' },
       { id: 'ckw3', type: '身份真实性核验', content: '公安实名、银行卡四要素通过', operator: '系统', time: '2026-07-21 14:52:00', result: '通过', remark: '身份真实有效' },
       { id: 'ckw4', type: '申请提交', content: '用户提交申请', operator: '系统', time: '2026-07-21 14:50:00', remark: '申请额度 ¥200,000' },
@@ -394,14 +420,14 @@ export function buildCreditKimiReport(id?: string): CreditKimiReport {
   r.name = '张*伟'
   r.idNo = '510***********1234'
   r.reportTime = '2026-07-21 15:00:22'
-  r.creditScore = 15
-  r.riskLevel = '低'
+  r.creditScore = 760
+  r.grade = '良好'
   r.autoDecision = '通过'
-  r.creditAdvice = '建议通过，按申请额度授信'
+  r.creditAdvice = '正常通过：信用良好，违约风险较低'
   r.product = '信用贷'
   r.channel = 'APP'
   r.amount = 80000
-  r.workStatus = '待确认'
+  r.workStatus = '—'
   r.operator = '--'
   r.dimensions = [
     dim('identity', '身份真实性', 96, 20, '低', '公安实名、银行卡四要素一致', [
@@ -456,15 +482,15 @@ export function buildCreditKimiReport(id?: string): CreditKimiReport {
   ]
   r.finalComputed = 15
   r.recommendation = {
-    advice: '建议通过，按申请额度授信',
-    reason: '综合评分 15 分（低风险），身份、还款、信用、行为、设备、关联六维全部良好',
+    advice: '正常通过：信用良好，违约风险较低',
+    reason: '综合评分 760 分（良好），身份、还款、信用、行为、设备、关联六维全部良好',
     positive: '各维度均≥78 分，无风险项',
     risk: '无明显风险因素',
     creditLimit: '建议授信额度：申请额度的 100%（¥80,000）',
     limitTable: buildBaseCreditReport().recommendation.limitTable,
   }
   r.opLogs = [
-    { id: 'ckp1', type: '信用报告生成', content: '系统自动生成信用风控报告', operator: '系统', time: '2026-07-21 15:00:22', remark: '信用评分 15 分，低风险' },
+    { id: 'ckp1', type: '信用报告生成', content: '系统自动生成信用风控报告', operator: '系统', time: '2026-07-21 15:00:22', remark: '信用评分 760 分，信用等级：良好' },
     { id: 'ckp2', type: '还款能力评估', content: '月收入 30,000 元，负债率 20%', operator: '系统', time: '2026-07-21 14:54:10', result: '通过', remark: '还款能力强' },
     { id: 'ckp3', type: '身份真实性核验', content: '公安实名、银行卡四要素通过', operator: '系统', time: '2026-07-21 14:52:00', result: '通过', remark: '身份真实有效' },
     { id: 'ckp4', type: '申请提交', content: '用户提交申请', operator: '系统', time: '2026-07-21 14:50:00', remark: '申请额度 ¥80,000' },
