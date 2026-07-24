@@ -23,7 +23,7 @@ const BANDS: FraudS4ScoreBand[] = ['极低', '低', '中', '高', '极高']
 // 自动审核（按欺诈等级：低→通过 / 中→预警 / 高·极高→拒绝；结果计算前为 处理中）
 const AUTO_DECISIONS: FraudS4AutoDecision[] = ['通过', '拒绝', '预警', '处理中']
 // 人工审核（方案4 独立状态机，按 N8 矩阵）
-const WORK_STATUS: FraudS4WorkStatus[] = ['核验计算中', '待确认', '已确认', '初审拒贷', '强制放行', '加入黑名单', '待审核', '已提交双人复核', '双人复核-放行办结', '双人复核-拒绝办结']
+const WORK_STATUS: FraudS4WorkStatus[] = ['核验计算中', '待确认', '已确认', '初审拒贷', '强制放行', '加入黑名单', '待审核', '提交复核', '复核通过', '复核拒绝 - 拒绝办结']
 // 命中黑名单（命中 = 命中黑名单命中类规则）
 const BLACKLIST_OPTS: SelectOption[] = [
   { value: 'hit', label: '已命中黑名单' },
@@ -158,7 +158,7 @@ export default function FraudScheme4List() {
 
   const stats = useMemo(() => {
     const total = rows.length
-    const pending = rows.filter((r) => ['待确认', '待审核', '已提交双人复核'].includes(r.workStatus)).length
+    const pending = rows.filter((r) => ['待确认', '待审核', '提交复核'].includes(r.workStatus)).length
     const reject = rows.filter((r) => r.autoDecision === '拒绝').length
     const gangCount = rows.filter((r) => r.gangTag !== '未关联团伙').length
     const today = '2026-07-21'

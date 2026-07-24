@@ -1,7 +1,7 @@
 // 欺诈识别（方案4 · 完整版）· 状态/操作矩阵与操作弹窗
 // 采用方案4 文档定义的独立欺诈处置状态机（非复用信息核验 VerifyOps）：
 //   人工处置状态：核验计算中 / 待确认 / 已确认 / 初审拒贷 / 强制放行 / 加入黑名单 /
-//                 待审核 / 已提交双人复核 / 双人复核-放行办结 / 双人复核-拒绝办结
+//                 待审核 / 提交复核 / 复核通过 / 复核拒绝 - 拒绝办结
 //   行内操作：查看 / 报告确认 / 强制复审 / 加入黑名单 / 提交双人复核 / 录入备注 / 确认放行 / 确认拒绝
 // 交互逻辑（弹窗 / 状态流转 / 日志追加）与信息核验体系 1:1 对齐。
 import { useEffect, useState } from 'react'
@@ -52,8 +52,10 @@ export function fraudScheme4OpsFor(work: FraudScheme4WorkStatus, band?: FraudS4S
   switch (work) {
     case '核验计算中': // 自动结果未出，仅可查看（置灰，见 viewLocked）
       return ['view']
-    case '待确认': // 低/极低风险→查看/报告确认；高/极高风险→查看/报告确认/加入黑名单
-      return isHigh ? ['view', 'reportConfirm', 'addBlacklist'] : ['view', 'reportConfirm']
+    case '待确认': // 低/极低风险→查看/报告确认；高风险→查看/报告确认/强制复审；极高风险→查看/报告确认/加入黑名单
+      if (band === '极高') return ['view', 'reportConfirm', 'addBlacklist']
+      if (band === '高') return ['view', 'reportConfirm', 'forceReview']
+      return ['view', 'reportConfirm']
     case '已确认': // 仅查看
       return ['view']
     case '初审拒贷':
@@ -62,10 +64,10 @@ export function fraudScheme4OpsFor(work: FraudScheme4WorkStatus, band?: FraudS4S
       return ['view']
     case '待审核': // 中风险预警：查看/提交双人复核/录入备注
       return ['view', 'submitReview', 'note']
-    case '已提交双人复核': // 中风险：查看/确认放行/确认拒绝/录入备注
+    case '提交复核': // 中风险：查看/确认放行/确认拒绝/录入备注
       return ['view', 'confirmPass', 'confirmReject', 'note']
-    case '双人复核-放行办结':
-    case '双人复核-拒绝办结': // 办结态，仅查看
+    case '复核通过':
+    case '复核拒绝 - 拒绝办结': // 办结态，仅查看
       return ['view']
   }
 }
@@ -77,7 +79,7 @@ export function fraudScheme4ViewLocked(work: FraudS4WorkStatus): boolean {
 const WORK_KIND: Record<FraudS4WorkStatus, 'red' | 'amber' | 'green' | 'blue' | 'gray'> = {
   核验计算中: 'gray', 待确认: 'amber', 已确认: 'green',
   初审拒贷: 'gray', 强制放行: 'gray', 加入黑名单: 'red',
-  待审核: 'amber', 已提交双人复核: 'blue', '双人复核-放行办结': 'gray', '双人复核-拒绝办结': 'gray',
+  待审核: 'amber', 提交复核: 'blue', '复核通过': 'green', '复核拒绝 - 拒绝办结': 'gray',
 }
 const BAND_KIND: Record<FraudS4ScoreBand, 'green' | 'amber' | 'orange' | 'red'> = {
   极低: 'green', 低: 'green', 中: 'amber', 高: 'orange', 极高: 'red',
@@ -195,8 +197,8 @@ function fraudScheme4UseActions(
   const close = () => setModal(null)
 
   const applyReportConfirm = () => {
-    onApply({ workStatus: '已确认', operator: '风控专员-张磊' })
-    onLog?.({ type: '报告确认', content: '确认欺诈识别报告无误', operator: '风控专员-张磊', time: now(), remark: '报告已确认' })
+    onApply({ workStatus: '已确认', operator: '初审：审核员 1' })
+    onLog?.({ type: '报告确认', content: '确认欺诈识别报告无误', operator: '初审：审核员 1', time: now(), remark: '报告已确认' })
     flash?.('已报告确认')
     close()
   }
@@ -207,12 +209,13 @@ function fraudScheme4UseActions(
   }
   const applyAddBlacklist = (payload: { phone: string; device: string; idNo: string; reason: string }) => {
     const parts = [payload.phone && `手机号 ${payload.phone}`, payload.device && `设备 ${payload.device}`, payload.idNo && `身份证 ${payload.idNo}`].filter(Boolean).join('、')
-    onLog?.({ type: '加入黑名单', content: `将 ${parts} 加入黑名单库`, operator: '风控专员-张磊', time: now(), remark: payload.reason || '后续申请自动拦截' })
+    onApply({ workStatus: '加入黑名单', operator: '初审：审核员 1；终审：主管 1' })
+    onLog?.({ type: '加入黑名单', content: `将 ${parts} 加入黑名单库`, operator: '初审：审核员 1；终审：主管 1', time: now(), remark: payload.reason || '后续申请自动拦截' })
     flash?.('已加入黑名单库，后续申请自动拦截')
     close()
   }
   const applySubmitReview = (note: string) => {
-    onApply({ workStatus: '已提交双人复核', operator: '初审：审核员 1' })
+    onApply({ workStatus: '提交复核', operator: '初审：审核员 1' })
     onLog?.({ type: '提交双人复核', content: '提交双人复核', operator: '初审：审核员 1', time: now(), remark: note })
     flash?.('已提交双人复核')
     close()
@@ -223,13 +226,13 @@ function fraudScheme4UseActions(
     close()
   }
   const applyConfirmPass = () => {
-    onApply({ workStatus: '双人复核-放行办结', operator: '初审：审核员 1；终审：主管 1' })
+    onApply({ workStatus: '复核通过', operator: '初审：审核员 1；终审：主管 1' })
     onLog?.({ type: '确认放行', content: '双人复核确认放行', operator: '初审：审核员 1；终审：主管 1', time: now() })
     flash?.('已确认放行')
     close()
   }
   const applyConfirmReject = () => {
-    onApply({ workStatus: '双人复核-拒绝办结', operator: '初审：审核员 1；终审：主管 1' })
+    onApply({ workStatus: '复核拒绝 - 拒绝办结', operator: '初审：审核员 1；终审：主管 1' })
     onLog?.({ type: '确认拒绝', content: '双人复核确认拒绝', operator: '初审：审核员 1；终审：主管 1', time: now() })
     flash?.('已确认拒绝')
     close()

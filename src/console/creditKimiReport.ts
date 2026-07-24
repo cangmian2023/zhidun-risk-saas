@@ -184,7 +184,7 @@ function buildBaseCreditReport(): CreditKimiReport {
         name: '信用历史',
         score: 38,
         weight: 25,
-        level: '低',
+        level: '极高',
         note: '跨行业联防联控库命中 1 条历史逾期',
         items: [
           { name: '征信查询次数', result: '近 3 个月查询 8 次', score: 50, weight: 20 },
@@ -199,7 +199,7 @@ function buildBaseCreditReport(): CreditKimiReport {
         name: '行为稳定性',
         score: 55,
         weight: 10,
-        level: '中',
+        level: '高',
         note: '手机号入网仅 21 天，不足 30 天',
         items: [
           { name: '手机号入网时长', result: '入网 21 天，不足 30 天', score: 30, weight: 30 },
@@ -214,7 +214,7 @@ function buildBaseCreditReport(): CreditKimiReport {
         name: '设备安全性',
         score: 28,
         weight: 10,
-        level: '低',
+        level: '极高',
         note: '设备存在 Root/越狱，关联多身份',
         items: [
           { name: 'Root/越狱状态', result: '已 Root', score: 10, weight: 30 },
@@ -360,14 +360,14 @@ export function buildCreditKimiReport(id?: string): CreditKimiReport {
         it('学历水平', '大专', 55, 15),
         it('资产情况', '无房产', 45, 10),
       ]),
-      dim('history', '信用历史', 55, 25, '低', '征信查询适中，无历史逾期', [
+      dim('history', '信用历史', 55, 25, '高', '征信查询适中，无历史逾期', [
         it('征信查询次数', '近 3 个月查询 4 次', 60, 20),
         it('历史逾期记录', '未命中', 80, 30),
         it('历史授信记录', '2 次通过', 65, 20),
         it('多头借贷情况', '当前 1 笔未结清', 55, 20),
         it('信用账户年龄', '首卡开户 2 年', 60, 10),
       ]),
-      dim('behavior', '行为稳定性', 58, 10, '中', '手机号入网 8 个月，行为正常', [
+      dim('behavior', '行为稳定性', 58, 10, '高', '手机号入网 8 个月，行为正常', [
         it('手机号入网时长', '入网 8 个月', 70, 30),
         it('设备使用时长', '设备使用 200 天', 75, 25),
         it('申请频率', '近 30 天首次申请', 80, 20),

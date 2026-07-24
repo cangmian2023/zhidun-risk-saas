@@ -270,7 +270,7 @@ export default function FraudScheme4Detail() {
   const nav = useNavigate()
   const [params] = useSearchParams()
   const sysParam = (params.get('sys') as FraudScheme4SysResult) ?? '极高'
-  const workParam = (params.get('work') as FraudScheme4WorkStatus) ?? '待复核'
+  const workParam = (params.get('work') as FraudScheme4WorkStatus) ?? '待确认'
   const opParam = params.get('op') ?? '--'
   const sampleId = params.get('id') ?? undefined
   const variantId = sysParam === '极高' || sysParam === '高' ? 'FRAUD' : sysParam === '中' ? 'SUSPECT' : 'PASS'

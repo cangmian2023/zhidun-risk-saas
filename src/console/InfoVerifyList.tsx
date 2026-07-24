@@ -15,10 +15,10 @@ const WORK_STATUSES: WorkStatus[] = [
   '待确认',
   '已确认',
   '待审核',
-  '已提交双人复核',
-  '双人复核-通过',
-  '双人复核-拒绝',
-  '强制放行办结',
+  '提交复核',
+  '复核通过',
+  '复核拒绝',
+  '强制放行',
 ]
 
 // 严格对齐交互说明：自动审核 × 人工审核 × 审核员 × 异常值(欺诈分档位)
@@ -34,18 +34,18 @@ const seedRows: VerifyRow[] = [
   { id: 'PA-20260618-003', name: '王强', product: '信用贷', channel: 'H5', amount: 30000, fraudScore: 88, creditScore: 521, sysResult: '拒绝', workStatus: '待确认', operator: '--', auditTime: '2026-06-18 15:48' },
   // 5. 拒绝 / 已确认 / 初审：审核员 1 / 查看
   { id: 'PA-20260620-011', name: '冯雪', product: '信用贷', channel: 'APP', amount: 60000, fraudScore: 85, creditScore: 498, sysResult: '拒绝', workStatus: '已确认', operator: '初审：审核员 1', auditTime: '2026-06-20 09:50' },
-  // 6. 拒绝 / 强制放行办结 / 初审：审核员 1；终审：主管 1 / 查看
-  { id: 'PA-20260619-010', name: '郑浩', product: '抵押贷', channel: '线下', amount: 680000, fraudScore: 92, creditScore: 505, sysResult: '拒绝', workStatus: '强制放行办结', operator: '初审：审核员 1；终审：主管 1', auditTime: '2026-06-19 14:30' },
+  // 6. 拒绝 / 强制放行 / 初审：审核员 1；终审：主管 1 / 查看
+  { id: 'PA-20260619-010', name: '郑浩', product: '抵押贷', channel: '线下', amount: 680000, fraudScore: 92, creditScore: 505, sysResult: '拒绝', workStatus: '强制放行', operator: '初审：审核员 1；终审：主管 1', auditTime: '2026-06-19 14:30' },
   // 7. 预警 / 待审核 / -- / 查看、提交双人复核
   { id: 'PA-20260618-004', name: '赵敏', product: '经营贷', channel: 'APP', amount: 200000, fraudScore: 42, creditScore: 635, sysResult: '预警', workStatus: '待审核', operator: '--', auditTime: '2026-06-18 16:05' },
   // 8. 预警 / 待审核 / -- (第二笔)
   { id: 'PA-20260618-006', name: '刘洋', product: '抵押贷', channel: '线下', amount: 350000, fraudScore: 35, creditScore: 560, sysResult: '预警', workStatus: '待审核', operator: '--', auditTime: '2026-06-19 09:12' },
-  // 9. 预警 / 已提交双人复核 / 初审：审核员 1 / 查看、确认放行、确认拒绝
-  { id: 'PA-20260619-007', name: '孙丽', product: '信用贷', channel: 'APP', amount: 120000, fraudScore: 30, creditScore: 700, sysResult: '预警', workStatus: '已提交双人复核', operator: '初审：审核员 1', auditTime: '2026-06-19 10:03' },
-  // 10. 预警 / 双人复核-通过 / 初审：审核员 1；终审：主管 1 / 查看
-  { id: 'PA-20260620-012', name: '蒋磊', product: '经营贷', channel: 'H5', amount: 150000, fraudScore: 47, creditScore: 540, sysResult: '预警', workStatus: '双人复核-通过', operator: '初审：审核员 1；终审：主管 1', auditTime: '2026-06-20 10:25' },
-  // 11. 预警 / 双人复核-拒绝 / 初审：审核员 1；终审：主管 1 / 查看
-  { id: 'PA-20260620-013', name: '韩梅', product: '信用贷', channel: '小程序', amount: 35000, fraudScore: 52, creditScore: 763, sysResult: '预警', workStatus: '双人复核-拒绝', operator: '初审：审核员 1；终审：主管 1', auditTime: '2026-06-20 11:15' },
+  // 9. 预警 / 提交复核 / 初审：审核员 1 / 查看、确认放行、确认拒绝
+  { id: 'PA-20260619-007', name: '孙丽', product: '信用贷', channel: 'APP', amount: 120000, fraudScore: 30, creditScore: 700, sysResult: '预警', workStatus: '提交复核', operator: '初审：审核员 1', auditTime: '2026-06-19 10:03' },
+  // 10. 预警 / 复核通过 / 初审：审核员 1；终审：主管 1 / 查看
+  { id: 'PA-20260620-012', name: '蒋磊', product: '经营贷', channel: 'H5', amount: 150000, fraudScore: 47, creditScore: 540, sysResult: '预警', workStatus: '复核通过', operator: '初审：审核员 1；终审：主管 1', auditTime: '2026-06-20 10:25' },
+  // 11. 预警 / 复核拒绝 / 初审：审核员 1；终审：主管 1 / 查看
+  { id: 'PA-20260620-013', name: '韩梅', product: '信用贷', channel: '小程序', amount: 35000, fraudScore: 52, creditScore: 763, sysResult: '预警', workStatus: '复核拒绝', operator: '初审：审核员 1；终审：主管 1', auditTime: '2026-06-20 11:15' },
   // 12. 通过 / 待确认 / -- (第二笔)
   { id: 'PA-20260619-009', name: '吴婷', product: '信用贷', channel: '小程序', amount: 45000, fraudScore: 9, creditScore: 755, sysResult: '通过', workStatus: '待确认', operator: '--', auditTime: '2026-06-19 13:45' },
   // 13. 通过 / 已确认 / 初审：审核员 1 (第二笔)
@@ -69,7 +69,7 @@ const SYS_KIND: Record<SysResult, 'gray' | 'green' | 'red' | 'amber'> = {
 }
 const WORK_KIND: Record<WorkStatus, 'gray' | 'blue' | 'green' | 'amber' | 'red' | 'violet'> = {
   核验计算中: 'gray', 待确认: 'blue', 已确认: 'green', 待审核: 'amber',
-  已提交双人复核: 'amber', '双人复核-通过': 'green', '双人复核-拒绝': 'red', 强制放行办结: 'violet',
+  提交复核: 'amber', '复核通过': 'green', '复核拒绝': 'red', 强制放行: 'violet',
 }
 
 /* ───────────────────────── 多选项下拉（沿用申贷审核筛选卡外观） ───────────────────────── */
@@ -190,14 +190,14 @@ export default function InfoVerifyList() {
   const stats = useMemo(() => {
     const total = rows.length
     const pending = rows.filter((r) => ['核验计算中', '待确认', '待审核'].includes(r.workStatus)).length
-    const review = rows.filter((r) => r.workStatus === '已提交双人复核').length
+    const review = rows.filter((r) => r.workStatus === '提交复核').length
     const passed = rows.filter((r) => r.sysResult === '通过').length
-    const forced = rows.filter((r) => r.workStatus === '强制放行办结').length
+    const forced = rows.filter((r) => r.workStatus === '强制放行').length
     return [
       { label: '待人工处置', value: String(pending), hint: '核验计算中 / 待确认 / 待审核', accent: 'amber' as const },
       { label: '自动审核通过率', value: total ? `${Math.round((passed / total) * 100)}%` : '0%', hint: `系统通过 ${passed} / 共 ${total} 笔`, accent: 'emerald' as const },
-      { label: '待双人复核', value: String(review), hint: '已提交双人复核等待终审', accent: 'violet' as const },
-      { label: '强制放行(高敏感)', value: String(forced), hint: '人工强制放行办结件', accent: 'rose' as const },
+      { label: '待双人复核', value: String(review), hint: '提交复核等待终审', accent: 'violet' as const },
+      { label: '强制放行(高敏感)', value: String(forced), hint: '人工强制放行件', accent: 'rose' as const },
     ]
   }, [rows])
 

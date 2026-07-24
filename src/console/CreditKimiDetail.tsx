@@ -30,6 +30,13 @@ const levelCls: Record<CreditLevel, string> = {
   极高: 'bg-rose-100 text-rose-700',
 }
 const levelText: Record<CreditLevel, string> = { 低: '低', 中: '中', 高: '高', 极高: '极高' }
+// 维度子项得分文字色：跟随风险等级（与「等级」预警徽标一致：低绿/中黄/高橙/极高红）
+const levelTextColor: Record<CreditLevel, string> = {
+  低: 'text-emerald-600',
+  中: 'text-amber-600',
+  高: 'text-orange-600',
+  极高: 'text-rose-600',
+}
 
 // 整体信用等级 → 文字色 / 徽标底色（差红/一般黄/良好青/优秀绿）
 const gradeText: Record<CreditGrade, string> = {
@@ -168,7 +175,7 @@ function ScoreOverviewCard({ d }: { d: CreditKimiReport }) {
                 title="点击定位到对应维度分析"
               >
                 <td className="px-3 py-2.5 font-medium text-ink-900">{dim.name}</td>
-                <td className={cn('px-3 py-2.5 text-right font-semibold', dimColor(dim.score))}>{dim.score}</td>
+                <td className={cn('px-3 py-2.5 text-right font-semibold', levelTextColor[dim.level])}>{dim.score}</td>
                 <td className="px-3 py-2.5 text-right text-slate-400">{dim.weight}%</td>
                 <td className="px-3 py-2.5 text-center"><span className={cn('rounded px-1.5 py-0.5 text-[10px] font-medium', levelCls[dim.level])}>{levelText[dim.level]}</span></td>
                 <td className="px-3 py-2.5 text-slate-500">{dim.note}</td>
@@ -189,8 +196,7 @@ function DimensionPanel({ d, images }: { d: CreditDimension; images?: CreditImag
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <div className="flex items-center gap-2">
-            <span className={cn('text-3xl font-bold', dimColor(d.score))}>{d.score}</span>
-            <span className="text-sm text-slate-400">/ 100</span>
+            <span className={cn('text-3xl font-bold', levelTextColor[d.level])}>{d.score}</span>
             <span className={cn('rounded-full px-2.5 py-0.5 text-xs font-semibold', levelCls[d.level])}>{d.level}风险</span>
           </div>
           <div className="mt-1 text-xs text-slate-500">维度权重 {d.weight}% · {d.note}</div>
@@ -339,7 +345,8 @@ export default function CreditKimiDetail() {
               </div>
             </div>
             <div className="mt-3 rounded-lg border border-slate-100 p-3 text-xs">
-              <span className="text-slate-500">参考授信额度：</span><b className="text-ink-900">{d.recommendation.creditLimit}</b>
+              <div className="text-slate-500">参考授信额度</div>
+              <div className="mt-1 break-words font-semibold text-ink-900">{d.recommendation.creditLimit}</div>
             </div>
           </div>
 

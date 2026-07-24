@@ -10,10 +10,10 @@ export type WorkStatus =
   | '待确认'
   | '已确认'
   | '待审核'
-  | '已提交双人复核'
-  | '双人复核-通过'
-  | '双人复核-拒绝'
-  | '强制放行办结'
+  | '提交复核'
+  | '复核通过'
+  | '复核拒绝'
+  | '强制放行'
 
 export interface VerifyRow {
   id: string
@@ -55,12 +55,12 @@ export function opsFor(sys: SysResult, work: WorkStatus): OpKey[] {
   }
   if (sys === '拒绝') {
     if (work === '待确认') return ['view', 'reportConfirm', 'forceRecheck'] // 报告确认 / 强制复审（推翻拦截）
-    return ['view'] // 已确认 / 强制放行办结 = 闭环
+    return ['view'] // 已确认 / 强制放行 = 闭环
   }
-  // 预警：待审核 仅可提交双人复核；已提交双人复核 由主管终审放行/拒绝
+  // 预警：待审核 仅可提交双人复核；提交复核 由主管终审放行/拒绝
   if (work === '待审核') return ['view', 'submitDual']
-  if (work === '已提交双人复核') return ['view', 'confirmPass', 'confirmReject']
-  return ['view'] // 双人复核-通过 / 双人复核-拒绝 = 已办结
+  if (work === '提交复核') return ['view', 'confirmPass', 'confirmReject']
+  return ['view'] // 复核通过 / 复核拒绝 = 已办结
 }
 
 export function viewLocked(work: WorkStatus): boolean {
@@ -78,10 +78,10 @@ const WORK_KIND: Record<WorkStatus, 'gray' | 'blue' | 'green' | 'amber' | 'red' 
   待确认: 'blue',
   已确认: 'green',
   待审核: 'amber',
-  已提交双人复核: 'amber',
-  '双人复核-通过': 'green',
-  '双人复核-拒绝': 'red',
-  强制放行办结: 'violet',
+  提交复核: 'amber',
+  '复核通过': 'green',
+  '复核拒绝': 'red',
+  强制放行: 'violet',
 }
 
 export function SysResultBadge({ value }: { value: SysResult }) {
@@ -411,29 +411,29 @@ function useVerifyActions(
   }
   const applyForceRecheck = (reason: string) => {
     void reason
-    // 强制复审：推翻系统拒贷，保持自动审核=拒绝，工单置为强制放行办结（双人审批）
-    onApply({ workStatus: '强制放行办结', operator: '初审：审核员 1；终审：主管 1' })
+    // 强制复审：推翻系统拒贷，保持自动审核=拒绝，工单置为强制放行（双人审批）
+    onApply({ workStatus: '强制放行', operator: '初审：审核员 1；终审：主管 1' })
     flash?.('已强制放行，生成高亮敏感操作日志')
     close()
   }
   const applySubmitDual = (note: string) => {
     void note
-    onApply({ workStatus: '已提交双人复核', operator: '初审：审核员 1' })
-    flash?.('已提交双人复核，工单锁定流转至主管')
+    onApply({ workStatus: '提交复核', operator: '初审：审核员 1' })
+    flash?.('已提交复核，工单锁定流转至主管')
     close()
   }
   const applyConfirmPass = (note: string) => {
     void note
-    // 确认放行：双人复核终审通过，工单办结
-    onApply({ workStatus: '双人复核-通过', operator: '初审：审核员 1；终审：主管 1' })
-    flash?.('双人复核通过，工单办结')
+    // 确认放行：复核终审通过，工单办结
+    onApply({ workStatus: '复核通过', operator: '初审：审核员 1；终审：主管 1' })
+    flash?.('复核通过，工单办结')
     close()
   }
   const applyConfirmReject = (reason: string) => {
     void reason
-    // 确认拒绝：双人复核终审拒绝，工单办结
-    onApply({ workStatus: '双人复核-拒绝', operator: '初审：审核员 1；终审：主管 1' })
-    flash?.('双人复核拒绝，工单办结')
+    // 确认拒绝：复核终审拒绝，工单办结
+    onApply({ workStatus: '复核拒绝', operator: '初审：审核员 1；终审：主管 1' })
+    flash?.('复核拒绝，工单办结')
     close()
   }
 
