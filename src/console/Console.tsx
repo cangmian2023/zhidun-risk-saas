@@ -15,6 +15,8 @@ import FraudScheme3List from './FraudScheme3List'
 import FraudScheme3Detail from './FraudScheme3Detail'
 import FraudScheme4List from './FraudScheme4List'
 import FraudScheme4Detail from './FraudScheme4Detail'
+import CreditKimiList from './CreditKimiList'
+import CreditKimiDetail from './CreditKimiDetail'
 import ScoreQueryPage from './ScoreQueryPage'
 import { creditRiskMenu, scoringMenu, type MenuGroup } from './menus'
 import { MenuIcon, type IconName } from '../components/icons'
@@ -118,6 +120,8 @@ export default function Console() {
     'cr:fraud-s2-detail': 'alert',
     'cr:fraud-s3': 'alert',
     'cr:fraud-s3-detail': 'alert',
+    'cr:credit-kimi': 'shield',
+    'cr:credit-kimi-detail': 'shield',
     'cr:pre-report': 'report',
     'cr:pre-manual': 'check',
     'cr:mid-cockpit': 'gauge',
@@ -363,6 +367,10 @@ export default function Console() {
               <FraudScheme3List />
             ) : key === 'cr:fraud-s3-detail' ? (
               <FraudScheme3Detail />
+            ) : key === 'cr:credit-kimi' ? (
+              <CreditKimiList />
+            ) : key === 'cr:credit-kimi-detail' ? (
+              <CreditKimiDetail />
             ) : isQuery && queryProd ? (
               <ScoreQueryPage product={queryProd} />
             ) : (

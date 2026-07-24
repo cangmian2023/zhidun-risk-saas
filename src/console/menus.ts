@@ -21,6 +21,7 @@ export const creditRiskMenu: MenuGroup[] = [
       { label: '申贷审核', key: 'cr:pre-application' },
       { label: '信息核验', key: 'cr:pre-verify' },
       { label: '信用风控', key: 'cr:pre-credit' },
+      { label: '信用风控·方案Kimi', key: 'cr:credit-kimi' },
       { label: '欺诈识别', key: 'cr:pre-fraud' },
       { label: '欺诈识别·方案1', key: 'cr:fraud-s1' },
       { label: '欺诈识别·方案2', key: 'cr:fraud-s2' },
