@@ -18,7 +18,8 @@ function ScrollToTop() {
 
 function RequireAuth({ children }: { children: ReactNode }) {
   const { user } = useAuth()
-  if (!user) return <Navigate to="/login" replace />
+  const location = useLocation()
+  if (!user) return <Navigate to="/login" replace state={{ from: location }} />
   return <>{children}</>
 }
 

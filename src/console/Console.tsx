@@ -11,7 +11,13 @@ import FraudScheme4List from './FraudScheme4List'
 import FraudScheme4Detail from './FraudScheme4Detail'
 import CreditKimiList from './CreditKimiList'
 import CreditKimiDetail from './CreditKimiDetail'
+import CreditModelConfig from './CreditModelConfig'
+import DecisionList from './DecisionList'
+import DecisionDetail from './DecisionDetail'
 import ScoreQueryPage from './ScoreQueryPage'
+import VerifyRuleList from './VerifyRuleList'
+import VerifyRuleConfig from './VerifyRuleConfig'
+import ReportTemplate from './ReportTemplate'
 import { creditRiskMenu, scoringMenu, entMenu, dmMenu, cmMenu, type MenuGroup } from './menus'
 import { MenuIcon, type IconName } from '../components/icons'
 import { moduleSpecs } from './specs'
@@ -430,6 +436,18 @@ export default function Console() {
               <CreditKimiList />
             ) : key === 'cr:credit-kimi-detail' ? (
               <CreditKimiDetail />
+            ) : key === 'cr:credit-kimi-config' ? (
+              <CreditModelConfig />
+            ) : key === 'cr:pre-report' ? (
+              <DecisionList />
+            ) : key === 'cr:pre-report-detail' ? (
+              <DecisionDetail />
+            ) : key === 'cr:pre-verify-config' ? (
+              <VerifyRuleList />
+            ) : key === 'cr:pre-verify-config-detail' ? (
+              <VerifyRuleConfig />
+            ) : key === 'cr:report-template' ? (
+              <ReportTemplate />
             ) : isQuery && queryProd ? (
               <ScoreQueryPage product={queryProd} />
             ) : (

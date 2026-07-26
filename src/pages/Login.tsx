@@ -6,6 +6,7 @@ import Logo from '../components/Logo'
 export default function Login() {
   const { login } = useAuth()
   const nav = useNavigate()
+  const location = useLocation()
   const [username, setUsername] = useState('admin')
   const [password, setPassword] = useState('')
   const [err, setErr] = useState('')
@@ -18,7 +19,9 @@ export default function Login() {
       return
     }
     setErr('')
-    nav('/console/cr/overview', { replace: true })
+    const target = (location.state as { from?: { pathname: string; search?: string } } | null)?.from
+    const to = target ? `${target.pathname}${target.search ?? ''}` : '/console/cr/overview'
+    nav(to, { replace: true })
   }
 
   return (

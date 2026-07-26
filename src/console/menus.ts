@@ -34,7 +34,7 @@ export const creditRiskMenu: MenuGroup[] = [
     section: '贷前审核',
     items: [
       { label: '信息核验', key: 'cr:pre-verify', desc: '展示信息核验的进件列表，支持核验结果查询' },
-      { label: '核验规则', key: 'cr:pre-verify-config', desc: '配置信息核验的校验规则、阈值、开关' },
+      { label: '核验规则', key: 'cr:pre-verify-config', keep: true },
     ],
   },
   {
@@ -60,7 +60,13 @@ export const creditRiskMenu: MenuGroup[] = [
     section: '贷前审核',
     items: [
       { label: '决策报告', key: 'cr:pre-report', desc: '展示所有生成的决策报告，支持按报告类型、决策建议筛选' },
-      { label: '报告模板', key: 'cr:pre-report-template', desc: '配置决策报告的展示模板、字段、样式' },
+    ],
+  },
+  {
+    group: '公共配置',
+    section: '贷前审核',
+    items: [
+      { label: '报告模板', key: 'cr:report-template', desc: '统一管理信息核验 / 信用风控 / 欺诈识别 / 决策报告四类报告的展示模板、评分等级、业务流程与导出样式' },
     ],
   },
   {

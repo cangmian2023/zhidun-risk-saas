@@ -48,7 +48,6 @@ export const FRAUD_S4_OP_LABEL: Record<FraudScheme4OpKey, string> = {
 
 /** 列表/详情行按（欺诈风险等级 + 人工处置状态）推导可执行按钮（对齐 N8 矩阵） */
 export function fraudScheme4OpsFor(work: FraudScheme4WorkStatus, band?: FraudS4ScoreBand): FraudScheme4OpKey[] {
-  const isHigh = band === '高' || band === '极高'
   switch (work) {
     case '核验计算中': // 自动结果未出，仅可查看（置灰，见 viewLocked）
       return ['view']
