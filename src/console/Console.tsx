@@ -18,6 +18,7 @@ import ScoreQueryPage from './ScoreQueryPage'
 import VerifyRuleList from './VerifyRuleList'
 import VerifyRuleConfig from './VerifyRuleConfig'
 import ReportTemplate from './ReportTemplate'
+import ReportTemplatePreview from './ReportTemplatePreview'
 import { creditRiskMenu, scoringMenu, entMenu, dmMenu, cmMenu, type MenuGroup } from './menus'
 import { MenuIcon, type IconName } from '../components/icons'
 import { moduleSpecs } from './specs'
@@ -448,6 +449,8 @@ export default function Console() {
               <VerifyRuleConfig />
             ) : key === 'cr:report-template' ? (
               <ReportTemplate />
+            ) : key === 'cr:report-template-preview' ? (
+              <ReportTemplatePreview />
             ) : isQuery && queryProd ? (
               <ScoreQueryPage product={queryProd} />
             ) : (

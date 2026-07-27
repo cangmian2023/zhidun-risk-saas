@@ -140,7 +140,7 @@ export function DetailHeader({
           {crumb && <p className="text-xs text-slate-400">{crumb}</p>}
           {subtitle && <p className="mt-0.5 text-xs text-slate-400">{subtitle}</p>}
         </div>
-        {actions && <div className="ml-auto flex items-center gap-3">{actions}</div>}
+        {actions && <div className="ml-auto flex flex-wrap items-center justify-end gap-2">{actions}</div>}
       </div>
     </div>
   )
