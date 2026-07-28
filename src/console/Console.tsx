@@ -20,6 +20,7 @@ import VerifyRuleConfig from './VerifyRuleConfig'
 import ReportTemplate from './ReportTemplate'
 import ReportTemplatePreview from './ReportTemplatePreview'
 import { creditRiskMenu, scoringMenu, entMenu, dmMenu, cmMenu, type MenuGroup } from './menus'
+import SidebarMenu from './SidebarMenu'
 import { MenuIcon, type IconName } from '../components/icons'
 import { moduleSpecs } from './specs'
 
@@ -371,41 +372,7 @@ export default function Console() {
               })}
             </nav>
           ) : (
-            menu.map((g, i) => {
-              const prev = menu[i - 1]
-              const showSection = !!g.section && g.section !== prev?.section
-              return (
-              <div key={g.group} className="mb-4">
-                {showSection && (
-                  <div className="mb-1.5 flex items-center gap-2 px-5">
-                    <span className="h-1.5 w-1.5 rounded-full bg-brand-500" />
-                    <span className="text-[11px] font-bold tracking-[0.2em] text-brand-700">{g.section}</span>
-                  </div>
-                )}
-                <p className="px-5 text-xs font-semibold uppercase tracking-wide text-slate-400">{g.group}</p>
-                <nav className="mt-1">
-                  {g.items.map((it) => {
-                    const to = `/console/${sub}/${it.key.split(':')[1]}`
-                    const active = it.key.split(':')[1] === cur
-                    return (
-                      <NavLink
-                        key={it.key}
-                        to={to}
-                        className={`flex items-center gap-2.5 px-5 py-2 text-sm transition ${
-                          active
-                            ? 'border-r-2 border-brand-600 bg-brand-50 font-medium text-brand-700'
-                            : 'text-slate-600 hover:bg-slate-50 hover:text-brand-700'
-                        }`}
-                      >
-                        <MenuIcon name={menuIcon(it.key)} className="h-4 w-4 shrink-0" />
-                        <span className="truncate">{it.label}</span>
-                      </NavLink>
-                    )
-                  })}
-                </nav>
-              </div>
-              )
-            })
+            <SidebarMenu menu={menu} sub={sub} cur={cur} menuIcon={menuIcon} nav={nav} />
           )}
         </aside>
 

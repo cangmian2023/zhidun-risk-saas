@@ -27,67 +27,18 @@ export interface MenuGroup {
  * 一、零售信贷风控
  * ========================================================== */
 export const creditRiskMenu: MenuGroup[] = [
-  { group: '工作台', items: [{ label: '概览看板', key: 'cr:overview', desc: '展示零售信贷风控核心指标的实时概览看板', keep: true }] },
+  { group: '概览看板', items: [{ label: '概览看板', key: 'cr:overview', desc: '展示零售信贷风控核心指标的实时概览看板', keep: true }] },
+  // 贷前审核（业务作业 · 对外）
   { group: '申贷审核', section: '贷前审核', items: [{ label: '申贷审核', key: 'cr:pre-application', desc: '展示所有申贷申请进件，支持按渠道、产品、状态筛选与审核' }] },
+  { group: '信息核验', section: '贷前审核', items: [{ label: '信息核验', key: 'cr:pre-verify', desc: '展示信息核验的进件列表，支持核验结果查询' }] },
+  { group: '信用风控', section: '贷前审核', items: [{ label: '信用风控', key: 'cr:credit-kimi', desc: '展示信用风控审核进件列表，支持按信用等级、自动审核结果筛选' }] },
+  { group: '欺诈识别', section: '贷前审核', items: [{ label: '欺诈识别', key: 'cr:pre-fraud', desc: '展示欺诈识别进件列表，支持按风险评分、命中规则筛选' }] },
+  { group: '决策报告', section: '贷前审核', items: [{ label: '决策报告', key: 'cr:pre-report', desc: '展示所有生成的决策报告，支持按报告类型、决策建议筛选' }] },
+  // 贷中监控（业务作业 · 对外）
+  { group: '监控任务看板', section: '贷中监控', items: [{ label: '监控任务看板', key: 'cr:mid-task', desc: '展示所有监控任务，支持按产品、场景、频次筛选' }] },
+  { group: '红黄灯预警', section: '贷中监控', items: [{ label: '预警', key: 'cr:mid-alert', desc: '展示所有红黄灯预警记录，支持按预警等级、监控场景筛选' }] },
   {
-    group: '信息核验',
-    section: '贷前审核',
-    items: [
-      { label: '信息核验', key: 'cr:pre-verify', desc: '展示信息核验的进件列表，支持核验结果查询' },
-      { label: '核验规则', key: 'cr:pre-verify-config', keep: true },
-    ],
-  },
-  {
-    group: '信用风控',
-    section: '贷前审核',
-    items: [
-      { label: '信用风控', key: 'cr:credit-kimi', desc: '展示信用风控审核进件列表，支持按信用等级、自动审核结果筛选' },
-      { label: '信用模型', key: 'cr:credit-kimi-config', desc: '配置六大维度的权重、评分规则、叠加惩罚机制' },
-    ],
-  },
-  {
-    group: '欺诈识别',
-    section: '贷前审核',
-    items: [
-      { label: '欺诈识别', key: 'cr:pre-fraud', desc: '展示欺诈识别进件列表，支持按风险评分、命中规则筛选' },
-      { label: '反欺诈规则库', key: 'cr:fraud-rules', desc: '管理反欺诈规则，配置规则权重、命中条件、处置建议' },
-      { label: '黑名单管理', key: 'cr:fraud-blacklist', desc: '管理手机号、设备指纹、身份证号、银行卡黑名单' },
-      { label: '团伙库管理', key: 'cr:fraud-gang', desc: '管理已知欺诈团伙信息、团伙成员、团伙特征' },
-    ],
-  },
-  {
-    group: '决策报告',
-    section: '贷前审核',
-    items: [
-      { label: '决策报告', key: 'cr:pre-report', desc: '展示所有生成的决策报告，支持按报告类型、决策建议筛选' },
-    ],
-  },
-  {
-    group: '公共配置',
-    section: '贷前审核',
-    items: [
-      { label: '报告模板', key: 'cr:report-template', desc: '统一管理信息核验 / 信用风控 / 欺诈识别 / 决策报告四类报告的展示模板、评分等级、业务流程与导出样式' },
-    ],
-  },
-  {
-    group: '监控任务管理',
-    section: '贷中监控',
-    items: [
-      { label: '监控任务看板', key: 'cr:mid-task', desc: '展示所有监控任务，支持按产品、场景、频次筛选' },
-      { label: '监控任务管理', key: 'cr:mid-task-config', desc: '创建/编辑监控任务，配置扫描频次、客群范围、预警规则' },
-      { label: '监控任务日志', key: 'cr:mid-task-log', desc: '展示监控任务的执行历史、耗时、扫描客群数' },
-    ],
-  },
-  {
-    group: '红黄灯预警',
-    section: '贷中监控',
-    items: [
-      { label: '预警', key: 'cr:mid-alert', desc: '展示所有红黄灯预警记录，支持按预警等级、监控场景筛选' },
-      { label: '预警规则', key: 'cr:mid-alert-config', desc: '配置红灯/黄灯预警的触发条件、阈值、通知方式' },
-    ],
-  },
-  {
-    group: '客群风险看板',
+    group: '客群风险',
     section: '贷中监控',
     items: [
       { label: '客群风险', key: 'cr:mid-crowd', desc: '展示各客群的实时风险分布、趋势变化' },
@@ -101,12 +52,34 @@ export const creditRiskMenu: MenuGroup[] = [
     items: [
       { label: '处置任务', key: 'cr:mid-dispose', desc: '展示待处置的预警任务，支持分配、转派、批量处置' },
       { label: '处置', key: 'cr:mid-dispose-record', desc: '展示所有处置历史，含处置人、处置时间、处置结果' },
+    ],
+  },
+  // 公共配置（运营人员 · 规则 / 模型 / 模板 / 看板）
+  {
+    group: '规则集合',
+    section: '公共配置',
+    items: [
+      { label: '核验规则', key: 'cr:pre-verify-config', keep: true },
+      { label: '反欺诈规则库', key: 'cr:fraud-rules', desc: '管理反欺诈规则，配置规则权重、命中条件、处置建议' },
+      { label: '黑名单管理', key: 'cr:fraud-blacklist', desc: '管理手机号、设备指纹、身份证号、银行卡黑名单' },
+      { label: '团伙库管理', key: 'cr:fraud-gang', desc: '管理已知欺诈团伙信息、团伙成员、团伙特征' },
+      { label: '预警规则', key: 'cr:mid-alert-config', desc: '配置红灯/黄灯预警的触发条件、阈值、通知方式' },
       { label: '处置策略', key: 'cr:mid-dispose-strategy', desc: '配置自动处置策略（如自动降额、自动冻结）' },
+    ],
+  },
+  { group: '模型', section: '公共配置', items: [{ label: '信用模型', key: 'cr:credit-kimi-config', desc: '配置六大维度的权重、评分规则、叠加惩罚机制' }] },
+  { group: '报告模板', section: '公共配置', items: [{ label: '报告模板', key: 'cr:report-template', desc: '统一管理信息核验 / 信用风控 / 欺诈识别 / 决策报告四类报告的展示模板、评分等级、业务流程与导出样式' }] },
+  {
+    group: '监控配置',
+    section: '公共配置',
+    items: [
+      { label: '监控任务管理', key: 'cr:mid-task-config', desc: '创建/编辑监控任务，配置扫描频次、客群范围、预警规则' },
+      { label: '监控任务日志', key: 'cr:mid-task-log', desc: '展示监控任务的执行历史、耗时、扫描客群数' },
     ],
   },
   {
     group: '结果输出',
-    section: '贷中监控',
+    section: '公共配置',
     items: [
       { label: 'API接口', key: 'cr:mid-output-api', desc: '管理 API 接口的调用权限、限流、计费' },
       { label: '推送', key: 'cr:mid-output-push', desc: '配置 URL 推送、文件交换的接收地址、格式、频次' },
