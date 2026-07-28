@@ -37,6 +37,7 @@ function buildItems(menu: MenuGroup[], sub: string, menuIcon: (k: string) => Ico
     return {
       key: `grp:${sub}:${g.group}`,
       label: g.group,
+      className: 'side-group',
       children: g.items.map(leaf),
     }
   }
@@ -45,7 +46,7 @@ function buildItems(menu: MenuGroup[], sub: string, menuIcon: (k: string) => Ico
   for (const s of sections) {
     const children = s.groups.map(groupToNode)
     if (s.name) {
-      items.push({ key: `sec:${sub}:${s.name}`, label: s.name, children })
+      items.push({ key: `sec:${sub}:${s.name}`, label: s.name, className: 'side-sec', children })
     } else {
       items.push(...children)
     }
@@ -68,6 +69,20 @@ function findOpenKeys(items: MenuProps['items'], target: string): string[] | nul
   return null
 }
 
+/** 收集所有含子节点的 key（section / group），用于「全部默认展开」 */
+function collectOpenKeys(items: MenuProps['items']): string[] {
+  const keys: string[] = []
+  for (const it of items ?? []) {
+    if (!it || it.key == null) continue
+    const k = String(it.key)
+    const children = (it as { children?: MenuProps['items'] }).children
+    if (children && children.length) {
+      keys.push(k, ...collectOpenKeys(children))
+    }
+  }
+  return keys
+}
+
 interface Props {
   menu: MenuGroup[]
   sub: string
@@ -81,32 +96,51 @@ export default function SidebarMenu({ menu, sub, cur, menuIcon, nav }: Props) {
   const openKeys = findOpenKeys(items, cur) ?? []
 
   return (
-    <ConfigProvider
-      theme={{
-        token: { colorPrimary: '#3366ff', borderRadius: 8 },
-        components: {
-          Menu: {
-            itemSelectedBg: '#eef4ff',
-            itemSelectedColor: '#1735e1',
-            itemHoverBg: '#f1f5f9',
-            itemHoverColor: '#1735e1',
-            subMenuItemBg: '#ffffff',
-            groupTitleColor: '#94a3b8',
+    <div className="console-side-menu-wrap">
+      <ConfigProvider
+        theme={{
+          token: { colorPrimary: '#1f47f5', borderRadius: 8, fontSize: 14 },
+          components: {
+            Menu: {
+              itemBg: 'transparent',
+              itemColor: '#475569',
+              itemHoverBg: '#f1f5f9',
+              itemHoverColor: '#1735e1',
+              itemActiveBg: '#eef4ff',
+              itemSelectedBg: '#eef4ff',
+              itemSelectedColor: '#1735e1',
+              itemSelectedFontWeight: 600,
+              itemHeight: 40,
+              itemMarginInline: 2,
+              itemBorderRadius: 8,
+              itemPaddingInline: 4,
+              itemIconSize: 16,
+              itemIconMarginInline: '8px',
+              subMenuItemBg: 'transparent',
+              subMenuItemColor: '#334155',
+              subMenuItemHoverBg: '#f1f5f9',
+              subMenuItemHoverColor: '#1735e1',
+              subMenuItemBorderRadius: 8,
+              groupTitleColor: '#94a3b8',
+              groupTitleFontSize: 12,
+            },
           },
-        },
-      }}
-    >
-      <Menu
-        mode="inline"
-        items={items}
-        selectedKeys={[cur]}
-        defaultOpenKeys={openKeys}
-        style={{ borderInlineEnd: 'none', width: '100%', background: 'transparent' }}
-        onClick={({ key }) => {
-          if (key.startsWith('sec:') || key.startsWith('grp:')) return
-          nav(`/console/${sub}/${key}`)
         }}
-      />
-    </ConfigProvider>
+      >
+        <Menu
+          className="console-side-menu"
+          mode="inline"
+          items={items}
+          selectedKeys={[cur]}
+          defaultOpenKeys={collectOpenKeys(items)}
+          inlineIndent={10}
+          style={{ borderInlineEnd: 'none', width: '100%', background: 'transparent' }}
+          onClick={({ key }) => {
+            if (key.startsWith('sec:') || key.startsWith('grp:')) return
+            nav(`/console/${sub}/${key}`)
+          }}
+        />
+      </ConfigProvider>
+    </div>
   )
 }

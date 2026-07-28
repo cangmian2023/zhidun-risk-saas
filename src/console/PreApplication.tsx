@@ -232,8 +232,8 @@ export default function PreApplication() {
   const listView = showList ? (
     <div className="space-y-6">
       <PageHeader
-        crumb="零售信贷风控 / 贷前审核"
-        title="申贷审核"
+        crumb="管理中心"
+        title="备份一申贷审核"
         subtitle="处理一笔贷款申请的总入口：接收各渠道申贷信息，调用决策引擎跑决策流，输出决策建议，并承载人工复核与自动报告生成。"
         actions={null}
       />

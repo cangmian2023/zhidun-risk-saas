@@ -29,7 +29,7 @@ const subName: Record<string, string> = {
   sc: '评分产品',
   ep: '企业风控',
   dm: '数字营销',
-  cm: '公共模块',
+  cm: '管理中心',
 }
 
 // 5 个子系统（可在 banner 中一键切换）
@@ -38,7 +38,7 @@ const subsystems = [
   { key: 'sc', name: '评分产品', open: true },
   { key: 'ep', name: '企业风控', open: false },
   { key: 'dm', name: '数字营销', open: false },
-  { key: 'cm', name: '公共模块', open: true },
+  { key: 'cm', name: '管理中心', open: true },
 ]
 
 // 用户名下拉：SaaS 服务应用到基础用户功能
@@ -224,7 +224,7 @@ export default function Console() {
     'dm:rta-strategy-tune': 'wrench',
     'dm:herald-task-detail': 'eye',
     'dm:rta-detail': 'cloud',
-    // 公共模块
+    // 管理中心（原公共模块）
     'cm:overview': 'dashboard',
     'cm:user-list': 'users',
     'cm:user-role': 'id',
@@ -239,6 +239,21 @@ export default function Console() {
     'cm:help-doc': 'report',
     'cm:help-faq': 'flag',
     'cm:help-service': 'bell',
+    // 管理中心（原公共模块）：由零售信贷风控迁入的「公共配置」
+    'cm:pre-application': 'audit',
+    'cm:pre-verify-config': 'filter',
+    'cm:fraud-rules': 'layers',
+    'cm:fraud-blacklist': 'plug',
+    'cm:fraud-gang': 'link',
+    'cm:mid-alert-config': 'zoom',
+    'cm:mid-dispose-strategy': 'work_flow',
+    'cm:credit-kimi-config': 'sliders',
+    'cm:report-template': 'stack',
+    'cm:mid-task-config': 'settings',
+    'cm:mid-task-log': 'clock',
+    'cm:mid-output-api': 'cloud',
+    'cm:mid-output-push': 'link',
+    'cm:mid-output-download': 'grid',
   }
   const menuIcon = (key: string): IconName => MENU_ICON[key] ?? 'dashboard'
 
@@ -390,6 +405,8 @@ export default function Console() {
               <PlannedPlaceholder name={subName[sub] ?? '该子系统'} />
             ) : key === 'cr:pre-application' ? (
               <PreApplication />
+            ) : key === 'cm:pre-application' ? (
+              <PreApplication />
             ) : key === 'cr:pre-verify' ? (
               <InfoVerifyList />
             ) : key === 'cr:pre-verify-detail' ? (
@@ -414,9 +431,15 @@ export default function Console() {
               <VerifyRuleList />
             ) : key === 'cr:pre-verify-config-detail' ? (
               <VerifyRuleConfig />
-            ) : key === 'cr:report-template' ? (
+            ) : key === 'cm:pre-verify-config' ? (
+              <VerifyRuleList />
+            ) : key === 'cm:pre-verify-config-detail' ? (
+              <VerifyRuleConfig />
+            ) : key === 'cm:credit-kimi-config' ? (
+              <CreditModelConfig />
+            ) : key === 'cm:report-template' ? (
               <ReportTemplate />
-            ) : key === 'cr:report-template-preview' ? (
+            ) : key === 'cm:report-template-preview' ? (
               <ReportTemplatePreview />
             ) : isQuery && queryProd ? (
               <ScoreQueryPage product={queryProd} />

@@ -1,14 +1,15 @@
 /* ============================================================================
- * 报告模板 · 实时预览子页面（独立路由 cr:report-template-preview）
+ * 报告模板 · 实时预览子页面（独立路由 cm:report-template-preview）
  * 从列表/详情页点击「预览」跳转至此，用样例数据渲染报告真实长相（只读）。
- * 顶栏可一键跳回对应报告模板详情页（cr:report-template?id=...）。
+ * 顶栏可一键跳回对应报告模板详情页（cm:report-template?id=...）。
  * ========================================================================== */
 import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { DetailHeader, Panel, Badge, Button, SingleSelect } from '../components/ui'
 import {
-  ReportTemplate, ScoreGrade, DisplayComponent, REPORT_META, PREVIEW_STATES, PREVIEW_SAMPLE, gradeForScore,
+  ReportTemplate, ScoreGrade, DisplayComponent, REPORT_META, PREVIEW_STATES, PREVIEW_SAMPLE, gradeForScore, computeSectionScore,
   SECTION_SOURCE_LABEL, ROLES, ROLE_HINT, seedReportTemplates, type Role,
+  RENDER_CONTAINER_LABEL, defaultContainer, type RenderContainer,
 } from './reportTemplateData'
 
 const SEL = '#3B82F6', SEL_BG = '#EFF6FF'
@@ -63,7 +64,19 @@ function Preview({ tpl, stateKey }: { tpl: ReportTemplate; stateKey: string }) {
   const theme = tpl.theme
   const fs = theme.fontSize === '小' ? 13 : theme.fontSize === '大' ? 16 : 14
   const sample = PREVIEW_SAMPLE[tpl.reportType]
-  const visibleSections = [...tpl.sections].sort((a, b) => a.order - b.order).filter((s) => s.visible)
+  /* 解析字段的「呈现容器」与「类型」：数据源→表字段；接口→输出字段；规则集→标签 */
+  const fieldMeta = (s: ReportTemplate['sections'][number], f: { sourceRef?: string }) => {
+    if (s.sourceType === 'data_source') {
+      const t = s.ds?.tableFields.find((x) => x.name === f.sourceRef)
+      return { container: (t?.container ?? 'text') as RenderContainer, type: t?.type ?? '' }
+    }
+    if (s.sourceType === 'api') {
+      const o = s.api?.outputs.find((x) => x.key === f.sourceRef)
+      return { container: (o?.container ?? defaultContainer(o?.type ?? 'string')) as RenderContainer, type: o?.type ?? '' }
+    }
+    return { container: 'tags' as RenderContainer, type: '' }
+  }
+  const visibleSections = [...tpl.sections].sort((a, b) => a.order - b.order).filter((s) => s.visible && ((s.homeTab ?? 'content') !== 'log' || tpl.showOpLog))
   const borderR = theme.borderRadius === '直角' ? 0 : theme.borderRadius === '大圆角' ? 14 : 8
   return (
     <div style={{ fontFamily: 'system-ui', fontSize: fs, color: '#111827' }}>
@@ -93,6 +106,63 @@ function Preview({ tpl, stateKey }: { tpl: ReportTemplate; stateKey: string }) {
           </div>
         )}
       </div>
+      {/* —— 结论与终审卡片（flowBlock，受模板「结论」Tab 显隐/标题控制） —— */}
+      {tpl.flowBlock.show && (
+        <div style={{ marginBottom: 12, border: '1px solid #E5E7EB', borderRadius: borderR, overflow: 'hidden' }}>
+          <div style={{ background: theme.headerStyle === '简洁' ? 'transparent' : '#F8FAFC', borderBottom: '1px solid #EEF2F7', padding: '8px 12px', fontWeight: 600 }}>
+            {tpl.flowBlock.title || '结论与终审'}
+          </div>
+          <div style={{ padding: 10 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+              <span style={{ fontSize: fs, fontWeight: 700, padding: '3px 12px', borderRadius: 999, color: grade.color, background: grade.color + '1A', border: `1px solid ${grade.color}55` }}>{st.label}</span>
+              <span style={{ fontSize: fs - 1, color: '#6B7280' }}>系统建议结论（预览样例）</span>
+            </div>
+            <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
+              {['审核通过', '拒绝授信', '预警观察', '退回补充'].map((b) => (
+                <span key={b} style={{ fontSize: 12, padding: '4px 12px', borderRadius: 6, border: '1px solid #D1D5DB', color: '#9CA3AF', background: '#F9FAFB', cursor: 'not-allowed' }}>{b}</span>
+              ))}
+            </div>
+            <div style={{ marginTop: 10, fontSize: fs - 2, color: '#6B7280' }}>审核人：— ｜ 决策时间：—（只读预览，不落库）</div>
+          </div>
+        </div>
+      )}
+      {/* —— 得分计算卡片（scoreBlock，受模板「评分方案」Tab 显隐/标题控制） —— */}
+      {tpl.scoreBlock.show && (
+        <div style={{ marginBottom: 12, border: '1px solid #E5E7EB', borderRadius: borderR, overflow: 'hidden' }}>
+          <div style={{ background: theme.headerStyle === '简洁' ? 'transparent' : '#F8FAFC', borderBottom: '1px solid #EEF2F7', padding: '8px 12px', fontWeight: 600 }}>
+            {tpl.scoreBlock.title || '得分计算'}
+          </div>
+          <div style={{ padding: 10 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+              <ScoreHero score={st.score} grade={grade} component={tpl.scoreDisplay.displayComponent} />
+              <div>
+                <div style={{ fontSize: fs + 2, fontWeight: 700, color: grade.color }}>{grade.grade} · {grade.label}</div>
+                <div style={{ fontSize: fs - 2, color: '#6B7280', marginTop: 4 }}>由各分段计分项自动汇总</div>
+              </div>
+            </div>
+            {(() => {
+              const parts = tpl.sections
+                .filter((s) => (s.homeTab ?? 'content') === 'content' && s.fields.some((f) => (f.scorePoints ?? 0) !== 0))
+                .map((s) => ({ name: s.name, ...computeSectionScore(s) }))
+              if (parts.length === 0) return <div style={{ marginTop: 10, fontSize: fs - 2, color: '#9CA3AF' }}>暂无分段配置计分项</div>
+              return (
+                <div style={{ marginTop: 10, border: '1px solid #EEF2F7', borderRadius: 8, overflow: 'hidden' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 0.8fr 0.8fr', fontSize: fs - 3, color: '#6B7280', background: '#F8FAFC', padding: '6px 10px', fontWeight: 600 }}>
+                    <span>分段</span><span>本卡总分</span><span>加 / 扣 项</span>
+                  </div>
+                  {parts.map((p, i) => (
+                    <div key={i} style={{ display: 'grid', gridTemplateColumns: '1.4fr 0.8fr 0.8fr', fontSize: fs - 2, padding: '6px 10px', borderTop: '1px solid #EEF2F7' }}>
+                      <span>{p.name}</span>
+                      <span style={{ color: p.total >= 0 ? '#047857' : '#DC2626', fontWeight: 600 }}>{p.total >= 0 ? '+' : ''}{p.total}</span>
+                      <span>{p.addCount} / {p.deductCount}</span>
+                    </div>
+                  ))}
+                </div>
+              )
+            })()}
+          </div>
+        </div>
+      )}
       <div style={{ padding: '10px 4px' }}>
         {visibleSections.length === 0 && <div style={{ color: '#9CA3AF', padding: 16 }}>当前未勾选任何分段</div>}
         {visibleSections.map((s) => {
@@ -109,11 +179,23 @@ function Preview({ tpl, stateKey }: { tpl: ReportTemplate; stateKey: string }) {
                 {visFields.length === 0 && <div style={{ fontSize: fs - 2, color: '#9CA3AF' }}>本分段字段已全部隐藏</div>}
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 6 }}>
                   {visFields.map((f) => {
-                    const val = sSample[f.id]
+                    const val = sSample[f.id] ?? sSample[f.name] ?? (s.sourceType === 'rule_set' ? (f.hitText ?? '命中') : '样例值')
+                    const meta = fieldMeta(s, f)
+                    const c = meta.container
                     return (
-                      <div key={f.id} style={{ display: 'flex', justifyContent: 'space-between', gap: 8, fontSize: fs - 2, padding: '4px 8px', background: '#F9FAFB', borderRadius: 6 }}>
-                        <span style={{ color: '#6B7280', flex: '0 0 auto' }}>{f.name}</span>
-                        <span style={{ color: '#374151', fontWeight: 500, textAlign: 'right', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{val ?? '样例值'}</span>
+                      <div key={f.id} style={{ fontSize: fs - 2, padding: '6px 8px', background: '#F9FAFB', borderRadius: 6, border: '1px solid #EEF2F7' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, alignItems: 'center' }}>
+                          <span style={{ color: '#6B7280', flex: '0 0 auto' }}>{f.name}</span>
+                          <span style={{ fontSize: 10, color: '#9CA3AF', border: '1px solid #E5E7EB', borderRadius: 999, padding: '0 6px', whiteSpace: 'nowrap' }}>{RENDER_CONTAINER_LABEL[c]}{meta.type ? ` · ${meta.type}` : ''}</span>
+                        </div>
+                        <div style={{ marginTop: 4 }}>
+                          {c === 'image' && <div style={{ height: 56, borderRadius: 6, background: 'repeating-conic-gradient(#E5E7EB 0% 25%, #F3F4F6 0% 50%) 50% / 12px 12px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9CA3AF', fontSize: 11 }}>🖼 图片预览</div>}
+                          {c === 'video' && <div style={{ height: 56, borderRadius: 6, background: 'linear-gradient(135deg,#1E293B,#334155)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, color: '#E5E7EB', fontSize: 11 }}><span style={{ fontSize: 18, lineHeight: 1 }}>▶</span>视频预览{val && val !== '—' ? `（${val}）` : ''}</div>}
+                          {c === 'file' && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 12, color: '#1D4ED8', background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: 6, padding: '3px 8px' }}>📎 {val} <span style={{ color: '#9CA3AF' }}>下载</span></span>}
+                          {c === 'tags' && <span style={{ display: 'inline-block', fontSize: 12, color: '#6D28D9', background: '#F5F3FF', border: '1px solid #DDD6FE', borderRadius: 999, padding: '2px 10px' }}>{val}</span>}
+                          {c === 'link' && <a style={{ fontSize: 12, color: '#1D4ED8', textDecoration: 'underline' }} href="#" onClick={(e) => e.preventDefault()}>{val}</a>}
+                          {(c === 'text' || c === 'table') && <span style={{ color: '#374151', fontWeight: 500 }}>{val}</span>}
+                        </div>
                       </div>
                     )
                   })}
@@ -138,7 +220,7 @@ export default function ReportTemplatePreview() {
   const [stateKey, setStateKey] = useState<string>(PREVIEW_STATES[tpl.reportType][0].key)
   const [role, setRole] = useState<Role>('风控专员')
 
-  const back = () => nav(`/console/cr/report-template?id=${tpl.id}`)
+  const back = () => nav(`/console/cm/report-template?id=${tpl.id}`)
 
   return (
     <div>

@@ -172,8 +172,8 @@ export default function DecisionList() {
   return (
     <div>
       <PageHeader
-        crumb="贷前审核 / 决策报告"
-        title="决策报告"
+        crumb="贷前审核 / 进件审核"
+        title="进件审核"
         subtitle={`共 ${rows.length} 份 · 由决策引擎综合「信息核验 / 信用风控 / 欺诈识别」三套子系统输出`}
       />
 

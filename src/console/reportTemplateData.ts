@@ -23,10 +23,72 @@ export type ReviewLevel = '单人复核' | '双人复核' | '初审+终审两级
 /* 分段来源类型：每块来源单一（与用户首填/接口调用/规则集碰撞一一对应） */
 export type SectionSource = 'data_source' | 'api' | 'rule_set'
 export const SECTION_SOURCE_LABEL: Record<SectionSource, string> = {
-  data_source: '数据源（用户首填）',
-  api: '接口调用结果',
-  rule_set: '规则集碰撞结果',
+  data_source: '数据源',
+  api: '接口调用',
+  rule_set: '规则集',
 }
+
+/* ============================================================================
+ * 字段「呈现容器」与「接口字段类型」
+ * - RenderContainer：决定前端用哪种对象/组件渲染该字段值（文本/图片/文件/标签组/链接/表格）
+ * - ApiFieldType：接口返回字段的数据域类型（比 DB 列类型更偏业务/前端），含 image/file 等
+ * 这两项都需在前端「配置来源」弹窗里配置：标签(显示名) + 容器。
+ * ========================================================================== */
+export type RenderContainer = 'text' | 'image' | 'file' | 'tags' | 'link' | 'table' | 'video'
+export const RENDER_CONTAINER_LABEL: Record<RenderContainer, string> = {
+  text: '文本', image: '图片', file: '文件', tags: '标签组', link: '链接', table: '表格', video: '视频',
+}
+export type ApiFieldType = 'string' | 'number' | 'enum' | 'boolean' | 'date' | 'image' | 'file' | 'json' | 'video'
+export const API_FIELD_TYPE_LABEL: Record<ApiFieldType, string> = {
+  string: '文本 string', number: '数值 number', enum: '枚举 enum', boolean: '布尔 boolean',
+  date: '日期 date', image: '图片 image', file: '文件 file', json: '结构 json', video: '视频 video',
+}
+/* 接口字段类型 → 默认显示方式（推荐值，可被显式配置覆盖） */
+export function defaultContainer(t: ApiFieldType): RenderContainer {
+  if (t === 'image') return 'image'
+  if (t === 'file') return 'file'
+  if (t === 'video') return 'video'
+  if (t === 'json') return 'table'
+  if (t === 'enum' || t === 'boolean') return 'tags'
+  return 'text'
+}
+/* 接口输出字段容器推断（按字段名/说明语义）：视频/活体→视频，影像/图片→图片，文本/OCR→文本，其余交默认 */
+export function inferApiContainer(name: string, desc: string): RenderContainer | undefined {
+  const t = `${name} ${desc}`
+  if (/文本|文字|ocr/i.test(t)) return undefined
+  if (/视频|活体|录像|mp4/i.test(t)) return 'video'
+  if (/影像|图片|照片|证照|头像|面/i.test(t)) return 'image'
+  return undefined
+}
+/* DB 列类型 → 推荐显示方式（用户可改） */
+export function recommendDbContainer(dbType: string): RenderContainer {
+  if (/image|img|pic|头像|照片|证照|影像/.test(dbType)) return 'image'
+  if (/file|附件|pdf|影像|文档/.test(dbType)) return 'file'
+  if (/json|clob|longtext|text\(/.test(dbType)) return 'table'
+  return 'text'
+}
+
+/* 脱敏规则：决定该字段在报告里以何种方式脱敏 */
+export type MaskRule = 'none' | 'phone' | 'idcard' | 'bank' | 'name'
+export const MASK_RULE_LABEL: Record<MaskRule, string> = {
+  none: '不脱敏', phone: '手机号', idcard: '身份证', bank: '银行卡', name: '姓名',
+}
+export function autoMaskRule(name: string): MaskRule {
+  if (/身份证|证件/.test(name)) return 'idcard'
+  if (/手机/.test(name)) return 'phone'
+  if (/银行卡|卡号/.test(name)) return 'bank'
+  if (/姓名/.test(name)) return 'name'
+  return 'none'
+}
+
+/* 风险等级（规则集字段用） */
+export type Severity = 'low' | 'mid' | 'high' | 'critical'
+export const SEVERITY_LABEL: Record<Severity, string> = {
+  low: '低', mid: '中', high: '高', critical: '极高',
+}
+/* 数值对齐方式（接口数值字段用） */
+export type Align = 'left' | 'center' | 'right'
+export const ALIGN_LABEL: Record<Align, string> = { left: '左对齐', center: '居中', right: '右对齐' }
 
 export interface FieldConfig {
   id: string
@@ -34,12 +96,160 @@ export interface FieldConfig {
   desc: string
   visible: boolean
   /* —— 来源相关配置（按所属分段的 sourceType 解释） —— */
-  sourceRef?: string    // 数据源：绑定的来源字段标识 / 接口：输出字段名 / 规则集：规则 id
-  mask?: boolean         // 数据源类：是否脱敏（身份证/手机号/银行卡等）
-  inputParam?: string    // 接口类：该输出字段对应的输入参数 key
+  sourceRef?: string    // 数据源：绑定的表字段名 / 接口：输出字段 key / 规则集：规则 id
+  mask?: boolean         // 数据源类：是否脱敏（兼容旧值；优先看 maskRule）
+  maskRule?: MaskRule    // 数据源类：脱敏规则（不脱敏/手机号/身份证/银行卡/姓名）
+  weight?: number        // 规则集类：权重（影响风险累计）
+  severity?: Severity    // 规则集类：风险等级
   hitText?: string      // 规则集类：命中时显示
   missText?: string     // 规则集类：未命中显示
+  hitReject?: boolean   // 规则集类：命中即拒（该条规则命中即整笔申请拒绝）
+  /* 计分（每条展示项可独立参与本卡总分） */
+  scoreMode?: 'add' | 'deduct'   // 加分 / 扣分（默认 deduct：规则命中即扣分）
+  scorePoints?: number             // 加 / 扣 的分值
+  condType?: FieldCondType        // 计分条件：规则=命中；字段=空/非空/大于/小于/等于/正则
+  condValue?: string              // 条件值（gt/lt/eq/regex 使用；empty/notEmpty/hit 不用）
 }
+/* 展示项计分条件类型 */
+export type FieldCondType = 'hit' | 'empty' | 'notEmpty' | 'gt' | 'lt' | 'eq' | 'regex'
+export const FIELD_COND_LABEL: Record<FieldCondType, string> = {
+  hit: '命中', empty: '为空', notEmpty: '非空', gt: '大于', lt: '小于', eq: '等于', regex: '正则',
+}
+
+/* 数据源（用户首填）连接配置：配真实库连接，字段从表里"读出来"只能显隐 */
+/* 读取表结构后得到的字段：列名 + DB 列类型 + 是否展示 + 报告显示名(可选) + 显示方式(可选) + 脱敏规则(可选) */
+export interface DbField {
+  name: string
+  type: string           // DB 列类型，读取表结构时填充（varchar/int/datetime/decimal…）
+  visible: boolean
+  label?: string         // 报告中显示名（默认 = name）
+  container?: RenderContainer  // 报告中如何呈现（默认按列类型推荐，可改）
+  maskRule?: MaskRule    // 脱敏规则（默认按字段名自动识别）
+  remark?: string        // 字段说明/备注（可选）
+  /* 计分（数据字段可按条件参与本卡总分） */
+  scoreMode?: 'add' | 'deduct'
+  scorePoints?: number
+  condType?: FieldCondType
+  condValue?: string
+}
+export interface DataSourceConfig {
+  dbType: string        // MySQL / PostgreSQL / Oracle
+  ip: string
+  port: string
+  username: string
+  password: string
+  database: string
+  table: string
+  /* 读取表结构后得到的字段（列名 + 类型 + 是否展示 + 配置项）；字段来自表，不可凭空新增 */
+  tableFields: DbField[]
+}
+/* 接口（模型/API 调用）配置：配 API 地址 + 访问的用户信息（输入）+ 返回值（输出） */
+export interface ApiParam {
+  key: string          // 参数名（Param key）
+  from: string         // 数据来自（如：进件表单.申请人ID）
+  required: boolean    // 是否必填
+}
+export interface ApiHeader {
+  key: string          // 请求头名（如 Authorization / Content-Type）
+  value: string        // 请求头值
+}
+export interface ApiOutput {
+  key: string          // 输出字段 key
+  label: string        // 报告中的显示名（标签）
+  type: ApiFieldType   // 数据域类型（string/number/enum/boolean/date/image/file/json）
+  visible?: boolean     // 是否在报告中展示
+  container?: RenderContainer  // 报告中显示方式（默认按 type 推荐，可改）
+  unit?: string         // 单位/后缀（如 元 / % / 分）
+  precision?: number    // 小数位（number 类型用）
+  align?: Align         // 数值对齐方式（默认 右对齐）
+  /* 计分（接口输出字段可按条件参与本卡总分） */
+  scoreMode?: 'add' | 'deduct'
+  scorePoints?: number
+  condType?: FieldCondType
+  condValue?: string
+}
+/* 接口（API 调用）配置：参考 Postman 的请求结构 ——
+   方法 + 地址 + 请求头 + 参数 + 请求体；并支持直接粘贴「统一代码」（cURL / 类 HTTP 请求）一键解析填充 */
+export type ApiMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
+export type ApiBodyType = 'none' | 'json' | 'form' | 'urlencoded'
+export interface ApiConfig {
+  url: string
+  method: ApiMethod
+  headers: ApiHeader[]      // 请求头（Headers）
+  inputs: ApiParam[]        // Params（访问的用户基本信息 / 查询参数）
+  bodyType: ApiBodyType     // 请求体类型
+  bodyText: string          // 请求体原始内容（json 模板 / form 键值 / urlencoded）
+  outputs: ApiOutput[]      // 返回值（输出）
+}
+/* 解析「统一代码」（cURL / 类 HTTP 请求串）为接口配置片段，
+   让用户既可逐项手填、也可直接粘贴代码一键填充 */
+export function parseCurl(code: string): Partial<ApiConfig> {
+  const out: Partial<ApiConfig> = {}
+  const txt = code.trim().replace(/\r/g, ' ')
+  // 切词：保留被引号包裹的整体（含空格），其余按空白切
+  const tokens = txt.replace(/^curl\b/i, '').match(/(['"])(?:\\.|[^'"\\])*\1|\S+/g) ?? []
+  const cleaned: string[] = []
+  for (let i = 0; i < tokens.length; i++) {
+    const t = tokens[i]
+    if (t.startsWith('-')) {
+      const nxt = tokens[i + 1]
+      if (nxt && !nxt.startsWith('-')) i++ // 跳过 flag 跟随的值
+      continue
+    }
+    cleaned.push(t)
+  }
+  const urlTok = cleaned[0]
+  if (urlTok) out.url = urlTok.replace(/^(['"])([\s\S]*)\1$/, '$2')
+  // 方法：-X POST / --request PUT
+  const xm = /(?:-X|--request)\s+(\w+)/i.exec(txt)
+  if (xm) out.method = xm[1].toUpperCase() as ApiMethod
+  // 请求头：-H 'K: V' / --header 'K: V'
+  const headers: ApiHeader[] = []
+  const hRe = /(?:-H|--header)\s+(['"]?)([^\n'"]+?)\1/g
+  let hm: RegExpExecArray | null
+  while ((hm = hRe.exec(txt))) {
+    const kv = hm[2].split(/:\s*/)
+    if (kv.length >= 2) headers.push({ key: kv[0].trim(), value: kv.slice(1).join(':').trim() })
+  }
+  if (headers.length) out.headers = headers
+  // 请求体：-d / --data / --data-raw / --data-urlencode
+  const dM = /(?:--data-raw|--data-urlencode|--data|-d)\s+(['"]?)([\s\S]*?)\1(?=\s+-|$)/.exec(txt)
+  if (dM) {
+    const body = dM[2].trim()
+    out.bodyText = body
+    out.bodyType = /^[\[{]/.test(body) ? 'json' : 'urlencoded'
+    if (!xm) out.method = 'POST'
+  }
+  if (!out.method) out.method = 'GET'
+  return out
+}
+/* 由当前接口配置生成可复制的 cURL 代码（「代码」Tab 的预览 / 导出） */
+export function buildCurl(api?: ApiConfig): string {
+  if (!api) return ''
+  const lines: string[] = [`curl -X ${api.method} '${api.url}'`]
+  for (const h of api.headers ?? []) lines.push(`  -H '${h.key}: ${h.value}'`)
+  if (api.bodyType !== 'none' && api.bodyText.trim()) {
+    const escaped = api.bodyText.trim().replace(/'/g, "'\\''")
+    lines.push(`  -d '${escaped}'`)
+  }
+  return lines.join(' \\\n')
+}
+
+/* 规则集（系统内已配置的规则合集）：选合集后对其规则项"用/不用" */
+export interface RuleSetItem { id: string; name: string; desc: string }
+export interface RuleSet { id: string; name: string; rules: RuleSetItem[] }
+
+/** 按各展示项计分配置，汇总本卡总分（假设条件满足时的计分；命中即拒项不计入）。 */
+export function computeSectionScore(s: SectionConfig): { total: number; addCount: number; deductCount: number } {
+  let total = 0, addCount = 0, deductCount = 0
+  for (const f of s.fields) {
+    if (!f.visible || f.hitReject) continue
+    const pts = f.scorePoints ?? 0
+    if ((f.scoreMode ?? 'deduct') === 'add') { total += pts; addCount++ } else { total -= pts; deductCount++ }
+  }
+  return { total, addCount, deductCount }
+}
+
 export interface SectionConfig {
   id: string
   name: string
@@ -47,9 +257,12 @@ export interface SectionConfig {
   order: number
   visible: boolean
   sourceType: SectionSource
+  homeTab?: 'content' | 'score' | 'flow' | 'log'  // 该段归属的编辑 Tab：'content'=报告内容配置；'score'=评分方案（如得分计算）；'flow'=审核操作（如结论与终审）；'log'=操作日志，由模板 showOpLog 开关控制，不在任何 Tab 编辑
   sourceName?: string   // 数据源名 / 接口名 / 规则集名
-  inputs?: { key: string; from: string }[]  // 接口类：输入参数映射（key=参数名，from=数据来源）
-  fields: FieldConfig[]
+  ds?: DataSourceConfig      // sourceType === 'data_source'
+  api?: ApiConfig            // sourceType === 'api'
+  ruleSetId?: string        // sourceType === 'rule_set'，选中的规则合集 id
+  fields: FieldConfig[]     // 展示项：数据源=表字段 / 接口=输出字段 / 规则集=规则项（用/不用）
 }
 export interface ScoreGrade {
   grade: string
@@ -60,6 +273,10 @@ export interface ScoreGrade {
   color: string
   description: string
 }
+export interface ScoreComponent {
+  name: string      // 构成项名称（如 设备群控 / 黑名单命中 / 身份）
+  weight: number    // 权重（0-100），所有项合计应为 100
+}
 export interface ScoreDisplayConfig {
   displayComponent: DisplayComponent
   showDescription: boolean
@@ -67,6 +284,36 @@ export interface ScoreDisplayConfig {
   showComponents: boolean
   showRiskTags: boolean
   grades: ScoreGrade[]
+  components: ScoreComponent[]   // 总分计算方式：各构成项权重（加权求和得总分），合计应为 100
+}
+
+/* 总分计算方式（加权构成）默认权重预设：各项加权求和得到报告顶部总分 */
+export const SCORE_COMPONENTS_PRESETS: Record<ReportType, ScoreComponent[]> = {
+  info_verify: [
+    { name: '设备群控', weight: 35 },
+    { name: '黑名单命中', weight: 30 },
+    { name: '资料异常', weight: 20 },
+    { name: '行为异常', weight: 15 },
+  ],
+  credit: [
+    { name: '身份', weight: 20 },
+    { name: '还款', weight: 25 },
+    { name: '信用历史', weight: 25 },
+    { name: '行为', weight: 10 },
+    { name: '设备', weight: 10 },
+    { name: '关联', weight: 10 },
+  ],
+  fraud: [
+    { name: '设备关联', weight: 30 },
+    { name: '团伙欺诈', weight: 25 },
+    { name: '黑名单', weight: 25 },
+    { name: '资料造假', weight: 20 },
+  ],
+  decision: [
+    { name: '信息核验异常值', weight: 34 },
+    { name: '信用评分', weight: 33 },
+    { name: '欺诈评分', weight: 33 },
+  ],
 }
 export interface BusinessFlowConfig {
   gradeId: string
@@ -105,7 +352,7 @@ export interface ExportConfig {
 }
 export interface TemplateChangeLog {
   version: string
-  action: '创建' | '编辑' | '启用' | '停用' | '复制' | '删除'
+  action: '创建' | '编辑' | '启用' | '停用' | '复制' | '删除' | '发布'
   operator: string
   timestamp: string
   summary: string
@@ -122,6 +369,9 @@ export interface ReportTemplate {
   lastEditor: string
   lastEditTime: string
   sections: SectionConfig[]
+  scoreBlock: { show: boolean; title: string }   // 评分方案 Tab → 报告内「得分计算」卡片：是否显示 + 报告内卡片标题
+  flowBlock: { show: boolean; title: string }   // 审核操作 Tab → 报告内「结论与终审」卡片：是否显示 + 报告内卡片标题
+  showOpLog: boolean        // 报告中是否显示操作日志（'log' 类分段的总开关）
   scoreDisplay: ScoreDisplayConfig
   businessFlow: BusinessFlowConfig[]
   theme: ThemeConfig
@@ -137,7 +387,74 @@ export const REPORT_META: Record<ReportType, { icon: string; label: string; colo
   decision: { icon: '🧭', label: '决策报告', color: 'green', hint: '融合三大报告给出综合决策建议' },
 }
 
-export const PRODUCTS = ['全产品', '信用贷', '抵押贷', '经营贷']
+/* ---------- 适用产品：大平台产品很多，分两级类目（类目 → 具体产品） ---------- */
+export const PRODUCT_ALL = '全产品'
+
+export interface ProductNode {
+  id: string
+  name: string
+  children: { id: string; name: string }[]
+}
+export const PRODUCT_TREE: ProductNode[] = [
+  {
+    id: 'credit', name: '信用贷', children: [
+      { id: 'credit-salary', name: '工薪贷' },
+      { id: 'credit-fund', name: '公积金贷' },
+      { id: 'credit-social', name: '社保贷' },
+      { id: 'credit-edu', name: '学历贷' },
+      { id: 'credit-merchant', name: '商户贷' },
+    ],
+  },
+  {
+    id: 'mortgage', name: '抵押贷', children: [
+      { id: 'mortgage-house', name: '房产抵押贷' },
+      { id: 'mortgage-car', name: '车辆抵押贷' },
+      { id: 'mortgage-device', name: '设备抵押贷' },
+    ],
+  },
+  {
+    id: 'biz', name: '经营贷', children: [
+      { id: 'biz-micro', name: '小微经营贷' },
+      { id: 'biz-individual', name: '个体工商户贷' },
+      { id: 'biz-supply', name: '供应链贷' },
+    ],
+  },
+  {
+    id: 'consume', name: '消费贷', children: [
+      { id: 'consume-goods', name: '商品分期贷' },
+      { id: 'consume-education', name: '教育分期贷' },
+      { id: 'consume-medical', name: '医美分期贷' },
+      { id: 'consume-travel', name: '旅游分期贷' },
+    ],
+  },
+  {
+    id: 'card', name: '信用卡', children: [
+      { id: 'card-standard', name: '标准信用卡' },
+      { id: 'card-gold', name: '金卡' },
+      { id: 'card-platinum', name: '白金卡' },
+    ],
+  },
+  {
+    id: 'other', name: '其他', children: [
+      { id: 'other-assist', name: '助农贷' },
+      { id: 'other-policy', name: '保单贷' },
+      { id: 'other-lease', name: '租赁贷' },
+    ],
+  },
+]
+/* 扁平叶子（带类目信息），供搜索下拉使用 */
+export const PRODUCT_LEAVES: { id: string; name: string; catId: string; cat: string }[] = PRODUCT_TREE.flatMap((c) =>
+  c.children.map((ch) => ({ id: ch.id, name: ch.name, catId: c.id, cat: c.name })),
+)
+/* scope 展示文案：全产品 / 单类 / 前 N 个 + 等 M 个 */
+export function scopeLabel(scope: string[]): string {
+  if (!scope || scope.length === 0) return '未设置'
+  if (scope.includes(PRODUCT_ALL)) return PRODUCT_ALL
+  if (scope.length === 1) return scope[0]
+  if (scope.length <= 3) return scope.join('、')
+  return scope.slice(0, 3).join('、') + ` 等${scope.length}个`
+}
+
 
 /* ---------- 可执行操作清单（业务中文） ---------- */
 export const ACTION_CATALOG: Record<string, string> = {
@@ -165,7 +482,7 @@ export const ACTION_BY_TYPE: Record<ReportType, string[]> = {
 export const SECTION_CATALOG: Record<ReportType, { id: string; name: string; desc: string; fields: { id: string; name: string; desc: string }[] }[]> = {
   info_verify: [
     {
-      id: 'score_model', name: '异常值模型卡', desc: '报告顶部的总风险值卡片：分数越大代表风险越高（0-100，≥80 为高危）。',
+      id: 'score_model', name: '得分计算', desc: '报告顶部的总风险值卡片：分数越大代表风险越高（0-100，≥80 为高危）。属于「评分方案」Tab，由已配置的数据源/规则集算得，不在「报告内容」里配来源。',
       fields: [
         { id: 'sv_big', name: '异常值大数字', desc: '顶部核心分数，如 82 分。勾掉则只保留等级标签' },
         { id: 'sv_denom', name: '满分分母', desc: '异常值的计算满分基准（固定 100）' },
@@ -179,7 +496,7 @@ export const SECTION_CATALOG: Record<ReportType, { id: string; name: string; des
       ],
     },
     {
-      id: 'conclusion_process', name: '结论与终审操作卡 + 核验过程', desc: '系统自动结论 + 人工审核结果 + 终审操作入口，以及核验过程时间线。',
+      id: 'conclusion_process', name: '结论与终审', desc: '系统自动结论 + 人工审核结果 + 终审操作入口，以及核验过程时间线。属于「审核操作」Tab，由已配置的数据源/规则集算得，不在「报告内容」里配来源。',
       fields: [
         { id: 'cp_system', name: '系统结果', desc: '机器自动给出的处置结论（通过/预警/拒绝）' },
         { id: 'cp_manual', name: '人工审核', desc: '当前人工审核状态（待确认/已确认等）' },
@@ -715,7 +1032,7 @@ export function syncFlowToGrades(flow: BusinessFlowConfig[], grades: ScoreGrade[
 /* 分段来源默认映射（seed 用；UI 中可改） */
 export const SECTION_SOURCE: Record<string, SectionSource> = {
   // 信息核验
-  score_model: 'api', conclusion_process: 'api', basic_info: 'data_source', id_images: 'data_source',
+  score_model: 'api', conclusion_process: 'api', basic_info: 'data_source', id_images: 'api',
   single_verify: 'rule_set', cross_fusion: 'rule_set', op_logs: 'api',
   // 信用风控
   credit_score_overview: 'api', credit_conclusion: 'api', applicant_info: 'data_source',
@@ -735,23 +1052,187 @@ export const DATA_SOURCE_FIELDS = ['申请人姓名', '身份证号', '手机号
 export const RULE_POOL = ['R1 公安实名', 'R2 银行卡四要素', 'R3 运营商实名', 'R4 设备真实性', 'R5 联防联控', 'R6 设备群控', 'R7 团伙关联', 'R8 黑名单命中', 'R9 资料一致性', 'R10 行为异常']
 /* 接口输入参数池（api 类输入参数 key 下拉可选） */
 export const API_INPUT_POOL = ['applicantId', 'idCard', 'mobile', 'deviceFp', 'ip', 'channel', 'bizType']
-
-/* 按分段来源类型，给字段注入合理的来源默认值（保留原 field id，不破坏 PREVIEW_SAMPLE） */
-function defaultFieldSource(sType: SectionSource, f: { id: string; name: string; desc: string }): FieldConfig {
-  if (sType === 'data_source') return { id: f.id, name: f.name, desc: f.desc, visible: true, sourceRef: f.id, mask: /身份证|手机|银行卡|证件|活体|人脸|姓名/.test(f.name) }
-  if (sType === 'api') return { id: f.id, name: f.name, desc: f.desc, visible: true, sourceRef: f.id, inputParam: '' }
-  return { id: f.id, name: f.name, desc: f.desc, visible: true, sourceRef: f.id, hitText: '命中', missText: '未命中' }
+/* 数据库类型池（data_source 段连接配置用） */
+export const DB_TYPES = ['MySQL', 'PostgreSQL', 'Oracle']
+/* 系统内已配置的规则合集（rule_set 段从中选择，再勾选用/不用的规则项） */
+export const RULE_SETS: RuleSet[] = [
+  {
+    id: 'rs_identity', name: '身份真实性规则集', rules: [
+      { id: 'R1', name: '公安实名', desc: '比对公安身份信息是否一致' },
+      { id: 'R2', name: '银行卡四要素', desc: '姓名+身份证+卡号+手机号四要素核验' },
+      { id: 'R3', name: '运营商实名', desc: '手机号运营商实名核验' },
+      { id: 'R4', name: '设备真实性', desc: '设备指纹真实性校验' },
+      { id: 'R9', name: '资料一致性', desc: '多源资料交叉一致性' },
+    ],
+  },
+  {
+    id: 'rs_device', name: '设备与团伙规则集', rules: [
+      { id: 'R4', name: '设备真实性', desc: '设备指纹真实性校验' },
+      { id: 'R5', name: '联防联控', desc: '跨机构联防联控命中' },
+      { id: 'R6', name: '设备群控', desc: '群控设备特征识别' },
+      { id: 'R7', name: '团伙关联', desc: '团伙关系网络关联' },
+      { id: 'R8', name: '黑名单命中', desc: '黑名单库命中' },
+    ],
+  },
+  {
+    id: 'rs_behavior', name: '行为异常规则集', rules: [
+      { id: 'R10', name: '行为异常', desc: '申请行为异常模式' },
+      { id: 'R6', name: '设备群控', desc: '群控设备特征识别' },
+      { id: 'R7', name: '团伙关联', desc: '团伙关系网络关联' },
+    ],
+  },
+  {
+    id: 'rs_all', name: '全量核验规则集', rules: [
+      { id: 'R1', name: '公安实名', desc: '比对公安身份信息' },
+      { id: 'R2', name: '银行卡四要素', desc: '四要素核验' },
+      { id: 'R3', name: '运营商实名', desc: '运营商实名' },
+      { id: 'R4', name: '设备真实性', desc: '设备指纹真实' },
+      { id: 'R5', name: '联防联控', desc: '联防联控' },
+      { id: 'R6', name: '设备群控', desc: '群控识别' },
+      { id: 'R7', name: '团伙关联', desc: '团伙关联' },
+      { id: 'R8', name: '黑名单命中', desc: '黑名单' },
+      { id: 'R9', name: '资料一致性', desc: '一致性' },
+      { id: 'R10', name: '行为异常', desc: '行为异常' },
+    ],
+  },
+]
+/* 分段 → 默认选中的规则合集（seed 用） */
+export const SECTION_RULESET: Record<string, string> = {
+  identity_fraud: 'rs_identity', cross_fusion: 'rs_all',
+  info_forgery: 'rs_identity', device_fraud: 'rs_device', behavior_fraud: 'rs_behavior',
+  gang_fraud: 'rs_device', blacklist_hit: 'rs_device', history_fraud: 'rs_all',
 }
 
+/* 模拟读取数据库表结构：根据表名给出示例列（仅用于演示，真实场景由后端返回）。
+ * 返回 {name, type}，type 为推断出的 DB 列类型（varchar/int/datetime/decimal…）。 */
+export function mockTableColumns(table: string): { name: string; type: string }[] {
+  const infer = (n: string): string => {
+    if (/时间|date|time|创建|更新|进件|birth|生日/i.test(n)) return 'datetime'
+    if (/年龄|收入|额度|金额|分数|score|数量|count|num|学历|婚姻|版本/i.test(n)) return 'decimal'
+    if (/_id$|编号|id$|序号/i.test(n)) return 'bigint'
+    if (/手机|证件|卡号|身份证|地址|姓名|单位|渠道|机型|系统|指纹|定位|原因|来源|支行|开户行|状态/i.test(n)) return 'varchar'
+    return 'varchar'
+  }
+  const base = ['id', '申请人姓名', '身份证号', '手机号', '创建时间']
+  let names: string[]
+  if (/user|applicant|basic|info/i.test(table)) names = ['applicant_id', '申请人姓名', '身份证号', '手机号', '年龄', '学历', '工作单位', '月收入', '居住地址', '婚姻状况', '设备指纹', 'IP地址', 'GPS定位', '进件渠道', 'APP版本']
+  else if (/bank|card|account/i.test(table)) names = ['account_id', '申请人姓名', '银行卡号', '开户行', '开户支行', '账户状态', '授信额度', '可用额度']
+  else if (/device|equip/i.test(table)) names = ['device_id', '设备指纹', '机型', '操作系统', 'MAC地址', 'IMSI', '是否越狱', '是否模拟器']
+  else names = base
+  return names.map((n) => ({ name: n, type: infer(n) }))
+}
+/* 数据源连接有效性校验（IP / 端口 / 必填项） */
+function validateDs(d: DataSourceConfig): string[] {
+  const errs: string[] = []
+  if (!d.ip.trim()) errs.push('IP 地址不能为空')
+  else if (!/^((\d{1,3}\.){3}\d{1,3}|localhost|[\w.-]+)$/.test(d.ip.trim())) errs.push('IP 地址格式不合法（应为 IPv4 / localhost / 域名）')
+  if (!d.port.trim()) errs.push('端口不能为空')
+  else if (!/^\d{2,5}$/.test(d.port.trim()) || +d.port < 1 || +d.port > 65535) errs.push('端口应在 1–65535 之间')
+  if (!d.username.trim()) errs.push('用户名不能为空')
+  if (!d.password.trim()) errs.push('密码不能为空')
+  if (!d.database.trim()) errs.push('数据库名不能为空')
+  if (!d.table.trim()) errs.push('表名不能为空')
+  return errs
+}
+/* 接口有效性校验（地址 / 输出字段 / 必填输入映射） */
+function validateApi(a: ApiConfig): string[] {
+  const errs: string[] = []
+  if (!a.url.trim()) errs.push('API 地址不能为空')
+  else if (!/^https?:\/\/.+/.test(a.url.trim())) errs.push('API 地址须以 http:// 或 https:// 开头')
+  if (a.outputs.length === 0) errs.push('至少配置 1 个输出字段')
+  else a.outputs.forEach((o, i) => { if (!o.key.trim()) errs.push(`第 ${i + 1} 个输出字段的 key 为空`); if (!o.label.trim()) errs.push(`第 ${i + 1} 个输出字段的显示名为空`) })
+  a.inputs.forEach((p, i) => { if (p.key.trim() && !p.from.trim()) errs.push(`第 ${i + 1} 个输入参数「${p.key}」未填写数据来源`) })
+  if (a.bodyType !== 'none' && !a.bodyText.trim()) errs.push(`请求体类型已选「${a.bodyType}」，但请求体内容为空`)
+  return errs
+}
+/* 规则集有效性校验（已选合集 / 至少启用 1 条规则） */
+function validateRuleSet(s: SectionConfig): string[] {
+  const errs: string[] = []
+  if (!s.ruleSetId) errs.push('尚未选择规则合集')
+  const used = s.fields.filter((f) => f.visible).length
+  if (used === 0) errs.push('至少需启用 1 条规则（报告中无可展示项）')
+  return errs
+}
+/**
+ * 来源配置『测试』：校验当前来源配置是否可用（模拟，无真实网络）。
+ * 返回结构化结果，供配置弹窗展示「通过 / 失败 + 明细 + 耗时」。
+ */
+export interface SourceTestResult {
+  ok: boolean
+  title: string
+  lines: string[]
+  durationMs: number
+}
+export function testSourceConfig(s: SectionConfig): SourceTestResult {
+  const durationMs = 80 + Math.floor(Math.random() * 320)
+  if (s.sourceType === 'data_source') {
+    const d = s.ds
+    if (!d) return { ok: false, title: '配置不完整', lines: ['数据源连接信息缺失'], durationMs }
+    const errs = validateDs(d)
+    if (errs.length) return { ok: false, title: '连接测试未通过', lines: errs, durationMs }
+    if (d.tableFields.length === 0) return { ok: false, title: '连接成功，但表字段未读取', lines: ['连接配置有效，但请先点「读取表字段」再保存展示项'], durationMs }
+    return { ok: true, title: '数据库连接成功', lines: [`${d.dbType} · ${d.ip}:${d.port}`, `数据库 ${d.database} / 表 ${d.table}`, `读取到 ${d.tableFields.length} 个字段`], durationMs }
+  }
+  if (s.sourceType === 'api') {
+    const a = s.api
+    if (!a) return { ok: false, title: '配置不完整', lines: ['接口配置信息缺失'], durationMs }
+    const errs = validateApi(a)
+    if (errs.length) return { ok: false, title: '接口测试未通过', lines: errs, durationMs }
+    const missed = a.inputs.filter((p) => p.required && !p.from.trim()).length
+    return { ok: true, title: '接口调用成功', lines: [`${a.method} ${a.url}`, `输入参数 ${a.inputs.length} 个${missed ? `（${missed} 个必填未映射）` : ''}`, `返回输出字段 ${a.outputs.length} 个`], durationMs }
+  }
+  // rule_set
+  const errs = validateRuleSet(s)
+  if (errs.length) return { ok: false, title: '规则集测试未通过', lines: errs, durationMs }
+  const rs = RULE_SETS.find((r) => r.id === s.ruleSetId)
+  const used = s.fields.filter((f) => f.visible).length
+  return { ok: true, title: '规则集加载成功', lines: [`规则合集：${rs?.name ?? s.ruleSetId}`, `启用 ${used} / 共 ${s.fields.length} 条规则`, `命中显示「${s.fields.find((f) => f.visible)?.hitText ?? '命中'}」`], durationMs }
+}
+
+/* 每个报告类型：首段（评分总览 / 模型卡）→ 评分方案 Tab；第二段（结论 / 处置建议）→ 审核操作 Tab。
+   与信息核验一致：这两段作为全局「得分计算 / 结论与终审」卡片的来源，不出现在「报告内容配置」里。
+   注：决策报告的「结论」卡是 decision_suggestion（最终决策建议），而非目录第 2 条 verify_summary（信息核验摘要，属内容）。 */
+const SCORE_SECTION: Record<ReportType, string> = {
+  info_verify: 'score_model',
+  credit: 'credit_score_overview',
+  fraud: 'fraud_score_model',
+  decision: 'decision_overview',
+}
+const FLOW_SECTION: Record<ReportType, string> = {
+  info_verify: 'conclusion_process',
+  credit: 'credit_conclusion',
+  fraud: 'disposal_bar',
+  decision: 'decision_suggestion',
+}
 function buildSections(type: ReportType): SectionConfig[] {
   return SECTION_CATALOG[type].map((s, i) => {
     const sType = SECTION_SOURCE[s.id] ?? 'data_source'
-    const inputs = sType === 'api'
-      ? (s.id === 'score_model' ? [{ key: 'applicantId', from: '进件表单.申请人ID' }, { key: 'deviceFp', from: '设备SDK.指纹' }]
-        : s.id === 'fraud_score_model' ? [{ key: 'deviceFp', from: '设备SDK.指纹' }, { key: 'ip', from: '请求上下文.IP' }]
-        : s.id === 'decision_overview' ? [{ key: 'verifyScore', from: '信息核验.异常值' }, { key: 'creditScore', from: '信用风控.信用分' }, { key: 'fraudScore', from: '欺诈识别.欺诈分' }]
-        : [])
-      : undefined
+    let ds: DataSourceConfig | undefined
+    let api: ApiConfig | undefined
+    let ruleSetId: string | undefined
+    let fields: FieldConfig[]
+
+    if (sType === 'data_source') {
+      // 数据源：初始用 seed 字段名作为表字段占位（type 默认 varchar）；用户配连接后可"读取表字段"覆盖
+      const tableFields = s.fields.map((f) => ({ name: f.name, type: 'varchar', visible: true }))
+      ds = { dbType: 'MySQL', ip: '', port: '3306', username: '', password: '', database: '', table: '', tableFields }
+      fields = ds.tableFields.map((tf, k) => ({ id: s.fields[k].id, name: tf.name, desc: s.fields[k].desc, visible: true, sourceRef: tf.name, mask: /身份证|手机|银行卡|证件|姓名/.test(tf.name), maskRule: autoMaskRule(tf.name), scoreMode: 'deduct', scorePoints: 10, condType: 'empty' as FieldCondType }))
+    } else if (sType === 'api') {
+      const inputs: ApiParam[] = s.id === 'score_model' ? [{ key: 'applicantId', from: '进件表单.申请人ID', required: true }, { key: 'deviceFp', from: '设备SDK.指纹', required: false }]
+        : s.id === 'fraud_score_model' ? [{ key: 'deviceFp', from: '设备SDK.指纹', required: true }, { key: 'ip', from: '请求上下文.IP', required: false }]
+        : s.id === 'decision_overview' ? [{ key: 'verifyScore', from: '信息核验.异常值', required: true }, { key: 'creditScore', from: '信用风控.信用分', required: true }, { key: 'fraudScore', from: '欺诈识别.欺诈分', required: true }]
+        : []
+      const outputs: ApiOutput[] = s.fields.map((f) => ({ key: f.id, label: f.name, type: 'string', container: inferApiContainer(f.name, f.desc), visible: true }))
+      api = { url: '', method: 'POST', headers: [], inputs, bodyType: 'none', bodyText: '', outputs }
+      fields = api.outputs.map((o, k) => ({ id: s.fields[k].id, name: o.label, desc: s.fields[k].desc, visible: true, sourceRef: o.key, scoreMode: 'deduct', scorePoints: 10, condType: 'empty' as FieldCondType }))
+    } else {
+      // 规则集：默认选中一个系统规则合集，展开后的规则项即合集内的规则
+      const rsId = SECTION_RULESET[s.id] ?? RULE_SETS[0].id
+      ruleSetId = rsId
+      const rs = RULE_SETS.find((r) => r.id === rsId)!
+      fields = rs.rules.map((r) => ({ id: r.id, name: r.name, desc: r.desc, visible: true, sourceRef: r.id, hitText: '命中', missText: '未命中', severity: 'mid' as Severity, hitReject: false, scoreMode: 'deduct', scorePoints: 10, condType: 'hit' as FieldCondType }))
+    }
+
     return {
       id: s.id,
       name: s.name,
@@ -759,9 +1240,10 @@ function buildSections(type: ReportType): SectionConfig[] {
       order: i + 1,
       visible: true,
       sourceType: sType,
+      homeTab: s.id === SCORE_SECTION[type] ? 'score' : s.id === FLOW_SECTION[type] ? 'flow' : /logs?$/i.test(s.id) ? 'log' : 'content',
       sourceName: s.name,
-      inputs,
-      fields: s.fields.map((f) => defaultFieldSource(sType, f)),
+      ds, api, ruleSetId,
+      fields,
     }
   })
 }
@@ -822,6 +1304,9 @@ export function buildTemplate(type: ReportType, o: BuildOpts): ReportTemplate {
     lastEditor: o.lastEditor ?? 'admin',
     lastEditTime: o.lastEditTime ?? '刚刚',
     sections: buildSections(type),
+    scoreBlock: { show: true, title: '' },
+    flowBlock: { show: true, title: '' },
+    showOpLog: true,
     scoreDisplay: {
       displayComponent: '大数字',
       showDescription: true,
@@ -829,6 +1314,7 @@ export function buildTemplate(type: ReportType, o: BuildOpts): ReportTemplate {
       showComponents: true,
       showRiskTags: true,
       grades: GRADE_PRESETS[type].map((g) => ({ ...g })),
+      components: SCORE_COMPONENTS_PRESETS[type].map((c) => ({ ...c })),
     },
     businessFlow: syncFlowToGrades(FLOW_PRESETS[type], GRADE_PRESETS[type]),
     theme: defaultTheme(),
@@ -846,7 +1332,7 @@ export const seedReportTemplates: ReportTemplate[] = [
     isDefault: true, version: 'V2.1', lastEditor: 'admin', lastEditTime: '今天', description: '信息核验报告标准展示模板，覆盖全部 7 个分段。异常值越高风险越高。',
   }),
   buildTemplate('credit', {
-    id: 'tpl-credit-loan', name: '信用贷信用风控报告模板', status: '已启用', scope: ['信用贷'],
+    id: 'tpl-credit-loan', name: '信用贷信用风控报告模板', status: '已启用', scope: ['工薪贷', '公积金贷', '社保贷', '学历贷', '商户贷'],
     version: 'V1.3', lastEditor: '主管', lastEditTime: '3天前', description: '面向信用贷客群的信用风控报告模板。',
   }),
   buildTemplate('fraud', {

@@ -72,9 +72,9 @@ export const crSpecs: Record<string, ModuleSpec> = {
     note: '快捷入口：发起审核、查看决策报告、配置监测任务。',
   },
 
-  'cr:pre-application': {
-    title: '申贷审核',
-    crumb: '零售信贷风控 / 贷前审核',
+  'cm:pre-application': {
+    title: '备份一申贷审核',
+    crumb: '管理中心',
     subtitle: '录入 / 导入申贷信息，调用决策引擎实时跑决策流，输出欺诈、关联、共债风险评估。',
     stats: [
       { label: '今日已审', value: '12,847', delta: '+6.2%', deltaType: 'up', accent: 'brand' },
@@ -198,7 +198,7 @@ export const crSpecs: Record<string, ModuleSpec> = {
   },
 
   'cr:pre-report': {
-    title: '决策报告',
+    title: '进件审核',
     crumb: '零售信贷风控 / 贷前审核',
     subtitle: '基于专家经验与前沿建模技术生成的科学、直观、可解释报告，支持在线查看与 PDF 导出。',
     columns: [

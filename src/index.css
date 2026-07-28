@@ -72,3 +72,62 @@ body {
 .animate-spin-slow {
   animation: spin-slow 6s linear infinite;
 }
+
+/* ============ 侧边栏 antd 菜单（与框架「白底 + 极浅灰 + brand 蓝」风格一致） ============ */
+.console-side-menu-wrap {
+  padding: 4px 9px 8px;
+}
+
+.console-side-menu.ant-menu {
+  background: transparent;
+}
+
+.console-side-menu .ant-menu-item,
+.console-side-menu .ant-menu-submenu-title {
+  transition: background-color 0.16s ease, color 0.16s ease;
+}
+
+/* 选中项：左侧 brand-600 实色细竖条 + 浅蓝底（与 .btn-ghost / 子系统激活态同源） */
+.console-side-menu .ant-menu-item-selected {
+  position: relative;
+}
+.console-side-menu .ant-menu-item-selected::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 18px;
+  border-radius: 3px;
+  background: #1f47f5;
+}
+
+/* 分区标题（section）：安静的浅灰小标题，与框架克制的灰白语言一致 */
+.console-side-menu .side-sec > .ant-menu-submenu-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #94a3b8 !important;
+  height: auto !important;
+  line-height: 1.5 !important;
+  margin-top: 10px;
+  padding: 10px 4px 4px !important;
+}
+
+/* 分组（group）标题 */
+.console-side-menu .side-group > .ant-menu-submenu-title {
+  color: #64748b !important;
+  font-weight: 500;
+}
+
+/* 侧边栏滚动条 */
+aside::-webkit-scrollbar {
+  width: 6px;
+}
+aside::-webkit-scrollbar-thumb {
+  background: #e2e8f0;
+  border-radius: 999px;
+}
+aside:hover::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+}

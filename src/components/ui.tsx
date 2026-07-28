@@ -426,18 +426,20 @@ export function Modal({
   title,
   children,
   footer,
+  width = 'max-w-lg',
 }: {
   open: boolean
   onClose: () => void
   title?: string
   children: ReactNode
   footer?: ReactNode
+  width?: string
 }) {
   if (!open) return null
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-slate-900/40" onClick={onClose} />
-      <div className="relative w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl">
+      <div className={`relative w-full ${width} overflow-hidden rounded-2xl bg-white shadow-2xl`}>
         <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
           <h2 className="text-lg font-semibold text-ink-900">{title}</h2>
           <button
@@ -462,6 +464,199 @@ export interface SelectOption {
   value: string
   label: string
 }
+
+/* ---------- 可搜索复杂下拉（分组 + 搜索 + 整类全选 + 多选/单选 + 互斥项） ---------- */
+export interface SearchSelectOption {
+  value: string
+  label: string
+  group?: string // 所属分组 key（与 groups[].key 对应）
+  disabled?: boolean
+}
+export interface SearchSelectGroup {
+  key: string
+  label: string
+}
+export interface SearchSelectProps {
+  options: SearchSelectOption[]
+  value: string | string[]
+  onChange: (v: string | string[]) => void
+  multiple?: boolean
+  groups?: SearchSelectGroup[]
+  pinned?: SearchSelectOption[] // 置顶固定项（如「全产品」），不参与分组搜索
+  placeholder?: string
+  searchPlaceholder?: string
+  emptyText?: string
+  disabled?: boolean
+  fullWidth?: boolean
+  width?: number | string
+  exclusiveValues?: string[] // 选中其中之一即清空其余（如「全产品」互斥）
+}
+export function SearchSelect({
+  options,
+  value,
+  onChange,
+  multiple = false,
+  groups,
+  pinned = [],
+  placeholder = '请选择',
+  searchPlaceholder = '搜索…',
+  emptyText = '无匹配项',
+  disabled = false,
+  fullWidth = false,
+  width,
+  exclusiveValues = [],
+}: SearchSelectProps) {
+  const [open, setOpen] = useState(false)
+  const [q, setQ] = useState('')
+  const ref = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    function onDocClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', onDocClick)
+    return () => document.removeEventListener('mousedown', onDocClick)
+  }, [])
+  useEffect(() => { if (!open) setQ('') }, [open])
+
+  const labelOf = (v: string) => options.find((o) => o.value === v)?.label ?? v
+  const isSel = (v: string) => (multiple ? (value as string[]).includes(v) : value === v)
+  const toggle = (v: string) => {
+    if (multiple) {
+      const arr = value as string[]
+      const checked = arr.includes(v)
+      let next: string[]
+      if (checked) next = arr.filter((x) => x !== v)
+      else if (exclusiveValues.includes(v)) next = [v]
+      else next = [...arr.filter((x) => !exclusiveValues.includes(x)), v]
+      onChange(next)
+    } else {
+      onChange(v)
+      setOpen(false)
+    }
+  }
+  const toggleGroup = (gKey: string) => {
+    const leaves = options.filter((o) => o.group === gKey).map((o) => o.value)
+    const arr = value as string[]
+    const allOn = leaves.length > 0 && leaves.every((v) => arr.includes(v))
+    const next = allOn
+      ? arr.filter((x) => !leaves.includes(x))
+      : [...arr.filter((x) => !exclusiveValues.includes(x)), ...leaves.filter((v) => !arr.includes(v))]
+    onChange(next)
+  }
+
+  const ql = q.trim().toLowerCase()
+  const matchOpt = (o: SearchSelectOption) => !ql || o.label.toLowerCase().includes(ql)
+  const usedGroups = (groups && groups.length ? groups : Array.from(new Set(options.map((o) => o.group).filter(Boolean) as string[])).map((k) => ({ key: k, label: k })))
+  const totalMatch =
+    pinned.filter(matchOpt).length +
+    usedGroups.reduce((n, g) => n + options.filter((o) => o.group === g.key && matchOpt(o)).length, 0)
+
+  let trigger: ReactNode
+  if (multiple) {
+    const arr = value as string[]
+    if (arr.length === 0) trigger = <span className="text-slate-400">{placeholder}</span>
+    else if (arr.length <= 2)
+      trigger = arr.map((v) => (
+        <span key={v} className="rounded-full bg-brand-50 px-2 py-0.5 text-xs text-brand-700">{labelOf(v)}</span>
+      ))
+    else trigger = <span className="text-brand-700">{`已选 ${arr.length} 项`}</span>
+  } else {
+    trigger = value ? <span>{labelOf(value as string)}</span> : <span className="text-slate-400">{placeholder}</span>
+  }
+
+  return (
+    <div className={`relative ${fullWidth ? 'w-full' : ''}`} ref={ref} style={width ? { width } : undefined}>
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => !disabled && setOpen((o) => !o)}
+        className={`flex min-h-9 w-full items-center gap-1.5 rounded-lg border px-3 py-1.5 text-left text-sm transition ${
+          multiple ? (value as string[]).length > 0 : !!value
+            ? 'border-brand-200 bg-brand-50 text-brand-700'
+            : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
+        } ${disabled ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}
+      >
+        <span className="flex flex-1 flex-wrap items-center gap-1 overflow-hidden">{trigger}</span>
+        <span className="pointer-events-none ml-1 text-xs text-slate-400">▾</span>
+      </button>
+      {open && (
+        <div className="absolute z-50 mt-1 w-full overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl">
+          <div className="border-b border-slate-100 p-2">
+            <input
+              autoFocus
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder={searchPlaceholder}
+              className="w-full rounded-lg border border-slate-200 px-2.5 py-1.5 text-sm outline-none focus:border-brand-400"
+            />
+          </div>
+          <div className="max-h-64 overflow-y-auto p-1.5">
+            {pinned.length > 0 && (
+              <div className="mb-1">
+                {pinned.map((p) => (
+                  <Row key={p.value} opt={p} checked={isSel(p.value)} onToggle={() => toggle(p.value)} multiple={multiple} />
+                ))}
+                <div className="my-1 border-t border-slate-100" />
+              </div>
+            )}
+            {usedGroups.map((g) => {
+              const gOpts = options.filter((o) => o.group === g.key && matchOpt(o))
+              if (gOpts.length === 0) return null
+              const allOn = gOpts.every((o) => isSel(o.value))
+              const someOn = gOpts.some((o) => isSel(o.value))
+              return (
+                <div key={g.key} className="mb-1">
+                  <div className="flex items-center gap-2 rounded-lg px-2 py-1 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                    {multiple && (
+                      <input
+                        type="checkbox"
+                        checked={allOn}
+                        ref={(el) => { if (el) el.indeterminate = !allOn && someOn }}
+                        onChange={() => toggleGroup(g.key)}
+                      />
+                    )}
+                    <span>{g.label}</span>
+                    {multiple && (
+                      <span className="ml-auto text-slate-300">{`${gOpts.filter((o) => isSel(o.value)).length}/${gOpts.length}`}</span>
+                    )}
+                  </div>
+                  {gOpts.map((o) => (
+                    <Row key={o.value} opt={o} checked={isSel(o.value)} onToggle={() => toggle(o.value)} multiple={multiple} />
+                  ))}
+                </div>
+              )
+            })}
+            {totalMatch === 0 && <div className="px-2 py-6 text-center text-sm text-slate-400">{emptyText}</div>}
+          </div>
+          {multiple && (
+            <div className="flex items-center justify-between border-t border-slate-100 px-3 py-2 text-xs text-slate-500">
+              <span>已选 {(value as string[]).length} 项</span>
+              <button type="button" className="text-slate-400 hover:text-slate-600" onClick={() => onChange([])}>清空</button>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function Row({ opt, checked, onToggle, multiple }: { opt: SearchSelectOption; checked: boolean; onToggle: () => void; multiple: boolean }) {
+  return (
+    <button
+      type="button"
+      disabled={opt.disabled}
+      onClick={onToggle}
+      className={`flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm transition hover:bg-slate-50 ${
+        checked ? 'text-brand-700' : 'text-slate-600'
+      } ${opt.disabled ? 'cursor-not-allowed opacity-50' : ''}`}
+    >
+      <input type={multiple ? 'checkbox' : 'radio'} readOnly checked={checked} tabIndex={-1} className="pointer-events-none" />
+      <span className="flex-1 truncate">{opt.label}</span>
+      {checked && multiple && <span className="text-brand-600">✓</span>}
+    </button>
+  )
+}
+
 
 export function SingleSelect({
   label,

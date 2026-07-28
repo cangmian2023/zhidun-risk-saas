@@ -199,7 +199,7 @@ export default function DecisionDetail() {
     return (
       <div className="space-y-6">
         <DetailHeader
-          backLabel="返回决策报告"
+          backLabel="返回进件审核"
           onBack={() => nav('/console/cr/pre-report')}
           title="未找到决策报告"
           subtitle={`编号 ${id}`}

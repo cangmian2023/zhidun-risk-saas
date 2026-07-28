@@ -68,7 +68,7 @@ export default function VerifyRuleList() {
   }
 
   const goNew = () => {
-    nav('/console/cr/pre-verify-config-detail?id=new')
+    nav('/console/cm/pre-verify-config-detail?id=new')
   }
 
   return (
