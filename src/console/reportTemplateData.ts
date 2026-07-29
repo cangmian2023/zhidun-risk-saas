@@ -16,9 +16,13 @@ export type ReportType = 'info_verify' | 'credit' | 'fraud' | 'decision'
 export type TplStatus = '草稿' | '已启用' | '已停用'
 export type RiskLevel = '低' | '中' | '高' | '极高'
 export type DisplayComponent = '大数字' | '环形图' | '进度条' | '仪表盘'
-export type AutoDecision = '通过' | '预警' | '拒绝' | '处理中'
-export type ManualStatus = '—' | '待确认' | '待审核' | '核验计算中'
-export type ReviewLevel = '单人复核' | '双人复核' | '初审+终审两级'
+/* 分段自动审核结果：总分落入该分段时系统自动给出的结论（在「评分方案」Tab 配置，「审核操作」Tab 继承） */
+export type AutoResult = '通过' | '拒绝' | '转人工'
+export const AUTO_RESULT_LIST: AutoResult[] = ['通过', '转人工', '拒绝']
+export const AUTO_RESULT_COLOR: Record<AutoResult, string> = { 通过: '#10B981', 转人工: '#F59E0B', 拒绝: '#EF4444' }
+/* 审核角色池（审核操作 Tab 各流程环节的经办人角色） */
+export type ReviewRole = '初审员' | '复审员' | '风控主管' | '风控经理' | '风控总监'
+export const REVIEW_ROLES: ReviewRole[] = ['初审员', '复审员', '风控主管', '风控经理', '风控总监']
 
 /* 分段来源类型：每块来源单一（与用户首填/接口调用/规则集碰撞一一对应） */
 export type SectionSource = 'data_source' | 'api' | 'rule_set'
@@ -68,6 +72,27 @@ export function recommendDbContainer(dbType: string): RenderContainer {
   return 'text'
 }
 
+/* 字段名/说明 -> 推断接口字段类型（让「类型」列与实际数据相符，避免全为 string） */
+export function inferFieldType(name: string, desc: string): ApiFieldType {
+  const t = `${name} ${desc}`
+  if (/图片|影像|照片|证照|头像|面|活体/i.test(t)) return 'image'
+  if (/视频|录像|mp4/i.test(t)) return 'video'
+  if (/文件|附件|pdf|文档|合同/i.test(t)) return 'file'
+  if (/时间|日期|date|出生|到期|创建|更新|申请时间/i.test(t)) return 'date'
+  if (/是否|通过|拒绝|命中|成功|失败|一致|异常|校验|核验|有|无|bool/i.test(t)) return 'boolean'
+  if (/年龄|岁|月收入|收入|额度|金额|分数|分|利率|期数|笔数|次数|数量|余额|负债|比例|评分|分值/i.test(t)) return 'number'
+  if (/状态|等级|类型|渠道|来源|原因|行业|职业|婚姻|学历|性别|证件|关系|标签/i.test(t)) return 'enum'
+  if (/维度|明细|列表|结构|json|详情|记录|图谱|项/i.test(t)) return 'json'
+  return 'string'
+}
+/* 字段名 -> 推断数据库列类型（让数据源「类型」列与实际库表相符，避免全为 varchar） */
+export function inferDbType(name: string): string {
+  if (/金额|收入|额度|利率|余额|负债|比例/.test(name)) return 'decimal(18,2)'
+  if (/年龄|岁|月收入|笔数|次数|数量|期数|分|分数|评分|分值/i.test(name)) return 'int'
+  if (/时间|日期|date|出生|到期|创建|更新|申请时间/i.test(name)) return 'datetime'
+  if (/是否|通过|命中|校验|核验|一致|异常|有|无/i.test(name)) return 'tinyint'
+  return 'varchar(64)'
+}
 /* 脱敏规则：决定该字段在报告里以何种方式脱敏 */
 export type MaskRule = 'none' | 'phone' | 'idcard' | 'bank' | 'name'
 export const MASK_RULE_LABEL: Record<MaskRule, string> = {
@@ -104,16 +129,22 @@ export interface FieldConfig {
   hitText?: string      // 规则集类：命中时显示
   missText?: string     // 规则集类：未命中显示
   hitReject?: boolean   // 规则集类：命中即拒（该条规则命中即整笔申请拒绝）
-  /* 计分（每条展示项可独立参与本卡总分） */
-  scoreMode?: 'add' | 'deduct'   // 加分 / 扣分（默认 deduct：规则命中即扣分）
+  /* 计分（每条展示项参与本卡总分，方向由所属分段 cardScoreMode 决定） */
   scorePoints?: number             // 加 / 扣 的分值
-  condType?: FieldCondType        // 计分条件：规则=命中；字段=空/非空/大于/小于/等于/正则
+  condType?: FieldCondType        // 计分条件：规则=命中/非命中；字段=空/非空/大于/小于/等于/正则
   condValue?: string              // 条件值（gt/lt/eq/regex 使用；empty/notEmpty/hit 不用）
+  exempt?: boolean                 // 豁免：可以（true）/ 不可以（false，默认）
 }
 /* 展示项计分条件类型 */
-export type FieldCondType = 'hit' | 'empty' | 'notEmpty' | 'gt' | 'lt' | 'eq' | 'regex'
+export type FieldCondType = 'hit' | 'miss' | 'empty' | 'notEmpty' | 'gt' | 'lt' | 'eq' | 'regex'
 export const FIELD_COND_LABEL: Record<FieldCondType, string> = {
-  hit: '命中', empty: '为空', notEmpty: '非空', gt: '大于', lt: '小于', eq: '等于', regex: '正则',
+  hit: '命中', miss: '非命中', empty: '为空', notEmpty: '非空', gt: '大于', lt: '小于', eq: '等于', regex: '正则',
+}
+
+/* 分段（卡片）级计分方向：达标加分 / 命中扣分 / 命中即拒（默认按 sourceType 推导：数据源/接口=达标加分，规则集=命中扣分） */
+export type CardScoreMode = 'add' | 'deduct' | 'reject'
+export const CARD_SCORE_MODE_LABEL: Record<CardScoreMode, string> = {
+  add: '达标加分', deduct: '命中扣分', reject: '命中即拒',
 }
 
 /* 数据源（用户首填）连接配置：配真实库连接，字段从表里"读出来"只能显隐 */
@@ -126,11 +157,11 @@ export interface DbField {
   container?: RenderContainer  // 报告中如何呈现（默认按列类型推荐，可改）
   maskRule?: MaskRule    // 脱敏规则（默认按字段名自动识别）
   remark?: string        // 字段说明/备注（可选）
-  /* 计分（数据字段可按条件参与本卡总分） */
-  scoreMode?: 'add' | 'deduct'
+  /* 计分（数据字段可按条件参与本卡总分；方向由所属分段 cardScoreMode 决定） */
   scorePoints?: number
   condType?: FieldCondType
   condValue?: string
+  exempt?: boolean       // 豁免：可以（true）/ 不可以（false，默认）
 }
 export interface DataSourceConfig {
   dbType: string        // MySQL / PostgreSQL / Oracle
@@ -162,11 +193,12 @@ export interface ApiOutput {
   unit?: string         // 单位/后缀（如 元 / % / 分）
   precision?: number    // 小数位（number 类型用）
   align?: Align         // 数值对齐方式（默认 右对齐）
-  /* 计分（接口输出字段可按条件参与本卡总分） */
-  scoreMode?: 'add' | 'deduct'
+  remark?: string       // 字段说明/备注（可选）
+  /* 计分（接口输出字段可按条件参与本卡总分；方向由所属分段 cardScoreMode 决定） */
   scorePoints?: number
   condType?: FieldCondType
   condValue?: string
+  exempt?: boolean       // 豁免：可以（true）/ 不可以（false，默认）
 }
 /* 接口（API 调用）配置：参考 Postman 的请求结构 ——
    方法 + 地址 + 请求头 + 参数 + 请求体；并支持直接粘贴「统一代码」（cURL / 类 HTTP 请求）一键解析填充 */
@@ -239,15 +271,21 @@ export function buildCurl(api?: ApiConfig): string {
 export interface RuleSetItem { id: string; name: string; desc: string }
 export interface RuleSet { id: string; name: string; rules: RuleSetItem[] }
 
-/** 按各展示项计分配置，汇总本卡总分（假设条件满足时的计分；命中即拒项不计入）。 */
-export function computeSectionScore(s: SectionConfig): { total: number; addCount: number; deductCount: number } {
+/** 按分段（卡片）级计分方向，汇总本卡总分（条件满足/命中时的理想计分，用于展示本卡满分与构成；命中即拒项不计入）。
+ *  - add：启用且非「命中即拒」项 → +scorePoints（整卡满分 = 启用项×分值）
+ *  - deduct：启用且非「命中即拒」项 → −scorePoints
+ *  - reject：本卡为命中即拒触发器，不参与加减分（由命中即拒项直接拒贷） */
+export function computeSectionScore(s: SectionConfig): { total: number; addCount: number; deductCount: number; mode: CardScoreMode } {
+  const mode: CardScoreMode = s.cardScoreMode ?? (s.sourceType === 'rule_set' ? 'deduct' : 'add')
   let total = 0, addCount = 0, deductCount = 0
   for (const f of s.fields) {
     if (!f.visible || f.hitReject) continue
     const pts = f.scorePoints ?? 0
-    if ((f.scoreMode ?? 'deduct') === 'add') { total += pts; addCount++ } else { total -= pts; deductCount++ }
+    if (mode === 'add') { total += pts; addCount++ }
+    else if (mode === 'deduct') { total -= pts; deductCount++ }
+    // 'reject' 模式：不计分
   }
-  return { total, addCount, deductCount }
+  return { total, addCount, deductCount, mode }
 }
 
 export interface SectionConfig {
@@ -257,6 +295,7 @@ export interface SectionConfig {
   order: number
   visible: boolean
   sourceType: SectionSource
+  cardScoreMode?: CardScoreMode  // 本卡计分方向（达标加分 / 命中扣分 / 命中即拒）；缺省按 sourceType 推导
   homeTab?: 'content' | 'score' | 'flow' | 'log'  // 该段归属的编辑 Tab：'content'=报告内容配置；'score'=评分方案（如得分计算）；'flow'=审核操作（如结论与终审）；'log'=操作日志，由模板 showOpLog 开关控制，不在任何 Tab 编辑
   sourceName?: string   // 数据源名 / 接口名 / 规则集名
   ds?: DataSourceConfig      // sourceType === 'data_source'
@@ -270,60 +309,155 @@ export interface ScoreGrade {
   minScore: number
   maxScore: number
   riskLevel: RiskLevel
-  color: string
+  color: string          // 标签配色：报告中该分段标签的颜色
+  autoResult: AutoResult // 总分落入本分段时的自动审核结果（通过/转人工/拒绝）
   description: string
-}
-export interface ScoreComponent {
-  name: string      // 构成项名称（如 设备群控 / 黑名单命中 / 身份）
-  weight: number    // 权重（0-100），所有项合计应为 100
 }
 export interface ScoreDisplayConfig {
   displayComponent: DisplayComponent
   showDescription: boolean
   showThresholdBar: boolean
-  showComponents: boolean
   showRiskTags: boolean
+  baseScore: number      // 基础分：总分 = 基础分 + Σ各卡加分 − Σ各卡扣分（避免纯扣分卡把总分扣成负数）
   grades: ScoreGrade[]
-  components: ScoreComponent[]   // 总分计算方式：各构成项权重（加权求和得总分），合计应为 100
 }
 
-/* 总分计算方式（加权构成）默认权重预设：各项加权求和得到报告顶部总分 */
-export const SCORE_COMPONENTS_PRESETS: Record<ReportType, ScoreComponent[]> = {
-  info_verify: [
-    { name: '设备群控', weight: 35 },
-    { name: '黑名单命中', weight: 30 },
-    { name: '资料异常', weight: 20 },
-    { name: '行为异常', weight: 15 },
-  ],
-  credit: [
-    { name: '身份', weight: 20 },
-    { name: '还款', weight: 25 },
-    { name: '信用历史', weight: 25 },
-    { name: '行为', weight: 10 },
-    { name: '设备', weight: 10 },
-    { name: '关联', weight: 10 },
-  ],
-  fraud: [
-    { name: '设备关联', weight: 30 },
-    { name: '团伙欺诈', weight: 25 },
-    { name: '黑名单', weight: 25 },
-    { name: '资料造假', weight: 20 },
-  ],
-  decision: [
-    { name: '信息核验异常值', weight: 34 },
-    { name: '信用评分', weight: 33 },
-    { name: '欺诈评分', weight: 33 },
-  ],
-}
+/* 审核操作 · 业务流程（每行对应「评分方案」的一个分段，字段按该分段 autoResult 取用）：
+ *  - 通过：passNeedConfirm（需人工确认？）→ passConfirmRole（确认人）
+ *  - 拒绝：rejectAllowRecheck（允许复审？）→ recheckSubmitRole（复审发起人）+ recheckApproveRole（复审审核人）
+ *  - 转人工：manualSuggestRole（建议提交人）→ manualApproveRole（建议审核人） */
 export interface BusinessFlowConfig {
   gradeId: string
-  autoDecision: AutoDecision
-  manualStatus: ManualStatus
   suggestionText: string
-  creditLimitRatio: number
-  needManualReview: boolean
-  reviewLevel: ReviewLevel
-  allowedActions: string[]
+  passNeedConfirm: boolean
+  passConfirmRole: ReviewRole
+  rejectAllowRecheck: boolean
+  recheckSubmitRole: ReviewRole
+  recheckApproveRole: ReviewRole
+  manualSuggestRole: ReviewRole
+  manualApproveRole: ReviewRole
+  /* 自由画布流程图（可选）：存在则以画布为准，缩写摘要回显在分段表「业务流程配置」列 */
+  flowGraph?: FlowGraph
+}
+
+/* ============================================================================
+ * 审核操作 · 自由画布流程图（每个评分分段一张图，在弹窗画布中编辑）
+ * - 节点：开始 / 人工审核 / 自动处理 / 抄送通知 / 结束，坐标为画布内绝对位置
+ * - 连线：from → to（可带标签，如「通过」「拒绝」）
+ * ========================================================================= */
+export type FlowNodeType = 'start' | 'manual' | 'auto' | 'notify' | 'end'
+export const FLOW_NODE_TYPE_LABEL: Record<FlowNodeType, string> = {
+  start: '开始', manual: '人工审核', auto: '自动处理', notify: '抄送通知', end: '结束',
+}
+export const FLOW_NODE_TYPE_COLOR: Record<FlowNodeType, { bg: string; border: string; text: string }> = {
+  start: { bg: '#ECFDF5', border: '#10B981', text: '#065F46' },
+  manual: { bg: '#EFF6FF', border: '#3B82F6', text: '#1E40AF' },
+  auto: { bg: '#FFFBEB', border: '#F59E0B', text: '#92400E' },
+  notify: { bg: '#F5F3FF', border: '#8B5CF6', text: '#5B21B6' },
+  end: { bg: '#F8FAFC', border: '#94A3B8', text: '#475569' },
+}
+export type FlowAutoAction = '自动通过' | '自动拒绝' | '额度试算'
+
+/* —— 自动处置节点：触发条件（参考钉钉/企微审批的「条件分支」）—— */
+export type FlowCondField = '总分' | '申请金额' | '命中即拒规则数' | '客群标签' | '无条件（直接执行）'
+export const FLOW_COND_FIELDS: FlowCondField[] = ['总分', '申请金额', '命中即拒规则数', '客群标签', '无条件（直接执行）']
+export type FlowCondOp = '≥' | '>' | '≤' | '<' | '=' | '介于'
+export const FLOW_COND_OPS: FlowCondOp[] = ['≥', '>', '≤', '<', '=', '介于']
+export interface FlowAutoCond { field: FlowCondField; op: FlowCondOp; value: string }
+
+/* —— 人工审核节点：审核事项 / 审批表单（参考成形 OA 的审批单配置）—— */
+export const REVIEW_CHECK_ITEMS = [
+  '身份真实性核验', '资料完整性检查', '收入与负债评估', '征信报告复核', '反欺诈规则复核', '额度与利率合理性',
+] as const
+export const REVIEW_FORM_FIELDS = [
+  '审批意见（必填）', '拒绝/退回原因', '建议授信额度', '建议利率与期限', '风险备注', '补充材料清单',
+] as const
+export type FlowTimeoutAction = '自动通过' | '升级上报' | '仅提醒'
+export const FLOW_TIMEOUT_ACTIONS: FlowTimeoutAction[] = ['自动通过', '升级上报', '仅提醒']
+
+export interface FlowGraphNode {
+  id: string
+  type: FlowNodeType
+  label: string          // 节点标题（可编辑）
+  x: number              // 画布坐标（左上角）
+  y: number
+  role?: ReviewRole      // manual/notify：经办或抄送角色
+  signMode?: 'any' | 'all' // manual：或签/会签
+  autoAction?: FlowAutoAction // auto：自动动作
+  cond?: FlowAutoCond    // auto：触发条件（满足才执行自动动作，缺省=无条件）
+  checkItems?: string[]  // manual：审核事项（审核什么）
+  formFields?: string[]  // manual：需填写的审批表单字段
+  timeoutHours?: number  // manual：超时时长（小时，0/缺省=不限时）
+  timeoutAction?: FlowTimeoutAction // manual：超时处理
+  returnable?: boolean   // manual：是否允许退回上一节点
+  note?: string          // 附注（如决策建议文案）
+}
+export interface FlowGraphEdge {
+  id: string
+  from: string
+  to: string
+  label?: string         // 连线语义（如 通过/拒绝/退回）
+}
+export interface FlowGraph {
+  nodes: FlowGraphNode[]
+  edges: FlowGraphEdge[]
+}
+
+/* 由分段的旧式勾选配置生成默认画布图（首次打开画布时兜底）；grade 用于给自动节点带上「总分介于分段区间」的触发条件 */
+export function buildDefaultFlowGraph(flow: BusinessFlowConfig, autoResult: AutoResult, grade?: ScoreGrade): FlowGraph {
+  const nodes: FlowGraphNode[] = [{ id: 'n_start', type: 'start', label: '评分完成', x: 40, y: 120 }]
+  const edges: FlowGraphEdge[] = []
+  let prev = 'n_start'
+  const link = (to: string, label?: string) => { edges.push({ id: `e_${prev}_${to}`, from: prev, to, label }); prev = to }
+  const gradeCond: FlowAutoCond | undefined = grade
+    ? { field: '总分', op: '介于', value: `${grade.minScore} ~ ${grade.maxScore}` }
+    : undefined
+  if (autoResult === '通过') {
+    nodes.push({ id: 'n_auto', type: 'auto', label: '自动通过', x: 220, y: 120, autoAction: '自动通过', cond: gradeCond })
+    link('n_auto')
+    if (flow.passNeedConfirm) {
+      nodes.push({ id: 'n_confirm', type: 'manual', label: '人工确认', x: 400, y: 120, role: flow.passConfirmRole, signMode: 'any', checkItems: ['资料完整性检查'], formFields: ['审批意见（必填）'], timeoutHours: 24, timeoutAction: '自动通过', returnable: false })
+      link('n_confirm')
+    }
+  } else if (autoResult === '拒绝') {
+    nodes.push({ id: 'n_auto', type: 'auto', label: '自动拒绝', x: 220, y: 120, autoAction: '自动拒绝', cond: gradeCond })
+    link('n_auto')
+    if (flow.rejectAllowRecheck) {
+      nodes.push({ id: 'n_resubmit', type: 'manual', label: '复审发起', x: 400, y: 40, role: flow.recheckSubmitRole, signMode: 'any', checkItems: ['资料完整性检查', '征信报告复核'], formFields: ['审批意见（必填）', '补充材料清单'], timeoutHours: 48, timeoutAction: '仅提醒', returnable: true })
+      nodes.push({ id: 'n_reapprove', type: 'manual', label: '复审审核', x: 580, y: 40, role: flow.recheckApproveRole, signMode: 'any', checkItems: ['征信报告复核', '反欺诈规则复核'], formFields: ['审批意见（必填）', '拒绝/退回原因'], timeoutHours: 48, timeoutAction: '升级上报', returnable: true })
+      edges.push({ id: 'e_auto_resubmit', from: 'n_auto', to: 'n_resubmit', label: '申请复审' })
+      edges.push({ id: 'e_resubmit_reapprove', from: 'n_resubmit', to: 'n_reapprove' })
+      prev = 'n_reapprove'
+    }
+  } else {
+    nodes.push({ id: 'n_suggest', type: 'manual', label: '提交建议', x: 220, y: 120, role: flow.manualSuggestRole, signMode: 'any', checkItems: ['身份真实性核验', '收入与负债评估'], formFields: ['审批意见（必填）', '建议授信额度'], timeoutHours: 24, timeoutAction: '仅提醒', returnable: false })
+    link('n_suggest')
+    nodes.push({ id: 'n_approve', type: 'manual', label: '审核建议', x: 400, y: 120, role: flow.manualApproveRole, signMode: 'any', checkItems: ['征信报告复核', '额度与利率合理性'], formFields: ['审批意见（必填）', '建议利率与期限', '风险备注'], timeoutHours: 24, timeoutAction: '升级上报', returnable: true })
+    link('n_approve')
+  }
+  nodes.push({ id: 'n_end', type: 'end', label: '结束', x: prev === 'n_reapprove' ? 580 : 580, y: prev === 'n_reapprove' ? 160 : 120 })
+  link('n_end')
+  return { nodes, edges }
+}
+
+/* 画布图 → 缩写摘要（回显在分段表「业务流程配置」列，如：评分完成 → 自动通过 → 人工确认(风控主管) → 结束） */
+export function summarizeFlowGraph(g: FlowGraph): string {
+  if (!g.nodes.length) return '（空流程）'
+  const nodeMap = new Map(g.nodes.map((n) => [n.id, n]))
+  const outMap = new Map<string, FlowGraphEdge[]>()
+  g.edges.forEach((e) => { const a = outMap.get(e.from) ?? []; a.push(e); outMap.set(e.from, a) })
+  const start = g.nodes.find((n) => n.type === 'start') ?? g.nodes[0]
+  const parts: string[] = []
+  const seen = new Set<string>()
+  let cur: FlowGraphNode | undefined = start
+  while (cur && !seen.has(cur.id) && parts.length < 8) {
+    seen.add(cur.id)
+    parts.push(cur.type === 'manual' && cur.role ? `${cur.label}(${cur.role}${cur.signMode === 'all' ? '·会签' : ''})` : cur.label)
+    const outs: FlowGraphEdge[] = outMap.get(cur.id) ?? []
+    cur = outs.length ? nodeMap.get(outs[0].to) : undefined
+  }
+  const branchCount = g.edges.length - (parts.length - 1)
+  return parts.join(' → ') + (branchCount > 0 ? `（+${branchCount} 条分支线）` : '')
 }
 export interface ThemeConfig {
   preset: '标准蓝' | '专业灰' | '政务红' | '极简白'
@@ -456,28 +590,6 @@ export function scopeLabel(scope: string[]): string {
 }
 
 
-/* ---------- 可执行操作清单（业务中文） ---------- */
-export const ACTION_CATALOG: Record<string, string> = {
-  view: '查看',
-  report_confirm: '报告确认',
-  force_review: '强制复审',
-  add_blacklist: '加入黑名单',
-  submit_dual_review: '提交双人复核',
-  add_note: '录入备注',
-  confirm_pass: '确认放行',
-  confirm_reject: '确认拒绝',
-  approve: '审核通过',
-  reject_credit: '拒绝授信',
-  return_material: '退回补充材料',
-  manual_review: '提交人工复核',
-}
-export const ACTION_BY_TYPE: Record<ReportType, string[]> = {
-  info_verify: ['view', 'report_confirm', 'force_review', 'submit_dual_review', 'add_note', 'add_blacklist'],
-  credit: ['view', 'approve', 'reject_credit', 'return_material', 'manual_review'],
-  fraud: ['view', 'report_confirm', 'force_review', 'add_blacklist', 'submit_dual_review', 'add_note', 'confirm_pass', 'confirm_reject'],
-  decision: ['view', 'report_confirm', 'force_review', 'add_blacklist', 'submit_dual_review', 'add_note', 'approve', 'reject_credit', 'return_material', 'manual_review'],
-}
-
 /* ---------- 分段与字段清单（含业务说明） ---------- */
 export const SECTION_CATALOG: Record<ReportType, { id: string; name: string; desc: string; fields: { id: string; name: string; desc: string }[] }[]> = {
   info_verify: [
@@ -588,30 +700,6 @@ export const SECTION_CATALOG: Record<ReportType, { id: string; name: string; des
   ],
   credit: [
     {
-      id: 'credit_score_overview', name: '信用评分总览', desc: '报告顶部的信用评分卡片：分数越高信用越好（0-100，A 为最优）。',
-      fields: [
-        { id: 'cso_ring', name: '环形评分图', desc: '以环形图展示 0-100 信用分' },
-        { id: 'cso_level', name: '信用等级（A/B/C/D）', desc: '评级标签' },
-        { id: 'cso_six', name: '六维评分条', desc: '身份/还款/信用历史/行为/设备/关联 六维条形' },
-        { id: 'cso_tags', name: '风险标签', desc: '命中风险标签' },
-        { id: 'cso_export', name: '导出报告按钮', desc: '导出入口' },
-      ],
-    },
-    {
-      id: 'credit_conclusion', name: '结论与终审操作卡', desc: '系统信用结论 + 人工审核 + 终审操作入口。',
-      fields: [
-        { id: 'cc_system', name: '系统结果', desc: '机器自动结论' },
-        { id: 'cc_manual', name: '人工审核', desc: '人工审核状态' },
-        { id: 'cc_operator', name: '操作人员', desc: '处理人' },
-        { id: 'cc_advice', name: '授信建议', desc: '授信建议' },
-        { id: 'cc_reason', name: '建议理由', desc: '建议依据' },
-        { id: 'cc_pos', name: '正向因素', desc: '有利因素' },
-        { id: 'cc_risk', name: '风险因素', desc: '风险点' },
-        { id: 'cc_amount', name: '参考授信额度', desc: '建议额度' },
-        { id: 'cc_ops', name: '操作按钮组', desc: '可执行操作' },
-      ],
-    },
-    {
       id: 'applicant_info', name: '用户基本信息', desc: '申请人身份与基础资料。',
       fields: [
         { id: 'ai_name', name: '姓名', desc: '申请人姓名' },
@@ -630,27 +718,6 @@ export const SECTION_CATALOG: Record<ReportType, { id: string; name: string; des
         { id: 'ai_gps', name: 'GPS定位', desc: 'GPS' },
         { id: 'ai_channel', name: '进件渠道', desc: '渠道' },
         { id: 'ai_appver', name: 'APP版本', desc: 'App 版本' },
-      ],
-    },
-    {
-      id: 'risk_factors', name: '风险因子分析', desc: '六维评分卡片 + 维度说明（权重/逻辑/来源）。',
-      fields: [
-        { id: 'rf_cards', name: '6维评分卡片', desc: '身份/还款/信用历史/行为/设备/关联 六张卡片' },
-        { id: 'rf_table', name: '维度说明表', desc: '各维度权重/逻辑/数据来源说明' },
-      ],
-    },
-    {
-      id: 'score_trend', name: '信用评分趋势', desc: '用户信用分近 7 月变化 vs 行业平均。',
-      fields: [
-        { id: 'st_svg', name: 'SVG折线图', desc: '用户 vs 行业 折线' },
-        { id: 'st_text', name: '趋势分析文案', desc: '趋势解读文字' },
-      ],
-    },
-    {
-      id: 'risk_radar', name: '风险维度雷达图', desc: '当前六维风险 vs 行业平均雷达对比。',
-      fields: [
-        { id: 'rr_svg', name: 'SVG雷达图', desc: '当前 vs 行业 雷达' },
-        { id: 'rr_text', name: '雷达图分析文案', desc: '雷达解读文字' },
       ],
     },
     {
@@ -846,69 +913,52 @@ export const SECTION_CATALOG: Record<ReportType, { id: string; name: string; des
 export const GRADE_PRESETS: Record<ReportType, ScoreGrade[]> = {
   /* 信息核验：异常值，越高越危险 → 危险度语义 */
   info_verify: [
-    { grade: '安全', label: '风险可控', minScore: 0, maxScore: 20, riskLevel: '低', color: '#10B981', description: '异常值处于低位，风险可控，建议正常通过' },
-    { grade: '关注', label: '中等风险', minScore: 21, maxScore: 50, riskLevel: '中', color: '#F59E0B', description: '异常值中等，建议关注个别风险项' },
-    { grade: '警示', label: '较高风险', minScore: 51, maxScore: 80, riskLevel: '高', color: '#F97316', description: '异常值较高，建议人工复核' },
-    { grade: '高危', label: '极高风险', minScore: 81, maxScore: 100, riskLevel: '极高', color: '#EF4444', description: '异常值极高，强烈建议预警处置' },
+    { grade: '安全', label: '风险可控', minScore: 0, maxScore: 20, riskLevel: '低', color: '#10B981', autoResult: '通过', description: '异常值处于低位，风险可控，建议正常通过' },
+    { grade: '关注', label: '中等风险', minScore: 21, maxScore: 50, riskLevel: '中', color: '#F59E0B', autoResult: '转人工', description: '异常值中等，建议关注个别风险项' },
+    { grade: '警示', label: '较高风险', minScore: 51, maxScore: 80, riskLevel: '高', color: '#F97316', autoResult: '转人工', description: '异常值较高，建议人工复核' },
+    { grade: '高危', label: '极高风险', minScore: 81, maxScore: 100, riskLevel: '极高', color: '#EF4444', autoResult: '拒绝', description: '异常值极高，强烈建议预警处置' },
   ],
   /* 信用风控：信用评分，越高越好 */
   credit: [
-    { grade: 'A', label: '优秀', minScore: 75, maxScore: 100, riskLevel: '低', color: '#10B981', description: '信用优秀，建议正常授信' },
-    { grade: 'B', label: '良好', minScore: 60, maxScore: 74, riskLevel: '中', color: '#F59E0B', description: '信用良好，建议正常授信' },
-    { grade: 'C', label: '一般', minScore: 45, maxScore: 59, riskLevel: '高', color: '#F97316', description: '信用一般，建议人工复核' },
-    { grade: 'D', label: '较差', minScore: 0, maxScore: 44, riskLevel: '高', color: '#EF4444', description: '信用较差，建议拒绝授信' },
+    { grade: 'A', label: '优秀', minScore: 75, maxScore: 100, riskLevel: '低', color: '#10B981', autoResult: '通过', description: '信用优秀，建议正常授信' },
+    { grade: 'B', label: '良好', minScore: 60, maxScore: 74, riskLevel: '中', color: '#F59E0B', autoResult: '通过', description: '信用良好，建议正常授信' },
+    { grade: 'C', label: '一般', minScore: 45, maxScore: 59, riskLevel: '高', color: '#F97316', autoResult: '转人工', description: '信用一般，建议人工复核' },
+    { grade: 'D', label: '较差', minScore: 0, maxScore: 44, riskLevel: '高', color: '#EF4444', autoResult: '拒绝', description: '信用较差，建议拒绝授信' },
   ],
   /* 欺诈识别：欺诈分，越高越危险 */
   fraud: [
-    { grade: '极低', label: '极低风险', minScore: 0, maxScore: 19, riskLevel: '低', color: '#10B981', description: '极低风险，可正常通过' },
-    { grade: '低', label: '低风险', minScore: 20, maxScore: 39, riskLevel: '低', color: '#10B981', description: '低风险，建议正常通过' },
-    { grade: '中', label: '中风险', minScore: 40, maxScore: 59, riskLevel: '中', color: '#F59E0B', description: '中风险，建议人工复核' },
-    { grade: '高', label: '高风险', minScore: 60, maxScore: 79, riskLevel: '高', color: '#F97316', description: '高风险，建议拒绝授信' },
-    { grade: '极高', label: '极高风险', minScore: 80, maxScore: 100, riskLevel: '极高', color: '#EF4444', description: '极高风险，强烈建议拒绝并加入黑名单' },
+    { grade: '极低', label: '极低风险', minScore: 0, maxScore: 19, riskLevel: '低', color: '#10B981', autoResult: '通过', description: '极低风险，可正常通过' },
+    { grade: '低', label: '低风险', minScore: 20, maxScore: 39, riskLevel: '低', color: '#10B981', autoResult: '通过', description: '低风险，建议正常通过' },
+    { grade: '中', label: '中风险', minScore: 40, maxScore: 59, riskLevel: '中', color: '#F59E0B', autoResult: '转人工', description: '中风险，建议人工复核' },
+    { grade: '高', label: '高风险', minScore: 60, maxScore: 79, riskLevel: '高', color: '#F97316', autoResult: '拒绝', description: '高风险，建议拒绝授信' },
+    { grade: '极高', label: '极高风险', minScore: 80, maxScore: 100, riskLevel: '极高', color: '#EF4444', autoResult: '拒绝', description: '极高风险，强烈建议拒绝并加入黑名单' },
   ],
   /* 决策报告：综合分，越高越好 */
   decision: [
-    { grade: '优先通过', label: '优先通过', minScore: 80, maxScore: 100, riskLevel: '低', color: '#10B981', description: '综合风险极低，建议优先授信' },
-    { grade: '通过', label: '通过', minScore: 60, maxScore: 79, riskLevel: '低', color: '#10B981', description: '综合风险低，建议正常授信' },
-    { grade: '限制额度', label: '限制额度', minScore: 40, maxScore: 59, riskLevel: '中', color: '#F59E0B', description: '综合风险中等，建议限制额度' },
-    { grade: '严格限制', label: '严格限制', minScore: 20, maxScore: 39, riskLevel: '高', color: '#F97316', description: '综合风险较高，建议严格限制' },
-    { grade: '拒绝', label: '拒绝', minScore: 0, maxScore: 19, riskLevel: '高', color: '#EF4444', description: '综合风险高，建议拒绝授信' },
+    { grade: '优先通过', label: '优先通过', minScore: 80, maxScore: 100, riskLevel: '低', color: '#10B981', autoResult: '通过', description: '综合风险极低，建议优先授信' },
+    { grade: '通过', label: '通过', minScore: 60, maxScore: 79, riskLevel: '低', color: '#10B981', autoResult: '通过', description: '综合风险低，建议正常授信' },
+    { grade: '限制额度', label: '限制额度', minScore: 40, maxScore: 59, riskLevel: '中', color: '#F59E0B', autoResult: '转人工', description: '综合风险中等，建议限制额度' },
+    { grade: '严格限制', label: '严格限制', minScore: 20, maxScore: 39, riskLevel: '高', color: '#F97316', autoResult: '拒绝', description: '综合风险较高，建议严格限制' },
+    { grade: '拒绝', label: '拒绝', minScore: 0, maxScore: 19, riskLevel: '高', color: '#EF4444', autoResult: '拒绝', description: '综合风险高，建议拒绝授信' },
   ],
 }
 
 /* ---------- 业务流程默认映射（index 与 grades 对齐） ---------- */
+/* 默认流程行：通过=需初审员确认；拒绝=允许复审（复审员发起、风控主管审核）；转人工=初审员提建议、风控主管审建议 */
+export function defaultFlowRow(gradeId: string, suggestionText: string): BusinessFlowConfig {
+  return {
+    gradeId, suggestionText,
+    passNeedConfirm: true, passConfirmRole: '初审员',
+    rejectAllowRecheck: true, recheckSubmitRole: '复审员', recheckApproveRole: '风控主管',
+    manualSuggestRole: '初审员', manualApproveRole: '风控主管',
+  }
+}
+/* 第 0 行固定为"计算中"占位，其后每一行对应 grades[i]（流程细节按分段 autoResult 在 UI 中取用对应字段） */
 export const FLOW_PRESETS: Record<ReportType, BusinessFlowConfig[]> = {
-  /* 第 0 行固定为"计算中"，其后每一行对应 grades[i] */
-  info_verify: [
-    { gradeId: '—', autoDecision: '处理中', manualStatus: '核验计算中', suggestionText: '系统正在计算异常值，请稍候…', creditLimitRatio: 0, needManualReview: false, reviewLevel: '单人复核', allowedActions: ['view'] },
-    { gradeId: '安全', autoDecision: '通过', manualStatus: '待确认', suggestionText: '异常值低，建议正常通过', creditLimitRatio: 100, needManualReview: false, reviewLevel: '单人复核', allowedActions: ['view', 'report_confirm'] },
-    { gradeId: '关注', autoDecision: '预警', manualStatus: '待审核', suggestionText: '异常值中等，建议人工复核后决策', creditLimitRatio: 70, needManualReview: true, reviewLevel: '双人复核', allowedActions: ['view', 'submit_dual_review', 'add_note'] },
-    { gradeId: '警示', autoDecision: '预警', manualStatus: '待确认', suggestionText: '异常值较高，建议谨慎授信并人工复核', creditLimitRatio: 40, needManualReview: true, reviewLevel: '双人复核', allowedActions: ['view', 'report_confirm', 'force_review'] },
-    { gradeId: '高危', autoDecision: '拒绝', manualStatus: '待确认', suggestionText: '异常值极高，强烈建议拒绝', creditLimitRatio: 0, needManualReview: false, reviewLevel: '单人复核', allowedActions: ['view', 'report_confirm', 'force_review'] },
-  ],
-  credit: [
-    { gradeId: '—', autoDecision: '处理中', manualStatus: '—', suggestionText: '系统正在计算评分…', creditLimitRatio: 0, needManualReview: false, reviewLevel: '单人复核', allowedActions: ['view'] },
-    { gradeId: 'A', autoDecision: '通过', manualStatus: '—', suggestionText: '信用优秀，建议正常授信', creditLimitRatio: 100, needManualReview: false, reviewLevel: '单人复核', allowedActions: ['view'] },
-    { gradeId: 'B', autoDecision: '通过', manualStatus: '—', suggestionText: '信用良好，建议正常授信', creditLimitRatio: 100, needManualReview: false, reviewLevel: '单人复核', allowedActions: ['view'] },
-    { gradeId: 'C', autoDecision: '预警', manualStatus: '待审核', suggestionText: '信用一般，建议人工复核', creditLimitRatio: 70, needManualReview: true, reviewLevel: '双人复核', allowedActions: ['view', 'manual_review', 'return_material'] },
-    { gradeId: 'D', autoDecision: '拒绝', manualStatus: '—', suggestionText: '信用较差，建议拒绝授信', creditLimitRatio: 0, needManualReview: false, reviewLevel: '单人复核', allowedActions: ['view'] },
-  ],
-  fraud: [
-    { gradeId: '—', autoDecision: '处理中', manualStatus: '核验计算中', suggestionText: '系统正在计算评分，请稍候…', creditLimitRatio: 0, needManualReview: false, reviewLevel: '单人复核', allowedActions: ['view'] },
-    { gradeId: '极低', autoDecision: '通过', manualStatus: '待确认', suggestionText: '极低风险，建议正常通过', creditLimitRatio: 100, needManualReview: false, reviewLevel: '单人复核', allowedActions: ['view', 'report_confirm'] },
-    { gradeId: '低', autoDecision: '通过', manualStatus: '待确认', suggestionText: '低风险，建议正常通过', creditLimitRatio: 100, needManualReview: false, reviewLevel: '单人复核', allowedActions: ['view', 'report_confirm'] },
-    { gradeId: '中', autoDecision: '预警', manualStatus: '待审核', suggestionText: '中风险，建议人工复核后决策', creditLimitRatio: 70, needManualReview: true, reviewLevel: '双人复核', allowedActions: ['view', 'submit_dual_review', 'add_note'] },
-    { gradeId: '高', autoDecision: '拒绝', manualStatus: '待确认', suggestionText: '高风险，建议拒绝授信', creditLimitRatio: 0, needManualReview: false, reviewLevel: '单人复核', allowedActions: ['view', 'report_confirm', 'force_review'] },
-    { gradeId: '极高', autoDecision: '拒绝', manualStatus: '待确认', suggestionText: '极高风险，强烈建议拒绝并加入黑名单', creditLimitRatio: 0, needManualReview: false, reviewLevel: '单人复核', allowedActions: ['view', 'report_confirm', 'add_blacklist'] },
-  ],
-  decision: [
-    { gradeId: '—', autoDecision: '处理中', manualStatus: '核验计算中', suggestionText: '系统正在生成综合决策，请稍候…', creditLimitRatio: 0, needManualReview: false, reviewLevel: '单人复核', allowedActions: ['view'] },
-    { gradeId: '优先通过', autoDecision: '通过', manualStatus: '待确认', suggestionText: '综合风险极低，建议优先授信', creditLimitRatio: 100, needManualReview: false, reviewLevel: '单人复核', allowedActions: ['view', 'report_confirm'] },
-    { gradeId: '通过', autoDecision: '通过', manualStatus: '待确认', suggestionText: '综合风险低，建议正常授信', creditLimitRatio: 100, needManualReview: false, reviewLevel: '单人复核', allowedActions: ['view', 'report_confirm'] },
-    { gradeId: '限制额度', autoDecision: '预警', manualStatus: '待审核', suggestionText: '综合风险中等，建议限制额度并人工复核', creditLimitRatio: 60, needManualReview: true, reviewLevel: '双人复核', allowedActions: ['view', 'submit_dual_review', 'add_note'] },
-    { gradeId: '严格限制', autoDecision: '拒绝', manualStatus: '待确认', suggestionText: '综合风险较高，建议严格限制并拒绝授信', creditLimitRatio: 0, needManualReview: false, reviewLevel: '单人复核', allowedActions: ['view', 'report_confirm', 'force_review'] },
-    { gradeId: '拒绝', autoDecision: '拒绝', manualStatus: '待确认', suggestionText: '综合风险高，建议拒绝授信', creditLimitRatio: 0, needManualReview: false, reviewLevel: '单人复核', allowedActions: ['view', 'report_confirm', 'add_blacklist'] },
-  ],
+  info_verify: [defaultFlowRow('—', '系统正在计算异常值，请稍候…'), ...GRADE_PRESETS.info_verify.map((g) => defaultFlowRow(g.grade, g.description))],
+  credit: [defaultFlowRow('—', '系统正在计算评分…'), ...GRADE_PRESETS.credit.map((g) => defaultFlowRow(g.grade, g.description))],
+  fraud: [defaultFlowRow('—', '系统正在计算评分，请稍候…'), ...GRADE_PRESETS.fraud.map((g) => defaultFlowRow(g.grade, g.description))],
+  decision: [defaultFlowRow('—', '系统正在生成综合决策，请稍候…'), ...GRADE_PRESETS.decision.map((g) => defaultFlowRow(g.grade, g.description))],
 }
 
 /* ---------- 主题预设 ---------- */
@@ -967,12 +1017,7 @@ export const PREVIEW_SAMPLE: Record<ReportType, { scoreLabel: string; sections: 
   credit: {
     scoreLabel: '信用评分',
     sections: {
-      credit_score_overview: { cso_ring: 'B 70', cso_level: 'B', cso_six: '身份 82 / 还款 65 / 信用历史 70 / 行为 60 / 设备 75 / 关联 68', cso_tags: '稳定收入', cso_export: '导出' },
-      credit_conclusion: { cc_system: '通过', cc_manual: '—', cc_operator: '初审：审核员 2', cc_advice: '授信 5 万', cc_reason: '信用良好', cc_pos: '收入稳定', cc_risk: '负债略高', cc_amount: '5 万', cc_ops: '审核通过' },
       applicant_info: { ai_name: '李*', ai_id: '4401**********21', ai_phone: '139****2233', ai_age: '29', ai_edu: '硕士', ai_company: '**软件', ai_income: '3 万', ai_marriage: '未婚' },
-      risk_factors: { rf_cards: '六维卡片', rf_table: '身份20%/还款25%/信用历史25%/行为10%/设备10%/关联10%' },
-      score_trend: { st_svg: '近 7 月：68→70→72→70→69→71→70', st_text: '平稳略升' },
-      risk_radar: { rr_svg: '当前 vs 行业', rr_text: '还款维度低于行业' },
       credit_suggestion: { cs_text: '建议正常授信', cs_pos: '收入稳定、历史良好', cs_risk: '负债略高', cs_ops: '审核通过 / 拒绝授信 / 提交人工复核 / 退回补充材料' },
       history_records: { hr_table: '2024 授信 3 万 正常结清' },
       credit_logs: { cl_timeline: '14:10 初审通过' },
@@ -1008,6 +1053,71 @@ export const PREVIEW_SAMPLE: Record<ReportType, { scoreLabel: string; sections: 
 }
 
 /* ---------- 工具函数 ---------- */
+
+/** 评分方案 · 得分来源汇总：把「报告内容配置」各卡片的得分汇总为总分。
+ *  总分 = 基础分 + Σ各加分卡满分 − Σ各扣分卡最大扣分；命中即拒项不参与分值，单独计数。
+ *  只统计归属「报告内容」Tab 且启用的分段。 */
+export interface ScoreSourceRow {
+  id: string
+  name: string
+  sourceType: SectionSource
+  mode: CardScoreMode
+  countedItems: number   // 参与计分的展示项数
+  points: number         // 分值贡献：add 卡为正（满分）、deduct 卡为负（最大扣分）
+  rejectItems: number    // 命中即拒项数（命中直接拒贷，不走分段）
+  visible: boolean
+}
+export interface ScoreSummary {
+  rows: ScoreSourceRow[]
+  baseScore: number
+  addMax: number       // Σ加分卡满分
+  deductMax: number    // Σ扣分卡最大扣分（正数表示）
+  min: number          // 总分下限 = 基础分 − 最大扣分
+  max: number          // 总分上限 = 基础分 + 加分满分
+  rejectTotal: number  // 全部命中即拒项合计
+}
+export function computeScoreSummary(t: ReportTemplate): ScoreSummary {
+  const rows: ScoreSourceRow[] = t.sections
+    .filter((s) => (s.homeTab ?? 'content') === 'content')
+    .sort((a, b) => a.order - b.order)
+    .map((s) => {
+      const r = computeSectionScore(s)
+      const rejectItems = r.mode === 'reject'
+        ? s.fields.filter((f) => f.visible).length
+        : s.fields.filter((f) => f.visible && f.hitReject).length
+      return {
+        id: s.id, name: s.sourceName || s.name, sourceType: s.sourceType, mode: r.mode,
+        countedItems: r.mode === 'add' ? r.addCount : r.deductCount,
+        points: r.total, rejectItems, visible: s.visible,
+      }
+    })
+  const enabled = rows.filter((r) => r.visible)
+  const addMax = enabled.reduce((sum, r) => sum + (r.mode === 'add' ? r.points : 0), 0)
+  const deductMax = enabled.reduce((sum, r) => sum + (r.mode === 'deduct' ? -r.points : 0), 0)
+  const baseScore = t.scoreDisplay.baseScore ?? 0
+  return {
+    rows, baseScore, addMax, deductMax,
+    min: baseScore - deductMax, max: baseScore + addMax,
+    rejectTotal: enabled.reduce((sum, r) => sum + r.rejectItems, 0),
+  }
+}
+
+/** 分段区间校验：应完整覆盖实际总分范围 [min, max]，且无重叠、无缝隙（按整数分值判断） */
+export function validateGrades(grades: ScoreGrade[], min: number, max: number): string[] {
+  const errs: string[] = []
+  if (!grades.length) return ['尚未配置任何分段']
+  const sorted = [...grades].sort((a, b) => a.minScore - b.minScore)
+  for (const g of sorted) if (g.minScore > g.maxScore) errs.push(`「${g.grade}」区间下限大于上限（${g.minScore}~${g.maxScore}）`)
+  for (let i = 1; i < sorted.length; i++) {
+    const prev = sorted[i - 1], cur = sorted[i]
+    if (cur.minScore <= prev.maxScore) errs.push(`「${prev.grade}」与「${cur.grade}」区间重叠`)
+    else if (cur.minScore > prev.maxScore + 1) errs.push(`「${prev.grade}」与「${cur.grade}」之间有缝隙（${prev.maxScore + 1}~${cur.minScore - 1} 无归属）`)
+  }
+  if (sorted[0].minScore > min) errs.push(`总分下限 ${min} 未覆盖（最低分段从 ${sorted[0].minScore} 起）`)
+  if (sorted[sorted.length - 1].maxScore < max) errs.push(`总分上限 ${max} 未覆盖（最高分段到 ${sorted[sorted.length - 1].maxScore} 止）`)
+  return errs
+}
+
 export function gradeForScore(t: ReportTemplate, score: number): ScoreGrade {
   const g = t.scoreDisplay.grades.find((x) => score >= x.minScore && score <= x.maxScore)
   return g ?? t.scoreDisplay.grades[t.scoreDisplay.grades.length - 1]
@@ -1019,12 +1129,12 @@ export function gradeForScore(t: ReportTemplate, score: number): ScoreGrade {
  *   - 其后每一行对应 grades[i]，改名/增删等级时自动跟随，已配置项尽量保留。
  */
 export function syncFlowToGrades(flow: BusinessFlowConfig[], grades: ScoreGrade[]): BusinessFlowConfig[] {
-  const calc = flow[0] ?? { gradeId: '—', autoDecision: '处理中', manualStatus: '核验计算中', suggestionText: '系统正在计算评分，请稍候…', creditLimitRatio: 0, needManualReview: false, reviewLevel: '单人复核' as ReviewLevel, allowedActions: ['view'] }
+  const calc = flow[0] ?? defaultFlowRow('—', '系统正在计算评分，请稍候…')
   const per = grades.map((g, i) => {
     const prev = flow[i + 1]
     return prev
       ? { ...prev, gradeId: g.grade }
-      : { gradeId: g.grade, autoDecision: '预警' as AutoDecision, manualStatus: '待审核' as ManualStatus, suggestionText: `${g.label}，请配置处置策略`, creditLimitRatio: 60, needManualReview: true, reviewLevel: '双人复核' as ReviewLevel, allowedActions: ['view', 'submit_dual_review', 'add_note'] }
+      : defaultFlowRow(g.grade, `${g.label}，请配置处置策略`)
   })
   return [calc, ...per]
 }
@@ -1035,8 +1145,8 @@ export const SECTION_SOURCE: Record<string, SectionSource> = {
   score_model: 'api', conclusion_process: 'api', basic_info: 'data_source', id_images: 'api',
   single_verify: 'rule_set', cross_fusion: 'rule_set', op_logs: 'api',
   // 信用风控
-  credit_score_overview: 'api', credit_conclusion: 'api', applicant_info: 'data_source',
-  risk_factors: 'api', score_trend: 'api', risk_radar: 'api', credit_suggestion: 'api',
+  applicant_info: 'data_source',
+      credit_suggestion: 'api',
   history_records: 'data_source', credit_logs: 'api',
   // 欺诈识别
   fraud_score_model: 'api', disposal_bar: 'api', identity_fraud: 'rule_set', info_forgery: 'rule_set',
@@ -1192,15 +1302,13 @@ export function testSourceConfig(s: SectionConfig): SourceTestResult {
 /* 每个报告类型：首段（评分总览 / 模型卡）→ 评分方案 Tab；第二段（结论 / 处置建议）→ 审核操作 Tab。
    与信息核验一致：这两段作为全局「得分计算 / 结论与终审」卡片的来源，不出现在「报告内容配置」里。
    注：决策报告的「结论」卡是 decision_suggestion（最终决策建议），而非目录第 2 条 verify_summary（信息核验摘要，属内容）。 */
-const SCORE_SECTION: Record<ReportType, string> = {
+const SCORE_SECTION: Partial<Record<ReportType, string>> = {
   info_verify: 'score_model',
-  credit: 'credit_score_overview',
   fraud: 'fraud_score_model',
   decision: 'decision_overview',
 }
-const FLOW_SECTION: Record<ReportType, string> = {
+const FLOW_SECTION: Partial<Record<ReportType, string>> = {
   info_verify: 'conclusion_process',
-  credit: 'credit_conclusion',
   fraud: 'disposal_bar',
   decision: 'decision_suggestion',
 }
@@ -1214,23 +1322,23 @@ function buildSections(type: ReportType): SectionConfig[] {
 
     if (sType === 'data_source') {
       // 数据源：初始用 seed 字段名作为表字段占位（type 默认 varchar）；用户配连接后可"读取表字段"覆盖
-      const tableFields = s.fields.map((f) => ({ name: f.name, type: 'varchar', visible: true }))
+      const tableFields = s.fields.map((f) => ({ name: f.name, type: inferDbType(f.name), visible: true }))
       ds = { dbType: 'MySQL', ip: '', port: '3306', username: '', password: '', database: '', table: '', tableFields }
-      fields = ds.tableFields.map((tf, k) => ({ id: s.fields[k].id, name: tf.name, desc: s.fields[k].desc, visible: true, sourceRef: tf.name, mask: /身份证|手机|银行卡|证件|姓名/.test(tf.name), maskRule: autoMaskRule(tf.name), scoreMode: 'deduct', scorePoints: 10, condType: 'empty' as FieldCondType }))
+      fields = ds.tableFields.map((tf, k) => ({ id: s.fields[k].id, name: tf.name, desc: s.fields[k].desc, visible: true, sourceRef: tf.name, mask: /身份证|手机|银行卡|证件|姓名/.test(tf.name), maskRule: autoMaskRule(tf.name), scorePoints: 5, condType: 'eq' as FieldCondType }))
     } else if (sType === 'api') {
       const inputs: ApiParam[] = s.id === 'score_model' ? [{ key: 'applicantId', from: '进件表单.申请人ID', required: true }, { key: 'deviceFp', from: '设备SDK.指纹', required: false }]
         : s.id === 'fraud_score_model' ? [{ key: 'deviceFp', from: '设备SDK.指纹', required: true }, { key: 'ip', from: '请求上下文.IP', required: false }]
         : s.id === 'decision_overview' ? [{ key: 'verifyScore', from: '信息核验.异常值', required: true }, { key: 'creditScore', from: '信用风控.信用分', required: true }, { key: 'fraudScore', from: '欺诈识别.欺诈分', required: true }]
         : []
-      const outputs: ApiOutput[] = s.fields.map((f) => ({ key: f.id, label: f.name, type: 'string', container: inferApiContainer(f.name, f.desc), visible: true }))
+      const outputs: ApiOutput[] = s.fields.map((f) => ({ key: f.id, label: f.name, type: inferFieldType(f.name, f.desc), container: inferApiContainer(f.name, f.desc), visible: true }))
       api = { url: '', method: 'POST', headers: [], inputs, bodyType: 'none', bodyText: '', outputs }
-      fields = api.outputs.map((o, k) => ({ id: s.fields[k].id, name: o.label, desc: s.fields[k].desc, visible: true, sourceRef: o.key, scoreMode: 'deduct', scorePoints: 10, condType: 'empty' as FieldCondType }))
+      fields = api.outputs.map((o, k) => ({ id: s.fields[k].id, name: o.label, desc: s.fields[k].desc, visible: true, sourceRef: o.key, scorePoints: 5, condType: 'eq' as FieldCondType }))
     } else {
       // 规则集：默认选中一个系统规则合集，展开后的规则项即合集内的规则
       const rsId = SECTION_RULESET[s.id] ?? RULE_SETS[0].id
       ruleSetId = rsId
       const rs = RULE_SETS.find((r) => r.id === rsId)!
-      fields = rs.rules.map((r) => ({ id: r.id, name: r.name, desc: r.desc, visible: true, sourceRef: r.id, hitText: '命中', missText: '未命中', severity: 'mid' as Severity, hitReject: false, scoreMode: 'deduct', scorePoints: 10, condType: 'hit' as FieldCondType }))
+      fields = rs.rules.map((r) => ({ id: r.id, name: r.name, desc: r.desc, visible: true, sourceRef: r.id, hitText: '命中', missText: '未命中', severity: 'mid' as Severity, hitReject: false, scorePoints: 5, condType: 'hit' as FieldCondType }))
     }
 
     return {
@@ -1240,6 +1348,7 @@ function buildSections(type: ReportType): SectionConfig[] {
       order: i + 1,
       visible: true,
       sourceType: sType,
+      cardScoreMode: sType === 'rule_set' ? 'deduct' : 'add',
       homeTab: s.id === SCORE_SECTION[type] ? 'score' : s.id === FLOW_SECTION[type] ? 'flow' : /logs?$/i.test(s.id) ? 'log' : 'content',
       sourceName: s.name,
       ds, api, ruleSetId,
@@ -1311,10 +1420,9 @@ export function buildTemplate(type: ReportType, o: BuildOpts): ReportTemplate {
       displayComponent: '大数字',
       showDescription: true,
       showThresholdBar: true,
-      showComponents: true,
       showRiskTags: true,
+      baseScore: 60,
       grades: GRADE_PRESETS[type].map((g) => ({ ...g })),
-      components: SCORE_COMPONENTS_PRESETS[type].map((c) => ({ ...c })),
     },
     businessFlow: syncFlowToGrades(FLOW_PRESETS[type], GRADE_PRESETS[type]),
     theme: defaultTheme(),

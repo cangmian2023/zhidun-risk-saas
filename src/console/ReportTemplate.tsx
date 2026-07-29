@@ -15,17 +15,20 @@ import { useState, useMemo, useRef, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { PageHeader, Panel, Badge, Button, DetailHeader, SingleSelect, SearchSelect, Modal } from '../components/ui'
 import {
-  ReportTemplate, ReportType, TplStatus, RiskLevel, DisplayComponent, ScoreGrade, ScoreComponent, ScoreDisplayConfig, BusinessFlowConfig,
-  ThemeConfig, ExportConfig, SectionConfig, FieldConfig, SectionSource, ROLE_PERM, computeSectionScore,
+  ReportTemplate, ReportType, TplStatus, DisplayComponent, ScoreGrade, BusinessFlowConfig,
+  SectionConfig, FieldConfig, SectionSource, ROLE_PERM, computeSectionScore,
   DataSourceConfig, DbField, ApiParam, ApiOutput, ApiConfig, ApiHeader, ApiMethod, ApiBodyType, ApiFieldType,
   RenderContainer, RENDER_CONTAINER_LABEL, API_FIELD_TYPE_LABEL, defaultContainer, recommendDbContainer,
-  MaskRule, MASK_RULE_LABEL, autoMaskRule, Severity, SEVERITY_LABEL, Align, ALIGN_LABEL, FieldCondType, FIELD_COND_LABEL,
+  MaskRule, MASK_RULE_LABEL, autoMaskRule, Severity, SEVERITY_LABEL, FieldCondType, FIELD_COND_LABEL,
   REPORT_META, PRODUCT_TREE, PRODUCT_LEAVES, PRODUCT_ALL, scopeLabel,
-  ACTION_CATALOG, ACTION_BY_TYPE, THEME_PRESETS, THEME_LIST,
+  AutoResult, AUTO_RESULT_LIST, AUTO_RESULT_COLOR,
+  computeScoreSummary, validateGrades,
   SECTION_SOURCE_LABEL, RULE_SETS, DB_TYPES, mockTableColumns,
   SourceTestResult, testSourceConfig, parseCurl, buildCurl,
   syncFlowToGrades, buildTemplate, seedReportTemplates,
+  FlowGraph, buildDefaultFlowGraph, summarizeFlowGraph,
 } from './reportTemplateData'
+import FlowCanvasEditor from './FlowCanvasEditor'
 
 /* 显示方式下拉项：对给定类型推荐一个默认值，标注「（推荐）」以便用户可改 */
 const containerOptions = (rec: RenderContainer) =>
@@ -39,9 +42,8 @@ function Field({ label, children, full, hint }: { label: string; children: React
   </div>
 }
 const inp: React.CSSProperties = { padding: '8px 10px', border: '1px solid #D1D5DB', borderRadius: 8, width: '100%', fontSize: 14 }
-const inpSm: React.CSSProperties = { padding: '4px 8px', border: '1px solid #D1D5DB', borderRadius: 6, fontSize: 13, width: '100%', minWidth: 90 }
+const inpSm: React.CSSProperties = { padding: '4px 8px', border: '1px solid #D1D5DB', borderRadius: 6, fontSize: 13, width: '100%', minWidth: 0 }
 const numSm: React.CSSProperties = { width: 56, padding: '4px 6px', border: '1px solid #D1D5DB', borderRadius: 6, fontSize: 13 }
-const colorInp: React.CSSProperties = { width: 48, height: 32, border: '1px solid #D1D5DB', borderRadius: 6, background: 'none' }
 const miniBtn: React.CSSProperties = { padding: '3px 10px', fontSize: 12, borderRadius: 6, border: '1px solid #D1D5DB', background: '#fff', cursor: 'pointer' }
 const SEL = '#3B82F6', SEL_BG = '#EFF6FF'
 
@@ -129,7 +131,7 @@ export default function ReportTemplateConfig() {
   const [templates, setTemplates] = useState<ReportTemplate[]>(seedReportTemplates)
   const [view, setView] = useState<'list' | 'detail'>(initId ? 'detail' : 'list')
   const [activeId, setActiveId] = useState<string>(initId ?? seedReportTemplates[0].id)
-  const [tab, setTab] = useState<'content' | 'score' | 'flow' | 'theme' | 'export'>('content')
+  const [tab, setTab] = useState<'content' | 'score' | 'flow'>('content')
   const [configSid, setConfigSid] = useState<string | null>(null)
   const [apiTab, setApiTab] = useState<'params' | 'headers' | 'body' | 'code'>('params')
   const [apiCode, setApiCode] = useState('')
@@ -143,6 +145,7 @@ export default function ReportTemplateConfig() {
   const [fScope, setFScope] = useState('全部')
   const [showNew, setShowNew] = useState(false)
   const [syncHint, setSyncHint] = useState<string>('')
+  const [demoScore, setDemoScore] = useState<number | null>(null) // 评分卡形态预览的示例分值（null=自动取范围 72% 处）
 
   const active = useMemo(() => templates.find((t) => t.id === activeId) ?? templates[0], [templates, activeId])
   const perm = ROLE_PERM['系统管理员'] // 权限固定为系统管理员（全权）；角色模拟切换已移除
@@ -161,7 +164,7 @@ export default function ReportTemplateConfig() {
     patch((t) => {
       const last = t.scoreDisplay.grades[t.scoreDisplay.grades.length - 1]
       const base = last ? last.maxScore : 0
-      const ng: ScoreGrade = { grade: `新档${t.scoreDisplay.grades.length + 1}`, label: '新风险档', minScore: base + 1, maxScore: 100, riskLevel: '中', color: '#F59E0B', description: '新评分档，请配置区间与处置' }
+      const ng: ScoreGrade = { grade: `新档${t.scoreDisplay.grades.length + 1}`, label: '新风险档', minScore: base + 1, maxScore: 100, riskLevel: '中', color: '#F59E0B', autoResult: '转人工', description: '新评分档，请配置区间与处置' }
       const grades = [...t.scoreDisplay.grades, ng]
       setSyncHint('已新增评分档，下方「审核操作」已自动同步增加一行')
       return { ...t, scoreDisplay: { ...t.scoreDisplay, grades }, businessFlow: syncFlowToGrades(t.businessFlow, grades) }
@@ -175,20 +178,25 @@ export default function ReportTemplateConfig() {
       return { ...t, scoreDisplay: { ...t.scoreDisplay, grades }, businessFlow: syncFlowToGrades(t.businessFlow, grades) }
     })
   }
-  /* 总分计算方式（加权构成） */
-  const patchScore = (fn: (s: ScoreDisplayConfig) => ScoreDisplayConfig) =>
-    patch((t) => ({ ...t, scoreDisplay: fn(t.scoreDisplay) }))
-  const addComponent = () =>
-    patchScore((s) => ({ ...s, components: [...s.components, { name: '', weight: 0 }] }))
-  const patchComponent = (i: number, fn: (c: ScoreComponent) => ScoreComponent) =>
-    patchScore((s) => ({ ...s, components: s.components.map((c, k) => (k === i ? fn(c) : c)) }))
-  const delComponent = (i: number) =>
-    patchScore((s) => ({ ...s, components: s.components.filter((_, k) => k !== i) }))
-  const compTotal = active.scoreDisplay.components.reduce((sum, c) => sum + (c.weight || 0), 0)
+  /* 评分方案：总分 = 基础分 + 各卡得分直接汇总（见 computeScoreSummary），此处仅用于分段区间校验 */
+  const scoreSummary = useMemo(() => computeScoreSummary(active), [active])
+  const gradeErrs = useMemo(() => validateGrades(active.scoreDisplay.grades, scoreSummary.min, scoreSummary.max), [active.scoreDisplay.grades, scoreSummary])
   const patchFlow = (i: number, fn: (f: BusinessFlowConfig) => BusinessFlowConfig) =>
     patch((t) => ({ ...t, businessFlow: t.businessFlow.map((f, k) => (k === i ? fn(f) : f)) }))
-  const patchTheme = (fn: (th: ThemeConfig) => ThemeConfig) => patch((t) => ({ ...t, theme: fn(t.theme) }))
-  const patchExport = (fn: (e: ExportConfig) => ExportConfig) => patch((t) => ({ ...t, export: fn(t.export) }))
+
+  /* ---- 审核操作：分段业务流程画布弹窗 ----
+     flowEditIdx = businessFlow 数组下标（i+1）；draftGraph 为画布草稿，点「保存流程」才写回模板 */
+  const [flowEditIdx, setFlowEditIdx] = useState<number | null>(null)
+  const [draftGraph, setDraftGraph] = useState<FlowGraph | null>(null)
+  const openFlowCanvas = (idx: number, flow: BusinessFlowConfig, ar: AutoResult) => {
+    setDraftGraph(flow.flowGraph ? { nodes: flow.flowGraph.nodes.map((n) => ({ ...n })), edges: flow.flowGraph.edges.map((e) => ({ ...e })) } : buildDefaultFlowGraph(flow, ar, active.scoreDisplay.grades[idx - 1]))
+    setFlowEditIdx(idx)
+  }
+  const saveFlowCanvas = () => {
+    if (flowEditIdx == null || !draftGraph) return
+    patchFlow(flowEditIdx, (x) => ({ ...x, flowGraph: draftGraph }))
+    setFlowEditIdx(null); setDraftGraph(null)
+  }
 
   /* ---- 报告内容：分段 / 来源配置（三种来源各自专属配置） ---- */
   /* 字段 id 由来源块派生：数据源=ds.tableFields / 接口=api.outputs / 规则集=规则项，见各来源 helper */
@@ -227,12 +235,7 @@ export default function ReportTemplateConfig() {
      各来源的字段增删在下方专属 helper 中处理（readTable / addApiOutput / selectRuleSet）。 */
   const patchField = (sid: string, fid: string, fn: (f: FieldConfig) => FieldConfig) =>
     patchSection(sid, (x) => ({ ...x, fields: x.fields.map((f) => (f.id === fid ? fn(f) : f)) }))
-  /* 计分改为逐条展示项配置（scoreMode / scorePoints / condType / condValue），本卡总分由 computeSectionScore 自动汇总 */
-  /* 评分方案 / 审核操作 两个 Tab 的首行配置：显示开关 + 报告内卡片标题 */
-  const patchScoreBlock = (fn: (b: { show: boolean; title: string }) => { show: boolean; title: string }) =>
-    patch((t) => ({ ...t, scoreBlock: fn(t.scoreBlock) }))
-  const patchFlowBlock = (fn: (b: { show: boolean; title: string }) => { show: boolean; title: string }) =>
-    patch((t) => ({ ...t, flowBlock: fn(t.flowBlock) }))
+  /* 计分方向提到分段（卡片）级 cardScoreMode；逐条展示项仅配置 scorePoints / condType / condValue，本卡总分由 computeSectionScore 自动汇总 */
   /* —— 数据源：连接配置 + 读取表字段 —— */
   const patchDs = (sid: string, fn: (d: DataSourceConfig) => DataSourceConfig) =>
     patchSection(sid, (s) => {
@@ -317,7 +320,11 @@ export default function ReportTemplateConfig() {
       logChange('编辑', '保存为草稿')
     }
   }
-  const saveDraft = () => { patch((t) => ({ ...t, status: '草稿' })); logChange('编辑', '保存模板配置') }
+  const saveDraft = () => {
+    if (active.scoreBlock.title.trim() === '') { window.alert('「评分方案」标题为必填项，不可为空'); return }
+    if (active.flowBlock.title.trim() === '') { window.alert('「审核操作」标题为必填项，不可为空'); return }
+    patch((t) => ({ ...t, status: '草稿' })); logChange('编辑', '保存模板配置')
+  }
   const publishNewVersion = () => {
     if (!canEdit) return
     const note = window.prompt('请输入本次发布的版本说明（将记入版本日志并自动启用该模板）：')
@@ -346,7 +353,7 @@ export default function ReportTemplateConfig() {
       ...src, id, name: `${src.name} - 复制`, isDefault: false, status: '草稿', version: 'V1.0', lastEditTime: now, lastEditor: '当前用户',
       sections: src.sections.map((s) => ({ ...s, fields: s.fields.map((f) => ({ ...f })) })),
       scoreDisplay: { ...src.scoreDisplay, grades: src.scoreDisplay.grades.map((g) => ({ ...g })) },
-      businessFlow: src.businessFlow.map((f) => ({ ...f, allowedActions: [...f.allowedActions] })),
+      businessFlow: src.businessFlow.map((f) => ({ ...f })),
       theme: { ...src.theme },
       export: { ...src.export, formats: [...src.export.formats], watermark: { ...src.export.watermark } },
       changeLogs: [{ version: 'V1.0', action: '创建', operator: '当前用户', timestamp: now, summary: `由「${src.name}」复制创建` }],
@@ -440,7 +447,7 @@ export default function ReportTemplateConfig() {
                   </div>
                   <div style={{ marginTop: 'auto', paddingTop: 12, display: 'flex', gap: 8 }}>
                     <Button variant="primary" onClick={() => { setActiveId(t.id); setView('detail') }}>配置</Button>
-                    <Button variant="ghost" onClick={() => nav(`/console/cr/report-template-preview?id=${t.id}`)}>预览</Button>
+                    <Button variant="ghost" onClick={() => nav(`/console/cm/report-template-preview?id=${t.id}`)}>预览</Button>
                     {perm.del && (t.status !== '已启用' && !t.isDefault) && (
                       <Button variant="ghost" onClick={() => deleteTpl(t.id)}>删除</Button>
                     )}
@@ -480,6 +487,9 @@ export default function ReportTemplateConfig() {
   const renderSectionCard = (s: SectionConfig, opts: { showConfigBtn: boolean; showDelete: boolean; showMove: boolean }) => {
     const st = s.sourceType
     const stColor = st === 'data_source' ? { bg: '#ECFDF5', bd: '#A7F3D0', tx: '#047857' } : st === 'api' ? { bg: '#EFF6FF', bd: '#BFDBFE', tx: '#1D4ED8' } : { bg: '#F5F3FF', bd: '#DDD6FE', tx: '#6D28D9' }
+    /* 表头 / 单元格统一样式：列宽由 colgroup 锁定，全部居中，杜绝 flex 错位 */
+    const thStyle: React.CSSProperties = { textAlign: 'center', verticalAlign: 'middle', padding: '7px 6px', borderBottom: '1px solid #EEF2F7', fontWeight: 600, color: '#6B7280', fontSize: 11, whiteSpace: 'nowrap' }
+    const tdStyle: React.CSSProperties = { textAlign: 'center', verticalAlign: 'middle', padding: '5px 6px', borderBottom: '1px solid #F1F5F9', fontSize: 12 }
     const disabled = opts.showMove ? (s.visible && visibleCount <= 1) : false
     const isFlash = s.id === flashId
     return (
@@ -503,96 +513,128 @@ export default function ReportTemplateConfig() {
         <div style={{ padding: '10px 12px', background: '#fff', borderTop: '1px solid #F1F5F9' }}>
           {st === 'data_source' && (
             <div>
-              <div style={{ fontSize: 12, color: '#6B7280', fontWeight: 600, marginBottom: 6 }}>取自该表，勾选「启用」即展示；「字段名」是库表原始名（只读），「提示标签」是前端显示名（如 姓名），显示方式/脱敏规则/说明也可在卡片上直接配。</div>
               {(s.ds?.tableFields ?? []).length === 0 && <div style={{ fontSize: 12, color: '#9CA3AF' }}>尚未读取表结构{opts.showConfigBtn ? '，点右上「配置来源」连接数据库并读取字段。' : '。'}</div>}
-              <ul style={{ listStyle: 'none', margin: 0, padding: 0, border: '1px solid #EEF2F7', borderRadius: 8, overflow: 'hidden' }}>
-                <li style={{ display: 'flex', gap: 10, fontSize: 11, fontWeight: 600, color: '#6B7280', background: '#F8FAFC', padding: '6px 10px', borderBottom: '1px solid #EEF2F7' }}>
-                  <span style={{ width: 46, flex: '0 0 auto', textAlign: 'center' }}>启用</span>
-                  <span style={{ flex: '1 1 40%', minWidth: 90 }}>字段名（原始）</span>
-                  <span style={{ flex: '1 1 40%', minWidth: 90 }}>提示标签（显示名）</span>
-                  <span style={{ width: 64, flex: '0 0 auto', textAlign: 'center' }}>类型</span>
-                  <span style={{ width: 108, flex: '0 0 auto', textAlign: 'center' }}>显示方式</span>
-                  <span style={{ width: 96, flex: '0 0 auto', textAlign: 'center' }}>脱敏规则</span>
-                  <span style={{ width: 120, flex: '0 0 auto', textAlign: 'center' }}>说明</span>
-                  <span style={{ width: 80, flex: '0 0 auto', textAlign: 'center' }}>计分</span>
-                  <span style={{ width: 60, flex: '0 0 auto', textAlign: 'center' }}>分值</span>
-                  <span style={{ width: 92, flex: '0 0 auto', textAlign: 'center' }}>条件</span>
-                  <span style={{ width: 92, flex: '0 0 auto', textAlign: 'center' }}>条件值</span>
-                </li>
-                {(s.ds?.tableFields ?? []).map((tf, idx) => (
-                  <li key={idx} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, padding: '6px 10px', borderBottom: '1px solid #F1F5F9', background: tf.visible ? '#ECFDF5' : '#fff' }}>
-                    <input type="checkbox" title="勾选=启用，取消=禁用" disabled={!canEdit} checked={tf.visible} onChange={() => toggleDsField(s.id, idx)} style={{ width: 18, flex: '0 0 auto' }} />
-                    <span style={{ fontWeight: 500, flex: '1 1 40%', minWidth: 90, color: '#374151' }}>{tf.name}</span>
-                    <input disabled={!canEdit} value={tf.label ?? ''} onChange={(e) => patchDsField(s.id, idx, (f) => ({ ...f, label: e.target.value }))} placeholder={tf.name} style={{ ...inpSm, flex: '1 1 40%', minWidth: 90, fontSize: 12 }} title="前端显示名（如 姓名→张三）" />
-                    <span style={{ width: 64, flex: '0 0 auto', textAlign: 'center', fontSize: 12, color: '#6B7280' }}>{tf.type}</span>
-                    <select disabled={!canEdit} value={tf.container ?? recommendDbContainer(tf.type)} onChange={(e) => patchDsField(s.id, idx, (f) => ({ ...f, container: e.target.value as RenderContainer }))} style={{ ...inpSm, width: 108, flex: '0 0 auto', fontSize: 11 }} title="显示方式（按列类型推荐，可改）">
-                      {containerOptions(recommendDbContainer(tf.type)).map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-                    </select>
-                    <select disabled={!canEdit} value={tf.maskRule ?? 'none'} onChange={(e) => patchDsField(s.id, idx, (f) => ({ ...f, maskRule: e.target.value as MaskRule }))} style={{ ...inpSm, width: 96, flex: '0 0 auto', fontSize: 11 }} title="脱敏规则">
-                      {Object.entries(MASK_RULE_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-                    </select>
-                    <input disabled={!canEdit} value={tf.remark ?? ''} onChange={(e) => patchDsField(s.id, idx, (f) => ({ ...f, remark: e.target.value }))} placeholder="备注" style={{ ...inpSm, width: 120, flex: '0 0 auto', fontSize: 12 }} />
-                    <select disabled={!canEdit} value={tf.scoreMode ?? 'deduct'} onChange={(e) => patchDsField(s.id, idx, (f) => ({ ...f, scoreMode: e.target.value as 'add' | 'deduct' }))} style={{ ...inpSm, width: 80, flex: '0 0 auto', fontSize: 11 }} title="计分：加分/扣分">
-                      <option value="add">加分</option><option value="deduct">扣分</option>
-                    </select>
-                    <input type="number" disabled={!canEdit} value={tf.scorePoints ?? 0} onChange={(e) => patchDsField(s.id, idx, (f) => ({ ...f, scorePoints: +e.target.value || 0 }))} title="分值（加 / 扣多少）" style={{ ...numSm, width: 60, flex: '0 0 auto', fontSize: 12 }} />
-                    <select disabled={!canEdit} value={tf.condType ?? 'empty'} onChange={(e) => patchDsField(s.id, idx, (f) => ({ ...f, condType: e.target.value as FieldCondType }))} style={{ ...inpSm, width: 92, flex: '0 0 auto', fontSize: 11 }} title="计分条件">
-                      {(['empty', 'notEmpty', 'gt', 'lt', 'eq'] as FieldCondType[]).map((c) => <option key={c} value={c}>{FIELD_COND_LABEL[c]}</option>)}
-                    </select>
-                    {(['gt', 'lt', 'eq'].includes(tf.condType ?? 'empty')) && (
-                      <input disabled={!canEdit} value={tf.condValue ?? ''} onChange={(e) => patchDsField(s.id, idx, (f) => ({ ...f, condValue: e.target.value }))} placeholder="阈值" title="条件阈值" style={{ ...inpSm, width: 92, flex: '0 0 auto', fontSize: 12 }} />
-                    )}
-                  </li>
-                ))}
-              </ul>
+              <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', minWidth: 900, borderCollapse: 'collapse', fontSize: 12, tableLayout: 'fixed', border: '1px solid #EEF2F7', borderRadius: 8, overflow: 'hidden' }}>
+                <colgroup>
+                  <col style={{ width: 40 }} />
+                  <col style={{ width: 48 }} />
+                  <col style={{ width: 120 }} />
+                  <col style={{ width: 120 }} />
+                  <col style={{ width: 64 }} />
+                  <col style={{ width: 108 }} />
+                  <col style={{ width: 96 }} />
+                  <col style={{ width: 72 }} />
+                  <col style={{ width: 88 }} />
+                  <col style={{ width: 88 }} />
+                  <col style={{ width: 60 }} />
+                  <col style={{ width: 10 }} />
+                </colgroup>
+                <thead>
+                  <tr style={{ background: '#F8FAFC' }}>
+                    <th style={{ ...thStyle, position: 'sticky', left: 0, zIndex: 3, background: '#F1F5F9' }}>序号</th>
+                    <th style={{ ...thStyle, position: 'sticky', left: 40, zIndex: 3, background: '#F1F5F9' }}>启用</th>
+                    <th style={{ ...thStyle, position: 'sticky', left: 88, zIndex: 3, background: '#F1F5F9', boxShadow: '1px 0 0 #E5E7EB' }}>字段名（原始）</th>
+                    <th style={thStyle}>提示标签</th>
+                    <th style={thStyle}>类型</th>
+                    <th style={thStyle}>显示方式</th>
+                    <th style={thStyle}>脱敏规则</th>
+                    <th style={thStyle}>豁免</th>
+                    <th style={thStyle}>条件</th>
+                    <th style={thStyle}>条件值</th>
+                    <th style={thStyle}>分值</th>
+                    <th style={{ ...thStyle, width: 10, padding: '7px 0' }} />
+                  </tr>
+                </thead>
+                <tbody>
+                  {(s.ds?.tableFields ?? []).map((tf, idx) => {
+                    const rowOn = tf.visible
+                    const rowBg = tf.visible ? '#ECFDF5' : '#fff'
+                    return (
+                    <tr key={idx} style={{ borderBottom: '1px solid #F1F5F9', background: rowBg, opacity: rowOn ? 1 : 0.6 }}>
+                      <td style={{ ...tdStyle, position: 'sticky', left: 0, zIndex: 2, background: rowBg, color: '#9CA3AF' }}>{idx + 1}</td>
+                      <td style={{ ...tdStyle, position: 'sticky', left: 40, zIndex: 2, background: rowBg }}><input type="checkbox"  disabled={!canEdit} checked={tf.visible} onChange={() => toggleDsField(s.id, idx)} style={{ width: 16, cursor: canEdit ? 'pointer' : 'not-allowed' }} /></td>
+                      <td style={{ ...tdStyle, fontWeight: 500, color: '#374151', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', position: 'sticky', left: 88, zIndex: 2, background: rowBg, boxShadow: '1px 0 0 #E5E7EB' }}>{tf.name}</td>
+                      <td style={tdStyle}><input disabled={!canEdit || !rowOn} value={tf.label ?? ''} onChange={(e) => patchDsField(s.id, idx, (f) => ({ ...f, label: e.target.value }))} placeholder={tf.name} style={{ ...inpSm, width: '100%', fontSize: 12 }}  /></td>
+                      <td style={{ ...tdStyle, color: '#6B7280' }}>{tf.type}</td>
+                      <td style={tdStyle}><select disabled={!canEdit || !rowOn} value={tf.container ?? recommendDbContainer(tf.type)} onChange={(e) => patchDsField(s.id, idx, (f) => ({ ...f, container: e.target.value as RenderContainer }))} style={{ ...inpSm, width: '100%', fontSize: 11 }} >{containerOptions(recommendDbContainer(tf.type)).map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}</select></td>
+                      <td style={tdStyle}><select disabled={!canEdit || !rowOn} value={tf.maskRule ?? 'none'} onChange={(e) => patchDsField(s.id, idx, (f) => ({ ...f, maskRule: e.target.value as MaskRule }))} style={{ ...inpSm, width: '100%', fontSize: 11 }} >{Object.entries(MASK_RULE_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></td>
+                      <td style={tdStyle}><select disabled={!canEdit || !rowOn} value={(tf.exempt ?? false) ? 'yes' : 'no'} onChange={(e) => patchDsField(s.id, idx, (f) => ({ ...f, exempt: e.target.value === 'yes' }))} style={{ ...inpSm, width: '100%', fontSize: 11 }} ><option value="no">不可以</option><option value="yes">可以</option></select></td>
+                      <td style={tdStyle}><select disabled={!canEdit || !rowOn} value={tf.condType ?? 'eq'} onChange={(e) => patchDsField(s.id, idx, (f) => ({ ...f, condType: e.target.value as FieldCondType }))} style={{ ...inpSm, width: '100%', fontSize: 11 }} >{(['eq', 'empty', 'notEmpty', 'gt', 'lt'] as FieldCondType[]).map((c) => <option key={c} value={c}>{FIELD_COND_LABEL[c]}</option>)}</select></td>
+                      {(['gt', 'lt', 'eq'].includes(tf.condType ?? 'eq')) ? (
+                        <td style={tdStyle}><input disabled={!canEdit || !rowOn} value={tf.condValue ?? ''} onChange={(e) => patchDsField(s.id, idx, (f) => ({ ...f, condValue: e.target.value }))} placeholder="阈值"  style={{ ...inpSm, width: '100%', fontSize: 12 }} /></td>
+                      ) : <td style={tdStyle}></td>}
+                      <td style={tdStyle}><input type="number" disabled={!canEdit || !rowOn} value={tf.scorePoints ?? 0} onChange={(e) => patchDsField(s.id, idx, (f) => ({ ...f, scorePoints: +e.target.value || 0 }))}  style={{ ...numSm, width: '100%', fontSize: 12 }} /></td>
+                      <td style={{ ...tdStyle, width: 10, padding: '5px 0' }} />
+                    </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+              </div>
             </div>
           )}
           {st === 'api' && (
             <div>
-              <div style={{ fontSize: 12, color: '#6B7280', fontWeight: 600, marginBottom: 6 }}>取自接口返回值，可直接增 / 删 / 改 / 查；勾选「启用」即展示。字段 key / 显示名 / 类型 / 显示方式 / 单位 / 对齐均在卡片上配置，连接与请求体在「配置来源」弹窗里填。</div>
               {(s.api?.outputs ?? []).length === 0 && <div style={{ fontSize: 12, color: '#9CA3AF' }}>暂无输出字段，点右下「＋ 输出字段」添加。</div>}
-              <ul style={{ listStyle: 'none', margin: 0, padding: 0, border: '1px solid #EEF2F7', borderRadius: 8, overflow: 'hidden' }}>
-                <li style={{ display: 'flex', gap: 8, fontSize: 11, fontWeight: 600, color: '#6B7280', background: '#F8FAFC', padding: '6px 10px', borderBottom: '1px solid #EEF2F7' }}>
-                  <span style={{ width: 46, flex: '0 0 auto', textAlign: 'center' }}>启用</span>
-                  <span style={{ flex: '1 1 40%', minWidth: 90 }}>显示名（标签）</span>
-                  <span style={{ width: 110, flex: '0 0 auto' }}>字段 key</span>
-                  <span style={{ width: 120, flex: '0 0 auto', textAlign: 'center' }}>类型</span>
-                  <span style={{ width: 108, flex: '0 0 auto', textAlign: 'center' }}>显示方式</span>
-                  <span style={{ width: 70, flex: '0 0 auto', textAlign: 'center' }}>单位</span>
-                  <span style={{ width: 84, flex: '0 0 auto', textAlign: 'center' }}>对齐</span>
-                  <span style={{ width: 80, flex: '0 0 auto', textAlign: 'center' }}>计分</span>
-                  <span style={{ width: 60, flex: '0 0 auto', textAlign: 'center' }}>分值</span>
-                  <span style={{ width: 92, flex: '0 0 auto', textAlign: 'center' }}>条件</span>
-                  <span style={{ width: 92, flex: '0 0 auto', textAlign: 'center' }}>条件值</span>
-                  <span style={{ width: 36, flex: '0 0 auto', textAlign: 'center' }}>操作</span>
-                </li>
-                {(s.api?.outputs ?? []).map((o, idx) => (
-                  <li key={idx} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, padding: '6px 10px', borderBottom: '1px solid #F1F5F9', background: (o.visible ?? true) ? '#EFF6FF' : '#fff' }}>
-                    <input type="checkbox" title="勾选=启用，取消=禁用" disabled={!canEdit} checked={o.visible ?? true} onChange={() => patchApi(s.id, (a) => ({ ...a, outputs: a.outputs.map((x, k) => (k === idx ? { ...x, visible: !x.visible } : x)) }))} style={{ width: 18, flex: '0 0 auto' }} />
-                    <input disabled={!canEdit} value={o.label} onChange={(e) => patchApiOutput(s.id, idx, (x) => ({ ...x, label: e.target.value }))} placeholder="显示名" style={{ ...inpSm, flex: '1 1 40%', minWidth: 90, fontSize: 12 }} />
-                    <input disabled={!canEdit} value={o.key} onChange={(e) => patchApiOutput(s.id, idx, (x) => ({ ...x, key: e.target.value }))} placeholder="字段 key" style={{ ...inpSm, width: 110, flex: '0 0 auto', fontSize: 12 }} />
-                    <select disabled={!canEdit} value={o.type} onChange={(e) => { const t = e.target.value as ApiFieldType; patchApiOutput(s.id, idx, (x) => ({ ...x, type: t, container: defaultContainer(t) })) }} style={{ ...inpSm, width: 120, flex: '0 0 auto', fontSize: 11 }} title="数据域类型">{Object.entries(API_FIELD_TYPE_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
-                    <select disabled={!canEdit} value={o.container ?? defaultContainer(o.type)} onChange={(e) => patchApiOutput(s.id, idx, (x) => ({ ...x, container: e.target.value as RenderContainer }))} style={{ ...inpSm, width: 108, flex: '0 0 auto', fontSize: 11 }} title="显示方式（按类型推荐，可改）">
-                      {containerOptions(defaultContainer(o.type)).map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
-                    </select>
-                    <input disabled={!canEdit} value={o.unit ?? ''} onChange={(e) => patchApiOutput(s.id, idx, (x) => ({ ...x, unit: e.target.value }))} placeholder="如 元/%" style={{ ...inpSm, width: 70, flex: '0 0 auto', fontSize: 12 }} />
-                    <select disabled={!canEdit} value={o.align ?? 'right'} onChange={(e) => patchApiOutput(s.id, idx, (x) => ({ ...x, align: e.target.value as Align }))} style={{ ...inpSm, width: 84, flex: '0 0 auto', fontSize: 11 }} title="数值对齐">
-                      {Object.entries(ALIGN_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-                    </select>
-                    <select disabled={!canEdit} value={o.scoreMode ?? 'deduct'} onChange={(e) => patchApiOutput(s.id, idx, (x) => ({ ...x, scoreMode: e.target.value as 'add' | 'deduct' }))} style={{ ...inpSm, width: 80, flex: '0 0 auto', fontSize: 11 }} title="计分：加分/扣分">
-                      <option value="add">加分</option><option value="deduct">扣分</option>
-                    </select>
-                    <input type="number" disabled={!canEdit} value={o.scorePoints ?? 0} onChange={(e) => patchApiOutput(s.id, idx, (x) => ({ ...x, scorePoints: +e.target.value || 0 }))} title="分值（加 / 扣多少）" style={{ ...numSm, width: 60, flex: '0 0 auto', fontSize: 12 }} />
-                    <select disabled={!canEdit} value={o.condType ?? 'empty'} onChange={(e) => patchApiOutput(s.id, idx, (x) => ({ ...x, condType: e.target.value as FieldCondType }))} style={{ ...inpSm, width: 92, flex: '0 0 auto', fontSize: 11 }} title="计分条件">
-                      {(['empty', 'notEmpty', 'gt', 'lt', 'eq', 'regex'] as FieldCondType[]).map((c) => <option key={c} value={c}>{FIELD_COND_LABEL[c]}</option>)}
-                    </select>
-                    {(['gt', 'lt', 'eq', 'regex'].includes(o.condType ?? 'empty')) && (
-                      <input disabled={!canEdit} value={o.condValue ?? ''} onChange={(e) => patchApiOutput(s.id, idx, (x) => ({ ...x, condValue: e.target.value }))} placeholder={o.condType === 'regex' ? '正则' : '阈值'} title="条件值（阈值 / 正则）" style={{ ...inpSm, width: 92, flex: '0 0 auto', fontSize: 12 }} />
-                    )}
-                    {canEdit && <button onClick={() => delApiOutput(s.id, idx)} title="删除该输出字段" style={{ ...miniBtn, color: '#DC2626', width: 36, flex: '0 0 auto', padding: '2px 0' }}>×</button>}
-                  </li>
-                ))}
-              </ul>
+              <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', minWidth: 920, borderCollapse: 'collapse', fontSize: 12, tableLayout: 'fixed', border: '1px solid #EEF2F7', borderRadius: 8, overflow: 'hidden' }}>
+                <colgroup>
+                  <col style={{ width: 40 }} />
+                  <col style={{ width: 48 }} />
+                  <col style={{ width: 100 }} />
+                  <col style={{ width: 110 }} />
+                  <col style={{ width: 96 }} />
+                  <col style={{ width: 96 }} />
+                  <col style={{ width: 84 }} />
+                  <col style={{ width: 84 }} />
+                  <col style={{ width: 56 }} />
+                  <col style={{ width: 72 }} />
+                  <col style={{ width: 36 }} />
+                  <col style={{ width: 10 }} />
+                </colgroup>
+                <thead>
+                  <tr style={{ background: '#F8FAFC' }}>
+                    <th style={{ ...thStyle, position: 'sticky', left: 0, zIndex: 3, background: '#F1F5F9' }}>序号</th>
+                    <th style={{ ...thStyle, position: 'sticky', left: 40, zIndex: 3, background: '#F1F5F9' }}>启用</th>
+                    <th style={{ ...thStyle, position: 'sticky', left: 88, zIndex: 3, background: '#F1F5F9', boxShadow: '1px 0 0 #E5E7EB' }}>提示标签</th>
+                    <th style={thStyle}>字段 key</th>
+                    <th style={thStyle}>类型</th>
+                    <th style={thStyle}>显示方式</th>
+                    <th style={thStyle}>条件</th>
+                    <th style={thStyle}>条件值</th>
+                    <th style={thStyle}>分值</th>
+                    <th style={thStyle}>豁免</th>
+                    <th style={thStyle}>操作</th>
+                    <th style={{ ...thStyle, width: 10, padding: '7px 0' }} />
+                  </tr>
+                </thead>
+                <tbody>
+                  {(s.api?.outputs ?? []).map((o, idx) => {
+                    const rowOn = o.visible ?? true
+                    const rowBg = rowOn ? '#EFF6FF' : '#fff'
+                    return (
+                    <tr key={idx} style={{ borderBottom: '1px solid #F1F5F9', background: rowBg, opacity: rowOn ? 1 : 0.6 }}>
+                      <td style={{ ...tdStyle, position: 'sticky', left: 0, zIndex: 2, background: rowBg, color: '#9CA3AF' }}>{idx + 1}</td>
+                      <td style={{ ...tdStyle, position: 'sticky', left: 40, zIndex: 2, background: rowBg }}><input type="checkbox"  disabled={!canEdit} checked={o.visible ?? true} onChange={() => patchApi(s.id, (a) => ({ ...a, outputs: a.outputs.map((x, k) => (k === idx ? { ...x, visible: !x.visible } : x)) }))} style={{ width: 16, cursor: canEdit ? 'pointer' : 'not-allowed' }} /></td>
+                      <td style={{ ...tdStyle, position: 'sticky', left: 88, zIndex: 2, background: rowBg, boxShadow: '1px 0 0 #E5E7EB' }}><input disabled={!canEdit || !rowOn} value={o.label} onChange={(e) => patchApiOutput(s.id, idx, (x) => ({ ...x, label: e.target.value }))} placeholder="显示名" style={{ ...inpSm, width: '100%', fontSize: 12 }} /></td>
+                      <td style={tdStyle}><input disabled={!canEdit || !rowOn} value={o.key} onChange={(e) => patchApiOutput(s.id, idx, (x) => ({ ...x, key: e.target.value }))} placeholder="字段 key" style={{ ...inpSm, width: '100%', fontSize: 12 }} /></td>
+                      <td style={tdStyle}><select disabled={!canEdit || !rowOn} value={o.type} onChange={(e) => { const t = e.target.value as ApiFieldType; patchApiOutput(s.id, idx, (x) => ({ ...x, type: t, container: defaultContainer(t) })) }} style={{ ...inpSm, width: '100%', fontSize: 11 }} >{Object.entries(API_FIELD_TYPE_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></td>
+                      <td style={tdStyle}><select disabled={!canEdit || !rowOn} value={o.container ?? defaultContainer(o.type)} onChange={(e) => patchApiOutput(s.id, idx, (x) => ({ ...x, container: e.target.value as RenderContainer }))} style={{ ...inpSm, width: '100%', fontSize: 11 }} >{containerOptions(defaultContainer(o.type)).map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}</select></td>
+                      <td style={tdStyle}><select disabled={!canEdit || !rowOn} value={o.condType ?? 'eq'} onChange={(e) => patchApiOutput(s.id, idx, (x) => ({ ...x, condType: e.target.value as FieldCondType }))} style={{ ...inpSm, width: '100%', fontSize: 11 }} >{(['eq', 'empty', 'notEmpty', 'gt', 'lt', 'regex'] as FieldCondType[]).map((c) => <option key={c} value={c}>{FIELD_COND_LABEL[c]}</option>)}</select></td>
+                      {(['gt', 'lt', 'eq', 'regex'].includes(o.condType ?? 'eq')) ? (
+                        <td style={tdStyle}><input disabled={!canEdit || !rowOn} value={o.condValue ?? ''} onChange={(e) => patchApiOutput(s.id, idx, (x) => ({ ...x, condValue: e.target.value }))} placeholder={o.condType === 'regex' ? '正则' : '阈值'}  style={{ ...inpSm, width: '100%', fontSize: 12 }} /></td>
+                      ) : <td style={tdStyle}></td>}
+                      <td style={tdStyle}><input type="number" disabled={!canEdit || !rowOn} value={o.scorePoints ?? 0} onChange={(e) => patchApiOutput(s.id, idx, (x) => ({ ...x, scorePoints: +e.target.value || 0 }))}  style={{ ...numSm, width: '100%', fontSize: 12 }} /></td>
+                      <td style={tdStyle}><select disabled={!canEdit || !rowOn} value={(o.exempt ?? false) ? 'yes' : 'no'} onChange={(e) => patchApiOutput(s.id, idx, (x) => ({ ...x, exempt: e.target.value === 'yes' }))} style={{ ...inpSm, width: '100%', fontSize: 11 }} ><option value="no">不可以</option><option value="yes">可以</option></select></td>
+                      <td style={tdStyle}>{canEdit && <button disabled={!rowOn} onClick={() => delApiOutput(s.id, idx)}  style={{ ...miniBtn, color: '#DC2626', width: 28, padding: '2px 0' }}>×</button>}</td>
+                      <td style={{ ...tdStyle, width: 10, padding: '5px 0' }} />
+                    </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+              </div>
               {canEdit && <button onClick={() => addApiOutput(s.id)} style={{ ...miniBtn, marginTop: 6 }}>＋ 输出字段</button>}
             </div>
           )}
@@ -601,52 +643,78 @@ export default function ReportTemplateConfig() {
               {(!s.ruleSetId || s.fields.length === 0) && <div style={{ fontSize: 12, color: '#9CA3AF' }}>尚未选择规则合集{opts.showConfigBtn ? '，点右上「配置来源」选择并勾选用/不用的规则项。' : '。'}</div>}
               {s.ruleSetId && s.fields.length > 0 && (
                 <div>
-                  <div style={{ fontSize: 12, color: '#6B7280', fontWeight: 600, marginBottom: 6 }}>已启用 {s.fields.filter((f) => f.visible).length} / 共 {s.fields.length} 条规则（勾选=启用；权重 / 风险等级 / 命中文案 / 命中即拒 可在卡片上直接改）</div>
-                  <ul style={{ listStyle: 'none', margin: 0, padding: 0, border: '1px solid #EEF2F7', borderRadius: 8, overflow: 'hidden' }}>
-                    <li style={{ display: 'flex', gap: 8, fontSize: 11, fontWeight: 600, color: '#6B7280', background: '#F8FAFC', padding: '6px 10px', borderBottom: '1px solid #EEF2F7' }}>
-                      <span style={{ width: 46, flex: '0 0 auto', textAlign: 'center' }}>启用</span>
-                      <span style={{ flex: 1, minWidth: 0 }}>规则名</span>
-                      <span style={{ width: 150, flex: '0 0 auto' }}>说明</span>
-                      <span style={{ width: 64, flex: '0 0 auto', textAlign: 'center' }}>权重</span>
-                      <span style={{ width: 80, flex: '0 0 auto', textAlign: 'center' }}>风险等级</span>
-                      <span style={{ width: 96, flex: '0 0 auto', textAlign: 'center' }}>命中文案</span>
-                      <span style={{ width: 96, flex: '0 0 auto', textAlign: 'center' }}>命中即拒</span>
-                      <span style={{ width: 80, flex: '0 0 auto', textAlign: 'center' }}>计分</span>
-                      <span style={{ width: 60, flex: '0 0 auto', textAlign: 'center' }}>分值</span>
-                      <span style={{ width: 92, flex: '0 0 auto', textAlign: 'center' }}>条件</span>
-                    </li>
-                    {s.fields.map((f) => (
-                      <li key={f.id} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, padding: '6px 10px', borderBottom: '1px solid #F1F5F9', background: f.visible ? '#F5F3FF' : '#fff' }}>
-                        <input type="checkbox" title="勾选=启用，取消=禁用" disabled={!canEdit} checked={f.visible} onChange={(e) => patchField(s.id, f.id, (x) => ({ ...x, visible: e.target.checked }))} style={{ width: 18, flex: '0 0 auto' }} />
-                        <span style={{ fontWeight: 500, flex: 1, minWidth: 0 }}>{f.name}</span>
-                        <span style={{ width: 150, flex: '0 0 auto', fontSize: 11, color: '#9CA3AF', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.desc}</span>
-                        <input disabled={!canEdit} type="number" value={f.weight ?? 0} onChange={(e) => patchField(s.id, f.id, (x) => ({ ...x, weight: +e.target.value || 0 }))} title="权重（影响风险累计）" style={{ ...inpSm, width: 64, flex: '0 0 auto', fontSize: 12 }} />
-                        <select disabled={!canEdit} value={f.severity ?? 'mid'} onChange={(e) => patchField(s.id, f.id, (x) => ({ ...x, severity: e.target.value as Severity }))} style={{ ...inpSm, width: 80, flex: '0 0 auto', fontSize: 11 }} title="风险等级">
-                          {Object.entries(SEVERITY_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-                        </select>
-                        <input disabled={!canEdit} value={f.hitText ?? '命中'} onChange={(e) => patchField(s.id, f.id, (x) => ({ ...x, hitText: e.target.value }))} title="命中时显示文案" style={{ ...inpSm, width: 96, flex: '0 0 auto', fontSize: 12 }} />
-                        <input type="checkbox" disabled={!canEdit} checked={f.hitReject ?? false} onChange={(e) => patchField(s.id, f.id, (x) => ({ ...x, hitReject: e.target.checked }))} title="该条规则命中即整笔申请拒绝" style={{ width: 18, flex: '0 0 auto' }} />
-                        <select disabled={!canEdit} value={f.scoreMode ?? 'deduct'} onChange={(e) => patchField(s.id, f.id, (x) => ({ ...x, scoreMode: e.target.value as 'add' | 'deduct' }))} style={{ ...inpSm, width: 80, flex: '0 0 auto', fontSize: 11 }} title="计分：加分/扣分（规则默认扣分）">
-                          <option value="add">加分</option><option value="deduct">扣分</option>
-                        </select>
-                        <input type="number" disabled={!canEdit} value={f.scorePoints ?? 0} onChange={(e) => patchField(s.id, f.id, (x) => ({ ...x, scorePoints: +e.target.value || 0 }))} title="分值（命中扣多少）" style={{ ...numSm, width: 60, flex: '0 0 auto', fontSize: 12 }} />
-                        <span style={{ width: 92, flex: '0 0 auto', textAlign: 'center', fontSize: 12, color: '#6B7280' }} title="规则命中即触发，无需额外条件">命中</span>
-                      </li>
-                    ))}
-                  </ul>
+                  <div style={{ overflowX: 'auto' }}>
+                  <table style={{ width: '100%', minWidth: 820, borderCollapse: 'collapse', fontSize: 12, tableLayout: 'fixed', border: '1px solid #EEF2F7', borderRadius: 8, overflow: 'hidden' }}>
+                    <colgroup>
+                      <col style={{ width: 40 }} />
+                      <col style={{ width: 48 }} />
+                      <col style={{ width: 130 }} />
+                      <col style={{ width: 64 }} />
+                      <col style={{ width: 80 }} />
+                      <col style={{ width: 80 }} />
+                      <col style={{ width: 72 }} />
+                      <col style={{ width: 88 }} />
+                      <col style={{ width: 60 }} />
+                      <col style={{ width: 10 }} />
+                    </colgroup>
+                    <thead>
+                      <tr style={{ background: '#F8FAFC' }}>
+                        <th style={{ ...thStyle, position: 'sticky', left: 0, zIndex: 3, background: '#F1F5F9' }}>序号</th>
+                        <th style={{ ...thStyle, position: 'sticky', left: 40, zIndex: 3, background: '#F1F5F9' }}>启用</th>
+                        <th style={{ ...thStyle, position: 'sticky', left: 88, zIndex: 3, background: '#F1F5F9', boxShadow: '1px 0 0 #E5E7EB' }}>规则名</th>
+                        <th style={thStyle}>权重</th>
+                        <th style={thStyle}>风险等级</th>
+                        <th style={thStyle}>命中即拒</th>
+                        <th style={thStyle}>豁免</th>
+                        <th style={thStyle}>条件</th>
+                        <th style={thStyle}>分值</th>
+                        <th style={{ ...thStyle, width: 10, padding: '7px 0' }} />
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {s.fields.map((f, idx) => {
+                        const rowOn = f.visible
+                        const rowBg = f.visible ? '#F5F3FF' : '#fff'
+                        return (
+                        <tr key={f.id} style={{ borderBottom: '1px solid #F1F5F9', background: rowBg, opacity: rowOn ? 1 : 0.6 }}>
+                          <td style={{ ...tdStyle, position: 'sticky', left: 0, zIndex: 2, background: rowBg, color: '#9CA3AF' }}>{idx + 1}</td>
+                          <td style={{ ...tdStyle, position: 'sticky', left: 40, zIndex: 2, background: rowBg }}><input type="checkbox"  disabled={!canEdit} checked={f.visible} onChange={(e) => patchField(s.id, f.id, (x) => ({ ...x, visible: e.target.checked }))} style={{ width: 16, cursor: canEdit ? 'pointer' : 'not-allowed' }} /></td>
+                          <td style={{ ...tdStyle, fontWeight: 500, color: '#374151', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', position: 'sticky', left: 88, zIndex: 2, background: rowBg, boxShadow: '1px 0 0 #E5E7EB' }}>{f.name}</td>
+                          <td style={tdStyle}><input disabled={!canEdit || !rowOn} type="number" value={f.weight ?? 0} onChange={(e) => patchField(s.id, f.id, (x) => ({ ...x, weight: +e.target.value || 0 }))}  style={{ ...inpSm, width: '100%', fontSize: 12 }} /></td>
+                          <td style={tdStyle}><select disabled={!canEdit || !rowOn} value={f.severity ?? 'mid'} onChange={(e) => patchField(s.id, f.id, (x) => ({ ...x, severity: e.target.value as Severity }))} style={{ ...inpSm, width: '100%', fontSize: 11 }} >{Object.entries(SEVERITY_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></td>
+                          <td style={tdStyle}><input type="checkbox" disabled={!canEdit || !rowOn} checked={f.hitReject ?? false} onChange={(e) => patchField(s.id, f.id, (x) => ({ ...x, hitReject: e.target.checked }))}  style={{ width: 16, cursor: canEdit ? 'pointer' : 'not-allowed' }} /></td>
+                          <td style={tdStyle}><select disabled={!canEdit || !rowOn} value={(f.exempt ?? false) ? 'yes' : 'no'} onChange={(e) => patchField(s.id, f.id, (x) => ({ ...x, exempt: e.target.value === 'yes' }))} style={{ ...inpSm, width: '100%', fontSize: 11 }} ><option value="no">不可以</option><option value="yes">可以</option></select></td>
+                          <td style={tdStyle}><select disabled={!canEdit || !rowOn} value={f.condType ?? 'hit'} onChange={(e) => patchField(s.id, f.id, (x) => ({ ...x, condType: e.target.value as FieldCondType }))} style={{ ...inpSm, width: '100%', fontSize: 11 }} >{(['hit', 'miss'] as FieldCondType[]).map((c) => <option key={c} value={c}>{FIELD_COND_LABEL[c]}</option>)}</select></td>
+                          <td style={tdStyle}><input type="number" disabled={!canEdit || !rowOn} value={-(f.scorePoints ?? 0)} onChange={(e) => patchField(s.id, f.id, (x) => ({ ...x, scorePoints: Math.abs(+e.target.value) || 0 }))}  style={{ ...numSm, width: '100%', fontSize: 12, color: '#DC2626' }} /></td>
+                          <td style={{ ...tdStyle, width: 10, padding: '5px 0' }} />
+                        </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                  </div>
                 </div>
               )}
             </div>
           )}
-          {/* —— 本卡总分（按各展示项计分配置自动汇总，只读） —— */}
+          {/* —— 本卡总分（按卡片级计分方向与各展示项计分配置自动汇总，只读） —— */}
           <div style={{ padding: '8px 12px', background: '#F8FAFC', borderTop: '1px dashed #E5E7EB' }}>
             {(() => {
               const r = computeSectionScore(s)
+              if (r.mode === 'reject') {
+                return (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: '#374151' }}>计分方式</span>
+                    <span style={{ fontSize: 14, fontWeight: 700, color: '#DC2626' }}>命中即拒</span>
+                    <span style={{ fontSize: 12, color: '#6B7280' }}>任一启用项命中即直接拒绝申请，不参与加减分</span>
+                  </div>
+                )
+              }
               return (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
                   <span style={{ fontSize: 13, fontWeight: 600, color: '#374151' }}>本卡总分（按各项计分自动汇总）</span>
                   <span style={{ fontSize: 15, fontWeight: 700, color: r.total >= 0 ? '#047857' : '#DC2626' }}>{r.total >= 0 ? '+' : ''}{r.total}</span>
-                  <span style={{ fontSize: 12, color: '#6B7280' }}>（加分 {r.addCount} 项 · 扣分 {r.deductCount} 项；命中即拒项不计入）</span>
+                  <span style={{ fontSize: 12, color: '#6B7280' }}>（{r.mode === 'add' ? '达标加分' : '命中扣分'} {r.mode === 'add' ? r.addCount : r.deductCount} 项；命中即拒项不计入）</span>
                 </div>
               )
             })()}
@@ -663,12 +731,12 @@ export default function ReportTemplateConfig() {
         actions={
           <>
             <Button variant="primary" onClick={() => nav(`/console/cm/report-template-preview?id=${active.id}`, { state: { tpl: active } })}>预览</Button>
-            {canEdit && <Button onClick={saveDraft}>保存</Button>}
+            {canEdit && <Button variant="secondary" onClick={saveDraft}>保存</Button>}
             {canEdit && <Button variant="secondary" onClick={publishNewVersion}>发布新版本</Button>}
-            {perm.enable && active.status !== '已启用' && <Button variant="primary" onClick={() => changeStatus('已启用')}>启用</Button>}
-            {perm.enable && active.status === '已启用' && <Button onClick={() => changeStatus('已停用')}>停用</Button>}
-            {perm.setDefault && !active.isDefault && <Button variant="ghost" onClick={setDefault}>设为默认</Button>}
-            {canEdit && <Button variant="ghost" onClick={copyTpl}>复制</Button>}
+            {perm.enable && active.status !== '已启用' && <Button variant="secondary" onClick={() => changeStatus('已启用')}>启用</Button>}
+            {perm.enable && active.status === '已启用' && <Button variant="secondary" onClick={() => changeStatus('已停用')}>停用</Button>}
+            {perm.setDefault && !active.isDefault && <Button variant="secondary" onClick={setDefault}>设为默认</Button>}
+            {canEdit && <Button variant="secondary" onClick={copyTpl}>复制</Button>}
             {perm.del && active.status !== '已启用' && !active.isDefault && <Button variant="ghost" onClick={() => deleteTpl(active.id)}>删除</Button>}
           </>
         } />
@@ -718,7 +786,7 @@ export default function ReportTemplateConfig() {
 
           {/* Tabs */}
           <div style={{ display: 'flex', gap: 4, marginTop: 16, borderBottom: '1px solid #E5E7EB', marginBottom: 14 }}>
-            {([['content', '报告内容'], ['score', '评分方案'], ['flow', '审核操作'], ['theme', '样式主题'], ['export', '导出模板']] as [any, string][]).map(([k, label]) => (
+            {([['content', '报告内容'], ['score', '评分方案'], ['flow', '审核操作']] as [any, string][]).map(([k, label]) => (
               <button key={k} onClick={() => setTab(k)} style={{ padding: '10px 16px', border: 'none', borderBottom: tab === k ? '2px solid #3B82F6' : '2px solid transparent', background: 'none', fontWeight: tab === k ? 700 : 400, color: tab === k ? '#1D4ED8' : '#6B7280', cursor: 'pointer' }}>{label}</button>
             ))}
           </div>
@@ -764,7 +832,6 @@ export default function ReportTemplateConfig() {
                         {canEdit && <button onClick={() => readTable(s.id)} style={{ ...miniBtn, borderColor: SEL, color: SEL }}>读取表字段</button>}
                         {canEdit && <button onClick={() => runTest(s)} disabled={testing} style={{ ...miniBtn, borderColor: '#047857', color: '#047857' }}>{testing ? '测试中…' : '测试连接'}</button>}
                       </div>
-                      <div style={{ fontSize: 12, color: '#9CA3AF', marginTop: 8 }}>读取表字段后，字段的「启用 / 提示标签（显示名）/ 显示方式 / 脱敏规则 / 说明」均在卡片上直接配置，无需在此填写。</div>
                     </div>
                   )}
                   {st === 'api' && (
@@ -845,7 +912,6 @@ export default function ReportTemplateConfig() {
                       <div style={{ marginTop: 12, display: 'flex', gap: 8 }}>
                         {canEdit && <button onClick={() => runTest(s)} disabled={testing} style={{ ...miniBtn, borderColor: '#1D4ED8', color: '#1D4ED8' }}>{testing ? '测试中…' : '测试接口'}</button>}
                       </div>
-                      <div style={{ fontSize: 12, color: '#9CA3AF', marginTop: 8 }}>输出字段的「增 / 删 / 改 / 查」在卡片上直接操作（key / 显示名 / 类型 / 显示方式 / 单位 / 对齐）；此处仅配置接口请求（方法 / 地址 / 参数 / 请求头 / 请求体）。</div>
                     </div>
                   )}
                   {st === 'rule_set' && (
@@ -877,7 +943,6 @@ export default function ReportTemplateConfig() {
                       <div style={{ marginTop: 12, display: 'flex', gap: 8 }}>
                         {canEdit && <button onClick={() => runTest(s)} disabled={testing} style={{ ...miniBtn, borderColor: '#6D28D9', color: '#6D28D9' }}>{testing ? '测试中…' : '测试规则集'}</button>}
                       </div>
-                      <div style={{ fontSize: 12, color: '#9CA3AF', marginTop: 8 }}>勾选即纳入报告碰撞；「命中 / 未命中」文案在此配置。</div>
                     </div>
                   )}
                   {testing && <div style={{ marginTop: 14, fontSize: 13, color: '#6B7280' }}>测试中，请稍候…</div>}
@@ -896,14 +961,22 @@ export default function ReportTemplateConfig() {
           </Modal>
 
           {tab === 'score' && (
-            <Panel title="评分方案配置" desc="选择评分卡形态，并划分评分等级（风险档）与阈值。等级名称/数量变更会自动同步到「审核操作」Tab。">
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', border: '1px solid #E5E7EB', borderRadius: 10, background: '#F8FAFC', marginBottom: 12 }}>
-                <input type="checkbox" disabled={!canEdit} checked={active.scoreBlock.show} onChange={(e) => patchScoreBlock((b) => ({ ...b, show: e.target.checked }))} />
-                <span style={{ fontSize: 13, fontWeight: 600, color: '#374151' }}>在报告中显示「得分计算」卡片</span>
+            <Panel title="评分方案配置" desc="对总分自定义分段：每段配分值范围、自动审核结果（通过/转人工/拒绝）与标签配色。分段变更会自动同步到「审核操作」Tab。">
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', border: '1px solid #E5E7EB', borderRadius: 10, background: '#F8FAFC', marginBottom: 12 }}>
+                <span style={{ fontSize: 13, color: '#374151' }}>标题<span style={{ color: '#DC2626', marginLeft: 2 }}>*</span></span>
+                <input disabled={!canEdit} value={active.scoreBlock.title}
+                  onChange={(e) => patch((t) => ({ ...t, scoreBlock: { ...t.scoreBlock, title: e.target.value } }))}
+                  placeholder="输入标题（必填）" style={{ ...inp, width: 260, ...(active.scoreBlock.title.trim() === '' ? { borderColor: '#DC2626' } : {}) }} />
+                {active.scoreBlock.title.trim() === '' && <span style={{ fontSize: 12, color: '#DC2626' }}>标题不可为空</span>}
                 <span style={{ flex: 1 }} />
-                <input disabled={!canEdit} value={active.scoreBlock.title} onChange={(e) => patchScoreBlock((b) => ({ ...b, title: e.target.value }))} placeholder="卡片标题（留空则用默认「得分计算」）" style={{ ...inp, width: 300 }} />
+                <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600, color: '#374151', cursor: canEdit ? 'pointer' : 'default' }}>
+                  <input type="checkbox" disabled={!canEdit} checked={active.scoreBlock.show}
+                    onChange={(e) => patch((t) => ({ ...t, scoreBlock: { ...t.scoreBlock, show: e.target.checked } }))} />
+                  启用
+                </label>
+                <span style={{ fontSize: 12, color: active.scoreBlock.show ? '#047857' : '#9CA3AF' }}>{active.scoreBlock.show ? '已启用' : '未启用'}</span>
               </div>
-              {sections.filter((s) => (s.homeTab ?? 'content') === 'score').map((s) => renderSectionCard(s, { showConfigBtn: false, showDelete: false, showMove: false }))}
+              <div style={active.scoreBlock.show ? undefined : { opacity: 0.45, pointerEvents: 'none', userSelect: 'none' }}>
               <Field label="评分卡形态">
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                   {(['大数字', '环形图', '进度条', '仪表盘'] as DisplayComponent[]).map((c) => (
@@ -913,51 +986,59 @@ export default function ReportTemplateConfig() {
                 </div>
               </Field>
               <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', margin: '10px 0' }}>
-                {([['showDescription', '显示风险描述'], ['showThresholdBar', '显示阈值刻度'], ['showComponents', '显示构成项'], ['showRiskTags', '显示风险标签']] as [keyof typeof active.scoreDisplay, string][]).map(([k, label]) => (
+                {([['showDescription', '显示风险描述'], ['showThresholdBar', '显示阈值刻度'], ['showRiskTags', '显示风险标签']] as [keyof typeof active.scoreDisplay, string][]).map(([k, label]) => (
                   <label key={label} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13 }}>
                     <input type="checkbox" disabled={!canEdit} checked={active.scoreDisplay[k] as boolean} onChange={(e) => patch((t) => ({ ...t, scoreDisplay: { ...t.scoreDisplay, [k]: e.target.checked } }))} />{label}
                   </label>
                 ))}
               </div>
-              {/* 总分计算方式（加权构成）：算总分 */}
-              <div style={{ marginTop: 14, padding: '12px 14px', border: '1px solid #E5E7EB', borderRadius: 10, background: '#FBFCFE' }}>
-                <div style={{ fontSize: 13, fontWeight: 600, color: '#374151' }}>总分计算方式（加权构成）</div>
-                <div style={{ fontSize: 12, color: '#6B7280', margin: '2px 0 8' }}>各项按权重加权求和得到报告顶部的总分；权重合计应为 100%。</div>
-                <div style={{ display: 'flex', gap: 10, fontSize: 11, fontWeight: 600, color: '#6B7280', padding: '4px 10px' }}>
-                  <span style={{ flex: 1, minWidth: 0 }}>构成项</span>
-                  <span style={{ width: 120, flex: '0 0 auto', textAlign: 'center' }}>权重（%）</span>
-                  <span style={{ width: 32, flex: '0 0 auto' }}></span>
-                </div>
-                {active.scoreDisplay.components.map((c, i) => (
-                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '4px 10px' }}>
-                    <input disabled={!canEdit} value={c.name} onChange={(e) => patchComponent(i, (x) => ({ ...x, name: e.target.value }))} placeholder="构成项名称" style={{ ...inpSm, flex: 1 }} />
-                    <input type="number" disabled={!canEdit} value={c.weight} onChange={(e) => patchComponent(i, (x) => ({ ...x, weight: +e.target.value }))} style={{ ...numSm, width: 120, flex: '0 0 auto' }} />
-                    {canEdit && <button onClick={() => delComponent(i)} style={{ ...miniBtn, color: '#DC2626', width: 32, flex: '0 0 auto' }}>×</button>}
+              {/* 评分卡形态预览：按分值分段 + 所选形态实时渲染示例效果 */}
+              {(() => {
+                const raw = demoScore ?? Math.round(scoreSummary.min + (scoreSummary.max - scoreSummary.min) * 0.72)
+                const pvScore = Math.max(scoreSummary.min, Math.min(scoreSummary.max, raw))
+                return (
+                  <div style={{ border: '1px dashed #CBD5E1', borderRadius: 10, background: '#FBFCFE', padding: '14px 16px', margin: '4px 0 14px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+                      <span style={{ fontSize: 12, fontWeight: 600, color: '#6B7280' }}>效果预览 · {active.scoreDisplay.displayComponent}</span>
+                      <span style={{ flex: 1 }} />
+                      <span style={{ fontSize: 12, color: '#6B7280' }}>示例分值</span>
+                      <input type="range" min={scoreSummary.min} max={scoreSummary.max} value={pvScore} onChange={(e) => setDemoScore(+e.target.value)} style={{ width: 160 }} />
+                      <input type="number" value={pvScore} onChange={(e) => setDemoScore(+e.target.value)} style={{ ...numSm, width: 70 }} />
+                    </div>
+                    <ScoreCardPreview sd={active.scoreDisplay} min={scoreSummary.min} max={scoreSummary.max} score={pvScore} />
                   </div>
-                ))}
-                {canEdit && <button onClick={addComponent} style={{ ...miniBtn, marginTop: 4 }}>＋ 新增构成项</button>}
-                <div style={{ marginTop: 8, fontSize: 12, color: compTotal === 100 ? '#047857' : '#B45309' }}>
-                  权重合计：<b>{compTotal}%</b>{compTotal !== 100 && '（应为 100%，请调整各项权重）'}
-                </div>
+                )
+              })()}
+              {/* 分值预测：最大 / 最小分值 */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '8px 12px', border: '1px solid #DBEAFE', background: '#EFF6FF', borderRadius: 8, marginTop: 14, marginBottom: 8, flexWrap: 'wrap' }}>
+                <span style={{ fontSize: 13, fontWeight: 600, color: '#1E40AF' }}>分值预测</span>
+                <span style={{ fontSize: 13, color: '#374151' }}>最小分值 <b style={{ color: '#DC2626' }}>{scoreSummary.min}</b></span>
+                <span style={{ fontSize: 13, color: '#374151' }}>最大分值 <b style={{ color: '#047857' }}>{scoreSummary.max}</b></span>
+                <span style={{ fontSize: 12, color: '#6B7280' }}>（基础分 {active.scoreDisplay.baseScore} ＋ 加分满分 {scoreSummary.addMax} − 最大扣分 {scoreSummary.deductMax}）</span>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6, marginTop: 14 }}>
-                <div style={{ fontSize: 13, color: '#374151', fontWeight: 600 }}>评分等级（风险档 · 分值分段）</div>
-                {canEdit && <button onClick={addGrade} style={miniBtn}>＋ 新增等级</button>}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                <div style={{ fontSize: 13, color: '#374151', fontWeight: 600 }}>分值分段</div>
+                {canEdit && <button onClick={addGrade} style={miniBtn}>＋ 新增分段</button>}
               </div>
               <table className="w-full text-sm" style={{ marginTop: 4 }}>
                 <thead><tr style={{ textAlign: 'left' }}>
-                  <th className="px-2 py-2">等级名</th><th className="px-2 py-2">标签</th><th className="px-2 py-2">分值区间</th><th className="px-2 py-2">风险</th><th className="px-2 py-2">颜色</th><th className="px-2 py-2">说明</th><th className="px-2 py-2"></th>
+                  <th className="px-2 py-2">分段名</th><th className="px-2 py-2">标签</th><th className="px-2 py-2">分值区间</th><th className="px-2 py-2">自动审核结果</th><th className="px-2 py-2">标签配色</th><th className="px-2 py-2">说明</th><th className="px-2 py-2"></th>
                 </tr></thead>
                 <tbody>
                   {active.scoreDisplay.grades.map((g, i) => (
-                    <tr key={g.grade} style={{ borderTop: '1px solid #F1F5F9' }}>
+                    <tr key={i} style={{ borderTop: '1px solid #F1F5F9' }}>
                       <td className="px-2 py-2 font-medium"><input disabled={!canEdit} value={g.grade} onChange={(e) => patchGrade(i, (x) => ({ ...x, grade: e.target.value }))} style={inpSm} /></td>
                       <td className="px-2 py-2"><input disabled={!canEdit} value={g.label} onChange={(e) => patchGrade(i, (x) => ({ ...x, label: e.target.value }))} style={inpSm} /></td>
                       <td className="px-2 py-2" style={{ display: 'flex', gap: 4 }}>
                         <input type="number" disabled={!canEdit} value={g.minScore} onChange={(e) => patchGrade(i, (x) => ({ ...x, minScore: +e.target.value }))} style={numSm} />~
                         <input type="number" disabled={!canEdit} value={g.maxScore} onChange={(e) => patchGrade(i, (x) => ({ ...x, maxScore: +e.target.value }))} style={numSm} />
                       </td>
-                      <td className="px-2 py-2"><select disabled={!canEdit} value={g.riskLevel} onChange={(e) => patchGrade(i, (x) => ({ ...x, riskLevel: e.target.value as RiskLevel }))} style={inpSm}>{['低', '中', '高', '极高'].map((r) => <option key={r}>{r}</option>)}</select></td>
+                      <td className="px-2 py-2">
+                        <select disabled={!canEdit} value={g.autoResult} onChange={(e) => patchGrade(i, (x) => ({ ...x, autoResult: e.target.value as AutoResult }))}
+                          style={{ ...inpSm, fontWeight: 600, color: AUTO_RESULT_COLOR[g.autoResult] }}>
+                          {AUTO_RESULT_LIST.map((r) => <option key={r} value={r}>{r}</option>)}
+                        </select>
+                      </td>
                       <td className="px-2 py-2"><input type="color" disabled={!canEdit} value={g.color} onChange={(e) => patchGrade(i, (x) => ({ ...x, color: e.target.value }))} style={{ width: 32, height: 28, border: 'none', background: 'none' }} /></td>
                       <td className="px-2 py-2"><input disabled={!canEdit} value={g.description} onChange={(e) => patchGrade(i, (x) => ({ ...x, description: e.target.value }))} style={inpSm} /></td>
                       <td className="px-2 py-2">{canEdit && i > 0 && <button onClick={() => delGrade(i)} style={{ ...miniBtn, color: '#DC2626', borderColor: '#FECACA' }}>删除</button>}</td>
@@ -965,109 +1046,94 @@ export default function ReportTemplateConfig() {
                   ))}
                 </tbody>
               </table>
-              <div style={{ fontSize: 12, color: '#9CA3AF', marginTop: 6 }}>提示：等级按从上到下顺序对应「审核操作」的每一行，无需在审核操作里再单独命名。</div>
+              {gradeErrs.length > 0 ? (
+                <div style={{ marginTop: 8, fontSize: 12, color: '#B45309', background: '#FFFBEB', border: '1px solid #FDE68A', borderRadius: 8, padding: '8px 10px' }}>
+                  <b>分段区间校验未通过：</b>
+                  {gradeErrs.map((e, k) => <div key={k}>· {e}</div>)}
+                </div>
+              ) : (
+                <div style={{ marginTop: 8, fontSize: 12, color: '#047857' }}>✓ 分段区间已完整覆盖总分范围 {scoreSummary.min} ~ {scoreSummary.max}，无重叠无缝隙。</div>
+              )}
+              </div>
             </Panel>
           )}
 
           {tab === 'flow' && (
-            <Panel title="审核操作配置" desc="按评分等级映射：自动审核结论、人工状态、授信额度比例、复核级别与可执行操作。每一行对应上方「评分方案」中的一个等级。">
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', border: '1px solid #E5E7EB', borderRadius: 10, background: '#F8FAFC', marginBottom: 12 }}>
-                <input type="checkbox" disabled={!canEdit} checked={active.flowBlock.show} onChange={(e) => patchFlowBlock((b) => ({ ...b, show: e.target.checked }))} />
-                <span style={{ fontSize: 13, fontWeight: 600, color: '#374151' }}>在报告中显示「结论与终审」卡片</span>
+            <Panel title="审核操作配置" desc="每一行继承「评分方案」的一个分段（分段名/区间/自动审核结果只读）。点「配置流程」在画布中自由编排该分段的业务流程（节点可增删/拖拽/连线），流程缩写回显在列中。">
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', border: '1px solid #E5E7EB', borderRadius: 10, background: '#F8FAFC', marginBottom: 12 }}>
+                <span style={{ fontSize: 13, color: '#374151' }}>标题<span style={{ color: '#DC2626', marginLeft: 2 }}>*</span></span>
+                <input disabled={!canEdit} value={active.flowBlock.title}
+                  onChange={(e) => patch((t) => ({ ...t, flowBlock: { ...t.flowBlock, title: e.target.value } }))}
+                  placeholder="输入标题（必填）" style={{ ...inp, width: 260, ...(active.flowBlock.title.trim() === '' ? { borderColor: '#DC2626' } : {}) }} />
+                {active.flowBlock.title.trim() === '' && <span style={{ fontSize: 12, color: '#DC2626' }}>标题不可为空</span>}
                 <span style={{ flex: 1 }} />
-                <input disabled={!canEdit} value={active.flowBlock.title} onChange={(e) => patchFlowBlock((b) => ({ ...b, title: e.target.value }))} placeholder="卡片标题（留空则用默认「结论与终审」）" style={{ ...inp, width: 300 }} />
+                <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600, color: '#374151', cursor: canEdit ? 'pointer' : 'default' }}>
+                  <input type="checkbox" disabled={!canEdit} checked={active.flowBlock.show}
+                    onChange={(e) => patch((t) => ({ ...t, flowBlock: { ...t.flowBlock, show: e.target.checked } }))} />
+                  启用
+                </label>
+                <span style={{ fontSize: 12, color: active.flowBlock.show ? '#047857' : '#9CA3AF' }}>{active.flowBlock.show ? '已启用' : '未启用'}</span>
               </div>
-              {sections.filter((s) => (s.homeTab ?? 'content') === 'flow').map((s) => renderSectionCard(s, { showConfigBtn: false, showDelete: false, showMove: false }))}
+              <div style={active.flowBlock.show ? undefined : { opacity: 0.45, pointerEvents: 'none', userSelect: 'none' }}>
               {syncHint && <div style={{ fontSize: 12, color: '#1D4ED8', background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: 8, padding: '6px 10px', marginBottom: 10 }}>{syncHint}</div>}
-              <div style={{ overflowX: 'auto' }}>
-                <table className="w-full text-sm">
-                  <thead><tr style={{ textAlign: 'left' }}>
-                    <th className="px-2 py-2">评分等级</th><th className="px-2 py-2">自动审核</th><th className="px-2 py-2">人工状态</th><th className="px-2 py-2">授信额度比例</th><th className="px-2 py-2">复核级别</th><th className="px-2 py-2">需人工复核</th><th className="px-2 py-2">可执行操作</th><th className="px-2 py-2">决策建议文案</th>
-                  </tr></thead>
-                  <tbody>
-                    <tr style={{ borderTop: '1px solid #F1F5F9', background: '#F8FAFC' }}>
-                      <td className="px-2 py-2 font-medium" colSpan={8}>计算中（评分尚未得出时的初始态，不可配置）</td>
-                    </tr>
-                    {flowRows.map(({ grade, flow }, i) => (
-                      <tr key={flow.gradeId} style={{ borderTop: '1px solid #F1F5F9', verticalAlign: 'top' }}>
-                        <td className="px-2 py-2 font-medium">{grade ? `${grade.grade} · ${grade.label}` : flow.gradeId}<br /><span style={{ fontSize: 11, color: grade?.color }}>{grade?.description}</span></td>
-                        <td className="px-2 py-2"><select disabled={!canEdit} value={flow.autoDecision} onChange={(e) => patchFlow(i + 1, (x) => ({ ...x, autoDecision: e.target.value as any }))} style={inpSm}>{['通过', '预警', '拒绝', '处理中'].map((o) => <option key={o}>{o}</option>)}</select></td>
-                        <td className="px-2 py-2"><select disabled={!canEdit} value={flow.manualStatus} onChange={(e) => patchFlow(i + 1, (x) => ({ ...x, manualStatus: e.target.value as any }))} style={inpSm}>{['—', '待确认', '待审核', '核验计算中'].map((o) => <option key={o}>{o}</option>)}</select></td>
-                        <td className="px-2 py-2"><input type="number" disabled={!canEdit} value={flow.creditLimitRatio} onChange={(e) => patchFlow(i + 1, (x) => ({ ...x, creditLimitRatio: +e.target.value }))} style={numSm} />%</td>
-                        <td className="px-2 py-2"><select disabled={!canEdit} value={flow.reviewLevel} onChange={(e) => patchFlow(i + 1, (x) => ({ ...x, reviewLevel: e.target.value as any }))} style={inpSm}>{['单人复核', '双人复核', '初审+终审两级'].map((o) => <option key={o}>{o}</option>)}</select></td>
-                        <td className="px-2 py-2" style={{ textAlign: 'center' }}><input type="checkbox" disabled={!canEdit} checked={flow.needManualReview} onChange={(e) => patchFlow(i + 1, (x) => ({ ...x, needManualReview: e.target.checked }))} /></td>
-                        <td className="px-2 py-2">
-                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, maxWidth: 220 }}>
-                            {ACTION_BY_TYPE[active.reportType].map((a) => {
-                              const on = flow.allowedActions.includes(a)
-                              return <button key={a} disabled={!canEdit} onClick={() => patchFlow(i + 1, (x) => ({ ...x, allowedActions: on ? x.allowedActions.filter((y) => y !== a) : [...x.allowedActions, a] }))}
-                                style={{ padding: '2px 8px', fontSize: 12, borderRadius: 999, border: `1px solid ${on ? SEL : '#D1D5DB'}`, background: on ? SEL_BG : '#fff', cursor: canEdit ? 'pointer' : 'default' }}>{ACTION_CATALOG[a]}</button>
-                            })}
+              <table style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed', fontSize: 13 }}>
+                <colgroup><col style={{ width: 190 }} /><col style={{ width: 90 }} /><col /><col style={{ width: 220 }} /></colgroup>
+                <thead><tr style={{ background: '#F8FAFC' }}>
+                  {['评分分段（继承）', '自动结果', '业务流程配置', '决策建议文案'].map((h) => (
+                    <th key={h} style={{ padding: '8px', fontSize: 12, fontWeight: 600, color: '#6B7280', textAlign: 'left', borderBottom: '1px solid #E5E7EB' }}>{h}</th>
+                  ))}
+                </tr></thead>
+                <tbody>
+                  {flowRows.map(({ grade, flow }, i) => {
+                    const ar: AutoResult = grade?.autoResult ?? '转人工'
+                    return (
+                      <tr key={i} style={{ borderTop: '1px solid #F1F5F9', verticalAlign: 'top' }}>
+                        <td style={{ padding: '8px', fontWeight: 600 }}>
+                          <span style={{ display: 'inline-block', width: 10, height: 10, borderRadius: 999, background: grade?.color ?? '#9CA3AF', marginRight: 6 }} />
+                          {grade ? `${grade.grade} · ${grade.label}` : flow.gradeId}
+                          <div style={{ fontSize: 11, color: '#6B7280', fontWeight: 400, marginTop: 2 }}>区间 {grade ? `${grade.minScore} ~ ${grade.maxScore}` : '—'} 分</div>
+                          <div style={{ fontSize: 11, color: grade?.color, fontWeight: 400 }}>{grade?.description}</div>
+                        </td>
+                        <td style={{ padding: '8px' }}>
+                          <span style={{ padding: '2px 10px', fontSize: 12, fontWeight: 600, borderRadius: 999, color: '#fff', background: AUTO_RESULT_COLOR[ar] }}>{ar}</span>
+                        </td>
+                        <td style={{ padding: '8px' }}>
+                          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+                            <div style={{ flex: 1, minWidth: 0, fontSize: 12, color: '#374151', lineHeight: 1.7, wordBreak: 'break-all' }}>
+                              {summarizeFlowGraph(flow.flowGraph ?? buildDefaultFlowGraph(flow, ar, grade))}
+                              {!flow.flowGraph && <span style={{ color: '#9CA3AF' }}>（默认流程，未自定义）</span>}
+                            </div>
+                            <button onClick={() => openFlowCanvas(i + 1, flow, ar)}
+                              style={{ ...miniBtn, borderColor: SEL, color: SEL, flexShrink: 0 }}>
+                              {canEdit ? '配置流程' : '查看流程'}
+                            </button>
                           </div>
                         </td>
-                        <td className="px-2 py-2"><input disabled={!canEdit} value={flow.suggestionText} onChange={(e) => patchFlow(i + 1, (x) => ({ ...x, suggestionText: e.target.value }))} style={inpSm} /></td>
+                        <td style={{ padding: '8px' }}><input disabled={!canEdit} value={flow.suggestionText} onChange={(e) => patchFlow(i + 1, (x) => ({ ...x, suggestionText: e.target.value }))} style={{ ...inpSm, width: '100%' }} /></td>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    )
+                  })}
+                </tbody>
+              </table>
               </div>
-            </Panel>
-          )}
 
-          {tab === 'theme' && (
-            <Panel title="样式主题配置" desc="选择预设主题套用配色，或逐项自定义。影响报告导出与在线查看的视觉风格。">
-              <Field label="主题预设">
-                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                  {THEME_LIST.map((p) => (
-                    <button key={p} disabled={!canEdit} onClick={() => patchTheme((th) => ({ ...th, preset: p, ...THEME_PRESETS[p] }))}
-                      style={{ padding: '6px 14px', borderRadius: 8, border: `1px solid ${active.theme.preset === p ? SEL : '#D1D5DB'}`, background: active.theme.preset === p ? SEL_BG : '#fff', cursor: canEdit ? 'pointer' : 'default' }}>{p}</button>
-                  ))}
-                </div>
-              </Field>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 14, marginTop: 8 }}>
-                <Field label="主色"><input type="color" disabled={!canEdit} value={active.theme.primaryColor} onChange={(e) => patchTheme((th) => ({ ...th, primaryColor: e.target.value }))} style={colorInp} /></Field>
-                <Field label="通过色"><input type="color" disabled={!canEdit} value={active.theme.passColor} onChange={(e) => patchTheme((th) => ({ ...th, passColor: e.target.value }))} style={colorInp} /></Field>
-                <Field label="预警色"><input type="color" disabled={!canEdit} value={active.theme.warningColor} onChange={(e) => patchTheme((th) => ({ ...th, warningColor: e.target.value }))} style={colorInp} /></Field>
-                <Field label="拒绝色"><input type="color" disabled={!canEdit} value={active.theme.rejectColor} onChange={(e) => patchTheme((th) => ({ ...th, rejectColor: e.target.value }))} style={colorInp} /></Field>
-                <Field label="间距"><select disabled={!canEdit} value={active.theme.spacing} onChange={(e) => patchTheme((th) => ({ ...th, spacing: e.target.value as any }))} style={inp}>{['紧凑', '标准', '宽松'].map((o) => <option key={o}>{o}</option>)}</select></Field>
-                <Field label="字号"><select disabled={!canEdit} value={active.theme.fontSize} onChange={(e) => patchTheme((th) => ({ ...th, fontSize: e.target.value as any }))} style={inp}>{['小', '标准', '大'].map((o) => <option key={o}>{o}</option>)}</select></Field>
-                <Field label="表格风格"><select disabled={!canEdit} value={active.theme.tableStyle} onChange={(e) => patchTheme((th) => ({ ...th, tableStyle: e.target.value as any }))} style={inp}>{['线框表', '斑马纹', '无边框'].map((o) => <option key={o}>{o}</option>)}</select></Field>
-                <Field label="圆角"><select disabled={!canEdit} value={active.theme.borderRadius} onChange={(e) => patchTheme((th) => ({ ...th, borderRadius: e.target.value as any }))} style={inp}>{['直角', '小圆角', '大圆角'].map((o) => <option key={o}>{o}</option>)}</select></Field>
-                <Field label="表头风格" full><select disabled={!canEdit} value={active.theme.headerStyle} onChange={(e) => patchTheme((th) => ({ ...th, headerStyle: e.target.value as any }))} style={inp}>{['简洁', '标准', '完整'].map((o) => <option key={o}>{o}</option>)}</select></Field>
-              </div>
-            </Panel>
-          )}
-
-          {tab === 'export' && (
-            <Panel title="导出模板配置" desc="配置报告可导出格式与 Word / Excel / PDF 细节。">
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 14 }}>
-                <Field label="导出格式" full>
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    {(['PDF', 'Word', 'Excel'] as const).map((f) => {
-                      const on = active.export.formats.includes(f)
-                      return <button key={f} disabled={!canEdit} onClick={() => patchExport((e) => ({ ...e, formats: on ? e.formats.filter((x) => x !== f) : [...e.formats, f] }))}
-                        style={{ padding: '4px 14px', borderRadius: 8, border: `1px solid ${on ? SEL : '#D1D5DB'}`, background: on ? SEL_BG : '#fff', cursor: canEdit ? 'pointer' : 'default' }}>{f}</button>
-                    })}
-                  </div>
-                </Field>
-                <Field label="默认格式"><select disabled={!canEdit} value={active.export.defaultFormat} onChange={(e) => patchExport((x) => ({ ...x, defaultFormat: e.target.value }))} style={inp}>{active.export.formats.map((f) => <option key={f}>{f}</option>)}</select></Field>
-                <Field label="PDF 页眉" full><input disabled={!canEdit} value={active.export.pdfHeader} onChange={(e) => patchExport((x) => ({ ...x, pdfHeader: e.target.value }))} style={inp} /></Field>
-                <Field label="PDF 页脚" full><input disabled={!canEdit} value={active.export.pdfFooter} onChange={(e) => patchExport((x) => ({ ...x, pdfFooter: e.target.value }))} style={inp} /></Field>
-                <Field label="Word 样式"><select disabled={!canEdit} value={active.export.wordStyle} onChange={(e) => patchExport((x) => ({ ...x, wordStyle: e.target.value as any }))} style={inp}>{['与页面一致', '独立样式'].map((o) => <option key={o}>{o}</option>)}</select></Field>
-                <Field label="导出范围"><select disabled={!canEdit} value={active.export.exportScope} onChange={(e) => patchExport((x) => ({ ...x, exportScope: e.target.value as any }))} style={inp}>{['完整报告', '仅当前可见分段', '自定义范围'].map((o) => <option key={o}>{o}</option>)}</select></Field>
-                <Field label="水印" full>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <label style={{ fontSize: 13, display: 'flex', gap: 6, alignItems: 'center' }}><input type="checkbox" disabled={!canEdit} checked={active.export.watermark.enabled} onChange={(e) => patchExport((x) => ({ ...x, watermark: { ...x.watermark, enabled: e.target.checked } }))} />启用</label>
-                    <input disabled={!canEdit} value={active.export.watermark.text} onChange={(e) => patchExport((x) => ({ ...x, watermark: { ...x.watermark, text: e.target.value } }))} style={inpSm} placeholder="水印文字" />
-                    <span style={{ fontSize: 12, color: '#6B7280' }}>透明度 {active.export.watermark.opacity}%</span>
-                    <input type="range" min={0} max={100} disabled={!canEdit} value={active.export.watermark.opacity} onChange={(e) => patchExport((x) => ({ ...x, watermark: { ...x.watermark, opacity: +e.target.value } }))} />
-                  </div>
-                </Field>
-                <Field label="Excel 分表" full><label style={{ fontSize: 13, display: 'flex', gap: 6, alignItems: 'center' }}><input type="checkbox" disabled={!canEdit} checked={active.export.excelSplitSheet} onChange={(e) => patchExport((x) => ({ ...x, excelSplitSheet: e.target.checked }))} />每个分段独立 Sheet</label></Field>
-                <Field label="包含操作日志"><label style={{ fontSize: 13, display: 'flex', gap: 6, alignItems: 'center' }}><input type="checkbox" disabled={!canEdit} checked={active.export.includeOpLogs} onChange={(e) => patchExport((x) => ({ ...x, includeOpLogs: e.target.checked }))} />包含</label></Field>
-                <Field label="包含签章"><label style={{ fontSize: 13, display: 'flex', gap: 6, alignItems: 'center' }}><input type="checkbox" disabled={!canEdit} checked={active.export.includeSignature} onChange={(e) => patchExport((x) => ({ ...x, includeSignature: e.target.checked }))} />包含</label></Field>
-                {active.export.includeSignature && <Field label="签章模板" full><select disabled={!canEdit} value={active.export.signatureTemplate ?? ''} onChange={(e) => patchExport((x) => ({ ...x, signatureTemplate: e.target.value }))} style={inp}>{['风险审核专用章', '风控主管签章'].map((o) => <option key={o}>{o}</option>)}</select></Field>}
-              </div>
+              {/* 分段业务流程 · 自由画布弹窗 */}
+              <Modal open={flowEditIdx != null} onClose={() => { setFlowEditIdx(null); setDraftGraph(null) }}
+                title={flowEditIdx != null ? `业务流程配置 · ${active.scoreDisplay.grades[flowEditIdx - 1] ? `${active.scoreDisplay.grades[flowEditIdx - 1].grade} · ${active.scoreDisplay.grades[flowEditIdx - 1].label}` : ''}` : ''}
+                width="max-w-5xl"
+                footer={<>
+                  <Button variant="ghost" onClick={() => { setFlowEditIdx(null); setDraftGraph(null) }}>取消</Button>
+                  {canEdit && flowEditIdx != null && (
+                    <Button variant="ghost" onClick={() => {
+                      const f = active.businessFlow[flowEditIdx]
+                      const g = active.scoreDisplay.grades[flowEditIdx - 1]
+                      setDraftGraph(buildDefaultFlowGraph(f, g?.autoResult ?? '转人工', g))
+                    }}>重置为默认流程</Button>
+                  )}
+                  {canEdit && <Button variant="primary" onClick={saveFlowCanvas}>保存流程</Button>}
+                </>}>
+                {draftGraph && <FlowCanvasEditor graph={draftGraph} onChange={setDraftGraph} readOnly={!canEdit} />}
+              </Modal>
             </Panel>
           )}
 
@@ -1086,6 +1152,122 @@ export default function ReportTemplateConfig() {
           </Panel>
         </div>
       </div>
+    </div>
+  )
+}
+
+/* =============================================================================
+ * 评分卡形态预览：按「分值分段 + 所选形态」渲染示例效果（评分方案 Tab 内嵌）
+ * ========================================================================== */
+const pvTag = (c: string): React.CSSProperties => ({ padding: '1px 8px', fontSize: 11, fontWeight: 600, borderRadius: 999, color: c, border: `1px solid ${c}55`, background: `${c}14` })
+
+function ScoreCardPreview({ sd, min, max, score }: {
+  sd: { displayComponent: DisplayComponent; grades: ScoreGrade[]; showDescription: boolean; showThresholdBar: boolean; showRiskTags: boolean }
+  min: number; max: number; score: number
+}) {
+  const range = Math.max(1, max - min)
+  const pct = Math.max(0, Math.min(1, (score - min) / range))
+  const grade = sd.grades.find((g) => score >= g.minScore && score <= g.maxScore)
+    ?? (score < (sd.grades[0]?.minScore ?? min) ? sd.grades[0] : sd.grades[sd.grades.length - 1])
+  const color = grade?.color ?? '#1D4ED8'
+  const gradeChip = grade && (
+    <span style={{ padding: '2px 10px', fontSize: 12, fontWeight: 600, borderRadius: 999, color: '#fff', background: color }}>{grade.grade} · {grade.label}</span>
+  )
+
+  /* 阈值刻度条：各分段按区间宽度占比着色，当前分段高亮 */
+  const thresholdBar = (
+    <div style={{ marginTop: 10, maxWidth: 420 }}>
+      <div style={{ display: 'flex', height: 8, borderRadius: 999, overflow: 'hidden' }}>
+        {sd.grades.map((g, i) => (
+          <div key={i} style={{ width: `${Math.max(0, (Math.min(g.maxScore, max) - Math.max(g.minScore, min)) / range) * 100}%`, background: g.color, opacity: g === grade ? 1 : 0.35 }} />
+        ))}
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#9CA3AF', marginTop: 2 }}>
+        <span>{min}</span>
+        {sd.grades.slice(0, -1).map((g, i) => <span key={i}>{g.maxScore}</span>)}
+        <span>{max}</span>
+      </div>
+    </div>
+  )
+
+  let visual: React.ReactNode = null
+  if (sd.displayComponent === '大数字') {
+    visual = (
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
+        <span style={{ fontSize: 46, fontWeight: 800, color, lineHeight: 1 }}>{score}</span>
+        <span style={{ fontSize: 13, color: '#9CA3AF' }}>/ {max} 分</span>
+        {gradeChip}
+      </div>
+    )
+  } else if (sd.displayComponent === '环形图') {
+    const R = 46, C = 2 * Math.PI * R
+    visual = (
+      <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+        <svg width="120" height="120" viewBox="0 0 120 120">
+          <circle cx="60" cy="60" r={R} fill="none" stroke="#E5E7EB" strokeWidth="12" />
+          <circle cx="60" cy="60" r={R} fill="none" stroke={color} strokeWidth="12" strokeLinecap="round"
+            strokeDasharray={`${(C * pct).toFixed(1)} ${C.toFixed(1)}`} transform="rotate(-90 60 60)" />
+          <text x="60" y="58" textAnchor="middle" fontSize="26" fontWeight="800" fill={color}>{score}</text>
+          <text x="60" y="76" textAnchor="middle" fontSize="11" fill="#9CA3AF">/ {max} 分</text>
+        </svg>
+        {gradeChip}
+      </div>
+    )
+  } else if (sd.displayComponent === '进度条') {
+    visual = (
+      <div style={{ maxWidth: 420 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
+          <span style={{ fontSize: 22, fontWeight: 800, color }}>{score} 分</span>
+          {gradeChip}
+        </div>
+        <div style={{ position: 'relative', height: 16, borderRadius: 999, overflow: 'hidden', display: 'flex', background: '#F1F5F9' }}>
+          {sd.grades.map((g, i) => (
+            <div key={i} style={{ width: `${Math.max(0, (Math.min(g.maxScore, max) - Math.max(g.minScore, min)) / range) * 100}%`, background: g.color, opacity: 0.28 }} />
+          ))}
+          <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: `${pct * 100}%`, background: color, opacity: 0.9, borderRadius: 999 }} />
+        </div>
+      </div>
+    )
+  } else {
+    /* 仪表盘：半圆弧按分段着色 + 指针 */
+    const cx = 90, cy = 84, R2 = 66
+    const pt = (p: number, r: number) => ({ x: cx - r * Math.cos(p * Math.PI), y: cy - r * Math.sin(p * Math.PI) })
+    const arc = (p1: number, p2: number, r: number) => {
+      const a = pt(p1, r), b = pt(p2, r)
+      return `M ${a.x.toFixed(1)} ${a.y.toFixed(1)} A ${r} ${r} 0 0 1 ${b.x.toFixed(1)} ${b.y.toFixed(1)}`
+    }
+    const needle = pt(pct, R2 - 16)
+    visual = (
+      <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+        <svg width="180" height="104" viewBox="0 0 180 104">
+          {sd.grades.map((g, i) => {
+            const p1 = Math.max(0, (g.minScore - min) / range), p2 = Math.min(1, (g.maxScore - min) / range)
+            if (p2 <= p1) return null
+            return <path key={i} d={arc(p1, p2, R2)} fill="none" stroke={g.color} strokeWidth="12" opacity={g === grade ? 1 : 0.35} />
+          })}
+          <line x1={cx} y1={cy} x2={needle.x.toFixed(1)} y2={needle.y.toFixed(1)} stroke="#334155" strokeWidth="3" strokeLinecap="round" />
+          <circle cx={cx} cy={cy} r="5" fill="#334155" />
+          <text x={cx} y={cy + 16} textAnchor="middle" fontSize="20" fontWeight="800" fill={color}>{score}</text>
+        </svg>
+        {gradeChip}
+      </div>
+    )
+  }
+
+  return (
+    <div>
+      {visual}
+      {sd.showThresholdBar && thresholdBar}
+      {sd.showRiskTags && grade && (
+        <div style={{ display: 'flex', gap: 6, marginTop: 10, flexWrap: 'wrap' }}>
+          <span style={pvTag(color)}>风险{grade.riskLevel}</span>
+          <span style={pvTag('#64748B')}>{grade.autoResult}</span>
+          {grade.label && <span style={pvTag('#0EA5E9')}>{grade.label}</span>}
+        </div>
+      )}
+      {sd.showDescription && grade?.description && (
+        <div style={{ marginTop: 8, fontSize: 12, color: '#6B7280' }}>{grade.description}</div>
+      )}
     </div>
   )
 }
