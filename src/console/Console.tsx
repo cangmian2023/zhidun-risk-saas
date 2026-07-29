@@ -19,6 +19,9 @@ import VerifyRuleList from './VerifyRuleList'
 import VerifyRuleConfig from './VerifyRuleConfig'
 import ReportTemplate from './ReportTemplate'
 import ReportTemplatePreview from './ReportTemplatePreview'
+import MidDashboardPage from './MidDashboardPage'
+import DashboardConfig from './DashboardConfig'
+import { loadDashboards, mergeMidMenu, getDashboardByKey } from './dashboardData'
 import { creditRiskMenu, scoringMenu, entMenu, dmMenu, cmMenu, type MenuGroup } from './menus'
 import SidebarMenu from './SidebarMenu'
 import { MenuIcon, type IconName } from '../components/icons'
@@ -249,6 +252,7 @@ export default function Console() {
     'cm:mid-dispose-strategy': 'work_flow',
     'cm:credit-kimi-config': 'sliders',
     'cm:report-template': 'stack',
+    'cm:dashboard-config': 'grid',
     'cm:mid-task-config': 'settings',
     'cm:mid-task-log': 'clock',
     'cm:mid-output-api': 'cloud',
@@ -258,7 +262,7 @@ export default function Console() {
   const menuIcon = (key: string): IconName => MENU_ICON[key] ?? 'dashboard'
 
   const menu: MenuGroup[] =
-    sub === 'cr' ? creditRiskMenu :
+    sub === 'cr' ? mergeMidMenu(creditRiskMenu, loadDashboards()) :
     sub === 'sc' ? scoringMenu :
     sub === 'ep' ? entMenu :
     sub === 'dm' ? dmMenu :
@@ -441,6 +445,10 @@ export default function Console() {
               <ReportTemplate />
             ) : key === 'cm:report-template-preview' ? (
               <ReportTemplatePreview />
+            ) : key === 'cm:dashboard-config' ? (
+              <DashboardConfig />
+            ) : getDashboardByKey(key) ? (
+              <MidDashboardPage pageKey={key} />
             ) : isQuery && queryProd ? (
               <ScoreQueryPage product={queryProd} />
             ) : (

@@ -218,6 +218,7 @@ export const cmMenu: MenuGroup[] = [
   },
   { group: '模型', section: '公共配置', items: [{ label: '信用模型', key: 'cm:credit-kimi-config', desc: '配置六大维度的权重、评分规则、叠加惩罚机制' }] },
   { group: '报告模板', section: '公共配置', items: [{ label: '报告模板', key: 'cm:report-template', desc: '统一管理信息核验 / 信用风控 / 欺诈识别 / 决策报告四类报告的展示模板、评分等级、结论与导出样式' }] },
+  { group: '数据看板配置', section: '公共配置', items: [{ label: '数据看板配置', key: 'cm:dashboard-config', desc: '统一管理贷中监控下的数据看板页面：增删改查、页面位置、展示数据与可视化配置', keep: true }] },
   {
     group: '监控配置',
     section: '公共配置',
