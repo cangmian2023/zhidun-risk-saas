@@ -1060,7 +1060,7 @@ function DetailView({
       </Panel>
 
       {/* ===== 命中规则与模型 ===== */}
-      <Panel id="rule" title="命中规则与模型" desc="命中规则默认展开、未命中默认折叠；高权重命中项以红色强调">
+      <Panel id="rule" title="命中规则与模型">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[720px] text-sm">
             <thead>

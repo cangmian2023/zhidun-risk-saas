@@ -6,7 +6,6 @@ import ModulePage from './ModulePage'
 import PreApplication from './PreApplication'
 import PreVerifyDetail from './PreVerifyDetail'
 import InfoVerifyList from './InfoVerifyList'
-import CreditReportDetail from './CreditReportDetail'
 import FraudScheme4List from './FraudScheme4List'
 import FraudScheme4Detail from './FraudScheme4Detail'
 import CreditKimiList from './CreditKimiList'
@@ -415,8 +414,6 @@ export default function Console() {
               <InfoVerifyList />
             ) : key === 'cr:pre-verify-detail' ? (
               <PreVerifyDetail />
-            ) : key === 'cr:credit-report-detail' ? (
-              <CreditReportDetail />
             ) : key === 'cr:pre-fraud' ? (
               <FraudScheme4List />
             ) : key === 'cr:pre-fraud-detail' ? (

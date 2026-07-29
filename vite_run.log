@@ -255,3 +255,578 @@ Re-optimizing dependencies because lockfile has changed
 10:15:34 PM [vite] hmr update /src/console/ReportTemplate.tsx, /src/index.css
 10:16:59 PM [vite] hmr update /src/console/ReportTemplate.tsx, /src/index.css
 10:17:19 PM [vite] hmr update /src/console/ReportTemplatePreview.tsx, /src/index.css
+6:40:10 PM [vite] hmr update /src/console/Console.tsx, /src/index.css
+6:40:10 PM [vite] hmr update /src/console/ReportTemplate.tsx, /src/index.css
+6:40:10 PM [vite] hmr update /src/index.css, /src/console/Console.tsx
+6:40:10 PM [vite] hmr update /src/index.css, /src/console/ReportTemplatePreview.tsx, /src/console/ReportTemplate.tsx
+6:52:23 PM [vite] hmr update /src/console/ReportTemplate.tsx, /src/index.css
+6:53:07 PM [vite] hmr update /src/console/FlowCanvasEditor.tsx, /src/index.css
+6:53:07 PM [vite] hmr update /src/console/DashboardConfig.tsx, /src/index.css
+6:53:07 PM [vite] hmr update /src/console/PreApplication.tsx, /src/index.css
+6:53:07 PM [vite] hmr update /src/console/CreditModelConfig.tsx, /src/index.css
+7:24:00 PM [vite] hmr update /src/index.css, /src/console/ReportTemplatePreview.tsx, /src/console/ReportTemplate.tsx, /src/console/FlowCanvasEditor.tsx
+7:24:16 PM [vite] hmr update /src/index.css, /src/console/ReportTemplatePreview.tsx, /src/console/ReportTemplate.tsx, /src/console/FlowCanvasEditor.tsx
+7:24:34 PM [vite] hmr update /src/console/FlowCanvasEditor.tsx, /src/index.css
+7:24:49 PM [vite] hmr update /src/console/FlowCanvasEditor.tsx, /src/index.css
+7:25:28 PM [vite] hmr update /src/console/FlowCanvasEditor.tsx, /src/index.css
+7:26:35 PM [vite] hmr update /src/console/FlowCanvasEditor.tsx, /src/index.css
+7:30:02 PM [vite] hmr update /src/index.css, /src/console/ReportTemplatePreview.tsx, /src/console/ReportTemplate.tsx, /src/console/FlowCanvasEditor.tsx
+7:30:15 PM [vite] hmr update /src/console/FlowCanvasEditor.tsx, /src/index.css
+7:32:37 PM [vite] hmr update /src/console/FlowCanvasEditor.tsx, /src/index.css
+7:32:48 PM [vite] hmr update /src/console/FlowCanvasEditor.tsx, /src/index.css
+7:33:02 PM [vite] hmr update /src/index.css, /src/console/ReportTemplatePreview.tsx, /src/console/ReportTemplate.tsx, /src/console/FlowCanvasEditor.tsx
+7:33:07 PM [vite] hmr update /src/index.css, /src/console/ReportTemplatePreview.tsx, /src/console/ReportTemplate.tsx, /src/console/FlowCanvasEditor.tsx
+7:33:12 PM [vite] hmr update /src/index.css, /src/console/ReportTemplatePreview.tsx, /src/console/ReportTemplate.tsx, /src/console/FlowCanvasEditor.tsx
+7:33:17 PM [vite] hmr update /src/index.css, /src/console/ReportTemplatePreview.tsx, /src/console/ReportTemplate.tsx, /src/console/FlowCanvasEditor.tsx
+7:33:22 PM [vite] hmr update /src/index.css, /src/console/ReportTemplatePreview.tsx, /src/console/ReportTemplate.tsx, /src/console/FlowCanvasEditor.tsx
+7:33:27 PM [vite] hmr update /src/index.css, /src/console/ReportTemplatePreview.tsx, /src/console/ReportTemplate.tsx, /src/console/FlowCanvasEditor.tsx
+7:33:32 PM [vite] hmr update /src/index.css, /src/console/ReportTemplatePreview.tsx, /src/console/ReportTemplate.tsx, /src/console/FlowCanvasEditor.tsx
+7:33:47 PM [vite] hmr update /src/console/FlowCanvasEditor.tsx, /src/index.css
+7:39:06 PM [vite] hmr update /src/console/ReportTemplate.tsx, /src/index.css
+7:39:41 PM [vite] hmr update /src/console/ReportTemplatePreview.tsx, /src/index.css
+7:47:37 PM [vite] hmr update /src/index.css, /src/console/ReportTemplatePreview.tsx, /src/console/ReportTemplate.tsx, /src/console/FlowCanvasEditor.tsx
+7:47:41 PM [vite] hmr update /src/console/DecisionOps.tsx, /src/index.css
+7:47:42 PM [vite] hmr invalidate /src/console/DecisionOps.tsx Could not Fast Refresh ("decisionOpsFor" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+7:47:42 PM [vite] hmr update /src/index.css, /src/console/DecisionList.tsx, /src/console/DecisionDetail.tsx
+7:47:48 PM [vite] hmr update /src/console/DecisionOps.tsx, /src/index.css
+7:47:49 PM [vite] hmr invalidate /src/console/DecisionOps.tsx Could not Fast Refresh ("decisionOpsFor" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+7:47:49 PM [vite] hmr update /src/index.css, /src/console/DecisionList.tsx, /src/console/DecisionDetail.tsx
+7:47:57 PM [vite] hmr update /src/console/DecisionOps.tsx, /src/index.css
+7:47:58 PM [vite] hmr invalidate /src/console/DecisionOps.tsx Could not Fast Refresh ("decisionOpsFor" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+7:47:58 PM [vite] hmr update /src/index.css, /src/console/DecisionList.tsx, /src/console/DecisionDetail.tsx
+7:48:02 PM [vite] hmr update /src/console/DecisionOps.tsx, /src/index.css
+7:48:02 PM [vite] hmr invalidate /src/console/DecisionOps.tsx Could not Fast Refresh ("decisionOpsFor" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+7:48:02 PM [vite] hmr update /src/index.css, /src/console/DecisionList.tsx, /src/console/DecisionDetail.tsx
+7:48:10 PM [vite] hmr update /src/console/DecisionOps.tsx, /src/index.css
+7:48:11 PM [vite] hmr invalidate /src/console/DecisionOps.tsx Could not Fast Refresh ("decisionOpsFor" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+7:48:11 PM [vite] hmr update /src/index.css, /src/console/DecisionList.tsx, /src/console/DecisionDetail.tsx
+7:48:31 PM [vite] hmr update /src/console/DecisionOps.tsx, /src/index.css
+7:48:31 PM [vite] hmr invalidate /src/console/DecisionOps.tsx Could not Fast Refresh ("decisionOpsFor" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+7:48:31 PM [vite] hmr update /src/index.css, /src/console/DecisionList.tsx, /src/console/DecisionDetail.tsx
+7:50:21 PM [vite] hmr update /src/console/DecisionOps.tsx, /src/index.css
+7:50:22 PM [vite] hmr invalidate /src/console/DecisionOps.tsx Could not Fast Refresh ("decisionOpsFor" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+7:50:22 PM [vite] hmr update /src/index.css, /src/console/DecisionList.tsx, /src/console/DecisionDetail.tsx
+7:50:30 PM [vite] hmr update /src/console/DecisionOps.tsx, /src/index.css
+7:50:30 PM [vite] hmr invalidate /src/console/DecisionOps.tsx Could not Fast Refresh ("decisionOpsFor" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+7:50:30 PM [vite] hmr update /src/index.css, /src/console/DecisionList.tsx, /src/console/DecisionDetail.tsx
+7:50:35 PM [vite] hmr update /src/console/DecisionOps.tsx, /src/index.css
+7:50:35 PM [vite] hmr invalidate /src/console/DecisionOps.tsx Could not Fast Refresh ("decisionOpsFor" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+7:50:35 PM [vite] hmr update /src/index.css, /src/console/DecisionList.tsx, /src/console/DecisionDetail.tsx
+7:52:50 PM [vite] hmr update /src/console/DecisionOps.tsx, /src/index.css
+7:52:51 PM [vite] hmr invalidate /src/console/DecisionOps.tsx Could not Fast Refresh ("decisionOpsFor" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+7:52:51 PM [vite] hmr update /src/index.css, /src/console/DecisionList.tsx, /src/console/DecisionDetail.tsx
+7:58:22 PM [vite] hmr update /src/console/DecisionDetail.tsx, /src/index.css
+7:58:22 PM [vite] Internal server error: /Users/mandy/work/project/risk/SaaS/src/console/DecisionDetail.tsx: Identifier 'Tone' has already been declared. (236:7)
+
+  234 |
+  235 |   // 各段落状态提示：预警(alert)/正常(ok)/待定(normal)，驱动右侧导航卡着色与圆点
+> 236 |   type Tone = 'ok' | 'alert' | 'normal'
+      |        ^
+  237 |   const sectionTone = (id: string): Tone => {
+  238 |     const r = d.row
+  239 |     switch (id) {
+  Plugin: vite:react-babel
+  File: /Users/mandy/work/project/risk/SaaS/src/console/DecisionDetail.tsx:236:7
+  234|  
+  235|    // 各段落状态提示：预警(alert)/正常(ok)/待定(normal)，驱动右侧导航卡着色与圆点
+  236|    type Tone = 'ok' | 'alert' | 'normal'
+     |         ^
+  237|    const sectionTone = (id: string): Tone => {
+  238|      const r = d.row
+      at constructor (/Users/mandy/work/project/risk/SaaS/node_modules/@babel/parser/lib/index.js:365:19)
+      at TypeScriptParserMixin.raise (/Users/mandy/work/project/risk/SaaS/node_modules/@babel/parser/lib/index.js:6616:19)
+      at TypeScriptScopeHandler.checkRedeclarationInScope (/Users/mandy/work/project/risk/SaaS/node_modules/@babel/parser/lib/index.js:1619:19)
+      at TypeScriptScopeHandler.declareName (/Users/mandy/work/project/risk/SaaS/node_modules/@babel/parser/lib/index.js:4895:14)
+      at TypeScriptParserMixin.declareNameFromIdentifier (/Users/mandy/work/project/risk/SaaS/node_modules/@babel/parser/lib/index.js:7584:16)
+      at TypeScriptParserMixin.checkIdentifier (/Users/mandy/work/project/risk/SaaS/node_modules/@babel/parser/lib/index.js:7580:12)
+      at TypeScriptParserMixin.tsParseTypeAliasDeclaration (/Users/mandy/work/project/risk/SaaS/node_modules/@babel/parser/lib/index.js:8783:10)
+      at TypeScriptParserMixin.parseStatementContent (/Users/mandy/work/project/risk/SaaS/node_modules/@babel/parser/lib/index.js:9519:27)
+      at TypeScriptParserMixin.parseStatementLike (/Users/mandy/work/project/risk/SaaS/node_modules/@babel/parser/lib/index.js:12784:17)
+      at TypeScriptParserMixin.parseStatementListItem (/Users/mandy/work/project/risk/SaaS/node_modules/@babel/parser/lib/index.js:12764:17)
+      at TypeScriptParserMixin.parseBlockOrModuleBlockBody (/Users/mandy/work/project/risk/SaaS/node_modules/@babel/parser/lib/index.js:13333:61)
+      at TypeScriptParserMixin.parseBlockBody (/Users/mandy/work/project/risk/SaaS/node_modules/@babel/parser/lib/index.js:13326:10)
+      at TypeScriptParserMixin.parseBlock (/Users/mandy/work/project/risk/SaaS/node_modules/@babel/parser/lib/index.js:13314:10)
+      at TypeScriptParserMixin.parseFunctionBody (/Users/mandy/work/project/risk/SaaS/node_modules/@babel/parser/lib/index.js:12117:24)
+      at TypeScriptParserMixin.parseFunctionBodyAndFinish (/Users/mandy/work/project/risk/SaaS/node_modules/@babel/parser/lib/index.js:12103:10)
+      at TypeScriptParserMixin.parseFunctionBodyAndFinish (/Users/mandy/work/project/risk/SaaS/node_modules/@babel/parser/lib/index.js:9189:18)
+      at /Users/mandy/work/project/risk/SaaS/node_modules/@babel/parser/lib/index.js:13462:12
+      at TypeScriptParserMixin.withSmartMixTopicForbiddingContext (/Users/mandy/work/project/risk/SaaS/node_modules/@babel/parser/lib/index.js:12420:14)
+      at TypeScriptParserMixin.parseFunction (/Users/mandy/work/project/risk/SaaS/node_modules/@babel/parser/lib/index.js:13461:10)
+      at TypeScriptParserMixin.parseExportDefaultExpression (/Users/mandy/work/project/risk/SaaS/node_modules/@babel/parser/lib/index.js:13924:19)
+      at TypeScriptParserMixin.parseExportDefaultExpression (/Users/mandy/work/project/risk/SaaS/node_modules/@babel/parser/lib/index.js:9419:18)
+      at TypeScriptParserMixin.parseExport (/Users/mandy/work/project/risk/SaaS/node_modules/@babel/parser/lib/index.js:13845:25)
+      at TypeScriptParserMixin.parseExport (/Users/mandy/work/project/risk/SaaS/node_modules/@babel/parser/lib/index.js:9402:20)
+      at TypeScriptParserMixin.parseStatementContent (/Users/mandy/work/project/risk/SaaS/node_modules/@babel/parser/lib/index.js:12895:27)
+      at TypeScriptParserMixin.parseStatementContent (/Users/mandy/work/project/risk/SaaS/node_modules/@babel/parser/lib/index.js:9525:18)
+      at TypeScriptParserMixin.parseStatementLike (/Users/mandy/work/project/risk/SaaS/node_modules/@babel/parser/lib/index.js:12784:17)
+      at TypeScriptParserMixin.parseModuleItem (/Users/mandy/work/project/risk/SaaS/node_modules/@babel/parser/lib/index.js:12761:17)
+      at TypeScriptParserMixin.parseBlockOrModuleBlockBody (/Users/mandy/work/project/risk/SaaS/node_modules/@babel/parser/lib/index.js:13333:36)
+      at TypeScriptParserMixin.parseBlockBody (/Users/mandy/work/project/risk/SaaS/node_modules/@babel/parser/lib/index.js:13326:10)
+      at TypeScriptParserMixin.parseProgram (/Users/mandy/work/project/risk/SaaS/node_modules/@babel/parser/lib/index.js:12639:10)
+      at TypeScriptParserMixin.parseTopLevel (/Users/mandy/work/project/risk/SaaS/node_modules/@babel/parser/lib/index.js:12629:25)
+      at TypeScriptParserMixin.parse (/Users/mandy/work/project/risk/SaaS/node_modules/@babel/parser/lib/index.js:14505:25)
+      at TypeScriptParserMixin.parse (/Users/mandy/work/project/risk/SaaS/node_modules/@babel/parser/lib/index.js:10143:18)
+      at parse (/Users/mandy/work/project/risk/SaaS/node_modules/@babel/parser/lib/index.js:14539:38)
+      at parser (/Users/mandy/work/project/risk/SaaS/node_modules/@babel/core/lib/parser/index.js:41:34)
+      at parser.next (<anonymous>)
+      at normalizeFile (/Users/mandy/work/project/risk/SaaS/node_modules/@babel/core/lib/transformation/normalize-file.js:51:37)
+      at normalizeFile.next (<anonymous>)
+      at run (/Users/mandy/work/project/risk/SaaS/node_modules/@babel/core/lib/transformation/index.js:22:50)
+      at run.next (<anonymous>)
+      at transform (/Users/mandy/work/project/risk/SaaS/node_modules/@babel/core/lib/transform.js:22:33)
+      at transform.next (<anonymous>)
+      at step (/Users/mandy/work/project/risk/SaaS/node_modules/gensync/index.js:261:32)
+      at /Users/mandy/work/project/risk/SaaS/node_modules/gensync/index.js:273:13
+      at async.call.result.err.err (/Users/mandy/work/project/risk/SaaS/node_modules/gensync/index.js:223:11)
+      at /Users/mandy/work/project/risk/SaaS/node_modules/gensync/index.js:189:28
+      at /Users/mandy/work/project/risk/SaaS/node_modules/@babel/core/lib/gensync-utils/async.js:67:7
+      at /Users/mandy/work/project/risk/SaaS/node_modules/gensync/index.js:113:33
+      at step (/Users/mandy/work/project/risk/SaaS/node_modules/gensync/index.js:287:14)
+      at /Users/mandy/work/project/risk/SaaS/node_modules/gensync/index.js:273:13
+7:59:05 PM [vite] hmr update /src/console/DecisionDetail.tsx, /src/index.css
+7:59:50 PM [vite] hmr update /src/console/DecisionOps.tsx, /src/index.css
+7:59:50 PM [vite] hmr invalidate /src/console/DecisionOps.tsx Could not Fast Refresh ("decisionOpsFor" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+7:59:50 PM [vite] hmr update /src/index.css, /src/console/DecisionList.tsx, /src/console/DecisionDetail.tsx
+8:04:12 PM [vite] hmr update /src/console/DecisionDetail.tsx, /src/index.css
+8:04:17 PM [vite] hmr update /src/console/DecisionDetail.tsx, /src/index.css
+8:04:21 PM [vite] hmr update /src/console/DecisionDetail.tsx, /src/index.css
+8:04:27 PM [vite] hmr update /src/console/DecisionDetail.tsx, /src/index.css
+8:04:34 PM [vite] hmr update /src/console/DecisionDetail.tsx, /src/index.css
+8:10:35 PM [vite] hmr update /src/console/DecisionDetail.tsx, /src/index.css
+8:10:43 PM [vite] hmr update /src/console/DecisionDetail.tsx, /src/index.css
+8:10:49 PM [vite] hmr update /src/console/DecisionOps.tsx, /src/index.css
+8:10:49 PM [vite] hmr invalidate /src/console/DecisionOps.tsx Could not Fast Refresh ("decisionOpsFor" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+8:10:49 PM [vite] hmr update /src/index.css, /src/console/DecisionList.tsx, /src/console/DecisionDetail.tsx
+8:10:54 PM [vite] hmr update /src/console/DecisionList.tsx, /src/index.css
+8:11:02 PM [vite] hmr update /src/console/DecisionList.tsx, /src/index.css
+8:28:44 PM [vite] hmr update /src/index.css, /src/console/ReportTemplatePreview.tsx, /src/console/ReportTemplate.tsx, /src/console/FlowCanvasEditor.tsx, /src/console/DecisionOps.tsx
+8:28:47 PM [vite] hmr invalidate /src/console/DecisionOps.tsx Could not Fast Refresh ("decisionOpsFor" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+8:28:47 PM [vite] hmr update /src/index.css, /src/console/DecisionList.tsx, /src/console/DecisionDetail.tsx
+8:29:27 PM [vite] hmr update /src/console/CreditReportDetail.tsx, /src/index.css
+8:29:34 PM [vite] hmr update /src/console/CreditReportDetail.tsx, /src/index.css
+8:29:40 PM [vite] hmr update /src/console/CreditReportDetail.tsx, /src/index.css
+8:29:54 PM [vite] hmr update /src/console/CreditReportDetail.tsx, /src/index.css
+8:30:00 PM [vite] hmr update /src/console/CreditReportDetail.tsx, /src/index.css
+8:30:30 PM [vite] hmr update /src/console/FraudScheme4Ops.tsx, /src/index.css
+8:30:33 PM [vite] hmr invalidate /src/console/FraudScheme4Ops.tsx Could not Fast Refresh ("FRAUD_S4_OP_LABEL" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+8:30:33 PM [vite] hmr update /src/index.css, /src/console/FraudScheme4List.tsx, /src/console/FraudScheme4Detail.tsx
+8:30:47 PM [vite] hmr update /src/console/FraudScheme4Ops.tsx, /src/index.css
+8:30:47 PM [vite] hmr invalidate /src/console/FraudScheme4Ops.tsx Could not Fast Refresh ("FRAUD_S4_OP_LABEL" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+8:30:47 PM [vite] hmr update /src/index.css, /src/console/FraudScheme4List.tsx, /src/console/FraudScheme4Detail.tsx
+8:30:57 PM [vite] hmr update /src/console/FraudScheme4Ops.tsx, /src/index.css
+8:30:58 PM [vite] hmr invalidate /src/console/FraudScheme4Ops.tsx Could not Fast Refresh ("FRAUD_S4_OP_LABEL" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+8:30:58 PM [vite] hmr update /src/index.css, /src/console/FraudScheme4List.tsx, /src/console/FraudScheme4Detail.tsx
+8:31:06 PM [vite] hmr update /src/console/FraudScheme4Ops.tsx, /src/index.css
+8:31:06 PM [vite] hmr invalidate /src/console/FraudScheme4Ops.tsx Could not Fast Refresh ("FRAUD_S4_OP_LABEL" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+8:31:06 PM [vite] hmr update /src/index.css, /src/console/FraudScheme4List.tsx, /src/console/FraudScheme4Detail.tsx
+8:31:13 PM [vite] hmr update /src/console/FraudScheme4Ops.tsx, /src/index.css
+8:31:13 PM [vite] hmr invalidate /src/console/FraudScheme4Ops.tsx Could not Fast Refresh ("FRAUD_S4_OP_LABEL" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+8:31:13 PM [vite] hmr update /src/index.css, /src/console/FraudScheme4List.tsx, /src/console/FraudScheme4Detail.tsx
+8:31:19 PM [vite] hmr update /src/console/FraudScheme4Ops.tsx, /src/index.css
+8:31:20 PM [vite] hmr invalidate /src/console/FraudScheme4Ops.tsx Could not Fast Refresh ("FRAUD_S4_OP_LABEL" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+8:31:20 PM [vite] hmr update /src/index.css, /src/console/FraudScheme4List.tsx, /src/console/FraudScheme4Detail.tsx
+8:31:27 PM [vite] hmr update /src/console/FraudScheme4Ops.tsx, /src/index.css
+8:31:28 PM [vite] hmr invalidate /src/console/FraudScheme4Ops.tsx Could not Fast Refresh ("FRAUD_S4_OP_LABEL" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+8:31:28 PM [vite] hmr update /src/index.css, /src/console/FraudScheme4List.tsx, /src/console/FraudScheme4Detail.tsx
+8:31:34 PM [vite] hmr update /src/console/FraudScheme4Detail.tsx, /src/index.css
+8:31:46 PM [vite] hmr update /src/console/FraudScheme4Ops.tsx, /src/index.css
+8:31:47 PM [vite] hmr invalidate /src/console/FraudScheme4Ops.tsx Could not Fast Refresh ("FRAUD_S4_OP_LABEL" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+8:31:47 PM [vite] hmr update /src/index.css, /src/console/FraudScheme4List.tsx, /src/console/FraudScheme4Detail.tsx
+8:33:09 PM [vite] hmr update /src/console/FraudScheme4Ops.tsx, /src/index.css
+8:33:10 PM [vite] hmr invalidate /src/console/FraudScheme4Ops.tsx Could not Fast Refresh ("FRAUD_S4_OP_LABEL" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+8:33:10 PM [vite] hmr update /src/index.css, /src/console/FraudScheme4List.tsx, /src/console/FraudScheme4Detail.tsx
+8:34:38 PM [vite] hmr update /src/console/ApprovalModal.tsx, /src/index.css
+8:55:21 PM [vite] hmr update /src/index.css, /src/console/ReportTemplatePreview.tsx, /src/console/ReportTemplate.tsx, /src/console/FlowCanvasEditor.tsx, /src/console/DecisionOps.tsx, /src/console/CreditReportDetail.tsx, /src/console/FraudScheme4Ops.tsx
+8:55:23 PM [vite] hmr invalidate /src/console/DecisionOps.tsx Could not Fast Refresh ("decisionOpsFor" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+8:55:23 PM [vite] hmr update /src/index.css, /src/console/DecisionList.tsx, /src/console/DecisionDetail.tsx
+8:55:23 PM [vite] hmr invalidate /src/console/FraudScheme4Ops.tsx Could not Fast Refresh ("FRAUD_S4_OP_LABEL" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+8:55:23 PM [vite] hmr update /src/index.css, /src/console/FraudScheme4List.tsx, /src/console/FraudScheme4Detail.tsx
+9:03:34 PM [vite] hmr update /src/index.css, /src/console/ReportTemplatePreview.tsx, /src/console/ReportTemplate.tsx, /src/console/FlowCanvasEditor.tsx, /src/console/DecisionOps.tsx, /src/console/CreditReportDetail.tsx, /src/console/FraudScheme4Ops.tsx
+9:03:36 PM [vite] hmr invalidate /src/console/DecisionOps.tsx Could not Fast Refresh ("decisionOpsFor" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+9:03:36 PM [vite] hmr update /src/index.css, /src/console/DecisionList.tsx, /src/console/DecisionDetail.tsx
+9:03:36 PM [vite] hmr invalidate /src/console/FraudScheme4Ops.tsx Could not Fast Refresh ("FRAUD_S4_OP_LABEL" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+9:03:36 PM [vite] hmr update /src/index.css, /src/console/FraudScheme4List.tsx, /src/console/FraudScheme4Detail.tsx
+9:03:42 PM [vite] hmr update /src/console/VerifyOps.tsx, /src/index.css
+9:03:42 PM [vite] hmr invalidate /src/console/VerifyOps.tsx Could not Fast Refresh ("OP_LABEL" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+9:03:42 PM [vite] hmr update /src/index.css, /src/console/PreVerifyDetail.tsx, /src/console/InfoVerifyList.tsx
+9:03:49 PM [vite] hmr update /src/console/VerifyOps.tsx, /src/index.css
+9:03:50 PM [vite] hmr invalidate /src/console/VerifyOps.tsx Could not Fast Refresh ("OP_LABEL" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+9:03:50 PM [vite] hmr update /src/index.css, /src/console/PreVerifyDetail.tsx, /src/console/InfoVerifyList.tsx
+9:03:58 PM [vite] hmr update /src/console/VerifyOps.tsx, /src/index.css
+9:03:58 PM [vite] hmr invalidate /src/console/VerifyOps.tsx Could not Fast Refresh ("OP_LABEL" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+9:03:58 PM [vite] hmr update /src/index.css, /src/console/PreVerifyDetail.tsx, /src/console/InfoVerifyList.tsx
+9:04:04 PM [vite] hmr update /src/console/VerifyOps.tsx, /src/index.css
+9:04:04 PM [vite] hmr invalidate /src/console/VerifyOps.tsx Could not Fast Refresh ("OP_LABEL" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+9:04:04 PM [vite] hmr update /src/index.css, /src/console/PreVerifyDetail.tsx, /src/console/InfoVerifyList.tsx
+9:04:13 PM [vite] hmr update /src/console/VerifyOps.tsx, /src/index.css
+9:04:13 PM [vite] hmr invalidate /src/console/VerifyOps.tsx Could not Fast Refresh ("OP_LABEL" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+9:04:13 PM [vite] hmr update /src/index.css, /src/console/PreVerifyDetail.tsx, /src/console/InfoVerifyList.tsx
+9:04:20 PM [vite] hmr update /src/console/VerifyOps.tsx, /src/index.css
+9:04:21 PM [vite] hmr invalidate /src/console/VerifyOps.tsx Could not Fast Refresh ("OP_LABEL" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+9:04:21 PM [vite] hmr update /src/index.css, /src/console/PreVerifyDetail.tsx, /src/console/InfoVerifyList.tsx
+9:04:28 PM [vite] hmr update /src/console/VerifyOps.tsx, /src/index.css
+9:04:29 PM [vite] hmr invalidate /src/console/VerifyOps.tsx Could not Fast Refresh ("OP_LABEL" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+9:04:29 PM [vite] hmr update /src/index.css, /src/console/PreVerifyDetail.tsx, /src/console/InfoVerifyList.tsx
+9:04:32 PM [vite] hmr update /src/console/VerifyOps.tsx, /src/index.css
+9:04:32 PM [vite] hmr invalidate /src/console/VerifyOps.tsx Could not Fast Refresh ("OP_LABEL" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+9:04:32 PM [vite] hmr update /src/index.css, /src/console/PreVerifyDetail.tsx, /src/console/InfoVerifyList.tsx
+9:11:16 PM [vite] hmr update /src/console/VerifyOps.tsx, /src/index.css
+9:11:16 PM [vite] hmr update /src/console/PreVerifyDetail.tsx, /src/index.css
+9:11:18 PM [vite] hmr invalidate /src/console/VerifyOps.tsx Could not Fast Refresh (new export)
+9:11:18 PM [vite] hmr update /src/index.css, /src/console/PreVerifyDetail.tsx, /src/console/InfoVerifyList.tsx
+9:15:39 PM [vite] hmr update /src/console/Console.tsx, /src/index.css
+9:15:39 PM [vite] hmr update /src/index.css, /src/console/Console.tsx
+9:15:42 PM [vite] hmr update /src/console/CreditReportDetail.tsx, /src/index.css
+10:42:25 PM [vite] hmr update /src/index.css, /src/console/ReportTemplatePreview.tsx, /src/console/ReportTemplate.tsx, /src/console/FlowCanvasEditor.tsx, /src/console/DecisionOps.tsx, /src/console/FraudScheme4Ops.tsx, /src/console/VerifyOps.tsx
+10:42:25 PM [vite] hmr invalidate /src/console/DecisionOps.tsx Could not Fast Refresh ("decisionOpsFor" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+10:42:25 PM [vite] hmr update /src/index.css, /src/console/DecisionList.tsx, /src/console/DecisionDetail.tsx
+10:42:25 PM [vite] hmr invalidate /src/console/FraudScheme4Ops.tsx Could not Fast Refresh ("FRAUD_S4_OP_LABEL" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+10:42:25 PM [vite] hmr update /src/index.css, /src/console/FraudScheme4List.tsx, /src/console/FraudScheme4Detail.tsx
+10:42:25 PM [vite] hmr invalidate /src/console/VerifyOps.tsx Could not Fast Refresh ("OP_LABEL" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+10:42:25 PM [vite] hmr update /src/index.css, /src/console/PreVerifyDetail.tsx, /src/console/InfoVerifyList.tsx
+10:42:36 PM [vite] hmr update /src/console/VerifyOps.tsx, /src/index.css
+10:42:36 PM [vite] hmr invalidate /src/console/VerifyOps.tsx Could not Fast Refresh ("OP_LABEL" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+10:42:36 PM [vite] hmr update /src/index.css, /src/console/PreVerifyDetail.tsx, /src/console/InfoVerifyList.tsx
+10:42:42 PM [vite] hmr update /src/console/VerifyOps.tsx, /src/index.css
+10:42:42 PM [vite] hmr invalidate /src/console/VerifyOps.tsx Could not Fast Refresh ("OP_LABEL" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+10:42:42 PM [vite] hmr update /src/index.css, /src/console/PreVerifyDetail.tsx, /src/console/InfoVerifyList.tsx
+10:42:55 PM [vite] hmr update /src/console/FraudScheme4Ops.tsx, /src/index.css
+10:42:56 PM [vite] hmr invalidate /src/console/FraudScheme4Ops.tsx Could not Fast Refresh ("FRAUD_S4_OP_LABEL" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+10:42:56 PM [vite] hmr update /src/index.css, /src/console/FraudScheme4List.tsx, /src/console/FraudScheme4Detail.tsx
+10:43:01 PM [vite] hmr update /src/console/FraudScheme4Ops.tsx, /src/index.css
+10:43:01 PM [vite] Internal server error: /Users/mandy/work/project/risk/SaaS/src/console/FraudScheme4Ops.tsx: Unexpected token (57:4)
+
+  55 |   return resolveActions(FRAUD_MACHINE, { workStatus: work, scoreBand: band }, { context }).map((a) => a.key as FraudScheme4OpKey)
+  56 | }
+> 57 |     case '核验计算中': // 自动结果未出，仅可查看（置灰，见 viewLocked）
+     |     ^
+  58 |       return ['view']
+  59 |     case '待确认': // 低/极低风险→查看/报告确认；高风险→查看/报告确认/强制复审；极高风险→查看/报告确认/加入黑名单
+  60 |       if (band === '极高') return ['view', 'reportConfirm', 'addBlacklist']
+  Plugin: vite:react-babel
+  File: /Users/mandy/work/project/risk/SaaS/src/console/FraudScheme4Ops.tsx:57:4
+  55 |    return resolveActions(FRAUD_MACHINE, { workStatus: work, scoreBand: band }, { context }).map((a) => a.key as FraudScheme4OpKey)
+  56 |  }
+  57 |      case '核验计算中': // 自动结果未出，仅可查看（置灰，见 viewLocked）
+     |      ^
+  58 |        return ['view']
+  59 |      case '待确认': // 低/极低风险→查看/报告确认；高风险→查看/报告确认/强制复审；极高风险→查看/报告确认/加入黑名单
+      at constructor (/Users/mandy/work/project/risk/SaaS/node_modules/@babel/parser/lib/index.js:365:19)
+      at TypeScriptParserMixin.raise (/Users/mandy/work/project/risk/SaaS/node_modules/@babel/parser/lib/index.js:6616:19)
+      at TypeScriptParserMixin.unexpected (/Users/mandy/work/project/risk/SaaS/node_modules/@babel/parser/lib/index.js:6636:16)
+      at TypeScriptParserMixin.parseExprAtom (/Users/mandy/work/project/risk/SaaS/node_modules/@babel/parser/lib/index.js:11459:22)
+      at TypeScriptParserMixin.parseExprAtom (/Users/mandy/work/project/risk/SaaS/node_modules/@babel/parser/lib/index.js:4776:20)
+      at TypeScriptParserMixin.parseExprSubscripts (/Users/mandy/work/project/risk/SaaS/node_modules/@babel/parser/lib/index.js:11098:23)
+      at TypeScriptParserMixin.parseUpdate (/Users/mandy/work/project/risk/SaaS/node_modules/@babel/parser/lib/index.js:11083:21)
+      at TypeScriptParserMixin.parseMaybeUnary (/Users/mandy/work/project/risk/SaaS/node_modules/@babel/parser/lib/index.js:11063:23)
+      at TypeScriptParserMixin.parseMaybeUnary (/Users/mandy/work/project/risk/SaaS/node_modules/@babel/parser/lib/index.js:9854:18)
+      at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (/Users/mandy/work/project/risk/SaaS/node_modules/@babel/parser/lib/index.js:10916:61)
+      at TypeScriptParserMixin.parseExprOps (/Users/mandy/work/project/risk/SaaS/node_modules/@babel/parser/lib/index.js:10921:23)
+      at TypeScriptParserMixin.parseMaybeConditional (/Users/mandy/work/project/risk/SaaS/node_modules/@babel/parser/lib/index.js:10898:23)
+      at TypeScriptParserMixin.parseMaybeAssign (/Users/mandy/work/project/risk/SaaS/node_modules/@babel/parser/lib/index.js:10848:21)
+      at TypeScriptParserMixin.parseMaybeAssign (/Users/mandy/work/project/risk/SaaS/node_modules/@babel/parser/lib/index.js:9803:20)
+      at TypeScriptParserMixin.parseExpressionBase (/Users/mandy/work/project/risk/SaaS/node_modules/@babel/parser/lib/index.js:10801:23)
+      at /Users/mandy/work/project/risk/SaaS/node_modules/@babel/parser/lib/index.js:10797:39
+      at TypeScriptParserMixin.allowInAnd (/Users/mandy/work/project/risk/SaaS/node_modules/@babel/parser/lib/index.js:12438:16)
+      at TypeScriptParserMixin.parseExpression (/Users/mandy/work/project/risk/SaaS/node_modules/@babel/parser/lib/index.js:10797:17)
+      at TypeScriptParserMixin.parseStatementContent (/Users/mandy/work/project/risk/SaaS/node_modules/@babel/parser/lib/index.js:12912:23)
+      at TypeScriptParserMixin.parseStatementContent (/Users/mandy/work/project/risk/SaaS/node_modules/@babel/parser/lib/index.js:9525:18)
+      at TypeScriptParserMixin.parseStatementLike (/Users/mandy/work/project/risk/SaaS/node_modules/@babel/parser/lib/index.js:12784:17)
+      at TypeScriptParserMixin.parseModuleItem (/Users/mandy/work/project/risk/SaaS/node_modules/@babel/parser/lib/index.js:12761:17)
+      at TypeScriptParserMixin.parseBlockOrModuleBlockBody (/Users/mandy/work/project/risk/SaaS/node_modules/@babel/parser/lib/index.js:13333:36)
+      at TypeScriptParserMixin.parseBlockBody (/Users/mandy/work/project/risk/SaaS/node_modules/@babel/parser/lib/index.js:13326:10)
+      at TypeScriptParserMixin.parseProgram (/Users/mandy/work/project/risk/SaaS/node_modules/@babel/parser/lib/index.js:12639:10)
+      at TypeScriptParserMixin.parseTopLevel (/Users/mandy/work/project/risk/SaaS/node_modules/@babel/parser/lib/index.js:12629:25)
+      at TypeScriptParserMixin.parse (/Users/mandy/work/project/risk/SaaS/node_modules/@babel/parser/lib/index.js:14505:25)
+      at TypeScriptParserMixin.parse (/Users/mandy/work/project/risk/SaaS/node_modules/@babel/parser/lib/index.js:10143:18)
+      at parse (/Users/mandy/work/project/risk/SaaS/node_modules/@babel/parser/lib/index.js:14539:38)
+      at parser (/Users/mandy/work/project/risk/SaaS/node_modules/@babel/core/lib/parser/index.js:41:34)
+      at parser.next (<anonymous>)
+      at normalizeFile (/Users/mandy/work/project/risk/SaaS/node_modules/@babel/core/lib/transformation/normalize-file.js:51:37)
+      at normalizeFile.next (<anonymous>)
+      at run (/Users/mandy/work/project/risk/SaaS/node_modules/@babel/core/lib/transformation/index.js:22:50)
+      at run.next (<anonymous>)
+      at transform (/Users/mandy/work/project/risk/SaaS/node_modules/@babel/core/lib/transform.js:22:33)
+      at transform.next (<anonymous>)
+      at step (/Users/mandy/work/project/risk/SaaS/node_modules/gensync/index.js:261:32)
+      at /Users/mandy/work/project/risk/SaaS/node_modules/gensync/index.js:273:13
+      at async.call.result.err.err (/Users/mandy/work/project/risk/SaaS/node_modules/gensync/index.js:223:11)
+      at /Users/mandy/work/project/risk/SaaS/node_modules/gensync/index.js:189:28
+      at /Users/mandy/work/project/risk/SaaS/node_modules/@babel/core/lib/gensync-utils/async.js:67:7
+      at /Users/mandy/work/project/risk/SaaS/node_modules/gensync/index.js:113:33
+      at step (/Users/mandy/work/project/risk/SaaS/node_modules/gensync/index.js:287:14)
+      at /Users/mandy/work/project/risk/SaaS/node_modules/gensync/index.js:273:13
+      at async.call.result.err.err (/Users/mandy/work/project/risk/SaaS/node_modules/gensync/index.js:223:11)
+10:43:16 PM [vite] hmr update /src/console/FraudScheme4Ops.tsx, /src/index.css
+10:43:19 PM [vite] hmr invalidate /src/console/FraudScheme4Ops.tsx Could not Fast Refresh ("FRAUD_S4_OP_LABEL" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+10:43:19 PM [vite] hmr update /src/index.css, /src/console/FraudScheme4List.tsx, /src/console/FraudScheme4Detail.tsx
+10:43:26 PM [vite] hmr update /src/console/FraudScheme4Ops.tsx, /src/index.css
+10:43:27 PM [vite] hmr invalidate /src/console/FraudScheme4Ops.tsx Could not Fast Refresh ("FRAUD_S4_OP_LABEL" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+10:43:27 PM [vite] hmr update /src/index.css, /src/console/FraudScheme4List.tsx, /src/console/FraudScheme4Detail.tsx
+10:43:37 PM [vite] hmr update /src/console/DecisionOps.tsx, /src/index.css
+10:43:37 PM [vite] hmr invalidate /src/console/DecisionOps.tsx Could not Fast Refresh ("decisionOpsFor" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+10:43:37 PM [vite] hmr update /src/index.css, /src/console/DecisionList.tsx, /src/console/DecisionDetail.tsx
+10:43:45 PM [vite] hmr update /src/console/DecisionOps.tsx, /src/index.css
+10:43:46 PM [vite] hmr invalidate /src/console/DecisionOps.tsx Could not Fast Refresh ("decisionOpsFor" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+10:43:46 PM [vite] hmr update /src/index.css, /src/console/DecisionList.tsx, /src/console/DecisionDetail.tsx
+10:44:06 PM [vite] hmr update /src/console/CreditKimiOps.tsx, /src/index.css
+10:44:07 PM [vite] hmr invalidate /src/console/CreditKimiOps.tsx Could not Fast Refresh ("CREDIT_OP_LABEL" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+10:44:07 PM [vite] hmr update /src/index.css, /src/console/CreditKimiDetail.tsx, /src/console/CreditKimiList.tsx
+10:44:14 PM [vite] hmr update /src/console/CreditKimiOps.tsx, /src/index.css
+10:44:14 PM [vite] hmr invalidate /src/console/CreditKimiOps.tsx Could not Fast Refresh ("CREDIT_OP_LABEL" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+10:44:14 PM [vite] hmr update /src/index.css, /src/console/CreditKimiDetail.tsx, /src/console/CreditKimiList.tsx
+10:44:33 PM [vite] hmr update /src/console/CreditKimiOps.tsx, /src/index.css
+10:44:33 PM [vite] hmr invalidate /src/console/CreditKimiOps.tsx Could not Fast Refresh (new export)
+10:44:33 PM [vite] hmr update /src/index.css, /src/console/CreditKimiDetail.tsx, /src/console/CreditKimiList.tsx
+10:44:55 PM [vite] hmr update /src/console/CreditKimiOps.tsx, /src/index.css
+10:45:00 PM [vite] hmr invalidate /src/console/CreditKimiOps.tsx Could not Fast Refresh ("CREDIT_OP_LABEL" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+10:45:00 PM [vite] hmr update /src/index.css, /src/console/CreditKimiDetail.tsx, /src/console/CreditKimiList.tsx
+10:45:03 PM [vite] hmr update /src/console/CreditKimiOps.tsx, /src/index.css
+10:45:05 PM [vite] hmr invalidate /src/console/CreditKimiOps.tsx Could not Fast Refresh ("CREDIT_OP_LABEL" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+10:45:05 PM [vite] hmr update /src/index.css, /src/console/CreditKimiDetail.tsx, /src/console/CreditKimiList.tsx
+10:45:09 PM [vite] hmr update /src/console/CreditKimiOps.tsx, /src/index.css
+10:45:14 PM [vite] hmr invalidate /src/console/CreditKimiOps.tsx Could not Fast Refresh ("CREDIT_OP_LABEL" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+10:45:14 PM [vite] hmr update /src/index.css, /src/console/CreditKimiDetail.tsx, /src/console/CreditKimiList.tsx
+10:45:21 PM [vite] hmr update /src/console/CreditKimiOps.tsx, /src/index.css
+10:45:22 PM [vite] hmr invalidate /src/console/CreditKimiOps.tsx Could not Fast Refresh ("CREDIT_OP_LABEL" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+10:45:22 PM [vite] hmr update /src/index.css, /src/console/CreditKimiDetail.tsx, /src/console/CreditKimiList.tsx
+10:45:35 PM [vite] hmr update /src/console/CreditKimiDetail.tsx, /src/index.css
+10:47:16 PM [vite] hmr update /src/index.css, /src/console/ReportTemplatePreview.tsx, /src/console/ReportTemplate.tsx, /src/console/FlowCanvasEditor.tsx, /src/console/DecisionOps.tsx, /src/console/FraudScheme4Ops.tsx, /src/console/VerifyOps.tsx, /src/console/CreditKimiOps.tsx
+10:47:18 PM [vite] hmr invalidate /src/console/DecisionOps.tsx Could not Fast Refresh ("decisionOpsFor" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+10:47:18 PM [vite] hmr update /src/index.css, /src/console/DecisionList.tsx, /src/console/DecisionDetail.tsx
+10:47:18 PM [vite] hmr invalidate /src/console/FraudScheme4Ops.tsx Could not Fast Refresh ("FRAUD_S4_OP_LABEL" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+10:47:18 PM [vite] hmr update /src/index.css, /src/console/FraudScheme4List.tsx, /src/console/FraudScheme4Detail.tsx
+10:47:18 PM [vite] hmr invalidate /src/console/VerifyOps.tsx Could not Fast Refresh ("OP_LABEL" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+10:47:18 PM [vite] hmr update /src/index.css, /src/console/PreVerifyDetail.tsx, /src/console/InfoVerifyList.tsx
+10:47:18 PM [vite] hmr invalidate /src/console/CreditKimiOps.tsx Could not Fast Refresh ("CREDIT_OP_LABEL" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+10:47:18 PM [vite] hmr update /src/index.css, /src/console/CreditKimiDetail.tsx, /src/console/CreditKimiList.tsx
+10:47:22 PM [vite] hmr update /src/console/ReportTemplate.tsx, /src/index.css
+10:47:30 PM [vite] hmr update /src/console/ReportTemplate.tsx, /src/index.css
+10:48:43 PM [vite] hmr update /src/console/ReportTemplate.tsx, /src/index.css
+10:59:13 PM [vite] hmr update /src/console/ReportTemplate.tsx, /src/index.css
+10:59:13 PM [vite] Internal server error: /Users/mandy/work/project/risk/SaaS/src/console/ReportTemplate.tsx: Identifier 'ReportType' has already been declared. (30:44)
+
+  28 |   syncFlowToGrades, buildTemplate, seedReportTemplates,
+  29 |   FlowGraph, buildDefaultFlowGraph, summarizeFlowGraph,
+> 30 |   MACHINE_BY_TYPE, machineToFlowGraph, type ReportType, type FlowStateMachine, type FlowActionDef,
+     |                                             ^
+  31 | } from './reportTemplateData'
+  32 | import FlowCanvasEditor from './FlowCanvasEditor'
+  33 |
+  Plugin: vite:react-babel
+  File: /Users/mandy/work/project/risk/SaaS/src/console/ReportTemplate.tsx:30:44
+  28 |    syncFlowToGrades, buildTemplate, seedReportTemplates,
+  29 |    FlowGraph, buildDefaultFlowGraph, summarizeFlowGraph,
+  30 |    MACHINE_BY_TYPE, machineToFlowGraph, type ReportType, type FlowStateMachine, type FlowActionDef,
+     |                                              ^
+  31 |  } from './reportTemplateData'
+  32 |  import FlowCanvasEditor from './FlowCanvasEditor'
+      at constructor (/Users/mandy/work/project/risk/SaaS/node_modules/@babel/parser/lib/index.js:365:19)
+      at TypeScriptParserMixin.raise (/Users/mandy/work/project/risk/SaaS/node_modules/@babel/parser/lib/index.js:6616:19)
+      at TypeScriptScopeHandler.declareName (/Users/mandy/work/project/risk/SaaS/node_modules/@babel/parser/lib/index.js:4878:21)
+      at TypeScriptParserMixin.declareNameFromIdentifier (/Users/mandy/work/project/risk/SaaS/node_modules/@babel/parser/lib/index.js:7584:16)
+      at TypeScriptParserMixin.checkIdentifier (/Users/mandy/work/project/risk/SaaS/node_modules/@babel/parser/lib/index.js:7580:12)
+      at TypeScriptParserMixin.parseTypeOnlyImportExportSpecifier (/Users/mandy/work/project/risk/SaaS/node_modules/@babel/parser/lib/index.js:10220:12)
+      at TypeScriptParserMixin.parseImportSpecifier (/Users/mandy/work/project/risk/SaaS/node_modules/@babel/parser/lib/index.js:10161:12)
+      at TypeScriptParserMixin.parseNamedImportSpecifiers (/Users/mandy/work/project/risk/SaaS/node_modules/@babel/parser/lib/index.js:14415:36)
+      at TypeScriptParserMixin.parseImportSpecifiersAndAfter (/Users/mandy/work/project/risk/SaaS/node_modules/@babel/parser/lib/index.js:14259:37)
+      at TypeScriptParserMixin.parseImport (/Users/mandy/work/project/risk/SaaS/node_modules/@babel/parser/lib/index.js:14252:17)
+      at TypeScriptParserMixin.parseImport (/Users/mandy/work/project/risk/SaaS/node_modules/@babel/parser/lib/index.js:9370:26)
+      at TypeScriptParserMixin.parseStatementContent (/Users/mandy/work/project/risk/SaaS/node_modules/@babel/parser/lib/index.js:12893:27)
+      at TypeScriptParserMixin.parseStatementContent (/Users/mandy/work/project/risk/SaaS/node_modules/@babel/parser/lib/index.js:9525:18)
+      at TypeScriptParserMixin.parseStatementLike (/Users/mandy/work/project/risk/SaaS/node_modules/@babel/parser/lib/index.js:12784:17)
+      at TypeScriptParserMixin.parseModuleItem (/Users/mandy/work/project/risk/SaaS/node_modules/@babel/parser/lib/index.js:12761:17)
+      at TypeScriptParserMixin.parseBlockOrModuleBlockBody (/Users/mandy/work/project/risk/SaaS/node_modules/@babel/parser/lib/index.js:13333:36)
+      at TypeScriptParserMixin.parseBlockBody (/Users/mandy/work/project/risk/SaaS/node_modules/@babel/parser/lib/index.js:13326:10)
+      at TypeScriptParserMixin.parseProgram (/Users/mandy/work/project/risk/SaaS/node_modules/@babel/parser/lib/index.js:12639:10)
+      at TypeScriptParserMixin.parseTopLevel (/Users/mandy/work/project/risk/SaaS/node_modules/@babel/parser/lib/index.js:12629:25)
+      at TypeScriptParserMixin.parse (/Users/mandy/work/project/risk/SaaS/node_modules/@babel/parser/lib/index.js:14505:25)
+      at TypeScriptParserMixin.parse (/Users/mandy/work/project/risk/SaaS/node_modules/@babel/parser/lib/index.js:10143:18)
+      at parse (/Users/mandy/work/project/risk/SaaS/node_modules/@babel/parser/lib/index.js:14539:38)
+      at parser (/Users/mandy/work/project/risk/SaaS/node_modules/@babel/core/lib/parser/index.js:41:34)
+      at parser.next (<anonymous>)
+      at normalizeFile (/Users/mandy/work/project/risk/SaaS/node_modules/@babel/core/lib/transformation/normalize-file.js:51:37)
+      at normalizeFile.next (<anonymous>)
+      at run (/Users/mandy/work/project/risk/SaaS/node_modules/@babel/core/lib/transformation/index.js:22:50)
+      at run.next (<anonymous>)
+      at transform (/Users/mandy/work/project/risk/SaaS/node_modules/@babel/core/lib/transform.js:22:33)
+      at transform.next (<anonymous>)
+      at step (/Users/mandy/work/project/risk/SaaS/node_modules/gensync/index.js:261:32)
+      at /Users/mandy/work/project/risk/SaaS/node_modules/gensync/index.js:273:13
+      at async.call.result.err.err (/Users/mandy/work/project/risk/SaaS/node_modules/gensync/index.js:223:11)
+      at /Users/mandy/work/project/risk/SaaS/node_modules/gensync/index.js:189:28
+      at /Users/mandy/work/project/risk/SaaS/node_modules/@babel/core/lib/gensync-utils/async.js:67:7
+      at /Users/mandy/work/project/risk/SaaS/node_modules/gensync/index.js:113:33
+      at step (/Users/mandy/work/project/risk/SaaS/node_modules/gensync/index.js:287:14)
+      at /Users/mandy/work/project/risk/SaaS/node_modules/gensync/index.js:273:13
+      at async.call.result.err.err (/Users/mandy/work/project/risk/SaaS/node_modules/gensync/index.js:223:11)
+11:00:15 PM [vite] hmr update /src/console/ReportTemplate.tsx, /src/index.css
+11:01:16 PM [vite] hmr update /src/console/ReportTemplate.tsx, /src/index.css
+11:01:30 PM [vite] hmr update /src/console/ReportTemplate.tsx, /src/index.css
+11:21:39 PM [vite] hmr update /src/index.css, /src/console/ReportTemplatePreview.tsx, /src/console/ReportTemplate.tsx, /src/console/FlowCanvasEditor.tsx, /src/console/DecisionOps.tsx, /src/console/FraudScheme4Ops.tsx, /src/console/VerifyOps.tsx, /src/console/CreditKimiOps.tsx
+11:21:40 PM [vite] hmr invalidate /src/console/DecisionOps.tsx Could not Fast Refresh ("decisionOpsFor" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+11:21:40 PM [vite] hmr update /src/index.css, /src/console/DecisionList.tsx, /src/console/DecisionDetail.tsx
+11:21:40 PM [vite] hmr invalidate /src/console/FraudScheme4Ops.tsx Could not Fast Refresh ("FRAUD_S4_OP_LABEL" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+11:21:40 PM [vite] hmr update /src/index.css, /src/console/FraudScheme4List.tsx, /src/console/FraudScheme4Detail.tsx
+11:21:40 PM [vite] hmr invalidate /src/console/VerifyOps.tsx Could not Fast Refresh ("OP_LABEL" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+11:21:40 PM [vite] hmr update /src/index.css, /src/console/PreVerifyDetail.tsx, /src/console/InfoVerifyList.tsx
+11:21:40 PM [vite] hmr invalidate /src/console/CreditKimiOps.tsx Could not Fast Refresh ("CREDIT_OP_LABEL" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+11:21:40 PM [vite] hmr update /src/index.css, /src/console/CreditKimiDetail.tsx, /src/console/CreditKimiList.tsx
+11:22:32 PM [vite] hmr update /src/console/ReportTemplate.tsx, /src/index.css
+11:36:36 PM [vite] hmr update /src/index.css, /src/console/ReportTemplatePreview.tsx, /src/console/ReportTemplate.tsx, /src/console/FlowCanvasEditor.tsx, /src/console/DecisionOps.tsx, /src/console/FraudScheme4Ops.tsx, /src/console/VerifyOps.tsx, /src/console/CreditKimiOps.tsx
+11:36:37 PM [vite] hmr invalidate /src/console/DecisionOps.tsx Could not Fast Refresh ("decisionOpsFor" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+11:36:37 PM [vite] hmr update /src/index.css, /src/console/DecisionList.tsx, /src/console/DecisionDetail.tsx
+11:36:37 PM [vite] hmr invalidate /src/console/FraudScheme4Ops.tsx Could not Fast Refresh ("FRAUD_S4_OP_LABEL" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+11:36:37 PM [vite] hmr update /src/index.css, /src/console/FraudScheme4List.tsx, /src/console/FraudScheme4Detail.tsx
+11:36:37 PM [vite] hmr invalidate /src/console/VerifyOps.tsx Could not Fast Refresh ("OP_LABEL" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+11:36:37 PM [vite] hmr update /src/index.css, /src/console/PreVerifyDetail.tsx, /src/console/InfoVerifyList.tsx
+11:36:37 PM [vite] hmr invalidate /src/console/CreditKimiOps.tsx Could not Fast Refresh ("CREDIT_OP_LABEL" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+11:36:37 PM [vite] hmr update /src/index.css, /src/console/CreditKimiDetail.tsx, /src/console/CreditKimiList.tsx
+11:36:57 PM [vite] hmr update /src/index.css, /src/console/ReportTemplatePreview.tsx, /src/console/ReportTemplate.tsx, /src/console/FlowCanvasEditor.tsx, /src/console/DecisionOps.tsx, /src/console/FraudScheme4Ops.tsx, /src/console/VerifyOps.tsx, /src/console/CreditKimiOps.tsx
+11:36:58 PM [vite] hmr invalidate /src/console/DecisionOps.tsx Could not Fast Refresh ("decisionOpsFor" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+11:36:58 PM [vite] hmr update /src/index.css, /src/console/DecisionList.tsx, /src/console/DecisionDetail.tsx
+11:36:58 PM [vite] hmr invalidate /src/console/FraudScheme4Ops.tsx Could not Fast Refresh ("FRAUD_S4_OP_LABEL" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+11:36:58 PM [vite] hmr update /src/index.css, /src/console/FraudScheme4List.tsx, /src/console/FraudScheme4Detail.tsx
+11:36:58 PM [vite] hmr invalidate /src/console/VerifyOps.tsx Could not Fast Refresh ("OP_LABEL" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+11:36:58 PM [vite] hmr update /src/index.css, /src/console/PreVerifyDetail.tsx, /src/console/InfoVerifyList.tsx
+11:36:58 PM [vite] hmr invalidate /src/console/CreditKimiOps.tsx Could not Fast Refresh ("CREDIT_OP_LABEL" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+11:36:58 PM [vite] hmr update /src/index.css, /src/console/CreditKimiDetail.tsx, /src/console/CreditKimiList.tsx
+11:37:40 PM [vite] hmr update /src/index.css, /src/console/ReportTemplatePreview.tsx, /src/console/ReportTemplate.tsx, /src/console/FlowCanvasEditor.tsx, /src/console/DecisionOps.tsx, /src/console/FraudScheme4Ops.tsx, /src/console/VerifyOps.tsx, /src/console/CreditKimiOps.tsx
+11:37:41 PM [vite] hmr invalidate /src/console/DecisionOps.tsx Could not Fast Refresh ("decisionOpsFor" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+11:37:41 PM [vite] hmr update /src/index.css, /src/console/DecisionList.tsx, /src/console/DecisionDetail.tsx
+11:37:41 PM [vite] hmr invalidate /src/console/FraudScheme4Ops.tsx Could not Fast Refresh ("FRAUD_S4_OP_LABEL" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+11:37:41 PM [vite] hmr update /src/index.css, /src/console/FraudScheme4List.tsx, /src/console/FraudScheme4Detail.tsx
+11:37:41 PM [vite] hmr invalidate /src/console/VerifyOps.tsx Could not Fast Refresh ("OP_LABEL" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+11:37:41 PM [vite] hmr update /src/index.css, /src/console/PreVerifyDetail.tsx, /src/console/InfoVerifyList.tsx
+11:37:41 PM [vite] hmr invalidate /src/console/CreditKimiOps.tsx Could not Fast Refresh ("CREDIT_OP_LABEL" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+11:37:41 PM [vite] hmr update /src/index.css, /src/console/CreditKimiDetail.tsx, /src/console/CreditKimiList.tsx
+11:37:51 PM [vite] hmr update /src/index.css, /src/console/ReportTemplatePreview.tsx, /src/console/ReportTemplate.tsx, /src/console/FlowCanvasEditor.tsx, /src/console/DecisionOps.tsx, /src/console/FraudScheme4Ops.tsx, /src/console/VerifyOps.tsx, /src/console/CreditKimiOps.tsx
+11:37:52 PM [vite] hmr invalidate /src/console/DecisionOps.tsx Could not Fast Refresh ("decisionOpsFor" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+11:37:52 PM [vite] hmr update /src/index.css, /src/console/DecisionList.tsx, /src/console/DecisionDetail.tsx
+11:37:52 PM [vite] hmr invalidate /src/console/FraudScheme4Ops.tsx Could not Fast Refresh ("FRAUD_S4_OP_LABEL" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+11:37:52 PM [vite] hmr update /src/index.css, /src/console/FraudScheme4List.tsx, /src/console/FraudScheme4Detail.tsx
+11:37:52 PM [vite] hmr invalidate /src/console/VerifyOps.tsx Could not Fast Refresh ("OP_LABEL" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+11:37:52 PM [vite] hmr update /src/index.css, /src/console/PreVerifyDetail.tsx, /src/console/InfoVerifyList.tsx
+11:37:52 PM [vite] hmr invalidate /src/console/CreditKimiOps.tsx Could not Fast Refresh ("CREDIT_OP_LABEL" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+11:37:52 PM [vite] hmr update /src/index.css, /src/console/CreditKimiDetail.tsx, /src/console/CreditKimiList.tsx
+11:38:07 PM [vite] hmr update /src/console/FlowCanvasEditor.tsx, /src/index.css
+11:38:14 PM [vite] hmr update /src/console/FlowCanvasEditor.tsx, /src/index.css
+11:39:03 PM [vite] hmr update /src/console/FlowCanvasEditor.tsx, /src/index.css
+11:39:09 PM [vite] hmr update /src/console/FlowCanvasEditor.tsx, /src/index.css
+11:39:25 PM [vite] hmr update /src/console/ReportTemplate.tsx, /src/index.css
+11:39:37 PM [vite] hmr update /src/console/ReportTemplate.tsx, /src/index.css
+11:40:52 PM [vite] hmr update /src/index.css, /src/console/ReportTemplatePreview.tsx, /src/console/ReportTemplate.tsx, /src/console/FlowCanvasEditor.tsx, /src/console/DecisionOps.tsx, /src/console/FraudScheme4Ops.tsx, /src/console/VerifyOps.tsx, /src/console/CreditKimiOps.tsx
+11:40:52 PM [vite] hmr update /src/console/ReportTemplate.tsx, /src/index.css
+11:40:54 PM [vite] hmr invalidate /src/console/DecisionOps.tsx Could not Fast Refresh ("decisionOpsFor" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+11:40:54 PM [vite] hmr update /src/index.css, /src/console/DecisionList.tsx, /src/console/DecisionDetail.tsx
+11:40:54 PM [vite] hmr invalidate /src/console/FraudScheme4Ops.tsx Could not Fast Refresh ("FRAUD_S4_OP_LABEL" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+11:40:54 PM [vite] hmr update /src/index.css, /src/console/FraudScheme4List.tsx, /src/console/FraudScheme4Detail.tsx
+11:40:54 PM [vite] hmr invalidate /src/console/VerifyOps.tsx Could not Fast Refresh ("OP_LABEL" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+11:40:54 PM [vite] hmr update /src/index.css, /src/console/PreVerifyDetail.tsx, /src/console/InfoVerifyList.tsx
+11:40:54 PM [vite] hmr invalidate /src/console/CreditKimiOps.tsx Could not Fast Refresh ("CREDIT_OP_LABEL" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+11:40:54 PM [vite] hmr update /src/index.css, /src/console/CreditKimiDetail.tsx, /src/console/CreditKimiList.tsx
+11:44:23 PM [vite] hmr update /src/index.css, /src/console/ReportTemplatePreview.tsx, /src/console/ReportTemplate.tsx, /src/console/FlowCanvasEditor.tsx, /src/console/DecisionOps.tsx, /src/console/FraudScheme4Ops.tsx, /src/console/VerifyOps.tsx, /src/console/CreditKimiOps.tsx
+11:44:24 PM [vite] hmr invalidate /src/console/DecisionOps.tsx Could not Fast Refresh ("decisionOpsFor" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+11:44:24 PM [vite] hmr update /src/index.css, /src/console/DecisionList.tsx, /src/console/DecisionDetail.tsx
+11:44:24 PM [vite] hmr invalidate /src/console/FraudScheme4Ops.tsx Could not Fast Refresh ("FRAUD_S4_OP_LABEL" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+11:44:24 PM [vite] hmr update /src/index.css, /src/console/FraudScheme4List.tsx, /src/console/FraudScheme4Detail.tsx
+11:44:24 PM [vite] hmr invalidate /src/console/VerifyOps.tsx Could not Fast Refresh ("OP_LABEL" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+11:44:24 PM [vite] hmr update /src/index.css, /src/console/PreVerifyDetail.tsx, /src/console/InfoVerifyList.tsx
+11:44:24 PM [vite] hmr invalidate /src/console/CreditKimiOps.tsx Could not Fast Refresh ("CREDIT_OP_LABEL" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+11:44:24 PM [vite] hmr update /src/index.css, /src/console/CreditKimiDetail.tsx, /src/console/CreditKimiList.tsx
+11:44:32 PM [vite] hmr update /src/index.css, /src/console/ReportTemplatePreview.tsx, /src/console/ReportTemplate.tsx, /src/console/FlowCanvasEditor.tsx, /src/console/DecisionOps.tsx, /src/console/FraudScheme4Ops.tsx, /src/console/VerifyOps.tsx, /src/console/CreditKimiOps.tsx
+11:44:33 PM [vite] hmr invalidate /src/console/DecisionOps.tsx Could not Fast Refresh ("decisionOpsFor" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+11:44:33 PM [vite] hmr update /src/index.css, /src/console/DecisionList.tsx, /src/console/DecisionDetail.tsx
+11:44:33 PM [vite] hmr invalidate /src/console/FraudScheme4Ops.tsx Could not Fast Refresh ("FRAUD_S4_OP_LABEL" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+11:44:33 PM [vite] hmr update /src/index.css, /src/console/FraudScheme4List.tsx, /src/console/FraudScheme4Detail.tsx
+11:44:33 PM [vite] hmr invalidate /src/console/VerifyOps.tsx Could not Fast Refresh ("OP_LABEL" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+11:44:33 PM [vite] hmr update /src/index.css, /src/console/PreVerifyDetail.tsx, /src/console/InfoVerifyList.tsx
+11:44:33 PM [vite] hmr invalidate /src/console/CreditKimiOps.tsx Could not Fast Refresh ("CREDIT_OP_LABEL" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+11:44:33 PM [vite] hmr update /src/index.css, /src/console/CreditKimiDetail.tsx, /src/console/CreditKimiList.tsx
+11:44:39 PM [vite] hmr update /src/console/FlowCanvasEditor.tsx, /src/index.css
+11:44:43 PM [vite] hmr update /src/console/FlowCanvasEditor.tsx, /src/index.css
+11:48:07 PM [vite] hmr update /src/console/FlowCanvasEditor.tsx, /src/index.css
+11:51:01 PM [vite] hmr update /src/index.css, /src/console/ReportTemplatePreview.tsx, /src/console/ReportTemplate.tsx, /src/console/FlowCanvasEditor.tsx, /src/console/DecisionOps.tsx, /src/console/FraudScheme4Ops.tsx, /src/console/VerifyOps.tsx, /src/console/CreditKimiOps.tsx
+11:51:01 PM [vite] hmr invalidate /src/console/DecisionOps.tsx Could not Fast Refresh ("decisionOpsFor" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+11:51:01 PM [vite] hmr update /src/index.css, /src/console/DecisionList.tsx, /src/console/DecisionDetail.tsx
+11:51:01 PM [vite] hmr invalidate /src/console/FraudScheme4Ops.tsx Could not Fast Refresh ("FRAUD_S4_OP_LABEL" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+11:51:01 PM [vite] hmr update /src/index.css, /src/console/FraudScheme4List.tsx, /src/console/FraudScheme4Detail.tsx
+11:51:01 PM [vite] hmr invalidate /src/console/VerifyOps.tsx Could not Fast Refresh ("OP_LABEL" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+11:51:01 PM [vite] hmr update /src/index.css, /src/console/PreVerifyDetail.tsx, /src/console/InfoVerifyList.tsx
+11:51:01 PM [vite] hmr invalidate /src/console/CreditKimiOps.tsx Could not Fast Refresh ("CREDIT_OP_LABEL" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+11:51:01 PM [vite] hmr update /src/index.css, /src/console/CreditKimiDetail.tsx, /src/console/CreditKimiList.tsx
+11:51:11 PM [vite] hmr update /src/index.css, /src/console/ReportTemplatePreview.tsx, /src/console/ReportTemplate.tsx, /src/console/FlowCanvasEditor.tsx, /src/console/DecisionOps.tsx, /src/console/FraudScheme4Ops.tsx, /src/console/VerifyOps.tsx, /src/console/CreditKimiOps.tsx
+11:51:11 PM [vite] hmr invalidate /src/console/DecisionOps.tsx Could not Fast Refresh ("decisionOpsFor" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+11:51:11 PM [vite] hmr update /src/index.css, /src/console/DecisionList.tsx, /src/console/DecisionDetail.tsx
+11:51:11 PM [vite] hmr invalidate /src/console/FraudScheme4Ops.tsx Could not Fast Refresh ("FRAUD_S4_OP_LABEL" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+11:51:11 PM [vite] hmr update /src/index.css, /src/console/FraudScheme4List.tsx, /src/console/FraudScheme4Detail.tsx
+11:51:11 PM [vite] hmr invalidate /src/console/VerifyOps.tsx Could not Fast Refresh ("OP_LABEL" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+11:51:11 PM [vite] hmr update /src/index.css, /src/console/PreVerifyDetail.tsx, /src/console/InfoVerifyList.tsx
+11:51:11 PM [vite] hmr invalidate /src/console/CreditKimiOps.tsx Could not Fast Refresh ("CREDIT_OP_LABEL" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+11:51:11 PM [vite] hmr update /src/index.css, /src/console/CreditKimiDetail.tsx, /src/console/CreditKimiList.tsx
+11:51:18 PM [vite] hmr update /src/index.css, /src/console/ReportTemplatePreview.tsx, /src/console/ReportTemplate.tsx, /src/console/FlowCanvasEditor.tsx, /src/console/DecisionOps.tsx, /src/console/FraudScheme4Ops.tsx, /src/console/VerifyOps.tsx, /src/console/CreditKimiOps.tsx
+11:51:19 PM [vite] hmr invalidate /src/console/DecisionOps.tsx Could not Fast Refresh ("decisionOpsFor" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+11:51:19 PM [vite] hmr update /src/index.css, /src/console/DecisionList.tsx, /src/console/DecisionDetail.tsx
+11:51:19 PM [vite] hmr invalidate /src/console/FraudScheme4Ops.tsx Could not Fast Refresh ("FRAUD_S4_OP_LABEL" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+11:51:19 PM [vite] hmr update /src/index.css, /src/console/FraudScheme4List.tsx, /src/console/FraudScheme4Detail.tsx
+11:51:19 PM [vite] hmr invalidate /src/console/VerifyOps.tsx Could not Fast Refresh ("OP_LABEL" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+11:51:19 PM [vite] hmr update /src/index.css, /src/console/PreVerifyDetail.tsx, /src/console/InfoVerifyList.tsx
+11:51:19 PM [vite] hmr invalidate /src/console/CreditKimiOps.tsx Could not Fast Refresh ("CREDIT_OP_LABEL" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+11:51:19 PM [vite] hmr update /src/index.css, /src/console/CreditKimiDetail.tsx, /src/console/CreditKimiList.tsx
+11:51:26 PM [vite] hmr update /src/index.css, /src/console/ReportTemplatePreview.tsx, /src/console/ReportTemplate.tsx, /src/console/FlowCanvasEditor.tsx, /src/console/DecisionOps.tsx, /src/console/FraudScheme4Ops.tsx, /src/console/VerifyOps.tsx, /src/console/CreditKimiOps.tsx
+11:51:26 PM [vite] hmr invalidate /src/console/DecisionOps.tsx Could not Fast Refresh ("decisionOpsFor" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+11:51:26 PM [vite] hmr update /src/index.css, /src/console/DecisionList.tsx, /src/console/DecisionDetail.tsx
+11:51:26 PM [vite] hmr invalidate /src/console/FraudScheme4Ops.tsx Could not Fast Refresh ("FRAUD_S4_OP_LABEL" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+11:51:26 PM [vite] hmr update /src/index.css, /src/console/FraudScheme4List.tsx, /src/console/FraudScheme4Detail.tsx
+11:51:26 PM [vite] hmr invalidate /src/console/VerifyOps.tsx Could not Fast Refresh ("OP_LABEL" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+11:51:26 PM [vite] hmr update /src/index.css, /src/console/PreVerifyDetail.tsx, /src/console/InfoVerifyList.tsx
+11:51:26 PM [vite] hmr invalidate /src/console/CreditKimiOps.tsx Could not Fast Refresh ("CREDIT_OP_LABEL" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+11:51:26 PM [vite] hmr update /src/index.css, /src/console/CreditKimiDetail.tsx, /src/console/CreditKimiList.tsx
+11:51:51 PM [vite] hmr update /src/console/ReportTemplate.tsx, /src/index.css
+11:51:59 PM [vite] hmr update /src/console/ReportTemplate.tsx, /src/index.css
+11:52:07 PM [vite] hmr update /src/console/ReportTemplate.tsx, /src/index.css
+12:09:03 AM [vite] hmr update /src/index.css, /src/console/ReportTemplatePreview.tsx, /src/console/ReportTemplate.tsx, /src/console/FlowCanvasEditor.tsx, /src/console/DecisionOps.tsx, /src/console/FraudScheme4Ops.tsx, /src/console/VerifyOps.tsx, /src/console/CreditKimiOps.tsx
+12:09:04 AM [vite] hmr invalidate /src/console/DecisionOps.tsx Could not Fast Refresh ("decisionOpsFor" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+12:09:04 AM [vite] hmr update /src/index.css, /src/console/DecisionList.tsx, /src/console/DecisionDetail.tsx
+12:09:04 AM [vite] hmr invalidate /src/console/FraudScheme4Ops.tsx Could not Fast Refresh ("FRAUD_S4_OP_LABEL" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+12:09:04 AM [vite] hmr update /src/index.css, /src/console/FraudScheme4List.tsx, /src/console/FraudScheme4Detail.tsx
+12:09:04 AM [vite] hmr invalidate /src/console/VerifyOps.tsx Could not Fast Refresh ("OP_LABEL" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+12:09:04 AM [vite] hmr update /src/index.css, /src/console/PreVerifyDetail.tsx, /src/console/InfoVerifyList.tsx
+12:09:04 AM [vite] hmr invalidate /src/console/CreditKimiOps.tsx Could not Fast Refresh ("CREDIT_OP_LABEL" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+12:09:04 AM [vite] hmr update /src/index.css, /src/console/CreditKimiDetail.tsx, /src/console/CreditKimiList.tsx
+12:09:07 AM [vite] hmr update /src/index.css, /src/console/ReportTemplatePreview.tsx, /src/console/ReportTemplate.tsx, /src/console/FlowCanvasEditor.tsx, /src/console/DecisionOps.tsx, /src/console/FraudScheme4Ops.tsx, /src/console/VerifyOps.tsx, /src/console/CreditKimiOps.tsx
+12:09:08 AM [vite] hmr invalidate /src/console/DecisionOps.tsx Could not Fast Refresh ("decisionOpsFor" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+12:09:08 AM [vite] hmr update /src/index.css, /src/console/DecisionList.tsx, /src/console/DecisionDetail.tsx
+12:09:08 AM [vite] hmr invalidate /src/console/FraudScheme4Ops.tsx Could not Fast Refresh ("FRAUD_S4_OP_LABEL" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+12:09:08 AM [vite] hmr update /src/index.css, /src/console/FraudScheme4List.tsx, /src/console/FraudScheme4Detail.tsx
+12:09:08 AM [vite] hmr invalidate /src/console/VerifyOps.tsx Could not Fast Refresh ("OP_LABEL" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+12:09:08 AM [vite] hmr update /src/index.css, /src/console/PreVerifyDetail.tsx, /src/console/InfoVerifyList.tsx
+12:09:08 AM [vite] hmr invalidate /src/console/CreditKimiOps.tsx Could not Fast Refresh ("CREDIT_OP_LABEL" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+12:09:08 AM [vite] hmr update /src/index.css, /src/console/CreditKimiDetail.tsx, /src/console/CreditKimiList.tsx
+12:09:15 AM [vite] hmr update /src/index.css, /src/console/ReportTemplatePreview.tsx, /src/console/ReportTemplate.tsx, /src/console/FlowCanvasEditor.tsx, /src/console/DecisionOps.tsx, /src/console/FraudScheme4Ops.tsx, /src/console/VerifyOps.tsx, /src/console/CreditKimiOps.tsx
+12:09:16 AM [vite] hmr invalidate /src/console/DecisionOps.tsx Could not Fast Refresh ("decisionOpsFor" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+12:09:16 AM [vite] hmr update /src/index.css, /src/console/DecisionList.tsx, /src/console/DecisionDetail.tsx
+12:09:16 AM [vite] hmr invalidate /src/console/FraudScheme4Ops.tsx Could not Fast Refresh ("FRAUD_S4_OP_LABEL" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+12:09:16 AM [vite] hmr update /src/index.css, /src/console/FraudScheme4List.tsx, /src/console/FraudScheme4Detail.tsx
+12:09:16 AM [vite] hmr invalidate /src/console/VerifyOps.tsx Could not Fast Refresh ("OP_LABEL" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+12:09:16 AM [vite] hmr update /src/index.css, /src/console/PreVerifyDetail.tsx, /src/console/InfoVerifyList.tsx
+12:09:16 AM [vite] hmr invalidate /src/console/CreditKimiOps.tsx Could not Fast Refresh ("CREDIT_OP_LABEL" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+12:09:16 AM [vite] hmr update /src/index.css, /src/console/CreditKimiDetail.tsx, /src/console/CreditKimiList.tsx
+12:09:30 AM [vite] hmr update /src/console/FlowCanvasEditor.tsx, /src/index.css
+12:09:37 AM [vite] hmr update /src/console/FlowCanvasEditor.tsx, /src/index.css
+12:09:43 AM [vite] hmr update /src/console/FlowCanvasEditor.tsx, /src/index.css
+12:09:49 AM [vite] hmr update /src/console/VerifyOps.tsx, /src/index.css
+12:09:50 AM [vite] hmr invalidate /src/console/VerifyOps.tsx Could not Fast Refresh ("OP_LABEL" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+12:09:50 AM [vite] hmr update /src/index.css, /src/console/PreVerifyDetail.tsx, /src/console/InfoVerifyList.tsx
+12:09:56 AM [vite] hmr update /src/console/CreditKimiOps.tsx, /src/index.css
+12:09:56 AM [vite] hmr invalidate /src/console/CreditKimiOps.tsx Could not Fast Refresh ("CREDIT_OP_LABEL" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+12:09:56 AM [vite] hmr update /src/index.css, /src/console/CreditKimiDetail.tsx, /src/console/CreditKimiList.tsx
+12:10:01 AM [vite] hmr update /src/console/FraudScheme4Ops.tsx, /src/index.css
+12:10:01 AM [vite] hmr invalidate /src/console/FraudScheme4Ops.tsx Could not Fast Refresh ("FRAUD_S4_OP_LABEL" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+12:10:01 AM [vite] hmr update /src/index.css, /src/console/FraudScheme4List.tsx, /src/console/FraudScheme4Detail.tsx
+12:10:47 AM [vite] hmr update /src/console/VerifyOps.tsx, /src/index.css
+12:10:47 AM [vite] hmr update /src/console/FraudScheme4Ops.tsx, /src/index.css
+12:10:48 AM [vite] hmr invalidate /src/console/VerifyOps.tsx Could not Fast Refresh ("OP_LABEL" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+12:10:48 AM [vite] hmr update /src/index.css, /src/console/PreVerifyDetail.tsx, /src/console/InfoVerifyList.tsx
+12:10:48 AM [vite] hmr invalidate /src/console/FraudScheme4Ops.tsx Could not Fast Refresh ("FRAUD_S4_OP_LABEL" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+12:10:48 AM [vite] hmr update /src/index.css, /src/console/FraudScheme4List.tsx, /src/console/FraudScheme4Detail.tsx

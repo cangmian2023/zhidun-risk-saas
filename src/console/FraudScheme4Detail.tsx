@@ -451,6 +451,7 @@ export default function FraudScheme4Detail() {
               onLog={(e) => addLog(e)}
               flash={flash}
               showView={false}
+              consolidateAudit
             />
             {/* 处置建议（原第九部分：删除标题，置于操作栏与欺诈识别过程之间） */}
             <div id="disposition" className="mt-4 border-t border-slate-100 pt-3">

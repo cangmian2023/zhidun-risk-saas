@@ -16,7 +16,7 @@ import {
   type CrossCheck,
 } from './infoVerifyReport'
 import { useModule } from '../store'
-import { VerifyActionBar, type VerifyRow, type WorkStatus, type SysResult } from './VerifyOps'
+import { VerifyActionBar, ivGradeFromRisk, type VerifyRow, type WorkStatus, type SysResult } from './VerifyOps'
 import { MergedOpTable } from '../components/MergedOpTable'
 
 const cn = (...c: (string | false | undefined)[]) => c.filter(Boolean).join(' ')
@@ -462,7 +462,7 @@ export default function PreVerifyDetail() {
 
           {/* 结论与终审操作（与列表一致：系统结果 / 工单状态 / 操作人员 + 操作按钮） */}
           <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-card">
-            <VerifyActionBar row={verifyRow} onApply={applyVerify} flash={flash} showView={false} />
+            <VerifyActionBar row={verifyRow} onApply={applyVerify} flash={flash} showView={false} grade={ivGradeFromRisk(d.cross.riskScore)} />
             {/* 核验过程（原「四、核验过程」卡片，弱化、横向置于卡底） */}
             <div className="mt-4 border-t border-slate-100 pt-3">
               <div className="mb-2 text-[11px] font-medium text-slate-400">核验过程</div>

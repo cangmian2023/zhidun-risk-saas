@@ -15,7 +15,6 @@ import {
   DecisionSuggestionBadge,
   DecisionInfoBadge,
   DecisionRiskBadge,
-  DecisionActionBar,
   DecisionActionKey,
   decisionOpsFor,
   useDecisionActions,
@@ -32,12 +31,7 @@ const SECTIONS = [
 ]
 
 const OPERATIONS = [
-  { op: '通过', desc: '同意系统建议，按建议额度授信', cond: '风控专员认为风险可控' },
-  { op: '调整额度', desc: '通过但调整授信额度', cond: '风控专员认为系统建议额度偏高或偏低' },
-  { op: '调整利率', desc: '通过但调整利率', cond: '风控专员认为系统建议利率不合适' },
-  { op: '拒绝', desc: '拒绝授信申请', cond: '风控专员认为风险过高' },
-  { op: '转人工', desc: '提交给上级或专家复核', cond: '风控专员无法判断' },
-  { op: '退回补充材料', desc: '退回申请，要求补充材料', cond: '发现材料缺失或存疑' },
+  { op: '审批', desc: '进入审批流程，按系统建议与流程配置完成审核结论', cond: '风控专员进行最终审批' },
 ]
 
 function KV({ label, children, full }: { label: string; children: ReactNode; full?: boolean }) {
@@ -237,6 +231,14 @@ export default function DecisionDetail() {
   const creditPositiveText = '身份真实性良好、还款能力尚可'
   const jump = (path: string) => () => nav(path)
 
+  // 审批操作按钮：统一为「审批」入口，弹出与流程配置对齐的审批弹窗
+  const recOps = new Set<string>(['审批'])
+  const actionableOps = decisionOpsFor(d.row.suggestion, d.row.approvalStatus).filter((o) => o !== 'view')
+  const onOp = (op: string) => {
+    const map: Record<string, DecisionActionKey> = { '审批': 'audit' }
+    onAction(map[op] ?? 'audit')
+  }
+
   // 分值配色与预警状态保持一致
   const toneText = (t: Tone) => t === 'alert' ? 'text-rose-600' : t === 'ok' ? 'text-emerald-600' : 'text-slate-700'
 
@@ -248,25 +250,6 @@ export default function DecisionDetail() {
     red: { card: 'bg-rose-50/50 ring-rose-100', pill: 'bg-rose-100 text-rose-700', num: 'text-rose-600' },
     blue: { card: 'bg-sky-50/50 ring-sky-100', pill: 'bg-sky-100 text-sky-700', num: 'text-sky-600' },
     gray: { card: 'bg-slate-50/60 ring-slate-100', pill: 'bg-slate-100 text-slate-500', num: 'text-slate-700' },
-  }
-
-  // 审批操作按钮：根据报告结论/状态推荐对应操作
-  const recOps = new Set<string>()
-  {
-    const r = d.row
-    if (r.suggestion === '拒绝' || r.suggestion === '严格限制') recOps.add('拒绝')
-    if (r.suggestion === '通过' || r.suggestion === '优先通过') recOps.add('通过')
-    if (r.suggestion === '限制额度' || r.suggestion === '严格限制') { recOps.add('调整额度'); recOps.add('调整利率') }
-    if (r.fraudResult === '疑似风险' || r.infoResult === '预警' || r.suggestion === '限制额度') recOps.add('转人工')
-    if (r.infoResult === '预警') recOps.add('退回补充材料')
-  }
-  const actionableOps = decisionOpsFor(d.row.suggestion, d.row.approvalStatus).filter((o) => o !== 'view')
-  const onOp = (op: string) => {
-    const map: Record<string, DecisionActionKey> = {
-      '通过': 'audit', '调整额度': 'audit', '调整利率': 'audit', '拒绝': 'audit',
-      '转人工': 'submitReview', '退回补充材料': 'return',
-    }
-    onAction(map[op] ?? 'audit')
   }
 
   return (
@@ -488,7 +471,6 @@ export default function DecisionDetail() {
         </nav>
       </div>
 
-      <DecisionActionBar row={d.row} onAction={onAction} />
       {actions.Modal}
     </div>
   )

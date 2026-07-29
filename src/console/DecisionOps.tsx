@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Badge, Button, Modal, DecisionTag, StatusTag } from '../components/ui'
+import { getDecisionAuditFlow, resolveActions, DECISION_APPROVAL_MACHINE, DECISION_REVIEW_MACHINE, type ReviewResult } from './reportTemplateData'
 import { useModule } from '../store'
 import {
   DecisionRow,
@@ -76,36 +77,18 @@ export type ReviewOpKey =
   | 'confirmReject'  // 确认拒绝
 
 export function reviewOpsFor(m: ManualReview, s: DecisionSuggestion): { key: ReviewOpKey; label: string; disabled?: boolean }[] {
-  const view = { key: 'view' as const, label: '查看' }
-  const note = { key: 'note' as const, label: '录入备注' }
-  switch (m) {
-    case '核验计算中':
-      return [{ key: 'view', label: '查看', disabled: true }]
-    case '待确认':
-      if (s === '通过') return [view, { key: 'reportConfirm', label: '报告确认' }]
-      if (s === '严格限制') return [view, { key: 'reportConfirm', label: '报告确认' }, { key: 'forceRecheck', label: '强制复审' }]
-      // 拒绝
-      return [view, { key: 'reportConfirm', label: '报告确认' }, { key: 'blacklist', label: '加入黑名单' }]
-    case '已确认':
-    case '初审拒贷':
-    case '强制放行':
-    case '复核通过':
-    case '复核拒绝':
-    case '加入黑名单':
-      return [view]
-    case '待审核':
-      return [view, { key: 'submitDual', label: '提交双人复核' }, note]
-    case '提交复核':
-      return [view, { key: 'confirmPass', label: '确认放行' }, { key: 'confirmReject', label: '确认拒绝' }, note]
-  }
+  const locked = m === '核验计算中'
+  return resolveActions(DECISION_REVIEW_MACHINE, { manualReview: m, suggestion: s }, { context: 'detail' }).map((a) => ({
+    key: a.key as ReviewOpKey,
+    label: a.label,
+    disabled: locked,
+  }))
 }
 
 export function decisionOpsFor(_s: DecisionSuggestion, w: ApprovalStatus): DecisionActionKey[] {
-  if (w === '已通过' || w === '已拒绝' || w === '已退回') return ['view']
-  if (w === '已提交双人复核') return ['view'] // 双人复核中，仅可查看
-  if (w === '待审批') return ['view', 'audit', 'return']
-  // 审批中
-  return ['view', 'submitReview', 'return']
+  return resolveActions(DECISION_APPROVAL_MACHINE, { suggestion: _s, approvalStatus: w }, { context: 'list' }).map(
+    (a) => a.key as DecisionActionKey,
+  )
 }
 
 const opLabel: Record<DecisionActionKey, string> = {
@@ -116,8 +99,10 @@ const opLabel: Record<DecisionActionKey, string> = {
   note: '录入备注',
 }
 
-const RATE_OPTIONS = ['基准利率+5%', '基准利率+10%', '基准利率+15%', '基准利率+20%']
-const RISK_FOCUS_OPTIONS = ['信用历史', '设备安全', '团伙关联', '信息异常', '还款能力']
+// 审批意见预设项中，含"调整/利率/额度/金额/期限/减免"等需填写具体值的，渲染输入框；其余（如"打回重审"）直接采用标签值
+function opinionNeedsInput(label: string): boolean {
+  return /调整|利率|额度|金额|期限|减免|降息|加息|上浮|下调/.test(label)
+}
 
 export function DecisionRowActions({ row, onAction }: { row: DecisionRow; onAction: (k: DecisionActionKey) => void }) {
   const ops = decisionOpsFor(row.suggestion, row.approvalStatus)
@@ -187,21 +172,33 @@ interface DecisionModalState {
 
 export function useDecisionActions(row: DecisionRow | null, onApply: (patch: Partial<DecisionRow>) => void) {
   const flash = useModule().flash
+  // 审批弹窗与报告模板的审核流程配置对齐：依据报告 suggestion 取对应流程节点的审核事项/结果/意见预设
+  const auditFlow = useMemo(() => (row ? getDecisionAuditFlow(row.suggestion) : null), [row?.suggestion])
   const [modal, setModal] = useState<DecisionModalState | null>(null)
-  const [opinion, setOpinion] = useState('')
+  const [opinionKeys, setOpinionKeys] = useState<string[]>([])
+  const [opinionValues, setOpinionValues] = useState<Record<string, string>>({})
+  const [opinionExtra, setOpinionExtra] = useState('')
   const [note, setNote] = useState('')
-  const [creditLimit, setCreditLimit] = useState('')
-  const [rateFloat, setRateFloat] = useState('')
-  const [riskFocus, setRiskFocus] = useState<string[]>([])
+  const [result, setResult] = useState<ReviewResult>('通过')
+  const [checks, setChecks] = useState<string[]>([])
   const [fileName, setFileName] = useState('')
+
+  // 弹窗打开到「审批决策」时，按当前流程配置初始化审批结果与审核事项
+  useEffect(() => {
+    if (modal?.key === 'audit' && auditFlow) {
+      setResult(auditFlow.results[0])
+      setChecks(auditFlow.checkItems)
+    }
+  }, [modal?.key, auditFlow])
 
   const close = () => {
     setModal(null)
-    setOpinion('')
+    setOpinionKeys([])
+    setOpinionValues({})
+    setOpinionExtra('')
     setNote('')
-    setCreditLimit('')
-    setRateFloat('')
-    setRiskFocus([])
+    setResult('通过')
+    setChecks([])
     setFileName('')
   }
 
@@ -254,10 +251,18 @@ export function useDecisionActions(row: DecisionRow | null, onApply: (patch: Par
     switch (modal.key) {
       case 'audit': {
         onApply({ approvalStatus: '审批中', operator: '李娜' })
-        const extra = [creditLimit && `额度¥${creditLimit}`, rateFloat && `利率${rateFloat}`, riskFocus.length && `关注点${riskFocus.join('/')}`]
+        const opinionText = [
+          ...opinionKeys.map((k) => opinionValues[k] ?? k),
+          ...(opinionExtra.trim() ? [opinionExtra.trim()] : []),
+        ].join('；')
+        const extra = [
+          `结论：${result}`,
+          auditFlow && checks.length && `审核事项 ${checks.length}/${auditFlow.checkItems.length}`,
+          opinionText && `审批意见：${opinionText}`,
+        ]
           .filter(Boolean)
           .join('，')
-        flash(`已对 ${row.id} 完成初审并进入审批中${extra ? `（${extra}）` : ''}`)
+        flash(`已对 ${row.id} 完成初审并进入审批中（${extra}）`)
         break
       }
       case 'submitReview': {
@@ -306,48 +311,90 @@ export function useDecisionActions(row: DecisionRow | null, onApply: (patch: Par
         <div className="space-y-3">
           <div className="text-sm text-slate-600">
             审批结论：<span className="font-medium text-ink-900">{row?.suggestion}</span>
+            <span className="ml-2 rounded bg-slate-100 px-1.5 py-0.5 text-[11px] text-slate-500">流程节点：{auditFlow?.nodeLabel}</span>
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <div className="mb-1 text-xs text-slate-400">授信额度（元）</div>
-              <input
-                type="number"
-                value={creditLimit || (row ? String(row.approvedAmount) : '')}
-                onChange={(e) => setCreditLimit(e.target.value)}
-                placeholder="审批结论为通过/调整额度时必填"
-                className="h-9 w-full rounded-lg border border-slate-300 px-3 text-sm outline-none focus:border-violet-400"
-              />
-            </div>
-            <div>
-              <div className="mb-1 text-xs text-slate-400">利率浮动</div>
-              <select
-                value={rateFloat || '基准利率+10%'}
-                onChange={(e) => setRateFloat(e.target.value)}
-                className="h-9 w-full rounded-lg border border-slate-300 px-3 text-sm outline-none focus:border-violet-400"
-              >
-                {RATE_OPTIONS.map((r) => (
-                  <option key={r} value={r}>{r}</option>
-                ))}
-              </select>
-            </div>
-          </div>
+
+          {/* 审核事项：来自模板流程配置 checkItems */}
           <div>
-            <div className="mb-1 text-xs text-slate-400">风险关注点（多选）</div>
+            <div className="mb-1 text-xs text-slate-400">审核事项（按流程配置核对）</div>
             <div className="flex flex-wrap gap-1.5">
-              {RISK_FOCUS_OPTIONS.map((f) => (
+              {(auditFlow?.checkItems ?? []).map((c) => {
+                const on = checks.includes(c)
+                return (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => setChecks((p) => (on ? p.filter((x) => x !== c) : [...p, c]))}
+                    className={`rounded-lg px-2.5 py-1 text-xs ring-1 ring-inset transition ${on ? 'bg-violet-50 text-violet-700 ring-violet-200' : 'bg-slate-50 text-slate-500 ring-slate-200 hover:bg-slate-100'}`}
+                  >
+                    {on ? '✓ ' : ''}{c}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* 审批结果：来自模板流程配置 results */}
+          <div>
+            <div className="mb-1 text-xs text-slate-400">审批结果（按流程配置可选）</div>
+            <div className="flex flex-wrap gap-1.5">
+              {(auditFlow?.results ?? []).map((r) => (
                 <button
-                  key={f}
+                  key={r}
                   type="button"
-                  onClick={() => setRiskFocus((prev) => (prev.includes(f) ? prev.filter((x) => x !== f) : [...prev, f]))}
-                  className={`rounded-full px-2.5 py-1 text-xs transition ${
-                    riskFocus.includes(f) ? 'bg-violet-100 text-violet-700' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
-                  }`}
+                  onClick={() => setResult(r)}
+                  className={`rounded-full px-3 py-1 text-xs transition ${result === r ? 'bg-violet-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
                 >
-                  {f}
+                  {r}
                 </button>
               ))}
             </div>
           </div>
+
+          {/* 审批意见：来自模板流程配置 opinionPresets[result]，多项可选、可填写 */}
+          <div>
+            <div className="mb-1 text-xs text-slate-400">审批意见（{result} 预设，可多选、可填写）</div>
+            <div className="space-y-2">
+              {((auditFlow?.opinionPresets ?? {})[result] ?? []).map((p) => {
+                const on = opinionKeys.includes(p)
+                const need = opinionNeedsInput(p)
+                return (
+                  <div key={p} className={`flex items-start gap-2 rounded-lg border px-2.5 py-2 transition ${on ? 'border-violet-200 bg-violet-50/50' : 'border-slate-200'}`}>
+                    <input
+                      type="checkbox"
+                      checked={on}
+                      onChange={() =>
+                        setOpinionKeys((p2) => {
+                          if (p2.includes(p)) return p2.filter((x) => x !== p)
+                          setOpinionValues((m) => ({ ...m, [p]: m[p] ?? p }))
+                          return [...p2, p]
+                        })
+                      }
+                      className="mt-0.5 h-3.5 w-3.5 shrink-0 accent-violet-600"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <div className="text-sm text-slate-700">{p}</div>
+                      {on && need && (
+                        <input
+                          value={opinionValues[p] ?? ''}
+                          onChange={(e) => setOpinionValues((m) => ({ ...m, [p]: e.target.value }))}
+                          placeholder={`请输入「${p}」的具体内容`}
+                          className="mt-1 h-8 w-full rounded-md border border-slate-300 px-2 text-xs outline-none focus:border-violet-400"
+                        />
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+            <textarea
+              value={opinionExtra}
+              onChange={(e) => setOpinionExtra(e.target.value)}
+              placeholder="其他审批意见（可自填）"
+              className="mt-2 h-16 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-violet-400"
+            />
+          </div>
+
           <div>
             <div className="mb-1 text-xs text-slate-400">附件上传</div>
             <input
@@ -356,15 +403,6 @@ export function useDecisionActions(row: DecisionRow | null, onApply: (patch: Par
               className="block w-full text-sm text-slate-500 file:mr-3 file:rounded-lg file:border-0 file:bg-violet-50 file:px-3 file:py-1.5 file:text-xs file:text-violet-600"
             />
             {fileName && <div className="mt-1 text-xs text-slate-400">已选：{fileName}</div>}
-          </div>
-          <div>
-            <div className="mb-1 text-xs text-slate-400">审批意见</div>
-            <textarea
-              value={opinion}
-              onChange={(e) => setOpinion(e.target.value)}
-              placeholder="填写审批意见（必填）"
-              className="h-24 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-violet-400"
-            />
           </div>
         </div>
       )}

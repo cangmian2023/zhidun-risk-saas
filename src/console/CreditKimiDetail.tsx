@@ -325,7 +325,7 @@ export default function CreditKimiDetail() {
 
           {/* 系统状态 / 授信建议（第二、三卡片合并）：操作栏 + 授信建议 + 正向/风险因素 + 参考额度 */}
           <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-card">
-            <CreditKimiActionBar row={row} onApply={applyRow} onLog={addLog} flash={flash} showView={false} />
+            <CreditKimiActionBar row={row} onApply={applyRow} onLog={addLog} flash={flash} showView={false} includeAudit />
             {/* 授信建议 */}
             <div id="recommend" className="mt-4 border-t border-slate-100 pt-3">
               <div className={cn('rounded-xl border p-4', adviceBox)}>

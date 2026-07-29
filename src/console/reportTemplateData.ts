@@ -336,8 +336,9 @@ export interface BusinessFlowConfig {
   recheckApproveRole: ReviewRole
   manualSuggestRole: ReviewRole
   manualApproveRole: ReviewRole
-  /* 自由画布流程图（可选）：存在则以画布为准，缩写摘要回显在分段表「业务流程配置」列 */
-  flowGraph?: FlowGraph
+  /* 自由画布流程图（运行时审批弹窗使用，可选）；在「审核操作配置」Tab 的弹窗画布中编辑。
+     一个评分分段可配多条业务流程，每条对应一个画布图，列表列逐条展示并可编辑/删除 */
+  flowGraphs?: FlowGraph[]
 }
 
 /* ============================================================================
@@ -345,52 +346,52 @@ export interface BusinessFlowConfig {
  * - 节点：开始 / 人工审核 / 自动处理 / 抄送通知 / 结束，坐标为画布内绝对位置
  * - 连线：from → to（可带标签，如「通过」「拒绝」）
  * ========================================================================= */
-export type FlowNodeType = 'start' | 'manual' | 'auto' | 'notify' | 'end'
+/* 节点类型收敛为三类：开始节点（流程入口）/ 普通节点（任一人工操作步）/ 结束节点（终态） */
+export type FlowNodeType = 'start' | 'normal' | 'end'
 export const FLOW_NODE_TYPE_LABEL: Record<FlowNodeType, string> = {
-  start: '开始', manual: '人工审核', auto: '自动处理', notify: '抄送通知', end: '结束',
+  start: '开始节点', normal: '普通节点', end: '结束节点',
 }
 export const FLOW_NODE_TYPE_COLOR: Record<FlowNodeType, { bg: string; border: string; text: string }> = {
   start: { bg: '#ECFDF5', border: '#10B981', text: '#065F46' },
-  manual: { bg: '#EFF6FF', border: '#3B82F6', text: '#1E40AF' },
-  auto: { bg: '#FFFBEB', border: '#F59E0B', text: '#92400E' },
-  notify: { bg: '#F5F3FF', border: '#8B5CF6', text: '#5B21B6' },
+  normal: { bg: '#EFF6FF', border: '#3B82F6', text: '#1E40AF' },
   end: { bg: '#F8FAFC', border: '#94A3B8', text: '#475569' },
 }
-export type FlowAutoAction = '自动通过' | '自动拒绝' | '额度试算'
+/* （自动处置/条件分支类型已移除：节点类型收敛为 开始/普通/结束 三类） */
 
-/* —— 自动处置节点：触发条件（参考钉钉/企微审批的「条件分支」）—— */
-export type FlowCondField = '总分' | '申请金额' | '命中即拒规则数' | '客群标签' | '无条件（直接执行）'
-export const FLOW_COND_FIELDS: FlowCondField[] = ['总分', '申请金额', '命中即拒规则数', '客群标签', '无条件（直接执行）']
-export type FlowCondOp = '≥' | '>' | '≤' | '<' | '=' | '介于'
-export const FLOW_COND_OPS: FlowCondOp[] = ['≥', '>', '≤', '<', '=', '介于']
-export interface FlowAutoCond { field: FlowCondField; op: FlowCondOp; value: string }
-
-/* —— 人工审核节点：审核事项 / 审批表单（参考成形 OA 的审批单配置）—— */
+/* —— 人工审核节点：审核事项 / 审批结果 / 审批意见 / 审批表单（参考成形 OA 的审批单配置）—— */
 export const REVIEW_CHECK_ITEMS = [
   '身份真实性核验', '资料完整性检查', '收入与负债评估', '征信报告复核', '反欺诈规则复核', '额度与利率合理性',
 ] as const
-export const REVIEW_FORM_FIELDS = [
-  '审批意见（必填）', '拒绝/退回原因', '建议授信额度', '建议利率与期限', '风险备注', '补充材料清单',
-] as const
-export type FlowTimeoutAction = '自动通过' | '升级上报' | '仅提醒'
-export const FLOW_TIMEOUT_ACTIONS: FlowTimeoutAction[] = ['自动通过', '升级上报', '仅提醒']
+// 审批结果：固定三选一，驱动流程走向（不可自定义）
+export type ReviewResult = '通过' | '驳回' | '拒绝'
+export const REVIEW_RESULTS: ReviewResult[] = ['通过', '驳回', '拒绝']
+// 审批意见：按审批结果分组的预设选项（可自定义增删），并始终允许手输
+export const DEFAULT_OPINIONS: Record<ReviewResult, string[]> = {
+  '通过': ['调整利率', '调整借贷金额'],
+  '驳回': ['缺少信息，请重新填写', '请重新审核信息'],
+  '拒绝': ['风控评分不足', '反欺诈规则命中'],
+}
+// 深拷贝默认审批意见预设（避免共用同一数组引用）
+export function defaultOpinionPresets(): Record<ReviewResult, string[]> {
+  return { '通过': [...DEFAULT_OPINIONS['通过']], '驳回': [...DEFAULT_OPINIONS['驳回']], '拒绝': [...DEFAULT_OPINIONS['拒绝']] }
+}
+/* （超时处理类型已移除：节点类型收敛为 开始/普通/结束 三类） */
 
 export interface FlowGraphNode {
   id: string
   type: FlowNodeType
-  label: string          // 节点标题（可编辑）
+  label: string          // 节点标题（画布上显示的名称）
+  buttonName?: string    // 按钮名称（运行时操作按钮上显示的文案；缺省回退到 label）
   x: number              // 画布坐标（左上角）
   y: number
-  role?: ReviewRole      // manual/notify：经办或抄送角色
-  signMode?: 'any' | 'all' // manual：或签/会签
-  autoAction?: FlowAutoAction // auto：自动动作
-  cond?: FlowAutoCond    // auto：触发条件（满足才执行自动动作，缺省=无条件）
-  checkItems?: string[]  // manual：审核事项（审核什么）
-  formFields?: string[]  // manual：需填写的审批表单字段
-  timeoutHours?: number  // manual：超时时长（小时，0/缺省=不限时）
-  timeoutAction?: FlowTimeoutAction // manual：超时处理
-  returnable?: boolean   // manual：是否允许退回上一节点
-  note?: string          // 附注（如决策建议文案）
+  role?: ReviewRole      // 经办角色（谁操作本节点）
+  checkItems?: string[]  // 弹出内容·审核事项（审核什么，可自定义）
+  results?: ReviewResult[]  // 弹出内容·审批结果（通过/驳回/拒绝），可多选
+  opinionPresets?: Record<ReviewResult, string[]> // 弹出内容·审批意见预设（按结果分组，可自定义增删）
+  resultStates?: Partial<Record<ReviewResult, string>> // 决策节点（有审批结果）：每结果 → 操作后状态（取自「状态枚举类」），运行时据此驱动状态列
+  postState?: string     // 动作节点（无审批结果）：操作后的固定状态（取自「状态枚举类」）
+  showButton?: boolean   // 结束节点：是否在结束状态显示按钮
+  note?: string          // 附注
 }
 export interface FlowGraphEdge {
   id: string
@@ -404,38 +405,33 @@ export interface FlowGraph {
 }
 
 /* 由分段的旧式勾选配置生成默认画布图（首次打开画布时兜底）；grade 用于给自动节点带上「总分介于分段区间」的触发条件 */
-export function buildDefaultFlowGraph(flow: BusinessFlowConfig, autoResult: AutoResult, grade?: ScoreGrade): FlowGraph {
+export function buildDefaultFlowGraph(flow: BusinessFlowConfig, autoResult: AutoResult): FlowGraph {
   const nodes: FlowGraphNode[] = [{ id: 'n_start', type: 'start', label: '评分完成', x: 40, y: 120 }]
   const edges: FlowGraphEdge[] = []
   let prev = 'n_start'
   const link = (to: string, label?: string) => { edges.push({ id: `e_${prev}_${to}`, from: prev, to, label }); prev = to }
-  const gradeCond: FlowAutoCond | undefined = grade
-    ? { field: '总分', op: '介于', value: `${grade.minScore} ~ ${grade.maxScore}` }
-    : undefined
   if (autoResult === '通过') {
-    nodes.push({ id: 'n_auto', type: 'auto', label: '自动通过', x: 220, y: 120, autoAction: '自动通过', cond: gradeCond })
-    link('n_auto')
-    if (flow.passNeedConfirm) {
-      nodes.push({ id: 'n_confirm', type: 'manual', label: '人工确认', x: 400, y: 120, role: flow.passConfirmRole, signMode: 'any', checkItems: ['资料完整性检查'], formFields: ['审批意见（必填）'], timeoutHours: 24, timeoutAction: '自动通过', returnable: false })
-      link('n_confirm')
-    }
+    nodes.push({ id: 'n_audit', type: 'normal', label: '人工确认', x: 320, y: 120, role: flow.passConfirmRole, checkItems: ['资料完整性检查'], results: ['通过', '驳回'], opinionPresets: defaultOpinionPresets(), postState: '通过' })
+    link('n_audit')
   } else if (autoResult === '拒绝') {
-    nodes.push({ id: 'n_auto', type: 'auto', label: '自动拒绝', x: 220, y: 120, autoAction: '自动拒绝', cond: gradeCond })
-    link('n_auto')
     if (flow.rejectAllowRecheck) {
-      nodes.push({ id: 'n_resubmit', type: 'manual', label: '复审发起', x: 400, y: 40, role: flow.recheckSubmitRole, signMode: 'any', checkItems: ['资料完整性检查', '征信报告复核'], formFields: ['审批意见（必填）', '补充材料清单'], timeoutHours: 48, timeoutAction: '仅提醒', returnable: true })
-      nodes.push({ id: 'n_reapprove', type: 'manual', label: '复审审核', x: 580, y: 40, role: flow.recheckApproveRole, signMode: 'any', checkItems: ['征信报告复核', '反欺诈规则复核'], formFields: ['审批意见（必填）', '拒绝/退回原因'], timeoutHours: 48, timeoutAction: '升级上报', returnable: true })
-      edges.push({ id: 'e_auto_resubmit', from: 'n_auto', to: 'n_resubmit', label: '申请复审' })
+      nodes.push({ id: 'n_resubmit', type: 'normal', label: '复审发起', x: 320, y: 60, role: flow.recheckSubmitRole, checkItems: ['资料完整性检查', '征信报告复核'], results: ['通过', '驳回', '拒绝'], opinionPresets: defaultOpinionPresets(), postState: '待复审' })
+      nodes.push({ id: 'n_reapprove', type: 'normal', label: '复审审核', x: 600, y: 60, role: flow.recheckApproveRole, checkItems: ['征信报告复核', '反欺诈规则复核'], results: ['通过', '驳回', '拒绝'], opinionPresets: defaultOpinionPresets(), postState: '已复审' })
+      edges.push({ id: 'e_start_resubmit', from: 'n_start', to: 'n_resubmit', label: '申请复审' })
       edges.push({ id: 'e_resubmit_reapprove', from: 'n_resubmit', to: 'n_reapprove' })
       prev = 'n_reapprove'
+    } else {
+      nodes.push({ id: 'n_reject', type: 'normal', label: '拒绝办结', x: 320, y: 120, role: flow.recheckApproveRole, checkItems: ['反欺诈规则复核'], results: ['拒绝'], opinionPresets: defaultOpinionPresets(), postState: '已拒绝' })
+      link('n_reject')
     }
   } else {
-    nodes.push({ id: 'n_suggest', type: 'manual', label: '提交建议', x: 220, y: 120, role: flow.manualSuggestRole, signMode: 'any', checkItems: ['身份真实性核验', '收入与负债评估'], formFields: ['审批意见（必填）', '建议授信额度'], timeoutHours: 24, timeoutAction: '仅提醒', returnable: false })
+    nodes.push({ id: 'n_suggest', type: 'normal', label: '提交建议', x: 320, y: 120, role: flow.manualSuggestRole, checkItems: ['身份真实性核验', '收入与负债评估'], results: ['通过', '驳回', '拒绝'], opinionPresets: defaultOpinionPresets(), postState: '待人工' })
     link('n_suggest')
-    nodes.push({ id: 'n_approve', type: 'manual', label: '审核建议', x: 400, y: 120, role: flow.manualApproveRole, signMode: 'any', checkItems: ['征信报告复核', '额度与利率合理性'], formFields: ['审批意见（必填）', '建议利率与期限', '风险备注'], timeoutHours: 24, timeoutAction: '升级上报', returnable: true })
+    nodes.push({ id: 'n_approve', type: 'normal', label: '审核建议', x: 600, y: 120, role: flow.manualApproveRole, checkItems: ['征信报告复核', '额度与利率合理性'], results: ['通过', '驳回', '拒绝'], opinionPresets: defaultOpinionPresets(), postState: '已审核' })
     link('n_approve')
   }
-  nodes.push({ id: 'n_end', type: 'end', label: '结束', x: prev === 'n_reapprove' ? 580 : 580, y: prev === 'n_reapprove' ? 160 : 120 })
+  const ex = prev === 'n_approve' || prev === 'n_reapprove'
+  nodes.push({ id: 'n_end', type: 'end', label: '结束', x: ex ? 860 : 600, y: prev === 'n_resubmit' ? 60 : 120, showButton: true })
   link('n_end')
   return { nodes, edges }
 }
@@ -452,7 +448,8 @@ export function summarizeFlowGraph(g: FlowGraph): string {
   let cur: FlowGraphNode | undefined = start
   while (cur && !seen.has(cur.id) && parts.length < 8) {
     seen.add(cur.id)
-    parts.push(cur.type === 'manual' && cur.role ? `${cur.label}(${cur.role}${cur.signMode === 'all' ? '·会签' : ''})` : cur.label)
+    const disp = cur.buttonName ?? cur.label
+    parts.push(cur.role ? `${disp}(${cur.role})` : disp)
     const outs: FlowGraphEdge[] = outMap.get(cur.id) ?? []
     cur = outs.length ? nodeMap.get(outs[0].to) : undefined
   }
@@ -504,7 +501,7 @@ export interface ReportTemplate {
   lastEditTime: string
   sections: SectionConfig[]
   scoreBlock: { show: boolean; title: string }   // 评分方案 Tab → 报告内「得分计算」卡片：是否显示 + 报告内卡片标题
-  flowBlock: { show: boolean; title: string }   // 审核操作 Tab → 报告内「结论与终审」卡片：是否显示 + 报告内卡片标题
+  flowBlock: { show: boolean; title: string; statusEnum: string[] }   // 审核操作 Tab → 报告内「结论与终审」卡片：是否显示 + 报告内卡片标题 + 状态枚举类
   showOpLog: boolean        // 报告中是否显示操作日志（'log' 类分段的总开关）
   scoreDisplay: ScoreDisplayConfig
   businessFlow: BusinessFlowConfig[]
@@ -718,6 +715,44 @@ export const SECTION_CATALOG: Record<ReportType, { id: string; name: string; des
         { id: 'ai_gps', name: 'GPS定位', desc: 'GPS' },
         { id: 'ai_channel', name: '进件渠道', desc: '渠道' },
         { id: 'ai_appver', name: 'APP版本', desc: 'App 版本' },
+      ],
+    },
+    {
+      id: 'credit_overview', name: '信用评分总览', desc: '顶部环形图：信用评分（0-100，越高越好）+ 风险等级 Badge + 行业平均对比 + 六大维度评分条（含权重）。',
+      fields: [
+        { id: 'co_ring', name: '信用评分环形图', desc: '总评分环形图（DisplayComponent=环形图，模型已支持）' },
+        { id: 'co_level', name: '风险等级 Badge', desc: 'A/B/C/D 等级彩色标签' },
+        { id: 'co_industry', name: '行业平均对比', desc: '与行业平均分的对比标注' },
+        { id: 'co_dims', name: '六大维度评分条', desc: '身份/还款/信用历史/行为/设备/关联 六维 ProgressBar（标注权重）' },
+        { id: 'co_tags', name: '风险标签', desc: '命中的风险标签' },
+      ],
+    },
+    {
+      id: 'credit_factors', name: '风险因子分析', desc: '六维风险因子卡片：每维含得分/权重/等级/逻辑/来源。',
+      fields: [
+        { id: 'cf_dim_card', name: '六维因子卡片', desc: '身份/还款/信用历史/行为/设备/关联 各一张卡片' },
+        { id: 'cf_dim_score', name: '维度得分', desc: '该维得分' },
+        { id: 'cf_dim_weight', name: '维度权重', desc: '该维权重' },
+        { id: 'cf_dim_level', name: '维度等级', desc: '该维风险等级' },
+        { id: 'cf_dim_logic', name: '维度逻辑', desc: '该维判定逻辑' },
+        { id: 'cf_dim_source', name: '维度来源', desc: '该维数据来源' },
+        { id: 'cf_table', name: '维度说明表', desc: '六维 权重/逻辑/来源 汇总表' },
+      ],
+    },
+    {
+      id: 'credit_trend', name: '信用评分趋势', desc: '用户近 7 月信用评分 vs 行业平均的趋势折线图。',
+      fields: [
+        { id: 'ct_line', name: '趋势折线图', desc: '⚠️ DisplayComponent 无折线/趋势图类型，需模型扩展（GAP）' },
+        { id: 'ct_user', name: '用户评分曲线', desc: '用户每月评分' },
+        { id: 'ct_industry', name: '行业平均曲线', desc: '行业每月平均' },
+      ],
+    },
+    {
+      id: 'credit_radar', name: '风险维度雷达图', desc: '当前六维 vs 行业平均的雷达图。',
+      fields: [
+        { id: 'cr_radar', name: '雷达图', desc: '⚠️ DisplayComponent 无雷达图类型，需模型扩展（GAP）' },
+        { id: 'cr_cur', name: '当前维度值', desc: '当前六维值' },
+        { id: 'cr_avg', name: '行业平均维度值', desc: '行业平均六维值' },
       ],
     },
     {
@@ -951,14 +986,151 @@ export function defaultFlowRow(gradeId: string, suggestionText: string): Busines
     passNeedConfirm: true, passConfirmRole: '初审员',
     rejectAllowRecheck: true, recheckSubmitRole: '复审员', recheckApproveRole: '风控主管',
     manualSuggestRole: '初审员', manualApproveRole: '风控主管',
+    flowGraphs: [],
   }
 }
 /* 第 0 行固定为"计算中"占位，其后每一行对应 grades[i]（流程细节按分段 autoResult 在 UI 中取用对应字段） */
+
+/* 由业务流程配置生成一张「终审审核」流程图：审核事项 / 审批结果 / 审批意见预设全部来自配置，
+ * 使 getAuditFlow 能取出报告专属、按档位区分的审核内容（不再走通用兜底）。 */
+function mkAuditGraph(
+  autoResult: AutoResult,
+  content: { checkItems: string[]; results: ReviewResult[]; opinion?: Partial<Record<ReviewResult, string[]>> },
+): FlowGraph {
+  const opin: Record<ReviewResult, string[]> = {
+    '通过': content.opinion?.['通过'] ?? ['正常通过'],
+    '驳回': content.opinion?.['驳回'] ?? ['信息存疑，请复核'],
+    '拒绝': content.opinion?.['拒绝'] ?? ['风险过高，建议拒绝'],
+  }
+  const post: string = autoResult === '通过' ? '已通过' : autoResult === '拒绝' ? '已拒绝' : '已审核'
+  return {
+    nodes: [
+      { id: 'n_start', type: 'start', label: '评分完成', x: 40, y: 140 },
+      { id: 'n_audit', type: 'normal', label: '终审审核', x: 360, y: 140, role: '风控主管', checkItems: content.checkItems, results: content.results, opinionPresets: opin, postState: post },
+      { id: 'n_end', type: 'end', label: '结束', x: 640, y: 140, showButton: true },
+    ],
+    edges: [
+      { id: 'e1', from: 'n_start', to: 'n_audit' },
+      { id: 'e2', from: 'n_audit', to: 'n_end' },
+    ],
+  }
+}
+function mkFlow(
+  gradeId: string,
+  suggestionText: string,
+  autoResult: AutoResult,
+  content: { checkItems: string[]; results: ReviewResult[]; opinion?: Partial<Record<ReviewResult, string[]>> },
+): BusinessFlowConfig {
+  return { ...defaultFlowRow(gradeId, suggestionText), flowGraphs: [mkAuditGraph(autoResult, content)] }
+}
+
 export const FLOW_PRESETS: Record<ReportType, BusinessFlowConfig[]> = {
-  info_verify: [defaultFlowRow('—', '系统正在计算异常值，请稍候…'), ...GRADE_PRESETS.info_verify.map((g) => defaultFlowRow(g.grade, g.description))],
-  credit: [defaultFlowRow('—', '系统正在计算评分…'), ...GRADE_PRESETS.credit.map((g) => defaultFlowRow(g.grade, g.description))],
-  fraud: [defaultFlowRow('—', '系统正在计算评分，请稍候…'), ...GRADE_PRESETS.fraud.map((g) => defaultFlowRow(g.grade, g.description))],
-  decision: [defaultFlowRow('—', '系统正在生成综合决策，请稍候…'), ...GRADE_PRESETS.decision.map((g) => defaultFlowRow(g.grade, g.description))],
+  /* 信息核验：异常值，越高越危险（安全/关注/警示/高危） */
+  info_verify: [
+    defaultFlowRow('—', '系统正在计算异常值，请稍候…'),
+    mkFlow('安全', GRADE_PRESETS.info_verify[0].description, '通过', {
+      checkItems: ['身份真实性核验', '资料完整性检查'],
+      results: ['通过', '驳回'],
+      opinion: { '通过': ['异常值低位，正常通过'], '驳回': ['信息存疑，退回补充'] },
+    }),
+    mkFlow('关注', GRADE_PRESETS.info_verify[1].description, '转人工', {
+      checkItems: ['异常项人工复核', '收入与负债评估'],
+      results: ['通过', '驳回', '拒绝'],
+      opinion: { '通过': ['风险可控，予以通过'], '拒绝': ['存在关注项，谨慎拒绝'] },
+    }),
+    mkFlow('警示', GRADE_PRESETS.info_verify[2].description, '转人工', {
+      checkItems: ['设备群控核查', '黑名单命中复核', '公安/运营商联防复核'],
+      results: ['通过', '驳回', '拒绝'],
+      opinion: { '拒绝': ['异常值较高，建议拒绝'] },
+    }),
+    mkFlow('高危', GRADE_PRESETS.info_verify[3].description, '拒绝', {
+      checkItems: ['设备群控核查', '黑名单命中复核', '公安/运营商联防复核'],
+      results: ['通过', '驳回', '拒绝'],
+      opinion: { '拒绝': ['异常值极高，建议拒绝处置', '命中黑名单，强制拦截'] },
+    }),
+  ],
+  /* 信用风控：信用评分，越高越好（A/B/C/D） */
+  credit: [
+    defaultFlowRow('—', '系统正在计算评分…'),
+    mkFlow('A', GRADE_PRESETS.credit[0].description, '通过', {
+      checkItems: ['征信报告复核', '额度与利率合理性'],
+      results: ['通过', '驳回'],
+      opinion: { '通过': ['信用优秀，正常授信'] },
+    }),
+    mkFlow('B', GRADE_PRESETS.credit[1].description, '通过', {
+      checkItems: ['征信报告复核', '额度与利率合理性'],
+      results: ['通过', '驳回'],
+      opinion: { '通过': ['信用良好，正常授信'] },
+    }),
+    mkFlow('C', GRADE_PRESETS.credit[2].description, '转人工', {
+      checkItems: ['信用历史核查', '负债率评估'],
+      results: ['通过', '驳回', '拒绝'],
+      opinion: { '拒绝': ['信用一般，谨慎授信'] },
+    }),
+    mkFlow('D', GRADE_PRESETS.credit[3].description, '拒绝', {
+      checkItems: ['征信报告复核', '偿债能力评估'],
+      results: ['通过', '驳回', '拒绝'],
+      opinion: { '拒绝': ['信用较差，建议拒绝授信'] },
+    }),
+  ],
+  /* 欺诈识别：欺诈分，越高越危险（极低/低/中/高/极高） */
+  fraud: [
+    defaultFlowRow('—', '系统正在计算评分，请稍候…'),
+    mkFlow('极低', GRADE_PRESETS.fraud[0].description, '通过', {
+      checkItems: ['反欺诈规则复核'],
+      results: ['通过', '驳回'],
+      opinion: { '通过': ['极低风险，正常通过'] },
+    }),
+    mkFlow('低', GRADE_PRESETS.fraud[1].description, '通过', {
+      checkItems: ['反欺诈规则复核'],
+      results: ['通过', '驳回'],
+      opinion: { '通过': ['低风险，正常通过'] },
+    }),
+    mkFlow('中', GRADE_PRESETS.fraud[2].description, '转人工', {
+      checkItems: ['团伙欺诈核查', '设备关联图谱复核'],
+      results: ['通过', '驳回', '拒绝'],
+      opinion: { '拒绝': ['中风险，建议人工研判'] },
+    }),
+    mkFlow('高', GRADE_PRESETS.fraud[3].description, '拒绝', {
+      checkItems: ['团伙欺诈核查', '黑名单命中复核'],
+      results: ['通过', '驳回', '拒绝'],
+      opinion: { '拒绝': ['高风险，建议拒绝授信'] },
+    }),
+    mkFlow('极高', GRADE_PRESETS.fraud[4].description, '拒绝', {
+      checkItems: ['团伙欺诈核查', '黑名单命中复核', '设备群控核查'],
+      results: ['通过', '驳回', '拒绝'],
+      opinion: { '拒绝': ['欺诈分极高，建议拒绝并加入黑名单'] },
+    }),
+  ],
+  /* 决策报告：综合分，越高越好（优先通过/通过/限制额度/严格限制/拒绝） */
+  decision: [
+    defaultFlowRow('—', '系统正在生成综合决策，请稍候…'),
+    mkFlow('优先通过', GRADE_PRESETS.decision[0].description, '通过', {
+      checkItems: ['三项子报告一致性核对', '额度与利率合理性'],
+      results: ['通过', '驳回'],
+      opinion: { '通过': ['综合风险极低，优先授信'] },
+    }),
+    mkFlow('通过', GRADE_PRESETS.decision[1].description, '通过', {
+      checkItems: ['三项子报告一致性核对'],
+      results: ['通过', '驳回'],
+      opinion: { '通过': ['综合风险低，正常授信'] },
+    }),
+    mkFlow('限制额度', GRADE_PRESETS.decision[2].description, '转人工', {
+      checkItems: ['信用与欺诈综合研判'],
+      results: ['通过', '驳回', '拒绝'],
+      opinion: { '拒绝': ['综合风险中等，限制额度'] },
+    }),
+    mkFlow('严格限制', GRADE_PRESETS.decision[3].description, '拒绝', {
+      checkItems: ['信用与欺诈综合研判'],
+      results: ['通过', '驳回', '拒绝'],
+      opinion: { '拒绝': ['综合风险较高，严格限制'] },
+    }),
+    mkFlow('拒绝', GRADE_PRESETS.decision[4].description, '拒绝', {
+      checkItems: ['欺诈分主导研判', '信用复核'],
+      results: ['通过', '驳回', '拒绝'],
+      opinion: { '拒绝': ['综合风险高，建议拒绝授信'] },
+    }),
+  ],
 }
 
 /* ---------- 主题预设 ---------- */
@@ -1400,6 +1572,13 @@ export interface BuildOpts {
   lastEditTime?: string
 }
 
+const STATUS_ENUM_PRESETS: Record<ReportType, string[]> = {
+  info_verify: ['待确认', '通过', '拒绝', '挂起', '已办结', '转人工'],
+  credit: ['待审核', '通过', '拒绝', '复核中', '已办结', '转人工'],
+  fraud: ['待确认', '通过', '拒绝', '加入黑名单', '已办结', '转人工'],
+  decision: ['待审批', '通过', '拒绝', '退回', '已办结', '转人工'],
+}
+
 export function buildTemplate(type: ReportType, o: BuildOpts): ReportTemplate {
   return {
     id: o.id,
@@ -1414,7 +1593,7 @@ export function buildTemplate(type: ReportType, o: BuildOpts): ReportTemplate {
     lastEditTime: o.lastEditTime ?? '刚刚',
     sections: buildSections(type),
     scoreBlock: { show: true, title: '' },
-    flowBlock: { show: true, title: '' },
+    flowBlock: { show: true, title: '', statusEnum: STATUS_ENUM_PRESETS[type] },
     showOpLog: true,
     scoreDisplay: {
       displayComponent: '大数字',
@@ -1452,6 +1631,281 @@ export const seedReportTemplates: ReportTemplate[] = [
     version: 'V1.2', lastEditor: 'admin', lastEditTime: '1周前', description: '整合三大报告的综合决策报告模板，当前已停用。',
   }),
 ]
+
+/* ---------- 决策报告运行态：审批弹窗所需的流程配置 ---------- */
+/* 依据报告 suggestion 映射到对应分段（grade），取其流程图中「结果选项最多」的审批节点，
+   返回该节点的审核事项 / 审批结果 / 审批意见预设，使弹窗与报告模板的审核流程配置保持一致。
+   注：当前读取种子模板配置（无跨页共享 store）；后续报告实例绑定模板 id 后可改读实际模板。 */
+/** 审批弹窗所需的流程配置（与报告模板的审核流程对齐）：审核事项 / 审批结果 / 审批意见预设 */
+export interface AuditFlow {
+  nodeLabel: string
+  checkItems: string[]
+  results: ReviewResult[]
+  opinionPresets: Record<ReviewResult, string[]>
+  /** 决策节点结果 → 状态 映射；运行时据此将审批结果落地为工单状态（缺省时用各报告内置兜底） */
+  resultStates?: Partial<Record<ReviewResult, string>>
+}
+
+/**
+ * 按报告类型 + 报告结论（grade）取对应业务流程节点的人工审核配置。
+ * 各报告类型共用：依据 suggestion 定位 GRADE_PRESETS 分段 → 取该分段 flowGraph 的最终人工节点。
+ * 无模板 / 无人工节点时回退到通用默认。
+ */
+export function getAuditFlow(type: ReportType, suggestion: string): AuditFlow {
+  const fallback: AuditFlow = {
+    nodeLabel: '审核建议',
+    checkItems: ['资料完整性检查', '收入与负债评估'],
+    results: [...REVIEW_RESULTS] as ReviewResult[],
+    opinionPresets: defaultOpinionPresets(),
+  }
+  const tpl = seedReportTemplates.find((t) => t.reportType === type)
+  if (!tpl) return fallback
+  const gi = GRADE_PRESETS[type].findIndex((g) => g.grade === suggestion)
+  const grade = gi >= 0 ? GRADE_PRESETS[type][gi] : undefined
+  const flow = gi >= 0 ? tpl.businessFlow[gi + 1] : tpl.businessFlow[1]
+  const autoResult: AutoResult = grade ? grade.autoResult : '转人工'
+  const g = flow?.flowGraphs?.[0] ?? buildDefaultFlowGraph(flow ?? defaultFlowRow('—', ''), autoResult)
+  const manual = g.nodes.filter((n) => n.results && n.results.length)
+  if (!manual.length) return fallback
+  const node = manual.reduce((a, b) => ((b.results?.length ?? 0) > (a.results?.length ?? 0) ? b : a))
+  return {
+    nodeLabel: node.buttonName ?? node.label,
+    checkItems: node.checkItems ?? [],
+    results: node.results ?? [...REVIEW_RESULTS],
+    opinionPresets: node.opinionPresets ?? defaultOpinionPresets(),
+    resultStates: node.resultStates,
+  }
+}
+
+export function getDecisionAuditFlow(suggestion: string): AuditFlow {
+  return getAuditFlow('decision', suggestion)
+}
+
+/* ============================================================================
+ * 审核状态机（报告模板可配置层）
+ * - 用"状态机配置"表达四报告的审核流转：状态(由行数据派生) → 该状态下可见操作 → 操作打开的弹窗 / 跳转的下一状态
+ * - resolveActions() 统一查表，替换各报告硬编码的 opsFor 类函数
+ * - 详情页用 context:'detail'，列表页用 context:'list'（守住"列表先不动"）
+ * ========================================================================= */
+export type FlowActionContext = 'list' | 'detail'
+export type FlowActionOpens = 'approval' | 'custom' | 'none'
+export type FlowAuditGradeFrom = 'riskScore' | 'scoreBand' | 'creditScore' | 'suggestion' | 'sysResult'
+
+export interface FlowActionDef {
+  key: string
+  label: string
+  variant?: 'primary' | 'secondary' | 'ghost'
+  opens: FlowActionOpens
+  /** opens='approval' 时，取哪个字段推算 grade 喂给 getAuditFlow */
+  auditGradeFrom?: FlowAuditGradeFrom
+  role?: ReviewRole
+  /** 点击后流转到的状态 id（单一事实源，供画布/执行参考） */
+  next: string
+  /** 不写=列表与详情都显示；写则仅指定上下文显示 */
+  contexts?: FlowActionContext[]
+}
+
+export interface FlowStateDef {
+  id: string
+  label: string
+  actions: FlowActionDef[]
+  /** 该状态下"查看"置灰（如计算中） */
+  lockedView?: boolean
+}
+
+export interface FlowStateMachine {
+  reportType: ReportType
+  /** 由行现有字段（sysResult×workStatus 等）算出当前状态 id */
+  derive: (row: any) => string
+  states: FlowStateDef[]
+}
+
+export interface ResolveOpts {
+  context?: FlowActionContext
+  role?: ReviewRole
+}
+
+/** 统一查表：返回当前状态在该上下文/角色下可见的操作定义 */
+export function resolveActions(m: FlowStateMachine, row: any, opts: ResolveOpts = {}): FlowActionDef[] {
+  const state = m.states.find((s) => s.id === m.derive(row))
+  if (!state) return []
+  const ctx = opts.context ?? 'list'
+  return state.actions.filter((a) => {
+    const acts = a.contexts ?? ['list', 'detail']
+    if (!acts.includes(ctx)) return false
+    if (a.role && opts.role && a.role !== opts.role) return false
+    return true
+  })
+}
+
+/* —— 四报告状态机配置（内容来自各自既有 opsFor 矩阵，原样搬入可配置结构）—— */
+
+// 信息核验：sysResult × workStatus
+const IV_A = {
+  view: { key: 'view', label: '查看', opens: 'none' as const, next: 'pass_done' },
+  audit: { key: 'audit', label: '审批', variant: 'primary' as const, opens: 'approval' as const, auditGradeFrom: 'riskScore' as const, contexts: ['detail' as const], next: 'pass_done' },
+  reportConfirm: { key: 'reportConfirm', label: '报告确认', opens: 'custom' as const, contexts: ['list' as const], next: 'pass_done' },
+  forceRecheck: { key: 'forceRecheck', label: '强制复审', opens: 'custom' as const, next: 'reject_closed' },
+  submitDual: { key: 'submitDual', label: '提交双人复核', opens: 'custom' as const, next: 'warn_dual' },
+  confirmPass: { key: 'confirmPass', label: '确认放行', opens: 'custom' as const, contexts: ['list' as const], next: 'warn_done' },
+  confirmReject: { key: 'confirmReject', label: '确认拒绝', opens: 'custom' as const, contexts: ['list' as const], next: 'warn_done' },
+}
+export const VERIFY_MACHINE: FlowStateMachine = {
+  reportType: 'info_verify',
+  derive: (r: any) =>
+    r.workStatus === '核验计算中' ? 'calculating'
+    : r.sysResult === '通过' ? (r.workStatus === '待确认' ? 'pass_pending' : 'pass_done')
+    : r.sysResult === '拒绝' ? (r.workStatus === '待确认' ? 'reject_pending' : 'reject_closed')
+    : r.workStatus === '待审核' ? 'warn_review'
+    : r.workStatus === '提交复核' ? 'warn_dual' : 'warn_done',
+  states: [
+    { id: 'calculating', label: '核验计算中', lockedView: true, actions: [IV_A.view] },
+    { id: 'pass_pending', label: '通过-待确认', actions: [IV_A.view, IV_A.audit, IV_A.reportConfirm] },
+    { id: 'pass_done', label: '通过-已办结', actions: [IV_A.view] },
+    { id: 'reject_pending', label: '拒绝-待确认', actions: [IV_A.view, IV_A.audit, IV_A.forceRecheck, IV_A.reportConfirm] },
+    { id: 'reject_closed', label: '拒绝-已办结', actions: [IV_A.view] },
+    { id: 'warn_review', label: '预警-待审核', actions: [IV_A.view, IV_A.submitDual] },
+    { id: 'warn_dual', label: '预警-提交复核', actions: [IV_A.view, IV_A.audit, IV_A.confirmPass, IV_A.confirmReject] },
+    { id: 'warn_done', label: '预警-已办结', actions: [IV_A.view] },
+  ],
+}
+
+// 欺诈识别方案4：workStatus × scoreBand
+const FRAUD_A = {
+  view: { key: 'view', label: '查看', opens: 'none' as const, next: 'closed' },
+  audit: { key: 'audit', label: '审批', variant: 'primary' as const, opens: 'approval' as const, auditGradeFrom: 'scoreBand' as const, contexts: ['detail' as const], next: 'closed' },
+  reportConfirm: { key: 'reportConfirm', label: '报告确认', opens: 'custom' as const, contexts: ['list' as const], next: 'closed' },
+  forceReview: { key: 'forceReview', label: '强制复审', opens: 'custom' as const, next: 'closed' },
+  addBlacklist: { key: 'addBlacklist', label: '加入黑名单', opens: 'custom' as const, next: 'closed' },
+  submitReview: { key: 'submitReview', label: '提交双人复核', opens: 'custom' as const, next: 'dual' },
+  note: { key: 'note', label: '录入备注', opens: 'custom' as const, next: 'dual' },
+  confirmPass: { key: 'confirmPass', label: '确认放行', opens: 'custom' as const, contexts: ['list' as const], next: 'done' },
+  confirmReject: { key: 'confirmReject', label: '确认拒绝', opens: 'custom' as const, contexts: ['list' as const], next: 'done' },
+}
+export const FRAUD_MACHINE: FlowStateMachine = {
+  reportType: 'fraud',
+  derive: (r: any) =>
+    r.workStatus === '核验计算中' ? 'calc'
+    : r.workStatus === '待确认' ? (r.scoreBand === '极高' ? 'pending_black' : r.scoreBand === '高' ? 'pending_force' : 'pending_confirm')
+    : ['已确认', '初审拒贷', '强制放行', '加入黑名单'].includes(r.workStatus) ? 'closed'
+    : r.workStatus === '待审核' ? 'review'
+    : r.workStatus === '提交复核' ? 'dual' : 'done',
+  states: [
+    { id: 'calc', label: '核验计算中', lockedView: true, actions: [FRAUD_A.view] },
+    { id: 'pending_confirm', label: '待确认-极低/低', actions: [FRAUD_A.view, FRAUD_A.audit, FRAUD_A.reportConfirm] },
+    { id: 'pending_force', label: '待确认-高', actions: [FRAUD_A.view, FRAUD_A.audit, FRAUD_A.forceReview, FRAUD_A.reportConfirm] },
+    { id: 'pending_black', label: '待确认-极高', actions: [FRAUD_A.view, FRAUD_A.audit, FRAUD_A.addBlacklist, FRAUD_A.reportConfirm] },
+    { id: 'closed', label: '已办结', actions: [FRAUD_A.view] },
+    { id: 'review', label: '待审核', actions: [FRAUD_A.view, FRAUD_A.submitReview, FRAUD_A.note] },
+    { id: 'dual', label: '提交复核', actions: [FRAUD_A.view, FRAUD_A.audit, FRAUD_A.note, FRAUD_A.confirmPass, FRAUD_A.confirmReject] },
+    { id: 'done', label: '复核已办结', actions: [FRAUD_A.view] },
+  ],
+}
+
+// 信用风控（真实页 CreditKimi）：sysResult × workStatus；详情页提交复核态收敛为"审批"
+const CREDIT_A = {
+  view: { key: 'view', label: '查看', opens: 'none' as const, next: 'done' },
+  audit: { key: 'audit', label: '审批', variant: 'primary' as const, opens: 'approval' as const, auditGradeFrom: 'creditScore' as const, contexts: ['detail' as const], next: 'done' },
+  submitReview: { key: 'submitReview', label: '提交复核', opens: 'custom' as const, next: 'dual' },
+  confirmPass: { key: 'confirmPass', label: '确认放行', opens: 'custom' as const, contexts: ['list' as const], next: 'done' },
+  confirmReject: { key: 'confirmReject', label: '确认拒绝', opens: 'custom' as const, contexts: ['list' as const], next: 'done' },
+  note: { key: 'note', label: '录入备注', opens: 'custom' as const, next: 'dual' },
+}
+export const CREDIT_MACHINE: FlowStateMachine = {
+  reportType: 'credit',
+  derive: (r: any) =>
+    r.sysResult === '处理中' ? 'calc'
+    : (r.sysResult === '通过' || r.sysResult === '拒绝') ? 'auto_done'
+    : r.workStatus === '待审核' ? 'review'
+    : r.workStatus === '提交复核' ? 'dual' : 'done',
+  states: [
+    { id: 'calc', label: '处理中', lockedView: true, actions: [CREDIT_A.view] },
+    { id: 'auto_done', label: '自动通过/拒绝', actions: [CREDIT_A.view] },
+    { id: 'review', label: '待审核', actions: [CREDIT_A.view, CREDIT_A.submitReview, CREDIT_A.note] },
+    { id: 'dual', label: '提交复核', actions: [CREDIT_A.view, CREDIT_A.audit, CREDIT_A.confirmPass, CREDIT_A.confirmReject, CREDIT_A.note] },
+    { id: 'done', label: '复核已办结', actions: [CREDIT_A.view] },
+  ],
+}
+
+// 决策报告：双层状态机
+// (A) 综合决策审批（DecisionActionKey），audit 在列表与详情一致（历史已收敛）
+const DEC_A = {
+  view: { key: 'view', label: '查看', opens: 'none' as const, next: 'done' },
+  audit: { key: 'audit', label: '审批', variant: 'primary' as const, opens: 'approval' as const, auditGradeFrom: 'suggestion' as const, next: 'pending' },
+  submitReview: { key: 'submitReview', label: '提交复核', opens: 'custom' as const, next: 'dual' },
+  return: { key: 'return', label: '退回补充材料', opens: 'custom' as const, next: 'done' },
+  note: { key: 'note', label: '录入备注', opens: 'custom' as const, next: 'pending' },
+}
+export const DECISION_APPROVAL_MACHINE: FlowStateMachine = {
+  reportType: 'decision',
+  derive: (r: any) =>
+    ['已通过', '已拒绝', '已退回'].includes(r.approvalStatus) ? 'done'
+    : r.approvalStatus === '已提交双人复核' ? 'dual'
+    : 'pending',
+  states: [
+    { id: 'done', label: '已办结', actions: [DEC_A.view] },
+    { id: 'dual', label: '双人复核中', actions: [DEC_A.view] },
+    { id: 'pending', label: '待审批', actions: [DEC_A.view, DEC_A.audit] },
+  ],
+}
+
+// (B) 子报告人工审核（ReviewOpKey），无 audit，沿用原 reportConfirm/放行/拒绝 等
+const DEC_R = {
+  view: { key: 'view', label: '查看', opens: 'none' as const, next: 'closed' },
+  reportConfirm: { key: 'reportConfirm', label: '报告确认', opens: 'custom' as const, next: 'closed' },
+  forceRecheck: { key: 'forceRecheck', label: '强制复审', opens: 'custom' as const, next: 'closed' },
+  blacklist: { key: 'blacklist', label: '加入黑名单', opens: 'custom' as const, next: 'closed' },
+  submitDual: { key: 'submitDual', label: '提交双人复核', opens: 'custom' as const, next: 'dual' },
+  note: { key: 'note', label: '录入备注', opens: 'custom' as const, next: 'dual' },
+  confirmPass: { key: 'confirmPass', label: '确认放行', opens: 'custom' as const, next: 'done' },
+  confirmReject: { key: 'confirmReject', label: '确认拒绝', opens: 'custom' as const, next: 'done' },
+}
+export const DECISION_REVIEW_MACHINE: FlowStateMachine = {
+  reportType: 'decision',
+  derive: (r: any) =>
+    r.manualReview === '核验计算中' ? 'calc'
+    : r.manualReview === '待确认' ? (r.suggestion === '通过' ? 'pending_pass' : r.suggestion === '严格限制' ? 'pending_force' : 'pending_black')
+    : ['已确认', '初审拒贷', '强制放行', '复核通过', '复核拒绝', '加入黑名单'].includes(r.manualReview) ? 'closed'
+    : r.manualReview === '待审核' ? 'review'
+    : r.manualReview === '提交复核' ? 'dual' : 'done',
+  states: [
+    { id: 'calc', label: '核验计算中', lockedView: true, actions: [DEC_R.view] },
+    { id: 'pending_pass', label: '待确认-通过', actions: [DEC_R.view, DEC_R.reportConfirm] },
+    { id: 'pending_force', label: '待确认-严格限制', actions: [DEC_R.view, DEC_R.reportConfirm, DEC_R.forceRecheck] },
+    { id: 'pending_black', label: '待确认-拒绝', actions: [DEC_R.view, DEC_R.reportConfirm, DEC_R.blacklist] },
+    { id: 'closed', label: '已办结', actions: [DEC_R.view] },
+    { id: 'review', label: '待审核', actions: [DEC_R.view, DEC_R.submitDual, DEC_R.note] },
+    { id: 'dual', label: '提交复核', actions: [DEC_R.view, DEC_R.confirmPass, DEC_R.confirmReject, DEC_R.note] },
+    { id: 'done', label: '已办结', actions: [DEC_R.view] },
+  ],
+}
+
+/** 把状态机转换为画布流程图（节点=状态，连线=操作跳转），供 FlowCanvasEditor 可视化 */
+export function machineToFlowGraph(m: FlowStateMachine): FlowGraph {
+  const nodes: FlowGraphNode[] = m.states.map((s, i) => ({
+    id: s.id,
+    type: s.lockedView ? 'start' : 'normal',
+    label: s.label,
+    x: 60 + (i % 4) * 220,
+    y: 60 + Math.floor(i / 4) * 170,
+  }))
+  const edges: FlowGraphEdge[] = []
+  m.states.forEach((s) => {
+    s.actions.forEach((a) => {
+      if (a.key === 'view') return
+      edges.push({ id: `e_${s.id}_${a.key}`, from: s.id, to: a.next, label: a.label })
+    })
+  })
+  return { nodes, edges }
+}
+
+/** 按报告类型取对应的状态机配置（决策报告默认取综合决策审批机） */
+export const MACHINE_BY_TYPE: Partial<Record<ReportType, FlowStateMachine>> = {
+  info_verify: VERIFY_MACHINE,
+  credit: CREDIT_MACHINE,
+  fraud: FRAUD_MACHINE,
+  decision: DECISION_APPROVAL_MACHINE,
+}
 
 /* ---------- 角色与权限（详情页与预览子页共用） ---------- */
 export type Role = '系统管理员' | '风控主管' | '风控策略岗' | '风控专员' | '数据分析师'

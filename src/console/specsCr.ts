@@ -177,7 +177,7 @@ export const crSpecs: Record<string, ModuleSpec> = {
       { label: '黑灰产情报', value: '27 条', delta: '新增 5', deltaType: 'flat', accent: 'violet' },
     ],
     reportKey: 'apply_no',
-    viewNavigate: 'credit-report-detail',
+    viewNavigate: 'credit-kimi-detail',
     columns: [
       { key: 'apply_no', label: '进件号', width: '150px' },
       { key: 'name', label: '申请人', width: '90px' },

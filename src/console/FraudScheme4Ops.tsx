@@ -7,6 +7,8 @@
 import { useEffect, useState } from 'react'
 import { Badge, Button, Modal, DecisionTag, StatusTag } from '../components/ui'
 import type { FraudS4WorkStatus, FraudS4AutoDecision, FraudS4ScoreBand, FraudS4RuleType } from './fraudScheme4Report'
+import { getAuditFlow, resolveActions, FRAUD_MACHINE, type ReviewResult } from './reportTemplateData'
+import { ApprovalModal } from './ApprovalModal'
 
 export type FraudScheme4SysResult = FraudS4ScoreBand // 欺诈风险等级（系统判定）
 export type FraudScheme4WorkStatus = FraudS4WorkStatus // 人工处置状态（方案4 独立状态机）
@@ -34,6 +36,7 @@ export type FraudScheme4OpKey =
   | 'note'
   | 'confirmPass'
   | 'confirmReject'
+  | 'audit'
 
 export const FRAUD_S4_OP_LABEL: Record<FraudScheme4OpKey, string> = {
   view: '查看',
@@ -44,31 +47,12 @@ export const FRAUD_S4_OP_LABEL: Record<FraudScheme4OpKey, string> = {
   note: '录入备注',
   confirmPass: '确认放行',
   confirmReject: '确认拒绝',
+  audit: '审批',
 }
 
 /** 列表/详情行按（欺诈风险等级 + 人工处置状态）推导可执行按钮（对齐 N8 矩阵） */
-export function fraudScheme4OpsFor(work: FraudScheme4WorkStatus, band?: FraudS4ScoreBand): FraudScheme4OpKey[] {
-  switch (work) {
-    case '核验计算中': // 自动结果未出，仅可查看（置灰，见 viewLocked）
-      return ['view']
-    case '待确认': // 低/极低风险→查看/报告确认；高风险→查看/报告确认/强制复审；极高风险→查看/报告确认/加入黑名单
-      if (band === '极高') return ['view', 'reportConfirm', 'addBlacklist']
-      if (band === '高') return ['view', 'reportConfirm', 'forceReview']
-      return ['view', 'reportConfirm']
-    case '已确认': // 仅查看
-      return ['view']
-    case '初审拒贷':
-    case '强制放行':
-    case '加入黑名单': // 办结态，仅查看
-      return ['view']
-    case '待审核': // 中风险预警：查看/提交双人复核/录入备注
-      return ['view', 'submitReview', 'note']
-    case '提交复核': // 中风险：查看/确认放行/确认拒绝/录入备注
-      return ['view', 'confirmPass', 'confirmReject', 'note']
-    case '复核通过':
-    case '复核拒绝 - 拒绝办结': // 办结态，仅查看
-      return ['view']
-  }
+export function fraudScheme4OpsFor(work: FraudScheme4WorkStatus, band?: FraudS4ScoreBand, context: 'list' | 'detail' = 'list'): FraudScheme4OpKey[] {
+  return resolveActions(FRAUD_MACHINE, { workStatus: work, scoreBand: band }, { context }).map((a) => a.key as FraudScheme4OpKey)
 }
 
 export function fraudScheme4ViewLocked(work: FraudS4WorkStatus): boolean {
@@ -184,9 +168,11 @@ function fraudScheme4UseActions(
   onLog?: (e: S4LogEntry) => void,
   onView?: () => void,
   flash?: (m: string) => void,
+  consolidateAudit = false,
 ) {
   const [modal, setModal] = useState<FraudScheme4OpKey | null>(null)
-  const ops = fraudScheme4OpsFor(row.workStatus, row.scoreBand)
+  // 详情页（consolidateAudit）用 detail 上下文：报告确认/确认放行/确认拒绝 收敛为「审批」；列表用 list 上下文保持原按钮
+  const ops: FraudScheme4OpKey[] = fraudScheme4OpsFor(row.workStatus, row.scoreBand, consolidateAudit ? 'detail' : 'list')
   const now = () => new Date().toLocaleString('zh-CN')
 
   const open = (op: FraudScheme4OpKey) => {
@@ -236,6 +222,19 @@ function fraudScheme4UseActions(
     flash?.('已确认拒绝')
     close()
   }
+  const applyAudit = (p: { result: ReviewResult; checks: string[]; opinionText: string; fileName: string }) => {
+    const fallback: Record<ReviewResult, FraudS4WorkStatus> = {
+      通过: '已确认',
+      驳回: '待审核',
+      拒绝: '复核拒绝 - 拒绝办结',
+    }
+    const af = getAuditFlow('fraud', row.scoreBand)
+    const next = (af.resultStates?.[p.result] as FraudS4WorkStatus) ?? fallback[p.result]
+    onApply({ workStatus: next })
+    onLog?.({ type: '审批', content: `审批结论：${p.result}；审核事项 ${p.checks.length} 项`, operator: '初审：审核员 1', time: now(), remark: p.opinionText })
+    flash?.(`已完成审批（${p.result}）${p.fileName ? '，已上传附件' : ''}`)
+    close()
+  }
 
   const renderModals = (
     <>
@@ -246,6 +245,13 @@ function fraudScheme4UseActions(
       <GenericConfirmModal title={FRAUD_S4_OP_LABEL['forceReview']} open={modal === 'forceReview'} onClose={close} onConfirm={applyForceReview} />
       <GenericConfirmModal title={FRAUD_S4_OP_LABEL['confirmPass']} open={modal === 'confirmPass'} onClose={close} onConfirm={applyConfirmPass} />
       <GenericConfirmModal title={FRAUD_S4_OP_LABEL['confirmReject']} open={modal === 'confirmReject'} onClose={close} onConfirm={applyConfirmReject} />
+      <ApprovalModal
+        open={modal === 'audit'}
+        conclusion={row.scoreBand}
+        auditFlow={getAuditFlow('fraud', row.scoreBand)}
+        onClose={close}
+        onConfirm={applyAudit}
+      />
     </>
   )
 
@@ -253,7 +259,7 @@ function fraudScheme4UseActions(
 }
 
 function opVariant(op: FraudScheme4OpKey): 'primary' | 'secondary' | 'ghost' {
-  if (op === 'reportConfirm' || op === 'forceReview' || op === 'addBlacklist' || op === 'confirmPass' || op === 'confirmReject') return 'primary'
+  if (op === 'reportConfirm' || op === 'forceReview' || op === 'addBlacklist' || op === 'confirmPass' || op === 'confirmReject' || op === 'audit') return 'primary'
   if (op === 'note' || op === 'submitReview') return 'ghost'
   return 'secondary'
 }
@@ -281,10 +287,10 @@ export function FraudScheme4RowActions({ row, onApply, onView, onLog, flash }: {
 }
 
 /** 详情页处置操作栏（含风险等级 / 工单状态 / 操作人员 + 处置按钮） */
-export function FraudScheme4ActionBar({ row, onApply, onView, onLog, flash, showView = true }: {
-  row: FraudScheme4Row; onApply: (next: Partial<FraudScheme4Row>) => void; onView?: () => void; onLog?: (e: S4LogEntry) => void; flash?: (m: string) => void; showView?: boolean
+export function FraudScheme4ActionBar({ row, onApply, onView, onLog, flash, showView = true, consolidateAudit = false }: {
+  row: FraudScheme4Row; onApply: (next: Partial<FraudScheme4Row>) => void; onView?: () => void; onLog?: (e: S4LogEntry) => void; flash?: (m: string) => void; showView?: boolean; consolidateAudit?: boolean
 }) {
-  const base = fraudScheme4UseActions(row, onApply, onLog, onView, flash)
+  const base = fraudScheme4UseActions(row, onApply, onLog, onView, flash, consolidateAudit)
   const locked = fraudScheme4ViewLocked(row.workStatus)
   const ops = base.ops.slice()
   if (showView && !ops.includes('view') && !locked) ops.unshift('view')

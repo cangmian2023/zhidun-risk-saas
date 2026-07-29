@@ -2,6 +2,8 @@
 // 依据交互说明：系统自动审核结果 × 工单人工状态 → 操作按钮；详情页与列表一致
 import { useEffect, useState } from 'react'
 import { Badge, Button, Modal } from '../components/ui'
+import { getAuditFlow, resolveActions, VERIFY_MACHINE, type ReviewResult } from './reportTemplateData'
+import { ApprovalModal } from './ApprovalModal'
 
 /* ===================== 状态模型 ===================== */
 export type SysResult = '处理中' | '通过' | '拒绝' | '预警'
@@ -36,6 +38,7 @@ export type OpKey =
   | 'submitDual'
   | 'confirmPass'
   | 'confirmReject'
+  | 'audit'
 
 export const OP_LABEL: Record<OpKey, string> = {
   view: '查看',
@@ -44,23 +47,33 @@ export const OP_LABEL: Record<OpKey, string> = {
   submitDual: '提交双人复核',
   confirmPass: '确认放行',
   confirmReject: '确认拒绝',
+  audit: '审批',
+}
+
+/** 信息核验报告档位推导（兜底用）：系统结果与危险度档位一一对应 */
+function ivGradeOf(row: VerifyRow): string {
+  if (row.sysResult === '通过') return '安全'
+  if (row.sysResult === '拒绝') return '高危'
+  if (row.sysResult === '预警') return '警示'
+  return '安全'
+}
+
+/** 信息核验异常值(0-100, 越高越危险) → 危险度档位，对齐 GRADE_PRESETS.info_verify 分段 */
+export function ivGradeFromRisk(riskScore: number): string {
+  if (riskScore <= 20) return '安全'
+  if (riskScore <= 50) return '关注'
+  if (riskScore <= 80) return '警示'
+  return '高危'
 }
 
 /** 按（系统自动审核结果 × 工单人工状态）推导该工单可执行的按钮 */
 // 操作矩阵严格对齐交互说明：系统自动审核结果 × 工单人工状态 → 可执行按钮
-export function opsFor(sys: SysResult, work: WorkStatus): OpKey[] {
-  if (work === '核验计算中') return ['view'] // 接口计算中：仅查看（置灰）
-  if (sys === '通过') {
-    return work === '待确认' ? ['view', 'reportConfirm'] : ['view'] // 待确认=报告确认；已确认=闭环
-  }
-  if (sys === '拒绝') {
-    if (work === '待确认') return ['view', 'reportConfirm', 'forceRecheck'] // 报告确认 / 强制复审（推翻拦截）
-    return ['view'] // 已确认 / 强制放行 = 闭环
-  }
-  // 预警：待审核 仅可提交双人复核；提交复核 由主管终审放行/拒绝
-  if (work === '待审核') return ['view', 'submitDual']
-  if (work === '提交复核') return ['view', 'confirmPass', 'confirmReject']
-  return ['view'] // 复核通过 / 复核拒绝 = 已办结
+// includeAudit=true 时（详情页），把决策类按钮（报告确认 / 确认放行 / 确认拒绝）收敛为单一「审批」，
+// 其弹窗内容由业务流程配置驱动（与 credit / fraud 一致）；强制复审 / 提交双人复核等保留为专业操作。
+export function opsFor(sys: SysResult, work: WorkStatus, includeAudit = false): OpKey[] {
+  return resolveActions(VERIFY_MACHINE, { sysResult: sys, workStatus: work }, { context: includeAudit ? 'detail' : 'list' }).map(
+    (a) => a.key as OpKey,
+  )
 }
 
 export function viewLocked(work: WorkStatus): boolean {
@@ -389,10 +402,13 @@ function useVerifyActions(
   onApply: (next: Partial<VerifyRow>) => void,
   onView?: () => void,
   flash?: (m: string) => void,
+  includeAudit = false,
+  grade?: string,
 ) {
   const [modal, setModal] = useState<OpKey | null>(null)
-  const ops = opsFor(row.sysResult, row.workStatus)
+  const ops = opsFor(row.sysResult, row.workStatus, includeAudit)
   const locked = viewLocked(row.workStatus)
+  const effectiveGrade = grade ?? ivGradeOf(row)
 
   const open = (op: OpKey) => {
     if (op === 'view') {
@@ -436,7 +452,15 @@ function useVerifyActions(
     flash?.('复核拒绝，工单办结')
     close()
   }
-
+  // 收敛后的「审批」入口：弹窗内容由业务流程配置驱动（getAuditFlow → ApprovalModal）
+  const applyAudit = (p: { result: ReviewResult; checks: string[]; opinionText: string; fileName: string }) => {
+    const af = getAuditFlow('info_verify', effectiveGrade)
+    const fallback = p.result === '通过' ? '复核通过' : p.result === '驳回' ? '待审核' : '复核拒绝'
+    const next: Partial<VerifyRow> = { operator: '初审：审核员 1；终审：主管 1', workStatus: (af.resultStates?.[p.result] as VerifyRow['workStatus']) ?? fallback }
+    onApply(next)
+    flash?.(`已审批（${p.result}）｜审核事项 ${p.checks.length} 项｜意见：${p.opinionText}${p.fileName ? `｜附件：${p.fileName}` : ''}`)
+    close()
+  }
   const renderModals = (
     <>
       <ReportConfirmModal row={row} open={modal === 'reportConfirm'} onClose={close} onConfirm={applyReportConfirm} />
@@ -444,6 +468,13 @@ function useVerifyActions(
       <SubmitDualReviewModal row={row} open={modal === 'submitDual'} onClose={close} onSubmit={applySubmitDual} />
       <ConfirmPassModal row={row} open={modal === 'confirmPass'} onClose={close} onConfirm={applyConfirmPass} />
       <ConfirmRejectModal row={row} open={modal === 'confirmReject'} onClose={close} onConfirm={applyConfirmReject} />
+      <ApprovalModal
+        open={modal === 'audit'}
+        conclusion={`案件结论：${row.sysResult}（${row.workStatus}）`}
+        auditFlow={getAuditFlow('info_verify', effectiveGrade)}
+        onClose={close}
+        onConfirm={applyAudit}
+      />
     </>
   )
 
@@ -451,7 +482,7 @@ function useVerifyActions(
 }
 
 function opVariant(op: OpKey): 'primary' | 'secondary' | 'ghost' {
-  if (op === 'forceRecheck' || op === 'confirmPass') return 'primary'
+  if (op === 'audit' || op === 'forceRecheck' || op === 'confirmPass') return 'primary'
   return 'secondary'
 }
 
@@ -500,14 +531,16 @@ export function VerifyActionBar({
   onView,
   flash,
   showView = true,
+  grade,
 }: {
   row: VerifyRow
   onApply: (next: Partial<VerifyRow>) => void
   onView?: () => void
   flash?: (m: string) => void
   showView?: boolean
+  grade?: string
 }) {
-  const base = useVerifyActions(row, onApply, onView, flash)
+  const base = useVerifyActions(row, onApply, onView, flash, true, grade)
   const ops = showView ? base.ops : base.ops.filter((o) => o !== 'view')
   const { locked, open, renderModals } = base
   return (

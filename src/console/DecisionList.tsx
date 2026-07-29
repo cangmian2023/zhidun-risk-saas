@@ -18,7 +18,7 @@ import {
   DecisionRiskBadge,
   DecisionAutoReviewBadge,
   DecisionManualReviewBadge,
-  DecisionReviewActions,
+  DecisionRowActions,
 } from './DecisionOps'
 
 // 多选胶囊（与 CreditKimiList 同款）
@@ -274,10 +274,12 @@ export default function DecisionList() {
                   <td className="whitespace-nowrap px-3 py-3 text-slate-500">{r.operator === '—' ? <span className="text-slate-300">—</span> : r.operator}</td>
                   <td className="whitespace-nowrap px-3 py-3 text-xs text-slate-400">{r.auditTime}</td>
                   <td style={bodyStyle({ right: true })} className="whitespace-nowrap px-3 py-3">
-                    <DecisionReviewActions
+                    <DecisionRowActions
                       row={r}
-                      onView={() => goDetail(r.id)}
-                      onAction={(k) => { setAuditRow(r); actions.run(k) }}
+                      onAction={(k) => {
+                        if (k === 'view') { goDetail(r.id); return }
+                        setAuditRow(r); actions.run(k)
+                      }}
                     />
                   </td>
                 </tr>

@@ -88,7 +88,7 @@ function Preview({ tpl, stateKey }: { tpl: ReportTemplate; stateKey: string }) {
         <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginTop: 10 }}>
           <ScoreHero score={st.score} grade={grade} component={tpl.scoreDisplay.displayComponent} />
           <div>
-            <div style={{ fontSize: fs + 2, fontWeight: 700, color: grade.color }}>{grade.grade} · {grade.label}</div>
+            <div style={{ fontSize: fs + 2, fontWeight: 700, color: grade.color }}>{grade.grade}</div>
             {tpl.scoreDisplay.showDescription && <div style={{ fontSize: fs - 2, color: '#6B7280', marginTop: 4, maxWidth: 260 }}>{grade.description}</div>}
             {tpl.scoreDisplay.showRiskTags && <div style={{ marginTop: 6 }}><Badge kind="red">风险等级 {grade.riskLevel}</Badge></div>}
           </div>
@@ -136,7 +136,7 @@ function Preview({ tpl, stateKey }: { tpl: ReportTemplate; stateKey: string }) {
             <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
               <ScoreHero score={st.score} grade={grade} component={tpl.scoreDisplay.displayComponent} />
               <div>
-                <div style={{ fontSize: fs + 2, fontWeight: 700, color: grade.color }}>{grade.grade} · {grade.label}</div>
+                <div style={{ fontSize: fs + 2, fontWeight: 700, color: grade.color }}>{grade.grade}</div>
                 <div style={{ fontSize: fs - 2, color: '#6B7280', marginTop: 4 }}>由各分段计分项自动汇总</div>
               </div>
             </div>

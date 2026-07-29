@@ -409,7 +409,7 @@ export default function CreditModelConfig() {
           )}
 
           {navKey === 'penalty' && (
-            <Panel title="⚠️ 惩罚机制" desc="命中条件即对总分进行扣分或拒绝">
+            <Panel title="⚠️ 惩罚机制">
               <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 10 }}>
                 <Button size="sm" variant="secondary" disabled={!canEdit} onClick={() => update((m) => ({ ...m, penalties: [...m.penalties, {
                   id: newId('pen'), name: '新惩罚规则', description: '', triggerConditions: [{ id: newId('tc'), type: 'blacklist' }],
@@ -484,7 +484,7 @@ export default function CreditModelConfig() {
           )}
 
           {navKey === 'grade' && (
-            <Panel title="📊 评分等级映射" desc="将总分映射为风险等级、自动决策与授信额度比例">
+            <Panel title="📊 评分等级映射">
               <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 10 }}>
                 <Button size="sm" variant="secondary" disabled={!canEdit} onClick={() => update((m) => ({ ...m, grades: [...m.grades, {
                   grade: `级${m.grades.length + 1}`, label: '新等级', minScore: 0, maxScore: 0, riskLevel: '中', autoDecision: '预警', needManualReview: false, creditLimitRatio: 0, color: '#64748B',

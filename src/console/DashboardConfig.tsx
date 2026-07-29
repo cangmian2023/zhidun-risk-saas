@@ -193,7 +193,7 @@ export default function DashboardConfig() {
       </div>
 
       {tab === 'pages' ? (
-        <Panel title="看板页面列表" desc="停用的页面会同步从左侧菜单隐藏；「预览」直接跳转至实际展示页。">
+        <Panel title="看板页面列表">
           <div className="overflow-x-auto">
             <table className="w-full text-sm" style={{ tableLayout: 'auto' }}>
               <thead>
@@ -239,7 +239,7 @@ export default function DashboardConfig() {
           </div>
         </Panel>
       ) : (
-        <Panel title="数据集（看板的数据来源）" desc="看板组件从此处选取数据集，再选字段、做计算、加筛选。内置数据集模拟指标集市；用户可注册接口(API)/SQL 数据源。">
+        <Panel title="数据集（看板的数据来源）">
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {datasets.map((d) => {
               const dims = d.fields.filter((f) => f.kind === 'dim')

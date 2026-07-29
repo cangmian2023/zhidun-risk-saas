@@ -1,10 +1,12 @@
 // 信用风控 · 状态/操作矩阵与操作弹窗
 // 评分越高信用越好（300-900）：优秀/良好→自动通过；一般→预警进入人工审核；差→自动拒绝
 // 人工审核流程（仅「一般/预警」）：待审核 → 提交复核 → 复核放行/复核拒绝
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Badge, Button, Modal } from '../components/ui'
 import type { CreditSysResult, CreditWorkStatus, CreditGrade } from './creditKimiReport'
 import { CREDIT_SYS_KIND, CREDIT_WORK_KIND, CREDIT_GRADE_KIND } from './creditKimiReport'
+import { getAuditFlow, resolveActions, CREDIT_MACHINE, type ReviewResult } from './reportTemplateData'
+import { ApprovalModal } from './ApprovalModal'
 
 /* ===================== 状态模型 ===================== */
 export type CreditKimiSysResult = CreditSysResult
@@ -25,6 +27,7 @@ export interface CreditKimiRow {
 
 export type CreditOpKey =
   | 'view'
+  | 'audit'
   | 'submitReview'
   | 'confirmPass'
   | 'confirmReject'
@@ -32,6 +35,7 @@ export type CreditOpKey =
 
 export const CREDIT_OP_LABEL: Record<CreditOpKey, string> = {
   view: '查看',
+  audit: '审批',
   submitReview: '提交复核',
   confirmPass: '确认放行',
   confirmReject: '确认拒绝',
@@ -47,14 +51,16 @@ export const CREDIT_OP_LABEL: Record<CreditOpKey, string> = {
  *      · 提交复核 → 查看、确认放行、确认拒绝、录入备注
  *      · 复核放行 / 复核拒绝 → 仅查看
  */
-export function creditOpsFor(sys: CreditKimiSysResult, work: CreditKimiWorkStatus): CreditOpKey[] {
-  if (sys === '处理中') return ['view']
-  if (sys === '通过' || sys === '拒绝') return ['view']
-  // sys === '预警'（一般）
-  if (work === '待审核') return ['view', 'submitReview', 'note']
-  if (work === '提交复核') return ['view', 'confirmPass', 'confirmReject', 'note']
-  // 复核放行 / 复核拒绝
-  return ['view']
+export function creditOpsFor(sys: CreditKimiSysResult, work: CreditKimiWorkStatus, context: 'list' | 'detail' = 'list'): CreditOpKey[] {
+  return resolveActions(CREDIT_MACHINE, { sysResult: sys, workStatus: work }, { context }).map((a) => a.key as CreditOpKey)
+}
+
+/** 信用评分(300-900) → 风险档位(A/B/C/D)，对齐 GRADE_PRESETS.credit 分段 */
+export function creditGradeFromScore(score: number): string {
+  if (score >= 75) return 'A'
+  if (score >= 60) return 'B'
+  if (score >= 45) return 'C'
+  return 'D'
 }
 
 /** 查看按钮是否置灰：仅「处理中」行禁止查看 */
@@ -201,10 +207,13 @@ export function useCreditKimiActions(
   onLog?: (entry: Omit<CreditKimiLog, 'id'>) => void,
   onView?: () => void,
   flash?: (m: string) => void,
+  includeAudit = false,
 ) {
   const [modal, setModal] = useState<CreditOpKey | null>(null)
-  const ops = creditOpsFor(row.sysResult, row.workStatus)
+  const ops = creditOpsFor(row.sysResult, row.workStatus, includeAudit ? 'detail' : 'list')
   const locked = creditViewLocked(row.sysResult)
+  // 审批弹窗内容由报告模板业务流程配置驱动（与另三报告一致）
+  const auditFlow = useMemo(() => getAuditFlow('credit', creditGradeFromScore(row.creditScore)), [row.creditScore])
 
   const open = (op: CreditOpKey) => {
     if (op === 'view') { onView?.(); return }
@@ -238,6 +247,15 @@ export function useCreditKimiActions(
     flash?.('备注已保存')
     close()
   }
+  // 审批（收敛后的单一入口）：结论映射回人工审核状态
+  const applyAudit = (p: { result: ReviewResult; checks: string[]; opinionText: string; fileName: string }) => {
+    const fallback: CreditKimiWorkStatus = p.result === '拒绝' ? '复核拒绝' : '复核放行'
+    const next = (auditFlow.resultStates?.[p.result] as CreditKimiWorkStatus) ?? fallback
+    onApply({ workStatus: next, operator: '初审：审核员 1；终审：主管 1' })
+    log('审批', `审批结论：${p.result}；审核事项 ${p.checks.length} 项；意见：${p.opinionText}${p.fileName ? `；附件：${p.fileName}` : ''}`, next)
+    flash?.(`已完成审批（${p.result}），工单流转至「${next}」`)
+    close()
+  }
 
   const renderModals = (
     <>
@@ -245,6 +263,13 @@ export function useCreditKimiActions(
       <ConfirmPassModal row={row} open={modal === 'confirmPass'} onClose={close} onConfirm={applyConfirmPass} />
       <ConfirmRejectModal row={row} open={modal === 'confirmReject'} onClose={close} onConfirm={applyConfirmReject} />
       <NoteModal open={modal === 'note'} target={row.id} onClose={close} onSubmit={applyNote} />
+      <ApprovalModal
+        open={modal === 'audit'}
+        conclusion={creditGradeFromScore(row.creditScore)}
+        auditFlow={auditFlow}
+        onClose={close}
+        onConfirm={applyAudit}
+      />
     </>
   )
 
@@ -252,7 +277,7 @@ export function useCreditKimiActions(
 }
 
 function opVariant(op: CreditOpKey): 'primary' | 'secondary' | 'ghost' {
-  if (op === 'confirmPass') return 'primary'
+  if (op === 'audit' || op === 'confirmPass') return 'primary'
   if (op === 'confirmReject') return 'ghost'
   if (op === 'note') return 'ghost'
   return 'secondary'
@@ -280,8 +305,8 @@ export function CreditKimiRowActions({ row, onApply, onView, flash }: { row: Cre
 }
 
 /** 详情页顶部操作栏（系统结果 / 人工审核 / 操作人员 + 操作按钮，与列表一致） */
-export function CreditKimiActionBar({ row, onApply, onLog, onView, flash, showView = true }: { row: CreditKimiRow; onApply: (next: Partial<CreditKimiRow>) => void; onLog?: (entry: Omit<CreditKimiLog, 'id'>) => void; onView?: () => void; flash?: (m: string) => void; showView?: boolean }) {
-  const base = useCreditKimiActions(row, onApply, onLog, onView, flash)
+export function CreditKimiActionBar({ row, onApply, onLog, onView, flash, showView = true, includeAudit = false }: { row: CreditKimiRow; onApply: (next: Partial<CreditKimiRow>) => void; onLog?: (entry: Omit<CreditKimiLog, 'id'>) => void; onView?: () => void; flash?: (m: string) => void; showView?: boolean; includeAudit?: boolean }) {
+  const base = useCreditKimiActions(row, onApply, onLog, onView, flash, includeAudit)
   const ops = showView ? base.ops : base.ops.filter((o) => o !== 'view')
   const { locked, open, renderModals } = base
   return (

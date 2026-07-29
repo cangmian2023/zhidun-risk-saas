@@ -184,18 +184,32 @@ export default function ReportTemplateConfig() {
   const patchFlow = (i: number, fn: (f: BusinessFlowConfig) => BusinessFlowConfig) =>
     patch((t) => ({ ...t, businessFlow: t.businessFlow.map((f, k) => (k === i ? fn(f) : f)) }))
 
-  /* ---- 审核操作：分段业务流程画布弹窗 ----
-     flowEditIdx = businessFlow 数组下标（i+1）；draftGraph 为画布草稿，点「保存流程」才写回模板 */
-  const [flowEditIdx, setFlowEditIdx] = useState<number | null>(null)
+  /* ---- 审核操作：分段业务流程（每条一图，在弹窗画布中配置） ----
+     flowEdit = { gi: businessFlow 下标(i+1), sub: 该分段内第几条流程 }；draftGraph 为画布草稿，点「保存流程」才写回模板 */
+  const [flowEdit, setFlowEdit] = useState<{ gi: number; sub: number } | null>(null)
   const [draftGraph, setDraftGraph] = useState<FlowGraph | null>(null)
-  const openFlowCanvas = (idx: number, flow: BusinessFlowConfig, ar: AutoResult) => {
-    setDraftGraph(flow.flowGraph ? { nodes: flow.flowGraph.nodes.map((n) => ({ ...n })), edges: flow.flowGraph.edges.map((e) => ({ ...e })) } : buildDefaultFlowGraph(flow, ar, active.scoreDisplay.grades[idx - 1]))
-    setFlowEditIdx(idx)
+  const openFlowCanvas = (gi: number, sub: number, flow: BusinessFlowConfig, ar: AutoResult) => {
+    const g = flow.flowGraphs?.[sub]
+    setDraftGraph(g ? { nodes: g.nodes.map((n) => ({ ...n })), edges: g.edges.map((e) => ({ ...e })) } : buildDefaultFlowGraph(flow, ar))
+    setFlowEdit({ gi, sub })
+  }
+  const addFlow = (gi: number, flow: BusinessFlowConfig, ar: AutoResult) => {
+    const ng = buildDefaultFlowGraph(flow, ar)
+    patchFlow(gi, (x) => ({ ...x, flowGraphs: [...(x.flowGraphs ?? []), ng] }))
+    setDraftGraph({ nodes: ng.nodes.map((n) => ({ ...n })), edges: ng.edges.map((e) => ({ ...e })) })
+    setFlowEdit({ gi, sub: (flow.flowGraphs ?? []).length })
+  }
+  const removeFlow = (gi: number, sub: number) => {
+    patchFlow(gi, (x) => ({ ...x, flowGraphs: (x.flowGraphs ?? []).filter((_, k) => k !== sub) }))
   }
   const saveFlowCanvas = () => {
-    if (flowEditIdx == null || !draftGraph) return
-    patchFlow(flowEditIdx, (x) => ({ ...x, flowGraph: draftGraph }))
-    setFlowEditIdx(null); setDraftGraph(null)
+    if (!flowEdit || !draftGraph) return
+    patchFlow(flowEdit.gi, (x) => {
+      const arr = [...(x.flowGraphs ?? [])]
+      arr[flowEdit.sub] = draftGraph
+      return { ...x, flowGraphs: arr }
+    })
+    setFlowEdit(null); setDraftGraph(null)
   }
 
   /* ---- 报告内容：分段 / 来源配置（三种来源各自专属配置） ---- */
@@ -409,7 +423,7 @@ export default function ReportTemplateConfig() {
       <div>
         <PageHeader title="报告模板配置" subtitle="统一管理信息核验 / 信用风控 / 欺诈识别 / 决策报告四类报告的展示模板、评分等级与审核操作"
           actions={<Button variant="primary" onClick={() => setShowNew(true)}>＋ 新建模板</Button>} />
-        <Panel desc="报告模板决定「某类报告长什么样、分数怎么分档、不同分数触发什么业务动作」。每个报告类型可并存多个模板，其中一个设为默认。">
+        <Panel>
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 14 }}>
             <input className="flex-1 min-w-[200px]" placeholder="搜索模板名称…" value={search} onChange={(e) => setSearch(e.target.value)} style={{ padding: '8px 10px', border: '1px solid #D1D5DB', borderRadius: 8 }} />
             <SingleSelect label="" options={typeOptions} value={fType} onChange={setFType} />
@@ -743,7 +757,7 @@ export default function ReportTemplateConfig() {
       <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 16, alignItems: 'start' }}>
         <div style={{ minWidth: 0 }}>
           {/* 基础信息 */}
-          <Panel title="基础信息" desc="模板的通用属性与报告级基础开关（所有配置 Tab 共用）。操作日志不在「报告内容」里当分段配，由本处统一控制显隐。">
+          <Panel title="基础信息">
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 14 }}>
               <Field label="模板名称" ><input disabled={!canEdit} value={active.name} onChange={(e) => patch((t) => ({ ...t, name: e.target.value }))} style={inp} /></Field>
               <Field label="报告类型"><input disabled value={REPORT_META[active.reportType].icon + ' ' + REPORT_META[active.reportType].label} style={{ ...inp, background: '#F3F4F6' }} /></Field>
@@ -792,7 +806,7 @@ export default function ReportTemplateConfig() {
           </div>
 
           {tab === 'content' && (
-            <Panel title="报告内容配置" desc="每个分段有『单一来源』：数据源 / 接口调用 / 规则集。卡片上只勾选『报告中展示哪些项』；IP/端口/接口地址/规则集等『配置项』点「配置来源」在弹窗里填，并可一键测试可用性。每个分段还可配置「上分」（是否参与报告总分、加分/扣分、分值区间与权重）。">
+            <Panel title="报告内容配置">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, flexWrap: 'wrap', gap: 8 }}>
                 <span style={{ fontSize: 13, color: '#374151', fontWeight: 600 }}>分段（{sections.length}）</span>
                 {canEdit && (
@@ -961,7 +975,7 @@ export default function ReportTemplateConfig() {
           </Modal>
 
           {tab === 'score' && (
-            <Panel title="评分方案配置" desc="对总分自定义分段：每段配分值范围、自动审核结果（通过/转人工/拒绝）与标签配色。分段变更会自动同步到「审核操作」Tab。">
+            <Panel title="评分方案配置">
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', border: '1px solid #E5E7EB', borderRadius: 10, background: '#F8FAFC', marginBottom: 12 }}>
                 <span style={{ fontSize: 13, color: '#374151' }}>标题<span style={{ color: '#DC2626', marginLeft: 2 }}>*</span></span>
                 <input disabled={!canEdit} value={active.scoreBlock.title}
@@ -1022,13 +1036,12 @@ export default function ReportTemplateConfig() {
               </div>
               <table className="w-full text-sm" style={{ marginTop: 4 }}>
                 <thead><tr style={{ textAlign: 'left' }}>
-                  <th className="px-2 py-2">分段名</th><th className="px-2 py-2">标签</th><th className="px-2 py-2">分值区间</th><th className="px-2 py-2">自动审核结果</th><th className="px-2 py-2">标签配色</th><th className="px-2 py-2">说明</th><th className="px-2 py-2"></th>
+                  <th className="px-2 py-2">分段名</th><th className="px-2 py-2">分值区间</th><th className="px-2 py-2">自动审核结果</th><th className="px-2 py-2">标签配色</th><th className="px-2 py-2">说明</th><th className="px-2 py-2"></th>
                 </tr></thead>
                 <tbody>
                   {active.scoreDisplay.grades.map((g, i) => (
                     <tr key={i} style={{ borderTop: '1px solid #F1F5F9' }}>
                       <td className="px-2 py-2 font-medium"><input disabled={!canEdit} value={g.grade} onChange={(e) => patchGrade(i, (x) => ({ ...x, grade: e.target.value }))} style={inpSm} /></td>
-                      <td className="px-2 py-2"><input disabled={!canEdit} value={g.label} onChange={(e) => patchGrade(i, (x) => ({ ...x, label: e.target.value }))} style={inpSm} /></td>
                       <td className="px-2 py-2" style={{ display: 'flex', gap: 4 }}>
                         <input type="number" disabled={!canEdit} value={g.minScore} onChange={(e) => patchGrade(i, (x) => ({ ...x, minScore: +e.target.value }))} style={numSm} />~
                         <input type="number" disabled={!canEdit} value={g.maxScore} onChange={(e) => patchGrade(i, (x) => ({ ...x, maxScore: +e.target.value }))} style={numSm} />
@@ -1059,7 +1072,7 @@ export default function ReportTemplateConfig() {
           )}
 
           {tab === 'flow' && (
-            <Panel title="审核操作配置" desc="每一行继承「评分方案」的一个分段（分段名/区间/自动审核结果只读）。点「配置流程」在画布中自由编排该分段的业务流程（节点可增删/拖拽/连线），流程缩写回显在列中。">
+            <Panel title="审核操作配置">
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', border: '1px solid #E5E7EB', borderRadius: 10, background: '#F8FAFC', marginBottom: 12 }}>
                 <span style={{ fontSize: 13, color: '#374151' }}>标题<span style={{ color: '#DC2626', marginLeft: 2 }}>*</span></span>
                 <input disabled={!canEdit} value={active.flowBlock.title}
@@ -1073,6 +1086,13 @@ export default function ReportTemplateConfig() {
                   启用
                 </label>
                 <span style={{ fontSize: 12, color: active.flowBlock.show ? '#047857' : '#9CA3AF' }}>{active.flowBlock.show ? '已启用' : '未启用'}</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', border: '1px solid #E5E7EB', borderRadius: 10, background: '#F8FAFC', marginBottom: 12 }}>
+                <span style={{ fontSize: 13, color: '#374151', whiteSpace: 'nowrap' }}>状态枚举类<span style={{ color: '#DC2626', marginLeft: 2 }}>*</span></span>
+                <input disabled={!canEdit} value={(active.flowBlock.statusEnum ?? []).join('/')}
+                  onChange={(e) => patch((t) => ({ ...t, flowBlock: { ...t.flowBlock, statusEnum: e.target.value.split('/').map((s) => s.trim()).filter(Boolean) } }))}
+                  placeholder="用 / 分隔，如 待确认/通过/拒绝/完结/挂起/转人工" style={{ ...inp, flex: 1 }} />
+                <span style={{ fontSize: 12, color: '#9CA3AF', whiteSpace: 'nowrap' }}>共 {(active.flowBlock.statusEnum ?? []).length} 个状态</span>
               </div>
               <div style={active.flowBlock.show ? undefined : { opacity: 0.45, pointerEvents: 'none', userSelect: 'none' }}>
               {syncHint && <div style={{ fontSize: 12, color: '#1D4ED8', background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: 8, padding: '6px 10px', marginBottom: 10 }}>{syncHint}</div>}
@@ -1090,7 +1110,7 @@ export default function ReportTemplateConfig() {
                       <tr key={i} style={{ borderTop: '1px solid #F1F5F9', verticalAlign: 'top' }}>
                         <td style={{ padding: '8px', fontWeight: 600 }}>
                           <span style={{ display: 'inline-block', width: 10, height: 10, borderRadius: 999, background: grade?.color ?? '#9CA3AF', marginRight: 6 }} />
-                          {grade ? `${grade.grade} · ${grade.label}` : flow.gradeId}
+                          {grade ? grade.grade : flow.gradeId}
                           <div style={{ fontSize: 11, color: '#6B7280', fontWeight: 400, marginTop: 2 }}>区间 {grade ? `${grade.minScore} ~ ${grade.maxScore}` : '—'} 分</div>
                           <div style={{ fontSize: 11, color: grade?.color, fontWeight: 400 }}>{grade?.description}</div>
                         </td>
@@ -1098,15 +1118,24 @@ export default function ReportTemplateConfig() {
                           <span style={{ padding: '2px 10px', fontSize: 12, fontWeight: 600, borderRadius: 999, color: '#fff', background: AUTO_RESULT_COLOR[ar] }}>{ar}</span>
                         </td>
                         <td style={{ padding: '8px' }}>
-                          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-                            <div style={{ flex: 1, minWidth: 0, fontSize: 12, color: '#374151', lineHeight: 1.7, wordBreak: 'break-all' }}>
-                              {summarizeFlowGraph(flow.flowGraph ?? buildDefaultFlowGraph(flow, ar, grade))}
-                              {!flow.flowGraph && <span style={{ color: '#9CA3AF' }}>（默认流程，未自定义）</span>}
-                            </div>
-                            <button onClick={() => openFlowCanvas(i + 1, flow, ar)}
-                              style={{ ...miniBtn, borderColor: SEL, color: SEL, flexShrink: 0 }}>
-                              {canEdit ? '配置流程' : '查看流程'}
-                            </button>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                            {(flow.flowGraphs ?? []).length === 0 && (
+                              <div style={{ fontSize: 12, color: '#9CA3AF' }}>（暂无业务流程，点击下方添加流程）</div>
+                            )}
+                            {(flow.flowGraphs ?? []).map((g, sub) => (
+                              <div key={sub} style={{ display: 'flex', alignItems: 'center', gap: 8, border: '1px solid #E5E7EB', borderRadius: 8, padding: '6px 8px', background: '#fff' }}>
+                                <div style={{ flex: 1, minWidth: 0, fontSize: 12, color: '#374151', lineHeight: 1.6, wordBreak: 'break-all' }}>
+                                  {summarizeFlowGraph(g)}
+                                </div>
+                                <button onClick={() => openFlowCanvas(i + 1, sub, flow, ar)} style={{ ...miniBtn, borderColor: SEL, color: SEL, flexShrink: 0 }}>
+                                  {canEdit ? '编辑' : '查看'}
+                                </button>
+                                {canEdit && <button onClick={() => removeFlow(i + 1, sub)} style={{ ...miniBtn, borderColor: '#FCA5A5', color: '#DC2626', flexShrink: 0 }}>删除</button>}
+                              </div>
+                            ))}
+                            {canEdit && (
+                              <button onClick={() => addFlow(i + 1, flow, ar)} style={{ ...miniBtn, borderColor: SEL, color: SEL, alignSelf: 'flex-start' }}>＋ 添加流程</button>
+                            )}
                           </div>
                         </td>
                         <td style={{ padding: '8px' }}><input disabled={!canEdit} value={flow.suggestionText} onChange={(e) => patchFlow(i + 1, (x) => ({ ...x, suggestionText: e.target.value }))} style={{ ...inpSm, width: '100%' }} /></td>
@@ -1118,26 +1147,25 @@ export default function ReportTemplateConfig() {
               </div>
 
               {/* 分段业务流程 · 自由画布弹窗 */}
-              <Modal open={flowEditIdx != null} onClose={() => { setFlowEditIdx(null); setDraftGraph(null) }}
-                title={flowEditIdx != null ? `业务流程配置 · ${active.scoreDisplay.grades[flowEditIdx - 1] ? `${active.scoreDisplay.grades[flowEditIdx - 1].grade} · ${active.scoreDisplay.grades[flowEditIdx - 1].label}` : ''}` : ''}
+              <Modal open={flowEdit != null} onClose={() => { setFlowEdit(null); setDraftGraph(null) }}
+                title={flowEdit != null ? `业务流程配置 · 第 ${flowEdit.sub + 1} 条 · ${active.scoreDisplay.grades[flowEdit.gi - 1] ? `${active.scoreDisplay.grades[flowEdit.gi - 1].grade} · ${active.scoreDisplay.grades[flowEdit.gi - 1].label}` : ''}` : ''}
                 width="max-w-5xl"
                 footer={<>
-                  <Button variant="ghost" onClick={() => { setFlowEditIdx(null); setDraftGraph(null) }}>取消</Button>
-                  {canEdit && flowEditIdx != null && (
+                  <Button variant="ghost" onClick={() => { setFlowEdit(null); setDraftGraph(null) }}>取消</Button>
+                  {canEdit && flowEdit != null && (
                     <Button variant="ghost" onClick={() => {
-                      const f = active.businessFlow[flowEditIdx]
-                      const g = active.scoreDisplay.grades[flowEditIdx - 1]
-                      setDraftGraph(buildDefaultFlowGraph(f, g?.autoResult ?? '转人工', g))
+                      const f = active.businessFlow[flowEdit.gi]
+                      const g = active.scoreDisplay.grades[flowEdit.gi - 1]
+                      setDraftGraph(buildDefaultFlowGraph(f, g?.autoResult ?? '转人工'))
                     }}>重置为默认流程</Button>
                   )}
                   {canEdit && <Button variant="primary" onClick={saveFlowCanvas}>保存流程</Button>}
                 </>}>
-                {draftGraph && <FlowCanvasEditor graph={draftGraph} onChange={setDraftGraph} readOnly={!canEdit} />}
+                {draftGraph && <FlowCanvasEditor graph={draftGraph} onChange={setDraftGraph} readOnly={!canEdit} statusEnum={active.flowBlock.statusEnum} />}
               </Modal>
             </Panel>
           )}
 
-          {/* 变更日志 */}
           <Panel title="变更日志" desc={`共 ${active.changeLogs.length} 条`} className="mt-4">
             <div style={{ maxHeight: 200, overflow: 'auto' }}>
               {active.changeLogs.map((c, i) => (
@@ -1156,6 +1184,8 @@ export default function ReportTemplateConfig() {
   )
 }
 
+/* 审核状态机（可编辑）表已移除：审核操作改由「审核操作配置」中按评分分段的多行业务流程配置（节点=状态枚举）驱动。运行时 MACHINE_BY_TYPE / resolveActions 不变。 */
+
 /* =============================================================================
  * 评分卡形态预览：按「分值分段 + 所选形态」渲染示例效果（评分方案 Tab 内嵌）
  * ========================================================================== */
@@ -1171,7 +1201,7 @@ function ScoreCardPreview({ sd, min, max, score }: {
     ?? (score < (sd.grades[0]?.minScore ?? min) ? sd.grades[0] : sd.grades[sd.grades.length - 1])
   const color = grade?.color ?? '#1D4ED8'
   const gradeChip = grade && (
-    <span style={{ padding: '2px 10px', fontSize: 12, fontWeight: 600, borderRadius: 999, color: '#fff', background: color }}>{grade.grade} · {grade.label}</span>
+    <span style={{ padding: '2px 10px', fontSize: 12, fontWeight: 600, borderRadius: 999, color: '#fff', background: color }}>{grade.grade}</span>
   )
 
   /* 阈值刻度条：各分段按区间宽度占比着色，当前分段高亮 */
@@ -1262,7 +1292,6 @@ function ScoreCardPreview({ sd, min, max, score }: {
         <div style={{ display: 'flex', gap: 6, marginTop: 10, flexWrap: 'wrap' }}>
           <span style={pvTag(color)}>风险{grade.riskLevel}</span>
           <span style={pvTag('#64748B')}>{grade.autoResult}</span>
-          {grade.label && <span style={pvTag('#0EA5E9')}>{grade.label}</span>}
         </div>
       )}
       {sd.showDescription && grade?.description && (
