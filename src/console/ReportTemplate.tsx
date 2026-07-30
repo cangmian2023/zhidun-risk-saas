@@ -45,12 +45,6 @@ function Field({ label, children, full, hint }: { label: string; children: React
 }
 const inp: React.CSSProperties = { padding: '8px 10px', border: '1px solid #D1D5DB', borderRadius: 8, width: '100%', fontSize: 14 }
 const inpSm: React.CSSProperties = { padding: '4px 8px', border: '1px solid #D1D5DB', borderRadius: 6, fontSize: 13, width: '100%', minWidth: 0 }
-/* 评分维度分布：等级徽标配色（低绿 / 中黄 / 高橙，与报告详情一致） */
-const DIM_LEVEL_STYLE: Record<DimLevel, React.CSSProperties> = {
-  低: { background: '#D1FAE5', color: '#047857' },
-  中: { background: '#FEF3C7', color: '#B45309' },
-  高: { background: '#FFEDD5', color: '#C2410C' },
-}
 const dimTh: React.CSSProperties = { padding: '7px 8px', fontWeight: 600, fontSize: 11, whiteSpace: 'nowrap' }
 const dimTd: React.CSSProperties = { padding: '5px 8px', fontSize: 12, verticalAlign: 'middle' }
 const numSm: React.CSSProperties = { width: 56, padding: '4px 6px', border: '1px solid #D1D5DB', borderRadius: 6, fontSize: 13 }
