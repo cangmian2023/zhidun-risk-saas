@@ -19,10 +19,12 @@ import {
   SectionConfig, FieldConfig, SectionSource, ROLE_PERM, computeSectionScore,
   DataSourceConfig, DbField, ApiParam, ApiOutput, ApiConfig, ApiHeader, ApiMethod, ApiBodyType, ApiFieldType,
   RenderContainer, RENDER_CONTAINER_LABEL, API_FIELD_TYPE_LABEL, defaultContainer, recommendDbContainer,
-  MaskRule, MASK_RULE_LABEL, autoMaskRule, Severity, SEVERITY_LABEL, FieldCondType, FIELD_COND_LABEL,
+  MaskRule, MASK_RULE_LABEL, autoMaskRule, Severity, SEVERITY_LABEL, FieldCondType, FieldCondition, FIELD_COND_LABEL,
   REPORT_META, PRODUCT_TREE, PRODUCT_LEAVES, PRODUCT_ALL, scopeLabel,
   AutoResult, AUTO_RESULT_LIST, AUTO_RESULT_COLOR, RiskLevel,
+  SpecialRule, SpecialRuleTrigger, SpecialRulePriority, SPECIAL_TRIGGER_LABEL, SPECIAL_PRIORITY_LABEL, SPECIAL_PRIORITY_HINT,
   computeScoreSummary, validateGrades,
+  DimLevel, DimLevelBand, DEFAULT_DIM_BANDS, buildDimRows,
   SECTION_SOURCE_LABEL, RULE_SETS, DB_TYPES, mockTableColumns,
   SourceTestResult, testSourceConfig, parseCurl, buildCurl,
   syncFlowToGrades, buildTemplate, seedReportTemplates,
@@ -43,6 +45,14 @@ function Field({ label, children, full, hint }: { label: string; children: React
 }
 const inp: React.CSSProperties = { padding: '8px 10px', border: '1px solid #D1D5DB', borderRadius: 8, width: '100%', fontSize: 14 }
 const inpSm: React.CSSProperties = { padding: '4px 8px', border: '1px solid #D1D5DB', borderRadius: 6, fontSize: 13, width: '100%', minWidth: 0 }
+/* 评分维度分布：等级徽标配色（低绿 / 中黄 / 高橙，与报告详情一致） */
+const DIM_LEVEL_STYLE: Record<DimLevel, React.CSSProperties> = {
+  低: { background: '#D1FAE5', color: '#047857' },
+  中: { background: '#FEF3C7', color: '#B45309' },
+  高: { background: '#FFEDD5', color: '#C2410C' },
+}
+const dimTh: React.CSSProperties = { padding: '7px 8px', fontWeight: 600, fontSize: 11, whiteSpace: 'nowrap' }
+const dimTd: React.CSSProperties = { padding: '5px 8px', fontSize: 12, verticalAlign: 'middle' }
 const numSm: React.CSSProperties = { width: 56, padding: '4px 6px', border: '1px solid #D1D5DB', borderRadius: 6, fontSize: 13 }
 const miniBtn: React.CSSProperties = { padding: '3px 10px', fontSize: 12, borderRadius: 6, border: '1px solid #D1D5DB', background: '#fff', cursor: 'pointer' }
 const SEL = '#3B82F6', SEL_BG = '#EFF6FF'
@@ -147,15 +157,54 @@ export default function ReportTemplateConfig() {
   const [syncHint, setSyncHint] = useState<string>('')
   const [demoScore, setDemoScore] = useState<number | null>(null) // 评分卡形态预览的示例分值（null=自动取范围 72% 处）
   const [basicExpanded, setBasicExpanded] = useState(false) // 基础信息默认收起，展开可编辑
+  const [condEdit, setCondEdit] = useState<{ kind: 'ds' | 'api' | 'rule'; sId: string; index?: number; fid?: string; name: string } | null>(null)
+  const [copyPick, setCopyPick] = useState(false) // 「＋ 复制现有模板」选择弹窗
+  const [specialPick, setSpecialPick] = useState(false) // 「＋ 添加规则」选择弹窗（特殊命中规则）
+  /* —— 条件配置弹窗辅助（五：多条件组合编辑器） —— */
+  const getCondSection = (sId: string) => active.sections.find((s) => s.id === sId)!
+  const getCondList = (t: NonNullable<typeof condEdit>): FieldCondition[] => {
+    const s = getCondSection(t.sId)
+    if (t.kind === 'ds') return s.ds?.tableFields[t.index!]?.conditions ?? []
+    if (t.kind === 'api') return s.api?.outputs[t.index!]?.conditions ?? []
+    return s.fields.find((f) => f.id === t.fid)?.conditions ?? []
+  }
+  const getCondFields = (t: NonNullable<typeof condEdit>): string[] => {
+    const s = getCondSection(t.sId)
+    if (t.kind === 'ds') return (s.ds?.tableFields ?? []).map((f) => f.name)
+    if (t.kind === 'api') return (s.api?.outputs ?? []).map((o) => o.key)
+    return s.fields.map((f) => f.name)
+  }
+  const getCondOps = (kind: 'ds' | 'api' | 'rule'): FieldCondType[] =>
+    kind === 'ds' ? ['eq', 'empty', 'notEmpty', 'gt', 'lt'] : kind === 'api' ? ['eq', 'empty', 'notEmpty', 'gt', 'lt', 'regex'] : ['hit', 'miss']
+  const applyCondList = (t: NonNullable<typeof condEdit>, list: FieldCondition[]) => {
+    if (t.kind === 'ds') patchDsField(t.sId, t.index!, (f) => ({ ...f, conditions: list }))
+    else if (t.kind === 'api') patchApiOutput(t.sId, t.index!, (x) => ({ ...x, conditions: list }))
+    else patchField(t.sId, t.fid!, (x) => ({ ...x, conditions: list }))
+  }
 
   const active = useMemo(() => templates.find((t) => t.id === activeId) ?? templates[0], [templates, activeId])
   const perm = ROLE_PERM['系统管理员'] // 权限固定为系统管理员（全权）；角色模拟切换已移除
   const canEdit = perm.edit
 
+  /* 编辑写回：除本地 state 外，同步回共享种子 seedReportTemplates —— 各报告详情页读的是它，
+     否则配置页改了开关/分值，详情页看不到变化（无跨页 store 时的最小可用做法）。 */
   const patch = (fn: (t: ReportTemplate) => ReportTemplate) =>
-    setTemplates((l) => l.map((t) => (t.id === activeId ? fn(t) : t)))
+    setTemplates((l) => l.map((t) => {
+      if (t.id !== activeId) return t
+      const next = fn(t)
+      const i = seedReportTemplates.findIndex((s) => s.id === t.id)
+      if (i >= 0) seedReportTemplates[i] = next
+      return next
+    }))
   const patchSection = (sid: string, fn: (s: SectionConfig) => SectionConfig) =>
     patch((t) => ({ ...t, sections: t.sections.map((s) => (s.id === sid ? fn(s) : s)) }))
+  /* 评分维度分布：逐维度 低/中/高 三档区间/说明（每个集合独立配置，不再全局共用） */
+  const patchSectionDimBand = (sid: string, bi: number, p: Partial<DimLevelBand>) =>
+    patchSection(sid, (s) => {
+      const base = s.dimBands ?? active.dimBands ?? DEFAULT_DIM_BANDS
+      const next = base.map((b, k) => (k === bi ? { ...b, ...p } : b))
+      return { ...s, dimBands: next }
+    })
   const patchGrade = (i: number, fn: (g: ScoreGrade) => ScoreGrade) =>
     patch((t) => {
       const grades = t.scoreDisplay.grades.map((g, k) => (k === i ? fn(g) : g))
@@ -179,8 +228,35 @@ export default function ReportTemplateConfig() {
       return { ...t, scoreDisplay: { ...t.scoreDisplay, grades }, businessFlow: syncFlowToGrades(t.businessFlow, grades) }
     })
   }
+  /* ---- 特殊命中规则：命中即定结论，不受分值分段约束 ---- */
+  const patchSpecial = (id: string, fn: (r: SpecialRule) => SpecialRule) =>
+    patch((t) => ({ ...t, specialRules: (t.specialRules ?? []).map((r) => (r.id === id ? fn(r) : r)) }))
+  const delSpecial = (id: string) =>
+    patch((t) => ({ ...t, specialRules: (t.specialRules ?? []).filter((r) => r.id !== id) }))
+  const addSpecial = (sectionId: string, fieldId: string, sectionName: string, ruleName: string) =>
+    patch((t) => {
+      if ((t.specialRules ?? []).some((r) => r.sectionId === sectionId && r.fieldId === fieldId)) return t
+      const nr: SpecialRule = {
+        id: `sr_${sectionId}_${fieldId}_${Date.now()}`, sectionId, fieldId, sectionName, ruleName,
+        trigger: 'hit', autoResult: '拒绝', priority: 'decisive', note: '',
+      }
+      return { ...t, specialRules: [...(t.specialRules ?? []), nr] }
+    })
+  /* 可选规则项：来自「报告内容配置」里已启用的分段与已勾选的展示项 */
+  const specialCandidates = useMemo(() => active.sections
+    .filter((s) => (s.homeTab ?? 'content') === 'content' && s.visible && s.sourceType !== 'tpl_copy')
+    .sort((a, b) => a.order - b.order)
+    .map((s) => ({
+      sectionId: s.id,
+      sectionName: s.sourceName || s.name,
+      sourceType: s.sourceType,
+      items: s.fields.filter((f) => f.visible).map((f) => ({ id: f.id, name: f.name })),
+    }))
+    .filter((g) => g.items.length > 0), [active.sections])
+
   /* 评分方案：总分 = 基础分 + 各卡得分直接汇总（见 computeScoreSummary），此处仅用于分段区间校验 */
   const scoreSummary = useMemo(() => computeScoreSummary(active), [active])
+  const dimRows = useMemo(() => buildDimRows(active), [active])
   const gradeErrs = useMemo(() => validateGrades(active.scoreDisplay.grades, scoreSummary.min, scoreSummary.max), [active.scoreDisplay.grades, scoreSummary])
   const patchFlow = (i: number, fn: (f: BusinessFlowConfig) => BusinessFlowConfig) =>
     patch((t) => ({ ...t, businessFlow: t.businessFlow.map((f, k) => (k === i ? fn(f) : f)) }))
@@ -230,6 +306,22 @@ export default function ReportTemplateConfig() {
         ? { ...base, api: { url: '', method: 'POST', headers: [], inputs: [], bodyType: 'none', bodyText: '', outputs: [] } }
         : { ...base, ruleSetId: RULE_SETS[0].id, fields: RULE_SETS[0].rules.map((r) => ({ id: r.id, name: r.name, desc: r.desc, visible: true, sourceRef: r.id, hitText: '命中', missText: '未命中' })) }
     patch((t) => ({ ...t, sections: [...t.sections, ns] })); logChange('编辑', `新增分段「${ns.name}」`)
+    setFlashId(ns.id); setTimeout(() => setFlashId((cur) => (cur === ns.id ? null : cur)), 1600)
+  }
+  /* 复制现有模板：把来源模板「报告内容配置」的全部分段快照进一个只读卡片（一个卡片、多个列表，配置不可修改） */
+  const addTplCopySection = (src: (typeof templates)[number]) => {
+    if (!canEdit) return
+    const snap = src.sections
+      .filter((x) => (x.homeTab ?? 'content') === 'content')
+      .map((x) => JSON.parse(JSON.stringify(x)) as SectionConfig)
+    const ns: SectionConfig = {
+      id: `sec_${Date.now()}`, name: `复制 · ${src.name}`, desc: '复制现有模板', order: nextOrder(active.sections),
+      visible: true, sourceType: 'tpl_copy', sourceName: src.name, fields: [],
+      copyFromId: src.id, copyFromName: src.name, copySections: snap,
+      copyScoreRange: (() => { const m = computeScoreSummary(src); return { min: m.min, max: m.max, base: m.baseScore } })(),
+    }
+    patch((t) => ({ ...t, sections: [...t.sections, ns] })); logChange('编辑', `复制模板「${src.name}」的报告内容配置（${snap.length} 个列表，只读）`)
+    setCopyPick(false)
     setFlashId(ns.id); setTimeout(() => setFlashId((cur) => (cur === ns.id ? null : cur)), 1600)
   }
   const delSection = (sid: string) => {
@@ -501,7 +593,9 @@ export default function ReportTemplateConfig() {
      - score / flow 段（得分计算 / 结论与终审）：由已配置的数据源/规则集算得，只展示勾选项，无「配置来源」「删除」 */
   const renderSectionCard = (s: SectionConfig, opts: { showConfigBtn: boolean; showDelete: boolean; showMove: boolean }) => {
     const st = s.sourceType
-    const stColor = st === 'data_source' ? { bg: '#ECFDF5', bd: '#A7F3D0', tx: '#047857' } : st === 'api' ? { bg: '#EFF6FF', bd: '#BFDBFE', tx: '#1D4ED8' } : { bg: '#F5F3FF', bd: '#DDD6FE', tx: '#6D28D9' }
+    /* 本卡计分方向：扣分卡的分值一律以负数呈现（输入框、汇总、复制卡都统一带 − 号） */
+    const cardDeduct = (s.cardScoreMode ?? (st === 'rule_set' ? 'deduct' : 'add')) === 'deduct'
+    const stColor = st === 'data_source' ? { bg: '#ECFDF5', bd: '#A7F3D0', tx: '#047857' } : st === 'api' ? { bg: '#EFF6FF', bd: '#BFDBFE', tx: '#1D4ED8' } : st === 'tpl_copy' ? { bg: '#FFFBEB', bd: '#FDE68A', tx: '#B45309' } : { bg: '#F5F3FF', bd: '#DDD6FE', tx: '#6D28D9' }
     /* 表头 / 单元格统一样式：列宽由 colgroup 锁定，全部居中，杜绝 flex 错位 */
     const thStyle: React.CSSProperties = { textAlign: 'center', verticalAlign: 'middle', padding: '7px 6px', borderBottom: '1px solid #EEF2F7', fontWeight: 600, color: '#6B7280', fontSize: 11, whiteSpace: 'nowrap' }
     const tdStyle: React.CSSProperties = { textAlign: 'center', verticalAlign: 'middle', padding: '5px 6px', borderBottom: '1px solid #F1F5F9', fontSize: 12 }
@@ -519,13 +613,48 @@ export default function ReportTemplateConfig() {
           <input type="checkbox" disabled={disabled || !canEdit} checked={s.visible} onChange={(e) => patchSection(s.id, (x) => ({ ...x, visible: e.target.checked }))} />
           <input disabled={!canEdit} value={s.name} onChange={(e) => patchSection(s.id, (x) => ({ ...x, name: e.target.value }))} style={{ ...inp, width: 190, fontWeight: 600, fontSize: 14 }} />
           <span style={{ fontSize: 12, fontWeight: 600, background: '#fff', border: `1px solid ${stColor.bd}`, color: stColor.tx, padding: '2px 8px', borderRadius: 999 }}>{SECTION_SOURCE_LABEL[st]}</span>
-          <span style={{ fontSize: 12, color: '#9CA3AF' }}>展示 {s.fields.filter((f) => f.visible).length}/{s.fields.length}</span>
+          {st === 'tpl_copy'
+            ? <span style={{ fontSize: 12, color: '#9CA3AF' }}>集成 {(s.copySections ?? []).length} 个列表{s.copyScoreRange ? <> · 总分区间 <b style={{ color: '#B45309' }}>{s.copyScoreRange.min} ~ {s.copyScoreRange.max}</b>（基础分 {s.copyScoreRange.base}）</> : null} · 配置只读</span>
+            : <span style={{ fontSize: 12, color: '#9CA3AF' }}>展示 {s.fields.filter((f) => f.visible).length}/{s.fields.length}</span>}
           <div style={{ display: 'flex', gap: 6, marginLeft: 'auto' }}>
             {opts.showDelete && canEdit && <button onClick={() => delSection(s.id)} style={{ ...miniBtn, color: '#DC2626', borderColor: '#FECACA' }}>删除分段</button>}
-            {opts.showConfigBtn && <button onClick={() => openConfig(s.id)} style={{ ...miniBtn, borderColor: SEL, color: SEL }}>配置来源</button>}
+            {opts.showConfigBtn && st !== 'tpl_copy' && <button onClick={() => openConfig(s.id)} style={{ ...miniBtn, borderColor: SEL, color: SEL }}>配置来源</button>}
           </div>
         </div>
         <div style={{ padding: '10px 12px', background: '#fff', borderTop: '1px solid #F1F5F9' }}>
+          {st === 'tpl_copy' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div style={{ fontSize: 12, color: '#9CA3AF' }}>来源模板：{s.copyFromName ?? s.sourceName}（全量集成「报告内容配置」，只读不可修改；如需调整请到原模板修改后删除本卡重新复制）</div>
+              {(s.copySections ?? []).map((cs) => {
+                /* 分值优先取来源编辑对象（DbField/ApiOutput），缺省回落到 FieldConfig（种子分值都在这里），保证每个 item 都有分 */
+                const rows: { name: string; pts: number; on: boolean }[] = cs.sourceType === 'data_source'
+                  ? (cs.ds?.tableFields ?? []).map((f) => ({ name: f.label ?? f.name, pts: f.scorePoints ?? cs.fields.find((x) => x.sourceRef === f.name)?.scorePoints ?? 0, on: f.visible }))
+                  : cs.sourceType === 'api'
+                    ? (cs.api?.outputs ?? []).map((o) => ({ name: o.label || o.key, pts: o.scorePoints ?? cs.fields.find((x) => x.sourceRef === o.key)?.scorePoints ?? 0, on: o.visible !== false }))
+                    : cs.fields.map((f) => ({ name: f.name, pts: f.scorePoints ?? 0, on: f.visible }))
+                const shown = rows.filter((r) => r.on)
+                const csDeduct = (cs.cardScoreMode ?? (cs.sourceType === 'rule_set' ? 'deduct' : 'add')) === 'deduct'
+                return (
+                  <div key={cs.id} style={{ border: '1px solid #F1F5F9', borderRadius: 8, overflow: 'hidden' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 10px', background: '#F8FAFC', fontSize: 12 }}>
+                      <b style={{ color: '#374151' }}>{cs.name}</b>
+                      <span style={{ color: '#9CA3AF' }}>{SECTION_SOURCE_LABEL[cs.sourceType]}</span>
+                      <span style={{ marginLeft: 'auto', color: '#9CA3AF' }}>展示 {shown.length}/{rows.length} 项</span>
+                    </div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, padding: '8px 10px' }}>
+                      {shown.map((r, i) => (
+                        <span key={i} style={{ fontSize: 12, padding: '2px 8px', borderRadius: 999, background: '#fff', border: '1px solid #E5E7EB', color: '#374151' }}>
+                          {r.name}<b style={{ marginLeft: 4, color: csDeduct ? '#DC2626' : '#B45309' }}>{csDeduct ? '−' : ''}{r.pts}分</b>
+                        </span>
+                      ))}
+                      {shown.length === 0 && <span style={{ fontSize: 12, color: '#9CA3AF' }}>（无展示项）</span>}
+                    </div>
+                  </div>
+                )
+              })}
+              {(s.copySections ?? []).length === 0 && <div style={{ fontSize: 12, color: '#9CA3AF' }}>来源模板没有报告内容分段。</div>}
+            </div>
+          )}
           {st === 'data_source' && (
             <div>
               {(s.ds?.tableFields ?? []).length === 0 && <div style={{ fontSize: 12, color: '#9CA3AF' }}>尚未读取表结构{opts.showConfigBtn ? '，点右上「配置来源」连接数据库并读取字段。' : '。'}</div>}
@@ -534,7 +663,6 @@ export default function ReportTemplateConfig() {
                 <colgroup>
                   <col style={{ width: 40 }} />
                   <col style={{ width: 48 }} />
-                  <col style={{ width: 120 }} />
                   <col style={{ width: 120 }} />
                   <col style={{ width: 64 }} />
                   <col style={{ width: 108 }} />
@@ -550,13 +678,11 @@ export default function ReportTemplateConfig() {
                     <th style={{ ...thStyle, position: 'sticky', left: 0, zIndex: 3, background: '#F1F5F9' }}>序号</th>
                     <th style={{ ...thStyle, position: 'sticky', left: 40, zIndex: 3, background: '#F1F5F9' }}>启用</th>
                     <th style={{ ...thStyle, position: 'sticky', left: 88, zIndex: 3, background: '#F1F5F9', boxShadow: '1px 0 0 #E5E7EB' }}>字段名（原始）</th>
-                    <th style={thStyle}>提示标签</th>
                     <th style={thStyle}>类型</th>
                     <th style={thStyle}>显示方式</th>
                     <th style={thStyle}>脱敏规则</th>
                     <th style={thStyle}>豁免</th>
-                    <th style={thStyle}>条件</th>
-                    <th style={thStyle}>条件值</th>
+                    <th style={thStyle}>条件配置</th>
                     <th style={thStyle}>分值</th>
                     <th style={{ ...thStyle, width: 10, padding: '7px 0' }} />
                   </tr>
@@ -570,16 +696,14 @@ export default function ReportTemplateConfig() {
                       <td style={{ ...tdStyle, position: 'sticky', left: 0, zIndex: 2, background: rowBg, color: '#9CA3AF' }}>{idx + 1}</td>
                       <td style={{ ...tdStyle, position: 'sticky', left: 40, zIndex: 2, background: rowBg }}><input type="checkbox"  disabled={!canEdit} checked={tf.visible} onChange={() => toggleDsField(s.id, idx)} style={{ width: 16, cursor: canEdit ? 'pointer' : 'not-allowed' }} /></td>
                       <td style={{ ...tdStyle, fontWeight: 500, color: '#374151', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', position: 'sticky', left: 88, zIndex: 2, background: rowBg, boxShadow: '1px 0 0 #E5E7EB' }}>{tf.name}</td>
-                      <td style={tdStyle}><input disabled={!canEdit || !rowOn} value={tf.label ?? ''} onChange={(e) => patchDsField(s.id, idx, (f) => ({ ...f, label: e.target.value }))} placeholder={tf.name} style={{ ...inpSm, width: '100%', fontSize: 12 }}  /></td>
                       <td style={{ ...tdStyle, color: '#6B7280' }}>{tf.type}</td>
                       <td style={tdStyle}><select disabled={!canEdit || !rowOn} value={tf.container ?? recommendDbContainer(tf.type)} onChange={(e) => patchDsField(s.id, idx, (f) => ({ ...f, container: e.target.value as RenderContainer }))} style={{ ...inpSm, width: '100%', fontSize: 11 }} >{containerOptions(recommendDbContainer(tf.type)).map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}</select></td>
                       <td style={tdStyle}><select disabled={!canEdit || !rowOn} value={tf.maskRule ?? 'none'} onChange={(e) => patchDsField(s.id, idx, (f) => ({ ...f, maskRule: e.target.value as MaskRule }))} style={{ ...inpSm, width: '100%', fontSize: 11 }} >{Object.entries(MASK_RULE_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></td>
                       <td style={tdStyle}><select disabled={!canEdit || !rowOn} value={(tf.exempt ?? false) ? 'yes' : 'no'} onChange={(e) => patchDsField(s.id, idx, (f) => ({ ...f, exempt: e.target.value === 'yes' }))} style={{ ...inpSm, width: '100%', fontSize: 11 }} ><option value="no">不可以</option><option value="yes">可以</option></select></td>
-                      <td style={tdStyle}><select disabled={!canEdit || !rowOn} value={tf.condType ?? 'eq'} onChange={(e) => patchDsField(s.id, idx, (f) => ({ ...f, condType: e.target.value as FieldCondType }))} style={{ ...inpSm, width: '100%', fontSize: 11 }} >{(['eq', 'empty', 'notEmpty', 'gt', 'lt'] as FieldCondType[]).map((c) => <option key={c} value={c}>{FIELD_COND_LABEL[c]}</option>)}</select></td>
-                      {(['gt', 'lt', 'eq'].includes(tf.condType ?? 'eq')) ? (
-                        <td style={tdStyle}><input disabled={!canEdit || !rowOn} value={tf.condValue ?? ''} onChange={(e) => patchDsField(s.id, idx, (f) => ({ ...f, condValue: e.target.value }))} placeholder="阈值"  style={{ ...inpSm, width: '100%', fontSize: 12 }} /></td>
-                      ) : <td style={tdStyle}></td>}
-                      <td style={tdStyle}><input type="number" disabled={!canEdit || !rowOn} value={tf.scorePoints ?? 0} onChange={(e) => patchDsField(s.id, idx, (f) => ({ ...f, scorePoints: +e.target.value || 0 }))}  style={{ ...numSm, width: '100%', fontSize: 12 }} /></td>
+                      <td style={tdStyle}>
+                        <button disabled={!canEdit || !rowOn} onClick={() => setCondEdit({ kind: 'ds', sId: s.id, index: idx, name: tf.name })} style={{ ...miniBtn, fontSize: 11, ...((tf.conditions?.length ?? 0) > 0 ? { borderColor: SEL, color: SEL } : {}) }}>{tf.conditions?.length ? `已配 ${tf.conditions.length} 条` : '配置条件'}</button>
+                      </td>
+                      <td style={tdStyle}><input type="number" disabled={!canEdit || !rowOn} value={cardDeduct ? -(tf.scorePoints ?? 0) : (tf.scorePoints ?? 0)} onChange={(e) => patchDsField(s.id, idx, (f) => ({ ...f, scorePoints: Math.abs(+e.target.value) || 0 }))}  style={{ ...numSm, width: '100%', fontSize: 12, ...(cardDeduct ? { color: '#DC2626' } : {}) }} /></td>
                       <td style={{ ...tdStyle, width: 10, padding: '5px 0' }} />
                     </tr>
                     )
@@ -597,11 +721,9 @@ export default function ReportTemplateConfig() {
                 <colgroup>
                   <col style={{ width: 40 }} />
                   <col style={{ width: 48 }} />
-                  <col style={{ width: 100 }} />
                   <col style={{ width: 110 }} />
                   <col style={{ width: 96 }} />
                   <col style={{ width: 96 }} />
-                  <col style={{ width: 84 }} />
                   <col style={{ width: 84 }} />
                   <col style={{ width: 56 }} />
                   <col style={{ width: 72 }} />
@@ -612,12 +734,10 @@ export default function ReportTemplateConfig() {
                   <tr style={{ background: '#F8FAFC' }}>
                     <th style={{ ...thStyle, position: 'sticky', left: 0, zIndex: 3, background: '#F1F5F9' }}>序号</th>
                     <th style={{ ...thStyle, position: 'sticky', left: 40, zIndex: 3, background: '#F1F5F9' }}>启用</th>
-                    <th style={{ ...thStyle, position: 'sticky', left: 88, zIndex: 3, background: '#F1F5F9', boxShadow: '1px 0 0 #E5E7EB' }}>提示标签</th>
-                    <th style={thStyle}>字段 key</th>
+                    <th style={{ ...thStyle, position: 'sticky', left: 88, zIndex: 3, background: '#F1F5F9', boxShadow: '1px 0 0 #E5E7EB' }}>字段 key</th>
                     <th style={thStyle}>类型</th>
                     <th style={thStyle}>显示方式</th>
-                    <th style={thStyle}>条件</th>
-                    <th style={thStyle}>条件值</th>
+                    <th style={thStyle}>条件配置</th>
                     <th style={thStyle}>分值</th>
                     <th style={thStyle}>豁免</th>
                     <th style={thStyle}>操作</th>
@@ -632,15 +752,13 @@ export default function ReportTemplateConfig() {
                     <tr key={idx} style={{ borderBottom: '1px solid #F1F5F9', background: rowBg, opacity: rowOn ? 1 : 0.6 }}>
                       <td style={{ ...tdStyle, position: 'sticky', left: 0, zIndex: 2, background: rowBg, color: '#9CA3AF' }}>{idx + 1}</td>
                       <td style={{ ...tdStyle, position: 'sticky', left: 40, zIndex: 2, background: rowBg }}><input type="checkbox"  disabled={!canEdit} checked={o.visible ?? true} onChange={() => patchApi(s.id, (a) => ({ ...a, outputs: a.outputs.map((x, k) => (k === idx ? { ...x, visible: !x.visible } : x)) }))} style={{ width: 16, cursor: canEdit ? 'pointer' : 'not-allowed' }} /></td>
-                      <td style={{ ...tdStyle, position: 'sticky', left: 88, zIndex: 2, background: rowBg, boxShadow: '1px 0 0 #E5E7EB' }}><input disabled={!canEdit || !rowOn} value={o.label} onChange={(e) => patchApiOutput(s.id, idx, (x) => ({ ...x, label: e.target.value }))} placeholder="显示名" style={{ ...inpSm, width: '100%', fontSize: 12 }} /></td>
-                      <td style={tdStyle}><input disabled={!canEdit || !rowOn} value={o.key} onChange={(e) => patchApiOutput(s.id, idx, (x) => ({ ...x, key: e.target.value }))} placeholder="字段 key" style={{ ...inpSm, width: '100%', fontSize: 12 }} /></td>
+                      <td style={{ ...tdStyle, position: 'sticky', left: 88, zIndex: 2, background: rowBg, boxShadow: '1px 0 0 #E5E7EB' }}><input disabled={!canEdit || !rowOn} value={o.key} onChange={(e) => patchApiOutput(s.id, idx, (x) => ({ ...x, key: e.target.value }))} placeholder="字段 key" style={{ ...inpSm, width: '100%', fontSize: 12 }} /></td>
                       <td style={tdStyle}><select disabled={!canEdit || !rowOn} value={o.type} onChange={(e) => { const t = e.target.value as ApiFieldType; patchApiOutput(s.id, idx, (x) => ({ ...x, type: t, container: defaultContainer(t) })) }} style={{ ...inpSm, width: '100%', fontSize: 11 }} >{Object.entries(API_FIELD_TYPE_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></td>
                       <td style={tdStyle}><select disabled={!canEdit || !rowOn} value={o.container ?? defaultContainer(o.type)} onChange={(e) => patchApiOutput(s.id, idx, (x) => ({ ...x, container: e.target.value as RenderContainer }))} style={{ ...inpSm, width: '100%', fontSize: 11 }} >{containerOptions(defaultContainer(o.type)).map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}</select></td>
-                      <td style={tdStyle}><select disabled={!canEdit || !rowOn} value={o.condType ?? 'eq'} onChange={(e) => patchApiOutput(s.id, idx, (x) => ({ ...x, condType: e.target.value as FieldCondType }))} style={{ ...inpSm, width: '100%', fontSize: 11 }} >{(['eq', 'empty', 'notEmpty', 'gt', 'lt', 'regex'] as FieldCondType[]).map((c) => <option key={c} value={c}>{FIELD_COND_LABEL[c]}</option>)}</select></td>
-                      {(['gt', 'lt', 'eq', 'regex'].includes(o.condType ?? 'eq')) ? (
-                        <td style={tdStyle}><input disabled={!canEdit || !rowOn} value={o.condValue ?? ''} onChange={(e) => patchApiOutput(s.id, idx, (x) => ({ ...x, condValue: e.target.value }))} placeholder={o.condType === 'regex' ? '正则' : '阈值'}  style={{ ...inpSm, width: '100%', fontSize: 12 }} /></td>
-                      ) : <td style={tdStyle}></td>}
-                      <td style={tdStyle}><input type="number" disabled={!canEdit || !rowOn} value={o.scorePoints ?? 0} onChange={(e) => patchApiOutput(s.id, idx, (x) => ({ ...x, scorePoints: +e.target.value || 0 }))}  style={{ ...numSm, width: '100%', fontSize: 12 }} /></td>
+                      <td style={tdStyle}>
+                        <button disabled={!canEdit || !rowOn} onClick={() => setCondEdit({ kind: 'api', sId: s.id, index: idx, name: o.key })} style={{ ...miniBtn, fontSize: 11, ...((o.conditions?.length ?? 0) > 0 ? { borderColor: SEL, color: SEL } : {}) }}>{o.conditions?.length ? `已配 ${o.conditions.length} 条` : '配置条件'}</button>
+                      </td>
+                      <td style={tdStyle}><input type="number" disabled={!canEdit || !rowOn} value={cardDeduct ? -(o.scorePoints ?? 0) : (o.scorePoints ?? 0)} onChange={(e) => patchApiOutput(s.id, idx, (x) => ({ ...x, scorePoints: Math.abs(+e.target.value) || 0 }))}  style={{ ...numSm, width: '100%', fontSize: 12, ...(cardDeduct ? { color: '#DC2626' } : {}) }} /></td>
                       <td style={tdStyle}><select disabled={!canEdit || !rowOn} value={(o.exempt ?? false) ? 'yes' : 'no'} onChange={(e) => patchApiOutput(s.id, idx, (x) => ({ ...x, exempt: e.target.value === 'yes' }))} style={{ ...inpSm, width: '100%', fontSize: 11 }} ><option value="no">不可以</option><option value="yes">可以</option></select></td>
                       <td style={tdStyle}>{canEdit && <button disabled={!rowOn} onClick={() => delApiOutput(s.id, idx)}  style={{ ...miniBtn, color: '#DC2626', width: 28, padding: '2px 0' }}>×</button>}</td>
                       <td style={{ ...tdStyle, width: 10, padding: '5px 0' }} />
@@ -681,7 +799,7 @@ export default function ReportTemplateConfig() {
                         <th style={thStyle}>风险等级</th>
                         <th style={thStyle}>命中即拒</th>
                         <th style={thStyle}>豁免</th>
-                        <th style={thStyle}>条件</th>
+                        <th style={thStyle}>条件配置</th>
                         <th style={thStyle}>分值</th>
                         <th style={{ ...thStyle, width: 10, padding: '7px 0' }} />
                       </tr>
@@ -699,7 +817,9 @@ export default function ReportTemplateConfig() {
                           <td style={tdStyle}><select disabled={!canEdit || !rowOn} value={f.severity ?? 'mid'} onChange={(e) => patchField(s.id, f.id, (x) => ({ ...x, severity: e.target.value as Severity }))} style={{ ...inpSm, width: '100%', fontSize: 11 }} >{Object.entries(SEVERITY_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></td>
                           <td style={tdStyle}><input type="checkbox" disabled={!canEdit || !rowOn} checked={f.hitReject ?? false} onChange={(e) => patchField(s.id, f.id, (x) => ({ ...x, hitReject: e.target.checked }))}  style={{ width: 16, cursor: canEdit ? 'pointer' : 'not-allowed' }} /></td>
                           <td style={tdStyle}><select disabled={!canEdit || !rowOn} value={(f.exempt ?? false) ? 'yes' : 'no'} onChange={(e) => patchField(s.id, f.id, (x) => ({ ...x, exempt: e.target.value === 'yes' }))} style={{ ...inpSm, width: '100%', fontSize: 11 }} ><option value="no">不可以</option><option value="yes">可以</option></select></td>
-                          <td style={tdStyle}><select disabled={!canEdit || !rowOn} value={f.condType ?? 'hit'} onChange={(e) => patchField(s.id, f.id, (x) => ({ ...x, condType: e.target.value as FieldCondType }))} style={{ ...inpSm, width: '100%', fontSize: 11 }} >{(['hit', 'miss'] as FieldCondType[]).map((c) => <option key={c} value={c}>{FIELD_COND_LABEL[c]}</option>)}</select></td>
+                          <td style={tdStyle}>
+                            <button disabled={!canEdit || !rowOn} onClick={() => setCondEdit({ kind: 'rule', sId: s.id, fid: f.id, name: f.name })} style={{ ...miniBtn, fontSize: 11, ...((f.conditions?.length ?? 0) > 0 ? { borderColor: SEL, color: SEL } : {}) }}>{f.conditions?.length ? `已配 ${f.conditions.length} 条` : '配置条件'}</button>
+                          </td>
                           <td style={tdStyle}><input type="number" disabled={!canEdit || !rowOn} value={-(f.scorePoints ?? 0)} onChange={(e) => patchField(s.id, f.id, (x) => ({ ...x, scorePoints: Math.abs(+e.target.value) || 0 }))}  style={{ ...numSm, width: '100%', fontSize: 12, color: '#DC2626' }} /></td>
                           <td style={{ ...tdStyle, width: 10, padding: '5px 0' }} />
                         </tr>
@@ -728,7 +848,7 @@ export default function ReportTemplateConfig() {
               return (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
                   <span style={{ fontSize: 13, fontWeight: 600, color: '#374151' }}>本卡总分（按各项计分自动汇总）</span>
-                  <span style={{ fontSize: 15, fontWeight: 700, color: r.total >= 0 ? '#047857' : '#DC2626' }}>{r.total >= 0 ? '+' : ''}{r.total}</span>
+                  <span style={{ fontSize: 15, fontWeight: 700, color: r.mode === 'deduct' ? '#DC2626' : '#047857' }}>{r.mode === 'deduct' ? '−' : '+'}{Math.abs(r.total)}</span>
                   <span style={{ fontSize: 12, color: '#6B7280' }}>（{r.mode === 'add' ? '达标加分' : '命中扣分'} {r.mode === 'add' ? r.addCount : r.deductCount} 项；命中即拒项不计入）</span>
                 </div>
               )
@@ -746,6 +866,17 @@ export default function ReportTemplateConfig() {
 
   return (
     <div>
+      {condEdit && (
+        <ConditionModal
+          open
+          title={`配置条件 · ${condEdit.name}`}
+          conditions={getCondList(condEdit)}
+          fieldOptions={getCondFields(condEdit)}
+          ops={getCondOps(condEdit.kind)}
+          onSave={(list) => applyCondList(condEdit, list)}
+          onClose={() => setCondEdit(null)}
+        />
+      )}
       <DetailHeader title={active.name} crumb="公共配置 / 报告模板" subtitle={`${REPORT_META[active.reportType].label} · ${active.version} · 适用 ${scopeLabel(active.scope)}`}
         backLabel="返回列表" onBack={() => setView('list')}
         actions={
@@ -828,21 +959,137 @@ export default function ReportTemplateConfig() {
 
           {tab === 'content' && (
             <Panel title="报告内容配置">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, flexWrap: 'wrap', gap: 8 }}>
-                <span style={{ fontSize: 13, color: '#374151', fontWeight: 600 }}>分段（{sections.length}）</span>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: 10, flexWrap: 'wrap', gap: 8 }}>
                 {canEdit && (
                   <div style={{ display: 'flex', gap: 8 }}>
                     {(['data_source', 'api', 'rule_set'] as SectionSource[]).map((st) => (
                       <button key={st} onClick={() => addSection(st)} style={miniBtn}>＋ {SECTION_SOURCE_LABEL[st]}</button>
                     ))}
+                    <button onClick={() => setCopyPick(true)} style={{ ...miniBtn, borderColor: '#FDE68A', color: '#B45309' }}>＋ 复制现有模板</button>
                   </div>
                 )}
               </div>
+              {/* ===== 评分维度分布：报告详情首卡的得分列表（每个来源卡片 = 一行，逐维度独立配 低/中/高 档位） ===== */}
+              <div style={{ marginBottom: 18, border: '1px solid #E5E7EB', borderRadius: 10, background: '#F8FAFC', overflow: 'hidden' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', borderBottom: '1px solid #E5E7EB' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600, color: '#374151', cursor: canEdit ? 'pointer' : 'default' }}>
+                    <input type="checkbox" disabled={!canEdit} checked={active.showSectionTotals}
+                      onChange={(e) => patch((t) => ({ ...t, showSectionTotals: e.target.checked }))} />
+                    显示分段总分
+                  </label>
+                  <span style={{ fontSize: 12, color: active.showSectionTotals ? '#047857' : '#9CA3AF' }}>
+                    {active.showSectionTotals ? '各集合展示汇总得分，并在报告详情首卡显示下方「评分维度分布」列表' : '不展示集合汇总得分，报告详情首卡不显示评分维度分布列表'}
+                  </span>
+                </div>
+
+                <div style={active.showSectionTotals ? { padding: 12 } : { padding: 12, opacity: 0.45, pointerEvents: 'none', userSelect: 'none' }}>
+                  {/* 逐维度档位配置表：每个维度独立配 低/中/高 区间与说明（表格内、增加到低/中/高列） */}
+                  <div style={{ fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 6 }}>评分维度分布（{dimRows.length} 个集合 · 报告详情首卡按此渲染，每个维度独立配 低/中/高 档位）</div>
+                  <div style={{ border: '1px solid #E5E7EB', borderRadius: 8, overflow: 'hidden', background: '#fff', overflowX: 'auto' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12, minWidth: 900 }}>
+                      <thead>
+                        <tr style={{ background: '#F1F5F9', color: '#94A3B8' }}>
+                          <th style={{ ...dimTh, textAlign: 'left' }}>维度</th>
+                          <th style={{ ...dimTh, textAlign: 'right', width: 64 }}>得分</th>
+                          <th style={{ ...dimTh, textAlign: 'right', width: 56 }}>权重</th>
+                          <th style={{ ...dimTh, textAlign: 'center', minWidth: 150 }}>低档（区间·说明）</th>
+                          <th style={{ ...dimTh, textAlign: 'center', minWidth: 150 }}>中档（区间·说明）</th>
+                          <th style={{ ...dimTh, textAlign: 'center', minWidth: 150 }}>高档（区间·说明）</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {dimRows.length === 0 && (
+                          <tr><td colSpan={6} style={{ ...dimTd, color: '#9CA3AF', textAlign: 'center' }}>「报告内容配置」里还没有启用的来源卡片</td></tr>
+                        )}
+                        {dimRows.map((r) => {
+                          const sec = sections.find((s) => s.id === r.id)
+                          const secBands = sec?.dimBands ?? active.dimBands ?? DEFAULT_DIM_BANDS
+                          return (
+                            <tr key={r.id} style={{ borderTop: '1px solid #F1F5F9' }}>
+                              <td style={{ ...dimTd, fontWeight: 600, color: '#111827' }}>{r.name}</td>
+                              <td style={{ ...dimTd, textAlign: 'right', fontWeight: 700, color: r.score < 0 ? '#E11D48' : '#059669' }}>{r.score < 0 ? '−' : '+'}{Math.abs(r.score)}</td>
+                              <td style={{ ...dimTd, textAlign: 'right', color: '#9CA3AF' }}>{r.weightPct}%</td>
+                              {(['低', '中', '高'] as DimLevel[]).map((lv) => {
+                                const bi = secBands.findIndex((b) => b.level === lv)
+                                const b = secBands[bi]
+                                return (
+                                  <td key={lv} style={{ ...dimTd, verticalAlign: 'top' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 4, whiteSpace: 'nowrap' }}>
+                                      <input type="number" disabled={!canEdit} value={b?.min ?? 0}
+                                        onChange={(e) => patchSectionDimBand(r.id, bi, { min: Number(e.target.value) })}
+                                        style={{ ...inpSm, width: 54 }} />
+                                      <span style={{ color: '#9CA3AF' }}>~</span>
+                                      <input type="number" disabled={!canEdit} value={b?.max ?? 0}
+                                        onChange={(e) => patchSectionDimBand(r.id, bi, { max: Number(e.target.value) })}
+                                        style={{ ...inpSm, width: 54 }} />
+                                    </div>
+                                    <input disabled={!canEdit} value={b?.note ?? ''} placeholder={`${lv}档说明`}
+                                      onChange={(e) => patchSectionDimBand(r.id, bi, { note: e.target.value })}
+                                      style={{ ...inpSm, width: '100%', marginTop: 4 }} />
+                                  </td>
+                                )
+                              })}
+                            </tr>
+                          )
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                  <div style={{ marginTop: 8, fontSize: 12, color: '#9CA3AF' }}>
+                    维度 = 集合名称 · 得分 = 本卡汇总得分 · 权重 = 本卡权重占比 · 低/中/高 区间与说明逐维度独立配置（不再全局共用一套）。
+                  </div>
+                </div>
+              </div>
+
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {sections.filter((s) => (s.homeTab ?? 'content') === 'content').map((s) => renderSectionCard(s, { showConfigBtn: true, showDelete: true, showMove: true }))}
               </div>
             </Panel>
           )}
+
+          {/* 复制现有模板弹窗：选择来源模板，整卡集成其报告内容配置（只读） */}
+          <Modal open={copyPick} onClose={() => setCopyPick(false)} title="复制现有模板 · 选择来源" width="max-w-md">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {templates.filter((t) => t.id !== active.id).map((t) => {
+                const n = t.sections.filter((x) => (x.homeTab ?? 'content') === 'content').length
+                return (
+                  <button key={t.id} onClick={() => addTplCopySection(t)} style={{ ...miniBtn, display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px', textAlign: 'left' }}>
+                    <span style={{ fontWeight: 600 }}>{t.name}</span>
+                    <span style={{ color: '#9CA3AF', fontSize: 12 }}>内容分段 {n} 个</span>
+                  </button>
+                )
+              })}
+            </div>
+            <div style={{ marginTop: 10, fontSize: 12, color: '#9CA3AF' }}>复制来源模板「报告内容配置」的全部分段，在本模板中合成一个只读卡片（一个卡片、多个列表），配置全部集成、不可修改。</div>
+          </Modal>
+
+          {/* 特殊命中规则 · 选择规则项弹窗：只列「报告内容配置」里已启用分段的已勾选展示项 */}
+          <Modal open={specialPick} onClose={() => setSpecialPick(false)} title="添加特殊命中规则 · 选择规则项" width="max-w-lg">
+            <div style={{ maxHeight: 420, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {specialCandidates.length === 0 && <div style={{ fontSize: 12, color: '#9CA3AF' }}>「报告内容配置」里还没有可选的展示项。</div>}
+              {specialCandidates.map((g) => (
+                <div key={g.sectionId}>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 6 }}>
+                    {g.sectionName}
+                    <span style={{ marginLeft: 6, fontSize: 11, fontWeight: 400, color: '#9CA3AF' }}>{SECTION_SOURCE_LABEL[g.sourceType] ?? ''}</span>
+                  </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                    {g.items.map((it) => {
+                      const used = (active.specialRules ?? []).some((r) => r.sectionId === g.sectionId && r.fieldId === it.id)
+                      return (
+                        <button key={it.id} disabled={used}
+                          onClick={() => { addSpecial(g.sectionId, it.id, g.sectionName, it.name); setSpecialPick(false) }}
+                          style={{ ...miniBtn, ...(used ? { color: '#9CA3AF', borderColor: '#E5E7EB', cursor: 'not-allowed', background: '#F9FAFB' } : {}) }}>
+                          {it.name}{used ? ' · 已添加' : ''}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div style={{ marginTop: 10, fontSize: 12, color: '#9CA3AF' }}>选中后即加入下方清单，可再配置触发条件（命中/未命中）、对应审核结果与优先级（决定规则/预警规则）。</div>
+          </Modal>
 
           {/* 配置来源弹窗：把连接/接口/规则集等「配置项」集中到弹窗，与卡片上的「展示项」分离 */}
           <Modal open={!!configSection} onClose={() => { setConfigSid(null); setTestResult(null) }} title={configSection ? `配置来源 · ${configSection.name}` : ''} width="max-w-2xl">
@@ -1052,7 +1299,8 @@ export default function ReportTemplateConfig() {
                 <span style={{ fontSize: 13, fontWeight: 600, color: '#1E40AF' }}>分值预测</span>
                 <span style={{ fontSize: 13, color: '#374151' }}>最小分值 <b style={{ color: '#DC2626' }}>{scoreSummary.min}</b></span>
                 <span style={{ fontSize: 13, color: '#374151' }}>最大分值 <b style={{ color: '#047857' }}>{scoreSummary.max}</b></span>
-                <span style={{ fontSize: 12, color: '#6B7280' }}>（基础分 {active.scoreDisplay.baseScore} ＋ 加分满分 {scoreSummary.addMax} − 最大扣分 {scoreSummary.deductMax}）</span>
+                <span style={{ fontSize: 13, color: '#374151' }}>命中即拒 <b style={{ color: '#DC2626' }}>{scoreSummary.rejectTotal}</b> 项</span>
+                <span style={{ fontSize: 12, color: '#6B7280' }}>（基础分 {active.scoreDisplay.baseScore} ＋ 加分满分 {scoreSummary.addMax} − 最大扣分 {scoreSummary.deductMax}；命中即拒项直接拒绝，不计入加减分）</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
                 <div style={{ fontSize: 13, color: '#374151', fontWeight: 600 }}>分值分段</div>
@@ -1091,6 +1339,68 @@ export default function ReportTemplateConfig() {
               ) : (
                 <div style={{ marginTop: 8, fontSize: 12, color: '#047857' }}>✓ 分段区间已完整覆盖总分范围 {scoreSummary.min} ~ {scoreSummary.max}，无重叠无缝隙。</div>
               )}
+
+              {/* ---------- 特殊命中规则：命中即定结论，不受分值分段约束 ---------- */}
+              <div style={{ marginTop: 22, paddingTop: 16, borderTop: '1px dashed #E5E7EB' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6, flexWrap: 'wrap', gap: 8 }}>
+                  <div style={{ fontSize: 13, color: '#374151', fontWeight: 600 }}>
+                    特殊命中规则
+                    <span style={{ marginLeft: 8, fontSize: 12, fontWeight: 400, color: '#6B7280' }}>
+                      某条规则一旦触发即直接定结论（决定规则），不再参考总分；预警规则仅重点提示，结论仍看总分。
+                    </span>
+                  </div>
+                  {canEdit && <button onClick={() => setSpecialPick(true)} style={{ ...miniBtn, borderColor: '#FCA5A5', color: '#B91C1C' }}>＋ 添加规则</button>}
+                </div>
+                {(active.specialRules ?? []).length === 0 ? (
+                  <div style={{ fontSize: 12, color: '#9CA3AF', border: '1px dashed #E5E7EB', borderRadius: 8, padding: '14px 12px', textAlign: 'center' }}>
+                    暂未配置特殊命中规则 —— 点「＋ 添加规则」，从「报告内容配置」里已选的规则项中挑选。
+                  </div>
+                ) : (
+                  <table className="w-full text-sm" style={{ marginTop: 4 }}>
+                    <colgroup>
+                      <col /><col style={{ width: 110 }} /><col style={{ width: 120 }} /><col style={{ width: 140 }} /><col style={{ width: 220 }} /><col style={{ width: 64 }} />
+                    </colgroup>
+                    <thead><tr style={{ textAlign: 'left' }}>
+                      <th className="px-2 py-2">规则项</th><th className="px-2 py-2">触发条件</th><th className="px-2 py-2">对应审核结果</th><th className="px-2 py-2">优先级</th><th className="px-2 py-2">说明</th><th className="px-2 py-2"></th>
+                    </tr></thead>
+                    <tbody>
+                      {(active.specialRules ?? []).map((r) => (
+                        <tr key={r.id} style={{ borderTop: '1px solid #F1F5F9' }}>
+                          <td className="px-2 py-2">
+                            <div style={{ fontSize: 13, fontWeight: 600, color: '#111827' }}>{r.ruleName}</div>
+                            <div style={{ fontSize: 11, color: '#9CA3AF' }}>{r.sectionName}</div>
+                          </td>
+                          <td className="px-2 py-2">
+                            <select disabled={!canEdit} value={r.trigger} onChange={(e) => patchSpecial(r.id, (x) => ({ ...x, trigger: e.target.value as SpecialRuleTrigger }))} style={{ ...inpSm, width: '100%' }}>
+                              {(['hit', 'miss'] as SpecialRuleTrigger[]).map((t) => <option key={t} value={t}>{SPECIAL_TRIGGER_LABEL[t]}</option>)}
+                            </select>
+                          </td>
+                          <td className="px-2 py-2">
+                            <select disabled={!canEdit} value={r.autoResult} onChange={(e) => patchSpecial(r.id, (x) => ({ ...x, autoResult: e.target.value as AutoResult }))}
+                              style={{ ...inpSm, width: '100%', fontWeight: 600, color: AUTO_RESULT_COLOR[r.autoResult] }}>
+                              {AUTO_RESULT_LIST.map((a) => <option key={a} value={a}>{a}</option>)}
+                            </select>
+                          </td>
+                          <td className="px-2 py-2">
+                            <select disabled={!canEdit} value={r.priority} onChange={(e) => patchSpecial(r.id, (x) => ({ ...x, priority: e.target.value as SpecialRulePriority }))}
+                              title={SPECIAL_PRIORITY_HINT[r.priority]}
+                              style={{ ...inpSm, width: '100%', fontWeight: 600, color: r.priority === 'decisive' ? '#B91C1C' : '#B45309' }}>
+                              {(['decisive', 'warning'] as SpecialRulePriority[]).map((p) => <option key={p} value={p}>{SPECIAL_PRIORITY_LABEL[p]}</option>)}
+                            </select>
+                          </td>
+                          <td className="px-2 py-2"><input disabled={!canEdit} value={r.note ?? ''} onChange={(e) => patchSpecial(r.id, (x) => ({ ...x, note: e.target.value }))} placeholder="补充说明（选填）" style={{ ...inpSm, width: '100%' }} /></td>
+                          <td className="px-2 py-2">{canEdit && <button onClick={() => delSpecial(r.id)} style={{ ...miniBtn, color: '#DC2626', borderColor: '#FECACA' }}>删除</button>}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+                {(active.specialRules ?? []).some((r) => r.priority === 'decisive') && (
+                  <div style={{ marginTop: 8, fontSize: 12, color: '#B91C1C', background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 8, padding: '8px 10px' }}>
+                    共 <b>{(active.specialRules ?? []).filter((r) => r.priority === 'decisive').length}</b> 条决定规则：报告详情将优先判定这些规则，触发后直接出结论（多条同时触发取最严：拒绝 &gt; 转人工 &gt; 通过），总分仅作参考展示。
+                  </div>
+                )}
+              </div>
               </div>
             </Panel>
           )}
@@ -1372,5 +1682,52 @@ function ScoreCardPreview({ sd, min, max, score, patchGrade, canEdit }: {
         <div style={{ marginTop: 8, fontSize: 12, color: '#6B7280' }}>{grade.description}</div>
       )}
     </div>
+  )
+}
+
+/* ===================== 多条件组合编辑器弹窗（五） ===================== */
+const ConditionModal = ({ open, title, conditions, fieldOptions, ops, onSave, onClose }: {
+  open: boolean
+  title: string
+  conditions: FieldCondition[]
+  fieldOptions: string[]
+  ops: FieldCondType[]
+  onSave: (list: FieldCondition[]) => void
+  onClose: () => void
+}) => {
+  const [list, setList] = useState<FieldCondition[]>(conditions)
+  useEffect(() => { setList(conditions.map((c) => ({ ...c }))) }, [open]) // 每次打开重置草稿
+  const valueDisabled = (op: FieldCondType) => ['empty', 'notEmpty', 'hit', 'miss'].includes(op)
+  const update = (i: number, patch: Partial<FieldCondition>) => setList((l) => l.map((c, k) => (k === i ? { ...c, ...patch } : c)))
+  const remove = (i: number) => setList((l) => l.filter((_, k) => k !== i))
+  const add = () => setList((l) => [...l, { id: `c${Date.now()}`, field: fieldOptions[0] ?? '', op: ops[0], value: '', logic: 'and' }])
+  return (
+    <Modal open={open} onClose={onClose} title={title}
+      footer={<><Button variant="ghost" onClick={onClose}>取消</Button><Button onClick={() => { onSave(list); onClose() }}>完成</Button></>}>
+      <div style={{ fontSize: 12, color: '#6B7280', marginBottom: 8 }}>可添加多条条件，按顺序以「且 / 或」组合。运算符：等于 / 空 / 非空 / 大于 / 小于 / 正则（规则项仅命中 / 未命中）。</div>
+      <div style={{ maxHeight: 360, overflowY: 'auto' }}>
+        {list.length === 0 && <div style={{ fontSize: 12, color: '#9CA3AF', padding: '12px 0' }}>尚未配置条件，点下方「＋ 添加条件」。</div>}
+        {list.map((c, i) => (
+          <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 0', borderBottom: '1px dashed #EEF2F7', flexWrap: 'wrap' }}>
+            <span style={{ fontSize: 12, color: '#9CA3AF', width: 18 }}>{i + 1}</span>
+            <select value={c.field} onChange={(e) => update(i, { field: e.target.value })} style={{ ...inpSm, width: 120, fontSize: 11 }}>
+              {fieldOptions.map((o) => <option key={o} value={o}>{o}</option>)}
+            </select>
+            <select value={c.op} onChange={(e) => update(i, { op: e.target.value as FieldCondType })} style={{ ...inpSm, width: 96, fontSize: 11 }}>
+              {ops.map((o) => <option key={o} value={o}>{FIELD_COND_LABEL[o]}</option>)}
+            </select>
+            <input value={c.value ?? ''} disabled={valueDisabled(c.op)} onChange={(e) => update(i, { value: e.target.value })} placeholder="值" style={{ ...inpSm, width: 90, fontSize: 11, opacity: valueDisabled(c.op) ? 0.5 : 1 }} />
+            {i < list.length - 1 && (
+              <select value={c.logic} onChange={(e) => update(i, { logic: e.target.value as 'and' | 'or' })} style={{ ...inpSm, width: 56, fontSize: 11 }}>
+                <option value="and">且</option>
+                <option value="or">或</option>
+              </select>
+            )}
+            <button onClick={() => remove(i)} style={{ ...miniBtn, color: '#DC2626', borderColor: '#FECACA', padding: '2px 8px' }}>删除</button>
+          </div>
+        ))}
+      </div>
+      <button onClick={add} style={{ ...miniBtn, marginTop: 10 }}>＋ 添加条件</button>
+    </Modal>
   )
 }

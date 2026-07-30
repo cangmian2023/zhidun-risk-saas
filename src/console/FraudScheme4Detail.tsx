@@ -23,8 +23,67 @@ import {
   type FraudScheme4SysResult,
 } from './FraudScheme4Ops'
 import { ExemptModal } from './ExemptModal'
+import { seedReportTemplates, computeSectionScore, evalSpecialRules, SPECIAL_TRIGGER_LABEL, type SectionConfig } from './reportTemplateData'
+import { TemplateDimTable } from './TemplateDimTable'
 
 const cn = (...c: (string | false | undefined)[]) => c.filter(Boolean).join(' ')
+
+/* —— 模板驱动的卡片汇总分 / 单项得分（汇总分为信用风控同款大数字分块，单项标签与信息核验 ScoreTag 一致）—— */
+const s4Tpl = seedReportTemplates.find((t) => t.reportType === 'fraud')
+const s4Sections: Record<string, SectionConfig> = Object.fromEntries((s4Tpl?.sections ?? []).map((s) => [s.id, s]))
+const secDeduct = (id: string) => s4Sections[id]?.cardScoreMode === 'deduct'
+function s4ScoreLookup(sec?: SectionConfig): (label: string) => number | undefined {
+  const items = (sec?.fields ?? []).filter((f) => f.visible && !f.hitReject)
+  return (label: string) => {
+    const exact = items.find((f) => f.name === label)
+    if (exact) return exact.scorePoints ?? 0
+    const part = items.find((f) => f.name.includes(label) || label.includes(f.name))
+    return part?.scorePoints
+  }
+}
+const devLookup = s4ScoreLookup(s4Sections['device_fraud'])
+const behLookup = s4ScoreLookup(s4Sections['behavior_fraud'])
+const gangLookup = s4ScoreLookup(s4Sections['gang_fraud'])
+const blkLookup = s4ScoreLookup(s4Sections['blacklist_hit'])
+const hisLookup = s4ScoreLookup(s4Sections['history_fraud'])
+function S4ScoreTag({ pts, deduct }: { pts?: number; deduct?: boolean }) {
+  if (pts == null || pts === 0) return null
+  return (
+    <span className={cn('ml-2 inline-flex shrink-0 items-center rounded-md px-1.5 py-0.5 text-[11px] font-medium tabular-nums', deduct ? 'bg-rose-50 text-rose-600 ring-1 ring-rose-200' : 'bg-emerald-50 text-emerald-600 ring-1 ring-emerald-200')}>
+      {deduct ? '−' : '+'}{Math.abs(pts)}分
+    </span>
+  )
+}
+/* 卡片汇总得分（统一采用信用风控报告的大数字分样式：大数字 + 胶囊 + 权重提示行，置于卡体顶部） */
+function S4CardScoreHead({ sec }: { sec?: SectionConfig }) {
+  if (!sec || s4Tpl?.showSectionTotals === false) return null
+  const sc = computeSectionScore(sec)
+  const deduct = sc.mode === 'deduct'
+  const signed = `${sc.total < 0 ? '−' : '+'}${Math.abs(sc.total)}`
+  return (
+    <div className="mb-4">
+      <div className="flex items-center gap-2">
+        <span className={cn('text-3xl font-bold tabular-nums', sc.total < 0 ? 'text-rose-600' : 'text-emerald-600')}>{signed}</span>
+        <span className={cn('rounded-full px-2.5 py-0.5 text-xs font-semibold', deduct ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700')}>{deduct ? '命中扣分' : '达标加分'}</span>
+      </div>
+      <div className="mt-1 text-xs text-slate-500">本卡汇总得分 · 集合权重 {sec.weight ?? 1}</div>
+    </div>
+  )
+}
+function S4RuleScoreHead({ rules }: { rules: FraudS4Rule[] }) {
+  if (s4Tpl?.showSectionTotals === false) return null
+  const hits = rules.filter((r) => r.status === '命中')
+  const total = hits.reduce((s, r) => s + (r.score ?? 0), 0)
+  return (
+    <div className="mb-4">
+      <div className="flex items-center gap-2">
+        <span className={cn('text-3xl font-bold tabular-nums', total > 0 ? 'text-rose-600' : 'text-emerald-600')}>{total > 0 ? `−${total}` : '0'}</span>
+        <span className={cn('rounded-full px-2.5 py-0.5 text-xs font-semibold', total > 0 ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700')}>{total > 0 ? '命中扣分' : '无命中'}</span>
+      </div>
+      <div className="mt-1 text-xs text-slate-500">本卡汇总得分 · 命中 {hits.length} 项</div>
+    </div>
+  )
+}
 
 const bandText: Record<FraudS4ScoreBand, string> = { 极低: 'text-emerald-600', 低: 'text-emerald-600', 中: 'text-amber-600', 高: 'text-orange-600', 极高: 'text-rose-600' }
 const bandChip: Record<FraudS4ScoreBand, string> = { 极低: 'bg-emerald-100 text-emerald-700', 低: 'bg-emerald-100 text-emerald-700', 中: 'bg-amber-100 text-amber-700', 高: 'bg-orange-100 text-orange-700', 极高: 'bg-rose-100 text-rose-700' }
@@ -167,6 +226,7 @@ function RuleTable({ rules, onExempt }: { rules: FraudS4Rule[]; onExempt: (name:
               <th className="px-3 py-2 font-medium">规则名称</th>
               <th className="px-3 py-2 font-medium">命中条件</th>
               <th className="px-3 py-2 font-medium">权重</th>
+              <th className="px-3 py-2 text-right font-medium">得分</th>
               <th className="px-3 py-2 font-medium">信息核验联动</th>
               <th className="px-3 py-2 font-medium">状态</th>
               <th className="px-3 py-2 font-medium">操作</th>
@@ -184,6 +244,7 @@ function RuleTable({ rules, onExempt }: { rules: FraudS4Rule[]; onExempt: (name:
                   <td className="px-3 py-2.5 font-medium text-ink-900">{r.name}</td>
                   <td className="max-w-xs px-3 py-2.5 leading-relaxed text-slate-600">{r.condition}</td>
                   <td className="px-3 py-2.5"><span className={cn('rounded px-1.5 py-0.5 text-[10px] font-medium', wCls)}>{r.weight}</span></td>
+                  <td className={cn('px-3 py-2.5 text-right font-semibold tabular-nums', hit ? 'text-rose-600' : 'text-slate-300')}>{hit ? `−${Math.abs(r.score ?? 0)}` : '—'}</td>
                   <td className="max-w-xs px-3 py-2.5 text-slate-500">{r.linkage}</td>
                   <td className="px-3 py-2.5">
                     <span className={cn('rounded px-1.5 py-0.5 text-[10px] font-medium', sCls)}>{r.status}</span>
@@ -380,6 +441,54 @@ export default function FraudScheme4Detail() {
               })()}
             </div>
 
+            {/* 特殊命中规则判定（读报告模板 · 自动审核 Tab → 特殊命中规则） */}
+            {(() => {
+              const hitNames = [...d.rules.filter((r) => r.status === '命中').map((r) => r.name), ...d.fraudTags]
+              const v = evalSpecialRules(s4Tpl?.specialRules, hitNames)
+              if (!v.decisive.length && !v.warnings.length) return null
+              return (
+                <div className="mt-3 space-y-2">
+                  {v.decisive.length > 0 && (
+                    <div className="rounded-xl border border-rose-200 bg-rose-50 px-3.5 py-2.5">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="inline-flex items-center rounded-full bg-rose-600 px-2 py-0.5 text-[11px] font-semibold text-white">决定规则</span>
+                        <span className="text-sm font-semibold text-rose-700">
+                          已触发 {v.decisive.length} 条决定规则 → 自动审核 = {v.finalResult}
+                        </span>
+                        <span className="text-[11px] text-rose-500">（不再参考总分，总分仅作参考展示）</span>
+                      </div>
+                      <div className="mt-1.5 flex flex-wrap gap-1.5">
+                        {v.decisive.map((r) => (
+                          <span key={r.id} className="inline-flex items-center rounded-md bg-white px-2 py-0.5 text-[11px] text-rose-700 ring-1 ring-rose-200">
+                            {r.ruleName} · {SPECIAL_TRIGGER_LABEL[r.trigger]} → {r.autoResult}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {v.warnings.length > 0 && (
+                    <div className="rounded-xl border border-amber-200 bg-amber-50 px-3.5 py-2.5">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="inline-flex items-center rounded-full bg-amber-500 px-2 py-0.5 text-[11px] font-semibold text-white">预警规则</span>
+                        <span className="text-sm font-semibold text-amber-700">已触发 {v.warnings.length} 条预警规则，请重点关注</span>
+                        <span className="text-[11px] text-amber-600">（结论仍以总分表现为准）</span>
+                      </div>
+                      <div className="mt-1.5 flex flex-wrap gap-1.5">
+                        {v.warnings.map((r) => (
+                          <span key={r.id} className="inline-flex items-center rounded-md bg-white px-2 py-0.5 text-[11px] text-amber-700 ring-1 ring-amber-200">
+                            {r.ruleName} · {SPECIAL_TRIGGER_LABEL[r.trigger]} → 建议 {r.autoResult}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )
+            })()}
+
+            {/* 评分维度分布（模板驱动：报告内容配置里每个集合一行；开关=模板「显示分段总分」） */}
+            <TemplateDimTable reportType="fraud" />
+
             {/* 因子构成表（可点击定位到对应分析模块） */}
             <div className="mt-4 overflow-hidden rounded-xl border border-slate-100">
               <table className="w-full text-left text-xs">
@@ -493,16 +602,19 @@ export default function FraudScheme4Detail() {
 
           {/* 二、身份欺诈详情 */}
           <Panel title="二、身份欺诈详情" id="rules" desc="展示身份维度的命中规则，可查看详情或标记规则豁免">
+            <S4RuleScoreHead rules={d.rules.filter((r) => r.type === '身份欺诈')} />
             <RuleTable rules={d.rules.filter((r) => r.type === '身份欺诈')} onExempt={(name) => setModal({ type: 'exempt', target: name })} />
           </Panel>
 
           {/* 三、信息伪造详情 */}
           <Panel title="三、信息伪造详情" id="forge" desc="展示信息伪造维度的命中规则，可查看详情或标记规则豁免">
+            <S4RuleScoreHead rules={d.rules.filter((r) => r.type === '信息伪造')} />
             <RuleTable rules={d.rules.filter((r) => r.type === '信息伪造')} onExempt={(name) => setModal({ type: 'exempt', target: name })} />
           </Panel>
 
           {/* 四、设备欺诈详情（原设备指纹分析） */}
           <Panel title="四、设备欺诈详情" id="device">
+            <S4CardScoreHead sec={s4Sections['device_fraud']} />
             <div className="grid grid-cols-1 gap-x-8 gap-y-2 sm:grid-cols-2 lg:grid-cols-3">
               {([
                 { k: '设备指纹', v: d.device.fingerprint },
@@ -521,6 +633,7 @@ export default function FraudScheme4Detail() {
                     <span className="text-sm text-slate-500">{e.k}</span>
                     <span className="flex items-center gap-2">
                       <span className={cn('text-right text-sm font-medium', FIELD_STATE_COLOR[st])}>{e.v}</span>
+                      <S4ScoreTag pts={devLookup(e.k)} deduct={secDeduct('device_fraud')} />
                       {e.exempt && (
                         disabled
                           ? <span className="whitespace-nowrap text-xs text-slate-300 cursor-not-allowed">豁免</span>
@@ -535,13 +648,14 @@ export default function FraudScheme4Detail() {
               {d.device.riskTags.map((t) => <span key={t} className="rounded-full bg-rose-100 px-2.5 py-0.5 text-xs font-medium text-rose-700">{t}</span>)}
             </div>
             <div className="mt-4">
-              <div className="mb-2 text-xs font-medium text-slate-500">设备关联图谱</div>
+              <div className="mb-2 flex items-center text-xs font-medium text-slate-500">设备关联图谱</div>
               <DeviceGraph nodes={d.deviceNodes} edges={d.deviceEdges} />
             </div>
           </Panel>
 
           {/* 五、行为欺诈详情（原行为轨迹分析） */}
           <Panel title="五、行为欺诈详情" id="behavior">
+            <S4CardScoreHead sec={s4Sections['behavior_fraud']} />
             <div className="grid grid-cols-1 gap-x-8 gap-y-2 sm:grid-cols-2">
               {([
                 { k: '申请耗时', v: d_b(d).duration },
@@ -556,7 +670,7 @@ export default function FraudScheme4Detail() {
                 return (
                   <div key={e.k} className="flex flex-col gap-0.5 rounded-lg bg-slate-50 px-3.5 py-2">
                     <span className="text-xs text-slate-400">{e.k}</span>
-                    <span className={cn('text-sm font-medium', FIELD_STATE_COLOR[st])}>{e.v}</span>
+                    <span className="flex items-center"><span className={cn('text-sm font-medium', FIELD_STATE_COLOR[st])}>{e.v}</span><S4ScoreTag pts={behLookup(e.k)} deduct={secDeduct('behavior_fraud')} /></span>
                     {e.exempt && (
                       disabled
                         ? <span className="mt-0.5 self-start whitespace-nowrap text-xs text-slate-300 cursor-not-allowed">豁免</span>
@@ -568,10 +682,10 @@ export default function FraudScheme4Detail() {
             </div>
             <div className="mt-2 flex flex-col gap-0.5 rounded-lg bg-slate-50 px-3.5 py-2">
               <span className="text-xs text-slate-400">操作路径</span>
-              <span className="text-sm font-medium text-ink-900">{d_b(d).path}</span>
+              <span className="flex items-center"><span className="text-sm font-medium text-ink-900">{d_b(d).path}</span><S4ScoreTag pts={behLookup('操作路径')} deduct={secDeduct('behavior_fraud')} /></span>
             </div>
             <div className="mt-4">
-              <div className="mb-2 text-xs font-medium text-slate-500">行为轨迹时间线</div>
+              <div className="mb-2 flex items-center text-xs font-medium text-slate-500">行为轨迹时间线</div>
               <div className="overflow-hidden rounded-xl border border-slate-100">
                 <table className="w-full text-left text-xs">
                   <thead>
@@ -597,6 +711,7 @@ export default function FraudScheme4Detail() {
 
           {/* 六、团伙欺诈详情（原关联图谱分析） */}
           <Panel title="六、团伙欺诈详情" id="graph">
+            <S4CardScoreHead sec={s4Sections['gang_fraud']} />
             <div className="grid grid-cols-1 gap-x-8 gap-y-2 sm:grid-cols-2 lg:grid-cols-3">
               {[
                 { k: '团伙标签', v: d.graph.gangTag },
@@ -608,17 +723,17 @@ export default function FraudScheme4Detail() {
               ].map((e) => (
                 <div key={e.k} className="flex items-center justify-between rounded-lg bg-slate-50 px-3.5 py-2">
                   <span className="text-sm text-slate-500">{e.k}</span>
-                  <span className="text-right text-sm font-medium text-ink-900">{e.v}</span>
+                  <span className="flex items-center"><span className="text-right text-sm font-medium text-ink-900">{e.v}</span><S4ScoreTag pts={gangLookup(e.k)} deduct={secDeduct('gang_fraud')} /></span>
                 </div>
               ))}
             </div>
             <div className="mt-4 grid gap-4 lg:grid-cols-2">
               <div>
-                <div className="mb-2 text-xs font-medium text-slate-500">关联图谱可视化</div>
+                <div className="mb-2 flex items-center text-xs font-medium text-slate-500">关联图谱可视化</div>
                 <AssocGraph associations={d.graph.associations} gangTag={d.graph.gangTag} />
               </div>
               <div>
-                <div className="mb-2 text-xs font-medium text-slate-500">关联列表</div>
+                <div className="mb-2 flex items-center text-xs font-medium text-slate-500">关联列表</div>
                 <div className="overflow-hidden rounded-xl border border-slate-100">
                   <table className="w-full text-left text-xs">
                     <thead>
@@ -647,6 +762,7 @@ export default function FraudScheme4Detail() {
 
           {/* 七、黑名单命中详情 */}
           <Panel title="七、黑名单命中详情" id="blacklist">
+            <S4CardScoreHead sec={s4Sections['blacklist_hit']} />
             <div className="grid grid-cols-1 gap-x-8 gap-y-2 sm:grid-cols-2 lg:grid-cols-3">
               {[
                 { k: '黑名单类型', v: d.blacklistHit.type },
@@ -658,12 +774,12 @@ export default function FraudScheme4Detail() {
               ].map((e) => (
                 <div key={e.k} className="flex items-center justify-between rounded-lg bg-slate-50 px-3.5 py-2">
                   <span className="text-sm text-slate-500">{e.k}</span>
-                  <span className="text-right text-sm font-medium text-ink-900">{e.v}</span>
+                  <span className="flex items-center"><span className="text-right text-sm font-medium text-ink-900">{e.v}</span><S4ScoreTag pts={blkLookup(e.k === '入库时间' ? '命中时间' : e.k)} deduct={secDeduct('blacklist_hit')} /></span>
                 </div>
               ))}
             </div>
             <div className="mt-4">
-              <div className="mb-2 text-xs font-medium text-slate-500">黑名单命中记录</div>
+              <div className="mb-2 flex items-center text-xs font-medium text-slate-500">黑名单命中记录</div>
               <div className="overflow-hidden rounded-xl border border-slate-100">
                 <table className="w-full text-left text-xs">
                   <thead>
@@ -674,11 +790,12 @@ export default function FraudScheme4Detail() {
                       <th className="px-3 py-2 font-medium">入库原因</th>
                       <th className="px-3 py-2 font-medium">入库时间</th>
                       <th className="px-3 py-2 font-medium">命中等级</th>
+                      <th className="px-3 py-2 font-medium">得分</th>
                     </tr>
                   </thead>
                   <tbody>
                     {d.blacklistRecords.length === 0 ? (
-                      <tr><td colSpan={6} className="px-3 py-6 text-center text-slate-400">未命中任何黑名单</td></tr>
+                      <tr><td colSpan={7} className="px-3 py-6 text-center text-slate-400">未命中任何黑名单</td></tr>
                     ) : d.blacklistRecords.map((r, i) => (
                       <tr key={i} className="border-t border-slate-100">
                         <td className="px-3 py-2 text-slate-700">{r.db}</td>
@@ -687,6 +804,7 @@ export default function FraudScheme4Detail() {
                         <td className="px-3 py-2 text-slate-500">{r.reason}</td>
                         <td className="px-3 py-2 text-slate-500">{r.time}</td>
                         <td className={cn('px-3 py-2 font-medium', blacklistLevelCls[r.level])}>{r.level}</td>
+                        <td className="px-3 py-2"><S4ScoreTag pts={blkLookup('命中记录表')} deduct={secDeduct('blacklist_hit')} /></td>
                       </tr>
                     ))}
                   </tbody>
@@ -697,6 +815,8 @@ export default function FraudScheme4Detail() {
 
           {/* 八、历史欺诈记录 */}
           <Panel title="八、历史欺诈记录" id="history">
+            <S4CardScoreHead sec={s4Sections['history_fraud']} />
+            <div className="mb-2 flex items-center text-xs font-medium text-slate-500">历史欺诈记录表</div>
             <div className="overflow-hidden rounded-xl border border-slate-100">
               <table className="w-full text-left text-xs">
                 <thead>
@@ -707,12 +827,13 @@ export default function FraudScheme4Detail() {
                     <th className="px-3 py-2 font-medium">命中规则</th>
                     <th className="px-3 py-2 font-medium">处置结果</th>
                     <th className="px-3 py-2 font-medium">处置人</th>
-                    <th className="px-3 py-2 font-medium">处置时间</th>
-                  </tr>
+                      <th className="px-3 py-2 font-medium">处置时间</th>
+                      <th className="px-3 py-2 font-medium">得分</th>
+                    </tr>
                 </thead>
                 <tbody>
                   {d.history.length === 0 ? (
-                    <tr><td colSpan={7} className="px-3 py-6 text-center text-slate-400">无历史欺诈记录</td></tr>
+                    <tr><td colSpan={8} className="px-3 py-6 text-center text-slate-400">无历史欺诈记录</td></tr>
                   ) : d.history.map((h, i) => (
                     <tr key={i} className="border-t border-slate-100">
                       <td className="px-3 py-2 text-slate-700">{h.appId}</td>
@@ -722,7 +843,8 @@ export default function FraudScheme4Detail() {
                       <td className="px-3 py-2 text-ink-900">{h.result}</td>
                       <td className="px-3 py-2 text-slate-500">{h.operator}</td>
                       <td className="px-3 py-2 text-slate-500">{h.opTime}</td>
-                    </tr>
+                      <td className="px-3 py-2"><S4ScoreTag pts={hisLookup('历史欺诈记录表')} deduct={secDeduct('history_fraud')} /></td>
+                      </tr>
                   ))}
                 </tbody>
               </table>

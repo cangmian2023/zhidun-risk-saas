@@ -25,6 +25,7 @@ export interface FraudS4Rule {
   status: '命中' | '未命中'
   condition: string // 命中条件
   weight: FraudS4Level | '—' // 该规则的权重档位（命中时有效，未命中显示「—」）
+  score?: number // 该规则命中时计入欺诈分的分值（由权重档位映射，见 LEVEL_SCORE）
   linkage: string // 信息核验联动
   advice: string // 处置建议（命中时有效）
   exemptible: boolean
@@ -241,10 +242,13 @@ const WARNING_HIT = new Set<string>([
 ])
 const PASS_HIT = new Set<string>([])
 
+// 规则命中时计入欺诈分的分值（由权重档位映射）：极高 20 / 高 12 / 中 6 / 低 3
+const LEVEL_SCORE: Record<FraudS4Level, number> = { 极高: 20, 高: 12, 中: 6, 低: 3 }
 function buildRules(hit: Set<string>): FraudS4Rule[] {
   return RULE_DEFS.map((r) => {
     const isHit = hit.has(r.name)
-    return { ...r, status: isHit ? '命中' : '未命中', advice: isHit ? r.advice : '—' }
+    const w = r.weight as FraudS4Level
+    return { ...r, status: isHit ? '命中' : '未命中', advice: isHit ? r.advice : '—', score: isHit ? (LEVEL_SCORE[w] ?? 0) : 0 }
   })
 }
 

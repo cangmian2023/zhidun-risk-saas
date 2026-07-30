@@ -153,7 +153,7 @@ function Preview({ tpl, stateKey }: { tpl: ReportTemplate; stateKey: string }) {
                   {parts.map((p, i) => (
                     <div key={i} style={{ display: 'grid', gridTemplateColumns: '1.4fr 0.8fr 0.8fr', fontSize: fs - 2, padding: '6px 10px', borderTop: '1px solid #EEF2F7' }}>
                       <span>{p.name}</span>
-                      <span style={{ color: p.total >= 0 ? '#047857' : '#DC2626', fontWeight: 600 }}>{p.total >= 0 ? '+' : ''}{p.total}</span>
+                      <span style={{ color: p.mode === 'deduct' ? '#DC2626' : '#047857', fontWeight: 600 }}>{p.mode === 'deduct' ? '−' : '+'}{Math.abs(p.total)}</span>
                       <span>{p.addCount} / {p.deductCount}</span>
                     </div>
                   ))}

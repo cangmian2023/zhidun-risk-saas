@@ -25,11 +25,12 @@ export type ReviewRole = '初审员' | '复审员' | '风控主管' | '风控经
 export const REVIEW_ROLES: ReviewRole[] = ['初审员', '复审员', '风控主管', '风控经理', '风控总监']
 
 /* 分段来源类型：每块来源单一（与用户首填/接口调用/规则集碰撞一一对应） */
-export type SectionSource = 'data_source' | 'api' | 'rule_set'
+export type SectionSource = 'data_source' | 'api' | 'rule_set' | 'tpl_copy'
 export const SECTION_SOURCE_LABEL: Record<SectionSource, string> = {
   data_source: '数据源',
   api: '接口调用',
   rule_set: '规则集',
+  tpl_copy: '模板复制',
 }
 
 /* ============================================================================
@@ -134,9 +135,19 @@ export interface FieldConfig {
   condType?: FieldCondType        // 计分条件：规则=命中/非命中；字段=空/非空/大于/小于/等于/正则
   condValue?: string              // 条件值（gt/lt/eq/regex 使用；empty/notEmpty/hit 不用）
   exempt?: boolean                 // 豁免：可以（true）/ 不可以（false，默认）
+  conditions?: FieldCondition[]   // 多条件组合（替代单一 condType/condValue；为空回落到 condType/condValue）
 }
 /* 展示项计分条件类型 */
 export type FieldCondType = 'hit' | 'miss' | 'empty' | 'notEmpty' | 'gt' | 'lt' | 'eq' | 'regex'
+/* 多条件组合：一个展示项可配置多条条件，按 logic 串联（最后一条 logic 忽略）。
+   field 默认本项；可填其他字段名以组合跨字段条件。 */
+export interface FieldCondition {
+  id: string
+  field: string          // 参与条件的字段名（默认本项；可填其他字段组合跨字段条件）
+  op: FieldCondType      // 运算符
+  value?: string         // 条件值（empty/notEmpty/hit/miss 时不使用）
+  logic: 'and' | 'or'    // 与下一条条件的连接关系（最后一条忽略）
+}
 export const FIELD_COND_LABEL: Record<FieldCondType, string> = {
   hit: '命中', miss: '非命中', empty: '为空', notEmpty: '非空', gt: '大于', lt: '小于', eq: '等于', regex: '正则',
 }
@@ -162,6 +173,7 @@ export interface DbField {
   condType?: FieldCondType
   condValue?: string
   exempt?: boolean       // 豁免：可以（true）/ 不可以（false，默认）
+  conditions?: FieldCondition[]   // 多条件组合（替代单一 condType/condValue）
 }
 export interface DataSourceConfig {
   dbType: string        // MySQL / PostgreSQL / Oracle
@@ -199,6 +211,7 @@ export interface ApiOutput {
   condType?: FieldCondType
   condValue?: string
   exempt?: boolean       // 豁免：可以（true）/ 不可以（false，默认）
+  conditions?: FieldCondition[]   // 多条件组合（替代单一 condType/condValue）
 }
 /* 接口（API 调用）配置：参考 Postman 的请求结构 ——
    方法 + 地址 + 请求头 + 参数 + 请求体；并支持直接粘贴「统一代码」（cURL / 类 HTTP 请求）一键解析填充 */
@@ -288,6 +301,53 @@ export function computeSectionScore(s: SectionConfig): { total: number; addCount
   return { total, addCount, deductCount, mode }
 }
 
+/* ---------- 评分维度分布（报告首卡列表）----------
+ * 报告内容配置里的每一个来源卡片（集合）＝ 列表里的一行：
+ *   维度 = 集合名 / 得分 = 本卡汇总得分 / 权重 = 本卡权重占比 / 等级 = 按下方三档区间派生 / 说明 = 每行可填
+ * 三档区间与档位说明在「报告内容配置」Tab 可配，开关同「显示分段总分」复选框。*/
+export type DimLevel = '低' | '中' | '高'
+export interface DimLevelBand {
+  level: DimLevel
+  min: number      // 区间下限（含）——按本卡得分绝对值匹配
+  max: number      // 区间上限（含）
+  note: string     // 该档说明：行内「说明」为空时作为兜底文案
+}
+export const DEFAULT_DIM_BANDS: DimLevelBand[] = [
+  { level: '低', min: 0, max: 20, note: '该维度表现正常，无明显风险' },
+  { level: '中', min: 21, max: 50, note: '该维度存在一定异常，建议关注' },
+  { level: '高', min: 51, max: 100, note: '该维度风险突出，需重点核查' },
+]
+export function matchDimBand(score: number, bands: DimLevelBand[]): DimLevelBand | undefined {
+  const v = Math.abs(score)
+  return bands.find((b) => v >= b.min && v <= b.max)
+}
+export interface DimRow {
+  id: string
+  name: string
+  score: number        // 本卡汇总得分（含正负）
+  weight: number       // 本卡权重原值
+  weightPct: number    // 权重占比（%）
+  level?: DimLevel
+  note: string
+}
+/* 由模板「报告内容配置」的来源卡片生成维度分布行（tpl_copy 只读卡不参与） */
+export function buildDimRows(tpl: ReportTemplate): DimRow[] {
+  const secs = tpl.sections.filter((s) => (s.homeTab ?? 'content') === 'content' && s.visible && s.sourceType !== 'tpl_copy')
+  const sumW = secs.reduce((a, s) => a + (s.weight ?? 1), 0) || 1
+  return secs.map((s) => {
+    const total = computeSectionScore(s).total
+    const w = s.weight ?? 1
+    const bands = s.dimBands ?? tpl.dimBands ?? DEFAULT_DIM_BANDS
+    const band = matchDimBand(total, bands)
+    return {
+      id: s.id, name: s.name, score: total, weight: w,
+      weightPct: Math.round((w / sumW) * 100),
+      level: band?.level,
+      note: (s.dimNote ?? '').trim() || band?.note || '',
+    }
+  })
+}
+
 export interface SectionConfig {
   id: string
   name: string
@@ -295,6 +355,8 @@ export interface SectionConfig {
   order: number
   visible: boolean
   sourceType: SectionSource
+  dimNote?: string         // 评分维度分布列表里该行的「说明」（留空则取所属等级档位的说明）
+  dimBands?: DimLevelBand[]  // 评分维度分布：本维度独立的三档（低/中/高）区间与说明；缺省套用模板级 dimBands（逐维度配置，不再全局共用一套）
   cardScoreMode?: CardScoreMode  // 本卡计分方向（达标加分 / 命中扣分 / 命中即拒）；缺省按 sourceType 推导
   weight?: number          // 本卡权重：报告总分 = 基础分 + Σ(各卡计分 × 权重)；缺省 1
   homeTab?: 'content' | 'score' | 'flow' | 'log'  // 该段归属的编辑 Tab：'content'=报告内容配置；'score'=评分方案（如得分计算）；'flow'=审核操作（如结论与终审）；'log'=操作日志，由模板 showOpLog 开关控制，不在任何 Tab 编辑
@@ -302,6 +364,11 @@ export interface SectionConfig {
   ds?: DataSourceConfig      // sourceType === 'data_source'
   api?: ApiConfig            // sourceType === 'api'
   ruleSetId?: string        // sourceType === 'rule_set'，选中的规则合集 id
+  /* sourceType === 'tpl_copy'：复制现有模板的全量「报告内容配置」——一个卡片、多个只读列表，配置不可修改（fields 留空，不参与本模板计分） */
+  copyFromId?: string       // 来源模板 id
+  copyFromName?: string     // 来源模板名
+  copySections?: SectionConfig[]  // 复制时的全量快照（只读展示）
+  copyScoreRange?: { min: number; max: number; base: number } // 复制时来源模板的总分区间（基础分±加扣分）快照
   fields: FieldConfig[]     // 展示项：数据源=表字段 / 接口=输出字段 / 规则集=规则项（用/不用）
 }
 export interface ScoreGrade {
@@ -321,6 +388,56 @@ export interface ScoreDisplayConfig {
   showRiskTags: boolean
   baseScore: number      // 基础分：总分 = 基础分 + Σ各卡加分 − Σ各卡扣分（避免纯扣分卡把总分扣成负数）
   grades: ScoreGrade[]
+}
+
+/* ---------- 特殊命中规则（自动审核 Tab · 分值分段之下） ----------
+ * 场景：某条规则一旦命中，不论总分多少都直接定结论（如「黑名单命中 → 拒绝」）。
+ * 规则项从「报告内容配置」里已选的展示项（规则集/数据源/接口项）中挑选。
+ *   - trigger   命中 / 未命中 时触发
+ *   - autoResult 触发后对应的自动审核结果
+ *   - priority  决定规则：直接定结论，不再看分数；预警规则：只重点提示，结论仍看分数
+ */
+export type SpecialRuleTrigger = 'hit' | 'miss'
+export const SPECIAL_TRIGGER_LABEL: Record<SpecialRuleTrigger, string> = { hit: '命中', miss: '未命中' }
+export type SpecialRulePriority = 'decisive' | 'warning'
+export const SPECIAL_PRIORITY_LABEL: Record<SpecialRulePriority, string> = { decisive: '决定规则', warning: '预警规则' }
+export const SPECIAL_PRIORITY_HINT: Record<SpecialRulePriority, string> = {
+  decisive: '触发后直接定结论，不再参考总分',
+  warning: '触发后重点提示，结论仍以总分为准',
+}
+export interface SpecialRule {
+  id: string
+  sectionId: string            // 来源分段（报告内容配置里的集合）
+  fieldId: string              // 来源展示项 id
+  sectionName: string          // 快照：分段名（展示用）
+  ruleName: string             // 快照：规则/展示项名（同时用于报告详情按名匹配）
+  trigger: SpecialRuleTrigger
+  autoResult: AutoResult
+  priority: SpecialRulePriority
+  note?: string
+}
+
+export interface SpecialRuleVerdict {
+  decisive: SpecialRule[]      // 已触发的决定规则
+  warnings: SpecialRule[]      // 已触发的预警规则
+  finalResult?: AutoResult     // 决定规则给出的结论（多条时取最严：拒绝 > 转人工 > 通过）
+}
+const AUTO_RESULT_SEVERITY: Record<AutoResult, number> = { 通过: 0, 转人工: 1, 拒绝: 2 }
+/** 报告详情侧：按「已命中规则名列表」评估特殊命中规则，得出是否直接定结论 */
+export function evalSpecialRules(rules: SpecialRule[] | undefined, hitNames: string[]): SpecialRuleVerdict {
+  const norm = (s: string) => s.replace(/[\s·、，,。.（）()]/g, '')
+  const hits = hitNames.map(norm)
+  const isHit = (name: string) => {
+    const n = norm(name)
+    return hits.some((h) => h === n || h.includes(n) || n.includes(h))
+  }
+  const triggered = (rules ?? []).filter((r) => (r.trigger === 'hit' ? isHit(r.ruleName) : !isHit(r.ruleName)))
+  const decisive = triggered.filter((r) => r.priority === 'decisive')
+  const warnings = triggered.filter((r) => r.priority === 'warning')
+  const finalResult = decisive.length
+    ? decisive.reduce((a, b) => (AUTO_RESULT_SEVERITY[b.autoResult] > AUTO_RESULT_SEVERITY[a.autoResult] ? b : a)).autoResult
+    : undefined
+  return { decisive, warnings, finalResult }
 }
 
 /* 审核操作 · 业务流程（每行对应「评分方案」的一个分段，字段按该分段 autoResult 取用）：
@@ -511,7 +628,10 @@ export interface ReportTemplate {
   scoreBlock: { show: boolean; title: string }   // 评分方案 Tab → 报告内「得分计算」卡片：是否显示 + 报告内卡片标题
   flowBlock: { show: boolean; title: string; statusEnum: string[] }   // 审核操作 Tab → 报告内「结论与终审」卡片：是否显示 + 报告内卡片标题 + 状态枚举类
   showOpLog: boolean        // 报告中是否显示操作日志（'log' 类分段的总开关）
+  showSectionTotals: boolean // 「报告内容配置」Tab 开关：各集合展示汇总得分 + 报告详情首卡展示「评分维度分布」列表
+  dimBands: DimLevelBand[]   // 评分维度分布：等级三档（高/中/低）的分值区间与档位说明
   scoreDisplay: ScoreDisplayConfig
+  specialRules: SpecialRule[]   // 自动审核 Tab → 特殊命中规则：命中即定结论（决定规则）/ 重点提示（预警规则）
   businessFlow: BusinessFlowConfig[]
   theme: ThemeConfig
   export: ExportConfig
@@ -857,6 +977,7 @@ export const SECTION_CATALOG: Record<ReportType, { id: string; name: string; des
         { id: 'bf_stay', name: '页面停留', desc: '停留时长' },
         { id: 'bf_track', name: '操作轨迹', desc: '操作轨迹' },
         { id: 'bf_gps', name: 'GPS定位', desc: 'GPS' },
+        { id: 'bf_cmp', name: '与正常用户对比', desc: '与正常用户行为基线的偏离度' },
         { id: 'bf_path', name: '操作路径', desc: '操作路径' },
         { id: 'bf_timeline', name: '行为轨迹时间线', desc: '行为时间线' },
       ],
@@ -1335,11 +1456,19 @@ export const SECTION_SOURCE: Record<string, SectionSource> = {
   history_records: 'data_source', credit_logs: 'api',
   // 欺诈识别
   fraud_score_model: 'api', disposal_bar: 'api', identity_fraud: 'rule_set', info_forgery: 'rule_set',
-  device_fraud: 'rule_set', behavior_fraud: 'rule_set', gang_fraud: 'rule_set', blacklist_hit: 'rule_set',
-  history_fraud: 'rule_set', fraud_logs: 'api',
+  // 设备/行为/团伙/黑名单/历史 这五段在报告详情里是「字段明细」而非规则表，来源按数据源建模，
+  // 展示项即字段本身（设备指纹、填写速度…），这样详情页每个 item 才能取到自己的分值。
+  device_fraud: 'data_source', behavior_fraud: 'data_source', gang_fraud: 'data_source', blacklist_hit: 'data_source',
+  history_fraud: 'data_source', fraud_logs: 'api',
   // 决策报告
   decision_overview: 'api', verify_summary: 'api', credit_summary: 'api', fraud_summary: 'api',
   decision_suggestion: 'api', decision_logs: 'api',
+}
+/* 分段计分方向覆盖表：默认「规则集=扣分 / 其余=加分」，此处显式指定的以此为准。
+ * 欺诈识别的设备/行为/团伙/黑名单/历史五段虽按数据源建模，但业务上是命中即扣分。 */
+export const SECTION_SCORE_MODE: Record<string, CardScoreMode> = {
+  device_fraud: 'deduct', behavior_fraud: 'deduct', gang_fraud: 'deduct',
+  blacklist_hit: 'deduct', history_fraud: 'deduct',
 }
 /* 数据源字段池（data_source 类字段下拉可选） */
 export const DATA_SOURCE_FIELDS = ['申请人姓名', '身份证号', '手机号', '银行卡号', '开户行', '年龄', '学历', '工作单位', '月收入', '居住地址', '婚姻状况', '设备指纹', 'IP地址', 'GPS定位', '进件渠道', 'APP版本']
@@ -1533,13 +1662,35 @@ function buildSections(type: ReportType): SectionConfig[] {
       order: i + 1,
       visible: true,
       sourceType: sType,
-      cardScoreMode: sType === 'rule_set' ? 'deduct' : 'add',
+      cardScoreMode: SECTION_SCORE_MODE[s.id] ?? (sType === 'rule_set' ? 'deduct' : 'add'),
       homeTab: s.id === SCORE_SECTION[type] ? 'score' : s.id === FLOW_SECTION[type] ? 'flow' : /logs?$/i.test(s.id) ? 'log' : 'content',
       sourceName: s.name,
       ds, api, ruleSetId,
       fields,
     }
   })
+}
+
+/* 特殊命中规则种子：仅给「规则集」类分段配几条典型的决定/预警规则，其余报告默认为空由用户自配 */
+function defaultSpecialRules(type: ReportType): SpecialRule[] {
+  const mk = (
+    sectionId: string, fieldId: string, sectionName: string, ruleName: string,
+    autoResult: AutoResult, priority: SpecialRulePriority, note: string,
+  ): SpecialRule => ({ id: `sr_${sectionId}_${fieldId}`, sectionId, fieldId, sectionName, ruleName, trigger: 'hit', autoResult, priority, note })
+  if (type === 'fraud') {
+    return [
+      mk('blacklist_hit', 'bh_type', '黑名单命中详情', '黑名单命中', '拒绝', 'decisive', '命中黑名单一律拒绝，不看总分'),
+      mk('identity_fraud', 'R1', '身份欺诈详情', '公安实名', '拒绝', 'decisive', '公安实名核验不通过直接拒绝'),
+      mk('device_fraud', 'df_fp', '设备欺诈详情', '设备群控', '转人工', 'warning', '疑似群控，重点提示，仍看总分'),
+    ]
+  }
+  if (type === 'info_verify') {
+    return [
+      mk('cross_fusion', 'R6', '数据交叉融合', '设备群控', '拒绝', 'decisive', '识别到群控/设备农场，直接拒绝'),
+      mk('cross_fusion', 'R5', '数据交叉融合', '联防联控', '转人工', 'warning', '跨机构联防联控命中，重点提示'),
+    ]
+  }
+  return []
 }
 
 function defaultTheme(): ThemeConfig {
@@ -1608,6 +1759,8 @@ export function buildTemplate(type: ReportType, o: BuildOpts): ReportTemplate {
     scoreBlock: { show: true, title: '' },
     flowBlock: { show: true, title: '', statusEnum: STATUS_ENUM_PRESETS[type] },
     showOpLog: true,
+    showSectionTotals: true,
+    dimBands: DEFAULT_DIM_BANDS.map((b) => ({ ...b })),
     scoreDisplay: {
       displayComponent: '大数字',
       showDescription: true,
@@ -1616,6 +1769,7 @@ export function buildTemplate(type: ReportType, o: BuildOpts): ReportTemplate {
       baseScore: 60,
       grades: GRADE_PRESETS[type].map((g) => ({ ...g })),
     },
+    specialRules: defaultSpecialRules(type),
     businessFlow: syncFlowToGrades(FLOW_PRESETS[type], GRADE_PRESETS[type]),
     theme: defaultTheme(),
     export: defaultExport(),

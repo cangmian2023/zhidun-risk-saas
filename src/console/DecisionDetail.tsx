@@ -5,7 +5,6 @@ import {
   getDecisionDetail,
   seedDecisionRows,
   DecisionRow,
-  InfoResult,
   creditRiskLevel,
   fraudRiskLevel,
   infoKind,
@@ -19,6 +18,13 @@ import {
   decisionOpsFor,
   useDecisionActions,
 } from './DecisionOps'
+import {
+  seedReportTemplates,
+  computeSectionScore,
+  type ReportType,
+} from './reportTemplateData'
+
+const cn = (...c: (string | false | undefined)[]) => c.filter(Boolean).join(' ')
 
 const SECTIONS = [
   { id: 'overview', label: '决策总览' },
@@ -43,6 +49,52 @@ function KV({ label, children, full }: { label: string; children: ReactNode; ful
   )
 }
 
+// 模板配置打分项明细：按「报告内容配置」分段（集合）分组，列出每集合的小项得分 + 集合汇总得分 + 权重。
+// 数据来自该报告类型对应的 seed 模板（与报告模板页初始态一致）；符号按集合计分方向自动取 +/−（绝不再叠加负号）。
+function TemplateScoredList({ reportType }: { reportType: ReportType }) {
+  const tpl = seedReportTemplates.find((t) => t.reportType === reportType)
+  if (!tpl) return null
+  const sections = tpl.sections.filter(
+    (s) => (s.homeTab ?? 'content') === 'content' && (s.fields ?? []).some((f) => f.visible && !f.hitReject),
+  )
+  if (sections.length === 0) return null
+  return (
+    <div className="mt-2 space-y-3">
+      {sections.map((s) => {
+        const sc = computeSectionScore(s)
+        const items = s.fields.filter((f) => f.visible && !f.hitReject)
+        // 符号按本卡计分方向取（扣分卡即使总分为 0 也应显示负号口径），避免出现"红色正数"
+        const sign = sc.mode === 'deduct' ? '−' : '+'
+        const valCls = sc.mode === 'deduct' ? 'text-rose-600' : 'text-emerald-600'
+        const w = s.weight ?? 1
+        if (items.length === 0) return null
+        return (
+          <div key={s.id} className="rounded-xl border border-slate-200 bg-slate-50/60 p-3">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-semibold text-ink-900">{s.name}</span>
+              <span className="flex items-baseline gap-1.5 text-xs">
+                <span className="text-slate-400">本集合汇总</span>
+                <span className={cn('font-bold tabular-nums', valCls)}>{sign}{Math.abs(sc.total)} 分</span>
+                <span className="text-slate-400">· 权重 {w}</span>
+              </span>
+            </div>
+            <table className="mt-2 w-full text-xs">
+              <tbody>
+                {items.map((f) => (
+                  <tr key={f.id} className="border-t border-slate-100">
+                    <td className="py-1.5 pr-2 text-slate-600">{f.name}</td>
+                    <td className={cn('py-1.5 text-right font-medium tabular-nums', valCls)}>{sign}{f.scorePoints ?? 0} 分</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 function DefTable({ headers, children }: { headers: string[]; children: ReactNode }) {
   return (
     <table className="w-full text-left text-sm">
@@ -58,96 +110,6 @@ function DefTable({ headers, children }: { headers: string[]; children: ReactNod
   )
 }
 
-// ============================ 复用块：证件与材料（与 pre-application 样式一致） ============================
-type MatStatus = 'pass' | 'fail' | 'missing'
-const MAT_META: Record<MatStatus, { box: string; icon: string; panel: string }> = {
-  pass: { box: 'bg-emerald-50 text-emerald-700 ring-emerald-200', icon: '✓', panel: 'bg-emerald-50/40' },
-  fail: { box: 'bg-rose-50 text-rose-700 ring-rose-200', icon: '✕', panel: 'bg-rose-50/40' },
-  missing: { box: 'bg-slate-50 text-slate-500 ring-slate-200', icon: '—', panel: 'bg-slate-50/40' },
-}
-interface MatFile { name: string; type: 'image' | 'video' | 'pdf' }
-interface MatItem { name: string; status: MatStatus; submitted: string; result: string; files: MatFile[] }
-
-function buildMaterials(info: InfoResult): MatItem[] {
-  const bank = info === '通过' ? 'pass' : 'fail'
-  const live = info === '拒绝' ? 'fail' : info === '通过' ? 'pass' : 'fail'
-  return [
-    { name: '身份证·人像面', status: 'pass', submitted: '申请人上传·人像面.jpg', result: '与公安库一致，姓名/证件号匹配', files: [{ name: '身份证人像面.jpg', type: 'image' }] },
-    { name: '身份证·国徽面', status: 'pass', submitted: '申请人上传·国徽面.jpg', result: '证件有效期 > 3 个月，无误', files: [{ name: '身份证国徽面.jpg', type: 'image' }] },
-    { name: '银行卡', status: bank, submitted: '绑定银行卡照片', result: bank === 'pass' ? '四要素核验通过' : '四要素与预留信息不一致', files: [{ name: '银行卡.jpg', type: 'image' }] },
-    { name: '活体检测', status: live, submitted: '实时活体视频', result: live === 'pass' ? '活体通过，无翻拍攻击' : '活体存疑/未通过', files: [{ name: '活体检测.mp4', type: 'video' }] },
-    { name: '收入证明', status: 'pass', submitted: '单位开具收入证明.pdf', result: '收入与负债比匹配', files: [{ name: '收入证明.pdf', type: 'pdf' }] },
-  ]
-}
-
-function MaterialBlock({ infoResult }: { infoResult: InfoResult }) {
-  const [tab, setTab] = useState(0)
-  const mats = buildMaterials(infoResult)
-  const active = mats[tab]
-  const meta = MAT_META[active.status]
-  return (
-    <div className="mt-4 rounded-xl border border-slate-200 p-3">
-      <div className="flex flex-wrap gap-2 text-xs">
-        {mats.map((m, i) => {
-          const mm = MAT_META[m.status]
-          return (
-            <button key={m.name} type="button" onClick={() => setTab(i)}
-              className={`rounded-lg px-2.5 py-1 ring-1 ring-inset transition ${mm.box} ${tab === i ? 'ring-2 font-medium' : 'opacity-80 hover:opacity-100'}`}>
-              {mm.icon} {m.name}
-            </button>
-          )
-        })}
-      </div>
-      <div className={`mt-3 rounded-xl p-3 text-sm ${meta.panel}`}>
-        <div className="flex items-center justify-between">
-          <span className="font-medium text-slate-700">{active.name}</span>
-          <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs ring-1 ring-inset ${meta.box}`}>
-            {meta.icon} {active.status === 'pass' ? '比对通过' : active.status === 'fail' ? '比对不通过' : '缺少资料'}
-          </span>
-        </div>
-        <dl className="mt-2 space-y-1.5">
-          <div className="flex gap-2"><dt className="shrink-0 text-slate-400">提交的资料</dt><dd className="text-slate-600">{active.submitted}</dd></div>
-          <div className="flex gap-2"><dt className="shrink-0 text-slate-400">比对结果</dt><dd className="text-slate-600">{active.result}</dd></div>
-        </dl>
-        <div className="mt-3 border-t border-slate-200/70 pt-3">
-          <p className="mb-2 text-xs text-slate-400">证明材料（图片、视频可直接查看，其余文档点击预览）</p>
-          <div className="flex flex-wrap gap-3">
-            {active.files.map((f) => {
-              if (f.type === 'image') {
-                return (
-                  <div key={f.name} className="w-36 overflow-hidden rounded-xl border border-slate-200 bg-gradient-to-br from-slate-100 to-slate-200">
-                    <div className="h-24 w-full" />
-                    <span className="block truncate px-2 py-1.5 text-xs text-slate-600">{f.name}</span>
-                  </div>
-                )
-              }
-              if (f.type === 'video') {
-                return (
-                  <div key={f.name} className="relative w-36 overflow-hidden rounded-xl border border-slate-200 bg-black">
-                    <div className="h-24 w-full bg-gradient-to-br from-slate-700 to-slate-900" />
-                    <span className="absolute inset-0 grid place-items-center">
-                      <span className="grid h-9 w-9 place-items-center rounded-full bg-white/25 backdrop-blur">
-                        <svg viewBox="0 0 24 24" className="h-5 w-5 text-white" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
-                      </span>
-                    </span>
-                    <span className="block truncate bg-white px-2 py-1.5 text-xs text-slate-600">{f.name}</span>
-                  </div>
-                )
-              }
-              return (
-                <button key={f.name} type="button" className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-left text-xs transition hover:border-brand-200 hover:bg-brand-50">
-                  <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-slate-100">📄</span>
-                  <span className="max-w-[140px] truncate text-slate-600">{f.name}</span>
-                  <span className="text-brand-600">预览</span>
-                </button>
-              )
-            })}
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
 
 // ============================ 复用块：欺诈识别报告 - 一、用户基本信息 ============================
 function UserBasicBlock({ row }: { row: DecisionRow }) {
@@ -391,7 +353,10 @@ export default function DecisionDetail() {
                 </div>
               </div>
             )}
-            <MaterialBlock infoResult={d.info.result} />
+            <div className="mt-4 border-t border-slate-100 pt-3">
+              <div className="mb-1 text-xs font-medium text-slate-500">配置打分项明细（按模板集合分组）</div>
+              <TemplateScoredList reportType="info_verify" />
+            </div>
           </Panel>
 
           {/* 5、信用风控摘要 */}
@@ -400,17 +365,10 @@ export default function DecisionDetail() {
             <KV label="信用风险等级"><DecisionRiskBadge v={creditRiskLevel[d.row.creditGrade]} /></KV>
             <KV label="关键风险项" full>{creditRiskText(d.row.creditGrade)}</KV>
             <KV label="正向因素" full>{creditPositiveText}</KV>
-            <h4 className="mb-2 mt-5 text-xs font-semibold text-slate-500">六大维度得分摘要</h4>
-            <DefTable headers={['维度', '得分', '等级', '说明']}>
-              {d.creditDimensions.map((x) => (
-                <tr key={x.name} className="border-b border-slate-100">
-                  <td className="px-3 py-2 font-medium text-ink-900">{x.name}</td>
-                  <td className={`px-3 py-2 tabular-nums font-medium ${toneText(x.level === '低风险' || x.level === '中风险' ? 'ok' : 'alert')}`}>{x.score}</td>
-                  <td className="px-3 py-2"><DecisionRiskBadge v={x.level} /></td>
-                  <td className="px-3 py-2 text-slate-500">{x.note}</td>
-                </tr>
-              ))}
-            </DefTable>
+            <div className="mt-4 border-t border-slate-100 pt-3">
+              <div className="mb-1 text-xs font-medium text-slate-500">配置打分项明细（按模板集合分组）</div>
+              <TemplateScoredList reportType="credit" />
+            </div>
           </Panel>
 
           {/* 6、欺诈识别摘要 */}
@@ -420,6 +378,10 @@ export default function DecisionDetail() {
             <KV label="命中规则数">{d.fraudHitCount}</KV>
             <KV label="关键命中规则" full>{d.fraudKeyRules.join('、')}</KV>
             <KV label="团伙标签" full>{d.fraudGroupTag}</KV>
+            <div className="mt-4 border-t border-slate-100 pt-3">
+              <div className="mb-1 text-xs font-medium text-slate-500">配置打分项明细（按模板集合分组）</div>
+              <TemplateScoredList reportType="fraud" />
+            </div>
           </Panel>
 
           {/* 7、操作日志 */}

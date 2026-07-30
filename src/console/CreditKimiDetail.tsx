@@ -210,7 +210,6 @@ function DimensionPanel({ d, images }: { d: CreditDimension; images?: CreditImag
               <th className="px-3 py-2 font-medium">评估项</th>
               <th className="px-3 py-2 font-medium">结果</th>
               <th className="px-3 py-2 text-right font-medium">得分</th>
-              <th className="px-3 py-2 text-right font-medium">权重</th>
             </tr>
           </thead>
           <tbody>
@@ -219,14 +218,8 @@ function DimensionPanel({ d, images }: { d: CreditDimension; images?: CreditImag
                 <td className="px-3 py-2.5 font-medium text-ink-900">{it.name}</td>
                 <td className="px-3 py-2.5 text-slate-500">{it.result}</td>
                 <td className={cn('px-3 py-2.5 text-right font-semibold', dimColor(it.score))}>{it.score}</td>
-                <td className="px-3 py-2.5 text-right text-slate-400">{it.weight}%</td>
               </tr>
             ))}
-            <tr className="border-t border-slate-200 bg-slate-50">
-              <td className="px-3 py-2.5 font-semibold text-ink-900" colSpan={2}>加权得分（得分 × 权重）</td>
-              <td className="px-3 py-2.5 text-right text-sm font-bold text-ink-900">{(d.score * d.weight / 100).toFixed(2)}</td>
-              <td className="px-3 py-2.5" />
-            </tr>
           </tbody>
         </table>
       </div>

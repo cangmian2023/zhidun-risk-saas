@@ -1,6 +1,6 @@
 // 信息核验报告页
 // 依据 doc/信息核验报告功能设计.md 与 doc/信息核验报告-示例数据.json 实现
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Badge, Button, DetailHeader, Panel } from '../components/ui'
 import {
@@ -19,6 +19,11 @@ import { useModule } from '../store'
 import { VerifyActionBar, ivGradeFromRisk, type VerifyRow, type WorkStatus, type SysResult } from './VerifyOps'
 import { MergedOpTable } from '../components/MergedOpTable'
 import { ExemptModal } from './ExemptModal'
+import { computeSectionScore, seedReportTemplates, evalSpecialRules, SPECIAL_TRIGGER_LABEL, type SectionConfig } from './reportTemplateData'
+import { TemplateDimTable } from './TemplateDimTable'
+
+/* 模块级模板引用：报告详情读「报告模板 · 自动审核 Tab → 特殊命中规则」做决定/预警判定 */
+const ivTplRef = seedReportTemplates.find((t) => t.reportType === 'info_verify')
 
 const cn = (...c: (string | false | undefined)[]) => c.filter(Boolean).join(' ')
 
@@ -257,6 +262,7 @@ function getActionsForConclusion(concl: Conclusion, handlers: {
 
 function SingleCard({
   s,
+  scoreTag,
   onReverify,
   onNote,
   onExempt,
@@ -264,6 +270,7 @@ function SingleCard({
   onECLink,
 }: {
   s: SingleResult
+  scoreTag?: ReactNode
   onReverify: (name: string) => void
   onNote: (name: string) => void
   onExempt: (name: string) => void
@@ -291,6 +298,7 @@ function SingleCard({
             <span className="text-sm font-semibold text-ink-900">{s.name}</span>
             <Badge kind={conclKind[s.conclusion]}>{conclText[s.conclusion]}</Badge>
             <RuleTooltip type={s.rulePromptType} />
+            {scoreTag}
           </div>
         </div>
         <ActionDropdown open={menuOpen} onToggle={() => setMenuOpen(!menuOpen)} actions={actions} />
@@ -325,6 +333,58 @@ function SingleCard({
   )
 }
 
+// ========================= 模板分段评分（方案 B 修订：分数标注在内容项上，不在顶部堆大块） =========================
+/* 设计：每张内容卡 = 模板「报告内容配置」的一个分段。
+ *  - 卡片汇总得分 + 权重：信用风控同款大数字分块，置于卡体顶部
+ *  - 小项得分：直接标在内容项右侧（如「身份证号 …… +5分」），与信息一一对应
+ *  - 加/扣分方向由分段 cardScoreMode 决定（data_source=达标加分 / rule_set=命中扣分） */
+
+// 小项得分标签：+5分（绿，加分）/ −5分（红，扣分）
+function ScoreTag({ pts, deduct }: { pts?: number; deduct?: boolean }) {
+  if (pts == null || pts === 0) return null
+  const minus = !!deduct
+  return (
+    <span
+      className={cn(
+        'ml-2 inline-flex shrink-0 items-center rounded-md px-1.5 py-0.5 text-[11px] font-medium tabular-nums',
+        minus ? 'bg-rose-50 text-rose-600 ring-1 ring-rose-200' : 'bg-emerald-50 text-emerald-600 ring-1 ring-emerald-200',
+      )}
+    >
+      {minus ? '−' : '+'}{Math.abs(pts)}分
+    </span>
+  )
+}
+
+// 卡片汇总得分（统一采用信用风控报告的大数字分样式：大数字 + 胶囊 + 权重提示行，置于卡体顶部）
+function CardScoreHead({ section, show }: { section?: SectionConfig; show?: boolean }) {
+  if (!section || show === false) return null
+  const sc = computeSectionScore(section)
+  const w = section.weight ?? 1
+  const deduct = sc.mode === 'deduct'
+  // 修正历史双负号：total 在 deduct 模式下已为负，符号取其自身正负，再用绝对值，绝不叠加
+  const signed = `${sc.total < 0 ? '−' : '+'}${Math.abs(sc.total)}`
+  return (
+    <div className="mb-4">
+      <div className="flex items-center gap-2">
+        <span className={cn('text-3xl font-bold tabular-nums', sc.total < 0 ? 'text-rose-600' : 'text-emerald-600')}>{signed}</span>
+        <span className={cn('rounded-full px-2.5 py-0.5 text-xs font-semibold', deduct ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700')}>{deduct ? '命中扣分' : '达标加分'}</span>
+      </div>
+      <div className="mt-1 text-xs text-slate-500">本卡汇总得分 · 集合权重 {w}</div>
+    </div>
+  )
+}
+
+// 按 field.name 建「展示项名 → 分值」查找（支持模板名与报告 label 不完全一致时的模糊匹配）
+function makeScoreLookup(section?: SectionConfig): (label: string) => number | undefined {
+  const items = (section?.fields ?? []).filter((f) => f.visible && !f.hitReject)
+  return (label: string) => {
+    const exact = items.find((f) => f.name === label)
+    if (exact) return exact.scorePoints ?? 0
+    const part = items.find((f) => f.name.includes(label) || label.includes(f.name))
+    return part?.scorePoints
+  }
+}
+
 // ========================= 主页面 =========================
 
 export default function PreVerifyDetail() {
@@ -338,6 +398,25 @@ export default function PreVerifyDetail() {
   // 报告内容（核验过程/交叉报告）按自动审核结果选套餐：拒绝→红 / 预警→黄 / 通过·处理中→绿
   const variant = sysParam === '拒绝' ? 'REJECT' : sysParam === '预警' ? 'WARNING' : 'PASS'
   const d = buildInfoVerifyReport(variant)
+
+  // 报告内容卡片的「卡片汇总得分 / 小项得分 / 权重」来自模板「报告内容配置」分段：
+  // 现有内容卡片与模板分段按 section.id 一一对应（basic_info / id_images / single_verify / cross_fusion）。
+  const ivTpl = seedReportTemplates.find((t) => t.reportType === 'info_verify')
+  const ivSections: Record<string, SectionConfig | undefined> = ivTpl
+    ? Object.fromEntries(ivTpl.sections.map((s) => [s.id, s]))
+    : {}
+
+  // 各内容分段的「得分方向」与「展示项→分值」查表（供卡片内联标注）
+  const basicDeduct = ivSections['basic_info'] ? computeSectionScore(ivSections['basic_info']!).mode === 'deduct' : false
+  const idDeduct = ivSections['id_images'] ? computeSectionScore(ivSections['id_images']!).mode === 'deduct' : false
+  const singleDeduct = ivSections['single_verify'] ? computeSectionScore(ivSections['single_verify']!).mode === 'deduct' : false
+  const basicLookup = makeScoreLookup(ivSections['basic_info'])
+  const idLookup = makeScoreLookup(ivSections['id_images'])
+  // 多源核验：模板前 5 个展示项（公安/银行卡/运营商/设备/联防联控）按序对应 5 个数据源卡
+  const singleScores = (ivSections['single_verify']?.fields ?? [])
+    .filter((f) => f.visible && !f.hitReject)
+    .slice(0, 5)
+    .map((f) => f.scorePoints ?? 0)
 
   // 详情页第二卡片仅用 VerifyRow 的「自动审核 / 人工审核 / 审核人 / 编号」驱动操作按钮；
   // product/channel/amount/分 等字段 VerifyActionBar 不展示，用占位兜底以满足类型
@@ -435,6 +514,7 @@ export default function PreVerifyDetail() {
 
           {/* 一、用户基本信息 */}
           <Panel title="一、用户基本信息" id="basic">
+            <CardScoreHead section={ivSections['basic_info']} show={ivTpl?.showSectionTotals} />
             <div className="grid grid-cols-1 gap-x-8 gap-y-2.5 sm:grid-cols-2 lg:grid-cols-3">
               {d.basic.map((f) => (
                 <div key={f.key} className="flex items-center justify-between rounded-lg border border-slate-100 px-3.5 py-2.5">
@@ -446,6 +526,7 @@ export default function PreVerifyDetail() {
                     ) : (
                       <Badge kind="red">格式异常</Badge>
                     )}
+                    <ScoreTag pts={basicLookup(f.label)} deduct={basicDeduct} />
                   </div>
                 </div>
               ))}
@@ -456,7 +537,10 @@ export default function PreVerifyDetail() {
                 {d.env.map((e) => (
                   <div key={e.key} className="flex items-center justify-between rounded-lg bg-slate-50 px-3.5 py-2">
                     <span className="text-sm text-slate-500">{e.label}</span>
-                    <span className="text-sm font-medium text-ink-900">{e.value}</span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-sm font-medium text-ink-900">{e.value}</span>
+                      <ScoreTag pts={basicLookup(e.label)} deduct={basicDeduct} />
+                    </div>
                   </div>
                 ))}
               </div>
@@ -465,11 +549,15 @@ export default function PreVerifyDetail() {
 
           {/* 二、用户证件照 */}
           <Panel title="二、用户证件照" id="photos">
+            <CardScoreHead section={ivSections['id_images']} show={ivTpl?.showSectionTotals} />
             <div className="grid gap-4 md:grid-cols-2">
               {d.images.map((img) => (
                 <div key={img.key} className="rounded-xl border border-slate-200 bg-white p-3">
                   <div className="mb-2 flex items-center justify-between">
-                    <span className="text-sm font-medium text-ink-900">{img.label}</span>
+                    <span className="flex items-center text-sm font-medium text-ink-900">
+                      {img.label}
+                      <ScoreTag pts={idLookup(img.label)} deduct={idDeduct} />
+                    </span>
                     {img.kind === 'video' && <Badge kind="blue">视频</Badge>}
                   </div>
                   <div className="grid aspect-[4/3] place-items-center overflow-hidden rounded-lg bg-slate-900">
@@ -505,11 +593,13 @@ export default function PreVerifyDetail() {
 
           {/* 三、多源并行核验单项报告 */}
           <Panel title="三、多源并行核验单项报告" id="single">
+            <CardScoreHead section={ivSections['single_verify']} show={ivTpl?.showSectionTotals} />
             <div className="grid gap-4 lg:grid-cols-2">
-              {d.single.map((s) => (
+              {d.single.map((s, i) => (
                 <SingleCard
                   key={s.source}
                   s={s}
+                  scoreTag={singleScores[i] != null ? <ScoreTag pts={singleScores[i]} deduct={singleDeduct} /> : undefined}
                   onReverify={(name) => addLog({ target: name, actionType: '重新核验', operator: '当前用户', time: new Date().toLocaleString('zh-CN'), remark: `二次核验流水号：TD${Date.now()}` })}
                   onNote={(name) => setModal({ type: 'note', target: name })}
                   onExempt={(name) => setModal({ type: 'exempt', target: name })}
@@ -529,6 +619,7 @@ export default function PreVerifyDetail() {
             id="cross"
             actions={<Button variant="ghost" size="sm" onClick={() => setModal({ type: 'weights', target: '' })}>查看打分权重明细</Button>}
           >
+            <CardScoreHead section={ivSections['cross_fusion']} show={ivTpl?.showSectionTotals} />
             {/* ===== 顶层总览区：5 项评估维度 ===== */}
             <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-5">
               {d.cross.atomic.map((a) => (
@@ -772,6 +863,52 @@ function ScoreModelCard({ cross }: { cross: CrossCheck }) {
           </div>
         </div>
       </div>
+
+      {/* 特殊命中规则判定（读报告模板 · 自动审核 Tab → 特殊命中规则） */}
+      {(() => {
+        const hitNames = [...scoreComponents.map((c) => c.name), ...cross.riskTags.map((t) => t.label)]
+        const v = evalSpecialRules(ivTplRef?.specialRules, hitNames)
+        if (!v.decisive.length && !v.warnings.length) return null
+        return (
+          <div className="mt-3 space-y-2">
+            {v.decisive.length > 0 && (
+              <div className="rounded-xl border border-rose-200 bg-rose-50 px-3.5 py-2.5">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="inline-flex items-center rounded-full bg-rose-600 px-2 py-0.5 text-[11px] font-semibold text-white">决定规则</span>
+                  <span className="text-sm font-semibold text-rose-700">已触发 {v.decisive.length} 条决定规则 → 自动审核 = {v.finalResult}</span>
+                  <span className="text-[11px] text-rose-500">（不再参考总分，总分仅作参考展示）</span>
+                </div>
+                <div className="mt-1.5 flex flex-wrap gap-1.5">
+                  {v.decisive.map((r) => (
+                    <span key={r.id} className="inline-flex items-center rounded-md bg-white px-2 py-0.5 text-[11px] text-rose-700 ring-1 ring-rose-200">
+                      {r.ruleName} · {SPECIAL_TRIGGER_LABEL[r.trigger]} → {r.autoResult}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+            {v.warnings.length > 0 && (
+              <div className="rounded-xl border border-amber-200 bg-amber-50 px-3.5 py-2.5">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="inline-flex items-center rounded-full bg-amber-500 px-2 py-0.5 text-[11px] font-semibold text-white">预警规则</span>
+                  <span className="text-sm font-semibold text-amber-700">已触发 {v.warnings.length} 条预警规则，请重点关注</span>
+                  <span className="text-[11px] text-amber-600">（结论仍以总分表现为准）</span>
+                </div>
+                <div className="mt-1.5 flex flex-wrap gap-1.5">
+                  {v.warnings.map((r) => (
+                    <span key={r.id} className="inline-flex items-center rounded-md bg-white px-2 py-0.5 text-[11px] text-amber-700 ring-1 ring-amber-200">
+                      {r.ruleName} · {SPECIAL_TRIGGER_LABEL[r.trigger]} → 建议 {r.autoResult}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )
+      })()}
+
+      {/* 评分维度分布（模板驱动：报告内容配置里每个集合一行；开关=模板「显示分段总分」） */}
+      <TemplateDimTable reportType="info_verify" />
 
       {/* 构成项分解表 */}
       <div className="mt-4 overflow-hidden rounded-xl border border-slate-100">
