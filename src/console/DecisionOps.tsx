@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { Badge, Button, Modal, DecisionTag, StatusTag } from '../components/ui'
-import { getDecisionAuditFlow, resolveActions, DECISION_APPROVAL_MACHINE, DECISION_REVIEW_MACHINE, type ReviewResult } from './reportTemplateData'
+import { ApprovalModal } from './ApprovalModal'
+import { getDecisionAuditFlow, getAuditFlow, getSegmentButtons, resolveActions, DECISION_APPROVAL_MACHINE, DECISION_REVIEW_MACHINE, type ReviewResult } from './reportTemplateData'
 import { useModule } from '../store'
 import {
   DecisionRow,
@@ -106,9 +107,20 @@ function opinionNeedsInput(label: string): boolean {
 
 export function DecisionRowActions({ row, onAction }: { row: DecisionRow; onAction: (k: DecisionActionKey) => void }) {
   const ops = decisionOpsFor(row.suggestion, row.approvalStatus)
+  const segmentButtons = useMemo(() => getSegmentButtons('decision', row.suggestion), [row.suggestion])
   return (
     <div className="flex flex-wrap items-center justify-start gap-3">
-      {ops.map((op) => (
+      {segmentButtons.map((b) => (
+        <button
+          key={`seg-${b.idx}`}
+          type="button"
+          onClick={() => onAction('view')}
+          className="whitespace-nowrap text-xs font-medium text-brand-600 hover:underline"
+        >
+          {b.label}
+        </button>
+      ))}
+      {ops.filter((op) => op !== 'audit').map((op) => (
         <button
           key={op}
           type="button"
@@ -174,6 +186,30 @@ export function useDecisionActions(row: DecisionRow | null, onApply: (patch: Par
   const flash = useModule().flash
   // 审批弹窗与报告模板的审核流程配置对齐：依据报告 suggestion 取对应流程节点的审核事项/结果/意见预设
   const auditFlow = useMemo(() => (row ? getDecisionAuditFlow(row.suggestion) : null), [row?.suggestion])
+  // 运行时「按分段渲染多按钮」：当前结论分段对应的全部触发按钮 + 各自审批弹窗
+  const segmentButtons = useMemo(() => (row ? getSegmentButtons('decision', row.suggestion) : []), [row?.suggestion])
+  const [segModal, setSegModal] = useState<number | null>(null)
+  const openSeg = (idx: number) => setSegModal(idx)
+  const closeSeg = () => setSegModal(null)
+  const applySeg = (p: { result: ReviewResult; checks: string[]; opinionText: string; fileName: string }) => {
+    if (!row) return
+    const af = getAuditFlow('decision', row.suggestion, segModal ?? 0)
+    const fallback: ApprovalStatus = p.result === '通过' ? '审批中' : p.result === '驳回' ? '已退回' : '已拒绝'
+    onApply({ approvalStatus: ((af.resultStates?.[p.result] ?? fallback) as ApprovalStatus), operator: '李娜' })
+    flash(`已审批（${p.result}）｜审核事项 ${p.checks.length} 项｜意见：${p.opinionText}${p.fileName ? `｜附件：${p.fileName}` : ''}`)
+    closeSeg()
+  }
+  const segModalEl = (
+    <ApprovalModal
+      open={segModal !== null}
+      title={`审批决策 · ${segModal !== null ? segmentButtons[segModal]?.label ?? '审批' : '审批'}`}
+      conclusion={`案件结论：${row?.suggestion ?? ''}`}
+      auditFlow={getAuditFlow('decision', row?.suggestion ?? '', segModal ?? 0)}
+      onClose={closeSeg}
+      onConfirm={applySeg}
+    />
+  )
+
   const [modal, setModal] = useState<DecisionModalState | null>(null)
   const [opinionKeys, setOpinionKeys] = useState<string[]>([])
   const [opinionValues, setOpinionValues] = useState<Record<string, string>>({})
@@ -434,7 +470,7 @@ export function useDecisionActions(row: DecisionRow | null, onApply: (patch: Par
     </Modal>
   )
 
-  return { run, Modal: Modal_ }
+  return { run, Modal: Modal_, segmentButtons, openSeg, segModalEl }
 }
 
 // ============================ 详情页底部操作栏 ============================

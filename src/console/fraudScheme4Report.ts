@@ -112,6 +112,10 @@ export interface FraudS4OpLog {
   time: string
   result?: string
   remark?: string
+  reviewer?: string
+  reviewStatus?: '待复核' | '已复核'
+  reviewTime?: string
+  attachments?: string[]
 }
 export interface FraudS4Disposition {
   suggestion: string
@@ -357,6 +361,7 @@ function baseReport(): FraudS4Report {
       { type: '设备群控检测', content: '近 7 日关联 3 个以上不同身份', operator: '系统', time: '2026-07-21 14:57:20', result: '命中', remark: '关联身份：李某、张某、王某' },
       { type: '行为轨迹检测', content: '表单填写速度异常', operator: '系统', time: '2026-07-21 14:56:50', result: '命中', remark: '平均 2.3 秒/字段' },
       { type: '申请提交', content: '用户提交申请', operator: '系统', time: '2026-07-21 14:55:00', remark: '申请额度 ¥30,000' },
+      { type: '规则豁免', content: '豁免规则：设备群控检测', operator: '风控专员-张磊', time: '2026-07-21 15:20:08', remark: '该设备为测试环境复用机型，经核实非群控作案，申请豁免。', reviewer: '风控主管-王伟', reviewStatus: '已复核', reviewTime: '2026-07-21 15:35:02', attachments: ['设备检测说明_20260721.pdf'] },
     ],
     workStatus: '待确认',
     operator: '--',

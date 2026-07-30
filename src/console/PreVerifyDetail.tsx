@@ -18,6 +18,7 @@ import {
 import { useModule } from '../store'
 import { VerifyActionBar, ivGradeFromRisk, type VerifyRow, type WorkStatus, type SysResult } from './VerifyOps'
 import { MergedOpTable } from '../components/MergedOpTable'
+import { ExemptModal } from './ExemptModal'
 
 const cn = (...c: (string | false | undefined)[]) => c.filter(Boolean).join(' ')
 
@@ -109,73 +110,6 @@ function ReceiptModal({ open, target, onClose }: { open: boolean; target: string
     </div>
   )
 }
-
-function ExemptModal({ open, target, onClose, onSubmit }: { open: boolean; target: string; onClose: () => void; onSubmit: (reason: string, reviewer: string) => void }) {
-  const [reason, setReason] = useState('')
-  const [reviewer, setReviewer] = useState('')
-  const [step, setStep] = useState<'apply' | 'review'>('apply')
-  if (!open) return null
-  const handleNext = () => {
-    if (!reason.trim()) return
-    setStep('review')
-  }
-  const handleSubmit = () => {
-    if (!reviewer.trim()) return
-    onSubmit(reason, reviewer)
-    setReason('')
-    setReviewer('')
-    setStep('apply')
-    onClose()
-  }
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30" onClick={onClose}>
-      <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
-        <h3 className="mb-1 text-base font-semibold text-ink-900">
-          {step === 'apply' ? '标记豁免 · 提交豁免申请' : '标记豁免 · 二级复核确认'}
-        </h3>
-        <p className="mb-3 text-xs text-slate-500">对象：{target}</p>
-        {step === 'apply' ? (
-          <>
-            <div className="mb-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-700">
-              风险提示：豁免操作需双人复核，单人无法直接豁免风险。请填写豁免原因后进入复核环节。
-            </div>
-            <textarea
-              className="mb-3 h-24 w-full resize-none rounded-lg border border-slate-200 p-3 text-sm outline-none focus:border-brand-400"
-              placeholder="请输入豁免原因..."
-              value={reason}
-              onChange={(e) => setReason(e.target.value)}
-            />
-            <div className="flex justify-end gap-2">
-              <Button variant="ghost" onClick={onClose}>取消</Button>
-              <Button variant="primary" onClick={handleNext}>提交 → 进入二级复核</Button>
-            </div>
-          </>
-        ) : (
-          <>
-            <div className="mb-3 rounded-lg bg-slate-50 p-3 text-sm text-slate-600">
-              <span className="text-xs text-slate-400">豁免原因：</span>{reason}
-            </div>
-            <div className="mb-3 rounded-lg border border-dashed border-amber-300 bg-amber-50 p-3 text-xs text-amber-700">
-              二级复核人须为独立审核人员，不得为豁免申请人本人。请确认复核人身份后填写姓名确认。
-            </div>
-            <input
-              className="mb-3 w-full rounded-lg border border-slate-200 px-3 py-3 text-sm outline-none focus:border-brand-400"
-              placeholder="复核人姓名"
-              value={reviewer}
-              onChange={(e) => setReviewer(e.target.value)}
-            />
-            <div className="flex justify-end gap-2">
-              <Button variant="ghost" onClick={() => setStep('apply')}>返回修改</Button>
-              <Button variant="primary" onClick={handleSubmit}>确认豁免</Button>
-            </div>
-          </>
-        )}
-      </div>
-    </div>
-  )
-}
-
-
 
 // ---- 全局操作弹窗：查看打分权重明细 ----
 function WeightsModal({
@@ -750,7 +684,7 @@ export default function PreVerifyDetail() {
         open={modal.type === 'exempt'}
         target={modal.target}
         onClose={() => setModal({ type: null, target: '' })}
-        onSubmit={(reason, reviewer) => addLog({ target: modal.target, actionType: '标记豁免', operator: '当前用户', time: new Date().toLocaleString('zh-CN'), remark: reason, reviewStatus: '已复核', reviewer, reviewTime: new Date().toLocaleString('zh-CN') })}
+        onSubmit={({ reason, reviewer, attachment }) => addLog({ target: modal.target, actionType: '标记豁免', operator: '当前用户', time: new Date().toLocaleString('zh-CN'), remark: reason + (attachment ? `（附件：${attachment}）` : ''), attachments: attachment ? [attachment] : undefined, reviewStatus: '已复核', reviewer, reviewTime: new Date().toLocaleString('zh-CN') })}
       />
       <WeightsModal
         open={modal.type === 'weights'}

@@ -21,12 +21,12 @@ import {
   RenderContainer, RENDER_CONTAINER_LABEL, API_FIELD_TYPE_LABEL, defaultContainer, recommendDbContainer,
   MaskRule, MASK_RULE_LABEL, autoMaskRule, Severity, SEVERITY_LABEL, FieldCondType, FIELD_COND_LABEL,
   REPORT_META, PRODUCT_TREE, PRODUCT_LEAVES, PRODUCT_ALL, scopeLabel,
-  AutoResult, AUTO_RESULT_LIST, AUTO_RESULT_COLOR,
+  AutoResult, AUTO_RESULT_LIST, AUTO_RESULT_COLOR, RiskLevel,
   computeScoreSummary, validateGrades,
   SECTION_SOURCE_LABEL, RULE_SETS, DB_TYPES, mockTableColumns,
   SourceTestResult, testSourceConfig, parseCurl, buildCurl,
   syncFlowToGrades, buildTemplate, seedReportTemplates,
-  FlowGraph, buildDefaultFlowGraph, summarizeFlowGraph,
+  FlowGraph, buildDefaultFlowGraph, summarizeFlowGraph, defaultButtonName,
 } from './reportTemplateData'
 import FlowCanvasEditor from './FlowCanvasEditor'
 
@@ -146,6 +146,7 @@ export default function ReportTemplateConfig() {
   const [showNew, setShowNew] = useState(false)
   const [syncHint, setSyncHint] = useState<string>('')
   const [demoScore, setDemoScore] = useState<number | null>(null) // 评分卡形态预览的示例分值（null=自动取范围 72% 处）
+  const [basicExpanded, setBasicExpanded] = useState(false) // 基础信息默认收起，展开可编辑
 
   const active = useMemo(() => templates.find((t) => t.id === activeId) ?? templates[0], [templates, activeId])
   const perm = ROLE_PERM['系统管理员'] // 权限固定为系统管理员（全权）；角色模拟切换已移除
@@ -166,7 +167,7 @@ export default function ReportTemplateConfig() {
       const base = last ? last.maxScore : 0
       const ng: ScoreGrade = { grade: `新档${t.scoreDisplay.grades.length + 1}`, label: '新风险档', minScore: base + 1, maxScore: 100, riskLevel: '中', color: '#F59E0B', autoResult: '转人工', description: '新评分档，请配置区间与处置' }
       const grades = [...t.scoreDisplay.grades, ng]
-      setSyncHint('已新增评分档，下方「审核操作」已自动同步增加一行')
+      setSyncHint('已新增评分档，下方「人工审核」已自动同步增加一行')
       return { ...t, scoreDisplay: { ...t.scoreDisplay, grades }, businessFlow: syncFlowToGrades(t.businessFlow, grades) }
     })
   }
@@ -174,7 +175,7 @@ export default function ReportTemplateConfig() {
     if (i === 0) return
     patch((t) => {
       const grades = t.scoreDisplay.grades.filter((_, k) => k !== i)
-      setSyncHint('已删除一个评分档，下方「审核操作」已自动同步删除对应行')
+      setSyncHint('已删除一个评分档，下方「人工审核」已自动同步删除对应行')
       return { ...t, scoreDisplay: { ...t.scoreDisplay, grades }, businessFlow: syncFlowToGrades(t.businessFlow, grades) }
     })
   }
@@ -194,7 +195,7 @@ export default function ReportTemplateConfig() {
     setFlowEdit({ gi, sub })
   }
   const addFlow = (gi: number, flow: BusinessFlowConfig, ar: AutoResult) => {
-    const ng = buildDefaultFlowGraph(flow, ar)
+    const ng = buildDefaultFlowGraph(flow, ar, defaultButtonName(ar))
     patchFlow(gi, (x) => ({ ...x, flowGraphs: [...(x.flowGraphs ?? []), ng] }))
     setDraftGraph({ nodes: ng.nodes.map((n) => ({ ...n })), edges: ng.edges.map((e) => ({ ...e })) })
     setFlowEdit({ gi, sub: (flow.flowGraphs ?? []).length })
@@ -335,8 +336,8 @@ export default function ReportTemplateConfig() {
     }
   }
   const saveDraft = () => {
-    if (active.scoreBlock.title.trim() === '') { window.alert('「评分方案」标题为必填项，不可为空'); return }
-    if (active.flowBlock.title.trim() === '') { window.alert('「审核操作」标题为必填项，不可为空'); return }
+    if (active.scoreBlock.title.trim() === '') { window.alert('「自动审核」标题为必填项，不可为空'); return }
+    if (active.flowBlock.title.trim() === '') { window.alert('「人工审核」标题为必填项，不可为空'); return }
     patch((t) => ({ ...t, status: '草稿' })); logChange('编辑', '保存模板配置')
   }
   const publishNewVersion = () => {
@@ -421,7 +422,7 @@ export default function ReportTemplateConfig() {
     ]
     return (
       <div>
-        <PageHeader title="报告模板配置" subtitle="统一管理信息核验 / 信用风控 / 欺诈识别 / 决策报告四类报告的展示模板、评分等级与审核操作"
+        <PageHeader title="报告模板配置" subtitle="统一管理信息核验 / 信用风控 / 欺诈识别 / 决策报告四类报告的展示模板、评分等级与人工审核"
           actions={<Button variant="primary" onClick={() => setShowNew(true)}>＋ 新建模板</Button>} />
         <Panel>
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 14 }}>
@@ -712,7 +713,7 @@ export default function ReportTemplateConfig() {
             </div>
           )}
           {/* —— 本卡总分（按卡片级计分方向与各展示项计分配置自动汇总，只读） —— */}
-          <div style={{ padding: '8px 12px', background: '#F8FAFC', borderTop: '1px dashed #E5E7EB' }}>
+          <div style={{ padding: '8px 12px', background: '#F8FAFC', borderTop: '1px dashed #E5E7EB', display: 'flex', alignItems: 'center', gap: 18, flexWrap: 'wrap' }}>
             {(() => {
               const r = computeSectionScore(s)
               if (r.mode === 'reject') {
@@ -732,6 +733,11 @@ export default function ReportTemplateConfig() {
                 </div>
               )
             })()}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+              <span style={{ fontSize: 13, fontWeight: 600, color: '#374151' }}>权重</span>
+              <input type="number" step="0.1" min="0" disabled={!canEdit} value={s.weight ?? 1} onChange={(e) => patchSection(s.id, (x) => ({ ...x, weight: +e.target.value || 0 }))} style={{ ...inpSm, width: 64 }} />
+              <span style={{ fontSize: 12, color: '#6B7280' }}>（报告总分 = 基础分 + Σ 各卡计分 × 权重）</span>
+            </div>
           </div>
         </div>
       </div>
@@ -756,8 +762,17 @@ export default function ReportTemplateConfig() {
         } />
       <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 16, alignItems: 'start' }}>
         <div style={{ minWidth: 0 }}>
-          {/* 基础信息 */}
-          <Panel title="基础信息">
+          {/* 基础信息（默认收起，缩略显示；展开可编辑、可收起） */}
+          <div className="rounded-2xl border border-slate-100 bg-white shadow-card">
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderBottom: basicExpanded ? '1px solid #F1F5F9' : 'none' }}>
+              <span style={{ fontSize: 15, fontWeight: 600, color: '#111827' }}>基础信息</span>
+              <button
+                onClick={() => setBasicExpanded((v) => !v)}
+                style={{ border: '1px solid #E5E7EB', borderRadius: 8, padding: '4px 10px', fontSize: 13, color: '#374151', background: '#fff', cursor: 'pointer' }}
+              >{basicExpanded ? '收起 ▴' : '展开编辑 ▾'}</button>
+            </div>
+            {basicExpanded ? (
+              <div style={{ padding: '14px 16px' }}>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 14 }}>
               <Field label="模板名称" ><input disabled={!canEdit} value={active.name} onChange={(e) => patch((t) => ({ ...t, name: e.target.value }))} style={inp} /></Field>
               <Field label="报告类型"><input disabled value={REPORT_META[active.reportType].icon + ' ' + REPORT_META[active.reportType].label} style={{ ...inp, background: '#F3F4F6' }} /></Field>
@@ -796,11 +811,17 @@ export default function ReportTemplateConfig() {
                 <textarea disabled={!canEdit} value={active.description} onChange={(e) => patch((t) => ({ ...t, description: e.target.value }))} rows={2} style={{ ...inp, resize: 'vertical' }} />
               </Field>
             </div>
-          </Panel>
+              </div>
+            ) : (
+              <div style={{ padding: '12px 16px', fontSize: 13, color: '#6B7280' }}>
+                模板名称：{active.name} · 报告类型：{REPORT_META[active.reportType].label} · 状态：{active.status}{active.isDefault ? ' · 默认模板' : ''} · 适用：{active.scope.includes(PRODUCT_ALL) ? '全产品' : `${active.scope.length} 个产品`} · 操作日志：{active.showOpLog ? '显示' : '不显示'}
+              </div>
+            )}
+          </div>
 
           {/* Tabs */}
           <div style={{ display: 'flex', gap: 4, marginTop: 16, borderBottom: '1px solid #E5E7EB', marginBottom: 14 }}>
-            {([['content', '报告内容'], ['score', '评分方案'], ['flow', '审核操作']] as [any, string][]).map(([k, label]) => (
+            {([['content', '报告内容'], ['score', '自动审核'], ['flow', '人工审核']] as [any, string][]).map(([k, label]) => (
               <button key={k} onClick={() => setTab(k)} style={{ padding: '10px 16px', border: 'none', borderBottom: tab === k ? '2px solid #3B82F6' : '2px solid transparent', background: 'none', fontWeight: tab === k ? 700 : 400, color: tab === k ? '#1D4ED8' : '#6B7280', cursor: 'pointer' }}>{label}</button>
             ))}
           </div>
@@ -975,7 +996,7 @@ export default function ReportTemplateConfig() {
           </Modal>
 
           {tab === 'score' && (
-            <Panel title="评分方案配置">
+            <Panel title="自动审核配置">
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', border: '1px solid #E5E7EB', borderRadius: 10, background: '#F8FAFC', marginBottom: 12 }}>
                 <span style={{ fontSize: 13, color: '#374151' }}>标题<span style={{ color: '#DC2626', marginLeft: 2 }}>*</span></span>
                 <input disabled={!canEdit} value={active.scoreBlock.title}
@@ -1000,7 +1021,7 @@ export default function ReportTemplateConfig() {
                 </div>
               </Field>
               <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', margin: '10px 0' }}>
-                {([['showDescription', '显示风险描述'], ['showThresholdBar', '显示阈值刻度'], ['showRiskTags', '显示风险标签']] as [keyof typeof active.scoreDisplay, string][]).map(([k, label]) => (
+                {([['showDescription', '显示风险描述'], ['showRiskTags', '显示风险标签']] as [keyof typeof active.scoreDisplay, string][]).map(([k, label]) => (
                   <label key={label} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13 }}>
                     <input type="checkbox" disabled={!canEdit} checked={active.scoreDisplay[k] as boolean} onChange={(e) => patch((t) => ({ ...t, scoreDisplay: { ...t.scoreDisplay, [k]: e.target.checked } }))} />{label}
                   </label>
@@ -1015,11 +1036,14 @@ export default function ReportTemplateConfig() {
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
                       <span style={{ fontSize: 12, fontWeight: 600, color: '#6B7280' }}>效果预览 · {active.scoreDisplay.displayComponent}</span>
                       <span style={{ flex: 1 }} />
+                      <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: '#374151', cursor: canEdit ? 'pointer' : 'default' }}>
+                        <input type="checkbox" disabled={!canEdit} checked={active.scoreDisplay.showThresholdBar} onChange={(e) => patch((t) => ({ ...t, scoreDisplay: { ...t.scoreDisplay, showThresholdBar: e.target.checked } }))} />启用刻度条
+                      </label>
                       <span style={{ fontSize: 12, color: '#6B7280' }}>示例分值</span>
                       <input type="range" min={scoreSummary.min} max={scoreSummary.max} value={pvScore} onChange={(e) => setDemoScore(+e.target.value)} style={{ width: 160 }} />
                       <input type="number" value={pvScore} onChange={(e) => setDemoScore(+e.target.value)} style={{ ...numSm, width: 70 }} />
                     </div>
-                    <ScoreCardPreview sd={active.scoreDisplay} min={scoreSummary.min} max={scoreSummary.max} score={pvScore} />
+                    <ScoreCardPreview sd={active.scoreDisplay} min={scoreSummary.min} max={scoreSummary.max} score={pvScore} patchGrade={patchGrade} canEdit={canEdit} />
                   </div>
                 )
               })()}
@@ -1072,7 +1096,7 @@ export default function ReportTemplateConfig() {
           )}
 
           {tab === 'flow' && (
-            <Panel title="审核操作配置">
+            <Panel title="人工审核配置">
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', border: '1px solid #E5E7EB', borderRadius: 10, background: '#F8FAFC', marginBottom: 12 }}>
                 <span style={{ fontSize: 13, color: '#374151' }}>标题<span style={{ color: '#DC2626', marginLeft: 2 }}>*</span></span>
                 <input disabled={!canEdit} value={active.flowBlock.title}
@@ -1099,7 +1123,7 @@ export default function ReportTemplateConfig() {
               <table style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed', fontSize: 13 }}>
                 <colgroup><col style={{ width: 190 }} /><col style={{ width: 90 }} /><col /><col style={{ width: 220 }} /></colgroup>
                 <thead><tr style={{ background: '#F8FAFC' }}>
-                  {['评分分段（继承）', '自动结果', '业务流程配置', '决策建议文案'].map((h) => (
+                  {['触发分段（报告状态）', '自动结果', '业务流程配置', '决策建议文案'].map((h) => (
                     <th key={h} style={{ padding: '8px', fontSize: 12, fontWeight: 600, color: '#6B7280', textAlign: 'left', borderBottom: '1px solid #E5E7EB' }}>{h}</th>
                   ))}
                 </tr></thead>
@@ -1122,17 +1146,24 @@ export default function ReportTemplateConfig() {
                             {(flow.flowGraphs ?? []).length === 0 && (
                               <div style={{ fontSize: 12, color: '#9CA3AF' }}>（暂无业务流程，点击下方添加流程）</div>
                             )}
-                            {(flow.flowGraphs ?? []).map((g, sub) => (
-                              <div key={sub} style={{ display: 'flex', alignItems: 'center', gap: 8, border: '1px solid #E5E7EB', borderRadius: 8, padding: '6px 8px', background: '#fff' }}>
-                                <div style={{ flex: 1, minWidth: 0, fontSize: 12, color: '#374151', lineHeight: 1.6, wordBreak: 'break-all' }}>
-                                  {summarizeFlowGraph(g)}
+                            {(flow.flowGraphs ?? []).map((g, sub) => {
+                              return (
+                                <div key={sub} style={{ display: 'flex', alignItems: 'center', gap: 8, border: '1px solid #E5E7EB', borderRadius: 8, padding: '6px 8px', background: '#fff' }}>
+                                  <div style={{ flex: 1, minWidth: 0 }}>
+                                    <div style={{ fontSize: 12, fontWeight: 600, color: '#1E40AF', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                      {g.name ?? '未命名流程'}
+                                    </div>
+                                    <div style={{ fontSize: 11, color: '#6B7280', marginTop: 2, lineHeight: 1.5, wordBreak: 'break-all' }}>
+                                      {summarizeFlowGraph(g)}
+                                    </div>
+                                  </div>
+                                  <button onClick={() => openFlowCanvas(i + 1, sub, flow, ar)} style={{ ...miniBtn, borderColor: SEL, color: SEL, flexShrink: 0 }}>
+                                    {canEdit ? '编辑' : '查看'}
+                                  </button>
+                                  {canEdit && <button onClick={() => removeFlow(i + 1, sub)} style={{ ...miniBtn, borderColor: '#FCA5A5', color: '#DC2626', flexShrink: 0 }}>删除</button>}
                                 </div>
-                                <button onClick={() => openFlowCanvas(i + 1, sub, flow, ar)} style={{ ...miniBtn, borderColor: SEL, color: SEL, flexShrink: 0 }}>
-                                  {canEdit ? '编辑' : '查看'}
-                                </button>
-                                {canEdit && <button onClick={() => removeFlow(i + 1, sub)} style={{ ...miniBtn, borderColor: '#FCA5A5', color: '#DC2626', flexShrink: 0 }}>删除</button>}
-                              </div>
-                            ))}
+                              )
+                            })}
                             {canEdit && (
                               <button onClick={() => addFlow(i + 1, flow, ar)} style={{ ...miniBtn, borderColor: SEL, color: SEL, alignSelf: 'flex-start' }}>＋ 添加流程</button>
                             )}
@@ -1144,6 +1175,9 @@ export default function ReportTemplateConfig() {
                   })}
                 </tbody>
               </table>
+              <div style={{ marginTop: 8, fontSize: 12, color: '#6B7280', lineHeight: 1.7 }}>
+                说明：每行对应一个评分分段（即一种报告状态）。「业务流程配置」中每条流程 = 该状态下出现的一个操作按钮（如「确认通过」「转人工审核」）；流程名称在画布编辑器中设置。「查看」按钮由系统强制提供，不需配置。一个状态下可配置多个按钮（多条流程）。
+              </div>
               </div>
 
               {/* 分段业务流程 · 自由画布弹窗 */}
@@ -1191,9 +1225,11 @@ export default function ReportTemplateConfig() {
  * ========================================================================== */
 const pvTag = (c: string): React.CSSProperties => ({ padding: '1px 8px', fontSize: 11, fontWeight: 600, borderRadius: 999, color: c, border: `1px solid ${c}55`, background: `${c}14` })
 
-function ScoreCardPreview({ sd, min, max, score }: {
+function ScoreCardPreview({ sd, min, max, score, patchGrade, canEdit }: {
   sd: { displayComponent: DisplayComponent; grades: ScoreGrade[]; showDescription: boolean; showThresholdBar: boolean; showRiskTags: boolean }
   min: number; max: number; score: number
+  patchGrade: (i: number, fn: (g: ScoreGrade) => ScoreGrade) => void
+  canEdit: boolean
 }) {
   const range = Math.max(1, max - min)
   const pct = Math.max(0, Math.min(1, (score - min) / range))
@@ -1204,18 +1240,34 @@ function ScoreCardPreview({ sd, min, max, score }: {
     <span style={{ padding: '2px 10px', fontSize: 12, fontWeight: 600, borderRadius: 999, color: '#fff', background: color }}>{grade.grade}</span>
   )
 
-  /* 阈值刻度条：各分段按区间宽度占比着色，当前分段高亮 */
+  /* 阈值刻度条：以「分段自身覆盖区间」[barMin,barMax] 为分母（而非理论 min/max），四段铺满整条；
+     数字按分段边界百分比绝对定位，与彩条精确对齐 */
+  const barMin = sd.grades[0]?.minScore ?? min
+  const barMax = sd.grades[sd.grades.length - 1]?.maxScore ?? max
+  const barRange = Math.max(1, barMax - barMin)
   const thresholdBar = (
-    <div style={{ marginTop: 10, maxWidth: 420 }}>
-      <div style={{ display: 'flex', height: 8, borderRadius: 999, overflow: 'hidden' }}>
-        {sd.grades.map((g, i) => (
-          <div key={i} style={{ width: `${Math.max(0, (Math.min(g.maxScore, max) - Math.max(g.minScore, min)) / range) * 100}%`, background: g.color, opacity: g === grade ? 1 : 0.35 }} />
-        ))}
+    <div style={{ marginTop: 10, width: '100%' }}>
+      <div style={{ position: 'relative', height: 8, borderRadius: 999, background: '#E5E7EB', overflow: 'hidden' }}>
+        {sd.grades.map((g, i) => {
+          const left = ((Math.max(g.minScore, barMin) - barMin) / barRange) * 100
+          const width = ((Math.min(g.maxScore, barMax) - Math.max(g.minScore, barMin)) / barRange) * 100
+          return (
+            <div key={i} style={{ position: 'absolute', left: `${left}%`, width: `${Math.max(0, width)}%`, height: '100%', background: g.color, opacity: g === grade ? 1 : 0.35 }} />
+          )
+        })}
       </div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#9CA3AF', marginTop: 2 }}>
-        <span>{min}</span>
-        {sd.grades.slice(0, -1).map((g, i) => <span key={i}>{g.maxScore}</span>)}
-        <span>{max}</span>
+      <div style={{ position: 'relative', height: 16, marginTop: 3, width: '100%' }}>
+        {(() => {
+          const bounds = [barMin, ...sd.grades.slice(0, -1).map((g) => g.maxScore), barMax]
+          return bounds.map((b, i) => {
+            const leftPct = ((Math.min(Math.max(b, barMin), barMax) - barMin) / barRange) * 100
+            const align = i === 0 ? 'left' : i === bounds.length - 1 ? 'right' : 'center'
+            const translate = align === 'left' ? 'translateX(0)' : align === 'right' ? 'translateX(-100%)' : 'translateX(-50%)'
+            return (
+              <span key={i} style={{ position: 'absolute', left: `${leftPct}%`, transform: translate, fontSize: 11, color: i === 0 || i === bounds.length - 1 ? '#6B7280' : '#9CA3AF' }}>{b}</span>
+            )
+          })
+        })()}
       </div>
     </div>
   )
@@ -1245,7 +1297,7 @@ function ScoreCardPreview({ sd, min, max, score }: {
     )
   } else if (sd.displayComponent === '进度条') {
     visual = (
-      <div style={{ maxWidth: 420 }}>
+      <div style={{ width: '100%' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
           <span style={{ fontSize: 22, fontWeight: 800, color }}>{score} 分</span>
           {gradeChip}
@@ -1259,19 +1311,20 @@ function ScoreCardPreview({ sd, min, max, score }: {
       </div>
     )
   } else {
-    /* 仪表盘：半圆弧按分段着色 + 指针 */
+    /* 仪表盘：半圆弧按分段着色 + 指针；以分段覆盖区间[barMin,barMax]为分母，弧与指针对齐铺满整弧 */
     const cx = 90, cy = 84, R2 = 66
     const pt = (p: number, r: number) => ({ x: cx - r * Math.cos(p * Math.PI), y: cy - r * Math.sin(p * Math.PI) })
     const arc = (p1: number, p2: number, r: number) => {
       const a = pt(p1, r), b = pt(p2, r)
       return `M ${a.x.toFixed(1)} ${a.y.toFixed(1)} A ${r} ${r} 0 0 1 ${b.x.toFixed(1)} ${b.y.toFixed(1)}`
     }
-    const needle = pt(pct, R2 - 16)
+    const gPct = Math.max(0, Math.min(1, (score - barMin) / barRange))
+    const needle = pt(gPct, R2 - 16)
     visual = (
       <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
         <svg width="180" height="104" viewBox="0 0 180 104">
           {sd.grades.map((g, i) => {
-            const p1 = Math.max(0, (g.minScore - min) / range), p2 = Math.min(1, (g.maxScore - min) / range)
+            const p1 = Math.max(0, (g.minScore - barMin) / barRange), p2 = Math.min(1, (g.maxScore - barMin) / barRange)
             if (p2 <= p1) return null
             return <path key={i} d={arc(p1, p2, R2)} fill="none" stroke={g.color} strokeWidth="12" opacity={g === grade ? 1 : 0.35} />
           })}
@@ -1288,12 +1341,33 @@ function ScoreCardPreview({ sd, min, max, score }: {
     <div>
       {visual}
       {sd.showThresholdBar && thresholdBar}
-      {sd.showRiskTags && grade && (
-        <div style={{ display: 'flex', gap: 6, marginTop: 10, flexWrap: 'wrap' }}>
-          <span style={pvTag(color)}>风险{grade.riskLevel}</span>
-          <span style={pvTag('#64748B')}>{grade.autoResult}</span>
-        </div>
-      )}
+      {sd.showRiskTags && grade && (() => {
+        const gi = sd.grades.findIndex((g) => g === grade)
+        const editable = canEdit && gi >= 0
+        return (
+          <div style={{ display: 'flex', gap: 6, marginTop: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+            {editable ? (
+              <>
+                <select value={grade.riskLevel}
+                  onChange={(e) => patchGrade(gi, (g) => ({ ...g, riskLevel: e.target.value as RiskLevel }))}
+                  style={{ ...pvTag(color), cursor: 'pointer' }}>
+                  {(['低', '中', '高', '极高'] as RiskLevel[]).map((r) => <option key={r} value={r}>风险{r}</option>)}
+                </select>
+                <select value={grade.autoResult}
+                  onChange={(e) => patchGrade(gi, (g) => ({ ...g, autoResult: e.target.value as AutoResult }))}
+                  style={{ ...pvTag(AUTO_RESULT_COLOR[grade.autoResult]), cursor: 'pointer' }}>
+                  {AUTO_RESULT_LIST.map((r) => <option key={r} value={r}>{r}</option>)}
+                </select>
+              </>
+            ) : (
+              <>
+                <span style={pvTag(color)}>风险{grade.riskLevel}</span>
+                <span style={pvTag('#64748B')}>{grade.autoResult}</span>
+              </>
+            )}
+          </div>
+        )
+      })()}
       {sd.showDescription && grade?.description && (
         <div style={{ marginTop: 8, fontSize: 12, color: '#6B7280' }}>{grade.description}</div>
       )}

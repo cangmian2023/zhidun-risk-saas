@@ -564,6 +564,9 @@ export function getDecisionDetail(id: string): DecisionDetailData | null {
   if (row.approvalStatus === '已退回') {
     logs.push({ time: row.auditTime, operator: row.operator, action: '退回补充', detail: '退回补充材料后重新进件。' })
   }
+  // 示例豁免操作记录（与「统一豁免弹窗」产出一致：原因 + 双人复核 + 附件）
+  logs.push({ time: row.auditTime, operator: '风控专员-张磊', action: '标记豁免', detail: '信息核验项「运营商手机号实名核验」入网时长不足，经电话核实为本人新办卡，申请豁免。复核人：风控主管-王伟（已复核）。' })
+  logs.push({ time: row.auditTime, operator: '风控专员-张磊', action: '标记豁免', detail: '信用风控项「手机号入网仅 21 天」命中，附 6 个月通话记录佐证，申请豁免。复核人：风控主管-王伟（已复核）。' })
 
   const tpl = seedDecisionTemplates.find((t) => t.id === row.templateId)
   return {

@@ -317,21 +317,27 @@ export default function DecisionDetail() {
               <p className="rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-400">当前状态「{d.row.approvalStatus}」已终态，无需操作。</p>
             ) : (
               <div className="flex flex-wrap items-center gap-2">
-                {OPERATIONS.map((o) => {
-                  const rec = recOps.has(o.op)
-                  return (
-                    <button
-                      key={o.op}
-                      type="button"
-                      onClick={() => onOp(o.op)}
-                      className={rec
-                        ? 'rounded-lg bg-brand-600 px-3.5 py-1.5 text-xs font-medium text-white hover:bg-brand-700'
-                        : 'rounded-lg border border-slate-200 px-3.5 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50'}
-                    >
-                      {o.op}
-                    </button>
-                  )
-                })}
+                {/* 按分段渲染多按钮：来自报告模板「审核操作配置」的当前结论分段流程 */}
+                {actions.segmentButtons.map((b) => (
+                  <button
+                    key={`seg-${b.idx}`}
+                    type="button"
+                    onClick={() => actions.openSeg(b.idx)}
+                    className="rounded-lg bg-brand-600 px-3.5 py-1.5 text-xs font-medium text-white hover:bg-brand-700"
+                  >
+                    {b.label}
+                  </button>
+                ))}
+                {OPERATIONS.filter((o) => o.op !== '审批').map((o) => (
+                  <button
+                    key={o.op}
+                    type="button"
+                    onClick={() => onOp(o.op)}
+                    className="rounded-lg border border-slate-200 px-3.5 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50"
+                  >
+                    {o.op}
+                  </button>
+                ))}
               </div>
             )}
             {actionableOps.length > 0 && (
@@ -472,6 +478,7 @@ export default function DecisionDetail() {
       </div>
 
       {actions.Modal}
+      {actions.segModalEl}
     </div>
   )
 }

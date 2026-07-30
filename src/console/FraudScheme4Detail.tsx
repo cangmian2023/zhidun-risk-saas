@@ -22,6 +22,7 @@ import {
   type FraudScheme4WorkStatus,
   type FraudScheme4SysResult,
 } from './FraudScheme4Ops'
+import { ExemptModal } from './ExemptModal'
 
 const cn = (...c: (string | false | undefined)[]) => c.filter(Boolean).join(' ')
 
@@ -31,34 +32,6 @@ const levelCls: Record<FraudS4Level, string> = { 低: 'text-emerald-600', 中: '
 const levelBg: Record<FraudS4Level, string> = { 低: 'bg-emerald-100 text-emerald-700', 中: 'bg-amber-100 text-amber-700', 高: 'bg-orange-100 text-orange-700', 极高: 'bg-rose-100 text-rose-700' }
 const blacklistLevelCls: Record<'极高危' | '高危' | '中' | '低', string> = { 极高危: 'text-rose-600', 高危: 'text-rose-500', 中: 'text-amber-600', 低: 'text-emerald-600' }
 
-/* ========================= 弹窗 ========================= */
-function ExemptModal({ open, target, onClose, onSubmit }: { open: boolean; target: string; onClose: () => void; onSubmit: (reason: string, attachment: string) => void }) {
-  const [reason, setReason] = useState('')
-  const [fileName, setFileName] = useState('')
-  if (!open) return null
-  const canSubmit = reason.trim() !== '' && fileName !== ''
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30" onClick={onClose}>
-      <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
-        <h3 className="mb-1 text-base font-semibold text-ink-900">规则豁免 · 填写豁免原因</h3>
-        <p className="mb-3 text-xs text-slate-500">对象：{target}</p>
-        <textarea className="mb-3 h-24 w-full resize-none rounded-lg border border-slate-200 p-3 text-sm outline-none focus:border-brand-400" placeholder="请填写规则豁免原因…" value={reason} onChange={(e) => setReason(e.target.value)} />
-        <div className="mb-4">
-          <label className="mb-1.5 block text-xs font-medium text-slate-500">豁免附件<span className="ml-0.5 text-rose-500">*</span></label>
-          <label className="flex cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-5 text-center text-xs text-slate-400 transition hover:border-brand-300 hover:bg-brand-50/40">
-            <span className="text-lg">📎</span>
-            <span>{fileName ? `已选：${fileName}` : '点击上传豁免证明材料（必填）'}</span>
-            <input type="file" className="hidden" onChange={(e) => setFileName(e.target.files?.[0]?.name ?? '')} />
-          </label>
-        </div>
-        <div className="flex justify-end gap-2">
-          <Button variant="ghost" onClick={onClose}>取消</Button>
-          <Button variant="primary" disabled={!canSubmit} onClick={() => { if (canSubmit) { onSubmit(reason.trim(), fileName); setReason(''); setFileName(''); onClose() } }}>确认豁免</Button>
-        </div>
-      </div>
-    </div>
-  )
-}
 
 function NoteModal({ open, target, onClose, onSubmit }: { open: boolean; target: string; onClose: () => void; onSubmit: (text: string) => void }) {
   const [text, setText] = useState('')
@@ -313,6 +286,10 @@ export default function FraudScheme4Detail() {
     operator: l.operator,
     time: l.time,
     remark: [l.content, l.remark].filter(Boolean).join(' · '),
+    reviewer: l.reviewer,
+    reviewStatus: l.reviewStatus,
+    reviewTime: l.reviewTime,
+    attachments: l.attachments,
   }))
 
   const navCards: { id: string; label: string; tone: 'ok' | 'alert' | 'normal' }[] = [
@@ -790,7 +767,7 @@ export default function FraudScheme4Detail() {
         </nav>
       </div>
 
-      <ExemptModal open={modal.type === 'exempt'} target={modal.target} onClose={() => setModal({ type: null, target: '' })} onSubmit={(reason, attachment) => addLog({ type: '规则豁免', content: `豁免规则：${modal.target}`, operator: '风控专员-张磊', time: new Date().toLocaleString('zh-CN'), remark: `${reason}${attachment ? `（附件：${attachment}）` : ''}` })} />
+      <ExemptModal open={modal.type === 'exempt'} target={modal.target} onClose={() => setModal({ type: null, target: '' })} onSubmit={({ reason, reviewer, attachment }) => addLog({ type: '规则豁免', content: `豁免规则：${modal.target}`, operator: '风控专员-张磊', time: new Date().toLocaleString('zh-CN'), remark: `${reason}${attachment ? `（附件：${attachment}）` : ''}`, reviewer, reviewStatus: '已复核', reviewTime: new Date().toLocaleString('zh-CN') })} />
       <NoteModal open={modal.type === 'note'} target="" onClose={() => setModal({ type: null, target: '' })} onSubmit={(text) => addLog({ type: '录入备注', content: '录入人工复核备注', operator: '风控专员-张磊', time: new Date().toLocaleString('zh-CN'), remark: text })} />
     </div>
   )

@@ -199,6 +199,10 @@ export interface CreditKimiLog {
   time: string
   result?: string
   remark?: string
+  reviewer?: string
+  reviewStatus?: '待复核' | '已复核'
+  reviewTime?: string
+  attachments?: string[]
 }
 
 export function useCreditKimiActions(

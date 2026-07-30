@@ -1,8 +1,8 @@
 // 信息核验 · 状态/操作矩阵与操作弹窗
 // 依据交互说明：系统自动审核结果 × 工单人工状态 → 操作按钮；详情页与列表一致
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { Badge, Button, Modal } from '../components/ui'
-import { getAuditFlow, resolveActions, VERIFY_MACHINE, type ReviewResult } from './reportTemplateData'
+import { getAuditFlow, getSegmentButtons, resolveActions, VERIFY_MACHINE, type ReviewResult } from './reportTemplateData'
 import { ApprovalModal } from './ApprovalModal'
 
 /* ===================== 状态模型 ===================== */
@@ -409,6 +409,27 @@ function useVerifyActions(
   const ops = opsFor(row.sysResult, row.workStatus, includeAudit)
   const locked = viewLocked(row.workStatus)
   const effectiveGrade = grade ?? ivGradeOf(row)
+  const segmentButtons = useMemo(() => getSegmentButtons('info_verify', effectiveGrade), [effectiveGrade])
+  const [segModal, setSegModal] = useState<number | null>(null)
+  const openSeg = (idx: number) => setSegModal(idx)
+  const closeSeg = () => setSegModal(null)
+  const applySegAudit = (p: { result: ReviewResult; checks: string[]; opinionText: string; fileName: string }) => {
+    const af = getAuditFlow('info_verify', effectiveGrade, segModal ?? 0)
+    const fallback = p.result === '通过' ? '复核通过' : p.result === '驳回' ? '待审核' : '复核拒绝'
+    onApply({ operator: '初审：审核员 1；终审：主管 1', workStatus: (af.resultStates?.[p.result] as VerifyRow['workStatus']) ?? fallback })
+    flash?.(`已审批（${p.result}）｜审核事项 ${p.checks.length} 项｜意见：${p.opinionText}${p.fileName ? `｜附件：${p.fileName}` : ''}`)
+    closeSeg()
+  }
+  const segModalEl = (
+    <ApprovalModal
+      open={segModal !== null}
+      title={`审批决策 · ${segModal !== null ? segmentButtons[segModal]?.label ?? '审批' : '审批'}`}
+      conclusion={`案件结论：${row.sysResult}（${row.workStatus}）`}
+      auditFlow={getAuditFlow('info_verify', effectiveGrade, segModal ?? 0)}
+      onClose={closeSeg}
+      onConfirm={applySegAudit}
+    />
+  )
 
   const open = (op: OpKey) => {
     if (op === 'view') {
@@ -478,7 +499,7 @@ function useVerifyActions(
     </>
   )
 
-  return { ops, locked, open, renderModals }
+  return { ops, locked, open, renderModals, segmentButtons, openSeg, segModalEl }
 }
 
 function opVariant(op: OpKey): 'primary' | 'secondary' | 'ghost' {
@@ -498,11 +519,16 @@ export function VerifyRowActions({
   onView?: () => void
   flash?: (m: string) => void
 }) {
-  const { ops, locked, open, renderModals } = useVerifyActions(row, onApply, onView, flash)
+  const { ops, locked, open, renderModals, segmentButtons, openSeg, segModalEl } = useVerifyActions(row, onApply, onView, flash)
   return (
     <>
       <div className="flex flex-wrap items-center justify-start gap-3">
-        {ops.map((op) => {
+        {segmentButtons.map((b) => (
+          <button key={`seg-${b.idx}`} type="button" onClick={() => openSeg(b.idx)} className="whitespace-nowrap text-xs font-medium text-brand-600 hover:underline">
+            {b.label}
+          </button>
+        ))}
+        {ops.filter((op) => op !== 'audit').map((op) => {
           const isViewLocked = op === 'view' && locked
           return (
             <button
@@ -520,6 +546,7 @@ export function VerifyRowActions({
         })}
       </div>
       {renderModals}
+      {segModalEl}
     </>
   )
 }
@@ -541,8 +568,8 @@ export function VerifyActionBar({
   grade?: string
 }) {
   const base = useVerifyActions(row, onApply, onView, flash, true, grade)
-  const ops = showView ? base.ops : base.ops.filter((o) => o !== 'view')
-  const { locked, open, renderModals } = base
+  const ops = base.ops.filter((o) => o !== 'audit' && (showView || o !== 'view'))
+  const { locked, open, renderModals, segmentButtons, openSeg, segModalEl } = base
   return (
     <div className="rounded-2xl border border-slate-100 bg-white p-3 shadow-sm">
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
@@ -559,6 +586,11 @@ export function VerifyActionBar({
           <span className="text-sm text-slate-700">{row.operator}</span>
         </div>
         <div className="ml-auto flex flex-wrap items-center gap-2">
+          {segmentButtons.map((b) => (
+            <Button key={`seg-${b.idx}`} variant="primary" onClick={() => openSeg(b.idx)}>
+              {b.label}
+            </Button>
+          ))}
           {ops.map((op) => {
             if (op === 'view') {
               return (
@@ -576,6 +608,7 @@ export function VerifyActionBar({
         </div>
       </div>
       {renderModals}
+      {segModalEl}
     </div>
   )
 }

@@ -233,7 +233,7 @@ function DimensionPanel({ d, images }: { d: CreditDimension; images?: CreditImag
 
       {images && images.length > 0 && (
         <div>
-          <div className="mb-2 text-xs font-medium text-slate-500">影像资料（复用信息核验证件照展示）</div>
+          <div className="mb-2 text-xs font-medium text-slate-500">证件照展示</div>
           <div className="grid gap-4 md:grid-cols-2">
             {images.map((img) => <ImageCard key={img.key} img={img} />)}
           </div>
@@ -287,6 +287,10 @@ export default function CreditKimiDetail() {
     operator: l.operator,
     time: l.time,
     remark: [l.content, l.remark].filter(Boolean).join(' · '),
+    reviewer: l.reviewer,
+    reviewStatus: l.reviewStatus,
+    reviewTime: l.reviewTime,
+    attachments: l.attachments,
   }))
 
   const toneFor = (lv: CreditLevel): 'ok' | 'alert' | 'normal' =>

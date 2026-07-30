@@ -296,6 +296,7 @@ export interface SectionConfig {
   visible: boolean
   sourceType: SectionSource
   cardScoreMode?: CardScoreMode  // 本卡计分方向（达标加分 / 命中扣分 / 命中即拒）；缺省按 sourceType 推导
+  weight?: number          // 本卡权重：报告总分 = 基础分 + Σ(各卡计分 × 权重)；缺省 1
   homeTab?: 'content' | 'score' | 'flow' | 'log'  // 该段归属的编辑 Tab：'content'=报告内容配置；'score'=评分方案（如得分计算）；'flow'=审核操作（如结论与终审）；'log'=操作日志，由模板 showOpLog 开关控制，不在任何 Tab 编辑
   sourceName?: string   // 数据源名 / 接口名 / 规则集名
   ds?: DataSourceConfig      // sourceType === 'data_source'
@@ -400,13 +401,20 @@ export interface FlowGraphEdge {
   label?: string         // 连线语义（如 通过/拒绝/退回）
 }
 export interface FlowGraph {
+  name?: string          // 流程名称（运行时操作按钮的标识；如「确认通过」「转人工审核」）
   nodes: FlowGraphNode[]
   edges: FlowGraphEdge[]
 }
 
-/* 由分段的旧式勾选配置生成默认画布图（首次打开画布时兜底）；grade 用于给自动节点带上「总分介于分段区间」的触发条件 */
-export function buildDefaultFlowGraph(flow: BusinessFlowConfig, autoResult: AutoResult): FlowGraph {
-  const nodes: FlowGraphNode[] = [{ id: 'n_start', type: 'start', label: '评分完成', x: 40, y: 120 }]
+/* 自动结果 → 默认触发按钮文案（运行时操作栏按此渲染按钮；可在「审核操作配置」里逐流程改名） */
+export function defaultButtonName(autoResult: AutoResult): string {
+  return autoResult === '通过' ? '确认通过' : autoResult === '拒绝' ? '确认拒绝' : '转人工审核'
+}
+
+/* 由分段的旧式勾选配置生成默认画布图（首次打开画布时兜底）；起点节点即运行时触发按钮 */
+export function buildDefaultFlowGraph(flow: BusinessFlowConfig, autoResult: AutoResult, buttonName?: string): FlowGraph {
+  const startLabel = buttonName ?? defaultButtonName(autoResult)
+  const nodes: FlowGraphNode[] = [{ id: 'n_start', type: 'start', label: startLabel, buttonName: startLabel, x: 40, y: 120 }]
   const edges: FlowGraphEdge[] = []
   let prev = 'n_start'
   const link = (to: string, label?: string) => { edges.push({ id: `e_${prev}_${to}`, from: prev, to, label }); prev = to }
@@ -433,7 +441,7 @@ export function buildDefaultFlowGraph(flow: BusinessFlowConfig, autoResult: Auto
   const ex = prev === 'n_approve' || prev === 'n_reapprove'
   nodes.push({ id: 'n_end', type: 'end', label: '结束', x: ex ? 860 : 600, y: prev === 'n_resubmit' ? 60 : 120, showButton: true })
   link('n_end')
-  return { nodes, edges }
+  return { name: startLabel, nodes, edges }
 }
 
 /* 画布图 → 缩写摘要（回显在分段表「业务流程配置」列，如：评分完成 → 自动通过 → 人工确认(风控主管) → 结束） */
@@ -591,7 +599,7 @@ export function scopeLabel(scope: string[]): string {
 export const SECTION_CATALOG: Record<ReportType, { id: string; name: string; desc: string; fields: { id: string; name: string; desc: string }[] }[]> = {
   info_verify: [
     {
-      id: 'score_model', name: '得分计算', desc: '报告顶部的总风险值卡片：分数越大代表风险越高（0-100，≥80 为高危）。属于「评分方案」Tab，由已配置的数据源/规则集算得，不在「报告内容」里配来源。',
+      id: 'score_model', name: '得分计算', desc: '报告顶部的总风险值卡片：分数越大代表风险越高（0-100，≥80 为高危）。属于「自动审核」Tab，由已配置的数据源/规则集算得，不在「报告内容」里配来源。',
       fields: [
         { id: 'sv_big', name: '异常值大数字', desc: '顶部核心分数，如 82 分。勾掉则只保留等级标签' },
         { id: 'sv_denom', name: '满分分母', desc: '异常值的计算满分基准（固定 100）' },
@@ -605,7 +613,7 @@ export const SECTION_CATALOG: Record<ReportType, { id: string; name: string; des
       ],
     },
     {
-      id: 'conclusion_process', name: '结论与终审', desc: '系统自动结论 + 人工审核结果 + 终审操作入口，以及核验过程时间线。属于「审核操作」Tab，由已配置的数据源/规则集算得，不在「报告内容」里配来源。',
+      id: 'conclusion_process', name: '结论与终审', desc: '系统自动结论 + 人工审核结果 + 终审操作入口，以及核验过程时间线。属于「人工审核」Tab，由已配置的数据源/规则集算得，不在「报告内容」里配来源。',
       fields: [
         { id: 'cp_system', name: '系统结果', desc: '机器自动给出的处置结论（通过/预警/拒绝）' },
         { id: 'cp_manual', name: '人工审核', desc: '当前人工审核状态（待确认/已确认等）' },
@@ -996,6 +1004,7 @@ export function defaultFlowRow(gradeId: string, suggestionText: string): Busines
 function mkAuditGraph(
   autoResult: AutoResult,
   content: { checkItems: string[]; results: ReviewResult[]; opinion?: Partial<Record<ReviewResult, string[]>> },
+  buttonName?: string,
 ): FlowGraph {
   const opin: Record<ReviewResult, string[]> = {
     '通过': content.opinion?.['通过'] ?? ['正常通过'],
@@ -1003,9 +1012,11 @@ function mkAuditGraph(
     '拒绝': content.opinion?.['拒绝'] ?? ['风险过高，建议拒绝'],
   }
   const post: string = autoResult === '通过' ? '已通过' : autoResult === '拒绝' ? '已拒绝' : '已审核'
+  const startLabel = buttonName ?? defaultButtonName(autoResult)
   return {
+    name: startLabel,
     nodes: [
-      { id: 'n_start', type: 'start', label: '评分完成', x: 40, y: 140 },
+      { id: 'n_start', type: 'start', label: startLabel, buttonName: startLabel, x: 40, y: 140 },
       { id: 'n_audit', type: 'normal', label: '终审审核', x: 360, y: 140, role: '风控主管', checkItems: content.checkItems, results: content.results, opinionPresets: opin, postState: post },
       { id: 'n_end', type: 'end', label: '结束', x: 640, y: 140, showButton: true },
     ],
@@ -1235,7 +1246,8 @@ export interface ScoreSourceRow {
   sourceType: SectionSource
   mode: CardScoreMode
   countedItems: number   // 参与计分的展示项数
-  points: number         // 分值贡献：add 卡为正（满分）、deduct 卡为负（最大扣分）
+  points: number         // 分值贡献（已乘权重）：add 卡为正（满分×权重）、deduct 卡为负（最大扣分×权重）
+  weight: number         // 本卡权重
   rejectItems: number    // 命中即拒项数（命中直接拒贷，不走分段）
   visible: boolean
 }
@@ -1254,13 +1266,14 @@ export function computeScoreSummary(t: ReportTemplate): ScoreSummary {
     .sort((a, b) => a.order - b.order)
     .map((s) => {
       const r = computeSectionScore(s)
+      const w = s.weight ?? 1
       const rejectItems = r.mode === 'reject'
         ? s.fields.filter((f) => f.visible).length
         : s.fields.filter((f) => f.visible && f.hitReject).length
       return {
         id: s.id, name: s.sourceName || s.name, sourceType: s.sourceType, mode: r.mode,
         countedItems: r.mode === 'add' ? r.addCount : r.deductCount,
-        points: r.total, rejectItems, visible: s.visible,
+        points: r.total * w, weight: w, rejectItems, visible: s.visible,
       }
     })
   const enabled = rows.filter((r) => r.visible)
@@ -1651,7 +1664,7 @@ export interface AuditFlow {
  * 各报告类型共用：依据 suggestion 定位 GRADE_PRESETS 分段 → 取该分段 flowGraph 的最终人工节点。
  * 无模板 / 无人工节点时回退到通用默认。
  */
-export function getAuditFlow(type: ReportType, suggestion: string): AuditFlow {
+export function getAuditFlow(type: ReportType, suggestion: string, graphIndex = 0): AuditFlow {
   const fallback: AuditFlow = {
     nodeLabel: '审核建议',
     checkItems: ['资料完整性检查', '收入与负债评估'],
@@ -1664,7 +1677,7 @@ export function getAuditFlow(type: ReportType, suggestion: string): AuditFlow {
   const grade = gi >= 0 ? GRADE_PRESETS[type][gi] : undefined
   const flow = gi >= 0 ? tpl.businessFlow[gi + 1] : tpl.businessFlow[1]
   const autoResult: AutoResult = grade ? grade.autoResult : '转人工'
-  const g = flow?.flowGraphs?.[0] ?? buildDefaultFlowGraph(flow ?? defaultFlowRow('—', ''), autoResult)
+  const g = flow?.flowGraphs?.[graphIndex] ?? flow?.flowGraphs?.[0] ?? buildDefaultFlowGraph(flow ?? defaultFlowRow('—', ''), autoResult)
   const manual = g.nodes.filter((n) => n.results && n.results.length)
   if (!manual.length) return fallback
   const node = manual.reduce((a, b) => ((b.results?.length ?? 0) > (a.results?.length ?? 0) ? b : a))
@@ -1679,6 +1692,26 @@ export function getAuditFlow(type: ReportType, suggestion: string): AuditFlow {
 
 export function getDecisionAuditFlow(suggestion: string): AuditFlow {
   return getAuditFlow('decision', suggestion)
+}
+
+/**
+ * 运行时「按分段渲染多按钮」：返回当前评分/结论分段对应的全部触发按钮。
+ * 设计：每个评分分段有 N 条业务流程（businessFlow[i].flowGraphs）= N 个操作按钮，
+ * 按钮文案取自该流程 start 节点的 buttonName；无流程时回退到自动结果默认按钮。
+ */
+export function getSegmentButtons(type: ReportType, suggestion: string): { idx: number; label: string }[] {
+  const tpl = seedReportTemplates.find((t) => t.reportType === type)
+  if (!tpl) return [{ idx: 0, label: '审批' }]
+  const gi = GRADE_PRESETS[type].findIndex((g) => g.grade === suggestion)
+  const grade = gi >= 0 ? GRADE_PRESETS[type][gi] : undefined
+  const flow = gi >= 0 ? tpl.businessFlow[gi + 1] : tpl.businessFlow[1]
+  const autoResult: AutoResult = grade ? grade.autoResult : '转人工'
+  const graphs = flow?.flowGraphs ?? []
+  if (!graphs.length) return [{ idx: 0, label: defaultButtonName(autoResult) }]
+  return graphs.map((g, idx) => {
+    const start = g.nodes.find((n) => n.type === 'start')
+    return { idx, label: start?.buttonName ?? start?.label ?? defaultButtonName(autoResult) }
+  })
 }
 
 /* ============================================================================

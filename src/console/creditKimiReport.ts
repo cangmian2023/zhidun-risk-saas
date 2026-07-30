@@ -76,6 +76,10 @@ export interface CreditOpLog {
   time: string
   result?: string
   remark?: string
+  reviewer?: string
+  reviewStatus?: '待复核' | '已复核'
+  reviewTime?: string
+  attachments?: string[]
 }
 
 export interface CreditKimiReport {
@@ -301,6 +305,7 @@ function buildBaseCreditReport(): CreditKimiReport {
       { id: 'ck6', type: '还款能力评估', content: '月收入 25,000 元，负债率 35%', operator: '系统', time: '2026-07-21 14:54:10', result: '通过', remark: '还款能力一般' },
       { id: 'ck7', type: '身份真实性核验', content: '公安实名、银行卡四要素通过', operator: '系统', time: '2026-07-21 14:52:00', result: '通过', remark: '身份真实有效' },
       { id: 'ck8', type: '申请提交', content: '用户提交申请', operator: '系统', time: '2026-07-21 14:50:00', remark: '申请额度 ¥30,000' },
+      { id: 'ck9', type: '规则豁免', content: '豁免规则：手机号入网仅 21 天', operator: '风控专员-张磊', time: '2026-07-21 15:22:40', remark: '客户已提供近 6 个月通话记录，核实为本人长期使用号码，申请豁免入网时长限制。', reviewer: '风控主管-王伟', reviewStatus: '已复核', reviewTime: '2026-07-21 15:40:11', attachments: ['通话记录截图_20260721.png'] },
     ],
     product: '信用贷',
     channel: 'H5',
