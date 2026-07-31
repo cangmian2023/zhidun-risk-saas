@@ -63,9 +63,9 @@ export function creditGradeFromScore(score: number): string {
   return 'D'
 }
 
-/** 查看按钮是否置灰：仅「处理中」行禁止查看 */
-export function creditViewLocked(sys: CreditKimiSysResult): boolean {
-  return sys === '处理中'
+/** 查看按钮是否置灰：所有状态下均可用（不再置灰） */
+export function creditViewLocked(_sys: CreditKimiSysResult): boolean {
+  return false
 }
 
 export function CreditSysResultBadge({ value }: { value: CreditKimiSysResult }) {

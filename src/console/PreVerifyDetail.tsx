@@ -19,11 +19,11 @@ import { useModule } from '../store'
 import { VerifyActionBar, ivGradeFromRisk, type VerifyRow, type WorkStatus, type SysResult } from './VerifyOps'
 import { MergedOpTable } from '../components/MergedOpTable'
 import { ExemptModal } from './ExemptModal'
-import { computeSectionScore, seedReportTemplates, evalSpecialRules, SPECIAL_TRIGGER_LABEL, type SectionConfig } from './reportTemplateData'
+import { computeSectionScore, evalSpecialRules, SPECIAL_TRIGGER_LABEL, matchDimBand, DEFAULT_DIM_BANDS, type SectionConfig, type ReportTemplate, type DimLevel } from './reportTemplateData'
 import { TemplateDimTable } from './TemplateDimTable'
+import { useTemplate } from './templateStore'
 
-/* 模块级模板引用：报告详情读「报告模板 · 自动审核 Tab → 特殊命中规则」做决定/预警判定 */
-const ivTplRef = seedReportTemplates.find((t) => t.reportType === 'info_verify')
+// 模板引用改为组件内 useTemplate 订阅（见下方 ivTpl），配置页编辑可实时反映到详情
 
 const cn = (...c: (string | false | undefined)[]) => c.filter(Boolean).join(' ')
 
@@ -358,6 +358,17 @@ function ScoreTag({ pts, deduct }: { pts?: number; deduct?: boolean }) {
 // 卡片汇总得分（统一采用信用风控报告的大数字分样式：大数字 + 胶囊 + 权重提示行，置于卡体顶部）
 function CardScoreHead({ section, show }: { section?: SectionConfig; show?: boolean }) {
   if (!section || show === false) return null
+  // 展示型分段（用户基本信息等）：不显示计分头，避免误导为风险计分项
+  if (section.scoreable === false) {
+    return (
+      <div className="mb-4">
+        <div className="flex items-center gap-2">
+          <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-500">仅展示 · 不计入评分</span>
+        </div>
+        <div className="mt-1 text-xs text-slate-500">本分段为资料展示型，无分值、不影响报告总分</div>
+      </div>
+    )
+  }
   const sc = computeSectionScore(section)
   const w = section.weight ?? 1
   const deduct = sc.mode === 'deduct'
@@ -401,7 +412,7 @@ export default function PreVerifyDetail() {
 
   // 报告内容卡片的「卡片汇总得分 / 小项得分 / 权重」来自模板「报告内容配置」分段：
   // 现有内容卡片与模板分段按 section.id 一一对应（basic_info / id_images / single_verify / cross_fusion）。
-  const ivTpl = seedReportTemplates.find((t) => t.reportType === 'info_verify')
+  const ivTpl = useTemplate(undefined, 'info_verify')
   const ivSections: Record<string, SectionConfig | undefined> = ivTpl
     ? Object.fromEntries(ivTpl.sections.map((s) => [s.id, s]))
     : {}
@@ -455,7 +466,7 @@ export default function PreVerifyDetail() {
     { id: 'single', label: '多源核验单项报告', tone: d.single.some((s) => s.conclusion !== 'pass') ? 'alert' : 'ok' },
     { id: 'cross', label: '交叉融合综合报告', tone: d.cross.finalConclusion === 'reject' || d.cross.finalConclusion === 'warning' ? 'alert' : 'ok' },
     { id: 'merged-ops', label: '全量操作日志', tone: 'normal' },
-    { id: 'report-actions', label: '操作日志', tone: 'normal' },
+    { id: 'conclusion', label: '结论与终审', tone: 'normal' },
   ]
 
   return (
@@ -471,45 +482,12 @@ export default function PreVerifyDetail() {
         {/* ============ 左侧主内容区 ============ */}
         <div className="min-w-0 flex-1 space-y-4">
           {/* 信用值模型卡（结论级，领衔整份报告） */}
-          <ScoreModelCard cross={d.cross} />
+          <ScoreModelCard cross={d.cross} ivTpl={ivTpl} />
 
-          {/* 结论与终审操作（与列表一致：系统结果 / 工单状态 / 操作人员 + 操作按钮） */}
-          <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-card">
+          {/* 结论与终审操作（卡名来自「人工审核配置-标题」flow.title；与列表一致：自动审核 / 人工审核 / 操作人员 + 操作按钮） */}
+          <div id="conclusion" className="rounded-2xl border border-slate-100 bg-white p-5 shadow-card">
+            <div className="mb-3 text-base font-semibold text-ink-900">{ivTpl?.flowBlock?.title || '结论与终审'}</div>
             <VerifyActionBar row={verifyRow} onApply={applyVerify} flash={flash} showView={false} grade={ivGradeFromRisk(d.cross.riskScore)} />
-            {/* 核验过程（原「四、核验过程」卡片，弱化、横向置于卡底） */}
-            <div className="mt-4 border-t border-slate-100 pt-3">
-              <div className="mb-2 text-[11px] font-medium text-slate-400">核验过程</div>
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
-                {d.threads.map((t, i) => {
-                  // 每步按自身 conclusion 上色：预警=黄 / 拒绝=红 / 通过=绿
-                  const tone = (t.conclusion ?? 'pass') as Conclusion
-                  const dot =
-                    tone === 'reject'
-                      ? 'bg-rose-500'
-                      : tone === 'warning'
-                        ? 'bg-amber-500'
-                        : tone === 'pending'
-                          ? 'bg-slate-400'
-                          : 'bg-emerald-500'
-                  const res =
-                    tone === 'reject'
-                      ? 'text-rose-600'
-                      : tone === 'warning'
-                        ? 'text-amber-600'
-                        : tone === 'pending'
-                          ? 'text-slate-500'
-                          : 'text-emerald-600'
-                  return (
-                    <div key={t.id} className="flex items-center gap-1.5 text-[11px]">
-                      <span className="w-3 shrink-0 text-right tabular-nums text-slate-400">{i + 1}</span>
-                      <span className={cn('h-1.5 w-1.5 rounded-full', dot)} />
-                      <span className="text-slate-500">{t.name}</span>
-                      <span className={res}>{t.result}</span>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
           </div>
 
           {/* 一、用户基本信息 */}
@@ -795,8 +773,8 @@ export default function PreVerifyDetail() {
 // ========================= 交叉融合综合报告子组件 =========================
 
 // ========================= 信用值模型卡（顶部结论级） =========================
-function ScoreModelCard({ cross }: { cross: CrossCheck }) {
-  const { riskScore, scoreCap, overallRisk, scoreComponents, ruleVersion, ruleBasis, auditTime, reportId } = cross
+function ScoreModelCard({ cross, ivTpl }: { cross: CrossCheck; ivTpl?: ReportTemplate }) {
+  const { riskScore, scoreCap, overallRisk, scoreComponents, ruleVersion, auditTime, reportId } = cross
   // 信用值 = 满分 − 风险值（越高越安全）；阈值分段：≥80 高(绿) / 20–80 中(黄) / <20 低(红)
   const creditScore = scoreCap - riskScore
   const creditPct = Math.min(100, Math.max(0, (creditScore / scoreCap) * 100))
@@ -806,7 +784,6 @@ function ScoreModelCard({ cross }: { cross: CrossCheck }) {
     medium: 'bg-amber-100 text-amber-700',
     low: 'bg-emerald-100 text-emerald-700',
   }
-  const compTotal = scoreComponents.reduce((s, c) => s + c.score, 0)
   const jump = (id?: string) => {
     if (!id) return
     const el = document.getElementById(`conflict-${id}`)
@@ -819,10 +796,9 @@ function ScoreModelCard({ cross }: { cross: CrossCheck }) {
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <span className="inline-flex h-6 items-center rounded-md bg-slate-800 px-2 text-[11px] font-medium text-white">信用值</span>
-          <span className="text-sm font-semibold text-ink-900">信息核验综合信用模型</span>
+          <span className="text-sm font-semibold text-ink-900">{ivTpl?.scoreDisplay?.title || '信息核验综合信用模型'}</span>
           <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[11px] text-slate-500">规则版本 {ruleVersion}</span>
         </div>
-        <span className="text-[11px] text-slate-400">分值越大越安全 · 满分 {scoreCap}</span>
       </div>
 
       {/* 总分 + 刻度条 */}
@@ -867,7 +843,7 @@ function ScoreModelCard({ cross }: { cross: CrossCheck }) {
       {/* 特殊命中规则判定（读报告模板 · 自动审核 Tab → 特殊命中规则） */}
       {(() => {
         const hitNames = [...scoreComponents.map((c) => c.name), ...cross.riskTags.map((t) => t.label)]
-        const v = evalSpecialRules(ivTplRef?.specialRules, hitNames)
+        const v = evalSpecialRules(ivTpl?.specialRules, hitNames)
         if (!v.decisive.length && !v.warnings.length) return null
         return (
           <div className="mt-3 space-y-2">
@@ -910,63 +886,82 @@ function ScoreModelCard({ cross }: { cross: CrossCheck }) {
       {/* 评分维度分布（模板驱动：报告内容配置里每个集合一行；开关=模板「显示分段总分」） */}
       <TemplateDimTable reportType="info_verify" />
 
-      {/* 构成项分解表 */}
-      <div className="mt-4 overflow-hidden rounded-xl border border-slate-100">
-        <table className="w-full text-left text-xs">
-          <thead>
-            <tr className="bg-slate-50 text-slate-400">
-              <th className="px-3 py-2 font-medium">风险维度</th>
-              <th className="px-3 py-2 font-medium">用户情况</th>
-              <th className="px-3 py-2 text-right font-medium">得分</th>
-              <th className="px-3 py-2 text-right font-medium">权重</th>
-              <th className="px-3 py-2 text-center font-medium">等级</th>
-            </tr>
-          </thead>
-          <tbody>
-            {scoreComponents.map((c) => (
-              <tr
-                key={c.name}
-                className={cn(
-                  'border-t border-slate-100 align-top transition',
-                  c.traceTo ? 'cursor-pointer hover:bg-slate-50' : '',
-                  c.core ? 'bg-rose-50/40' : '',
-                )}
-                onClick={() => jump(c.traceTo)}
-                title={c.traceTo ? '点击定位到对应疑点详情' : undefined}
-              >
-                <td className="px-3 py-2.5">
-                  <div className="flex items-center gap-1.5">
-                    <span className="font-medium text-ink-900">{c.name}</span>
-                    {c.core && (
-                      <span className="rounded bg-rose-100 px-1.5 py-0.5 text-[10px] font-medium text-rose-700">核心因子</span>
-                    )}
-                  </div>
-                </td>
-                <td className="px-3 py-2.5 text-slate-500">{c.situation}</td>
-                <td className={cn('px-3 py-2.5 text-right font-semibold', c.level === 'high' ? 'text-rose-600' : c.level === 'medium' ? 'text-amber-600' : 'text-emerald-600')}>
-                  +{c.score}
-                </td>
-                <td className="px-3 py-2.5 text-right text-slate-400">{c.weight}</td>
-                <td className="px-3 py-2.5 text-center">
-                  <span className={cn('rounded px-1.5 py-0.5 text-[10px] font-medium', levelCls[c.level])}>{riskText[c.level]}</span>
-                </td>
-              </tr>
-            ))}
-            {/* 合计行 */}
-            <tr className="border-t border-slate-200 bg-slate-50">
-              <td className="px-3 py-2.5 font-semibold text-ink-900" colSpan={2}>信用值（满分−风险项累加）</td>
-              <td className={cn('px-3 py-2.5 text-right text-sm font-bold', bandColor)}>{Math.max(0, scoreCap - compTotal)}</td>
-              <td className="px-3 py-2.5" colSpan={2} />
-            </tr>
-          </tbody>
-        </table>
-      </div>
+      {/* 构成项分解表：由「自动审核配置-特殊命中规则」驱动（每条命中规则 = 一行风险维度/用户情况/得分/权重/等级） */}
+      {(() => {
+        const dimLevelToRisk = (lv: DimLevel | undefined): RiskLevel => (lv === '高' ? 'high' : lv === '中' ? 'medium' : 'low')
+        // 规则所属分段（用于缺省权重）：本卡片只拿到 ivTpl，按 section.id 自建查找表
+        const secMap: Record<string, SectionConfig | undefined> = Object.fromEntries(
+          (ivTpl?.sections ?? []).map((s) => [s.id, s]),
+        )
+        const specialBreakdown: ScoreComponent[] = (ivTpl?.specialRules ?? []).map((r) => {
+          const sec = secMap[r.sectionId]
+          const w = r.weight ?? sec?.weight ?? 1
+          const sc = r.score ?? 0
+          const dim = matchDimBand(sc, ivTpl?.dimBands ?? DEFAULT_DIM_BANDS)
+          return {
+            name: r.ruleName,
+            situation: `${SPECIAL_TRIGGER_LABEL[r.trigger]}·${r.sectionName}`,
+            score: sc,
+            weight: w,
+            level: dimLevelToRisk(dim?.level),
+            core: r.priority === 'decisive',
+            traceTo: undefined,
+          }
+        })
+        const rows = specialBreakdown.length > 0 ? specialBreakdown : scoreComponents
+        return (
+          <>
+            <div className="mt-4 overflow-hidden rounded-xl border border-slate-100">
+              <table className="w-full text-left text-xs">
+                <thead>
+                  <tr className="bg-slate-50 text-slate-400">
+                    <th className="px-3 py-2 font-medium">风险维度</th>
+                    <th className="px-3 py-2 font-medium">用户情况</th>
+                    <th className="px-3 py-2 text-right font-medium">得分</th>
+                    <th className="px-3 py-2 text-right font-medium">权重</th>
+                    <th className="px-3 py-2 text-center font-medium">等级</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map((c) => (
+                    <tr
+                      key={c.name}
+                      className={cn(
+                        'border-t border-slate-100 align-top transition',
+                        c.traceTo ? 'cursor-pointer hover:bg-slate-50' : '',
+                        c.core ? 'bg-rose-50/40' : '',
+                      )}
+                      onClick={() => jump(c.traceTo)}
+                      title={c.traceTo ? '点击定位到对应疑点详情' : undefined}
+                    >
+                      <td className="px-3 py-2.5">
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-medium text-ink-900">{c.name}</span>
+                          {c.core && (
+                            <span className="rounded bg-rose-100 px-1.5 py-0.5 text-[10px] font-medium text-rose-700">核心因子</span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-3 py-2.5 text-slate-500">{c.situation}</td>
+                      <td className={cn('px-3 py-2.5 text-right font-semibold', c.level === 'high' ? 'text-rose-600' : c.level === 'medium' ? 'text-amber-600' : 'text-emerald-600')}>
+                        +{c.score}
+                      </td>
+                      <td className="px-3 py-2.5 text-right text-slate-400">{c.weight}</td>
+                      <td className="px-3 py-2.5 text-center">
+                        <span className={cn('rounded px-1.5 py-0.5 text-[10px] font-medium', levelCls[c.level])}>{riskText[c.level]}</span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
 
-      {/* 判定规则 + 审计栏 */}
-      <p className="mt-3 rounded-lg bg-slate-50 px-3 py-2.5 text-[11px] leading-relaxed text-slate-500">{ruleBasis}</p>
-      <div className="mt-2 border-t border-slate-100 pt-2 text-[11px] leading-relaxed text-slate-400">
-        计算时间：{auditTime} | 规则版本：{ruleVersion} | 综合报告ID：{reportId}
-      </div>
+            <div className="mt-2 border-t border-slate-100 pt-2 text-[11px] leading-relaxed text-slate-400">
+              计算时间：{auditTime} | 规则版本：{ruleVersion} | 综合报告ID：{reportId}
+            </div>
+          </>
+        )
+      })()}
     </div>
   )
 }

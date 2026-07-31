@@ -78,7 +78,7 @@ export type ReviewOpKey =
   | 'confirmReject'  // 确认拒绝
 
 export function reviewOpsFor(m: ManualReview, s: DecisionSuggestion): { key: ReviewOpKey; label: string; disabled?: boolean }[] {
-  const locked = m === '核验计算中'
+  const locked = false // 查看在所有状态下均可用（不再置灰）
   return resolveActions(DECISION_REVIEW_MACHINE, { manualReview: m, suggestion: s }, { context: 'detail' }).map((a) => ({
     key: a.key as ReviewOpKey,
     label: a.label,
@@ -105,22 +105,35 @@ function opinionNeedsInput(label: string): boolean {
   return /调整|利率|额度|金额|期限|减免|降息|加息|上浮|下调/.test(label)
 }
 
-export function DecisionRowActions({ row, onAction }: { row: DecisionRow; onAction: (k: DecisionActionKey) => void }) {
+export function DecisionRowActions({ row, onAction, onSeg }: { row: DecisionRow; onAction: (k: DecisionActionKey) => void; onSeg?: (idx: number) => void }) {
   const ops = decisionOpsFor(row.suggestion, row.approvalStatus)
   const segmentButtons = useMemo(() => getSegmentButtons('decision', row.suggestion), [row.suggestion])
+  // 查看在所有状态下均可用，且默认排在第一位
+  const showView = ops.includes('view')
+  const restOps = ops.filter((op) => op !== 'view' && op !== 'audit')
   return (
     <div className="flex flex-wrap items-center justify-start gap-3">
+      {showView && (
+        <button
+          key="view"
+          type="button"
+          onClick={() => onAction('view')}
+          className="whitespace-nowrap text-xs font-medium text-brand-600 hover:underline"
+        >
+          {opLabel['view']}
+        </button>
+      )}
       {segmentButtons.map((b) => (
         <button
           key={`seg-${b.idx}`}
           type="button"
-          onClick={() => onAction('view')}
+          onClick={() => (onSeg ? onSeg(b.idx) : onAction('view'))}
           className="whitespace-nowrap text-xs font-medium text-brand-600 hover:underline"
         >
           {b.label}
         </button>
       ))}
-      {ops.filter((op) => op !== 'audit').map((op) => (
+      {restOps.map((op) => (
         <button
           key={op}
           type="button"

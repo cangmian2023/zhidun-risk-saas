@@ -11,7 +11,7 @@
  *  5. 详情页"当前登录角色"切换器，让使用者感知权限差异。
  *  6. 列表页移除大块权限矩阵（权限在角色说明里体现）。
  * ========================================================================== */
-import { useState, useMemo, useRef, useEffect } from 'react'
+import { useState, useMemo, useRef, useEffect, Fragment } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { PageHeader, Panel, Badge, Button, DetailHeader, SingleSelect, SearchSelect, Modal } from '../components/ui'
 import {
@@ -27,9 +27,11 @@ import {
   DimLevel, DimLevelBand, DEFAULT_DIM_BANDS, buildDimRows,
   SECTION_SOURCE_LABEL, RULE_SETS, DB_TYPES, mockTableColumns,
   SourceTestResult, testSourceConfig, parseCurl, buildCurl,
+  CardDisplayMode, CARD_DISPLAY_MODE_LABEL, FieldGroup,
   syncFlowToGrades, buildTemplate, seedReportTemplates,
   FlowGraph, buildDefaultFlowGraph, summarizeFlowGraph, defaultButtonName,
 } from './reportTemplateData'
+import { touch } from './templateStore'
 import FlowCanvasEditor from './FlowCanvasEditor'
 
 /* 显示方式下拉项：对给定类型推荐一个默认值，标注「（推荐）」以便用户可改 */
@@ -188,6 +190,7 @@ export default function ReportTemplateConfig() {
       const next = fn(t)
       const i = seedReportTemplates.findIndex((s) => s.id === t.id)
       if (i >= 0) seedReportTemplates[i] = next
+      touch() // 通知订阅了模板 store 的详情/预览组件实时刷新
       return next
     }))
   const patchSection = (sid: string, fn: (s: SectionConfig) => SectionConfig) =>
@@ -341,7 +344,27 @@ export default function ReportTemplateConfig() {
   const patchDs = (sid: string, fn: (d: DataSourceConfig) => DataSourceConfig) =>
     patchSection(sid, (s) => {
       const ds = fn(s.ds ?? { dbType: 'MySQL', ip: '', port: '3306', username: '', password: '', database: '', table: '', tableFields: [] })
-      const fields = ds.tableFields.map((tf, k) => ({ id: `dsf_${k}`, name: tf.name, desc: '数据库表字段', visible: tf.visible, sourceRef: tf.name, mask: /身份证|手机|银行卡|证件|姓名/.test(tf.name) }))
+      // 重建 fields 时保留已配置的计分字段，并以本行（DbField）的分值优先；
+      // 缺失时回落到旧字段配置，避免编辑任意一项后被整体清零导致本卡总分计算错误。
+      const fields = ds.tableFields.map((tf, k) => {
+        const old = s.fields.find((f) => f.sourceRef === tf.name) ?? s.fields[k]
+        return {
+          ...old,
+          id: old?.id ?? `dsf_${k}`,
+          name: tf.name,
+          desc: old?.desc ?? '数据库表字段',
+          visible: tf.visible,
+          sourceRef: tf.name,
+          displayLabel: tf.label ?? tf.name,
+          mask: /身份证|手机|银行卡|证件|姓名/.test(tf.name),
+          group: tf.group ?? old?.group,
+          scorePoints: tf.scorePoints ?? old?.scorePoints ?? 0,
+          condType: tf.condType ?? old?.condType,
+          condValue: tf.condValue ?? old?.condValue,
+          exempt: tf.exempt ?? old?.exempt,
+          conditions: tf.conditions ?? old?.conditions,
+        }
+      })
       return { ...s, ds, fields }
     })
   const readTable = (sid: string) => {
@@ -354,11 +377,48 @@ export default function ReportTemplateConfig() {
   /* 数据源字段级配置：显示名 / 显示方式 / 脱敏规则 / 说明（类型从表结构读取，只读） */
   const patchDsField = (sid: string, idx: number, fn: (f: DbField) => DbField) =>
     patchDs(sid, (d) => ({ ...d, tableFields: d.tableFields.map((t, k) => (k === idx ? fn(t) : t)) }))
+  /* 数据源 / 接口合集的内部分组（可命名）：增删分组、改名、删除时把组内字段并入首个剩余组 */
+  const patchFieldGroups = (sid: string, fn: (g: FieldGroup[] | undefined) => FieldGroup[] | undefined) =>
+    patchSection(sid, (s) => ({ ...s, fieldGroups: fn(s.fieldGroups) }))
+  const addFieldGroup = (sid: string) =>
+    patchFieldGroups(sid, (g) => {
+      const groups = g ?? []
+      const n = groups.length + 1
+      return [...groups, { id: `grp_${Date.now()}_${n}`, name: `新分组${n}` }]
+    })
+  const renameFieldGroup = (sid: string, gid: string, name: string) =>
+    patchFieldGroups(sid, (g) => (g ?? []).map((x) => (x.id === gid ? { ...x, name } : x)))
+  const delFieldGroup = (sid: string, gid: string) =>
+    patchSection(sid, (s) => {
+      const groups = (s.fieldGroups ?? []).filter((x) => x.id !== gid)
+      const fallback = groups[0]?.id
+      const ds = s.ds ? { ...s.ds, tableFields: s.ds.tableFields.map((t) => (t.group === gid ? { ...t, group: fallback } : t)) } : s.ds
+      const fields = s.fields.map((f) => (f.group === gid ? { ...f, group: fallback } : f))
+      return { ...s, fieldGroups: groups, ds, fields }
+    })
   /* —— 接口：API 地址 + 输入参数 + 输出字段 —— */
   const patchApi = (sid: string, fn: (a: ApiConfig) => ApiConfig) =>
     patchSection(sid, (s) => {
       const api = fn(s.api ?? { url: '', method: 'POST', headers: [], inputs: [], bodyType: 'none', bodyText: '', outputs: [] })
-      const fields = api.outputs.map((o, k) => ({ id: `apo_${k}`, name: o.label, desc: '接口输出字段', visible: o.visible ?? true, sourceRef: o.key }))
+      // 与数据源一致：重建 fields 时保留计分字段，并以本行（ApiOutput）的分值优先。
+      const fields = api.outputs.map((o, k) => {
+        const old = s.fields.find((f) => f.sourceRef === o.key) ?? s.fields[k]
+        return {
+          ...old,
+          id: old?.id ?? `apo_${k}`,
+          name: o.label,
+          desc: old?.desc ?? '接口输出字段',
+          visible: o.visible ?? true,
+          sourceRef: o.key,
+          displayLabel: o.label ?? o.key,
+          group: o.group ?? old?.group,
+          scorePoints: o.scorePoints ?? old?.scorePoints ?? 0,
+          condType: o.condType ?? old?.condType,
+          condValue: o.condValue ?? old?.condValue,
+          exempt: o.exempt ?? old?.exempt,
+          conditions: o.conditions ?? old?.conditions,
+        }
+      })
       return { ...s, api, fields }
     })
   const addApiInput = (sid: string) => patchApi(sid, (a) => ({ ...a, inputs: [...a.inputs, { key: '', from: '', required: false }] }))
@@ -595,6 +655,71 @@ export default function ReportTemplateConfig() {
     const tdStyle: React.CSSProperties = { textAlign: 'center', verticalAlign: 'middle', padding: '5px 6px', borderBottom: '1px solid #F1F5F9', fontSize: 12 }
     const disabled = opts.showMove ? (s.visible && visibleCount <= 1) : false
     const isFlash = s.id === flashId
+    /* 数据源 / 接口合集内部分组（可命名）：分组元数据 + 字段归属 + 有效分组（无分组字段归入首个组） */
+    const dsGroups = s.fieldGroups ?? []
+    const apiGroups = s.fieldGroups ?? []
+    const tableFieldsDs = s.ds?.tableFields ?? []
+    const apiOutputs = s.api?.outputs ?? []
+    const effGroup = (g?: string) => (g && (dsGroups.length ? dsGroups : apiGroups).find((x) => x.id === g) ? g : ((dsGroups.length ? dsGroups : apiGroups)[0]?.id ?? ''))
+    /* 数据源 / 接口字段行（含可选的「分组」列，用于把字段归入某个命名子组） */
+    const renderDsRow = (tf: DbField, realIdx: number) => {
+      const rowOn = tf.visible
+      const rowBg = tf.visible ? '#ECFDF5' : '#fff'
+      const grouped = dsGroups.length > 0
+      return (
+        <tr key={realIdx} style={{ borderBottom: '1px solid #F1F5F9', background: rowBg, opacity: rowOn ? 1 : 0.6 }}>
+          <td style={{ ...tdStyle, position: 'sticky', left: 0, zIndex: 2, background: rowBg, color: '#9CA3AF' }}>{realIdx + 1}</td>
+          <td style={{ ...tdStyle, position: 'sticky', left: 40, zIndex: 2, background: rowBg }}><input type="checkbox" disabled={!canEdit} checked={tf.visible} onChange={() => toggleDsField(s.id, realIdx)} style={{ width: 16, cursor: canEdit ? 'pointer' : 'not-allowed' }} /></td>
+          <td style={{ ...tdStyle, fontWeight: 500, color: '#374151', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', position: 'sticky', left: 88, zIndex: 2, background: rowBg, boxShadow: '1px 0 0 #E5E7EB' }}>{tf.name}</td>
+          {grouped && (
+            <td style={tdStyle}>
+              <select disabled={!canEdit || !rowOn} value={effGroup(tf.group)} onChange={(e) => patchDsField(s.id, realIdx, (f) => ({ ...f, group: e.target.value || undefined }))} style={{ ...inpSm, width: '100%', fontSize: 11 }}>
+                {dsGroups.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
+              </select>
+            </td>
+          )}
+          <td style={tdStyle}><input disabled={!canEdit || !rowOn} value={tf.label ?? ''} onChange={(e) => patchDsField(s.id, realIdx, (f) => ({ ...f, label: e.target.value }))} placeholder={tf.name} style={{ ...inpSm, width: '100%', fontSize: 12 }} /></td>
+          <td style={{ ...tdStyle, color: '#6B7280' }}>{tf.type}</td>
+          <td style={tdStyle}><select disabled={!canEdit || !rowOn} value={tf.container ?? recommendDbContainer(tf.type)} onChange={(e) => patchDsField(s.id, realIdx, (f) => ({ ...f, container: e.target.value as RenderContainer }))} style={{ ...inpSm, width: '100%', fontSize: 11 }} >{containerOptions(recommendDbContainer(tf.type)).map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}</select></td>
+          <td style={tdStyle}><select disabled={!canEdit || !rowOn} value={tf.maskRule ?? 'none'} onChange={(e) => patchDsField(s.id, realIdx, (f) => ({ ...f, maskRule: e.target.value as MaskRule }))} style={{ ...inpSm, width: '100%', fontSize: 11 }} >{Object.entries(MASK_RULE_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></td>
+          <td style={tdStyle}><select disabled={!canEdit || !rowOn} value={(tf.exempt ?? false) ? 'yes' : 'no'} onChange={(e) => patchDsField(s.id, realIdx, (f) => ({ ...f, exempt: e.target.value === 'yes' }))} style={{ ...inpSm, width: '100%', fontSize: 11 }} ><option value="no">不可以</option><option value="yes">可以</option></select></td>
+          <td style={tdStyle}>
+            <button disabled={!canEdit || !rowOn} onClick={() => setCondEdit({ kind: 'ds', sId: s.id, index: realIdx, name: tf.name })} style={{ ...miniBtn, fontSize: 11, ...((tf.conditions?.length ?? 0) > 0 ? { borderColor: SEL, color: SEL } : {}) }}>{tf.conditions?.length ? `已配 ${tf.conditions.length} 条` : '配置条件'}</button>
+          </td>
+          <td style={tdStyle}>{s.scoreable === false ? <span style={{ color: '#9CA3AF' }}>不计入</span> : <input type="number" disabled={!canEdit || !rowOn} value={cardDeduct ? -(tf.scorePoints ?? 0) : (tf.scorePoints ?? 0)} onChange={(e) => patchDsField(s.id, realIdx, (f) => ({ ...f, scorePoints: Math.abs(+e.target.value) || 0 }))} style={{ ...numSm, width: '100%', fontSize: 12, ...(cardDeduct ? { color: '#DC2626' } : {}) }} />}</td>
+          <td style={{ ...tdStyle, width: 10, padding: '5px 0' }} />
+        </tr>
+      )
+    }
+    const renderApiRow = (o: ApiOutput, realIdx: number) => {
+      const rowOn = o.visible ?? true
+      const rowBg = rowOn ? '#EFF6FF' : '#fff'
+      const grouped = apiGroups.length > 0
+      return (
+        <tr key={realIdx} style={{ borderBottom: '1px solid #F1F5F9', background: rowBg, opacity: rowOn ? 1 : 0.6 }}>
+          <td style={{ ...tdStyle, position: 'sticky', left: 0, zIndex: 2, background: rowBg, color: '#9CA3AF' }}>{realIdx + 1}</td>
+          <td style={{ ...tdStyle, position: 'sticky', left: 40, zIndex: 2, background: rowBg }}><input type="checkbox" disabled={!canEdit} checked={o.visible ?? true} onChange={() => patchApi(s.id, (a) => ({ ...a, outputs: a.outputs.map((x, k) => (k === realIdx ? { ...x, visible: !x.visible } : x)) }))} style={{ width: 16, cursor: canEdit ? 'pointer' : 'not-allowed' }} /></td>
+          <td style={{ ...tdStyle, position: 'sticky', left: 88, zIndex: 2, background: rowBg, boxShadow: '1px 0 0 #E5E7EB' }}><input disabled={!canEdit || !rowOn} value={o.key} onChange={(e) => patchApiOutput(s.id, realIdx, (x) => ({ ...x, key: e.target.value }))} placeholder="字段 key" style={{ ...inpSm, width: '100%', fontSize: 12 }} /></td>
+          {grouped && (
+            <td style={tdStyle}>
+              <select disabled={!canEdit || !rowOn} value={effGroup(o.group)} onChange={(e) => patchApiOutput(s.id, realIdx, (x) => ({ ...x, group: e.target.value || undefined }))} style={{ ...inpSm, width: '100%', fontSize: 11 }}>
+                {apiGroups.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
+              </select>
+            </td>
+          )}
+          <td style={tdStyle}><input disabled={!canEdit || !rowOn} value={o.label ?? ''} onChange={(e) => patchApiOutput(s.id, realIdx, (x) => ({ ...x, label: e.target.value }))} placeholder={o.key} style={{ ...inpSm, width: '100%', fontSize: 12 }} /></td>
+          <td style={tdStyle}><select disabled={!canEdit || !rowOn} value={o.type} onChange={(e) => { const t = e.target.value as ApiFieldType; patchApiOutput(s.id, realIdx, (x) => ({ ...x, type: t, container: defaultContainer(t) })) }} style={{ ...inpSm, width: '100%', fontSize: 11 }} >{Object.entries(API_FIELD_TYPE_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></td>
+          <td style={tdStyle}><select disabled={!canEdit || !rowOn} value={o.container ?? defaultContainer(o.type)} onChange={(e) => patchApiOutput(s.id, realIdx, (x) => ({ ...x, container: e.target.value as RenderContainer }))} style={{ ...inpSm, width: '100%', fontSize: 11 }} >{containerOptions(defaultContainer(o.type)).map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}</select></td>
+          <td style={tdStyle}>
+            <button disabled={!canEdit || !rowOn} onClick={() => setCondEdit({ kind: 'api', sId: s.id, index: realIdx, name: o.key })} style={{ ...miniBtn, fontSize: 11, ...((o.conditions?.length ?? 0) > 0 ? { borderColor: SEL, color: SEL } : {}) }}>{o.conditions?.length ? `已配 ${o.conditions.length} 条` : '配置条件'}</button>
+          </td>
+          <td style={tdStyle}>{s.scoreable === false ? <span style={{ color: '#9CA3AF' }}>不计入</span> : <input type="number" disabled={!canEdit || !rowOn} value={cardDeduct ? -(o.scorePoints ?? 0) : (o.scorePoints ?? 0)} onChange={(e) => patchApiOutput(s.id, realIdx, (x) => ({ ...x, scorePoints: Math.abs(+e.target.value) || 0 }))} style={{ ...numSm, width: '100%', fontSize: 12, ...(cardDeduct ? { color: '#DC2626' } : {}) }} />}</td>
+          <td style={tdStyle}><select disabled={!canEdit || !rowOn} value={(o.exempt ?? false) ? 'yes' : 'no'} onChange={(e) => patchApiOutput(s.id, realIdx, (x) => ({ ...x, exempt: e.target.value === 'yes' }))} style={{ ...inpSm, width: '100%', fontSize: 11 }} ><option value="no">不可以</option><option value="yes">可以</option></select></td>
+          <td style={tdStyle}>{canEdit && <button disabled={!rowOn} onClick={() => delApiOutput(s.id, realIdx)} style={{ ...miniBtn, color: '#DC2626', width: 28, padding: '2px 0' }}>×</button>}</td>
+          <td style={{ ...tdStyle, width: 10, padding: '5px 0' }} />
+        </tr>
+      )
+    }
     return (
       <div
         key={s.id}
@@ -610,6 +735,19 @@ export default function ReportTemplateConfig() {
           {st === 'tpl_copy'
             ? <span style={{ fontSize: 12, color: '#9CA3AF' }}>集成 {(s.copySections ?? []).length} 个列表{s.copyScoreRange ? <> · 总分区间 <b style={{ color: '#B45309' }}>{s.copyScoreRange.min} ~ {s.copyScoreRange.max}</b>（基础分 {s.copyScoreRange.base}）</> : null} · 配置只读</span>
             : <span style={{ fontSize: 12, color: '#9CA3AF' }}>展示 {s.fields.filter((f) => f.visible).length}/{s.fields.length}</span>}
+          <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: '#6B7280' }}>
+            显示方式
+            <select
+              value={s.displayMode ?? 'list'}
+              disabled={!canEdit}
+              onChange={(e) => patchSection(s.id, (x) => ({ ...x, displayMode: e.target.value as CardDisplayMode }))}
+              style={{ ...inpSm, fontSize: 12 }}
+            >
+              {(Object.keys(CARD_DISPLAY_MODE_LABEL) as CardDisplayMode[]).map((m) => (
+                <option key={m} value={m}>{CARD_DISPLAY_MODE_LABEL[m]}</option>
+              ))}
+            </select>
+          </label>
           <div style={{ display: 'flex', gap: 6, marginLeft: 'auto' }}>
             {opts.showDelete && canEdit && <button onClick={() => delSection(s.id)} style={{ ...miniBtn, color: '#DC2626', borderColor: '#FECACA' }}>删除分段</button>}
             {opts.showConfigBtn && st !== 'tpl_copy' && <button onClick={() => openConfig(s.id)} style={{ ...miniBtn, borderColor: SEL, color: SEL }}>配置来源</button>}
@@ -652,11 +790,25 @@ export default function ReportTemplateConfig() {
           {st === 'data_source' && (
             <div>
               {(s.ds?.tableFields ?? []).length === 0 && <div style={{ fontSize: 12, color: '#9CA3AF' }}>尚未读取表结构{opts.showConfigBtn ? '，点右上「配置来源」连接数据库并读取字段。' : '。'}</div>}
+              {canEdit && dsGroups.length > 0 && (
+                <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                  <span style={{ fontSize: 12, color: '#6B7280', fontWeight: 600 }}>内部分组：</span>
+                  {dsGroups.map((g) => (
+                    <span key={g.id} style={{ display: 'inline-flex', alignItems: 'center', gap: 2, background: '#F1F5F9', border: '1px solid #E5E7EB', borderRadius: 6, padding: '2px 4px 2px 6px' }}>
+                      <input value={g.name} onChange={(e) => renameFieldGroup(s.id, g.id, e.target.value)} style={{ ...inpSm, width: 92, fontSize: 12, border: 'none', background: 'transparent', fontWeight: 600 }} />
+                      <button onClick={() => delFieldGroup(s.id, g.id)} style={{ ...miniBtn, color: '#DC2626', padding: '0 4px', border: 'none', background: 'transparent' }} title="删除分组（组内字段并入首个分组）">×</button>
+                    </span>
+                  ))}
+                  <button onClick={() => addFieldGroup(s.id)} style={{ ...miniBtn, fontSize: 12 }}>+ 添加分组</button>
+                </div>
+              )}
               <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', minWidth: 900, borderCollapse: 'collapse', fontSize: 12, tableLayout: 'fixed', border: '1px solid #EEF2F7', borderRadius: 8, overflow: 'hidden' }}>
+              <table style={{ width: '100%', minWidth: dsGroups.length > 0 ? 980 : 900, borderCollapse: 'collapse', fontSize: 12, tableLayout: 'fixed', border: '1px solid #EEF2F7', borderRadius: 8, overflow: 'hidden' }}>
                 <colgroup>
                   <col style={{ width: 40 }} />
                   <col style={{ width: 48 }} />
+                  <col style={{ width: 120 }} />
+                  {dsGroups.length > 0 && <col style={{ width: 110 }} />}
                   <col style={{ width: 120 }} />
                   <col style={{ width: 64 }} />
                   <col style={{ width: 108 }} />
@@ -672,6 +824,8 @@ export default function ReportTemplateConfig() {
                     <th style={{ ...thStyle, position: 'sticky', left: 0, zIndex: 3, background: '#F1F5F9' }}>序号</th>
                     <th style={{ ...thStyle, position: 'sticky', left: 40, zIndex: 3, background: '#F1F5F9' }}>启用</th>
                     <th style={{ ...thStyle, position: 'sticky', left: 88, zIndex: 3, background: '#F1F5F9', boxShadow: '1px 0 0 #E5E7EB' }}>字段名（原始）</th>
+                    {dsGroups.length > 0 && <th style={thStyle}>分组</th>}
+                    <th style={thStyle}>显示标签</th>
                     <th style={thStyle}>类型</th>
                     <th style={thStyle}>显示方式</th>
                     <th style={thStyle}>脱敏规则</th>
@@ -682,26 +836,24 @@ export default function ReportTemplateConfig() {
                   </tr>
                 </thead>
                 <tbody>
-                  {(s.ds?.tableFields ?? []).map((tf, idx) => {
-                    const rowOn = tf.visible
-                    const rowBg = tf.visible ? '#ECFDF5' : '#fff'
-                    return (
-                    <tr key={idx} style={{ borderBottom: '1px solid #F1F5F9', background: rowBg, opacity: rowOn ? 1 : 0.6 }}>
-                      <td style={{ ...tdStyle, position: 'sticky', left: 0, zIndex: 2, background: rowBg, color: '#9CA3AF' }}>{idx + 1}</td>
-                      <td style={{ ...tdStyle, position: 'sticky', left: 40, zIndex: 2, background: rowBg }}><input type="checkbox"  disabled={!canEdit} checked={tf.visible} onChange={() => toggleDsField(s.id, idx)} style={{ width: 16, cursor: canEdit ? 'pointer' : 'not-allowed' }} /></td>
-                      <td style={{ ...tdStyle, fontWeight: 500, color: '#374151', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', position: 'sticky', left: 88, zIndex: 2, background: rowBg, boxShadow: '1px 0 0 #E5E7EB' }}>{tf.name}</td>
-                      <td style={{ ...tdStyle, color: '#6B7280' }}>{tf.type}</td>
-                      <td style={tdStyle}><select disabled={!canEdit || !rowOn} value={tf.container ?? recommendDbContainer(tf.type)} onChange={(e) => patchDsField(s.id, idx, (f) => ({ ...f, container: e.target.value as RenderContainer }))} style={{ ...inpSm, width: '100%', fontSize: 11 }} >{containerOptions(recommendDbContainer(tf.type)).map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}</select></td>
-                      <td style={tdStyle}><select disabled={!canEdit || !rowOn} value={tf.maskRule ?? 'none'} onChange={(e) => patchDsField(s.id, idx, (f) => ({ ...f, maskRule: e.target.value as MaskRule }))} style={{ ...inpSm, width: '100%', fontSize: 11 }} >{Object.entries(MASK_RULE_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></td>
-                      <td style={tdStyle}><select disabled={!canEdit || !rowOn} value={(tf.exempt ?? false) ? 'yes' : 'no'} onChange={(e) => patchDsField(s.id, idx, (f) => ({ ...f, exempt: e.target.value === 'yes' }))} style={{ ...inpSm, width: '100%', fontSize: 11 }} ><option value="no">不可以</option><option value="yes">可以</option></select></td>
-                      <td style={tdStyle}>
-                        <button disabled={!canEdit || !rowOn} onClick={() => setCondEdit({ kind: 'ds', sId: s.id, index: idx, name: tf.name })} style={{ ...miniBtn, fontSize: 11, ...((tf.conditions?.length ?? 0) > 0 ? { borderColor: SEL, color: SEL } : {}) }}>{tf.conditions?.length ? `已配 ${tf.conditions.length} 条` : '配置条件'}</button>
-                      </td>
-                      <td style={tdStyle}><input type="number" disabled={!canEdit || !rowOn} value={cardDeduct ? -(tf.scorePoints ?? 0) : (tf.scorePoints ?? 0)} onChange={(e) => patchDsField(s.id, idx, (f) => ({ ...f, scorePoints: Math.abs(+e.target.value) || 0 }))}  style={{ ...numSm, width: '100%', fontSize: 12, ...(cardDeduct ? { color: '#DC2626' } : {}) }} /></td>
-                      <td style={{ ...tdStyle, width: 10, padding: '5px 0' }} />
-                    </tr>
-                    )
-                  })}
+                  {dsGroups.length > 0 ? (
+                    dsGroups.map((g) => {
+                      const grpRows = tableFieldsDs.map((tf, realIdx) => ({ tf, realIdx })).filter(({ tf }) => effGroup(tf.group) === g.id)
+                      const shown = grpRows.filter(({ tf }) => tf.visible).length
+                      return (
+                        <Fragment key={g.id}>
+                          <tr>
+                            <td colSpan={12} style={{ background: '#F1F5F9', padding: '5px 10px', fontSize: 12, fontWeight: 600, color: '#374151', borderBottom: '1px solid #E5E7EB' }}>
+                              {g.name}<span style={{ marginLeft: 8, color: '#9CA3AF', fontWeight: 400 }}>展示 {shown}/{grpRows.length} 项</span>
+                            </td>
+                          </tr>
+                          {grpRows.map(({ tf, realIdx }) => renderDsRow(tf, realIdx))}
+                        </Fragment>
+                      )
+                    })
+                  ) : (
+                    tableFieldsDs.map((tf, realIdx) => renderDsRow(tf, realIdx))
+                  )}
                 </tbody>
               </table>
               </div>
@@ -710,12 +862,26 @@ export default function ReportTemplateConfig() {
           {st === 'api' && (
             <div>
               {(s.api?.outputs ?? []).length === 0 && <div style={{ fontSize: 12, color: '#9CA3AF' }}>暂无输出字段，点右下「＋ 输出字段」添加。</div>}
+              {canEdit && apiGroups.length > 0 && (
+                <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                  <span style={{ fontSize: 12, color: '#6B7280', fontWeight: 600 }}>内部分组：</span>
+                  {apiGroups.map((g) => (
+                    <span key={g.id} style={{ display: 'inline-flex', alignItems: 'center', gap: 2, background: '#F1F5F9', border: '1px solid #E5E7EB', borderRadius: 6, padding: '2px 4px 2px 6px' }}>
+                      <input value={g.name} onChange={(e) => renameFieldGroup(s.id, g.id, e.target.value)} style={{ ...inpSm, width: 92, fontSize: 12, border: 'none', background: 'transparent', fontWeight: 600 }} />
+                      <button onClick={() => delFieldGroup(s.id, g.id)} style={{ ...miniBtn, color: '#DC2626', padding: '0 4px', border: 'none', background: 'transparent' }} title="删除分组（组内字段并入首个分组）">×</button>
+                    </span>
+                  ))}
+                  <button onClick={() => addFieldGroup(s.id)} style={{ ...miniBtn, fontSize: 12 }}>+ 添加分组</button>
+                </div>
+              )}
               <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', minWidth: 920, borderCollapse: 'collapse', fontSize: 12, tableLayout: 'fixed', border: '1px solid #EEF2F7', borderRadius: 8, overflow: 'hidden' }}>
+              <table style={{ width: '100%', minWidth: apiGroups.length > 0 ? 1000 : 920, borderCollapse: 'collapse', fontSize: 12, tableLayout: 'fixed', border: '1px solid #EEF2F7', borderRadius: 8, overflow: 'hidden' }}>
                 <colgroup>
                   <col style={{ width: 40 }} />
                   <col style={{ width: 48 }} />
                   <col style={{ width: 110 }} />
+                  {apiGroups.length > 0 && <col style={{ width: 110 }} />}
+                  <col style={{ width: 120 }} />
                   <col style={{ width: 96 }} />
                   <col style={{ width: 96 }} />
                   <col style={{ width: 84 }} />
@@ -729,6 +895,8 @@ export default function ReportTemplateConfig() {
                     <th style={{ ...thStyle, position: 'sticky', left: 0, zIndex: 3, background: '#F1F5F9' }}>序号</th>
                     <th style={{ ...thStyle, position: 'sticky', left: 40, zIndex: 3, background: '#F1F5F9' }}>启用</th>
                     <th style={{ ...thStyle, position: 'sticky', left: 88, zIndex: 3, background: '#F1F5F9', boxShadow: '1px 0 0 #E5E7EB' }}>字段 key</th>
+                    {apiGroups.length > 0 && <th style={thStyle}>分组</th>}
+                    <th style={thStyle}>显示标签</th>
                     <th style={thStyle}>类型</th>
                     <th style={thStyle}>显示方式</th>
                     <th style={thStyle}>条件配置</th>
@@ -739,26 +907,24 @@ export default function ReportTemplateConfig() {
                   </tr>
                 </thead>
                 <tbody>
-                  {(s.api?.outputs ?? []).map((o, idx) => {
-                    const rowOn = o.visible ?? true
-                    const rowBg = rowOn ? '#EFF6FF' : '#fff'
-                    return (
-                    <tr key={idx} style={{ borderBottom: '1px solid #F1F5F9', background: rowBg, opacity: rowOn ? 1 : 0.6 }}>
-                      <td style={{ ...tdStyle, position: 'sticky', left: 0, zIndex: 2, background: rowBg, color: '#9CA3AF' }}>{idx + 1}</td>
-                      <td style={{ ...tdStyle, position: 'sticky', left: 40, zIndex: 2, background: rowBg }}><input type="checkbox"  disabled={!canEdit} checked={o.visible ?? true} onChange={() => patchApi(s.id, (a) => ({ ...a, outputs: a.outputs.map((x, k) => (k === idx ? { ...x, visible: !x.visible } : x)) }))} style={{ width: 16, cursor: canEdit ? 'pointer' : 'not-allowed' }} /></td>
-                      <td style={{ ...tdStyle, position: 'sticky', left: 88, zIndex: 2, background: rowBg, boxShadow: '1px 0 0 #E5E7EB' }}><input disabled={!canEdit || !rowOn} value={o.key} onChange={(e) => patchApiOutput(s.id, idx, (x) => ({ ...x, key: e.target.value }))} placeholder="字段 key" style={{ ...inpSm, width: '100%', fontSize: 12 }} /></td>
-                      <td style={tdStyle}><select disabled={!canEdit || !rowOn} value={o.type} onChange={(e) => { const t = e.target.value as ApiFieldType; patchApiOutput(s.id, idx, (x) => ({ ...x, type: t, container: defaultContainer(t) })) }} style={{ ...inpSm, width: '100%', fontSize: 11 }} >{Object.entries(API_FIELD_TYPE_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></td>
-                      <td style={tdStyle}><select disabled={!canEdit || !rowOn} value={o.container ?? defaultContainer(o.type)} onChange={(e) => patchApiOutput(s.id, idx, (x) => ({ ...x, container: e.target.value as RenderContainer }))} style={{ ...inpSm, width: '100%', fontSize: 11 }} >{containerOptions(defaultContainer(o.type)).map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}</select></td>
-                      <td style={tdStyle}>
-                        <button disabled={!canEdit || !rowOn} onClick={() => setCondEdit({ kind: 'api', sId: s.id, index: idx, name: o.key })} style={{ ...miniBtn, fontSize: 11, ...((o.conditions?.length ?? 0) > 0 ? { borderColor: SEL, color: SEL } : {}) }}>{o.conditions?.length ? `已配 ${o.conditions.length} 条` : '配置条件'}</button>
-                      </td>
-                      <td style={tdStyle}><input type="number" disabled={!canEdit || !rowOn} value={cardDeduct ? -(o.scorePoints ?? 0) : (o.scorePoints ?? 0)} onChange={(e) => patchApiOutput(s.id, idx, (x) => ({ ...x, scorePoints: Math.abs(+e.target.value) || 0 }))}  style={{ ...numSm, width: '100%', fontSize: 12, ...(cardDeduct ? { color: '#DC2626' } : {}) }} /></td>
-                      <td style={tdStyle}><select disabled={!canEdit || !rowOn} value={(o.exempt ?? false) ? 'yes' : 'no'} onChange={(e) => patchApiOutput(s.id, idx, (x) => ({ ...x, exempt: e.target.value === 'yes' }))} style={{ ...inpSm, width: '100%', fontSize: 11 }} ><option value="no">不可以</option><option value="yes">可以</option></select></td>
-                      <td style={tdStyle}>{canEdit && <button disabled={!rowOn} onClick={() => delApiOutput(s.id, idx)}  style={{ ...miniBtn, color: '#DC2626', width: 28, padding: '2px 0' }}>×</button>}</td>
-                      <td style={{ ...tdStyle, width: 10, padding: '5px 0' }} />
-                    </tr>
-                    )
-                  })}
+                  {apiGroups.length > 0 ? (
+                    apiGroups.map((g) => {
+                      const grpRows = apiOutputs.map((o, realIdx) => ({ o, realIdx })).filter(({ o }) => effGroup(o.group) === g.id)
+                      const shown = grpRows.filter(({ o }) => o.visible !== false).length
+                      return (
+                        <Fragment key={g.id}>
+                          <tr>
+                            <td colSpan={12} style={{ background: '#F1F5F9', padding: '5px 10px', fontSize: 12, fontWeight: 600, color: '#374151', borderBottom: '1px solid #E5E7EB' }}>
+                              {g.name}<span style={{ marginLeft: 8, color: '#9CA3AF', fontWeight: 400 }}>展示 {shown}/{grpRows.length} 项</span>
+                            </td>
+                          </tr>
+                          {grpRows.map(({ o, realIdx }) => renderApiRow(o, realIdx))}
+                        </Fragment>
+                      )
+                    })
+                  ) : (
+                    apiOutputs.map((o, realIdx) => renderApiRow(o, realIdx))
+                  )}
                 </tbody>
               </table>
               </div>
@@ -814,7 +980,7 @@ export default function ReportTemplateConfig() {
                           <td style={tdStyle}>
                             <button disabled={!canEdit || !rowOn} onClick={() => setCondEdit({ kind: 'rule', sId: s.id, fid: f.id, name: f.name })} style={{ ...miniBtn, fontSize: 11, ...((f.conditions?.length ?? 0) > 0 ? { borderColor: SEL, color: SEL } : {}) }}>{f.conditions?.length ? `已配 ${f.conditions.length} 条` : '配置条件'}</button>
                           </td>
-                          <td style={tdStyle}><input type="number" disabled={!canEdit || !rowOn} value={-(f.scorePoints ?? 0)} onChange={(e) => patchField(s.id, f.id, (x) => ({ ...x, scorePoints: Math.abs(+e.target.value) || 0 }))}  style={{ ...numSm, width: '100%', fontSize: 12, color: '#DC2626' }} /></td>
+                          <td style={tdStyle}>{s.scoreable === false ? <span style={{ color: '#9CA3AF' }}>不计入</span> : <input type="number" disabled={!canEdit || !rowOn} value={-(f.scorePoints ?? 0)} onChange={(e) => patchField(s.id, f.id, (x) => ({ ...x, scorePoints: Math.abs(+e.target.value) || 0 }))}  style={{ ...numSm, width: '100%', fontSize: 12, color: '#DC2626' }} />}</td>
                           <td style={{ ...tdStyle, width: 10, padding: '5px 0' }} />
                         </tr>
                         )
@@ -829,6 +995,15 @@ export default function ReportTemplateConfig() {
           {/* —— 本卡总分（按卡片级计分方向与各展示项计分配置自动汇总，只读） —— */}
           <div style={{ padding: '8px 12px', background: '#F8FAFC', borderTop: '1px dashed #E5E7EB', display: 'flex', alignItems: 'center', gap: 18, flexWrap: 'wrap' }}>
             {(() => {
+              if (s.scoreable === false) {
+                return (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: '#374151' }}>计分方式</span>
+                    <span style={{ fontSize: 14, fontWeight: 700, color: '#6B7280' }}>仅展示 · 不计入评分</span>
+                    <span style={{ fontSize: 12, color: '#6B7280' }}>该分段为资料展示型，无分值、不影响本卡总分与报告总分</span>
+                  </div>
+                )
+              }
               const r = computeSectionScore(s)
               if (r.mode === 'reject') {
                 return (
@@ -962,77 +1137,6 @@ export default function ReportTemplateConfig() {
                     <button onClick={() => setCopyPick(true)} style={{ ...miniBtn, borderColor: '#FDE68A', color: '#B45309' }}>＋ 复制现有模板</button>
                   </div>
                 )}
-              </div>
-              {/* ===== 评分维度分布：报告详情首卡的得分列表（每个来源卡片 = 一行，逐维度独立配 低/中/高 档位） ===== */}
-              <div style={{ marginBottom: 18, border: '1px solid #E5E7EB', borderRadius: 10, background: '#F8FAFC', overflow: 'hidden' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', borderBottom: '1px solid #E5E7EB' }}>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600, color: '#374151', cursor: canEdit ? 'pointer' : 'default' }}>
-                    <input type="checkbox" disabled={!canEdit} checked={active.showSectionTotals}
-                      onChange={(e) => patch((t) => ({ ...t, showSectionTotals: e.target.checked }))} />
-                    显示分段总分
-                  </label>
-                  <span style={{ fontSize: 12, color: active.showSectionTotals ? '#047857' : '#9CA3AF' }}>
-                    {active.showSectionTotals ? '各集合展示汇总得分，并在报告详情首卡显示下方「评分维度分布」列表' : '不展示集合汇总得分，报告详情首卡不显示评分维度分布列表'}
-                  </span>
-                </div>
-
-                <div style={active.showSectionTotals ? { padding: 12 } : { padding: 12, opacity: 0.45, pointerEvents: 'none', userSelect: 'none' }}>
-                  {/* 逐维度档位配置表：每个维度独立配 低/中/高 区间与说明（表格内、增加到低/中/高列） */}
-                  <div style={{ fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 6 }}>评分维度分布（{dimRows.length} 个集合 · 报告详情首卡按此渲染，每个维度独立配 低/中/高 档位）</div>
-                  <div style={{ border: '1px solid #E5E7EB', borderRadius: 8, overflow: 'hidden', background: '#fff', overflowX: 'auto' }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12, minWidth: 900 }}>
-                      <thead>
-                        <tr style={{ background: '#F1F5F9', color: '#94A3B8' }}>
-                          <th style={{ ...dimTh, textAlign: 'left' }}>维度</th>
-                          <th style={{ ...dimTh, textAlign: 'right', width: 64 }}>得分</th>
-                          <th style={{ ...dimTh, textAlign: 'right', width: 56 }}>权重</th>
-                          <th style={{ ...dimTh, textAlign: 'center', minWidth: 150 }}>低档（区间·说明）</th>
-                          <th style={{ ...dimTh, textAlign: 'center', minWidth: 150 }}>中档（区间·说明）</th>
-                          <th style={{ ...dimTh, textAlign: 'center', minWidth: 150 }}>高档（区间·说明）</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {dimRows.length === 0 && (
-                          <tr><td colSpan={6} style={{ ...dimTd, color: '#9CA3AF', textAlign: 'center' }}>「报告内容配置」里还没有启用的来源卡片</td></tr>
-                        )}
-                        {dimRows.map((r) => {
-                          const sec = sections.find((s) => s.id === r.id)
-                          const secBands = sec?.dimBands ?? active.dimBands ?? DEFAULT_DIM_BANDS
-                          return (
-                            <tr key={r.id} style={{ borderTop: '1px solid #F1F5F9' }}>
-                              <td style={{ ...dimTd, fontWeight: 600, color: '#111827' }}>{r.name}</td>
-                              <td style={{ ...dimTd, textAlign: 'right', fontWeight: 700, color: r.score < 0 ? '#E11D48' : '#059669' }}>{r.score < 0 ? '−' : '+'}{Math.abs(r.score)}</td>
-                              <td style={{ ...dimTd, textAlign: 'right', color: '#9CA3AF' }}>{r.weightPct}%</td>
-                              {(['低', '中', '高'] as DimLevel[]).map((lv) => {
-                                const bi = secBands.findIndex((b) => b.level === lv)
-                                const b = secBands[bi]
-                                return (
-                                  <td key={lv} style={{ ...dimTd, verticalAlign: 'top' }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: 4, whiteSpace: 'nowrap' }}>
-                                      <input type="number" disabled={!canEdit} value={b?.min ?? 0}
-                                        onChange={(e) => patchSectionDimBand(r.id, bi, { min: Number(e.target.value) })}
-                                        style={{ ...inpSm, width: 54 }} />
-                                      <span style={{ color: '#9CA3AF' }}>~</span>
-                                      <input type="number" disabled={!canEdit} value={b?.max ?? 0}
-                                        onChange={(e) => patchSectionDimBand(r.id, bi, { max: Number(e.target.value) })}
-                                        style={{ ...inpSm, width: 54 }} />
-                                    </div>
-                                    <input disabled={!canEdit} value={b?.note ?? ''} placeholder={`${lv}档说明`}
-                                      onChange={(e) => patchSectionDimBand(r.id, bi, { note: e.target.value })}
-                                      style={{ ...inpSm, width: '100%', marginTop: 4 }} />
-                                  </td>
-                                )
-                              })}
-                            </tr>
-                          )
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-                  <div style={{ marginTop: 8, fontSize: 12, color: '#9CA3AF' }}>
-                    维度 = 集合名称 · 得分 = 本卡汇总得分 · 权重 = 本卡权重占比 · 低/中/高 区间与说明逐维度独立配置（不再全局共用一套）。
-                  </div>
-                </div>
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -1394,6 +1498,77 @@ export default function ReportTemplateConfig() {
                     共 <b>{(active.specialRules ?? []).filter((r) => r.priority === 'decisive').length}</b> 条决定规则：报告详情将优先判定这些规则，触发后直接出结论（多条同时触发取最严：拒绝 &gt; 转人工 &gt; 通过），总分仅作参考展示。
                   </div>
                 )}
+              </div>
+              {/* ===== 评分维度分布：报告详情首卡的得分列表（每个来源卡片 = 一行，逐维度独立配 低/中/高 档位） ===== */}
+              <div style={{ marginBottom: 18, border: '1px solid #E5E7EB', borderRadius: 10, background: '#F8FAFC', overflow: 'hidden' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', borderBottom: '1px solid #E5E7EB' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600, color: '#374151', cursor: canEdit ? 'pointer' : 'default' }}>
+                    <input type="checkbox" disabled={!canEdit} checked={active.showSectionTotals}
+                      onChange={(e) => patch((t) => ({ ...t, showSectionTotals: e.target.checked }))} />
+                    显示分段总分
+                  </label>
+                  <span style={{ fontSize: 12, color: active.showSectionTotals ? '#047857' : '#9CA3AF' }}>
+                    {active.showSectionTotals ? '各集合展示汇总得分，并在报告详情首卡显示下方「评分维度分布」列表' : '不展示集合汇总得分，报告详情首卡不显示评分维度分布列表'}
+                  </span>
+                </div>
+
+                <div style={active.showSectionTotals ? { padding: 12 } : { padding: 12, opacity: 0.45, pointerEvents: 'none', userSelect: 'none' }}>
+                  {/* 逐维度档位配置表：每个维度独立配 低/中/高 区间与说明（表格内、增加到低/中/高列） */}
+                  <div style={{ fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 6 }}>评分维度分布（{dimRows.length} 个集合 · 报告详情首卡按此渲染，每个维度独立配 低/中/高 档位）</div>
+                  <div style={{ border: '1px solid #E5E7EB', borderRadius: 8, overflow: 'hidden', background: '#fff', overflowX: 'auto' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12, minWidth: 900 }}>
+                      <thead>
+                        <tr style={{ background: '#F1F5F9', color: '#94A3B8' }}>
+                          <th style={{ ...dimTh, textAlign: 'left' }}>维度</th>
+                          <th style={{ ...dimTh, textAlign: 'right', width: 64 }}>得分</th>
+                          <th style={{ ...dimTh, textAlign: 'right', width: 56 }}>权重</th>
+                          <th style={{ ...dimTh, textAlign: 'center', minWidth: 150 }}>低档（区间·说明）</th>
+                          <th style={{ ...dimTh, textAlign: 'center', minWidth: 150 }}>中档（区间·说明）</th>
+                          <th style={{ ...dimTh, textAlign: 'center', minWidth: 150 }}>高档（区间·说明）</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {dimRows.length === 0 && (
+                          <tr><td colSpan={6} style={{ ...dimTd, color: '#9CA3AF', textAlign: 'center' }}>「报告内容配置」里还没有启用的来源卡片</td></tr>
+                        )}
+                        {dimRows.map((r) => {
+                          const sec = sections.find((s) => s.id === r.id)
+                          const secBands = sec?.dimBands ?? active.dimBands ?? DEFAULT_DIM_BANDS
+                          return (
+                            <tr key={r.id} style={{ borderTop: '1px solid #F1F5F9' }}>
+                              <td style={{ ...dimTd, fontWeight: 600, color: '#111827' }}>{r.name}</td>
+                              <td style={{ ...dimTd, textAlign: 'right', fontWeight: 700, color: r.score < 0 ? '#E11D48' : '#059669' }}>{r.score < 0 ? '−' : '+'}{Math.abs(r.score)}</td>
+                              <td style={{ ...dimTd, textAlign: 'right', color: '#9CA3AF' }}>{r.weightPct}%</td>
+                              {(['低', '中', '高'] as DimLevel[]).map((lv) => {
+                                const bi = secBands.findIndex((b) => b.level === lv)
+                                const b = secBands[bi]
+                                return (
+                                  <td key={lv} style={{ ...dimTd, verticalAlign: 'top' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 4, whiteSpace: 'nowrap' }}>
+                                      <input type="number" disabled={!canEdit} value={b?.min ?? 0}
+                                        onChange={(e) => patchSectionDimBand(r.id, bi, { min: Number(e.target.value) })}
+                                        style={{ ...inpSm, width: 54 }} />
+                                      <span style={{ color: '#9CA3AF' }}>~</span>
+                                      <input type="number" disabled={!canEdit} value={b?.max ?? 0}
+                                        onChange={(e) => patchSectionDimBand(r.id, bi, { max: Number(e.target.value) })}
+                                        style={{ ...inpSm, width: 54 }} />
+                                    </div>
+                                    <input disabled={!canEdit} value={b?.note ?? ''} placeholder={`${lv}档说明`}
+                                      onChange={(e) => patchSectionDimBand(r.id, bi, { note: e.target.value })}
+                                      style={{ ...inpSm, width: '100%', marginTop: 4 }} />
+                                  </td>
+                                )
+                              })}
+                            </tr>
+                          )
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                  <div style={{ marginTop: 8, fontSize: 12, color: '#9CA3AF' }}>
+                    维度 = 集合名称 · 得分 = 本卡汇总得分 · 权重 = 本卡权重占比 · 低/中/高 区间与说明逐维度独立配置（不再全局共用一套）。
+                  </div>
+                </div>
               </div>
               </div>
             </Panel>

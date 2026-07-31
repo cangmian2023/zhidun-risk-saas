@@ -76,8 +76,8 @@ export function opsFor(sys: SysResult, work: WorkStatus, includeAudit = false): 
   )
 }
 
-export function viewLocked(work: WorkStatus): boolean {
-  return work === '核验计算中'
+export function viewLocked(_work: WorkStatus): boolean {
+  return false // 查看在所有状态下均可用（不再置灰）
 }
 
 const SYS_KIND: Record<SysResult, 'gray' | 'green' | 'red' | 'amber'> = {
@@ -523,27 +523,35 @@ export function VerifyRowActions({
   return (
     <>
       <div className="flex flex-wrap items-center justify-start gap-3">
+        {/* 查看：所有状态均可用，固定排操作列第一位（需求：查看所有状态都可用、默认在操作列第一位） */}
+        {ops.includes('view') && (
+          <button
+            key="view"
+            type="button"
+            disabled={locked}
+            onClick={() => open('view')}
+            className={`whitespace-nowrap text-xs font-medium ${
+              locked ? 'cursor-not-allowed text-slate-300' : 'text-brand-600 hover:underline'
+            }`}
+          >
+            {OP_LABEL.view}
+          </button>
+        )}
         {segmentButtons.map((b) => (
           <button key={`seg-${b.idx}`} type="button" onClick={() => openSeg(b.idx)} className="whitespace-nowrap text-xs font-medium text-brand-600 hover:underline">
             {b.label}
           </button>
         ))}
-        {ops.filter((op) => op !== 'audit').map((op) => {
-          const isViewLocked = op === 'view' && locked
-          return (
-            <button
-              key={op}
-              type="button"
-              disabled={isViewLocked}
-              onClick={() => open(op)}
-              className={`whitespace-nowrap text-xs font-medium ${
-                isViewLocked ? 'cursor-not-allowed text-slate-300' : 'text-brand-600 hover:underline'
-              }`}
-            >
-              {OP_LABEL[op]}
-            </button>
-          )
-        })}
+        {ops.filter((op) => op !== 'view' && op !== 'audit').map((op) => (
+          <button
+            key={op}
+            type="button"
+            onClick={() => open(op)}
+            className="whitespace-nowrap text-xs font-medium text-brand-600 hover:underline"
+          >
+            {OP_LABEL[op]}
+          </button>
+        ))}
       </div>
       {renderModals}
       {segModalEl}
@@ -551,7 +559,7 @@ export function VerifyRowActions({
   )
 }
 
-/** 详情页操作栏（含系统结果 / 工单状态 / 操作人员 + 操作按钮，与列表一致） */
+/** 详情页操作栏（含自动审核 / 人工审核 / 操作人员 + 操作按钮，与列表一致） */
 export function VerifyActionBar({
   row,
   onApply,
@@ -574,11 +582,11 @@ export function VerifyActionBar({
     <div className="rounded-2xl border border-slate-100 bg-white p-3 shadow-sm">
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
         <div className="flex items-center gap-2">
-          <span className="text-xs text-slate-400">系统结果</span>
+          <span className="text-xs text-slate-400">自动审核</span>
           <SysResultBadge value={row.sysResult} />
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-xs text-slate-400">工单状态</span>
+          <span className="text-xs text-slate-400">人工审核</span>
           <WorkStatusBadge value={row.workStatus} />
         </div>
         <div className="flex items-center gap-2">

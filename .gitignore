@@ -16,6 +16,9 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
+dev.log
+dev.err
+.tsc_check.log
 
 # env
 .env

@@ -120,6 +120,8 @@ export interface FieldConfig {
   id: string
   name: string
   desc: string
+  displayLabel?: string   // 报告展示标签（默认 = name；数据源取 DbField.label / 接口取 ApiOutput.label）
+  group?: string          // 所属内部分组 id（数据源/接口合集可内部分组并命名；缺省归入首个分组）
   visible: boolean
   /* —— 来源相关配置（按所属分段的 sourceType 解释） —— */
   sourceRef?: string    // 数据源：绑定的表字段名 / 接口：输出字段 key / 规则集：规则 id
@@ -166,6 +168,7 @@ export interface DbField {
   visible: boolean
   label?: string         // 报告中显示名（默认 = name）
   container?: RenderContainer  // 报告中如何呈现（默认按列类型推荐，可改）
+  group?: string         // 所属内部分组 id（数据源合集可内部分组并命名）
   maskRule?: MaskRule    // 脱敏规则（默认按字段名自动识别）
   remark?: string        // 字段说明/备注（可选）
   /* 计分（数据字段可按条件参与本卡总分；方向由所属分段 cardScoreMode 决定） */
@@ -212,6 +215,7 @@ export interface ApiOutput {
   condValue?: string
   exempt?: boolean       // 豁免：可以（true）/ 不可以（false，默认）
   conditions?: FieldCondition[]   // 多条件组合（替代单一 condType/condValue）
+  group?: string         // 所属内部分组 id（接口合集可内部分组并命名）
 }
 /* 接口（API 调用）配置：参考 Postman 的请求结构 ——
    方法 + 地址 + 请求头 + 参数 + 请求体；并支持直接粘贴「统一代码」（cURL / 类 HTTP 请求）一键解析填充 */
@@ -290,6 +294,7 @@ export interface RuleSet { id: string; name: string; rules: RuleSetItem[] }
  *  - reject：本卡为命中即拒触发器，不参与加减分（由命中即拒项直接拒贷） */
 export function computeSectionScore(s: SectionConfig): { total: number; addCount: number; deductCount: number; mode: CardScoreMode } {
   const mode: CardScoreMode = s.cardScoreMode ?? (s.sourceType === 'rule_set' ? 'deduct' : 'add')
+  if (s.scoreable === false) return { total: 0, addCount: 0, deductCount: 0, mode }
   let total = 0, addCount = 0, deductCount = 0
   for (const f of s.fields) {
     if (!f.visible || f.hitReject) continue
@@ -332,7 +337,7 @@ export interface DimRow {
 }
 /* 由模板「报告内容配置」的来源卡片生成维度分布行（tpl_copy 只读卡不参与） */
 export function buildDimRows(tpl: ReportTemplate): DimRow[] {
-  const secs = tpl.sections.filter((s) => (s.homeTab ?? 'content') === 'content' && s.visible && s.sourceType !== 'tpl_copy')
+  const secs = tpl.sections.filter((s) => (s.homeTab ?? 'content') === 'content' && s.visible && s.sourceType !== 'tpl_copy' && s.scoreable !== false)
   const sumW = secs.reduce((a, s) => a + (s.weight ?? 1), 0) || 1
   return secs.map((s) => {
     const total = computeSectionScore(s).total
@@ -357,6 +362,10 @@ export interface SectionConfig {
   sourceType: SectionSource
   dimNote?: string         // 评分维度分布列表里该行的「说明」（留空则取所属等级档位的说明）
   dimBands?: DimLevelBand[]  // 评分维度分布：本维度独立的三档（低/中/高）区间与说明；缺省套用模板级 dimBands（逐维度配置，不再全局共用一套）
+  /** 演示/备用报告：本卡示例得分（异常值口径，越高风险越高）；模板驱动的报告详情读取并展示 */
+  demoScore?: number
+  /** 演示/备用报告：本卡内各展示项的示例值与状态（key=fieldId）；模板驱动的报告详情读取并展示 */
+  demoValues?: Record<string, { name?: string; value: string; status: 'pass' | 'warn' | 'reject' }>
   cardScoreMode?: CardScoreMode  // 本卡计分方向（达标加分 / 命中扣分 / 命中即拒）；缺省按 sourceType 推导
   weight?: number          // 本卡权重：报告总分 = 基础分 + Σ(各卡计分 × 权重)；缺省 1
   homeTab?: 'content' | 'score' | 'flow' | 'log'  // 该段归属的编辑 Tab：'content'=报告内容配置；'score'=评分方案（如得分计算）；'flow'=审核操作（如结论与终审）；'log'=操作日志，由模板 showOpLog 开关控制，不在任何 Tab 编辑
@@ -370,6 +379,24 @@ export interface SectionConfig {
   copySections?: SectionConfig[]  // 复制时的全量快照（只读展示）
   copyScoreRange?: { min: number; max: number; base: number } // 复制时来源模板的总分区间（基础分±加扣分）快照
   fields: FieldConfig[]     // 展示项：数据源=表字段 / 接口=输出字段 / 规则集=规则项（用/不用）
+  /** 报告详情页本卡显示方式：列表 / 2排卡片 / 3排卡片；从第三个卡片（各集合/维度卡片）起可配置，缺省 'list' */
+  displayMode?: CardDisplayMode
+  /** 是否计入评分：false 表示该分段为「仅展示」型（如用户基本信息），不配置分值、不计入本卡总分与报告总分 */
+  scoreable?: boolean
+  /* 数据源 / 接口合集的内部分组（可命名）：报告详情里分段卡片内部按组展示；缺省空=不分组（平铺） */
+  fieldGroups?: FieldGroup[]
+}
+
+/* 分段内部分组（数据源/接口合集可把一个合集再拆成多个命名子组，如「基础资料」「环境采集」） */
+export interface FieldGroup {
+  id: string
+  name: string
+}
+
+/* ---------- 报告详情页卡片显示方式（从第三个卡片起可配置） ---------- */
+export type CardDisplayMode = 'list' | 'grid2' | 'grid3'
+export const CARD_DISPLAY_MODE_LABEL: Record<CardDisplayMode, string> = {
+  list: '列表', grid2: '2排卡片', grid3: '3排卡片',
 }
 export interface ScoreGrade {
   grade: string
@@ -387,6 +414,7 @@ export interface ScoreDisplayConfig {
   showThresholdBar: boolean
   showRiskTags: boolean
   baseScore: number      // 基础分：总分 = 基础分 + Σ各卡加分 − Σ各卡扣分（避免纯扣分卡把总分扣成负数）
+  title?: string        // 自动审核配置-标题*：报告结论卡上的模型名称（如「信息核验综合信用模型」），空则详情页用兜底名
   grades: ScoreGrade[]
 }
 
@@ -415,6 +443,9 @@ export interface SpecialRule {
   autoResult: AutoResult
   priority: SpecialRulePriority
   note?: string
+  /* 评分构成（构成项分解表由特殊命中规则驱动时取用）：单条规则得分与权重 */
+  score?: number               // 该规则命中对异常值的贡献分（越高风险越高）
+  weight?: number              // 该规则所属分段的权重（百分比），缺省取来源分段 weight
 }
 
 export interface SpecialRuleVerdict {
@@ -630,6 +661,8 @@ export interface ReportTemplate {
   showOpLog: boolean        // 报告中是否显示操作日志（'log' 类分段的总开关）
   showSectionTotals: boolean // 「报告内容配置」Tab 开关：各集合展示汇总得分 + 报告详情首卡展示「评分维度分布」列表
   dimBands: DimLevelBand[]   // 评分维度分布：等级三档（高/中/低）的分值区间与档位说明
+  /** 演示/备用报告：申请人示例信息（key=字段名，value=值），由模板驱动的报告详情读取并展示 */
+  demoApplicant?: Record<string, string>
   scoreDisplay: ScoreDisplayConfig
   specialRules: SpecialRule[]   // 自动审核 Tab → 特殊命中规则：命中即定结论（决定规则）/ 重点提示（预警规则）
   businessFlow: BusinessFlowConfig[]
@@ -716,7 +749,7 @@ export function scopeLabel(scope: string[]): string {
 
 
 /* ---------- 分段与字段清单（含业务说明） ---------- */
-export const SECTION_CATALOG: Record<ReportType, { id: string; name: string; desc: string; fields: { id: string; name: string; desc: string }[] }[]> = {
+export const SECTION_CATALOG: Record<ReportType, { id: string; name: string; desc: string; groups?: FieldGroup[]; fields: { id: string; name: string; desc: string; group?: string }[] }[]> = {
   info_verify: [
     {
       id: 'score_model', name: '得分计算', desc: '报告顶部的总风险值卡片：分数越大代表风险越高（0-100，≥80 为高危）。属于「自动审核」Tab，由已配置的数据源/规则集算得，不在「报告内容」里配来源。',
@@ -735,8 +768,8 @@ export const SECTION_CATALOG: Record<ReportType, { id: string; name: string; des
     {
       id: 'conclusion_process', name: '结论与终审', desc: '系统自动结论 + 人工审核结果 + 终审操作入口，以及核验过程时间线。属于「人工审核」Tab，由已配置的数据源/规则集算得，不在「报告内容」里配来源。',
       fields: [
-        { id: 'cp_system', name: '系统结果', desc: '机器自动给出的处置结论（通过/预警/拒绝）' },
-        { id: 'cp_manual', name: '人工审核', desc: '当前人工审核状态（待确认/已确认等）' },
+        { id: 'cp_system', name: '自动审核', desc: '机器自动给出的处置结论（通过/预警/拒绝），由分数计算后判定' },
+        { id: 'cp_manual', name: '人工审核', desc: '人工操作后的工单状态（待确认/确认通过/确认拒绝/提交复核/复核通过/复核拒绝/关闭）' },
         { id: 'cp_operator', name: '操作人员', desc: '当前处理该件的审核员' },
         { id: 'cp_advice', name: '授信建议', desc: '系统给出的授信额度/利率建议' },
         { id: 'cp_reason', name: '建议理由', desc: '给出该建议的依据摘要' },
@@ -752,23 +785,27 @@ export const SECTION_CATALOG: Record<ReportType, { id: string; name: string; des
     },
     {
       id: 'basic_info', name: '用户基本信息', desc: '申请人身份、联系方式与设备环境等基础资料。',
+      groups: [
+        { id: 'g_base', name: '基础资料' },
+        { id: 'g_env', name: '环境采集' },
+      ],
       fields: [
-        { id: 'bi_name', name: '姓名', desc: '申请人姓名' },
-        { id: 'bi_id', name: '身份证号', desc: '脱敏后的证件号' },
-        { id: 'bi_phone', name: '手机号', desc: '申请所用手机号' },
-        { id: 'bi_bank', name: '银行卡号', desc: '收款/绑定银行卡' },
-        { id: 'bi_bank_branch', name: '开户行', desc: '银行卡归属支行' },
-        { id: 'bi_age', name: '年龄', desc: '申请人年龄' },
-        { id: 'bi_edu', name: '学历', desc: '最高学历' },
-        { id: 'bi_company', name: '工作单位', desc: '任职单位' },
-        { id: 'bi_income', name: '月收入', desc: '申报月收入' },
-        { id: 'bi_address', name: '居住地址', desc: '常住地址' },
-        { id: 'bi_marriage', name: '婚姻', desc: '婚姻状况' },
-        { id: 'bi_fp', name: '设备指纹', desc: '本机设备指纹标识' },
-        { id: 'bi_ip', name: 'IP地址', desc: '申请时 IP' },
-        { id: 'bi_gps', name: 'GPS定位', desc: '申请时定位' },
-        { id: 'bi_channel', name: '进件渠道', desc: '来自哪个渠道' },
-        { id: 'bi_appver', name: 'APP版本', desc: '申请所用 App 版本' },
+        { id: 'bi_name', name: '姓名', desc: '申请人姓名', group: 'g_base' },
+        { id: 'bi_id', name: '身份证号', desc: '脱敏后的证件号', group: 'g_base' },
+        { id: 'bi_phone', name: '手机号', desc: '申请所用手机号', group: 'g_base' },
+        { id: 'bi_bank', name: '银行卡号', desc: '收款/绑定银行卡', group: 'g_base' },
+        { id: 'bi_bank_branch', name: '开户行', desc: '银行卡归属支行', group: 'g_base' },
+        { id: 'bi_age', name: '年龄', desc: '申请人年龄', group: 'g_base' },
+        { id: 'bi_edu', name: '学历', desc: '最高学历', group: 'g_base' },
+        { id: 'bi_company', name: '工作单位', desc: '任职单位', group: 'g_base' },
+        { id: 'bi_income', name: '月收入', desc: '申报月收入', group: 'g_base' },
+        { id: 'bi_address', name: '居住地址', desc: '常住地址', group: 'g_base' },
+        { id: 'bi_marriage', name: '婚姻', desc: '婚姻状况', group: 'g_base' },
+        { id: 'bi_fp', name: '设备指纹', desc: '本机设备指纹标识', group: 'g_env' },
+        { id: 'bi_ip', name: 'IP地址', desc: '申请时 IP', group: 'g_env' },
+        { id: 'bi_gps', name: 'GPS定位', desc: '申请时定位', group: 'g_env' },
+        { id: 'bi_channel', name: '进件渠道', desc: '来自哪个渠道', group: 'g_env' },
+        { id: 'bi_appver', name: 'APP版本', desc: '申请所用 App 版本', group: 'g_env' },
       ],
     },
     {
@@ -1449,7 +1486,7 @@ export function syncFlowToGrades(flow: BusinessFlowConfig[], grades: ScoreGrade[
 export const SECTION_SOURCE: Record<string, SectionSource> = {
   // 信息核验
   score_model: 'api', conclusion_process: 'api', basic_info: 'data_source', id_images: 'api',
-  single_verify: 'rule_set', cross_fusion: 'rule_set', op_logs: 'api',
+  single_verify: 'rule_set', cross_fusion: 'tpl_copy', op_logs: 'api',
   // 信用风控
   applicant_info: 'data_source',
       credit_suggestion: 'api',
@@ -1522,9 +1559,13 @@ export const RULE_SETS: RuleSet[] = [
 ]
 /* 分段 → 默认选中的规则合集（seed 用） */
 export const SECTION_RULESET: Record<string, string> = {
-  identity_fraud: 'rs_identity', cross_fusion: 'rs_all',
+  identity_fraud: 'rs_identity',
   info_forgery: 'rs_identity', device_fraud: 'rs_device', behavior_fraud: 'rs_behavior',
   gang_fraud: 'rs_device', blacklist_hit: 'rs_device', history_fraud: 'rs_all',
+}
+/* 模板复制类分段 → 复制来源分段 id（复用既有内容合集，如「数据交叉融合」复用「多源并行核验」） */
+export const SECTION_COPY_FROM: Record<string, string> = {
+  cross_fusion: 'single_verify',
 }
 
 /* 模拟读取数据库表结构：根据表名给出示例列（仅用于演示，真实场景由后端返回）。
@@ -1627,26 +1668,45 @@ const FLOW_SECTION: Partial<Record<ReportType, string>> = {
   decision: 'decision_suggestion',
 }
 function buildSections(type: ReportType): SectionConfig[] {
+  // built 用于 tpl_copy 段引用同模板内已建好的来源段（如「数据交叉融合」复用「多源并行核验」）
+  const built: Record<string, SectionConfig> = {}
   return SECTION_CATALOG[type].map((s, i) => {
     const sType = SECTION_SOURCE[s.id] ?? 'data_source'
     let ds: DataSourceConfig | undefined
     let api: ApiConfig | undefined
     let ruleSetId: string | undefined
+    let copyFromId: string | undefined
+    let copyFromName: string | undefined
+    let copySections: SectionConfig[] | undefined
+    let copyScoreRange: { min: number; max: number; base: number } | undefined
     let fields: FieldConfig[]
 
     if (sType === 'data_source') {
       // 数据源：初始用 seed 字段名作为表字段占位（type 默认 varchar）；用户配连接后可"读取表字段"覆盖
-      const tableFields = s.fields.map((f) => ({ name: f.name, type: inferDbType(f.name), visible: true }))
+      const tableFields = s.fields.map((f) => ({ name: f.name, type: inferDbType(f.name), visible: true, scorePoints: 5, condType: 'eq' as FieldCondType, group: f.group }))
       ds = { dbType: 'MySQL', ip: '', port: '3306', username: '', password: '', database: '', table: '', tableFields }
-      fields = ds.tableFields.map((tf, k) => ({ id: s.fields[k].id, name: tf.name, desc: s.fields[k].desc, visible: true, sourceRef: tf.name, mask: /身份证|手机|银行卡|证件|姓名/.test(tf.name), maskRule: autoMaskRule(tf.name), scorePoints: 5, condType: 'eq' as FieldCondType }))
+      fields = ds.tableFields.map((tf, k) => ({ id: s.fields[k].id, name: tf.name, desc: s.fields[k].desc, visible: true, sourceRef: tf.name, mask: /身份证|手机|银行卡|证件|姓名/.test(tf.name), maskRule: autoMaskRule(tf.name), scorePoints: 5, condType: 'eq' as FieldCondType, group: tf.group }))
     } else if (sType === 'api') {
-      const inputs: ApiParam[] = s.id === 'score_model' ? [{ key: 'applicantId', from: '进件表单.申请人ID', required: true }, { key: 'deviceFp', from: '设备SDK.指纹', required: false }]
+      const inputs: ApiParam[] = s.id === 'id_images'
+        ? [{ key: 'applicantId', from: '进件表单.申请人ID', required: true }, { key: 'idCard', from: '进件表单.身份证号', required: true }]
+        : s.id === 'score_model' ? [{ key: 'applicantId', from: '进件表单.申请人ID', required: true }, { key: 'deviceFp', from: '设备SDK.指纹', required: false }]
         : s.id === 'fraud_score_model' ? [{ key: 'deviceFp', from: '设备SDK.指纹', required: true }, { key: 'ip', from: '请求上下文.IP', required: false }]
         : s.id === 'decision_overview' ? [{ key: 'verifyScore', from: '信息核验.异常值', required: true }, { key: 'creditScore', from: '信用风控.信用分', required: true }, { key: 'fraudScore', from: '欺诈识别.欺诈分', required: true }]
         : []
-      const outputs: ApiOutput[] = s.fields.map((f) => ({ key: f.id, label: f.name, type: inferFieldType(f.name, f.desc), container: inferApiContainer(f.name, f.desc), visible: true }))
+      // 证件照类合集：输出几乎都是影像（OCR 识别文本例外为纯文本）
+      const containerOf = (name: string): RenderContainer => (/ocr|文本|文字/i.test(name) ? 'text' : 'image')
+      const outputs: ApiOutput[] = s.fields.map((f) => ({ key: f.id, label: f.name, type: inferFieldType(f.name, f.desc), container: s.id === 'id_images' ? containerOf(f.name) : inferApiContainer(f.name, f.desc), visible: true, scorePoints: 5, condType: 'eq' as FieldCondType }))
       api = { url: '', method: 'POST', headers: [], inputs, bodyType: 'none', bodyText: '', outputs }
       fields = api.outputs.map((o, k) => ({ id: s.fields[k].id, name: o.label, desc: s.fields[k].desc, visible: true, sourceRef: o.key, scorePoints: 5, condType: 'eq' as FieldCondType }))
+    } else if (sType === 'tpl_copy') {
+      // 模板复制：集成来源段的只读快照，本模板不可改、不计分
+      const fromId = SECTION_COPY_FROM[s.id] ?? ''
+      const fromSec = built[fromId]
+      copyFromId = fromId
+      copyFromName = fromSec?.name
+      copySections = fromSec ? [fromSec] : undefined
+      copyScoreRange = fromSec ? { min: 0, max: fromSec.fields.reduce((a, f) => a + (f.scorePoints ?? 0), 0), base: 0 } : undefined
+      fields = []
     } else {
       // 规则集：默认选中一个系统规则合集，展开后的规则项即合集内的规则
       const rsId = SECTION_RULESET[s.id] ?? RULE_SETS[0].id
@@ -1655,19 +1715,24 @@ function buildSections(type: ReportType): SectionConfig[] {
       fields = rs.rules.map((r) => ({ id: r.id, name: r.name, desc: r.desc, visible: true, sourceRef: r.id, hitText: '命中', missText: '未命中', severity: 'mid' as Severity, hitReject: false, scorePoints: 5, condType: 'hit' as FieldCondType }))
     }
 
-    return {
+    const sec: SectionConfig = {
       id: s.id,
       name: s.name,
       desc: s.desc,
       order: i + 1,
       visible: true,
       sourceType: sType,
+      // 用户基本信息（basic_info / applicant_info）与模板复制段为「仅展示」型：不参与风险计分
+      scoreable: (s.id === 'basic_info' || s.id === 'applicant_info' || sType === 'tpl_copy') ? false : undefined,
       cardScoreMode: SECTION_SCORE_MODE[s.id] ?? (sType === 'rule_set' ? 'deduct' : 'add'),
       homeTab: s.id === SCORE_SECTION[type] ? 'score' : s.id === FLOW_SECTION[type] ? 'flow' : /logs?$/i.test(s.id) ? 'log' : 'content',
       sourceName: s.name,
-      ds, api, ruleSetId,
+      ds, api, ruleSetId, copyFromId, copyFromName, copySections, copyScoreRange,
+      fieldGroups: s.groups ? s.groups.map((g) => ({ ...g })) : undefined,
       fields,
     }
+    built[s.id] = sec
+    return sec
   })
 }
 
@@ -1676,18 +1741,19 @@ function defaultSpecialRules(type: ReportType): SpecialRule[] {
   const mk = (
     sectionId: string, fieldId: string, sectionName: string, ruleName: string,
     autoResult: AutoResult, priority: SpecialRulePriority, note: string,
-  ): SpecialRule => ({ id: `sr_${sectionId}_${fieldId}`, sectionId, fieldId, sectionName, ruleName, trigger: 'hit', autoResult, priority, note })
+    score?: number, weight?: number,
+  ): SpecialRule => ({ id: `sr_${sectionId}_${fieldId}`, sectionId, fieldId, sectionName, ruleName, trigger: 'hit', autoResult, priority, note, score, weight })
   if (type === 'fraud') {
     return [
-      mk('blacklist_hit', 'bh_type', '黑名单命中详情', '黑名单命中', '拒绝', 'decisive', '命中黑名单一律拒绝，不看总分'),
-      mk('identity_fraud', 'R1', '身份欺诈详情', '公安实名', '拒绝', 'decisive', '公安实名核验不通过直接拒绝'),
-      mk('device_fraud', 'df_fp', '设备欺诈详情', '设备群控', '转人工', 'warning', '疑似群控，重点提示，仍看总分'),
+      mk('blacklist_hit', 'bh_type', '黑名单命中详情', '黑名单命中', '拒绝', 'decisive', '命中黑名单一律拒绝，不看总分', 30, 25),
+      mk('identity_fraud', 'R1', '身份欺诈详情', '公安实名', '拒绝', 'decisive', '公安实名核验不通过直接拒绝', 25, 20),
+      mk('device_fraud', 'df_fp', '设备欺诈详情', '设备群控', '转人工', 'warning', '疑似群控，重点提示，仍看总分', 18, 15),
     ]
   }
   if (type === 'info_verify') {
     return [
-      mk('cross_fusion', 'R6', '数据交叉融合', '设备群控', '拒绝', 'decisive', '识别到群控/设备农场，直接拒绝'),
-      mk('cross_fusion', 'R5', '数据交叉融合', '联防联控', '转人工', 'warning', '跨机构联防联控命中，重点提示'),
+      mk('cross_fusion', 'R6', '数据交叉融合', '设备群控', '拒绝', 'decisive', '识别到群控/设备农场，直接拒绝', 35, 30),
+      mk('cross_fusion', 'R5', '数据交叉融合', '联防联控', '转人工', 'warning', '跨机构联防联控命中，重点提示', 18, 15),
     ]
   }
   return []
@@ -1767,6 +1833,7 @@ export function buildTemplate(type: ReportType, o: BuildOpts): ReportTemplate {
       showThresholdBar: true,
       showRiskTags: true,
       baseScore: 60,
+      title: type === 'info_verify' ? '信息核验综合信用模型' : '',
       grades: GRADE_PRESETS[type].map((g) => ({ ...g })),
     },
     specialRules: defaultSpecialRules(type),
@@ -1777,6 +1844,176 @@ export function buildTemplate(type: ReportType, o: BuildOpts): ReportTemplate {
       { version: o.version ?? 'V1.0', action: '创建', operator: o.lastEditor ?? 'admin', timestamp: o.lastEditTime ?? '刚刚', summary: `创建「${o.name}」` },
     ],
   }
+}
+
+/* ---------- 备用：权威信息核验报告模板（演示用，不替换现有功能） ----------
+ * 维度依据行业权威身份核验能力设计：身份证二/四要素、人像比对、活体检测、证件 OCR、
+ * 银行卡二/三/四要素、运营商三要素与在网、反欺诈黑名单与联防联控、设备与行为、多头借贷。
+ * 每个「集合」带 demoScore（异常值口径，越高风险越高）与 demoValues（展示项示例），
+ * 使「模板驱动的报告详情（BackupReportDetail）」可直接据此渲染，并随模板编辑实时更新。 */
+type DemoStatus = 'pass' | 'warn' | 'reject'
+
+/* 数据项规格：统一描述一个字段的 绑定引用(ref) / 计分 / 演示值，供三类分段复用以生成 FieldConfig */
+interface AuthFieldSpec {
+  id: string
+  name: string      // 报告展示名
+  ref: string       // 数据源列名 / API 输出 key / 规则 id
+  desc: string
+  scorePoints: number
+  condType: FieldCondType
+  condValue?: string
+  // 规则集类专用
+  severity?: Severity
+  hitReject?: boolean
+  hitText?: string
+  missText?: string
+  demo: { value: string; status: DemoStatus }
+}
+
+/* 数据源分段：配 MySQL 表 + 字段（列名/类型），字段绑定列名、按关键字自动脱敏 */
+function mkDsSection(id: string, name: string, desc: string, weight: number, mode: CardScoreMode, demoScore: number, table: string, fields: AuthFieldSpec[]): SectionConfig {
+  const ds: DataSourceConfig = {
+    dbType: 'MySQL', ip: '', port: '3306', username: '', password: '', database: 'risk_iv', table,
+    tableFields: fields.map((f) => ({ name: f.ref, label: f.name, type: inferDbType(f.ref), visible: true, scorePoints: f.scorePoints, condType: f.condType, condValue: f.condValue })),
+  }
+  return {
+    id, name, desc, order: 0, visible: true,
+    sourceType: 'data_source', sourceName: name,
+    cardScoreMode: mode, homeTab: 'content',
+    weight, dimNote: '',
+    ds,
+    fields: fields.map((f) => ({
+      id: f.id, name: f.name, desc: f.desc, visible: true,
+      sourceRef: f.ref, maskRule: autoMaskRule(f.ref),
+      scorePoints: f.scorePoints, condType: f.condType, condValue: f.condValue,
+    })),
+    demoScore,
+    demoValues: Object.fromEntries(fields.map((f) => [f.id, { name: f.name, value: f.demo.value, status: f.demo.status }])),
+  }
+}
+
+/* 接口分段：配 API 地址 + 入参 + 输出字段 */
+function mkApiSection(id: string, name: string, desc: string, weight: number, mode: CardScoreMode, demoScore: number, url: string, inputs: ApiParam[], fields: AuthFieldSpec[]): SectionConfig {
+  const api: ApiConfig = {
+    url, method: 'POST', headers: [], inputs, bodyType: 'json', bodyText: '',
+    outputs: fields.map((f) => ({
+      key: f.ref, label: f.name, type: inferFieldType(f.name, f.desc),
+      container: inferApiContainer(f.name, f.desc), visible: true,
+      scorePoints: f.scorePoints, condType: f.condType, condValue: f.condValue,
+    })),
+  }
+  return {
+    id, name, desc, order: 0, visible: true,
+    sourceType: 'api', sourceName: name,
+    cardScoreMode: mode, homeTab: 'content',
+    weight, dimNote: '',
+    api,
+    fields: fields.map((f) => ({
+      id: f.id, name: f.name, desc: f.desc, visible: true,
+      sourceRef: f.ref, scorePoints: f.scorePoints, condType: f.condType, condValue: f.condValue,
+    })),
+    demoScore,
+    demoValues: Object.fromEntries(fields.map((f) => [f.id, { name: f.name, value: f.demo.value, status: f.demo.status }])),
+  }
+}
+
+/* 规则集分段：绑定规则集，字段即规则项 */
+function mkRuleSection(id: string, name: string, desc: string, weight: number, mode: CardScoreMode, demoScore: number, ruleSetId: string, fields: AuthFieldSpec[]): SectionConfig {
+  return {
+    id, name, desc, order: 0, visible: true,
+    sourceType: 'rule_set', sourceName: name,
+    cardScoreMode: mode, homeTab: 'content',
+    weight, dimNote: '',
+    ruleSetId,
+    fields: fields.map((f) => ({
+      id: f.id, name: f.name, desc: f.desc, visible: true,
+      sourceRef: f.ref, hitText: f.hitText ?? '命中', missText: f.missText ?? '未命中',
+      severity: (f.severity ?? 'mid') as Severity, hitReject: f.hitReject ?? false,
+      scorePoints: f.scorePoints, condType: f.condType, condValue: f.condValue,
+    })),
+    demoScore,
+    demoValues: Object.fromEntries(fields.map((f) => [f.id, { name: f.name, value: f.demo.value, status: f.demo.status }])),
+  }
+}
+
+export function buildAuthorityInfoTemplate(): ReportTemplate {
+  const sections: SectionConfig[] = [
+    mkDsSection('sec_identity', '身份实名核验', '身份证要素与公安库一致性，确认「本人+真实身份」', 15, 'deduct', 10, 't_identity_verify', [
+      { id: 'iv_no', name: '身份证号格式校验', ref: 'id_no', desc: '18 位结构/校验位', scorePoints: 8, condType: 'regex', condValue: '^\\d{17}[\\dX]$', demo: { value: '格式正确', status: 'pass' } },
+      { id: 'iv_2e', name: '姓名+证件二要素', ref: 'id_2elem', desc: '与公安库姓名证件号比对', scorePoints: 15, condType: 'eq', condValue: '一致', demo: { value: '一致', status: 'pass' } },
+      { id: 'iv_exp', name: '证件有效期', ref: 'id_expire', desc: '是否在有效期内', scorePoints: 8, condType: 'eq', condValue: '有效期内', demo: { value: '有效期内', status: 'pass' } },
+      { id: 'iv_lost', name: '证件挂失/冒用', ref: 'id_lost', desc: '公安库挂失冒用状态', scorePoints: 12, condType: 'eq', condValue: '正常', demo: { value: '正常', status: 'pass' } },
+      { id: 'iv_photo', name: '公安库人像一致性', ref: 'id_photo', desc: '证件照与公安留存照比对', scorePoints: 10, condType: 'eq', condValue: '一致', demo: { value: '一致', status: 'pass' } },
+    ]),
+    mkApiSection('sec_liveness', '活体检测与人像比对', '活体检测 + 1:1 人像比对，防照片/视频/面具攻击', 12, 'deduct', 8, '/api/face/verify', [
+      { key: 'applicantId', from: '进件表单.申请人ID', required: true },
+      { key: 'liveImage', from: '采集SDK.活体照', required: true },
+    ], [
+      { id: 'lv_live', name: '活体检测', ref: 'live_result', desc: '动作配合/防翻拍', scorePoints: 15, condType: 'eq', condValue: '通过', demo: { value: '通过', status: 'pass' } },
+      { id: 'lv_face', name: '1:1 人像比对', ref: 'face_similarity', desc: '与证件照相似度', scorePoints: 15, condType: 'gt', condValue: '90', demo: { value: '98.2%', status: 'pass' } },
+      { id: 'lv_spoof', name: '翻拍/面具攻击', ref: 'spoof_result', desc: '攻击检测', scorePoints: 12, condType: 'eq', condValue: '未命中', demo: { value: '未命中', status: 'pass' } },
+    ]),
+    mkApiSection('sec_ocr', '证件 OCR 识别', '身份证/银行卡影像文字识别', 8, 'deduct', 6, '/api/ocr/idcard', [
+      { key: 'imageId', from: '影像资料.身份证影像', required: true },
+    ], [
+      { id: 'oc_id', name: '身份证 OCR', ref: 'ocr_id', desc: '正反面文字识别', scorePoints: 8, condType: 'eq', condValue: '识别成功', demo: { value: '识别成功', status: 'pass' } },
+      { id: 'oc_bank', name: '银行卡 OCR', ref: 'ocr_bank', desc: '卡号识别', scorePoints: 6, condType: 'eq', condValue: '识别成功', demo: { value: '识别成功', status: 'pass' } },
+    ]),
+    mkDsSection('sec_bank', '银行卡核验', '银行卡二/三/四要素与银行开户预留一致性', 12, 'deduct', 12, 't_bank_verify', [
+      { id: 'bk_3e', name: '银行卡三要素', ref: 'bank_3elem', desc: '姓名+证件+卡号', scorePoints: 12, condType: 'eq', condValue: '一致', demo: { value: '一致', status: 'pass' } },
+      { id: 'bk_4e', name: '银行卡四要素', ref: 'bank_4elem', desc: '+预留手机号', scorePoints: 12, condType: 'eq', condValue: '一致', demo: { value: '一致', status: 'pass' } },
+      { id: 'bk_stat', name: '卡状态', ref: 'bank_status', desc: '是否止付/冻结', scorePoints: 6, condType: 'eq', condValue: '正常', demo: { value: '正常', status: 'pass' } },
+      { id: 'bk_type', name: '卡类型', ref: 'bank_type', desc: '借记/贷记', scorePoints: 4, condType: 'eq', condValue: '借记卡', demo: { value: '借记卡', status: 'pass' } },
+    ]),
+    mkDsSection('sec_operator', '运营商核验与在网', '运营商三要素一致性、在网时长与状态', 15, 'deduct', 15, 't_citynet_verify', [
+      { id: 'op_3e', name: '运营商三要素', ref: 'op_3elem', desc: '姓名+证件+手机号', scorePoints: 12, condType: 'eq', condValue: '一致', demo: { value: '一致', status: 'pass' } },
+      { id: 'op_dur', name: '在网时长', ref: 'op_duration', desc: '入网月数', scorePoints: 8, condType: 'gt', condValue: '12', demo: { value: '36 个月', status: 'pass' } },
+      { id: 'op_stat', name: '在网状态', ref: 'op_status', desc: '正常/停机', scorePoints: 8, condType: 'eq', condValue: '正常', demo: { value: '正常', status: 'pass' } },
+      { id: 'op_prov', name: '归属地一致性', ref: 'op_province', desc: '与申请地比对', scorePoints: 4, condType: 'eq', condValue: '一致', demo: { value: '一致', status: 'pass' } },
+    ]),
+    mkRuleSection('sec_blacklist', '反欺诈黑名单与联防联控', '黑名单/公安重点人员/跨机构联防联控命中核查', 18, 'deduct', 5, 'rs_all', [
+      { id: 'bl_ovd', name: '信贷逾期黑名单', ref: 'rule_bl_overdue', desc: '近 X 月信贷逾期黑名单', scorePoints: 15, condType: 'hit', severity: 'high', hitReject: true, demo: { value: '未命中', status: 'pass' } },
+      { id: 'bl_sx', name: '失信被执行人', ref: 'rule_bl_sx', desc: '法院失信名单', scorePoints: 15, condType: 'hit', severity: 'high', hitReject: true, demo: { value: '未命中', status: 'pass' } },
+      { id: 'bl_pol', name: '公安重点人员', ref: 'rule_bl_police', desc: '公安重点人员库', scorePoints: 15, condType: 'hit', severity: 'high', hitReject: true, demo: { value: '未命中', status: 'pass' } },
+      { id: 'bl_link', name: '跨机构联防联控', ref: 'rule_bl_link', desc: '多头联防联控命中', scorePoints: 10, condType: 'hit', severity: 'mid', demo: { value: '未命中', status: 'pass' } },
+    ]),
+    mkRuleSection('sec_device', '设备与行为风险', '设备群控/异常、行为轨迹、地理位置跳动', 12, 'deduct', 58, 'rs_device', [
+      { id: 'dv_farm', name: '设备群控/农场', ref: 'rule_dv_farm', desc: '群控/设备农场识别', scorePoints: 12, condType: 'hit', severity: 'high', demo: { value: '未命中', status: 'pass' } },
+      { id: 'dv_abn', name: '设备异常', ref: 'rule_dv_abn', desc: '一设备多申请关联', scorePoints: 8, condType: 'hit', severity: 'mid', demo: { value: '命中（关联 3 个申请）', status: 'warn' } },
+      { id: 'dv_geo', name: '地理位置跳动', ref: 'rule_dv_geo', desc: '短时发生地跳跃', scorePoints: 8, condType: 'hit', severity: 'mid', demo: { value: '命中（2 省）', status: 'warn' } },
+      { id: 'dv_root', name: '模拟器/越狱', ref: 'rule_dv_root', desc: '运行环境风险', scorePoints: 6, condType: 'hit', severity: 'mid', demo: { value: '未命中', status: 'pass' } },
+    ]),
+    mkDsSection('sec_multi', '多头借贷与信贷申请', '近周期信贷申请机构数、查询次数、逾期记录', 8, 'deduct', 62, 't_multi_loan', [
+      { id: 'ml_org', name: '近 30 天申请机构数', ref: 'ml_org_30d', desc: '信贷申请机构数', scorePoints: 8, condType: 'lt', condValue: '10', demo: { value: '6 家', status: 'warn' } },
+      { id: 'ml_qry', name: '近 30 天审批查询', ref: 'ml_query_30d', desc: '征信审批查询次数', scorePoints: 8, condType: 'lt', condValue: '15', demo: { value: '9 次', status: 'warn' } },
+      { id: 'ml_ovd', name: '历史逾期记录', ref: 'ml_overdue', desc: '历史逾期笔数', scorePoints: 10, condType: 'eq', condValue: '无', demo: { value: '无', status: 'pass' } },
+      { id: 'ml_cur', name: '当前在贷笔数', ref: 'ml_current', desc: '当前未结清笔数', scorePoints: 6, condType: 'lt', condValue: '5', demo: { value: '2 笔', status: 'pass' } },
+    ]),
+  ]
+  sections.forEach((s, i) => (s.order = i + 1))
+  const tpl = buildTemplate('info_verify', {
+    id: 'tpl-info-authority',
+    name: '权威信息核验报告模板（备用）',
+    status: '草稿',
+    scope: ['全产品'],
+    isDefault: false,
+    version: 'V1.0',
+    lastEditor: 'admin',
+    lastEditTime: '今天',
+    description: '依据行业权威身份核验能力设计的备用演示模板：8 个集合均已配置具体数据项（数据源绑定/脱敏/计分条件），覆盖身份证要素、人像比对、活体、OCR、银行卡、运营商、黑名单、设备、多头。用于验证「模板驱动报告」链路，不替换现有标准模板。',
+  })
+  tpl.sections = sections
+  tpl.showSectionTotals = true
+  tpl.specialRules = [] // 备用模板暂无决定/预警规则（维度已含风险标记）
+  tpl.demoApplicant = {
+    申请人: '张*明',
+    证件号: '3301**********1234',
+    手机号: '138****6688',
+    银行卡: '6222********1234',
+    申请产品: '工薪贷',
+    申请额度: '¥80,000',
+  }
+  return tpl
 }
 
 /* ---------- 种子数据（对应文档卡片示例） ---------- */
@@ -1797,6 +2034,7 @@ export const seedReportTemplates: ReportTemplate[] = [
     id: 'tpl-decision-standard', name: '决策报告综合模板', status: '已停用', scope: ['全产品'],
     version: 'V1.2', lastEditor: 'admin', lastEditTime: '1周前', description: '整合三大报告的综合决策报告模板，当前已停用。',
   }),
+  buildAuthorityInfoTemplate(),
 ]
 
 /* ---------- 决策报告运行态：审批弹窗所需的流程配置 ---------- */
@@ -1946,7 +2184,7 @@ export const VERIFY_MACHINE: FlowStateMachine = {
     : r.workStatus === '待审核' ? 'warn_review'
     : r.workStatus === '提交复核' ? 'warn_dual' : 'warn_done',
   states: [
-    { id: 'calculating', label: '核验计算中', lockedView: true, actions: [IV_A.view] },
+    { id: 'calculating', label: '核验计算中', actions: [IV_A.view] },
     { id: 'pass_pending', label: '通过-待确认', actions: [IV_A.view, IV_A.audit, IV_A.reportConfirm] },
     { id: 'pass_done', label: '通过-已办结', actions: [IV_A.view] },
     { id: 'reject_pending', label: '拒绝-待确认', actions: [IV_A.view, IV_A.audit, IV_A.forceRecheck, IV_A.reportConfirm] },
@@ -1978,7 +2216,7 @@ export const FRAUD_MACHINE: FlowStateMachine = {
     : r.workStatus === '待审核' ? 'review'
     : r.workStatus === '提交复核' ? 'dual' : 'done',
   states: [
-    { id: 'calc', label: '核验计算中', lockedView: true, actions: [FRAUD_A.view] },
+    { id: 'calc', label: '核验计算中', actions: [FRAUD_A.view] },
     { id: 'pending_confirm', label: '待确认-极低/低', actions: [FRAUD_A.view, FRAUD_A.audit, FRAUD_A.reportConfirm] },
     { id: 'pending_force', label: '待确认-高', actions: [FRAUD_A.view, FRAUD_A.audit, FRAUD_A.forceReview, FRAUD_A.reportConfirm] },
     { id: 'pending_black', label: '待确认-极高', actions: [FRAUD_A.view, FRAUD_A.audit, FRAUD_A.addBlacklist, FRAUD_A.reportConfirm] },
@@ -2006,7 +2244,7 @@ export const CREDIT_MACHINE: FlowStateMachine = {
     : r.workStatus === '待审核' ? 'review'
     : r.workStatus === '提交复核' ? 'dual' : 'done',
   states: [
-    { id: 'calc', label: '处理中', lockedView: true, actions: [CREDIT_A.view] },
+    { id: 'calc', label: '处理中', actions: [CREDIT_A.view] },
     { id: 'auto_done', label: '自动通过/拒绝', actions: [CREDIT_A.view] },
     { id: 'review', label: '待审核', actions: [CREDIT_A.view, CREDIT_A.submitReview, CREDIT_A.note] },
     { id: 'dual', label: '提交复核', actions: [CREDIT_A.view, CREDIT_A.audit, CREDIT_A.confirmPass, CREDIT_A.confirmReject, CREDIT_A.note] },
@@ -2056,7 +2294,7 @@ export const DECISION_REVIEW_MACHINE: FlowStateMachine = {
     : r.manualReview === '待审核' ? 'review'
     : r.manualReview === '提交复核' ? 'dual' : 'done',
   states: [
-    { id: 'calc', label: '核验计算中', lockedView: true, actions: [DEC_R.view] },
+    { id: 'calc', label: '核验计算中', actions: [DEC_R.view] },
     { id: 'pending_pass', label: '待确认-通过', actions: [DEC_R.view, DEC_R.reportConfirm] },
     { id: 'pending_force', label: '待确认-严格限制', actions: [DEC_R.view, DEC_R.reportConfirm, DEC_R.forceRecheck] },
     { id: 'pending_black', label: '待确认-拒绝', actions: [DEC_R.view, DEC_R.reportConfirm, DEC_R.blacklist] },

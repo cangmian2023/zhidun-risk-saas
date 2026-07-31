@@ -11,6 +11,7 @@ import {
   SECTION_SOURCE_LABEL, ROLES, ROLE_HINT, seedReportTemplates, type Role,
   RENDER_CONTAINER_LABEL, defaultContainer, type RenderContainer,
 } from './reportTemplateData'
+import { useTemplate } from './templateStore'
 
 const SEL = '#3B82F6', SEL_BG = '#EFF6FF'
 
@@ -142,7 +143,7 @@ function Preview({ tpl, stateKey }: { tpl: ReportTemplate; stateKey: string }) {
             </div>
             {(() => {
               const parts = tpl.sections
-                .filter((s) => (s.homeTab ?? 'content') === 'content' && s.fields.some((f) => (f.scorePoints ?? 0) !== 0))
+                .filter((s) => (s.homeTab ?? 'content') === 'content' && s.scoreable !== false && s.fields.some((f) => (f.scorePoints ?? 0) !== 0))
                 .map((s) => ({ name: s.name, ...computeSectionScore(s) }))
               if (parts.length === 0) return <div style={{ marginTop: 10, fontSize: fs - 2, color: '#9CA3AF' }}>暂无分段配置计分项</div>
               return (
@@ -176,30 +177,53 @@ function Preview({ tpl, stateKey }: { tpl: ReportTemplate; stateKey: string }) {
                 <span style={{ fontSize: fs - 3, padding: '1px 8px', borderRadius: 999, background: s.sourceType === 'data_source' ? '#ECFDF5' : s.sourceType === 'api' ? '#EFF6FF' : '#F5F3FF', border: `1px solid ${s.sourceType === 'data_source' ? '#A7F3D0' : s.sourceType === 'api' ? '#BFDBFE' : '#DDD6FE'}`, color: s.sourceType === 'data_source' ? '#047857' : s.sourceType === 'api' ? '#1D4ED8' : '#6D28D9' }}>{SECTION_SOURCE_LABEL[s.sourceType]}</span>
               </div>
               <div style={{ padding: 10 }}>
-                {visFields.length === 0 && <div style={{ fontSize: fs - 2, color: '#9CA3AF' }}>本分段字段已全部隐藏</div>}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 6 }}>
-                  {visFields.map((f) => {
-                    const val = sSample[f.id] ?? sSample[f.name] ?? (s.sourceType === 'rule_set' ? (f.hitText ?? '命中') : '样例值')
-                    const meta = fieldMeta(s, f)
-                    const c = meta.container
-                    return (
-                      <div key={f.id} style={{ fontSize: fs - 2, padding: '6px 8px', background: '#F9FAFB', borderRadius: 6, border: '1px solid #EEF2F7' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, alignItems: 'center' }}>
-                          <span style={{ color: '#6B7280', flex: '0 0 auto' }}>{f.name}</span>
-                          <span style={{ fontSize: 10, color: '#9CA3AF', border: '1px solid #E5E7EB', borderRadius: 999, padding: '0 6px', whiteSpace: 'nowrap' }}>{RENDER_CONTAINER_LABEL[c]}{meta.type ? ` · ${meta.type}` : ''}</span>
+                {s.sourceType === 'tpl_copy' ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    <div style={{ fontSize: fs - 2, color: '#9CA3AF' }}>来源模板：{s.copyFromName ?? s.sourceName}（全量集成，只读不可修改）</div>
+                    {(s.copySections ?? []).map((cs) => (
+                      <div key={cs.id} style={{ border: '1px solid #EEF2F7', borderRadius: 6, overflow: 'hidden' }}>
+                        <div style={{ background: '#F8FAFC', padding: '5px 10px', fontSize: fs - 2, fontWeight: 600, display: 'flex', gap: 6, alignItems: 'center' }}>
+                          {cs.name}
+                          <span style={{ fontSize: fs - 3, color: '#9CA3AF', fontWeight: 400 }}>{SECTION_SOURCE_LABEL[cs.sourceType]}</span>
                         </div>
-                        <div style={{ marginTop: 4 }}>
-                          {c === 'image' && <div style={{ height: 56, borderRadius: 6, background: 'repeating-conic-gradient(#E5E7EB 0% 25%, #F3F4F6 0% 50%) 50% / 12px 12px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9CA3AF', fontSize: 11 }}>🖼 图片预览</div>}
-                          {c === 'video' && <div style={{ height: 56, borderRadius: 6, background: 'linear-gradient(135deg,#1E293B,#334155)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, color: '#E5E7EB', fontSize: 11 }}><span style={{ fontSize: 18, lineHeight: 1 }}>▶</span>视频预览{val && val !== '—' ? `（${val}）` : ''}</div>}
-                          {c === 'file' && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 12, color: '#1D4ED8', background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: 6, padding: '3px 8px' }}>📎 {val} <span style={{ color: '#9CA3AF' }}>下载</span></span>}
-                          {c === 'tags' && <span style={{ display: 'inline-block', fontSize: 12, color: '#6D28D9', background: '#F5F3FF', border: '1px solid #DDD6FE', borderRadius: 999, padding: '2px 10px' }}>{val}</span>}
-                          {c === 'link' && <a style={{ fontSize: 12, color: '#1D4ED8', textDecoration: 'underline' }} href="#" onClick={(e) => e.preventDefault()}>{val}</a>}
-                          {(c === 'text' || c === 'table') && <span style={{ color: '#374151', fontWeight: 500 }}>{val}</span>}
+                        <div style={{ padding: 8, display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                          {cs.fields.filter((f) => f.visible).map((f) => (
+                            <span key={f.id} style={{ fontSize: fs - 2, padding: '2px 8px', borderRadius: 999, background: '#F9FAFB', border: '1px solid #EEF2F7', color: '#374151' }}>{f.name}</span>
+                          ))}
+                          {cs.fields.filter((f) => f.visible).length === 0 && <span style={{ fontSize: fs - 2, color: '#9CA3AF' }}>（无展示项）</span>}
                         </div>
                       </div>
-                    )
-                  })}
-                </div>
+                    ))}
+                    {(s.copySections ?? []).length === 0 && <div style={{ fontSize: fs - 2, color: '#9CA3AF' }}>来源模板没有可集成的报告内容分段。</div>}
+                  </div>
+                ) : (
+                  <>
+                    {visFields.length === 0 && <div style={{ fontSize: fs - 2, color: '#9CA3AF' }}>本分段字段已全部隐藏</div>}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 6 }}>
+                      {visFields.map((f) => {
+                        const val = sSample[f.id] ?? sSample[f.name] ?? (s.sourceType === 'rule_set' ? (f.hitText ?? '命中') : '样例值')
+                        const meta = fieldMeta(s, f)
+                        const c = meta.container
+                        return (
+                          <div key={f.id} style={{ fontSize: fs - 2, padding: '6px 8px', background: '#F9FAFB', borderRadius: 6, border: '1px solid #EEF2F7' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, alignItems: 'center' }}>
+                              <span style={{ color: '#6B7280', flex: '0 0 auto' }}>{f.displayLabel ?? f.name}</span>
+                              <span style={{ fontSize: 10, color: '#9CA3AF', border: '1px solid #E5E7EB', borderRadius: 999, padding: '0 6px', whiteSpace: 'nowrap' }}>{RENDER_CONTAINER_LABEL[c]}{meta.type ? ` · ${meta.type}` : ''}</span>
+                            </div>
+                            <div style={{ marginTop: 4 }}>
+                              {c === 'image' && <div style={{ height: 56, borderRadius: 6, background: 'repeating-conic-gradient(#E5E7EB 0% 25%, #F3F4F6 0% 50%) 50% / 12px 12px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9CA3AF', fontSize: 11 }}>🖼 图片预览</div>}
+                              {c === 'video' && <div style={{ height: 56, borderRadius: 6, background: 'linear-gradient(135deg,#1E293B,#334155)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, color: '#E5E7EB', fontSize: 11 }}><span style={{ fontSize: 18, lineHeight: 1 }}>▶</span>视频预览{val && val !== '—' ? `（${val}）` : ''}</div>}
+                              {c === 'file' && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 12, color: '#1D4ED8', background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: 6, padding: '3px 8px' }}>📎 {val} <span style={{ color: '#9CA3AF' }}>下载</span></span>}
+                              {c === 'tags' && <span style={{ display: 'inline-block', fontSize: 12, color: '#6D28D9', background: '#F5F3FF', border: '1px solid #DDD6FE', borderRadius: 999, padding: '2px 10px' }}>{val}</span>}
+                              {c === 'link' && <a style={{ fontSize: 12, color: '#1D4ED8', textDecoration: 'underline' }} href="#" onClick={(e) => e.preventDefault()}>{val}</a>}
+                              {(c === 'text' || c === 'table') && <span style={{ color: '#374151', fontWeight: 500 }}>{val}</span>}
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           )
@@ -215,7 +239,8 @@ export default function ReportTemplatePreview() {
   const loc = useLocation()
   const stateTpl = (loc.state as any)?.tpl as ReportTemplate | undefined
   const id = new URLSearchParams(loc.search).get('id') ?? seedReportTemplates[0].id
-  const tpl = stateTpl ?? seedReportTemplates.find((t) => t.id === id) ?? seedReportTemplates[0]
+  const storeTpl = useTemplate(id)
+  const tpl = stateTpl ?? storeTpl ?? seedReportTemplates[0]
   const meta = REPORT_META[tpl.reportType]
   const [stateKey, setStateKey] = useState<string>(PREVIEW_STATES[tpl.reportType][0].key)
   const [role, setRole] = useState<Role>('风控专员')
@@ -230,7 +255,14 @@ export default function ReportTemplatePreview() {
         subtitle={`${meta.label} · ${tpl.version}`}
         backLabel="返回详情"
         onBack={back}
-        actions={<Button variant="primary" onClick={back}>返回模板详情</Button>}
+        actions={
+          <>
+            {tpl.id === 'tpl-info-authority' && (
+              <Button variant="secondary" onClick={() => nav('/report/backup')}>生成演示报告（备用）</Button>
+            )}
+            <Button variant="primary" onClick={back}>返回模板详情</Button>
+          </>
+        }
       />
       <Panel title="报告预览（只读样例）" desc="用样例数据渲染该模板下报告的实际长相。可切换评分档与预览角色查看不同效果。">
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10, flexWrap: 'wrap', background: '#F8FAFC', border: '1px solid #EEF2F7', borderRadius: 8, padding: '8px 12px' }}>

@@ -7,7 +7,8 @@
  * 显隐开关：模板「报告内容配置」Tab 的复选框「显示分段总分」(showSectionTotals)
  * 样式基准：信用风控报告「评分维度分布（六维加权）」列表
  * ========================================================================== */
-import { buildDimRows, seedReportTemplates, type DimLevel, type ReportType } from './reportTemplateData'
+import { buildDimRows, type DimLevel, type ReportType } from './reportTemplateData'
+import { useTemplate } from './templateStore'
 
 const cn = (...c: (string | false | undefined)[]) => c.filter(Boolean).join(' ')
 
@@ -17,12 +18,13 @@ const LEVEL_CLS: Record<DimLevel, string> = {
   高: 'bg-orange-100 text-orange-700',
 }
 
-export function TemplateDimTable({ reportType, title = '评分维度分布（各集合加权）', onRowClick }: {
-  reportType: ReportType
+export function TemplateDimTable({ reportType, templateId, title = '评分维度分布（各集合加权）', onRowClick }: {
+  reportType?: ReportType
+  templateId?: string
   title?: string
   onRowClick?: (sectionId: string) => void
 }) {
-  const tpl = seedReportTemplates.find((t) => t.reportType === reportType)
+  const tpl = useTemplate(templateId, reportType)
   if (!tpl || tpl.showSectionTotals === false) return null
   const rows = buildDimRows(tpl)
   if (rows.length === 0) return null

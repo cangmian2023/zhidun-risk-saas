@@ -55,8 +55,8 @@ export function fraudScheme4OpsFor(work: FraudScheme4WorkStatus, band?: FraudS4S
   return resolveActions(FRAUD_MACHINE, { workStatus: work, scoreBand: band }, { context }).map((a) => a.key as FraudScheme4OpKey)
 }
 
-export function fraudScheme4ViewLocked(work: FraudS4WorkStatus): boolean {
-  return work === '核验计算中'
+export function fraudScheme4ViewLocked(_work: FraudS4WorkStatus): boolean {
+  return false // 查看在所有状态下均可用（不再置灰）
 }
 
 const WORK_KIND: Record<FraudS4WorkStatus, 'red' | 'amber' | 'green' | 'blue' | 'gray'> = {

@@ -280,6 +280,7 @@ export default function DecisionList() {
                         if (k === 'view') { goDetail(r.id); return }
                         setAuditRow(r); actions.run(k)
                       }}
+                      onSeg={(idx) => { setAuditRow(r); actions.openSeg(idx) }}
                     />
                   </td>
                 </tr>
@@ -309,6 +310,7 @@ export default function DecisionList() {
       </Panel>
 
       {actions.Modal}
+      {actions.segModalEl}
     </div>
   )
 }

@@ -19,10 +19,11 @@ import {
   useDecisionActions,
 } from './DecisionOps'
 import {
-  seedReportTemplates,
   computeSectionScore,
   type ReportType,
 } from './reportTemplateData'
+import { TemplateDimTable } from './TemplateDimTable'
+import { useTemplate } from './templateStore'
 
 const cn = (...c: (string | false | undefined)[]) => c.filter(Boolean).join(' ')
 
@@ -52,7 +53,7 @@ function KV({ label, children, full }: { label: string; children: ReactNode; ful
 // 模板配置打分项明细：按「报告内容配置」分段（集合）分组，列出每集合的小项得分 + 集合汇总得分 + 权重。
 // 数据来自该报告类型对应的 seed 模板（与报告模板页初始态一致）；符号按集合计分方向自动取 +/−（绝不再叠加负号）。
 function TemplateScoredList({ reportType }: { reportType: ReportType }) {
-  const tpl = seedReportTemplates.find((t) => t.reportType === reportType)
+  const tpl = useTemplate(undefined, reportType)
   if (!tpl) return null
   const sections = tpl.sections.filter(
     (s) => (s.homeTab ?? 'content') === 'content' && (s.fields ?? []).some((f) => f.visible && !f.hitReject),
@@ -270,6 +271,8 @@ export default function DecisionDetail() {
                 })}
               </div>
             </div>
+            {/* 评分维度分布：统一为模板驱动表（读报告模板「报告内容配置」分段，受 showSectionTotals 开关与编辑实时影响） */}
+            <TemplateDimTable reportType="decision" title="评分维度分布（各集合加权）" />
           </Panel>
 
           {/* 2、审批操作（合并授信方案） */}

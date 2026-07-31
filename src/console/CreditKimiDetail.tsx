@@ -5,6 +5,7 @@ import { useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Badge, DetailHeader, Panel } from '../components/ui'
 import { MergedOpTable } from '../components/MergedOpTable'
+import { TemplateDimTable } from './TemplateDimTable'
 import {
   buildCreditKimiReport,
   type CreditKimiReport,
@@ -29,7 +30,6 @@ const levelCls: Record<CreditLevel, string> = {
   高: 'bg-orange-100 text-orange-700',
   极高: 'bg-rose-100 text-rose-700',
 }
-const levelText: Record<CreditLevel, string> = { 低: '低', 中: '中', 高: '高', 极高: '极高' }
 // 维度子项得分文字色：跟随风险等级（与「等级」预警徽标一致：低绿/中黄/高橙/极高红）
 const levelTextColor: Record<CreditLevel, string> = {
   低: 'text-emerald-600',
@@ -153,37 +153,8 @@ function ScoreOverviewCard({ d }: { d: CreditKimiReport }) {
         </div>
       </div>
 
-      {/* 评分维度分布（六维加权）— 列表，样式与欺诈识别报告「因子构成表」一致 */}
-      <div className="mt-5 mb-1 text-xs font-medium text-slate-500">评分维度分布（六维加权）</div>
-      <div className="overflow-hidden rounded-xl border border-slate-100">
-        <table className="w-full text-left text-xs">
-          <thead>
-            <tr className="bg-slate-50 text-slate-400">
-              <th className="px-3 py-2 font-medium">维度</th>
-              <th className="px-3 py-2 text-right font-medium">得分</th>
-              <th className="px-3 py-2 text-right font-medium">权重</th>
-              <th className="px-3 py-2 text-center font-medium">等级</th>
-              <th className="px-3 py-2 font-medium">说明</th>
-            </tr>
-          </thead>
-          <tbody>
-            {d.dimensions.map((dim) => (
-              <tr
-                key={dim.key}
-                className="cursor-pointer border-t border-slate-100 transition hover:bg-slate-50"
-                onClick={() => jumpTo(dim.key)}
-                title="点击定位到对应维度分析"
-              >
-                <td className="px-3 py-2.5 font-medium text-ink-900">{dim.name}</td>
-                <td className={cn('px-3 py-2.5 text-right font-semibold', levelTextColor[dim.level])}>{dim.score}</td>
-                <td className="px-3 py-2.5 text-right text-slate-400">{dim.weight}%</td>
-                <td className="px-3 py-2.5 text-center"><span className={cn('rounded px-1.5 py-0.5 text-[10px] font-medium', levelCls[dim.level])}>{levelText[dim.level]}</span></td>
-                <td className="px-3 py-2.5 text-slate-500">{dim.note}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      {/* 评分维度分布：统一改为模板驱动表（读报告模板「报告内容配置」分段，受 showSectionTotals 开关与编辑实时影响） */}
+      <TemplateDimTable reportType="credit" title="评分维度分布（各集合加权）" onRowClick={jumpTo} />
 
     </div>
   )
