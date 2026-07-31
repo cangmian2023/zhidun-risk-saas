@@ -408,6 +408,16 @@ export interface ScoreGrade {
   autoResult: AutoResult // 总分落入本分段时的自动审核结果（通过/转人工/拒绝）
   description: string
 }
+/* 分值语义：决定报告详情页「大数字 + 阈值刻度条」的读数方向。
+ *  - 'risk'   异常值：直接展示总分，越高越危险，刻度条与 grades 同向（左低右高）
+ *  - 'credit' 信用值：展示「满分 − 总分」，越高越安全，刻度条整条左右翻转
+ * 分段边界 / 配色 / 结论一律取 grades，本开关只管「这个数怎么读」，不改评分模型本身。
+ */
+export type ScoreSemantic = 'risk' | 'credit'
+export const SCORE_SEMANTIC_LABEL: Record<ScoreSemantic, string> = {
+  risk: '异常值 · 越高越危险',
+  credit: '信用值 · 越高越安全',
+}
 export interface ScoreDisplayConfig {
   displayComponent: DisplayComponent
   showDescription: boolean
@@ -415,7 +425,43 @@ export interface ScoreDisplayConfig {
   showRiskTags: boolean
   baseScore: number      // 基础分：总分 = 基础分 + Σ各卡加分 − Σ各卡扣分（避免纯扣分卡把总分扣成负数）
   title?: string        // 自动审核配置-标题*：报告结论卡上的模型名称（如「信息核验综合信用模型」），空则详情页用兜底名
+  scoreSemantic?: ScoreSemantic  // 分值语义（缺省 'risk'）：详情页大数字与刻度条按此方向渲染
   grades: ScoreGrade[]
+}
+
+/* ---------- 阈值刻度条：由 grades + 分值语义推导（报告详情页读同一套算法） ---------- */
+export interface ScoreBarSeg {
+  grade: ScoreGrade
+  left: number    // 展示坐标左端（%）
+  width: number   // 段宽（%）
+}
+/** 把模板分段铺成刻度条；'credit' 语义下整条左右翻转。bounds 为展示坐标下的边界刻度值 */
+export function buildScoreBar(grades: ScoreGrade[], semantic: ScoreSemantic = 'risk') {
+  const gs = [...grades].sort((a, b) => a.minScore - b.minScore)
+  const min = gs[0]?.minScore ?? 0
+  const max = gs[gs.length - 1]?.maxScore ?? 100
+  const range = Math.max(1, max - min)
+  const segs: ScoreBarSeg[] = gs
+    .map((g) => {
+      const lo = semantic === 'credit' ? min + max - g.maxScore : g.minScore
+      const hi = semantic === 'credit' ? min + max - g.minScore : g.maxScore
+      return { grade: g, left: ((lo - min) / range) * 100, width: ((hi - lo) / range) * 100 }
+    })
+    .sort((a, b) => a.left - b.left)
+  const bounds = [min, ...segs.slice(0, -1).map((s) => Math.round(min + ((s.left + s.width) / 100) * range)), max]
+  return { segs, bounds, min, max }
+}
+/** 模型原始总分 → 详情页展示值 */
+export function toDisplayScore(raw: number, semantic: ScoreSemantic = 'risk', grades: ScoreGrade[] = []): number {
+  if (semantic !== 'credit') return raw
+  const gs = [...grades].sort((a, b) => a.minScore - b.minScore)
+  const min = gs[0]?.minScore ?? 0
+  const max = gs[gs.length - 1]?.maxScore ?? 100
+  return min + max - raw
+}
+/** 模型原始总分落在哪个分段 */
+export function matchGrade(raw: number, grades: ScoreGrade[]): ScoreGrade | undefined {
+  return grades.find((g) => raw >= g.minScore && raw <= g.maxScore)
 }
 
 /* ---------- 特殊命中规则（自动审核 Tab · 分值分段之下） ----------
@@ -1834,6 +1880,8 @@ export function buildTemplate(type: ReportType, o: BuildOpts): ReportTemplate {
       showRiskTags: true,
       baseScore: 60,
       title: type === 'info_verify' ? '信息核验综合信用模型' : '',
+      // 信息核验/欺诈的 grades 是异常值语义，但报告详情页习惯给客户看「信用值」→ 默认翻转；信用/决策本身就是越高越好，直读
+      scoreSemantic: type === 'info_verify' || type === 'fraud' ? 'credit' : 'risk',
       grades: GRADE_PRESETS[type].map((g) => ({ ...g })),
     },
     specialRules: defaultSpecialRules(type),

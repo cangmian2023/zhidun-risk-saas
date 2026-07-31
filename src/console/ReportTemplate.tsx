@@ -28,6 +28,7 @@ import {
   SECTION_SOURCE_LABEL, RULE_SETS, DB_TYPES, mockTableColumns,
   SourceTestResult, testSourceConfig, parseCurl, buildCurl,
   CardDisplayMode, CARD_DISPLAY_MODE_LABEL, FieldGroup,
+  ScoreSemantic, SCORE_SEMANTIC_LABEL, toDisplayScore,
   syncFlowToGrades, buildTemplate, seedReportTemplates,
   FlowGraph, buildDefaultFlowGraph, summarizeFlowGraph, defaultButtonName,
 } from './reportTemplateData'
@@ -1384,6 +1385,22 @@ export default function ReportTemplateConfig() {
                       <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: '#374151', cursor: canEdit ? 'pointer' : 'default' }}>
                         <input type="checkbox" disabled={!canEdit} checked={active.scoreDisplay.showThresholdBar} onChange={(e) => patch((t) => ({ ...t, scoreDisplay: { ...t.scoreDisplay, showThresholdBar: e.target.checked } }))} />启用刻度条
                       </label>
+                      {/* 分值语义：只影响报告详情页大数字与刻度条的读数方向，不改评分模型 */}
+                      <span style={{ fontSize: 12, color: '#6B7280' }}>分值语义</span>
+                      <select
+                        disabled={!canEdit}
+                        value={active.scoreDisplay.scoreSemantic ?? 'risk'}
+                        onChange={(e) => patch((t) => ({ ...t, scoreDisplay: { ...t.scoreDisplay, scoreSemantic: e.target.value as ScoreSemantic } }))}
+                        style={{ ...numSm, width: 168 }}
+                      >
+                        {(['risk', 'credit'] as ScoreSemantic[]).map((s) => (
+                          <option key={s} value={s}>{SCORE_SEMANTIC_LABEL[s]}</option>
+                        ))}
+                      </select>
+                      <span style={{ fontSize: 11, color: '#9CA3AF' }}>
+                        详情页读数 {toDisplayScore(pvScore, active.scoreDisplay.scoreSemantic ?? 'risk', active.scoreDisplay.grades)}
+                        {(active.scoreDisplay.scoreSemantic ?? 'risk') === 'credit' ? `（= ${scoreSummary.max} − ${pvScore}）` : ''}
+                      </span>
                       <span style={{ fontSize: 12, color: '#6B7280' }}>示例分值</span>
                       <input type="range" min={scoreSummary.min} max={scoreSummary.max} value={pvScore} onChange={(e) => setDemoScore(+e.target.value)} style={{ width: 160 }} />
                       <input type="number" value={pvScore} onChange={(e) => setDemoScore(+e.target.value)} style={{ ...numSm, width: 70 }} />

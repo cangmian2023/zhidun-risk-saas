@@ -19,7 +19,7 @@ import { useModule } from '../store'
 import { VerifyActionBar, ivGradeFromRisk, type VerifyRow, type WorkStatus, type SysResult } from './VerifyOps'
 import { MergedOpTable } from '../components/MergedOpTable'
 import { ExemptModal } from './ExemptModal'
-import { computeSectionScore, evalSpecialRules, SPECIAL_TRIGGER_LABEL, matchDimBand, DEFAULT_DIM_BANDS, type SectionConfig, type ReportTemplate, type DimLevel } from './reportTemplateData'
+import { computeSectionScore, evalSpecialRules, SPECIAL_TRIGGER_LABEL, matchDimBand, DEFAULT_DIM_BANDS, buildScoreBar, toDisplayScore, matchGrade, type SectionConfig, type ReportTemplate, type DimLevel, type ScoreSemantic } from './reportTemplateData'
 import { TemplateDimTable } from './TemplateDimTable'
 import { useTemplate } from './templateStore'
 
@@ -465,7 +465,8 @@ export default function PreVerifyDetail() {
     { id: 'photos', label: '用户证件照', tone: 'ok' },
     { id: 'single', label: '多源核验单项报告', tone: d.single.some((s) => s.conclusion !== 'pass') ? 'alert' : 'ok' },
     { id: 'cross', label: '交叉融合综合报告', tone: d.cross.finalConclusion === 'reject' || d.cross.finalConclusion === 'warning' ? 'alert' : 'ok' },
-    { id: 'merged-ops', label: '全量操作日志', tone: 'normal' },
+    // 操作日志锚点随 showOpLog 开关一起显隐
+    ...((ivTpl?.showOpLog ?? true) ? [{ id: 'merged-ops', label: '全量操作日志', tone: 'normal' as const }] : []),
     { id: 'conclusion', label: '结论与终审', tone: 'normal' },
   ]
 
@@ -685,10 +686,12 @@ export default function PreVerifyDetail() {
             </div>
           </Panel>
 
-          {/* 六、单项核验全量操作日志 */}\
-          <Panel title="六、单项核验全量操作日志" id="merged-ops">
-            <MergedOpTable itemActions={d.itemActions} opLogs={logs} />
-          </Panel>
+          {/* 六、单项核验全量操作日志（由模板「基础信息 → 在报告中显示操作日志」showOpLog 总开关控制） */}
+          {(ivTpl?.showOpLog ?? true) && (
+            <Panel title="六、单项核验全量操作日志" id="merged-ops">
+              <MergedOpTable itemActions={d.itemActions} opLogs={logs} />
+            </Panel>
+          )}
 
 
 
@@ -775,9 +778,19 @@ export default function PreVerifyDetail() {
 // ========================= 信用值模型卡（顶部结论级） =========================
 function ScoreModelCard({ cross, ivTpl }: { cross: CrossCheck; ivTpl?: ReportTemplate }) {
   const { riskScore, scoreCap, overallRisk, scoreComponents, ruleVersion, auditTime, reportId } = cross
-  // 信用值 = 满分 − 风险值（越高越安全）；阈值分段：≥80 高(绿) / 20–80 中(黄) / <20 低(红)
-  const creditScore = scoreCap - riskScore
-  const creditPct = Math.min(100, Math.max(0, (creditScore / scoreCap) * 100))
+  /* 大数字 + 阈值刻度条全部读模板「自动审核配置 → 分值分段 grades」：
+     scoreSemantic='credit' → 展示 满分−异常值（越高越安全），刻度条整条翻转；'risk' → 直接展示异常值。
+     模板缺失时回落到原来的 信用值=满分−风险值、20/80 三段。 */
+  const sd = ivTpl?.scoreDisplay
+  const grades = sd?.grades ?? []
+  const semantic: ScoreSemantic = sd?.scoreSemantic ?? 'credit'
+  const semLabel = semantic === 'credit' ? '信用值' : '异常值'
+  const bar = buildScoreBar(grades, semantic)
+  const hitGrade = matchGrade(riskScore, grades)
+  const shownScore = grades.length ? toDisplayScore(riskScore, semantic, grades) : scoreCap - riskScore
+  const shownCap = grades.length ? bar.max : scoreCap
+  const shownMin = grades.length ? bar.min : 0
+  const pointerPct = Math.min(100, Math.max(0, ((shownScore - shownMin) / Math.max(1, shownCap - shownMin)) * 100))
   const bandColor = overallRisk === 'high' ? 'text-rose-600' : overallRisk === 'medium' ? 'text-amber-600' : 'text-emerald-600'
   const levelCls: Record<RiskLevel, string> = {
     high: 'bg-rose-100 text-rose-700',
@@ -795,7 +808,7 @@ function ScoreModelCard({ cross, ivTpl }: { cross: CrossCheck; ivTpl?: ReportTem
       {/* 标识行 */}
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <span className="inline-flex h-6 items-center rounded-md bg-slate-800 px-2 text-[11px] font-medium text-white">信用值</span>
+          <span className="inline-flex h-6 items-center rounded-md bg-slate-800 px-2 text-[11px] font-medium text-white">{semLabel}</span>
           <span className="text-sm font-semibold text-ink-900">{ivTpl?.scoreDisplay?.title || '信息核验综合信用模型'}</span>
           <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[11px] text-slate-500">规则版本 {ruleVersion}</span>
         </div>
@@ -805,39 +818,78 @@ function ScoreModelCard({ cross, ivTpl }: { cross: CrossCheck; ivTpl?: ReportTem
       <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-center">
         <div className="flex items-end gap-3">
           <div className="flex items-baseline">
-            <span className={cn('text-5xl font-bold leading-none', bandColor)}>{creditScore}</span>
-            <span className="ml-1 text-sm font-normal text-slate-300">/ {scoreCap}</span>
+            <span
+              className={cn('text-5xl font-bold leading-none', !hitGrade && bandColor)}
+              style={hitGrade ? { color: hitGrade.color } : undefined}
+            >
+              {shownScore}
+            </span>
+            <span className="ml-1 text-sm font-normal text-slate-300">/ {shownCap}</span>
           </div>
           <div className="mb-1">
-            <span className={cn('rounded-full px-2.5 py-0.5 text-xs font-semibold', levelCls[overallRisk])}>
-              {levelText[overallRisk]}信用
-            </span>
+            {hitGrade ? (
+              <span
+                className="rounded-full px-2.5 py-0.5 text-xs font-semibold"
+                style={{ color: hitGrade.color, background: `${hitGrade.color}1A` }}
+                title={hitGrade.description}
+              >
+                {hitGrade.grade} · {hitGrade.label}
+              </span>
+            ) : (
+              <span className={cn('rounded-full px-2.5 py-0.5 text-xs font-semibold', levelCls[overallRisk])}>
+                {levelText[overallRisk]}信用
+              </span>
+            )}
           </div>
         </div>
 
-        {/* 阈值刻度条 */}
-        <div className="min-w-0 flex-1">
-          <div className="relative h-2.5 w-full overflow-visible rounded-full">
-            <div className="absolute inset-0 flex overflow-hidden rounded-full">
-              <div className="h-full bg-rose-400" style={{ width: '20%' }} />
-              <div className="h-full bg-amber-400" style={{ width: '60%' }} />
-              <div className="h-full bg-emerald-400" style={{ width: '20%' }} />
+        {/* 阈值刻度条（分段/配色/边界全部来自模板 grades；credit 语义下整条翻转） */}
+        {(sd?.showThresholdBar ?? true) && (
+          <div className="min-w-0 flex-1">
+            <div className="relative h-2.5 w-full overflow-visible rounded-full">
+              <div className="absolute inset-0 overflow-hidden rounded-full bg-slate-100">
+                {bar.segs.length > 0 ? (
+                  bar.segs.map((s) => (
+                    <div
+                      key={s.grade.grade}
+                      className="absolute top-0 h-full"
+                      style={{
+                        left: `${s.left}%`,
+                        width: `${s.width}%`,
+                        background: s.grade.color,
+                        opacity: hitGrade && s.grade.grade !== hitGrade.grade ? 0.35 : 1,
+                      }}
+                      title={`${s.grade.grade}｜原始分 ${s.grade.minScore}–${s.grade.maxScore}｜${s.grade.autoResult}`}
+                    />
+                  ))
+                ) : (
+                  <div className="flex h-full w-full">
+                    <div className="h-full bg-rose-400" style={{ width: '20%' }} />
+                    <div className="h-full bg-amber-400" style={{ width: '60%' }} />
+                    <div className="h-full bg-emerald-400" style={{ width: '20%' }} />
+                  </div>
+                )}
+              </div>
+              {/* 指针 */}
+              <div className="absolute top-1/2 -translate-x-1/2 -translate-y-1/2" style={{ left: `${pointerPct}%` }}>
+                <div className="h-4 w-4 rounded-full border-2 border-white bg-slate-800 shadow" />
+              </div>
             </div>
-            {/* 指针 */}
-            <div
-              className="absolute top-1/2 -translate-x-1/2 -translate-y-1/2"
-              style={{ left: `${creditPct}%` }}
-            >
-              <div className="h-4 w-4 rounded-full border-2 border-white bg-slate-800 shadow" />
+            <div className="relative mt-1.5 h-4 text-[10px] text-slate-400">
+              {(bar.segs.length > 0 ? bar.bounds : [0, 20, 80, 100]).map((b, i, arr) => {
+                const range = Math.max(1, shownCap - shownMin)
+                const leftPct = ((b - shownMin) / range) * 100
+                const tx = i === 0 ? 'translateX(0)' : i === arr.length - 1 ? 'translateX(-100%)' : 'translateX(-50%)'
+                const tail = i === 0 ? `· ${semantic === 'credit' ? '最差' : '最优'}` : i === arr.length - 1 ? `· ${semantic === 'credit' ? '最优' : '最差'}` : ''
+                return (
+                  <span key={b} className="absolute" style={{ left: `${leftPct}%`, transform: tx }}>
+                    {b} {tail}
+                  </span>
+                )
+              })}
             </div>
           </div>
-          <div className="mt-1.5 flex justify-between text-[10px] text-slate-400">
-            <span>0 · 低信用</span>
-            <span>20</span>
-            <span>80</span>
-            <span>100 · 高信用</span>
-          </div>
-        </div>
+        )}
       </div>
 
       {/* 特殊命中规则判定（读报告模板 · 自动审核 Tab → 特殊命中规则） */}
