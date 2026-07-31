@@ -423,6 +423,7 @@ export interface ScoreDisplayConfig {
   showDescription: boolean
   showThresholdBar: boolean
   showRiskTags: boolean
+  riskTags?: string[]   // 风险标签（独立可编辑列表）：勾选「显示风险标签」后在评分卡上以 chips 展示，可在配置页预览卡直接增删
   baseScore: number      // 基础分：总分 = 基础分 + Σ各卡加分 − Σ各卡扣分（避免纯扣分卡把总分扣成负数）
   title?: string        // 自动审核配置-标题*：报告结论卡上的模型名称（如「信息核验综合信用模型」），空则详情页用兜底名
   scoreSemantic?: ScoreSemantic  // 分值语义（缺省 'risk'）：详情页大数字与刻度条按此方向渲染
@@ -1936,6 +1937,7 @@ export function buildTemplate(type: ReportType, o: BuildOpts): ReportTemplate {
       showDescription: true,
       showThresholdBar: true,
       showRiskTags: true,
+      riskTags: ['设备环境异常', '关联风险偏高'],
       baseScore: 60,
       title: type === 'info_verify' ? '信息核验综合信用模型' : '',
       // 信息核验/欺诈的 grades 是异常值语义，但报告详情页习惯给客户看「信用值」→ 默认翻转；信用/决策本身就是越高越好，直读

@@ -29,13 +29,12 @@ import {
   SourceTestResult, testSourceConfig, parseCurl, buildCurl,
   CardDisplayMode, CARD_DISPLAY_MODE_LABEL, FieldGroup,
   ScoreSemantic, SCORE_SEMANTIC_LABEL, toDisplayScore, ScoreDisplayConfig,
-  syncFlowToGrades, buildTemplate, seedReportTemplates, DECISION_SCORE_VARS,
+  syncFlowToGrades, buildTemplate, seedReportTemplates,
   FlowGraph, buildDefaultFlowGraph, summarizeFlowGraph, defaultButtonName,
 } from './reportTemplateData'
 import { touch } from './templateStore'
 import FlowCanvasEditor from './FlowCanvasEditor'
 import { ScoreVisual } from './ScoreVisual'
-import FormulaEditor from './formulaEditor'
 
 /* 显示方式下拉项：对给定类型推荐一个默认值，标注「（推荐）」以便用户可改 */
 const containerOptions = (rec: RenderContainer) =>
@@ -210,6 +209,8 @@ export default function ReportTemplateConfig() {
       const grades = t.scoreDisplay.grades.map((g, k) => (k === i ? fn(g) : g))
       return { ...t, scoreDisplay: { ...t.scoreDisplay, grades }, businessFlow: syncFlowToGrades(t.businessFlow, grades) }
     })
+  const patchRiskTags = (fn: (tags: string[]) => string[]) =>
+    patch((t) => ({ ...t, scoreDisplay: { ...t.scoreDisplay, riskTags: fn(t.scoreDisplay.riskTags ?? []) } }))
   const addGrade = () => {
     patch((t) => {
       const last = t.scoreDisplay.grades[t.scoreDisplay.grades.length - 1]
@@ -1417,7 +1418,7 @@ export default function ReportTemplateConfig() {
                       <input type="range" min={scoreSummary.min} max={scoreSummary.max} value={pvScore} onChange={(e) => setDemoScore(+e.target.value)} style={{ width: 160 }} />
                       <input type="number" value={pvScore} onChange={(e) => setDemoScore(+e.target.value)} style={{ ...numSm, width: 70 }} />
                     </div>
-                    <ScoreCardPreview sd={active.scoreDisplay} score={pvScore} patchGrade={patchGrade} canEdit={canEdit} />
+                    <ScoreCardPreview sd={active.scoreDisplay} score={pvScore} patchGrade={patchGrade} patchRiskTags={patchRiskTags} canEdit={canEdit} />
                   </div>
                 )
               })()}
@@ -1429,17 +1430,6 @@ export default function ReportTemplateConfig() {
                 <span style={{ fontSize: 13, color: '#374151' }}>命中即拒 <b style={{ color: '#DC2626' }}>{scoreSummary.rejectTotal}</b> 项</span>
                 <span style={{ fontSize: 12, color: '#6B7280' }}>（基础分 {active.scoreDisplay.baseScore} ＋ 加分满分 {scoreSummary.addMax} − 最大扣分 {scoreSummary.deductMax}；命中即拒项直接拒绝，不计入加减分）</span>
               </div>
-              {active.reportType === 'decision' && (
-                <div style={{ marginTop: 14 }}>
-                  <div style={{ fontSize: 12, fontWeight: 600, color: '#6B7280', marginBottom: 6 }}>综合总分公式（决策报告特有 · 支持加减不同方向聚合）</div>
-                  <FormulaEditor
-                    formula={active.scoreFormula}
-                    vars={DECISION_SCORE_VARS}
-                    canEdit={canEdit}
-                    onSave={(f) => patch((t) => ({ ...t, scoreFormula: f }))}
-                  />
-                </div>
-              )}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
                 <div style={{ fontSize: 13, color: '#374151', fontWeight: 600 }}>分值分段</div>
                 {canEdit && <button onClick={addGrade} style={miniBtn}>＋ 新增分段</button>}
@@ -1747,12 +1737,14 @@ const pvTag = (c: string): React.CSSProperties => ({ padding: '1px 8px', fontSiz
 /* 评分卡预览：与报告详情页共用 ScoreVisual —— 这里看到什么样，报告生成出来就是
    什么样（展示形态 / 分段配色 / 语义方向 / 三个开关全部同一份渲染代码）。
    预览独有的能力是「风险等级 / 自动审核结果」内联改，通过 tagSlot 注入。 */
-function ScoreCardPreview({ sd, score, patchGrade, canEdit }: {
+function ScoreCardPreview({ sd, score, patchGrade, patchRiskTags, canEdit }: {
   sd: ScoreDisplayConfig
   score: number
   patchGrade: (i: number, fn: (g: ScoreGrade) => ScoreGrade) => void
+  patchRiskTags: (fn: (tags: string[]) => string[]) => void
   canEdit: boolean
 }) {
+  const [newTag, setNewTag] = useState('')
   return (
     <ScoreVisual
       sd={sd}
@@ -1761,27 +1753,45 @@ function ScoreCardPreview({ sd, score, patchGrade, canEdit }: {
         if (!grade) return null
         const editable = canEdit && gradeIndex >= 0
         return (
-          <div style={{ display: 'flex', gap: 6, marginTop: 10, flexWrap: 'wrap', alignItems: 'center' }}>
-            {editable ? (
-              <>
-                <select value={grade.riskLevel}
-                  onChange={(e) => patchGrade(gradeIndex, (g) => ({ ...g, riskLevel: e.target.value as RiskLevel }))}
-                  style={{ ...pvTag(color), cursor: 'pointer' }}>
-                  {(['低', '中', '高', '极高'] as RiskLevel[]).map((r) => <option key={r} value={r}>风险{r}</option>)}
-                </select>
-                <select value={grade.autoResult}
-                  onChange={(e) => patchGrade(gradeIndex, (g) => ({ ...g, autoResult: e.target.value as AutoResult }))}
-                  style={{ ...pvTag(AUTO_RESULT_COLOR[grade.autoResult]), cursor: 'pointer' }}>
-                  {AUTO_RESULT_LIST.map((r) => <option key={r} value={r}>{r}</option>)}
-                </select>
-              </>
-            ) : (
-              <>
-                <span style={pvTag(color)}>风险{grade.riskLevel}</span>
-                <span style={pvTag('#64748B')}>{grade.autoResult}</span>
-              </>
+          <>
+            <div style={{ display: 'flex', gap: 6, marginTop: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+              {editable ? (
+                <>
+                  <select value={grade.riskLevel}
+                    onChange={(e) => patchGrade(gradeIndex, (g) => ({ ...g, riskLevel: e.target.value as RiskLevel }))}
+                    style={{ ...pvTag(color), cursor: 'pointer' }}>
+                    {(['低', '中', '高', '极高'] as RiskLevel[]).map((r) => <option key={r} value={r}>风险{r}</option>)}
+                  </select>
+                  <select value={grade.autoResult}
+                    onChange={(e) => patchGrade(gradeIndex, (g) => ({ ...g, autoResult: e.target.value as AutoResult }))}
+                    style={{ ...pvTag(AUTO_RESULT_COLOR[grade.autoResult]), cursor: 'pointer' }}>
+                    {AUTO_RESULT_LIST.map((r) => <option key={r} value={r}>{r}</option>)}
+                  </select>
+                </>
+              ) : (
+                <>
+                  <span style={pvTag(color)}>风险{grade.riskLevel}</span>
+                  <span style={pvTag('#64748B')}>{grade.autoResult}</span>
+                </>
+              )}
+            </div>
+            {sd.showRiskTags && (
+              <div style={{ display: 'flex', gap: 6, marginTop: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+                {(sd.riskTags ?? []).map((tag, i) => (
+                  <span key={i} style={pvTag('#0EA5E9')}>
+                    {tag}
+                    {canEdit && <button type="button" onClick={() => patchRiskTags((l) => l.filter((_, k) => k !== i))} style={{ marginLeft: 4, border: 'none', background: 'transparent', color: '#0EA5E9', cursor: 'pointer', fontSize: 11 }}>×</button>}
+                  </span>
+                ))}
+                {canEdit && (
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                    <input value={newTag} onChange={(e) => setNewTag(e.target.value)} placeholder="加标签" style={{ ...numSm, width: 96 }} onKeyDown={(e) => { if (e.key === 'Enter' && newTag.trim()) { patchRiskTags((l) => [...l, newTag.trim()]); setNewTag('') } }} />
+                    <button type="button" onClick={() => { if (newTag.trim()) { patchRiskTags((l) => [...l, newTag.trim()]); setNewTag('') } }} style={{ ...numSm, cursor: 'pointer' }}>+ 标签</button>
+                  </span>
+                )}
+              </div>
             )}
-          </div>
+          </>
         )
       }}
     />
