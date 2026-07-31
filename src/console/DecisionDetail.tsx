@@ -21,6 +21,9 @@ import {
 import {
   computeSectionScore,
   type ReportType,
+  evaluateFormula,
+  formulaText,
+  DECISION_SCORE_VARS,
 } from './reportTemplateData'
 import { TemplateDimTable } from './TemplateDimTable'
 import { useTemplate } from './templateStore'
@@ -151,6 +154,7 @@ export default function DecisionDetail() {
   }
   const data = getDecisionDetail(id)
   const actions = useDecisionActions(auditRow, apply)
+  const tpl = useTemplate(undefined, 'decision')
 
   if (!data) {
     return (
@@ -229,6 +233,27 @@ export default function DecisionDetail() {
         <div className="min-w-0 flex-1 space-y-4">
           {/* 第1段：决策总览 */}
           <Panel id="overview" className="scroll-mt-24" title="1、决策总览">
+            {tpl?.scoreFormula && (() => {
+              const vals = { credit_score: d.creditScore900v, info_score: d.info.creditScore, fraud_score: d.fraudScoreRaw }
+              const total = evaluateFormula(tpl.scoreFormula, vals)
+              return (
+                <div className="mb-6 rounded-2xl border border-violet-200 bg-gradient-to-br from-violet-50 to-white p-5">
+                  {/* 上方小卡片：已配公式摘要 */}
+                  <div className="mb-3 flex items-center gap-2 rounded-lg bg-white/70 px-3 py-2 ring-1 ring-inset ring-violet-100">
+                    <span className="text-xs font-medium text-slate-500">综合总分计算公式</span>
+                    <code className="text-xs font-semibold text-violet-700">{formulaText(tpl.scoreFormula, DECISION_SCORE_VARS)}</code>
+                    <span className="ml-auto text-[11px] text-slate-400">在「报告模板配置 · 评分方案」中编辑</span>
+                  </div>
+                  <div className="flex items-end justify-between">
+                    <div>
+                      <div className="text-xs text-slate-400">自动评审综合总分</div>
+                      <div className="text-5xl font-bold tabular-nums text-violet-700">{total == null ? '—' : total.toFixed(1)}</div>
+                    </div>
+                    <div className="text-right text-xs text-slate-400">由公式实时计算 · 随模板配置联动</div>
+                  </div>
+                </div>
+              )
+            })()}
             <div className="grid gap-6 lg:grid-cols-2">
               <div>
                 <KV label="决策建议"><DecisionSuggestionBadge v={d.row.suggestion} /></KV>

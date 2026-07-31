@@ -690,6 +690,63 @@ export interface TemplateChangeLog {
   timestamp: string
   summary: string
 }
+
+/* ---------- 综合总分可视化公式（决策报告：把三大报告分数按可配置公式聚合） ---------- */
+export type FormulaOp = '+' | '-'
+export interface FormulaTerm {
+  id: string
+  op: FormulaOp          // 该 term 前的运算符（首项的 ± 也由此决定，支持"有的地方加、有的地方减"）
+  kind: 'var' | 'const'
+  varId?: string        // kind==='var'：引用 DECISION_SCORE_VARS 中的变量
+  constVal?: number     // kind==='const'：常数
+  factor: number        // 系数（变量/常数前的乘数，默认 1）
+}
+export interface ScoreFormula {
+  terms: FormulaTerm[]
+  updatedAt?: string
+}
+/** 公式可用变量（来自三大报告的关键分数；dir 仅作方向提示，符号由公式运算符决定） */
+export interface FormulaVar {
+  id: string
+  label: string
+  dir: 'up-good' | 'up-bad'
+  sample: number        // 配置页实时预览用的样例值
+}
+export const DECISION_SCORE_VARS: FormulaVar[] = [
+  { id: 'credit_score', label: '信用评分', dir: 'up-good', sample: 720 },
+  { id: 'info_score', label: '信息核验得分', dir: 'up-bad', sample: 20 },
+  { id: 'fraud_score', label: '欺诈评分', dir: 'up-bad', sample: 30 },
+]
+/** 决策报告默认综合公式：信用评分×0.4 − 欺诈评分×0.3 − 信息核验得分×0.3（仅示例，可改） */
+export const DEFAULT_DECISION_FORMULA: ScoreFormula = {
+  terms: [
+    { id: 't1', op: '+', kind: 'var', varId: 'credit_score', factor: 0.4 },
+    { id: 't2', op: '-', kind: 'var', varId: 'fraud_score', factor: 0.3 },
+    { id: 't3', op: '-', kind: 'var', varId: 'info_score', factor: 0.3 },
+  ],
+}
+/** 按变量值求值综合总分；无公式返回 null */
+export function evaluateFormula(f: ScoreFormula | undefined, values: Record<string, number>): number | null {
+  if (!f || f.terms.length === 0) return null
+  let sum = 0
+  for (const t of f.terms) {
+    const base = t.kind === 'var' ? (values[t.varId ?? ''] ?? 0) : (t.constVal ?? 0)
+    sum += (t.op === '-' ? -1 : 1) * t.factor * base
+  }
+  return sum
+}
+/** 生成可读公式文本，如 "信用评分×0.4 − 欺诈评分×0.3" */
+export function formulaText(f: ScoreFormula | undefined, vars: FormulaVar[]): string {
+  if (!f || f.terms.length === 0) return '未配置公式'
+  const labelOf = (id?: string) => vars.find((v) => v.id === id)?.label ?? id ?? '?'
+  return f.terms.map((t, i) => {
+    const sign = t.op === '-' ? '− ' : (i === 0 ? '' : '+ ')
+    const base = t.kind === 'var' ? labelOf(t.varId) : `常数(${t.constVal ?? 0})`
+    const fac = Math.abs(t.factor) === 1 ? '' : `×${Number(t.factor)}`
+    return `${sign}${base}${fac}`
+  }).join(' ')
+}
+
 export interface ReportTemplate {
   id: string
   name: string
@@ -710,6 +767,7 @@ export interface ReportTemplate {
   /** 演示/备用报告：申请人示例信息（key=字段名，value=值），由模板驱动的报告详情读取并展示 */
   demoApplicant?: Record<string, string>
   scoreDisplay: ScoreDisplayConfig
+  scoreFormula?: ScoreFormula  // 决策报告：综合总分可视化公式（由 FormulaEditor 编辑，详情页 evaluateFormula 求值展示）
   specialRules: SpecialRule[]   // 自动审核 Tab → 特殊命中规则：命中即定结论（决定规则）/ 重点提示（预警规则）
   businessFlow: BusinessFlowConfig[]
   theme: ThemeConfig
@@ -1884,6 +1942,7 @@ export function buildTemplate(type: ReportType, o: BuildOpts): ReportTemplate {
       scoreSemantic: type === 'info_verify' || type === 'fraud' ? 'credit' : 'risk',
       grades: GRADE_PRESETS[type].map((g) => ({ ...g })),
     },
+    scoreFormula: type === 'decision' ? { ...DEFAULT_DECISION_FORMULA, terms: DEFAULT_DECISION_FORMULA.terms.map((t) => ({ ...t })) } : undefined,
     specialRules: defaultSpecialRules(type),
     businessFlow: syncFlowToGrades(FLOW_PRESETS[type], GRADE_PRESETS[type]),
     theme: defaultTheme(),

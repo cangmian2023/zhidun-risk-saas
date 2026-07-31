@@ -29,12 +29,13 @@ import {
   SourceTestResult, testSourceConfig, parseCurl, buildCurl,
   CardDisplayMode, CARD_DISPLAY_MODE_LABEL, FieldGroup,
   ScoreSemantic, SCORE_SEMANTIC_LABEL, toDisplayScore, ScoreDisplayConfig,
-  syncFlowToGrades, buildTemplate, seedReportTemplates,
+  syncFlowToGrades, buildTemplate, seedReportTemplates, DECISION_SCORE_VARS,
   FlowGraph, buildDefaultFlowGraph, summarizeFlowGraph, defaultButtonName,
 } from './reportTemplateData'
 import { touch } from './templateStore'
 import FlowCanvasEditor from './FlowCanvasEditor'
 import { ScoreVisual } from './ScoreVisual'
+import FormulaEditor from './formulaEditor'
 
 /* 显示方式下拉项：对给定类型推荐一个默认值，标注「（推荐）」以便用户可改 */
 const containerOptions = (rec: RenderContainer) =>
@@ -1428,6 +1429,17 @@ export default function ReportTemplateConfig() {
                 <span style={{ fontSize: 13, color: '#374151' }}>命中即拒 <b style={{ color: '#DC2626' }}>{scoreSummary.rejectTotal}</b> 项</span>
                 <span style={{ fontSize: 12, color: '#6B7280' }}>（基础分 {active.scoreDisplay.baseScore} ＋ 加分满分 {scoreSummary.addMax} − 最大扣分 {scoreSummary.deductMax}；命中即拒项直接拒绝，不计入加减分）</span>
               </div>
+              {active.reportType === 'decision' && (
+                <div style={{ marginTop: 14 }}>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: '#6B7280', marginBottom: 6 }}>综合总分公式（决策报告特有 · 支持加减不同方向聚合）</div>
+                  <FormulaEditor
+                    formula={active.scoreFormula}
+                    vars={DECISION_SCORE_VARS}
+                    canEdit={canEdit}
+                    onSave={(f) => patch((t) => ({ ...t, scoreFormula: f }))}
+                  />
+                </div>
+              )}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
                 <div style={{ fontSize: 13, color: '#374151', fontWeight: 600 }}>分值分段</div>
                 {canEdit && <button onClick={addGrade} style={miniBtn}>＋ 新增分段</button>}
