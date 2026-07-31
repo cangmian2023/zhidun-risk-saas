@@ -50,8 +50,14 @@ export function getTemplateById(id: string): ReportTemplate | undefined {
   return seedReportTemplates.find((t) => t.id === id)
 }
 
+/* 按报告类型取模板。
+ * 同一类型下可能并存多个模板（正式版 / 备用版 / 草稿版），不能简单取数组第一个 ——
+ * 那样配置页的「设为默认」按钮就成了空操作（它承诺"新进件将使用新模板"），
+ * 且调整 seed 顺序会让报告详情页悄悄换掉模板。
+ * 取用优先级：本类型下被标为默认的 → 已启用的 → 兜底第一个。 */
 export function getTemplateByType(type: ReportType): ReportTemplate | undefined {
-  return seedReportTemplates.find((t) => t.reportType === type)
+  const list = seedReportTemplates.filter((t) => t.reportType === type)
+  return list.find((t) => t.isDefault) ?? list.find((t) => t.status === '已启用') ?? list[0]
 }
 
 /** 订阅模板变化；返回按 id / type 查到的模板（每次渲染重新读取，确保拿到最新对象） */

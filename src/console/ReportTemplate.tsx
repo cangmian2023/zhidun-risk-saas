@@ -28,12 +28,13 @@ import {
   SECTION_SOURCE_LABEL, RULE_SETS, DB_TYPES, mockTableColumns,
   SourceTestResult, testSourceConfig, parseCurl, buildCurl,
   CardDisplayMode, CARD_DISPLAY_MODE_LABEL, FieldGroup,
-  ScoreSemantic, SCORE_SEMANTIC_LABEL, toDisplayScore,
+  ScoreSemantic, SCORE_SEMANTIC_LABEL, toDisplayScore, ScoreDisplayConfig,
   syncFlowToGrades, buildTemplate, seedReportTemplates,
   FlowGraph, buildDefaultFlowGraph, summarizeFlowGraph, defaultButtonName,
 } from './reportTemplateData'
 import { touch } from './templateStore'
 import FlowCanvasEditor from './FlowCanvasEditor'
+import { ScoreVisual } from './ScoreVisual'
 
 /* 显示方式下拉项：对给定类型推荐一个默认值，标注「（推荐）」以便用户可改 */
 const containerOptions = (rec: RenderContainer) =>
@@ -502,10 +503,20 @@ export default function ReportTemplateConfig() {
       changeLogs: [{ version: nv, action: '发布', operator: '当前用户', timestamp: now, summary: note ? `发布新版本：${note}` : '发布新版本' }, ...t.changeLogs],
     }))
   }
+  /* 设为默认：①默认位在「同一报告类型」内互斥转移（原来对全部模板置位，会顺手把别的
+     报告类型的默认也清掉）；②必须同步写回 seedReportTemplates 并 touch()，否则报告详情页
+     （经 templateStore 读 seed）根本感知不到，按钮弹的「新进件将使用新模板」就成了空话。 */
   const setDefault = () => {
     if (active.isDefault) return
     if (!window.confirm('设为默认后，新进入件将使用新模板，历史报告不受影响。是否继续？')) return
-    setTemplates((l) => l.map((t) => ({ ...t, isDefault: t.id === activeId })))
+    setTemplates((l) => l.map((t) => {
+      if (t.reportType !== active.reportType) return t
+      const next = { ...t, isDefault: t.id === activeId }
+      const i = seedReportTemplates.findIndex((s) => s.id === t.id)
+      if (i >= 0) seedReportTemplates[i] = next
+      return next
+    }))
+    touch()
   }
   const copyTpl = () => {
     const id = `tpl-${Date.now()}`
@@ -1405,7 +1416,7 @@ export default function ReportTemplateConfig() {
                       <input type="range" min={scoreSummary.min} max={scoreSummary.max} value={pvScore} onChange={(e) => setDemoScore(+e.target.value)} style={{ width: 160 }} />
                       <input type="number" value={pvScore} onChange={(e) => setDemoScore(+e.target.value)} style={{ ...numSm, width: 70 }} />
                     </div>
-                    <ScoreCardPreview sd={active.scoreDisplay} min={scoreSummary.min} max={scoreSummary.max} score={pvScore} patchGrade={patchGrade} canEdit={canEdit} />
+                    <ScoreCardPreview sd={active.scoreDisplay} score={pvScore} patchGrade={patchGrade} canEdit={canEdit} />
                   </div>
                 )
               })()}
@@ -1721,136 +1732,33 @@ export default function ReportTemplateConfig() {
  * ========================================================================== */
 const pvTag = (c: string): React.CSSProperties => ({ padding: '1px 8px', fontSize: 11, fontWeight: 600, borderRadius: 999, color: c, border: `1px solid ${c}55`, background: `${c}14` })
 
-function ScoreCardPreview({ sd, min, max, score, patchGrade, canEdit }: {
-  sd: { displayComponent: DisplayComponent; grades: ScoreGrade[]; showDescription: boolean; showThresholdBar: boolean; showRiskTags: boolean }
-  min: number; max: number; score: number
+/* 评分卡预览：与报告详情页共用 ScoreVisual —— 这里看到什么样，报告生成出来就是
+   什么样（展示形态 / 分段配色 / 语义方向 / 三个开关全部同一份渲染代码）。
+   预览独有的能力是「风险等级 / 自动审核结果」内联改，通过 tagSlot 注入。 */
+function ScoreCardPreview({ sd, score, patchGrade, canEdit }: {
+  sd: ScoreDisplayConfig
+  score: number
   patchGrade: (i: number, fn: (g: ScoreGrade) => ScoreGrade) => void
   canEdit: boolean
 }) {
-  const range = Math.max(1, max - min)
-  const pct = Math.max(0, Math.min(1, (score - min) / range))
-  const grade = sd.grades.find((g) => score >= g.minScore && score <= g.maxScore)
-    ?? (score < (sd.grades[0]?.minScore ?? min) ? sd.grades[0] : sd.grades[sd.grades.length - 1])
-  const color = grade?.color ?? '#1D4ED8'
-  const gradeChip = grade && (
-    <span style={{ padding: '2px 10px', fontSize: 12, fontWeight: 600, borderRadius: 999, color: '#fff', background: color }}>{grade.grade}</span>
-  )
-
-  /* 阈值刻度条：以「分段自身覆盖区间」[barMin,barMax] 为分母（而非理论 min/max），四段铺满整条；
-     数字按分段边界百分比绝对定位，与彩条精确对齐 */
-  const barMin = sd.grades[0]?.minScore ?? min
-  const barMax = sd.grades[sd.grades.length - 1]?.maxScore ?? max
-  const barRange = Math.max(1, barMax - barMin)
-  const thresholdBar = (
-    <div style={{ marginTop: 10, width: '100%' }}>
-      <div style={{ position: 'relative', height: 8, borderRadius: 999, background: '#E5E7EB', overflow: 'hidden' }}>
-        {sd.grades.map((g, i) => {
-          const left = ((Math.max(g.minScore, barMin) - barMin) / barRange) * 100
-          const width = ((Math.min(g.maxScore, barMax) - Math.max(g.minScore, barMin)) / barRange) * 100
-          return (
-            <div key={i} style={{ position: 'absolute', left: `${left}%`, width: `${Math.max(0, width)}%`, height: '100%', background: g.color, opacity: g === grade ? 1 : 0.35 }} />
-          )
-        })}
-      </div>
-      <div style={{ position: 'relative', height: 16, marginTop: 3, width: '100%' }}>
-        {(() => {
-          const bounds = [barMin, ...sd.grades.slice(0, -1).map((g) => g.maxScore), barMax]
-          return bounds.map((b, i) => {
-            const leftPct = ((Math.min(Math.max(b, barMin), barMax) - barMin) / barRange) * 100
-            const align = i === 0 ? 'left' : i === bounds.length - 1 ? 'right' : 'center'
-            const translate = align === 'left' ? 'translateX(0)' : align === 'right' ? 'translateX(-100%)' : 'translateX(-50%)'
-            return (
-              <span key={i} style={{ position: 'absolute', left: `${leftPct}%`, transform: translate, fontSize: 11, color: i === 0 || i === bounds.length - 1 ? '#6B7280' : '#9CA3AF' }}>{b}</span>
-            )
-          })
-        })()}
-      </div>
-    </div>
-  )
-
-  let visual: React.ReactNode = null
-  if (sd.displayComponent === '大数字') {
-    visual = (
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
-        <span style={{ fontSize: 46, fontWeight: 800, color, lineHeight: 1 }}>{score}</span>
-        <span style={{ fontSize: 13, color: '#9CA3AF' }}>/ {max} 分</span>
-        {gradeChip}
-      </div>
-    )
-  } else if (sd.displayComponent === '环形图') {
-    const R = 46, C = 2 * Math.PI * R
-    visual = (
-      <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-        <svg width="120" height="120" viewBox="0 0 120 120">
-          <circle cx="60" cy="60" r={R} fill="none" stroke="#E5E7EB" strokeWidth="12" />
-          <circle cx="60" cy="60" r={R} fill="none" stroke={color} strokeWidth="12" strokeLinecap="round"
-            strokeDasharray={`${(C * pct).toFixed(1)} ${C.toFixed(1)}`} transform="rotate(-90 60 60)" />
-          <text x="60" y="58" textAnchor="middle" fontSize="26" fontWeight="800" fill={color}>{score}</text>
-          <text x="60" y="76" textAnchor="middle" fontSize="11" fill="#9CA3AF">/ {max} 分</text>
-        </svg>
-        {gradeChip}
-      </div>
-    )
-  } else if (sd.displayComponent === '进度条') {
-    visual = (
-      <div style={{ width: '100%' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
-          <span style={{ fontSize: 22, fontWeight: 800, color }}>{score} 分</span>
-          {gradeChip}
-        </div>
-        <div style={{ position: 'relative', height: 16, borderRadius: 999, overflow: 'hidden', display: 'flex', background: '#F1F5F9' }}>
-          {sd.grades.map((g, i) => (
-            <div key={i} style={{ width: `${Math.max(0, (Math.min(g.maxScore, max) - Math.max(g.minScore, min)) / range) * 100}%`, background: g.color, opacity: 0.28 }} />
-          ))}
-          <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: `${pct * 100}%`, background: color, opacity: 0.9, borderRadius: 999 }} />
-        </div>
-      </div>
-    )
-  } else {
-    /* 仪表盘：半圆弧按分段着色 + 指针；以分段覆盖区间[barMin,barMax]为分母，弧与指针对齐铺满整弧 */
-    const cx = 90, cy = 84, R2 = 66
-    const pt = (p: number, r: number) => ({ x: cx - r * Math.cos(p * Math.PI), y: cy - r * Math.sin(p * Math.PI) })
-    const arc = (p1: number, p2: number, r: number) => {
-      const a = pt(p1, r), b = pt(p2, r)
-      return `M ${a.x.toFixed(1)} ${a.y.toFixed(1)} A ${r} ${r} 0 0 1 ${b.x.toFixed(1)} ${b.y.toFixed(1)}`
-    }
-    const gPct = Math.max(0, Math.min(1, (score - barMin) / barRange))
-    const needle = pt(gPct, R2 - 16)
-    visual = (
-      <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-        <svg width="180" height="104" viewBox="0 0 180 104">
-          {sd.grades.map((g, i) => {
-            const p1 = Math.max(0, (g.minScore - barMin) / barRange), p2 = Math.min(1, (g.maxScore - barMin) / barRange)
-            if (p2 <= p1) return null
-            return <path key={i} d={arc(p1, p2, R2)} fill="none" stroke={g.color} strokeWidth="12" opacity={g === grade ? 1 : 0.35} />
-          })}
-          <line x1={cx} y1={cy} x2={needle.x.toFixed(1)} y2={needle.y.toFixed(1)} stroke="#334155" strokeWidth="3" strokeLinecap="round" />
-          <circle cx={cx} cy={cy} r="5" fill="#334155" />
-          <text x={cx} y={cy + 16} textAnchor="middle" fontSize="20" fontWeight="800" fill={color}>{score}</text>
-        </svg>
-        {gradeChip}
-      </div>
-    )
-  }
-
   return (
-    <div>
-      {visual}
-      {sd.showThresholdBar && thresholdBar}
-      {sd.showRiskTags && grade && (() => {
-        const gi = sd.grades.findIndex((g) => g === grade)
-        const editable = canEdit && gi >= 0
+    <ScoreVisual
+      sd={sd}
+      rawScore={score}
+      tagSlot={({ grade, gradeIndex, color }) => {
+        if (!grade) return null
+        const editable = canEdit && gradeIndex >= 0
         return (
           <div style={{ display: 'flex', gap: 6, marginTop: 10, flexWrap: 'wrap', alignItems: 'center' }}>
             {editable ? (
               <>
                 <select value={grade.riskLevel}
-                  onChange={(e) => patchGrade(gi, (g) => ({ ...g, riskLevel: e.target.value as RiskLevel }))}
+                  onChange={(e) => patchGrade(gradeIndex, (g) => ({ ...g, riskLevel: e.target.value as RiskLevel }))}
                   style={{ ...pvTag(color), cursor: 'pointer' }}>
                   {(['低', '中', '高', '极高'] as RiskLevel[]).map((r) => <option key={r} value={r}>风险{r}</option>)}
                 </select>
                 <select value={grade.autoResult}
-                  onChange={(e) => patchGrade(gi, (g) => ({ ...g, autoResult: e.target.value as AutoResult }))}
+                  onChange={(e) => patchGrade(gradeIndex, (g) => ({ ...g, autoResult: e.target.value as AutoResult }))}
                   style={{ ...pvTag(AUTO_RESULT_COLOR[grade.autoResult]), cursor: 'pointer' }}>
                   {AUTO_RESULT_LIST.map((r) => <option key={r} value={r}>{r}</option>)}
                 </select>
@@ -1863,11 +1771,8 @@ function ScoreCardPreview({ sd, min, max, score, patchGrade, canEdit }: {
             )}
           </div>
         )
-      })()}
-      {sd.showDescription && grade?.description && (
-        <div style={{ marginTop: 8, fontSize: 12, color: '#6B7280' }}>{grade.description}</div>
-      )}
-    </div>
+      }}
+    />
   )
 }
 

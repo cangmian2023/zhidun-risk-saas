@@ -19,7 +19,8 @@ import { useModule } from '../store'
 import { VerifyActionBar, ivGradeFromRisk, type VerifyRow, type WorkStatus, type SysResult } from './VerifyOps'
 import { MergedOpTable } from '../components/MergedOpTable'
 import { ExemptModal } from './ExemptModal'
-import { computeSectionScore, evalSpecialRules, SPECIAL_TRIGGER_LABEL, matchDimBand, DEFAULT_DIM_BANDS, buildScoreBar, toDisplayScore, matchGrade, type SectionConfig, type ReportTemplate, type DimLevel, type ScoreSemantic } from './reportTemplateData'
+import { computeSectionScore, evalSpecialRules, SPECIAL_TRIGGER_LABEL, matchDimBand, DEFAULT_DIM_BANDS, type SectionConfig, type ReportTemplate, type DimLevel, type ScoreSemantic } from './reportTemplateData'
+import { ScoreVisual } from './ScoreVisual'
 import { TemplateDimTable } from './TemplateDimTable'
 import { useTemplate } from './templateStore'
 
@@ -34,8 +35,8 @@ const conclKind: Record<Conclusion, 'green' | 'red' | 'amber' | 'blue'> = {
   pass: 'green', reject: 'red', warning: 'amber', pending: 'blue',
 }
 const riskText: Record<RiskLevel, string> = { high: '高', medium: '中', low: '低' }
-// 信用值卡：风险高 = 信用低（与颜色 / 数值 信用值=满分−风险值 自洽）
-const levelText: Record<RiskLevel, string> = { high: '低', medium: '中', low: '高' }
+/* 评分卡的等级文案已下沉到模板 grades（由 ScoreVisual 统一渲染），
+   此处不再维护「风险高=信用低」的本地映射表。 */
 const riskKind: Record<RiskLevel, 'red' | 'amber' | 'blue'> = {
   high: 'red', medium: 'amber', low: 'blue',
 }
@@ -472,8 +473,9 @@ export default function PreVerifyDetail() {
 
   return (
     <div className="space-y-6">
+      {/* 报告标题直接取模板名称（基础信息-模板名称*）：用户配什么就显示什么，不做任何裁剪 */}
       <DetailHeader
-        title="信息核验报告"
+        title={ivTpl?.name || '信息核验报告'}
         subtitle={`进件号 ${d.appId} · 申请人 ${d.name} · ${d.idNo}`}
         backLabel="返回信息核验"
         onBack={() => nav('/console/cr/pre-verify')}
@@ -777,21 +779,12 @@ export default function PreVerifyDetail() {
 
 // ========================= 信用值模型卡（顶部结论级） =========================
 function ScoreModelCard({ cross, ivTpl }: { cross: CrossCheck; ivTpl?: ReportTemplate }) {
-  const { riskScore, scoreCap, overallRisk, scoreComponents, ruleVersion, auditTime, reportId } = cross
-  /* 大数字 + 阈值刻度条全部读模板「自动审核配置 → 分值分段 grades」：
-     scoreSemantic='credit' → 展示 满分−异常值（越高越安全），刻度条整条翻转；'risk' → 直接展示异常值。
-     模板缺失时回落到原来的 信用值=满分−风险值、20/80 三段。 */
+  const { riskScore, scoreComponents, ruleVersion, auditTime, reportId } = cross
+  /* 评分区整体由模板「自动审核配置 → 展示形态 + 分值分段 grades + 分值语义」驱动，
+     渲染下沉到与配置页预览共用的 ScoreVisual，本组件只保留标识行与下方的构成项表。 */
   const sd = ivTpl?.scoreDisplay
-  const grades = sd?.grades ?? []
-  const semantic: ScoreSemantic = sd?.scoreSemantic ?? 'credit'
+  const semantic: ScoreSemantic = sd?.scoreSemantic ?? 'risk'
   const semLabel = semantic === 'credit' ? '信用值' : '异常值'
-  const bar = buildScoreBar(grades, semantic)
-  const hitGrade = matchGrade(riskScore, grades)
-  const shownScore = grades.length ? toDisplayScore(riskScore, semantic, grades) : scoreCap - riskScore
-  const shownCap = grades.length ? bar.max : scoreCap
-  const shownMin = grades.length ? bar.min : 0
-  const pointerPct = Math.min(100, Math.max(0, ((shownScore - shownMin) / Math.max(1, shownCap - shownMin)) * 100))
-  const bandColor = overallRisk === 'high' ? 'text-rose-600' : overallRisk === 'medium' ? 'text-amber-600' : 'text-emerald-600'
   const levelCls: Record<RiskLevel, string> = {
     high: 'bg-rose-100 text-rose-700',
     medium: 'bg-amber-100 text-amber-700',
@@ -814,82 +807,11 @@ function ScoreModelCard({ cross, ivTpl }: { cross: CrossCheck; ivTpl?: ReportTem
         </div>
       </div>
 
-      {/* 总分 + 刻度条 */}
-      <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-center">
-        <div className="flex items-end gap-3">
-          <div className="flex items-baseline">
-            <span
-              className={cn('text-5xl font-bold leading-none', !hitGrade && bandColor)}
-              style={hitGrade ? { color: hitGrade.color } : undefined}
-            >
-              {shownScore}
-            </span>
-            <span className="ml-1 text-sm font-normal text-slate-300">/ {shownCap}</span>
-          </div>
-          <div className="mb-1">
-            {hitGrade ? (
-              <span
-                className="rounded-full px-2.5 py-0.5 text-xs font-semibold"
-                style={{ color: hitGrade.color, background: `${hitGrade.color}1A` }}
-                title={hitGrade.description}
-              >
-                {hitGrade.grade} · {hitGrade.label}
-              </span>
-            ) : (
-              <span className={cn('rounded-full px-2.5 py-0.5 text-xs font-semibold', levelCls[overallRisk])}>
-                {levelText[overallRisk]}信用
-              </span>
-            )}
-          </div>
-        </div>
-
-        {/* 阈值刻度条（分段/配色/边界全部来自模板 grades；credit 语义下整条翻转） */}
-        {(sd?.showThresholdBar ?? true) && (
-          <div className="min-w-0 flex-1">
-            <div className="relative h-2.5 w-full overflow-visible rounded-full">
-              <div className="absolute inset-0 overflow-hidden rounded-full bg-slate-100">
-                {bar.segs.length > 0 ? (
-                  bar.segs.map((s) => (
-                    <div
-                      key={s.grade.grade}
-                      className="absolute top-0 h-full"
-                      style={{
-                        left: `${s.left}%`,
-                        width: `${s.width}%`,
-                        background: s.grade.color,
-                        opacity: hitGrade && s.grade.grade !== hitGrade.grade ? 0.35 : 1,
-                      }}
-                      title={`${s.grade.grade}｜原始分 ${s.grade.minScore}–${s.grade.maxScore}｜${s.grade.autoResult}`}
-                    />
-                  ))
-                ) : (
-                  <div className="flex h-full w-full">
-                    <div className="h-full bg-rose-400" style={{ width: '20%' }} />
-                    <div className="h-full bg-amber-400" style={{ width: '60%' }} />
-                    <div className="h-full bg-emerald-400" style={{ width: '20%' }} />
-                  </div>
-                )}
-              </div>
-              {/* 指针 */}
-              <div className="absolute top-1/2 -translate-x-1/2 -translate-y-1/2" style={{ left: `${pointerPct}%` }}>
-                <div className="h-4 w-4 rounded-full border-2 border-white bg-slate-800 shadow" />
-              </div>
-            </div>
-            <div className="relative mt-1.5 h-4 text-[10px] text-slate-400">
-              {(bar.segs.length > 0 ? bar.bounds : [0, 20, 80, 100]).map((b, i, arr) => {
-                const range = Math.max(1, shownCap - shownMin)
-                const leftPct = ((b - shownMin) / range) * 100
-                const tx = i === 0 ? 'translateX(0)' : i === arr.length - 1 ? 'translateX(-100%)' : 'translateX(-50%)'
-                const tail = i === 0 ? `· ${semantic === 'credit' ? '最差' : '最优'}` : i === arr.length - 1 ? `· ${semantic === 'credit' ? '最优' : '最差'}` : ''
-                return (
-                  <span key={b} className="absolute" style={{ left: `${leftPct}%`, transform: tx }}>
-                    {b} {tail}
-                  </span>
-                )
-              })}
-            </div>
-          </div>
-        )}
+      {/* 评分可视化：与「模板配置页 → 自动审核 → 评分方案」的预览共用 ScoreVisual。
+          展示形态（大数字/环形图/进度条/仪表盘）、分段边界与配色、分值语义方向、
+          刻度条/风险标签/说明三个开关，全部由模板决定 —— 配置成什么样，报告就长什么样。 */}
+      <div className="mt-4">
+        <ScoreVisual sd={sd} rawScore={riskScore} />
       </div>
 
       {/* 特殊命中规则判定（读报告模板 · 自动审核 Tab → 特殊命中规则） */}
