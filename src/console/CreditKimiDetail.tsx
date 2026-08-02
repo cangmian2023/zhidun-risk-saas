@@ -2,7 +2,7 @@
 // 页面结构与「信息核验」(PreVerifyDetail) 保持一致：头部 + 顶部评分总览卡 + 操作栏 + 右侧锚点导航 + 卡片式分段
 // 复用信息核验的效果：分支(右导航/分段)、标签体系(风险等级/自动审批/人工审核)、图片展示(影像资料/视频/OCR)、预警(橙/红)、页面结构
 import { useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom'
 import { Badge, DetailHeader, Panel } from '../components/ui'
 import { MergedOpTable } from '../components/MergedOpTable'
 import { TemplateDimTable } from './TemplateDimTable'
@@ -21,6 +21,10 @@ import {
   type CreditKimiLog,
 } from './CreditKimiOps'
 import type { OpLog, OpActionType } from './infoVerifyReport'
+import { buildReportName, getModuleByRoute, fieldGridClass, type ReportTemplate } from './reportTemplateData'
+import { useTemplate, useSectionDisplayMode } from './templateStore'
+import { ScoreVisual } from './ScoreVisual'
+import { DisplayModeToggle } from './DisplayModeToggle'
 
 const cn = (...c: (string | false | undefined)[]) => c.filter(Boolean).join(' ')
 
@@ -99,58 +103,26 @@ function ImageCard({ img }: { img: CreditImageItem }) {
 }
 
 /* ========================= 顶部：信用评分总览 ========================= */
-function ScoreOverviewCard({ d }: { d: CreditKimiReport }) {
+function ScoreOverviewCard({ d, tpl }: { d: CreditKimiReport; tpl?: ReportTemplate }) {
   const bandColor = gradeText[d.grade]
-  // 300-900 映射到 0-100% 的指针位置
-  const pct = Math.max(0, Math.min(100, ((d.creditScore - 300) / 600) * 100))
   return (
     <div id="score" className="rounded-2xl border border-slate-100 bg-white p-5 shadow-card">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <span className="inline-flex h-6 items-center rounded-md bg-slate-800 px-2 text-[11px] font-medium text-white">信用评分</span>
-          <span className="text-sm font-semibold text-ink-900">信用风控综合评分模型</span>
+          <span className="text-sm font-semibold text-ink-900">{tpl?.scoreDisplay?.title || '信用风控综合评分模型'}</span>
         </div>
-        <span className="text-[11px] text-slate-400">分数越高信用越好 · 评分区间 300–900</span>
+        <span className="text-[11px] text-slate-400">评分区间 300–900</span>
       </div>
 
-      <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-end gap-3">
-          <div className="flex items-baseline">
-            <span className={cn('text-5xl font-bold leading-none', bandColor)}>{d.creditScore}</span>
-            <span className="ml-1 text-sm font-normal text-slate-300">分</span>
-          </div>
-          <div className="mb-1">
-            <span className={cn('rounded-full px-2.5 py-0.5 text-xs font-semibold', gradeChipCls[d.grade])}>信用{d.grade}</span>
-          </div>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="rounded-lg bg-slate-50 px-3 py-1.5 text-xs text-slate-500">自动审核：<b className={cn('font-semibold', bandColor)}>{d.autoDecision}</b></span>
-        </div>
-      </div>
-
-      {/* 得分进度条（区间刻度：越靠右信用越好） */}
+      {/* 评分可视化：与「模板配置页 → 自动审核」预览共用 ScoreVisual，配置成什么样报告就长什么样 */}
       <div className="mt-4">
-        <div className="relative h-2.5 w-full overflow-visible rounded-full">
-          <div className="absolute inset-0 flex overflow-hidden rounded-full">
-            <div className="h-full bg-rose-400" style={{ width: '33.33%' }} title="差 300-500" />
-            <div className="h-full bg-amber-400" style={{ width: '25%' }} title="一般 501-650" />
-            <div className="h-full bg-cyan-400" style={{ width: '25%' }} title="良好 651-800" />
-            <div className="h-full bg-emerald-400" style={{ width: '16.67%' }} title="优秀 801-900" />
-          </div>
-          <div
-            className="absolute top-1/2 -translate-x-1/2 -translate-y-1/2"
-            style={{ left: `${pct}%` }}
-          >
-            <div className="h-4 w-4 rounded-full border-2 border-white bg-slate-800 shadow" />
-          </div>
-        </div>
-        <div className="mt-1.5 flex justify-between text-[10px] text-slate-400">
-          <span>300 · 差</span>
-          <span>500</span>
-          <span>650</span>
-          <span>800</span>
-          <span>900 · 优秀</span>
-        </div>
+        <ScoreVisual sd={tpl?.scoreDisplay} rawScore={d.creditScore} />
+      </div>
+
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <span className={cn('rounded-full px-2.5 py-0.5 text-xs font-semibold', gradeChipCls[d.grade])}>信用{d.grade}</span>
+        <span className="rounded-lg bg-slate-50 px-3 py-1.5 text-xs text-slate-500">自动审核：<b className={cn('font-semibold', bandColor)}>{d.autoDecision}</b></span>
       </div>
 
       {/* 评分维度分布：统一改为模板驱动表（读报告模板「报告内容配置」分段，受 showSectionTotals 开关与编辑实时影响） */}
@@ -223,6 +195,15 @@ export default function CreditKimiDetail() {
         ? 'PASS'
         : (sysParam === '通过' ? 'PASS' : sysParam === '预警' ? 'WARNING' : 'REJECT')
   const d = buildCreditKimiReport(variant)
+  const tpl = useTemplate(undefined, 'credit')
+  const { mode: basicMode } = useSectionDisplayMode('credit', 'applicant_info')
+  const location = useLocation()
+  const reportName = buildReportName({
+    reportType: 'credit',
+    product: d.product,
+    reportTime: d.reportTime,
+    module: getModuleByRoute(location.pathname),
+  })
 
   const [row, setRow] = useState<CreditKimiRow>(() => ({
     id: sampleId ?? d.appId,
@@ -280,7 +261,7 @@ export default function CreditKimiDetail() {
   return (
     <div className="space-y-6">
       <DetailHeader
-        title="信用风控报告"
+        title={reportName.display}
         subtitle={`申请编号 ${d.appId} · 申请人 ${d.name} · ${d.idNo}`}
         backLabel="返回信用风控"
         onBack={() => nav('/console/cr/credit-kimi')}
@@ -289,7 +270,7 @@ export default function CreditKimiDetail() {
       <div className="lg:flex lg:gap-6">
         {/* 左侧主内容区 */}
         <div className="min-w-0 flex-1 space-y-4">
-          <ScoreOverviewCard d={d} />
+          <ScoreOverviewCard d={d} tpl={tpl} />
 
           {/* 系统状态 / 授信建议（第二、三卡片合并）：操作栏 + 授信建议 + 正向/风险因素 + 参考额度 */}
           <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-card">
@@ -317,6 +298,27 @@ export default function CreditKimiDetail() {
               <div className="mt-1 break-words font-semibold text-ink-900">{d.recommendation.creditLimit}</div>
             </div>
           </div>
+
+          {/* 用户基本信息（对齐模板目录 applicant_info，挂显示方式切换） */}
+          <Panel title="用户基本信息" id="applicant" actions={<DisplayModeToggle reportType="credit" sectionId="applicant_info" />}>
+            <div className={fieldGridClass(basicMode)}>
+              {[
+                { label: '姓名', value: d.name },
+                { label: '身份证号', value: d.idNo },
+                { label: '申请产品', value: d.product },
+                { label: '申请渠道', value: d.channel },
+                { label: '申请额度', value: '¥' + d.amount.toLocaleString() },
+                { label: '进件时间', value: d.reportTime },
+                { label: '工单状态', value: d.workStatus },
+                { label: '审核人', value: d.operator },
+              ].map((f) => (
+                <div key={f.label} className="flex items-center justify-between gap-2 rounded-lg bg-slate-50/60 px-3 py-2">
+                  <span className="text-sm text-slate-400">{f.label}</span>
+                  <span className="text-sm font-medium text-ink-900">{f.value}</span>
+                </div>
+              ))}
+            </div>
+          </Panel>
 
           <Panel title="一、身份真实性" id="identity">
             <DimensionPanel d={d.dimensions[0]} images={d.images} />

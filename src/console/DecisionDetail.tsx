@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react'
-import { useSearchParams, useNavigate } from 'react-router-dom'
+import { useSearchParams, useNavigate, useLocation } from 'react-router-dom'
 import { DetailHeader, Panel, Badge, Button } from '../components/ui'
 import {
   getDecisionDetail,
@@ -21,12 +21,13 @@ import {
 import {
   computeSectionScore,
   type ReportType,
-  evaluateFormula,
-  formulaText,
-  DECISION_SCORE_VARS,
+  buildReportName,
+  getModuleByRoute,
+  fieldGridClass,
 } from './reportTemplateData'
 import { TemplateDimTable } from './TemplateDimTable'
-import { useTemplate } from './templateStore'
+import { useTemplate, useSectionDisplayMode } from './templateStore'
+import { DisplayModeToggle } from './DisplayModeToggle'
 
 const cn = (...c: (string | false | undefined)[]) => c.filter(Boolean).join(' ')
 
@@ -116,7 +117,7 @@ function DefTable({ headers, children }: { headers: string[]; children: ReactNod
 
 
 // ============================ 复用块：欺诈识别报告 - 一、用户基本信息 ============================
-function UserBasicBlock({ row }: { row: DecisionRow }) {
+function UserBasicBlock({ row, mode = 'list' }: { row: DecisionRow; mode?: 'list' | 'card' }) {
   const fields = [
     { label: '姓名', value: row.name },
     { label: '证件类型', value: '居民身份证' },
@@ -128,7 +129,7 @@ function UserBasicBlock({ row }: { row: DecisionRow }) {
     { label: '进件时间', value: row.auditTime },
   ]
   return (
-    <div className="grid grid-cols-2 gap-x-8 gap-y-2 sm:grid-cols-3 lg:grid-cols-4">
+    <div className={fieldGridClass(mode)}>
       {fields.map((f, i) => (
         <div key={i} className="flex min-w-0 items-center justify-between gap-2 rounded-lg bg-slate-50/60 px-3 py-2">
           <span className="shrink-0 whitespace-nowrap text-sm text-slate-400">{f.label}</span>
@@ -155,6 +156,7 @@ export default function DecisionDetail() {
   const data = getDecisionDetail(id)
   const actions = useDecisionActions(auditRow, apply)
   const tpl = useTemplate(undefined, 'decision')
+  const { mode: basicMode } = useSectionDisplayMode('decision', 'applicant_info')
 
   if (!data) {
     return (
@@ -171,6 +173,13 @@ export default function DecisionDetail() {
   }
 
   const d = data
+  const location = useLocation()
+  const reportName = buildReportName({
+    reportType: 'decision',
+    product: d.row.product,
+    reportTime: d.reportTime,
+    module: getModuleByRoute(location.pathname),
+  })
   const onAction = (k: DecisionActionKey) => {
     if (k === 'view') return
     setAuditRow(d.row)
@@ -224,7 +233,7 @@ export default function DecisionDetail() {
       <DetailHeader
         backLabel="返回决策报告"
         onBack={() => nav('/console/cr/pre-report')}
-        title={`决策报告 · ${d.row.name}`}
+        title={reportName.display}
         subtitle={`${d.row.product} · ${d.row.channel} · 申请编号 ${d.row.appId}`}
       />
 
@@ -233,27 +242,7 @@ export default function DecisionDetail() {
         <div className="min-w-0 flex-1 space-y-4">
           {/* 第1段：决策总览 */}
           <Panel id="overview" className="scroll-mt-24" title="1、决策总览">
-            {tpl?.scoreFormula && (() => {
-              const vals = { credit_score: d.creditScore900v, info_score: d.info.creditScore, fraud_score: d.fraudScoreRaw }
-              const total = evaluateFormula(tpl.scoreFormula, vals)
-              return (
-                <div className="mb-6 rounded-2xl border border-violet-200 bg-gradient-to-br from-violet-50 to-white p-5">
-                  {/* 上方小卡片：已配公式摘要 */}
-                  <div className="mb-3 flex items-center gap-2 rounded-lg bg-white/70 px-3 py-2 ring-1 ring-inset ring-violet-100">
-                    <span className="text-xs font-medium text-slate-500">综合总分计算公式</span>
-                    <code className="text-xs font-semibold text-violet-700">{formulaText(tpl.scoreFormula, DECISION_SCORE_VARS)}</code>
-                    <span className="ml-auto text-[11px] text-slate-400">在「报告模板配置 · 评分方案」中编辑</span>
-                  </div>
-                  <div className="flex items-end justify-between">
-                    <div>
-                      <div className="text-xs text-slate-400">自动评审综合总分</div>
-                      <div className="text-5xl font-bold tabular-nums text-violet-700">{total == null ? '—' : total.toFixed(1)}</div>
-                    </div>
-                    <div className="text-right text-xs text-slate-400">由公式实时计算 · 随模板配置联动</div>
-                  </div>
-                </div>
-              )
-            })()}
+            {/* 综合总分公式摘要卡已按需求移除（公式编辑器统一收归模板配置「自动审核 → 评分卡形态」） */}
             <div className="grid gap-6 lg:grid-cols-2">
               <div>
                 <KV label="决策建议"><DecisionSuggestionBadge v={d.row.suggestion} /></KV>
@@ -361,8 +350,8 @@ export default function DecisionDetail() {
           </Panel>
 
           {/* 3、用户基本信息 */}
-          <Panel id="basic" className="scroll-mt-24" title="3、用户基本信息">
-            <UserBasicBlock row={d.row} />
+          <Panel id="basic" className="scroll-mt-24" title="3、用户基本信息" actions={<DisplayModeToggle reportType="decision" sectionId="applicant_info" />}>
+            <UserBasicBlock row={d.row} mode={basicMode} />
           </Panel>
 
           {/* 4、信息核验摘要 */}

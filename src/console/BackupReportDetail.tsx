@@ -83,14 +83,13 @@ export default function BackupReportDetail() {
           </div>
         </div>
 
-        {/* 各集合卡片（模板驱动；从第三个卡片起可配置显示方式：列表 / 2排卡片 / 3排卡片） */}
+        {/* 各集合卡片（模板驱动；从第三个卡片起可配置显示方式：列表 / 小卡片） */}
         {sections.map((s) => {
           const score = s.demoScore ?? 0
           const mode = s.displayMode ?? 'list'
           const items = Object.entries(s.demoValues ?? {}) as [string, { name?: string; value: string; status: DemoStatus }][]
           const wrapCls =
-            mode === 'grid2' ? 'grid grid-cols-2 gap-2'
-            : mode === 'grid3' ? 'grid grid-cols-3 gap-2'
+            mode === 'card' ? 'grid grid-cols-2 gap-2'
             : 'space-y-1.5'
           /* 内部分组（数据源/接口合集可拆成命名子组）：分组标题 + 组内项，列表模式用整行小标题，网格模式用跨列标题 */
           const groups = s.fieldGroups ?? []
@@ -145,7 +144,7 @@ export default function BackupReportDetail() {
                 {bodyNodes}
               </div>
               <div className="mt-2 text-right text-[11px] text-slate-400">
-                显示方式 {mode === 'grid2' ? '2排卡片' : mode === 'grid3' ? '3排卡片' : '列表'} · 本卡权重 {s.weight ?? 1}% · 本卡异常值 {anomalySign(score)}
+                显示方式 {mode === 'card' ? '小卡片' : '列表'} · 本卡权重 {s.weight ?? 1}% · 本卡异常值 {anomalySign(score)}
                 {Math.abs(score)}
               </div>
             </Panel>

@@ -372,6 +372,7 @@ export interface DecisionDetailData {
   logs: DecisionOpLog[]
   templateId: string
   templateName: string
+  reportTime: string // 报告生成时间（报告名称生成用）
   // 第1段：决策总览
   suggestedRate: string // 建议利率
   reviewAdvice: string // 人工复核建议
@@ -582,6 +583,7 @@ export function getDecisionDetail(id: string): DecisionDetailData | null {
     logs,
     templateId: row.templateId,
     templateName: tpl?.name ?? '标准决策报告模板',
+    reportTime: row.auditTime,
     suggestedRate,
     reviewAdvice,
     basisSummary,

@@ -67,14 +67,8 @@ export function ScoreVisual({
   const span = Math.max(1, bar.max - bar.min)
   const pct = Math.max(0, Math.min(1, (shown - bar.min) / span))
 
-  const chip = grade ? (
-    <span
-      style={{ padding: '2px 10px', fontSize: 12, fontWeight: 600, borderRadius: 999, color: '#fff', background: color }}
-      title={grade.description}
-    >
-      {grade.label ? `${grade.grade} · ${grade.label}` : grade.grade}
-    </span>
-  ) : null
+  /* 评分卡不再渲染等级徽标（如 "B · 良好" / "D · 较差"）：等级信息由阈值条配色与说明承载，
+     避免数字旁出现随分值变化的等级表情。 */
 
   /* ---------- 阈值刻度条：段宽/配色/边界刻度全部取自 bar（已含语义翻转） ---------- */
   const thresholdBar = (
@@ -114,13 +108,8 @@ export function ScoreVisual({
         {bar.bounds.map((b, i, arr) => {
           const left = ((b - bar.min) / span) * 100
           const tx = i === 0 ? 'translateX(0)' : i === arr.length - 1 ? 'translateX(-100%)' : 'translateX(-50%)'
-          // 展示坐标下：credit 语义左端是原始分最高处（最差），risk 语义左端才是最优
-          const tail =
-            i === 0
-              ? `· ${semantic === 'credit' ? '最差' : '最优'}`
-              : i === arr.length - 1
-                ? `· ${semantic === 'credit' ? '最优' : '最差'}`
-                : ''
+          // 仅显示刻度值，不标注最优/最差
+          const tail = ''
           return (
             <span
               key={`${b}-${i}`}
@@ -148,8 +137,7 @@ export function ScoreVisual({
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
         <span style={{ fontSize: 46, fontWeight: 800, color, lineHeight: 1 }}>{shown}</span>
         <span style={{ fontSize: 13, color: '#9CA3AF' }}>/ {bar.max} 分</span>
-        {chip}
-      </div>
+              </div>
     )
   } else if (comp === '环形图') {
     const R = 46
@@ -172,16 +160,14 @@ export function ScoreVisual({
           <text x="60" y="58" textAnchor="middle" fontSize="26" fontWeight="800" fill={color}>{shown}</text>
           <text x="60" y="76" textAnchor="middle" fontSize="11" fill="#9CA3AF">/ {bar.max} 分</text>
         </svg>
-        {chip}
-      </div>
+              </div>
     )
   } else if (comp === '进度条') {
     visual = (
       <div style={{ width: '100%' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
           <span style={{ fontSize: 22, fontWeight: 800, color }}>{shown} 分</span>
-          {chip}
-        </div>
+                  </div>
         <div style={{ position: 'relative', height: 16, borderRadius: 999, overflow: 'hidden', background: '#F1F5F9' }}>
           {bar.segs.map((s) => (
             <div
@@ -245,8 +231,7 @@ export function ScoreVisual({
           <circle cx={cx} cy={cy} r="5" fill="#334155" />
           <text x={cx} y={cy + 16} textAnchor="middle" fontSize="20" fontWeight="800" fill={color}>{shown}</text>
         </svg>
-        {chip}
-      </div>
+              </div>
     )
   }
 
@@ -271,12 +256,16 @@ export function ScoreVisual({
       {(sd?.showRiskTags ?? true) &&
         (tagSlot
           ? tagSlot({ grade, gradeIndex, color })
-          : grade && (
-              <div style={{ display: 'flex', gap: 6, marginTop: 10, flexWrap: 'wrap', alignItems: 'center' }}>
-                <span style={tagStyle(color)}>风险{grade.riskLevel}</span>
-                <span style={tagStyle('#64748B')}>{grade.autoResult}</span>
-              </div>
-            ))}
+          : grade && (() => {
+              // 风险标签的唯一来源 = 该分段「标签」列（grade.tags，空格分隔）；无标签时不显示
+              const segTags = (grade.tags ?? '').split(/\s+/).map((s) => s.trim()).filter(Boolean)
+              if (segTags.length === 0) return null
+              return (
+                <div style={{ display: 'flex', gap: 6, marginTop: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+                  {segTags.map((tg, i) => <span key={i} style={tagStyle(color)}>{tg}</span>)}
+                </div>
+              )
+            })())}
 
       {(sd?.showDescription ?? true) && grade?.description && (
         <div style={{ marginTop: 8, fontSize: 12, color: '#6B7280' }}>{grade.description}</div>

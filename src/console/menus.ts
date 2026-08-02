@@ -30,7 +30,7 @@ export const creditRiskMenu: MenuGroup[] = [
   { group: '概览看板', section: '工作台', items: [{ label: '概览看板', key: 'cr:overview', desc: '展示零售信贷风控核心指标的实时概览看板', keep: true }] },
   // 贷前审核（业务作业 · 对外）
   { group: '进件审核', section: '贷前审核', items: [{ label: '进件审核', key: 'cr:pre-report', desc: '展示所有生成的决策报告，支持按报告类型、决策建议筛选' }] },
-  { group: '信息核验', section: '贷前审核', items: [{ label: '信息核验', key: 'cr:pre-verify', desc: '展示信息核验的进件列表，支持核验结果查询' }] },
+  { group: '信息核验', section: '贷前审核', items: [{ label: '信息核验', key: 'cr:pre-verify', desc: '展示信息核验的进件列表，支持核验结果查询' }, { label: '信息核验222', key: 'cr:pre-verify-222', desc: '模板驱动的信息核验报告（数据从本地模板文件读取）' }] },
   { group: '信用风控', section: '贷前审核', items: [{ label: '信用风控', key: 'cr:credit-kimi', desc: '展示信用风控审核进件列表，支持按信用等级、自动审核结果筛选' }] },
   { group: '欺诈识别', section: '贷前审核', items: [{ label: '欺诈识别', key: 'cr:pre-fraud', desc: '展示欺诈识别进件列表，支持按风险评分、命中规则筛选' }] },
   // 贷中监控（业务作业 · 对外）

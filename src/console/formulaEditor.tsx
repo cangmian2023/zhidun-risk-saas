@@ -1,7 +1,6 @@
 import React, { useState } from 'react'
 import {
   DECISION_SCORE_VARS,
-  evaluateFormula,
   formulaText,
   type FormulaTerm,
   type FormulaVar,
@@ -44,9 +43,6 @@ export default function FormulaEditor({ formula, vars = DECISION_SCORE_VARS, can
   const remove = (i: number) => setDraft((d) => d.filter((_, k) => k !== i))
   const add = () => setDraft((d) => [...d, newTerm(vars)])
 
-  const sampleValues = vars.reduce<Record<string, number>>((a, v) => ((a[v.id] = v.sample), a), {})
-  const preview = evaluateFormula({ terms: draft }, sampleValues)
-
   const save = () => {
     const clean = draft
       .filter((t) => (t.kind === 'var' ? !!t.varId : true))
@@ -63,27 +59,14 @@ export default function FormulaEditor({ formula, vars = DECISION_SCORE_VARS, can
       <div style={card}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
           <span style={{ fontSize: 13, fontWeight: 600, color: '#374151' }}>综合总分计算公式</span>
-          {saved && <span style={{ fontSize: 12, color: '#047857' }}>● 已保存</span>}
           <span style={{ flex: 1 }} />
           {canEdit && <button onClick={open} style={{ ...miniBtn, borderColor: '#6D28D9', color: '#6D28D9' }}>编辑</button>}
         </div>
-        {terms.length === 0 ? (
-          <span style={{ fontSize: 12, color: '#9CA3AF' }}>未配置公式，点击「编辑」设置三大报告分数的聚合方式（支持加减不同方向）。</span>
-        ) : (
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-            {terms.map((t) => {
-              const v = t.kind === 'var' ? vars.find((x) => x.id === t.varId) : undefined
-              const label = t.kind === 'var' ? (v?.label ?? t.varId) : `常数(${t.constVal ?? 0})`
-              const fac = Math.abs(t.factor) === 1 ? '' : `×${Number(t.factor)}`
-              return (
-                <span key={t.id} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: '#fff', border: '1px solid #E5E7EB', borderRadius: 6, padding: '3px 8px', fontSize: 12, color: '#374151' }}>
-                  <b style={{ color: t.op === '-' ? '#DC2626' : '#047857' }}>{t.op}</b>
-                  <span>{label}{fac}</span>
-                </span>
-              )
-            })}
-          </div>
-        )}
+          {terms.length === 0 ? (
+            <span style={{ fontSize: 12, color: '#9CA3AF' }}>未配置公式，点击「编辑」设置各数据块的聚合方式（支持加减不同方向）。</span>
+          ) : (
+            <code style={{ fontSize: 13, color: '#4C1D95', background: '#F5F3FF', border: '1px solid #EDE9FE', borderRadius: 6, padding: '4px 10px', fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace' }}>{formulaText(formula, vars)}</code>
+          )}
       </div>
     )
   }
@@ -112,9 +95,9 @@ export default function FormulaEditor({ formula, vars = DECISION_SCORE_VARS, can
               <option value="const">常数</option>
             </select>
             {t.kind === 'var' ? (
-              <select value={t.varId} disabled={!canEdit} onChange={(e) => update(i, { varId: e.target.value })} style={{ ...inp, minWidth: 170 }}>
+              <select value={t.varId} disabled={!canEdit} onChange={(e) => update(i, { varId: e.target.value })} style={{ ...inp, minWidth: 200 }}>
                 {vars.map((v) => (
-                  <option key={v.id} value={v.id}>{v.label}（{v.dir === 'up-good' ? '越高越好' : '越高越险'}）</option>
+                  <option key={v.id} value={v.id}>{v.label}{v.rangeHint ? `（${v.rangeHint}）` : ''}</option>
                 ))}
               </select>
             ) : (
@@ -133,8 +116,6 @@ export default function FormulaEditor({ formula, vars = DECISION_SCORE_VARS, can
       <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', gap: 12, padding: '8px 12px', border: '1px solid #EDE9FE', background: '#F5F3FF', borderRadius: 8, flexWrap: 'wrap' }}>
         <span style={{ fontSize: 12, color: '#6B7280' }}>预览（样例值）：</span>
         <code style={{ fontSize: 13, color: '#4C1D95' }}>{formulaText({ terms: draft }, vars)}</code>
-        <span style={{ flex: 1 }} />
-        <span style={{ fontSize: 13, fontWeight: 600, color: '#4C1D95' }}>综合总分 ≈ <b>{preview == null ? '—' : preview.toFixed(2)}</b></span>
       </div>
 
       <div style={{ marginTop: 12, display: 'flex', justifyContent: 'flex-end', gap: 8 }}>

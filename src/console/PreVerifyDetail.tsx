@@ -1,7 +1,7 @@
 // 信息核验报告页
 // 依据 doc/信息核验报告功能设计.md 与 doc/信息核验报告-示例数据.json 实现
 import { useState, type ReactNode } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom'
 import { Badge, Button, DetailHeader, Panel } from '../components/ui'
 import {
   buildInfoVerifyReport,
@@ -19,10 +19,11 @@ import { useModule } from '../store'
 import { VerifyActionBar, ivGradeFromRisk, type VerifyRow, type WorkStatus, type SysResult } from './VerifyOps'
 import { MergedOpTable } from '../components/MergedOpTable'
 import { ExemptModal } from './ExemptModal'
-import { computeSectionScore, evalSpecialRules, SPECIAL_TRIGGER_LABEL, matchDimBand, DEFAULT_DIM_BANDS, type SectionConfig, type ReportTemplate, type DimLevel, type ScoreSemantic } from './reportTemplateData'
+import { computeSectionScore, evalSpecialRules, SPECIAL_TRIGGER_LABEL, matchDimBand, defaultDimBandsForScore, buildReportName, getModuleByRoute, fieldGridClass, type SectionConfig, type ReportTemplate, type DimLevel, type ScoreSemantic } from './reportTemplateData'
 import { ScoreVisual } from './ScoreVisual'
 import { TemplateDimTable } from './TemplateDimTable'
 import { useTemplate } from './templateStore'
+import { DisplayModeToggle } from './DisplayModeToggle'
 
 // 模板引用改为组件内 useTemplate 订阅（见下方 ivTpl），配置页编辑可实时反映到详情
 
@@ -334,6 +335,24 @@ function SingleCard({
   )
 }
 
+// 列表模式通用表格：表头 + 数据行（一行是一条卡片数据）
+function SectionTable({ head, children }: { head: string[]; children: ReactNode }) {
+  return (
+    <div className="overflow-hidden rounded-xl border border-slate-200">
+      <table className="w-full border-collapse text-sm">
+        <thead>
+          <tr className="bg-slate-50 text-left text-xs font-medium text-slate-500">
+            {head.map((h) => (
+              <th key={h} className="border-b border-slate-200 px-3 py-2">{h}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>{children}</tbody>
+      </table>
+    </div>
+  )
+}
+
 // ========================= 模板分段评分（方案 B 修订：分数标注在内容项上，不在顶部堆大块） =========================
 /* 设计：每张内容卡 = 模板「报告内容配置」的一个分段。
  *  - 卡片汇总得分 + 权重：信用风控同款大数字分块，置于卡体顶部
@@ -359,17 +378,8 @@ function ScoreTag({ pts, deduct }: { pts?: number; deduct?: boolean }) {
 // 卡片汇总得分（统一采用信用风控报告的大数字分样式：大数字 + 胶囊 + 权重提示行，置于卡体顶部）
 function CardScoreHead({ section, show }: { section?: SectionConfig; show?: boolean }) {
   if (!section || show === false) return null
-  // 展示型分段（用户基本信息等）：不显示计分头，避免误导为风险计分项
-  if (section.scoreable === false) {
-    return (
-      <div className="mb-4">
-        <div className="flex items-center gap-2">
-          <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-500">仅展示 · 不计入评分</span>
-        </div>
-        <div className="mt-1 text-xs text-slate-500">本分段为资料展示型，无分值、不影响报告总分</div>
-      </div>
-    )
-  }
+  // 展示型分段（用户基本信息等）：按需求不再显示「仅展示·不计入评分」提示
+  if (section.scoreable === false) return null
   const sc = computeSectionScore(section)
   const w = section.weight ?? 1
   const deduct = sc.mode === 'deduct'
@@ -402,6 +412,7 @@ function makeScoreLookup(section?: SectionConfig): (label: string) => number | u
 export default function PreVerifyDetail() {
   const nav = useNavigate()
   const [params] = useSearchParams()
+  const location = useLocation()
   // 由列表跳转带来的参数还原该行的「自动审核 / 人工审核 / 操作人员 / 编号」，确保详情页与列表完全一致
   const sysParam = (params.get('sys') as SysResult) ?? '处理中'
   const workParam = (params.get('work') as WorkStatus) ?? '核验计算中'
@@ -418,10 +429,23 @@ export default function PreVerifyDetail() {
     ? Object.fromEntries(ivTpl.sections.map((s) => [s.id, s]))
     : {}
 
+  // 报告名称按 模板类型 + 产品 + 时间 + 模块 综合生成（与模板名称独立）
+  const ivReportName = buildReportName({
+    reportType: 'info_verify',
+    product: d.product,
+    reportTime: d.reportTime,
+    module: getModuleByRoute(location.pathname),
+  })
+
   // 各内容分段的「得分方向」与「展示项→分值」查表（供卡片内联标注）
   const basicDeduct = ivSections['basic_info'] ? computeSectionScore(ivSections['basic_info']!).mode === 'deduct' : false
   const idDeduct = ivSections['id_images'] ? computeSectionScore(ivSections['id_images']!).mode === 'deduct' : false
   const singleDeduct = ivSections['single_verify'] ? computeSectionScore(ivSections['single_verify']!).mode === 'deduct' : false
+  // 各内容分段「显示方式」（列表/小卡片），由详情页图标按钮切换并落库到模板分段
+  const basicMode = ivSections['basic_info']?.displayMode ?? 'list'
+  const idMode = ivSections['id_images']?.displayMode ?? 'list'
+  const singleMode = ivSections['single_verify']?.displayMode ?? 'list'
+  const crossMode = ivSections['cross_fusion']?.displayMode ?? 'list'
   const basicLookup = makeScoreLookup(ivSections['basic_info'])
   const idLookup = makeScoreLookup(ivSections['id_images'])
   // 多源核验：模板前 5 个展示项（公安/银行卡/运营商/设备/联防联控）按序对应 5 个数据源卡
@@ -473,9 +497,9 @@ export default function PreVerifyDetail() {
 
   return (
     <div className="space-y-6">
-      {/* 报告标题直接取模板名称（基础信息-模板名称*）：用户配什么就显示什么，不做任何裁剪 */}
+      {/* 报告标题 = 模板类型 + 产品 + 时间 + 模块 综合生成（与模板名称独立） */}
       <DetailHeader
-        title={ivTpl?.name || '信息核验报告'}
+        title={ivReportName.display}
         subtitle={`进件号 ${d.appId} · 申请人 ${d.name} · ${d.idNo}`}
         backLabel="返回信息核验"
         onBack={() => nav('/console/cr/pre-verify')}
@@ -494,119 +518,205 @@ export default function PreVerifyDetail() {
           </div>
 
           {/* 一、用户基本信息 */}
-          <Panel title="一、用户基本信息" id="basic">
+          <Panel title="一、用户基本信息" id="basic" actions={<DisplayModeToggle reportType="info_verify" sectionId="basic_info" />}>
             <CardScoreHead section={ivSections['basic_info']} show={ivTpl?.showSectionTotals} />
-            <div className="grid grid-cols-1 gap-x-8 gap-y-2.5 sm:grid-cols-2 lg:grid-cols-3">
-              {d.basic.map((f) => (
-                <div key={f.key} className="flex items-center justify-between rounded-lg border border-slate-100 px-3.5 py-2.5">
-                  <span className="text-sm text-slate-500">{f.label}</span>
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-sm font-medium text-ink-900">{f.value}</span>
-                    {f.valid ? (
-                      <span className="text-[10px] font-normal text-slate-300">✓</span>
-                    ) : (
-                      <Badge kind="red">格式异常</Badge>
-                    )}
-                    <ScoreTag pts={basicLookup(f.label)} deduct={basicDeduct} />
+            {basicMode === 'list' ? (
+              <div className="space-y-4">
+                <SectionTable head={['字段', '内容', '校验', '得分']}>
+                  {d.basic.map((f) => (
+                    <tr key={f.key} className="border-b border-slate-100">
+                      <td className="px-3 py-2 text-sm text-slate-500">{f.label}</td>
+                      <td className="px-3 py-2 text-sm font-medium text-ink-900">{f.value}</td>
+                      <td className="px-3 py-2">{f.valid ? <span className="text-[11px] text-emerald-500">✓ 正常</span> : <Badge kind="red">格式异常</Badge>}</td>
+                      <td className="px-3 py-2"><ScoreTag pts={basicLookup(f.label)} deduct={basicDeduct} /></td>
+                    </tr>
+                  ))}
+                </SectionTable>
+                <div>
+                  <div className="mb-2 text-xs font-medium text-slate-500">环境采集</div>
+                  <SectionTable head={['字段', '内容', '得分']}>
+                    {d.env.map((e) => (
+                      <tr key={e.key} className="border-b border-slate-100">
+                        <td className="px-3 py-2 text-sm text-slate-500">{e.label}</td>
+                        <td className="px-3 py-2 text-sm font-medium text-ink-900">{e.value}</td>
+                        <td className="px-3 py-2"><ScoreTag pts={basicLookup(e.label)} deduct={basicDeduct} /></td>
+                      </tr>
+                    ))}
+                  </SectionTable>
+                </div>
+              </div>
+            ) : (
+              <div>
+                <div className={fieldGridClass(basicMode)}>
+                  {d.basic.map((f) => (
+                    <div key={f.key} className="flex items-center justify-between rounded-lg border border-slate-100 px-3.5 py-2.5">
+                      <span className="text-sm text-slate-500">{f.label}</span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-sm font-medium text-ink-900">{f.value}</span>
+                        {f.valid ? (
+                          <span className="text-[10px] font-normal text-slate-300">✓</span>
+                        ) : (
+                          <Badge kind="red">格式异常</Badge>
+                        )}
+                        <ScoreTag pts={basicLookup(f.label)} deduct={basicDeduct} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-4 border-t border-slate-100 pt-4">
+                  <div className="mb-2 text-xs font-medium text-slate-500">环境采集</div>
+                  <div className={fieldGridClass(basicMode)}>
+                    {d.env.map((e) => (
+                      <div key={e.key} className="flex items-center justify-between rounded-lg bg-slate-50 px-3.5 py-2">
+                        <span className="text-sm text-slate-500">{e.label}</span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-sm font-medium text-ink-900">{e.value}</span>
+                          <ScoreTag pts={basicLookup(e.label)} deduct={basicDeduct} />
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
-              ))}
-            </div>
-            <div className="mt-4 border-t border-slate-100 pt-4">
-              <div className="mb-2 text-xs font-medium text-slate-500">环境采集</div>
-              <div className="grid grid-cols-1 gap-x-8 gap-y-2 sm:grid-cols-2 lg:grid-cols-3">
-                {d.env.map((e) => (
-                  <div key={e.key} className="flex items-center justify-between rounded-lg bg-slate-50 px-3.5 py-2">
-                    <span className="text-sm text-slate-500">{e.label}</span>
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-sm font-medium text-ink-900">{e.value}</span>
-                      <ScoreTag pts={basicLookup(e.label)} deduct={basicDeduct} />
+              </div>
+            )}
+          </Panel>
+
+          {/* 二、用户证件照 */}
+          <Panel title="二、用户证件照" id="photos" actions={<DisplayModeToggle reportType="info_verify" sectionId="id_images" />}>
+            <CardScoreHead section={ivSections['id_images']} show={ivTpl?.showSectionTotals} />
+            {idMode === 'list' ? (
+              <SectionTable head={['预览', '名称', '类型', 'OCR 识别']}>
+                {d.images.map((img) => (
+                  <tr key={img.key} className="border-b border-slate-100 align-top">
+                    <td className="px-3 py-2">
+                      {img.kind === 'video' ? (
+                        <div className="grid h-12 w-16 place-items-center rounded bg-slate-900 text-[10px] text-slate-300">视频</div>
+                      ) : (
+                        <img src={img.url} alt={img.label} className="h-12 w-16 rounded object-cover" onError={(e) => { e.currentTarget.style.display = 'none' }} />
+                      )}
+                    </td>
+                    <td className="px-3 py-2 text-sm font-medium text-ink-900">{img.label}</td>
+                    <td className="px-3 py-2">{img.kind === 'video' ? <Badge kind="blue">视频</Badge> : '图片'}</td>
+                    <td className="px-3 py-2 text-xs leading-relaxed text-slate-600">{img.ocr}</td>
+                  </tr>
+                ))}
+              </SectionTable>
+            ) : (
+              <div className="grid gap-4 md:grid-cols-2">
+                {d.images.map((img) => (
+                  <div key={img.key} className="rounded-xl border border-slate-200 bg-white p-3">
+                    <div className="mb-2 flex items-center justify-between">
+                      <span className="flex items-center text-sm font-medium text-ink-900">
+                        {img.label}
+                        <ScoreTag pts={idLookup(img.label)} deduct={idDeduct} />
+                      </span>
+                      {img.kind === 'video' && <Badge kind="blue">视频</Badge>}
+                    </div>
+                    <div className="grid aspect-[4/3] place-items-center overflow-hidden rounded-lg bg-slate-900">
+                      {img.kind === 'video' ? (
+                        <video controls poster={img.url} src="/sample/live.mp4" className="h-full w-full object-contain" />
+                      ) : (
+                        <img
+                          src={img.url}
+                          alt={img.label}
+                          className="h-full w-full object-contain"
+                          onError={(e) => {
+                            const el = e.currentTarget
+                            el.style.display = 'none'
+                            const p = el.parentElement
+                            if (p && !p.querySelector('.ph')) {
+                              const s = document.createElement('span')
+                              s.className = 'ph text-xs text-slate-400'
+                              s.textContent = '图片占位'
+                              p.appendChild(s)
+                            }
+                          }}
+                        />
+                      )}
+                    </div>
+                    <div className="mt-2 rounded-lg bg-slate-50 p-2.5 text-xs leading-relaxed text-slate-600">
+                      <span className="font-medium text-slate-500">OCR 识别：</span>
+                      {img.ocr}
                     </div>
                   </div>
                 ))}
               </div>
-            </div>
-          </Panel>
-
-          {/* 二、用户证件照 */}
-          <Panel title="二、用户证件照" id="photos">
-            <CardScoreHead section={ivSections['id_images']} show={ivTpl?.showSectionTotals} />
-            <div className="grid gap-4 md:grid-cols-2">
-              {d.images.map((img) => (
-                <div key={img.key} className="rounded-xl border border-slate-200 bg-white p-3">
-                  <div className="mb-2 flex items-center justify-between">
-                    <span className="flex items-center text-sm font-medium text-ink-900">
-                      {img.label}
-                      <ScoreTag pts={idLookup(img.label)} deduct={idDeduct} />
-                    </span>
-                    {img.kind === 'video' && <Badge kind="blue">视频</Badge>}
-                  </div>
-                  <div className="grid aspect-[4/3] place-items-center overflow-hidden rounded-lg bg-slate-900">
-                    {img.kind === 'video' ? (
-                      <video controls poster={img.url} src="/sample/live.mp4" className="h-full w-full object-contain" />
-                    ) : (
-                      <img
-                        src={img.url}
-                        alt={img.label}
-                        className="h-full w-full object-contain"
-                        onError={(e) => {
-                          const el = e.currentTarget
-                          el.style.display = 'none'
-                          const p = el.parentElement
-                          if (p && !p.querySelector('.ph')) {
-                            const s = document.createElement('span')
-                            s.className = 'ph text-xs text-slate-400'
-                            s.textContent = '图片占位'
-                            p.appendChild(s)
-                          }
-                        }}
-                      />
-                    )}
-                  </div>
-                  <div className="mt-2 rounded-lg bg-slate-50 p-2.5 text-xs leading-relaxed text-slate-600">
-                    <span className="font-medium text-slate-500">OCR 识别：</span>
-                    {img.ocr}
-                  </div>
-                </div>
-              ))}
-            </div>
+            )}
           </Panel>
 
           {/* 三、多源并行核验单项报告 */}
-          <Panel title="三、多源并行核验单项报告" id="single">
+          <Panel title="三、多源并行核验单项报告" id="single" actions={<DisplayModeToggle reportType="info_verify" sectionId="single_verify" />}>
             <CardScoreHead section={ivSections['single_verify']} show={ivTpl?.showSectionTotals} />
-            <div className="grid gap-4 lg:grid-cols-2">
-              {d.single.map((s, i) => (
-                <SingleCard
-                  key={s.source}
-                  s={s}
-                  scoreTag={singleScores[i] != null ? <ScoreTag pts={singleScores[i]} deduct={singleDeduct} /> : undefined}
-                  onReverify={(name) => addLog({ target: name, actionType: '重新核验', operator: '当前用户', time: new Date().toLocaleString('zh-CN'), remark: `二次核验流水号：TD${Date.now()}` })}
-                  onNote={(name) => setModal({ type: 'note', target: name })}
-                  onExempt={(name) => setModal({ type: 'exempt', target: name })}
-                  onReceipt={(name) => {
-                    setModal({ type: 'receipt', target: name })
-                    addLog({ target: name, actionType: '查看回执', operator: '当前用户', time: new Date().toLocaleString('zh-CN'), remark: '查看第三方接口原始回执流水' })
-                  }}
-                  onECLink={(name) => addLog({ target: name, actionType: '关联电核', operator: '当前用户', time: new Date().toLocaleString('zh-CN'), remark: `关联电核台账编号 EC${Date.now().toString(36).toUpperCase()}` })}
-                />
-              ))}
-            </div>
+            {(() => {
+              const revert = (name: string) => addLog({ target: name, actionType: '重新核验', operator: '当前用户', time: new Date().toLocaleString('zh-CN'), remark: `二次核验流水号：TD${Date.now()}` })
+              const note = (name: string) => setModal({ type: 'note', target: name })
+              const exempt = (name: string) => setModal({ type: 'exempt', target: name })
+              const receipt = (name: string) => { setModal({ type: 'receipt', target: name }); addLog({ target: name, actionType: '查看回执', operator: '当前用户', time: new Date().toLocaleString('zh-CN'), remark: '查看第三方接口原始回执流水' }) }
+              const ec = (name: string) => addLog({ target: name, actionType: '关联电核', operator: '当前用户', time: new Date().toLocaleString('zh-CN'), remark: `关联电核台账编号 EC${Date.now().toString(36).toUpperCase()}` })
+              return singleMode === 'card' ? (
+                <div className="grid gap-4 lg:grid-cols-2">
+                  {d.single.map((s, i) => (
+                    <SingleCard key={s.source} s={s} scoreTag={singleScores[i] != null ? <ScoreTag pts={singleScores[i]} deduct={singleDeduct} /> : undefined} onReverify={revert} onNote={note} onExempt={exempt} onReceipt={receipt} onECLink={ec} />
+                  ))}
+                </div>
+              ) : (
+                <SectionTable head={['数据源', '结论', '得分', '调用状态', '耗时', '核验时间', '渠道', '关键字段', '操作']}>
+                  {d.single.map((s, i) => (
+                    <tr key={s.source} className="border-b border-slate-100 align-top">
+                      <td className="px-3 py-2">
+                        <div className="flex items-center gap-2">
+                          <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-brand-50 text-brand-600"><SrcIcon name={s.icon} /></span>
+                          <span className="text-sm font-medium text-ink-900">{s.name}</span>
+                        </div>
+                      </td>
+                      <td className="px-3 py-2"><Badge kind={conclKind[s.conclusion]}>{conclText[s.conclusion]}</Badge></td>
+                      <td className="px-3 py-2">{singleScores[i] != null ? <ScoreTag pts={singleScores[i]} deduct={singleDeduct} /> : null}</td>
+                      <td className="px-3 py-2 text-sm text-slate-600">{s.callStatus === 'success' ? '调用成功' : s.callStatus === 'fail' ? '调用失败' : '部分成功'}</td>
+                      <td className="px-3 py-2 text-sm text-slate-600">{s.costMs}ms</td>
+                      <td className="px-3 py-2 text-sm text-slate-600">{s.verifyTime}</td>
+                      <td className="px-3 py-2 text-sm text-slate-600">{s.channel}</td>
+                      <td className="px-3 py-2 text-xs leading-relaxed text-slate-600">{s.items.map((it) => `${it.label}：${it.value}`).join('　')}</td>
+                      <td className="px-3 py-2">
+                        <div className="flex flex-wrap gap-1">
+                          <button type="button" onClick={() => revert(s.name)} className="rounded border border-slate-200 px-2 py-0.5 text-[11px] text-slate-600 hover:bg-slate-50">重新核验</button>
+                          <button type="button" onClick={() => note(s.name)} className="rounded border border-slate-200 px-2 py-0.5 text-[11px] text-slate-600 hover:bg-slate-50">备注</button>
+                          <button type="button" onClick={() => exempt(s.name)} className="rounded border border-slate-200 px-2 py-0.5 text-[11px] text-slate-600 hover:bg-slate-50">豁免</button>
+                          <button type="button" onClick={() => receipt(s.name)} className="rounded border border-slate-200 px-2 py-0.5 text-[11px] text-slate-600 hover:bg-slate-50">回执</button>
+                          <button type="button" onClick={() => ec(s.name)} className="rounded border border-slate-200 px-2 py-0.5 text-[11px] text-slate-600 hover:bg-slate-50">电核</button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </SectionTable>
+              )
+            })()}
           </Panel>
 
           {/* 五、数据交叉融合综合报告 · 5项 */}
           <Panel
             title="五、数据交叉融合综合报告 · 5项"
             id="cross"
-            actions={<Button variant="ghost" size="sm" onClick={() => setModal({ type: 'weights', target: '' })}>查看打分权重明细</Button>}
+            actions={<div className="flex items-center gap-2"><DisplayModeToggle reportType="info_verify" sectionId="cross_fusion" /><Button variant="ghost" size="sm" onClick={() => setModal({ type: 'weights', target: '' })}>查看打分权重明细</Button></div>}
           >
             <CardScoreHead section={ivSections['cross_fusion']} show={ivTpl?.showSectionTotals} />
             {/* ===== 顶层总览区：5 项评估维度 ===== */}
-            <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-5">
-              {d.cross.atomic.map((a) => (
-                <AtomicCard key={a.key} a={a} conflicts={d.cross.conflicts} />
-              ))}
-            </div>
+              {crossMode === 'card' ? (
+                <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-5">
+                  {d.cross.atomic.map((a) => (
+                    <AtomicCard key={a.key} a={a} conflicts={d.cross.conflicts} />
+                  ))}
+                </div>
+              ) : (
+                <SectionTable head={['维度', '状态', '取值']}>
+                  {d.cross.atomic.map((a) => (
+                    <tr key={a.key} className="border-b border-slate-100">
+                      <td className="px-3 py-2 text-sm text-slate-600">{a.label}</td>
+                      <td className="px-3 py-2">{a.status === 'ok' ? <span className="rounded bg-emerald-100 px-1.5 py-0.5 text-[10px] font-medium text-emerald-600">正常</span> : <RiskLevelBadge level={a.status === 'fail' ? 'high' : 'medium'} noTooltip />}</td>
+                      <td className={cn('px-3 py-2 text-sm font-bold', statusCls[a.status])}>{a.value}</td>
+                    </tr>
+                  ))}
+                </SectionTable>
+              )}
 
             {/* ===== 综合风险头部栏 ===== */}
             <div className="mt-5 rounded-xl border border-slate-200 bg-white p-5">
@@ -821,22 +931,6 @@ function ScoreModelCard({ cross, ivTpl }: { cross: CrossCheck; ivTpl?: ReportTem
         if (!v.decisive.length && !v.warnings.length) return null
         return (
           <div className="mt-3 space-y-2">
-            {v.decisive.length > 0 && (
-              <div className="rounded-xl border border-rose-200 bg-rose-50 px-3.5 py-2.5">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="inline-flex items-center rounded-full bg-rose-600 px-2 py-0.5 text-[11px] font-semibold text-white">决定规则</span>
-                  <span className="text-sm font-semibold text-rose-700">已触发 {v.decisive.length} 条决定规则 → 自动审核 = {v.finalResult}</span>
-                  <span className="text-[11px] text-rose-500">（不再参考总分，总分仅作参考展示）</span>
-                </div>
-                <div className="mt-1.5 flex flex-wrap gap-1.5">
-                  {v.decisive.map((r) => (
-                    <span key={r.id} className="inline-flex items-center rounded-md bg-white px-2 py-0.5 text-[11px] text-rose-700 ring-1 ring-rose-200">
-                      {r.ruleName} · {SPECIAL_TRIGGER_LABEL[r.trigger]} → {r.autoResult}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
             {v.warnings.length > 0 && (
               <div className="rounded-xl border border-amber-200 bg-amber-50 px-3.5 py-2.5">
                 <div className="flex flex-wrap items-center gap-2">
@@ -871,7 +965,7 @@ function ScoreModelCard({ cross, ivTpl }: { cross: CrossCheck; ivTpl?: ReportTem
           const sec = secMap[r.sectionId]
           const w = r.weight ?? sec?.weight ?? 1
           const sc = r.score ?? 0
-          const dim = matchDimBand(sc, ivTpl?.dimBands ?? DEFAULT_DIM_BANDS)
+          const dim = matchDimBand(sc, ivTpl?.dimBands ?? defaultDimBandsForScore(sc))
           return {
             name: r.ruleName,
             situation: `${SPECIAL_TRIGGER_LABEL[r.trigger]}·${r.sectionName}`,

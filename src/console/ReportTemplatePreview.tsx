@@ -258,7 +258,10 @@ export default function ReportTemplatePreview() {
         actions={
           <>
             {tpl.id === 'tpl-info-authority' && (
-              <Button variant="secondary" onClick={() => nav('/report/backup')}>生成演示报告（备用）</Button>
+              <Button variant="secondary" onClick={() => nav('/report/backup')}>生成演示报告（旧备用）</Button>
+            )}
+            {tpl.id === 'tpl-info-backup222' && (
+              <Button variant="secondary" onClick={() => nav('/report/backup222')}>生成演示报告（方案222）</Button>
             )}
             <Button variant="primary" onClick={back}>返回模板详情</Button>
           </>

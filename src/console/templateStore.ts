@@ -11,7 +11,29 @@
  *     订阅，模板变化即重新渲染。
  * ========================================================================== */
 import { useSyncExternalStore } from 'react'
-import { seedReportTemplates, type ReportTemplate, type ReportType } from './reportTemplateData'
+import { seedReportTemplates, type ReportTemplate, type ReportType, type SectionConfig, type CardDisplayMode } from './reportTemplateData'
+
+/* ---------- 本地文件持久化（通过 Vite 插件代理写入 templateSeed.json）---------- */
+let saveTimer: ReturnType<typeof setTimeout> | null = null
+function scheduleSave() {
+  if (saveTimer) clearTimeout(saveTimer)
+  saveTimer = setTimeout(() => {
+    fetch('/api/save-templates', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(seedReportTemplates),
+    }).catch(() => { /* dev server may restart */ })
+  }, 300)
+}
+
+// 启动时尝试加载已保存的文件
+try {
+  const saved = await fetch('/api/load-templates').then(r => r.ok ? r.json() : null).catch(() => null)
+  if (saved && Array.isArray(saved) && saved.length > 0) {
+    seedReportTemplates.length = 0
+    seedReportTemplates.push(...saved)
+  }
+} catch { /* 首次启动无文件时用代码 seed */ }
 
 let version = 0
 const listeners = new Set<() => void>()
@@ -19,6 +41,7 @@ const listeners = new Set<() => void>()
 function emit() {
   version++
   listeners.forEach((l) => l())
+  scheduleSave()
 }
 
 export function subscribe(cb: () => void): () => void {
@@ -71,4 +94,24 @@ export function useTemplate(id?: string, type?: ReportType): ReportTemplate | un
 export function useTemplates(): ReportTemplate[] {
   useSyncExternalStore(subscribe, getVersion)
   return seedReportTemplates
+}
+
+/** 编辑某模板下的单个分段（写回 seed 并通知订阅者） */
+export function patchSection(tplId: string, sid: string, fn: (s: SectionConfig) => SectionConfig): void {
+  updateTemplate(tplId, (t) => ({
+    ...t,
+    sections: t.sections.map((s) => (s.id === sid ? fn(s) : s)),
+  }))
+}
+
+/** 详情页「显示方式」开关：返回当前分段显示方式 + 切换函数（列表 ⇄ 小卡片），落库到模板分段 */
+export function useSectionDisplayMode(reportType: ReportType, sectionId: string) {
+  const tpl = useTemplate(undefined, reportType)
+  const mode: CardDisplayMode = tpl?.sections.find((s) => s.id === sectionId)?.displayMode ?? 'list'
+  const setMode = (next: CardDisplayMode) => {
+    if (!tpl) return
+    patchSection(tpl.id, sectionId, (s) => ({ ...s, displayMode: next }))
+  }
+  const toggle = () => setMode(mode === 'list' ? 'card' : 'list')
+  return { mode, setMode, toggle }
 }

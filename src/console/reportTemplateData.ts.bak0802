@@ -783,7 +783,6 @@ export interface FormulaVar {
   label: string
   dir: 'up-good' | 'up-bad'
   sample: number        // 配置页实时预览用的样例值
-  rangeHint?: string    // 变量取值范围提示，如 "0～80"
 }
 export const DECISION_SCORE_VARS: FormulaVar[] = [
   { id: 'credit_score', label: '信用评分', dir: 'up-good', sample: 720 },
@@ -828,11 +827,10 @@ export function buildDefaultScoreFormula(sections: SectionConfig[]): ScoreFormul
 /** 生成可读公式文本，如 "信用评分×0.4 − 欺诈评分×0.3" */
 export function formulaText(f: ScoreFormula | undefined, vars: FormulaVar[]): string {
   if (!f || f.terms.length === 0) return '未配置公式'
-  const varOf = (id?: string) => vars.find((v) => v.id === id)
+  const labelOf = (id?: string) => vars.find((v) => v.id === id)?.label ?? id ?? '?'
   return f.terms.map((t, i) => {
     const sign = t.op === '-' ? '− ' : (i === 0 ? '' : '+ ')
-    const v = t.kind === 'var' ? varOf(t.varId) : undefined
-    const base = t.kind === 'var' ? (v?.label ?? t.varId ?? '?') + (v?.rangeHint ? `(${v.rangeHint})` : '') : `常数(${t.constVal ?? 0})`
+    const base = t.kind === 'var' ? labelOf(t.varId) : `常数(${t.constVal ?? 0})`
     const fac = Math.abs(t.factor) === 1 ? '' : `×${Number(t.factor)}`
     return `${sign}${base}${fac}`
   }).join(' ')
@@ -1359,63 +1357,6 @@ export const GRADE_PRESETS: Record<ReportType, ScoreGrade[]> = {
   ],
 }
 
-/**
- * 新建模板的默认分段：统一三段 A/B/C（用户约定「新创建的默认都是 abc」）。
- * 区间方向随分值语义对齐显示效果——保证「好档」始终出现在刻度条右侧：
- *   - 'credit'（信息核验/欺诈，展示翻转：越高越安全）→ 好档在原始低分（翻转后到右侧）
- *   - 'risk'（信用/决策，越高越好）→ 好档在原始高分（右侧）
- * 区间始终连续铺满 [0,100]，不重叠无缝隙。
- * 注意：仅用于 createNew，已存在的 4 类种子模板仍保留各自语义档（安全/关注/警示/高危、A/B/C/D、5 档等）。
- */
-export function defaultABCGrades(semantic: ScoreSemantic = 'risk'): ScoreGrade[] {
-  if (semantic === 'credit') {
-    return [
-      { grade: 'A', label: '优秀', minScore: 0, maxScore: 40, riskLevel: '低', color: '#10B981', autoResult: '通过', description: '综合评分优秀，建议正常通过' },
-      { grade: 'B', label: '良好', minScore: 40, maxScore: 75, riskLevel: '中', color: '#F59E0B', autoResult: '转人工', description: '综合评分中等，建议人工复核' },
-      { grade: 'C', label: '较差', minScore: 75, maxScore: 100, riskLevel: '高', color: '#EF4444', autoResult: '拒绝', description: '综合评分较差，建议拒绝授信' },
-    ]
-  }
-  return [
-    { grade: 'A', label: '优秀', minScore: 75, maxScore: 100, riskLevel: '低', color: '#10B981', autoResult: '通过', description: '综合评分优秀，建议正常通过' },
-    { grade: 'B', label: '良好', minScore: 40, maxScore: 74, riskLevel: '中', color: '#F59E0B', autoResult: '转人工', description: '综合评分中等，建议人工复核' },
-    { grade: 'C', label: '较差', minScore: 0, maxScore: 39, riskLevel: '高', color: '#EF4444', autoResult: '拒绝', description: '综合评分较差，建议拒绝授信' },
-  ]
-}
-
-/** 根据实际分值预测范围 [min, max] 自动生成 N 段均匀分段（默认 3 段 A/B/C）。
- *  区间无缝铺满，不重叠无缝隙。好档始终在刻度条右侧。 */
-export function buildDefaultGradesForRange(
-  min: number,
-  max: number,
-  count = 3,
-  semantic: ScoreSemantic = 'risk',
-): ScoreGrade[] {
-  if (max <= min) max = min + 1
-  const span = max - min
-  const seg = Math.ceil(span / count)
-  const colors = ['#10B981', '#F59E0B', '#F97316', '#EF4444', '#7C3AED']
-  const labels = ['A', 'B', 'C', 'D', 'E']
-  const results: ScoreGrade[] = []
-  for (let i = 0; i < count; i++) {
-    const lo = min + i * seg
-    const hi = i === count - 1 ? max : Math.min(max, lo + seg - 1)
-    // credit 语义（异常值：低分=安全→好档在低分段）；risk 语义（信用值：高分=安全→好档在高分段）
-    const idx = semantic === 'credit' ? i : count - 1 - i
-    const g = labels[idx] ?? labels[labels.length - 1]
-    results.push({
-      grade: g,
-      label: g,
-      minScore: lo,
-      maxScore: hi,
-      riskLevel: idx === 0 ? '低' : idx === 1 ? '中' : '高',
-      color: colors[idx % colors.length],
-      autoResult: idx === 0 ? '通过' : idx === count - 1 ? '拒绝' : '转人工',
-      description: `分段 ${g}`,
-    })
-  }
-  return results
-}
-
 /* ---------- 业务流程默认映射（index 与 grades 对齐） ---------- */
 /* 默认流程行：通过=需初审员确认；拒绝=允许复审（复审员发起、风控主管审核）；转人工=初审员提建议、风控主管审建议 */
 export function defaultFlowRow(gradeId: string, suggestionText: string): BusinessFlowConfig {
@@ -1710,37 +1651,10 @@ export function computeScoreSummary(t: ReportTemplate): ScoreSummary {
   const addMax = enabled.reduce((sum, r) => sum + (r.mode === 'add' ? r.points : 0), 0)
   const deductMax = enabled.reduce((sum, r) => sum + (r.mode === 'deduct' ? -r.points : 0), 0)
   const baseScore = t.scoreDisplay.baseScore ?? 0
-
-  // ===== 使用编辑综合总分公式评估分值预测范围 =====
-  const formula = t.scoreFormula ?? buildDefaultScoreFormula(t.sections)
-  // 构建各卡片的绝对总分映射（公式变量取绝对值，符号由公式项的 op 负责）
-  const rawTotals: Record<string, number> = {}
-  for (const s of t.sections.filter(s => (s.homeTab ?? 'content') === 'content')) {
-    const r = computeSectionScore(s)
-    rawTotals[s.id] = Math.abs(r.total)
-  }
-  // 分别代入使公式最大 / 最小的变量值
-  const maxVals: Record<string, number> = {}
-  const minVals: Record<string, number> = {}
-  for (const term of formula.terms) {
-    if (term.kind === 'var' && term.varId) {
-      const secId = term.varId.replace('sec_', '')
-      const raw = rawTotals[secId] ?? 0
-      // + 项：取 raw 使总分最大，取 0 使总分最小
-      // - 项：取 0 使总分最大，取 raw 使总分最小
-      maxVals[term.varId] = term.op === '+' ? raw : 0
-      minVals[term.varId] = term.op === '-' ? raw : 0
-    }
-  }
-  const formulaMax = evaluateFormula(formula, maxVals) ?? 0
-  const formulaMin = evaluateFormula(formula, minVals) ?? 0
-
-  const specialRejectCount = (t.specialRules ?? []).filter((r) => r.autoResult === '拒绝').length
   return {
     rows, baseScore, addMax, deductMax,
-    min: baseScore + formulaMin,
-    max: baseScore + formulaMax,
-    rejectTotal: enabled.reduce((sum, r) => sum + r.rejectItems, 0) + specialRejectCount,
+    min: baseScore - deductMax, max: baseScore + addMax,
+    rejectTotal: enabled.reduce((sum, r) => sum + r.rejectItems, 0),
   }
 }
 
@@ -2109,7 +2023,6 @@ const STATUS_ENUM_PRESETS: Record<ReportType, string[]> = {
 }
 
 export function buildTemplate(type: ReportType, o: BuildOpts): ReportTemplate {
-  const sections = buildSections(type)
   const tpl: ReportTemplate = {
     id: o.id,
     name: o.name,
@@ -2121,7 +2034,7 @@ export function buildTemplate(type: ReportType, o: BuildOpts): ReportTemplate {
     version: o.version ?? 'V1.0',
     lastEditor: o.lastEditor ?? 'admin',
     lastEditTime: o.lastEditTime ?? '刚刚',
-    sections,
+    sections: buildSections(type),
     scoreBlock: { show: true, title: '', min: 0, max: 100, rejectCount: 0 },
     flowBlock: { show: true, title: '', statusEnum: STATUS_ENUM_PRESETS[type] },
     showOpLog: true,
@@ -2131,13 +2044,13 @@ export function buildTemplate(type: ReportType, o: BuildOpts): ReportTemplate {
       showDescription: true,
       showThresholdBar: true,
       showRiskTags: true,
-      baseScore: 0,
+      baseScore: 60,
       title: type === 'info_verify' ? '信息核验综合信用模型' : '',
       // 信息核验/欺诈的 grades 是异常值语义，但报告详情页习惯给客户看「信用值」→ 默认翻转；信用/决策本身就是越高越好，直读
       scoreSemantic: type === 'info_verify' || type === 'fraud' ? 'credit' : 'risk',
       grades: GRADE_PRESETS[type].map((g) => ({ ...g })),
     },
-    scoreFormula: type === 'decision' ? { ...DEFAULT_DECISION_FORMULA, terms: DEFAULT_DECISION_FORMULA.terms.map((t) => ({ ...t })) } : buildDefaultScoreFormula(sections),
+    scoreFormula: type === 'decision' ? { ...DEFAULT_DECISION_FORMULA, terms: DEFAULT_DECISION_FORMULA.terms.map((t) => ({ ...t })) } : undefined,
     specialRules: defaultSpecialRules(type),
     businessFlow: syncFlowToGrades(FLOW_PRESETS[type], GRADE_PRESETS[type]),
     theme: defaultTheme(),
@@ -2146,12 +2059,11 @@ export function buildTemplate(type: ReportType, o: BuildOpts): ReportTemplate {
       { version: o.version ?? 'V1.0', action: '创建', operator: o.lastEditor ?? 'admin', timestamp: o.lastEditTime ?? '刚刚', summary: `创建「${o.name}」` },
     ],
   }
-  // 分值预测默认值取当前模板计算结果；首次生成时按实际分值范围自动分三段
+  // 分值预测默认值取当前模板计算结果，后续用户可在评分方案 Tab 自行配置
   const summary = computeScoreSummary(tpl)
   tpl.scoreBlock.min = summary.min
   tpl.scoreBlock.max = summary.max
   tpl.scoreBlock.rejectCount = summary.rejectTotal
-  tpl.scoreDisplay.grades = buildDefaultGradesForRange(summary.min, summary.max, 3, tpl.scoreDisplay.scoreSemantic)
   return tpl
 }
 
@@ -2325,129 +2237,6 @@ export function buildAuthorityInfoTemplate(): ReportTemplate {
   return tpl
 }
 
-/* ============================================================================
- * 方案222 备用模板（按 0802 映射关系新建 + 样例数据）
- * - 完全独立于标准模板 tpl-info-standard 与旧测试 tpl-info-authority，不替换任何现有功能
- * - 分段结构遵循信息核验报告：用户基本信息(双分组) / 用户证件照(api) / 多源并行核验(规则集) /
- *   数据交叉融合(规则集) / 操作日志；并携带 sample 级 demoScore / demoValues / specialRules，
- *   使 BackupReportDetail222 可直接据此还原一份「及格」的报告内容。
- * ========================================================================= */
-export function buildBackup222Template(): ReportTemplate {
-  const t = buildTemplate('info_verify', {
-    id: 'tpl-info-backup222',
-    name: '综合信用模型（方案222备用）',
-    status: '草稿',
-    scope: ['全产品'],
-    isDefault: false,
-    version: 'V2.6风控策略集',
-    lastEditor: 'admin',
-    lastEditTime: '2026-07-21',
-    description: '方案222 备用：按 0802 映射关系新建的模板 + 样例数据，用于验证「模板驱动还原报告」。不替换现有信息核验标准模板。',
-  })
-  const sec = (id: string) => t.sections.find((s) => s.id === id)!
-
-  /* 一、用户基本信息（双分组：基础资料 g_base / 环境采集 g_env）样例 */
-  const basic = sec('basic_info')
-  basic.demoScore = 6
-  basic.demoValues = {
-    bi_name: { name: '姓名', value: '张*明', status: 'pass' },
-    bi_id: { name: '身份证号', value: '3301**********1234', status: 'pass' },
-    bi_phone: { name: '手机号', value: '138****6688', status: 'pass' },
-    bi_bank: { name: '银行卡号', value: '6222********1234', status: 'pass' },
-    bi_bank_branch: { name: '开户行', value: '工商银行杭州分行', status: 'pass' },
-    bi_age: { name: '年龄', value: '32', status: 'pass' },
-    bi_edu: { name: '学历', value: '本科', status: 'pass' },
-    bi_company: { name: '工作单位', value: '杭州某科技有限公司', status: 'pass' },
-    bi_income: { name: '月收入', value: '¥15,000', status: 'pass' },
-    bi_address: { name: '居住地址', value: '杭州市西湖区', status: 'pass' },
-    bi_marriage: { name: '婚姻', value: '已婚', status: 'pass' },
-    bi_fp: { name: '设备指纹', value: 'FP-9A2B7C…', status: 'pass' },
-    bi_ip: { name: 'IP地址', value: '223.104.xx.xx', status: 'pass' },
-    bi_gps: { name: 'GPS定位', value: '杭州·西湖区', status: 'pass' },
-    bi_channel: { name: '进件渠道', value: 'APP', status: 'pass' },
-    bi_appver: { name: 'APP版本', value: 'v3.2.1', status: 'pass' },
-  }
-
-  /* 二、用户证件照（接口集）样例 */
-  const images = sec('id_images')
-  images.demoScore = 2
-  images.demoValues = {
-    ii_front: { name: '身份证人像面', value: '已采集', status: 'pass' },
-    ii_back: { name: '身份证国徽面', value: '已采集', status: 'pass' },
-    ii_live: { name: '活体人脸', value: '活体通过', status: 'pass' },
-    ii_bank: { name: '银行卡', value: '已采集', status: 'pass' },
-    ii_ocr: { name: 'OCR识别文本', value: '姓名/证件号一致', status: 'pass' },
-  }
-
-  /* 三、多源并行核验单项报告（规则集）样例 */
-  const single = sec('single_verify')
-  single.demoScore = 9
-  single.demoValues = {
-    sv_police: { name: '公安实名', value: '一致', status: 'pass' },
-    sv_bank4: { name: '银行卡四要素', value: '一致', status: 'pass' },
-    sv_operator: { name: '运营商实名', value: '已实名', status: 'pass' },
-    sv_device: { name: '终端设备', value: '真实设备', status: 'warn' },
-    sv_link: { name: '联防联控', value: '无异常', status: 'pass' },
-    sv_serial: { name: '核验流水号', value: 'OPR-20260721-143218', status: 'pass' },
-    sv_time: { name: '核验时间', value: '2026-07-21 15:00:12', status: 'pass' },
-  }
-
-  /* 五、数据交叉融合综合报告（规则集：与「多源并行核验」同属 rule_set，详情页用同一组件渲染，显示效果一致）样例 */
-  const cross = sec('cross_fusion')
-  // 由模板复制(tpl_copy)重写为规则集(rule_set)：与 single_verify 同结构、详情页渲染效果一致；不再复制、可独立计分
-  cross.sourceType = 'rule_set'
-  cross.scoreable = true
-  cross.copyFromId = undefined
-  cross.copyFromName = undefined
-  cross.copySections = undefined
-  cross.copyScoreRange = undefined
-  cross.ruleSetId = 'rs_device'
-  const crossRs = RULE_SETS.find((r) => r.id === 'rs_device')!
-  cross.fields = crossRs.rules.map((r) => ({
-    id: r.id, name: r.name, desc: r.desc, visible: true, sourceRef: r.id,
-    hitText: '命中', missText: '未命中', severity: 'mid' as Severity, hitReject: false,
-    scorePoints: 5, condType: 'hit' as FieldCondType,
-  }))
-  cross.demoScore = 18
-  cross.demoValues = {
-    R4: { name: '设备真实性', value: '异常', status: 'warn' },
-    R5: { name: '联防联控', value: '命中 2 项', status: 'warn' },
-    R6: { name: '设备群控', value: '命中', status: 'warn' },
-    R7: { name: '团伙关联', value: '未命中', status: 'pass' },
-    R8: { name: '黑名单命中', value: '命中', status: 'reject' },
-  }
-
-  /* 操作日志（仅展示，不计分） */
-  sec('op_logs').demoScore = 0
-
-  // 重新计算分值预测并同步分段和业务流程
-  t.scoreDisplay.scoreSemantic = 'risk'
-  const s2 = computeScoreSummary(t)
-  t.scoreBlock = { show: true, title: '得分计算', min: s2.min, max: s2.max, rejectCount: s2.rejectTotal }
-  t.scoreDisplay.grades = buildDefaultGradesForRange(s2.min, s2.max, 3, 'risk')
-  t.businessFlow = syncFlowToGrades(t.businessFlow, t.scoreDisplay.grades)
-  t.scoreFormula = buildDefaultScoreFormula(t.sections)
-  t.showSectionTotals = true
-  t.showOpLog = true
-  t.specialRules = [
-    { id: 'sr1', sectionId: 'single_verify', fieldId: 'sv_device', sectionName: '多源并行核验单项报告', ruleName: '设备群控', trigger: 'hit', autoResult: '转人工', priority: 'warning', score: 18, weight: 20, note: '命中设备群控特征' },
-    { id: 'sr2', sectionId: 'cross_fusion', fieldId: 'R8', sectionName: '数据交叉融合综合报告', ruleName: '黑名单命中', trigger: 'hit', autoResult: '拒绝', priority: 'decisive', score: 50, weight: 30, note: '命中风控黑名单' },
-    { id: 'sr3', sectionId: 'basic_info', fieldId: 'bi_id', sectionName: '用户基本信息', ruleName: '证件号格式异常', trigger: 'hit', autoResult: '转人工', priority: 'warning', score: 10, weight: 15, note: '证件号与姓名一致性待核' },
-    { id: 'sr4', sectionId: 'id_images', fieldId: 'ii_live', sectionName: '用户证件照', ruleName: '活体比对失败', trigger: 'hit', autoResult: '拒绝', priority: 'decisive', score: 40, weight: 25, note: '活体检测分数偏低' },
-  ]
-  t.demoApplicant = {
-    申请人: '张*明',
-    证件号: '3301**********1234',
-    手机号: '138****6688',
-    银行卡: '6222********1234',
-    申请产品: '工薪贷',
-    申请额度: '¥80,000',
-    报告ID: 'CR20260721001',
-    计算时间: '2026-07-21 15:00:22',
-  }
-  return t
-}
-
 /* ---------- 种子数据（对应文档卡片示例） ---------- */
 export const seedReportTemplates: ReportTemplate[] = [
   buildTemplate('info_verify', {
@@ -2467,14 +2256,7 @@ export const seedReportTemplates: ReportTemplate[] = [
     version: 'V1.2', lastEditor: 'admin', lastEditTime: '1周前', description: '整合三大报告的综合决策报告模板，当前已停用。',
   }),
   buildAuthorityInfoTemplate(),
-  buildBackup222Template(),
 ]
-
-// 加载 templateNull.json（空骨架模板，供用户对照补全字段）
-import templateNullJson from './templateNull.json'
-if (!seedReportTemplates.find((t) => t.id === (templateNullJson as any).id)) {
-  seedReportTemplates.push(templateNullJson as any as ReportTemplate)
-}
 
 /* ---------- 决策报告运行态：审批弹窗所需的流程配置 ---------- */
 /* 依据报告 suggestion 映射到对应分段（grade），取其流程图中「结果选项最多」的审批节点，

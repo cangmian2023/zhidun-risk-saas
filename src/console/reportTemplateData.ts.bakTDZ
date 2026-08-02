@@ -2109,7 +2109,6 @@ const STATUS_ENUM_PRESETS: Record<ReportType, string[]> = {
 }
 
 export function buildTemplate(type: ReportType, o: BuildOpts): ReportTemplate {
-  const sections = buildSections(type)
   const tpl: ReportTemplate = {
     id: o.id,
     name: o.name,
@@ -2121,7 +2120,7 @@ export function buildTemplate(type: ReportType, o: BuildOpts): ReportTemplate {
     version: o.version ?? 'V1.0',
     lastEditor: o.lastEditor ?? 'admin',
     lastEditTime: o.lastEditTime ?? '刚刚',
-    sections,
+    sections: buildSections(type),
     scoreBlock: { show: true, title: '', min: 0, max: 100, rejectCount: 0 },
     flowBlock: { show: true, title: '', statusEnum: STATUS_ENUM_PRESETS[type] },
     showOpLog: true,
@@ -2137,7 +2136,7 @@ export function buildTemplate(type: ReportType, o: BuildOpts): ReportTemplate {
       scoreSemantic: type === 'info_verify' || type === 'fraud' ? 'credit' : 'risk',
       grades: GRADE_PRESETS[type].map((g) => ({ ...g })),
     },
-    scoreFormula: type === 'decision' ? { ...DEFAULT_DECISION_FORMULA, terms: DEFAULT_DECISION_FORMULA.terms.map((t) => ({ ...t })) } : buildDefaultScoreFormula(sections),
+    scoreFormula: type === 'decision' ? { ...DEFAULT_DECISION_FORMULA, terms: DEFAULT_DECISION_FORMULA.terms.map((t) => ({ ...t })) } : buildDefaultScoreFormula(tpl.sections),
     specialRules: defaultSpecialRules(type),
     businessFlow: syncFlowToGrades(FLOW_PRESETS[type], GRADE_PRESETS[type]),
     theme: defaultTheme(),
@@ -2146,11 +2145,12 @@ export function buildTemplate(type: ReportType, o: BuildOpts): ReportTemplate {
       { version: o.version ?? 'V1.0', action: '创建', operator: o.lastEditor ?? 'admin', timestamp: o.lastEditTime ?? '刚刚', summary: `创建「${o.name}」` },
     ],
   }
-  // 分值预测默认值取当前模板计算结果；首次生成时按实际分值范围自动分三段
+  // 分值预测默认值取当前模板计算结果；分段默认按实际分值范围自动生成均匀三段
   const summary = computeScoreSummary(tpl)
   tpl.scoreBlock.min = summary.min
   tpl.scoreBlock.max = summary.max
   tpl.scoreBlock.rejectCount = summary.rejectTotal
+  // 分段范围基于实际分值预测重新生成（保留预设的等级名/颜色/结果映射作为骨架，区间重算）
   tpl.scoreDisplay.grades = buildDefaultGradesForRange(summary.min, summary.max, 3, tpl.scoreDisplay.scoreSemantic)
   return tpl
 }
@@ -2420,12 +2420,10 @@ export function buildBackup222Template(): ReportTemplate {
   /* 操作日志（仅展示，不计分） */
   sec('op_logs').demoScore = 0
 
-  // 重新计算分值预测并同步分段和业务流程
+  // 重新计算分值预测（不覆盖 grades，用户可在 UI 自定义分段颜色和区间）
   t.scoreDisplay.scoreSemantic = 'risk'
   const s2 = computeScoreSummary(t)
   t.scoreBlock = { show: true, title: '得分计算', min: s2.min, max: s2.max, rejectCount: s2.rejectTotal }
-  t.scoreDisplay.grades = buildDefaultGradesForRange(s2.min, s2.max, 3, 'risk')
-  t.businessFlow = syncFlowToGrades(t.businessFlow, t.scoreDisplay.grades)
   t.scoreFormula = buildDefaultScoreFormula(t.sections)
   t.showSectionTotals = true
   t.showOpLog = true

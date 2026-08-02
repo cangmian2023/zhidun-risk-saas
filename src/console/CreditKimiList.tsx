@@ -193,7 +193,7 @@ export default function CreditKimiList() {
       <PageHeader
         crumb="零售信贷风控 / 贷前审核"
         title="信用风控"
-        subtitle="贷前审核 · 信用评分（300-900，越高越好）/ 六维评估 / 授信决策 + 工单人工处置（操作随审核状态动态变化）"
+        subtitle="贷前审核 · 信用评分（300-900）/ 六维评估 / 授信决策 + 工单人工处置（操作随审核状态动态变化）"
       />
 
       <div className="mx-auto max-w-[1400px] space-y-5 px-4 pb-10">

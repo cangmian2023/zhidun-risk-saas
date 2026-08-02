@@ -1,0 +1,234 @@
+{
+  "id": "tpl-null",
+  "name": "空模板（所有字段值为null）",
+  "reportType": "info_verify",
+  "scope": ["全产品"],
+  "status": "草稿",
+  "isDefault": false,
+  "description": null,
+  "version": null,
+  "lastEditor": null,
+  "lastEditTime": null,
+  "showOpLog": false,
+  "showSectionTotals": false,
+  "sections": [
+    {
+      "id": "score_model",
+      "name": null,
+      "desc": null,
+      "sourceType": "rule_set",
+      "order": 0,
+      "visible": true,
+      "homeTab": "score",
+      "weight": 1,
+      "cardScoreMode": "add",
+      "scoreable": true,
+      "demoScore": null,
+      "demoValues": null,
+      "displayMode": "list",
+      "fieldGroups": [],
+      "ruleSetId": null,
+      "fields": []
+    },
+    {
+      "id": "conclusion_process",
+      "name": null,
+      "desc": null,
+      "sourceType": "rule_set",
+      "order": 1,
+      "visible": true,
+      "homeTab": "flow",
+      "weight": 1,
+      "cardScoreMode": "add",
+      "scoreable": true,
+      "demoScore": null,
+      "demoValues": null,
+      "displayMode": "list",
+      "fieldGroups": [],
+      "ruleSetId": null,
+      "fields": []
+    },
+    {
+      "id": "basic_info",
+      "name": null,
+      "desc": null,
+      "sourceType": "data_source",
+      "order": 2,
+      "visible": true,
+      "homeTab": "content",
+      "weight": 1,
+      "cardScoreMode": "add",
+      "scoreable": false,
+      "demoScore": null,
+      "demoValues": null,
+      "displayMode": "list",
+      "fieldGroups": [
+        { "name": "基础资料", "fields": ["f_name", "f_id", "f_phone"] },
+        { "name": "设备环境", "fields": ["f_ip", "f_gps", "f_channel"] }
+      ],
+      "ds": {
+        "dbType": null,
+        "ip": null,
+        "port": null,
+        "username": null,
+        "password": null,
+        "database": null,
+        "table": null,
+        "tableFields": []
+      },
+      "fields": [
+        { "id": "f_name", "name": null, "visible": true, "sourceRef": null, "group": "基础资料", "scorePoints": 0, "hitReject": false, "condType": null, "condValue": null, "severity": "low", "hitText": null, "missText": null, "displayMode": "list", "maskRule": "none", "container": "text" },
+        { "id": "f_id", "name": null, "visible": true, "sourceRef": null, "group": "基础资料", "scorePoints": 0, "hitReject": false, "condType": null, "condValue": null, "severity": "low", "hitText": null, "missText": null, "displayMode": "list", "maskRule": "none", "container": "text" },
+        { "id": "f_phone", "name": null, "visible": true, "sourceRef": null, "group": "基础资料", "scorePoints": 0, "hitReject": false, "condType": null, "condValue": null, "severity": "low", "hitText": null, "missText": null, "displayMode": "list", "maskRule": "none", "container": "text" },
+        { "id": "f_ip", "name": null, "visible": true, "sourceRef": null, "group": "设备环境", "scorePoints": 0, "hitReject": false, "condType": null, "condValue": null, "severity": "low", "hitText": null, "missText": null, "displayMode": "list", "maskRule": "none", "container": "text" },
+        { "id": "f_gps", "name": null, "visible": true, "sourceRef": null, "group": "设备环境", "scorePoints": 0, "hitReject": false, "condType": null, "condValue": null, "severity": "low", "hitText": null, "missText": null, "displayMode": "list", "maskRule": "none", "container": "text" },
+        { "id": "f_channel", "name": null, "visible": true, "sourceRef": null, "group": "设备环境", "scorePoints": 0, "hitReject": false, "condType": null, "condValue": null, "severity": "low", "hitText": null, "missText": null, "displayMode": "list", "maskRule": "none", "container": "text" }
+      ]
+    },
+    {
+      "id": "id_images",
+      "name": null,
+      "desc": null,
+      "sourceType": "api",
+      "order": 3,
+      "visible": true,
+      "homeTab": "content",
+      "weight": 1,
+      "cardScoreMode": "add",
+      "scoreable": true,
+      "demoScore": null,
+      "demoValues": null,
+      "displayMode": "list",
+      "fieldGroups": [],
+      "api": {
+        "url": null,
+        "method": "GET",
+        "headers": [],
+        "inputs": [],
+        "bodyType": null,
+        "bodyText": null,
+        "outputs": []
+      },
+      "fields": [
+        { "id": "img_front", "name": null, "visible": true, "sourceRef": null, "scorePoints": 0, "hitReject": false, "condType": null, "condValue": null, "severity": "low", "hitText": null, "missText": null, "displayMode": "list", "maskRule": "none", "container": "image" },
+        { "id": "img_back", "name": null, "visible": true, "sourceRef": null, "scorePoints": 0, "hitReject": false, "condType": null, "condValue": null, "severity": "low", "hitText": null, "missText": null, "displayMode": "list", "maskRule": "none", "container": "image" },
+        { "id": "img_live", "name": null, "visible": true, "sourceRef": null, "scorePoints": 0, "hitReject": false, "condType": null, "condValue": null, "severity": "low", "hitText": null, "missText": null, "displayMode": "list", "maskRule": "none", "container": "image" }
+      ]
+    },
+    {
+      "id": "single_verify",
+      "name": null,
+      "desc": null,
+      "sourceType": "rule_set",
+      "order": 4,
+      "visible": true,
+      "homeTab": "content",
+      "weight": 1,
+      "cardScoreMode": "deduct",
+      "scoreable": true,
+      "demoScore": null,
+      "demoValues": null,
+      "displayMode": "list",
+      "fieldGroups": [],
+      "ruleSetId": null,
+      "fields": [
+        { "id": "r1", "name": null, "visible": true, "sourceRef": null, "scorePoints": 0, "hitReject": false, "condType": "hit", "condValue": null, "severity": "mid", "hitText": "命中", "missText": "未命中", "displayMode": "list", "maskRule": "none", "container": "text" }
+      ]
+    },
+    {
+      "id": "cross_fusion",
+      "name": null,
+      "desc": null,
+      "sourceType": "rule_set",
+      "order": 5,
+      "visible": true,
+      "homeTab": "content",
+      "weight": 1,
+      "cardScoreMode": "deduct",
+      "scoreable": true,
+      "demoScore": null,
+      "demoValues": null,
+      "displayMode": "list",
+      "fieldGroups": [],
+      "ruleSetId": null,
+      "fields": [
+        { "id": "c1", "name": null, "visible": true, "sourceRef": null, "scorePoints": 0, "hitReject": false, "condType": "hit", "condValue": null, "severity": "mid", "hitText": "命中", "missText": "未命中", "displayMode": "list", "maskRule": "none", "container": "text" }
+      ]
+    },
+    {
+      "id": "op_logs",
+      "name": null,
+      "desc": null,
+      "sourceType": "api",
+      "order": 6,
+      "visible": true,
+      "homeTab": "log",
+      "weight": 1,
+      "cardScoreMode": "add",
+      "scoreable": false,
+      "demoScore": null,
+      "demoValues": null,
+      "displayMode": "list",
+      "fieldGroups": [],
+      "api": {
+        "url": null,
+        "method": "GET",
+        "headers": [],
+        "inputs": [],
+        "bodyType": null,
+        "bodyText": null,
+        "outputs": []
+      },
+      "fields": []
+    }
+  ],
+  "scoreBlock": {
+    "show": true,
+    "title": "得分计算",
+    "min": 0,
+    "max": 100,
+    "rejectCount": 0
+  },
+  "flowBlock": {
+    "show": true,
+    "title": "结论与终审",
+    "statusEnum": "待确认/通过/拒绝/挂起/已办结/转人工"
+  },
+  "scoreDisplay": {
+    "displayComponent": "大数字",
+    "showDescription": true,
+    "showThresholdBar": true,
+    "showRiskTags": true,
+    "baseScore": 0,
+    "title": null,
+    "scoreSemantic": "credit",
+    "grades": [
+      { "grade": "A", "label": "A", "minScore": 0, "maxScore": 33, "riskLevel": "低", "color": "#10B981", "autoResult": "通过", "description": null, "tags": null },
+      { "grade": "B", "label": "B", "minScore": 34, "maxScore": 66, "riskLevel": "中", "color": "#F59E0B", "autoResult": "转人工", "description": null, "tags": null },
+      { "grade": "C", "label": "C", "minScore": 67, "maxScore": 100, "riskLevel": "高", "color": "#EF4444", "autoResult": "拒绝", "description": null, "tags": null }
+    ]
+  },
+  "scoreFormula": {
+    "terms": [],
+    "updatedAt": null
+  },
+  "specialRules": [],
+  "businessFlow": [],
+  "dimBands": [],
+  "demoApplicant": null,
+  "theme": {
+    "preset": null,
+    "primaryColor": null,
+    "spacing": null,
+    "fontSize": null,
+    "tableStyle": null,
+    "borderRadius": null,
+    "headerStyle": null
+  },
+  "export": {
+    "format": null,
+    "watermark": null,
+    "scope": null
+  },
+  "changeLogs": []
+}

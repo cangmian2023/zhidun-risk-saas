@@ -166,6 +166,8 @@ export interface InfoVerifyReport {
   appId: string
   name: string
   idNo: string
+  product: string // 申请产品（报告名称生成用）
+  reportTime: string // 报告生成时间（报告名称生成用）
   decision: Conclusion
   decisionText: string
   summary: string
@@ -246,6 +248,8 @@ function buildBaseInfoVerifyReport(): InfoVerifyReport {
     appId: 'J20260718X0001',
     name: '张*伟',
     idNo: '110***********0314',
+    product: '信用贷',
+    reportTime: '2026-07-21 14:30:00',
     decision: 'reject',
     decisionText: '拒绝',
     summary:

@@ -8,6 +8,7 @@ import Home from './pages/Home'
 import CreditRisk from './pages/CreditRisk'
 import Scoring from './pages/Scoring'
 import BackupReportDetail from './console/BackupReportDetail'
+import BackupReportDetail222 from './console/BackupReportDetail222'
 
 function ScrollToTop() {
   const { pathname } = useLocation()
@@ -75,6 +76,7 @@ export default function App() {
           }
         />
         <Route path="/report/backup" element={<RequireAuth><BackupReportDetail /></RequireAuth>} />
+        <Route path="/report/backup222" element={<RequireAuth><BackupReportDetail222 /></RequireAuth>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </div>
