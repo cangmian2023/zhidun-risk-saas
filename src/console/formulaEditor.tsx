@@ -76,7 +76,7 @@ export default function FormulaEditor({ formula, vars = DECISION_SCORE_VARS, can
     <div style={{ ...card, borderColor: '#6D28D9' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
         <span style={{ fontSize: 13, fontWeight: 700, color: '#6D28D9' }}>编辑综合总分公式</span>
-        <span style={{ fontSize: 12, color: '#9CA3AF' }}>选择变量、符号与系数，组合出综合总分算法</span>
+        <span style={{ fontSize: 12, color: '#9CA3AF' }}>保存后写回 JSON（scoreFormula）；变量系数（权重）与「报告内容配置」对应数据块的权重双向联动</span>
         <span style={{ flex: 1 }} />
         <button onClick={() => setEditing(false)} style={miniBtn}>取消</button>
       </div>

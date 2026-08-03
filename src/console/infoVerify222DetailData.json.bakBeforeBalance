@@ -166,7 +166,7 @@
           {
             "name": "公安实名",
             "conclusion": "通过",
-            "score": 3,
+            "score": 5,
             "callStatus": "success",
             "costMs": 120,
             "verifyTime": "2026-08-01 14:33:50",
@@ -585,7 +585,7 @@
           {
             "name": "银行卡四要素",
             "conclusion": "通过",
-            "score": 0,
+            "score": 5,
             "callStatus": "success",
             "costMs": 88,
             "verifyTime": "2026-08-01 15:12:55",
@@ -606,7 +606,7 @@
           {
             "name": "运营商实名",
             "conclusion": "通过",
-            "score": 0,
+            "score": 5,
             "callStatus": "success",
             "costMs": 96,
             "verifyTime": "2026-08-01 15:13:00",
@@ -692,7 +692,7 @@
           {
             "name": "联防联控",
             "conclusion": "通过",
-            "score": 5,
+            "score": 0,
             "items": [
               {
                 "label": "命中项",
@@ -708,7 +708,7 @@
           {
             "name": "设备群控",
             "conclusion": "预警",
-            "score": 0,
+            "score": -5,
             "items": [
               {
                 "label": "群控特征",
@@ -986,7 +986,7 @@
           {
             "name": "银行卡四要素",
             "conclusion": "通过",
-            "score": 0,
+            "score": 5,
             "callStatus": "success",
             "costMs": 84,
             "verifyTime": "2026-08-01 15:50:55",
@@ -1007,7 +1007,7 @@
           {
             "name": "运营商实名",
             "conclusion": "通过",
-            "score": 0,
+            "score": 5,
             "callStatus": "success",
             "costMs": 94,
             "verifyTime": "2026-08-01 15:51:00",
@@ -1023,7 +1023,7 @@
           {
             "name": "设备真实性",
             "conclusion": "预警",
-            "score": 0,
+            "score": 5,
             "callStatus": "success",
             "costMs": 152,
             "verifyTime": "2026-08-01 15:51:05",
@@ -1072,7 +1072,7 @@
           {
             "name": "设备真实性",
             "conclusion": "预警",
-            "score": 0,
+            "score": -5,
             "items": [
               {
                 "label": "设备类型",
@@ -1109,7 +1109,7 @@
           {
             "name": "设备群控",
             "conclusion": "预警",
-            "score": 0,
+            "score": -5,
             "items": [
               {
                 "label": "群控特征",
@@ -1141,7 +1141,7 @@
           {
             "name": "黑名单命中",
             "conclusion": "拒绝",
-            "score": 0,
+            "score": -5,
             "items": [
               {
                 "label": "黑名单类型",

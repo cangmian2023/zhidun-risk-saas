@@ -13,16 +13,78 @@
 import { useSyncExternalStore } from 'react'
 import { seedReportTemplates, type ReportTemplate, type ReportType, type SectionConfig, type CardDisplayMode } from './reportTemplateData'
 
+/* ============================================================================
+ * 磁盘 JSON 四块格式（templateSeed.json 存储结构）
+ *   basic        基本信息（name/type/scope/status/开关…）
+ *   content      报告内容配置 → sections（content/log 分段；score/flow 分段已废弃不再生成）
+ *   autoReview   自动审核 → scoreBlock/scoreDisplay/scoreFormula/specialRules
+ *   manualReview 人工审核 → flowBlock/businessFlow
+ * 运行时内存仍是扁平 ReportTemplate，仅序列化/反序列化做分组，页面代码零改动。
+ * ========================================================================== */
+
+/** 扁平 → 磁盘四块 */
+export function convertToDisk(t: ReportTemplate) {
+  return {
+    id: t.id,
+    basic: {
+      name: t.name, reportType: t.reportType, scope: t.scope, status: t.status, isDefault: t.isDefault,
+      description: t.description, version: t.version, lastEditor: t.lastEditor, lastEditTime: t.lastEditTime,
+      showOpLog: t.showOpLog, showSectionTotals: t.showSectionTotals,
+    },
+    content: { sections: t.sections },
+    autoReview: {
+      scoreBlock: t.scoreBlock, scoreDisplay: t.scoreDisplay, scoreFormula: t.scoreFormula, specialRules: t.specialRules,
+    },
+    manualReview: {
+      flowBlock: t.flowBlock, businessFlow: t.businessFlow,
+    },
+    theme: t.theme, export: t.export, changeLogs: t.changeLogs, demoApplicant: t.demoApplicant,
+  }
+}
+
+/** 磁盘四块 → 扁平（兼容旧版扁平格式：无 basic 字段时按旧格式原样返回；兼容旧文件残留的 score/flow 分段） */
+export function convertFromDisk(d: any): ReportTemplate {
+  if (!d || !d.basic) return d as ReportTemplate
+  const b = d.basic ?? {}
+  const c = d.content ?? { sections: [] }
+  const ar = d.autoReview ?? {}
+  const mr = d.manualReview ?? {}
+  return {
+    id: d.id, name: b.name, reportType: b.reportType, scope: b.scope ?? [], status: b.status,
+    isDefault: b.isDefault ?? false, description: b.description ?? '', version: b.version ?? 'V1.0',
+    lastEditor: b.lastEditor ?? 'admin', lastEditTime: b.lastEditTime ?? '',
+    // 兼容旧文件：autoReview.sections / manualReview.sections 里的遗留分段一并并入（拍平后按 order 排序）
+    sections: [...(c.sections ?? []), ...(ar.sections ?? []), ...(mr.sections ?? [])].sort((a, b) => (a.order ?? 0) - (b.order ?? 0)),
+    scoreBlock: ar.scoreBlock, flowBlock: mr.flowBlock,
+    showOpLog: b.showOpLog ?? true, showSectionTotals: b.showSectionTotals ?? true,
+    scoreDisplay: ar.scoreDisplay, scoreFormula: ar.scoreFormula, specialRules: ar.specialRules,
+    businessFlow: mr.businessFlow,
+    theme: d.theme, export: d.export, changeLogs: d.changeLogs, demoApplicant: d.demoApplicant,
+  } as unknown as ReportTemplate
+}
+
 /* ---------- 本地文件持久化（通过 Vite 插件代理写入 templateSeed.json）---------- */
 let saveTimer: ReturnType<typeof setTimeout> | null = null
+/* 保存状态通知：saved=成功 / error=失败（供页面显示 toast，5 秒后由页面自行消失） */
+let saveNotifier: ((s: 'saved' | 'error', msg?: string) => void) | null = null
+export function subscribeSaveStatus(cb: (s: 'saved' | 'error', msg?: string) => void): () => void {
+  saveNotifier = cb
+  return () => { if (saveNotifier === cb) saveNotifier = null }
+}
 function scheduleSave() {
   if (saveTimer) clearTimeout(saveTimer)
   saveTimer = setTimeout(() => {
     fetch('/api/save-templates', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(seedReportTemplates),
-    }).catch(() => { /* dev server may restart */ })
+      body: JSON.stringify(seedReportTemplates.map(convertToDisk)),
+    }).then((r) => {
+      if (r.ok) saveNotifier?.('saved', '模板已保存到本地')
+      else { console.error('[templateStore] 保存失败:', r.status, r.statusText); saveNotifier?.('error', `保存失败（HTTP ${r.status}）`) }
+    }).catch((e) => {
+      console.error('[templateStore] 保存异常（dev server 未重启？POST /api/save-templates 404 → 磁盘不更新）:', e)
+      saveNotifier?.('error', '保存失败，请确认 dev server 已重启（POST /api/save-templates）')
+    })
   }, 300)
 }
 
@@ -31,7 +93,7 @@ try {
   const saved = await fetch('/api/load-templates').then(r => r.ok ? r.json() : null).catch(() => null)
   if (saved && Array.isArray(saved) && saved.length > 0) {
     seedReportTemplates.length = 0
-    seedReportTemplates.push(...saved)
+    seedReportTemplates.push(...saved.map(convertFromDisk))
   }
 } catch { /* 首次启动无文件时用代码 seed */ }
 

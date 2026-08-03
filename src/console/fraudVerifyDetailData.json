@@ -1,0 +1,1529 @@
+{
+  "A": {
+    "reportId": "FR-20260801-A",
+    "computedAt": "2026-08-02 15:00:22",
+    "applicant": {
+      "姓名": "张伟",
+      "证件号": "3301**********1234",
+      "手机号": "138****6688",
+      "银行卡": "6222********1234",
+      "申请产品": "信用贷",
+      "申请额度": 80000
+    },
+    "dataBlocks": [
+      {
+        "id": "basic_info",
+        "type": "data_source",
+        "name": "basic_info",
+        "groups": [
+          {
+            "name": "基础资料",
+            "items": [
+              {
+                "field": "姓名",
+                "value": "—",
+                "valid": true,
+                "score": 5
+              },
+              {
+                "field": "身份证号",
+                "value": "—",
+                "valid": true,
+                "score": 5
+              },
+              {
+                "field": "手机号",
+                "value": "—",
+                "valid": true,
+                "score": 5
+              },
+              {
+                "field": "银行卡号",
+                "value": "—",
+                "valid": true,
+                "score": 5
+              },
+              {
+                "field": "年龄",
+                "value": "—",
+                "valid": true,
+                "score": 5
+              },
+              {
+                "field": "进件渠道",
+                "value": "—",
+                "valid": true,
+                "score": 5
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "identity_fraud",
+        "type": "rule_set",
+        "name": "identity_fraud",
+        "items": [
+          {
+            "name": "公安实名",
+            "conclusion": "通过",
+            "score": 0,
+            "callStatus": "success",
+            "costMs": 120,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "未命中",
+                "status": "pass"
+              }
+            ]
+          },
+          {
+            "name": "银行卡四要素",
+            "conclusion": "通过",
+            "score": 0,
+            "callStatus": "success",
+            "costMs": 143,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "未命中",
+                "status": "pass"
+              }
+            ]
+          },
+          {
+            "name": "运营商实名",
+            "conclusion": "通过",
+            "score": 0,
+            "callStatus": "success",
+            "costMs": 166,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "未命中",
+                "status": "pass"
+              }
+            ]
+          },
+          {
+            "name": "设备真实性",
+            "conclusion": "通过",
+            "score": 0,
+            "callStatus": "success",
+            "costMs": 189,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "未命中",
+                "status": "pass"
+              }
+            ]
+          },
+          {
+            "name": "资料一致性",
+            "conclusion": "通过",
+            "score": 0,
+            "callStatus": "success",
+            "costMs": 212,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "未命中",
+                "status": "pass"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "info_forgery",
+        "type": "rule_set",
+        "name": "info_forgery",
+        "items": [
+          {
+            "name": "公安实名",
+            "conclusion": "通过",
+            "score": 0,
+            "callStatus": "success",
+            "costMs": 120,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "未命中",
+                "status": "pass"
+              }
+            ]
+          },
+          {
+            "name": "银行卡四要素",
+            "conclusion": "通过",
+            "score": 0,
+            "callStatus": "success",
+            "costMs": 143,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "未命中",
+                "status": "pass"
+              }
+            ]
+          },
+          {
+            "name": "运营商实名",
+            "conclusion": "通过",
+            "score": 0,
+            "callStatus": "success",
+            "costMs": 166,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "未命中",
+                "status": "pass"
+              }
+            ]
+          },
+          {
+            "name": "设备真实性",
+            "conclusion": "通过",
+            "score": 0,
+            "callStatus": "success",
+            "costMs": 189,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "未命中",
+                "status": "pass"
+              }
+            ]
+          },
+          {
+            "name": "资料一致性",
+            "conclusion": "通过",
+            "score": 0,
+            "callStatus": "success",
+            "costMs": 212,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "未命中",
+                "status": "pass"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "device_fraud",
+        "type": "data_source",
+        "name": "device_fraud",
+        "groups": [
+          {
+            "name": "基础资料",
+            "items": [
+              {
+                "field": "设备指纹",
+                "value": "—",
+                "valid": true,
+                "score": 5
+              },
+              {
+                "field": "设备类型",
+                "value": "—",
+                "valid": false,
+                "score": 0
+              },
+              {
+                "field": "Root/越狱状态",
+                "value": "—",
+                "valid": false,
+                "score": 0
+              },
+              {
+                "field": "模拟器检测",
+                "value": "—",
+                "valid": false,
+                "score": 0
+              },
+              {
+                "field": "代理/VPN检测",
+                "value": "—",
+                "valid": false,
+                "score": 0
+              },
+              {
+                "field": "设备关联身份数",
+                "value": "—",
+                "valid": false,
+                "score": 0
+              },
+              {
+                "field": "设备关联申请数",
+                "value": "—",
+                "valid": false,
+                "score": 0
+              },
+              {
+                "field": "首次出现时间",
+                "value": "—",
+                "valid": false,
+                "score": 0
+              },
+              {
+                "field": "设备关联图谱",
+                "value": "—",
+                "valid": false,
+                "score": 0
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "behavior_fraud",
+        "type": "data_source",
+        "name": "behavior_fraud",
+        "groups": [
+          {
+            "name": "基础资料",
+            "items": [
+              {
+                "field": "申请耗时",
+                "value": "—",
+                "valid": false,
+                "score": 0
+              },
+              {
+                "field": "填写速度",
+                "value": "—",
+                "valid": false,
+                "score": 0
+              },
+              {
+                "field": "页面停留",
+                "value": "—",
+                "valid": false,
+                "score": 0
+              },
+              {
+                "field": "操作轨迹",
+                "value": "—",
+                "valid": false,
+                "score": 0
+              },
+              {
+                "field": "GPS定位",
+                "value": "—",
+                "valid": false,
+                "score": 0
+              },
+              {
+                "field": "与正常用户对比",
+                "value": "—",
+                "valid": false,
+                "score": 0
+              },
+              {
+                "field": "操作路径",
+                "value": "—",
+                "valid": false,
+                "score": 0
+              },
+              {
+                "field": "行为轨迹时间线",
+                "value": "—",
+                "valid": false,
+                "score": 0
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "gang_fraud",
+        "type": "data_source",
+        "name": "gang_fraud",
+        "groups": [
+          {
+            "name": "基础资料",
+            "items": [
+              {
+                "field": "团伙标签",
+                "value": "—",
+                "valid": false,
+                "score": 0
+              },
+              {
+                "field": "关联度评分",
+                "value": "—",
+                "valid": false,
+                "score": 0
+              },
+              {
+                "field": "关联维度",
+                "value": "—",
+                "valid": false,
+                "score": 0
+              },
+              {
+                "field": "关联节点数",
+                "value": "—",
+                "valid": false,
+                "score": 0
+              },
+              {
+                "field": "团伙规模",
+                "value": "—",
+                "valid": false,
+                "score": 0
+              },
+              {
+                "field": "历史案件",
+                "value": "—",
+                "valid": false,
+                "score": 0
+              },
+              {
+                "field": "关联图谱可视化",
+                "value": "—",
+                "valid": false,
+                "score": 0
+              },
+              {
+                "field": "关联列表",
+                "value": "—",
+                "valid": false,
+                "score": 0
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "blacklist_hit",
+        "type": "data_source",
+        "name": "blacklist_hit",
+        "groups": [
+          {
+            "name": "基础资料",
+            "items": [
+              {
+                "field": "黑名单类型",
+                "value": "—",
+                "valid": false,
+                "score": 0
+              },
+              {
+                "field": "命中字段",
+                "value": "—",
+                "valid": false,
+                "score": 0
+              },
+              {
+                "field": "来源",
+                "value": "—",
+                "valid": false,
+                "score": 0
+              },
+              {
+                "field": "原因",
+                "value": "—",
+                "valid": false,
+                "score": 0
+              },
+              {
+                "field": "命中时间",
+                "value": "—",
+                "valid": false,
+                "score": 0
+              },
+              {
+                "field": "等级",
+                "value": "—",
+                "valid": false,
+                "score": 0
+              },
+              {
+                "field": "命中记录表",
+                "value": "—",
+                "valid": false,
+                "score": 0
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "history_fraud",
+        "type": "data_source",
+        "name": "history_fraud",
+        "groups": [
+          {
+            "name": "基础资料",
+            "items": [
+              {
+                "field": "历史欺诈记录表",
+                "value": "—",
+                "valid": false,
+                "score": 0
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "opLogs": [
+      {
+        "time": "2026-08-02 15:00:22",
+        "actor": "系统",
+        "action": "生成报告",
+        "detail": "风控策略集 V2.6 自动生成"
+      },
+      {
+        "time": "2026-08-02 15:00:31",
+        "actor": "系统",
+        "action": "自动审核",
+        "detail": "结论 A"
+      }
+    ],
+    "specialRules": []
+  },
+  "B": {
+    "reportId": "FR-20260801-B",
+    "computedAt": "2026-08-02 15:00:22",
+    "applicant": {
+      "姓名": "李娜",
+      "证件号": "3301**********5678",
+      "手机号": "139****2345",
+      "银行卡": "6222********1234",
+      "申请产品": "信用贷",
+      "申请额度": 80000
+    },
+    "dataBlocks": [
+      {
+        "id": "basic_info",
+        "type": "data_source",
+        "name": "basic_info",
+        "groups": [
+          {
+            "name": "基础资料",
+            "items": [
+              {
+                "field": "姓名",
+                "value": "—",
+                "valid": true,
+                "score": 5
+              },
+              {
+                "field": "身份证号",
+                "value": "—",
+                "valid": true,
+                "score": 5
+              },
+              {
+                "field": "手机号",
+                "value": "—",
+                "valid": true,
+                "score": 5
+              },
+              {
+                "field": "银行卡号",
+                "value": "—",
+                "valid": true,
+                "score": 5
+              },
+              {
+                "field": "年龄",
+                "value": "—",
+                "valid": true,
+                "score": 5
+              },
+              {
+                "field": "进件渠道",
+                "value": "—",
+                "valid": true,
+                "score": 5
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "identity_fraud",
+        "type": "rule_set",
+        "name": "identity_fraud",
+        "items": [
+          {
+            "name": "公安实名",
+            "conclusion": "拒绝",
+            "score": 5,
+            "callStatus": "success",
+            "costMs": 120,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "命中",
+                "status": "fail"
+              }
+            ]
+          },
+          {
+            "name": "银行卡四要素",
+            "conclusion": "拒绝",
+            "score": 5,
+            "callStatus": "success",
+            "costMs": 143,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "命中",
+                "status": "fail"
+              }
+            ]
+          },
+          {
+            "name": "运营商实名",
+            "conclusion": "拒绝",
+            "score": 5,
+            "callStatus": "success",
+            "costMs": 166,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "命中",
+                "status": "fail"
+              }
+            ]
+          },
+          {
+            "name": "设备真实性",
+            "conclusion": "通过",
+            "score": 0,
+            "callStatus": "success",
+            "costMs": 189,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "未命中",
+                "status": "pass"
+              }
+            ]
+          },
+          {
+            "name": "资料一致性",
+            "conclusion": "通过",
+            "score": 0,
+            "callStatus": "success",
+            "costMs": 212,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "未命中",
+                "status": "pass"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "info_forgery",
+        "type": "rule_set",
+        "name": "info_forgery",
+        "items": [
+          {
+            "name": "公安实名",
+            "conclusion": "拒绝",
+            "score": 5,
+            "callStatus": "success",
+            "costMs": 120,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "命中",
+                "status": "fail"
+              }
+            ]
+          },
+          {
+            "name": "银行卡四要素",
+            "conclusion": "拒绝",
+            "score": 5,
+            "callStatus": "success",
+            "costMs": 143,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "命中",
+                "status": "fail"
+              }
+            ]
+          },
+          {
+            "name": "运营商实名",
+            "conclusion": "拒绝",
+            "score": 5,
+            "callStatus": "success",
+            "costMs": 166,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "命中",
+                "status": "fail"
+              }
+            ]
+          },
+          {
+            "name": "设备真实性",
+            "conclusion": "通过",
+            "score": 0,
+            "callStatus": "success",
+            "costMs": 189,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "未命中",
+                "status": "pass"
+              }
+            ]
+          },
+          {
+            "name": "资料一致性",
+            "conclusion": "通过",
+            "score": 0,
+            "callStatus": "success",
+            "costMs": 212,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "未命中",
+                "status": "pass"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "device_fraud",
+        "type": "data_source",
+        "name": "device_fraud",
+        "groups": [
+          {
+            "name": "基础资料",
+            "items": [
+              {
+                "field": "设备指纹",
+                "value": "—",
+                "valid": true,
+                "score": 5
+              },
+              {
+                "field": "设备类型",
+                "value": "—",
+                "valid": true,
+                "score": 5
+              },
+              {
+                "field": "Root/越狱状态",
+                "value": "—",
+                "valid": true,
+                "score": 5
+              },
+              {
+                "field": "模拟器检测",
+                "value": "—",
+                "valid": true,
+                "score": 5
+              },
+              {
+                "field": "代理/VPN检测",
+                "value": "—",
+                "valid": true,
+                "score": 5
+              },
+              {
+                "field": "设备关联身份数",
+                "value": "—",
+                "valid": false,
+                "score": 0
+              },
+              {
+                "field": "设备关联申请数",
+                "value": "—",
+                "valid": false,
+                "score": 0
+              },
+              {
+                "field": "首次出现时间",
+                "value": "—",
+                "valid": false,
+                "score": 0
+              },
+              {
+                "field": "设备关联图谱",
+                "value": "—",
+                "valid": false,
+                "score": 0
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "behavior_fraud",
+        "type": "data_source",
+        "name": "behavior_fraud",
+        "groups": [
+          {
+            "name": "基础资料",
+            "items": [
+              {
+                "field": "申请耗时",
+                "value": "—",
+                "valid": true,
+                "score": 5
+              },
+              {
+                "field": "填写速度",
+                "value": "—",
+                "valid": true,
+                "score": 5
+              },
+              {
+                "field": "页面停留",
+                "value": "—",
+                "valid": true,
+                "score": 5
+              },
+              {
+                "field": "操作轨迹",
+                "value": "—",
+                "valid": true,
+                "score": 5
+              },
+              {
+                "field": "GPS定位",
+                "value": "—",
+                "valid": false,
+                "score": 0
+              },
+              {
+                "field": "与正常用户对比",
+                "value": "—",
+                "valid": false,
+                "score": 0
+              },
+              {
+                "field": "操作路径",
+                "value": "—",
+                "valid": false,
+                "score": 0
+              },
+              {
+                "field": "行为轨迹时间线",
+                "value": "—",
+                "valid": false,
+                "score": 0
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "gang_fraud",
+        "type": "data_source",
+        "name": "gang_fraud",
+        "groups": [
+          {
+            "name": "基础资料",
+            "items": [
+              {
+                "field": "团伙标签",
+                "value": "—",
+                "valid": true,
+                "score": 5
+              },
+              {
+                "field": "关联度评分",
+                "value": "—",
+                "valid": true,
+                "score": 5
+              },
+              {
+                "field": "关联维度",
+                "value": "—",
+                "valid": true,
+                "score": 5
+              },
+              {
+                "field": "关联节点数",
+                "value": "—",
+                "valid": false,
+                "score": 0
+              },
+              {
+                "field": "团伙规模",
+                "value": "—",
+                "valid": false,
+                "score": 0
+              },
+              {
+                "field": "历史案件",
+                "value": "—",
+                "valid": false,
+                "score": 0
+              },
+              {
+                "field": "关联图谱可视化",
+                "value": "—",
+                "valid": false,
+                "score": 0
+              },
+              {
+                "field": "关联列表",
+                "value": "—",
+                "valid": false,
+                "score": 0
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "blacklist_hit",
+        "type": "data_source",
+        "name": "blacklist_hit",
+        "groups": [
+          {
+            "name": "基础资料",
+            "items": [
+              {
+                "field": "黑名单类型",
+                "value": "—",
+                "valid": true,
+                "score": 5
+              },
+              {
+                "field": "命中字段",
+                "value": "—",
+                "valid": true,
+                "score": 5
+              },
+              {
+                "field": "来源",
+                "value": "—",
+                "valid": false,
+                "score": 0
+              },
+              {
+                "field": "原因",
+                "value": "—",
+                "valid": false,
+                "score": 0
+              },
+              {
+                "field": "命中时间",
+                "value": "—",
+                "valid": false,
+                "score": 0
+              },
+              {
+                "field": "等级",
+                "value": "—",
+                "valid": false,
+                "score": 0
+              },
+              {
+                "field": "命中记录表",
+                "value": "—",
+                "valid": false,
+                "score": 0
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "history_fraud",
+        "type": "data_source",
+        "name": "history_fraud",
+        "groups": [
+          {
+            "name": "基础资料",
+            "items": [
+              {
+                "field": "历史欺诈记录表",
+                "value": "—",
+                "valid": true,
+                "score": 5
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "opLogs": [
+      {
+        "time": "2026-08-02 15:00:22",
+        "actor": "系统",
+        "action": "生成报告",
+        "detail": "风控策略集 V2.6 自动生成"
+      },
+      {
+        "time": "2026-08-02 15:00:31",
+        "actor": "系统",
+        "action": "自动审核",
+        "detail": "结论 B"
+      }
+    ],
+    "specialRules": []
+  },
+  "C": {
+    "reportId": "FR-20260801-C",
+    "computedAt": "2026-08-02 15:00:22",
+    "applicant": {
+      "姓名": "王强",
+      "证件号": "3301**********9012",
+      "手机号": "137****6789",
+      "银行卡": "6222********1234",
+      "申请产品": "信用贷",
+      "申请额度": 80000
+    },
+    "dataBlocks": [
+      {
+        "id": "basic_info",
+        "type": "data_source",
+        "name": "basic_info",
+        "groups": [
+          {
+            "name": "基础资料",
+            "items": [
+              {
+                "field": "姓名",
+                "value": "—",
+                "valid": true,
+                "score": 5
+              },
+              {
+                "field": "身份证号",
+                "value": "—",
+                "valid": true,
+                "score": 5
+              },
+              {
+                "field": "手机号",
+                "value": "—",
+                "valid": true,
+                "score": 5
+              },
+              {
+                "field": "银行卡号",
+                "value": "—",
+                "valid": true,
+                "score": 5
+              },
+              {
+                "field": "年龄",
+                "value": "—",
+                "valid": true,
+                "score": 5
+              },
+              {
+                "field": "进件渠道",
+                "value": "—",
+                "valid": true,
+                "score": 5
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "identity_fraud",
+        "type": "rule_set",
+        "name": "identity_fraud",
+        "items": [
+          {
+            "name": "公安实名",
+            "conclusion": "拒绝",
+            "score": 5,
+            "callStatus": "success",
+            "costMs": 120,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "命中",
+                "status": "fail"
+              }
+            ]
+          },
+          {
+            "name": "银行卡四要素",
+            "conclusion": "拒绝",
+            "score": 5,
+            "callStatus": "success",
+            "costMs": 143,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "命中",
+                "status": "fail"
+              }
+            ]
+          },
+          {
+            "name": "运营商实名",
+            "conclusion": "拒绝",
+            "score": 5,
+            "callStatus": "success",
+            "costMs": 166,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "命中",
+                "status": "fail"
+              }
+            ]
+          },
+          {
+            "name": "设备真实性",
+            "conclusion": "拒绝",
+            "score": 5,
+            "callStatus": "success",
+            "costMs": 189,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "命中",
+                "status": "fail"
+              }
+            ]
+          },
+          {
+            "name": "资料一致性",
+            "conclusion": "拒绝",
+            "score": 5,
+            "callStatus": "success",
+            "costMs": 212,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "命中",
+                "status": "fail"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "info_forgery",
+        "type": "rule_set",
+        "name": "info_forgery",
+        "items": [
+          {
+            "name": "公安实名",
+            "conclusion": "拒绝",
+            "score": 5,
+            "callStatus": "success",
+            "costMs": 120,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "命中",
+                "status": "fail"
+              }
+            ]
+          },
+          {
+            "name": "银行卡四要素",
+            "conclusion": "拒绝",
+            "score": 5,
+            "callStatus": "success",
+            "costMs": 143,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "命中",
+                "status": "fail"
+              }
+            ]
+          },
+          {
+            "name": "运营商实名",
+            "conclusion": "拒绝",
+            "score": 5,
+            "callStatus": "success",
+            "costMs": 166,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "命中",
+                "status": "fail"
+              }
+            ]
+          },
+          {
+            "name": "设备真实性",
+            "conclusion": "拒绝",
+            "score": 5,
+            "callStatus": "success",
+            "costMs": 189,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "命中",
+                "status": "fail"
+              }
+            ]
+          },
+          {
+            "name": "资料一致性",
+            "conclusion": "拒绝",
+            "score": 5,
+            "callStatus": "success",
+            "costMs": 212,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "命中",
+                "status": "fail"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "device_fraud",
+        "type": "data_source",
+        "name": "device_fraud",
+        "groups": [
+          {
+            "name": "基础资料",
+            "items": [
+              {
+                "field": "设备指纹",
+                "value": "—",
+                "valid": true,
+                "score": 5
+              },
+              {
+                "field": "设备类型",
+                "value": "—",
+                "valid": true,
+                "score": 5
+              },
+              {
+                "field": "Root/越狱状态",
+                "value": "—",
+                "valid": true,
+                "score": 5
+              },
+              {
+                "field": "模拟器检测",
+                "value": "—",
+                "valid": true,
+                "score": 5
+              },
+              {
+                "field": "代理/VPN检测",
+                "value": "—",
+                "valid": true,
+                "score": 5
+              },
+              {
+                "field": "设备关联身份数",
+                "value": "—",
+                "valid": true,
+                "score": 5
+              },
+              {
+                "field": "设备关联申请数",
+                "value": "—",
+                "valid": true,
+                "score": 5
+              },
+              {
+                "field": "首次出现时间",
+                "value": "—",
+                "valid": true,
+                "score": 5
+              },
+              {
+                "field": "设备关联图谱",
+                "value": "—",
+                "valid": true,
+                "score": 5
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "behavior_fraud",
+        "type": "data_source",
+        "name": "behavior_fraud",
+        "groups": [
+          {
+            "name": "基础资料",
+            "items": [
+              {
+                "field": "申请耗时",
+                "value": "—",
+                "valid": true,
+                "score": 5
+              },
+              {
+                "field": "填写速度",
+                "value": "—",
+                "valid": true,
+                "score": 5
+              },
+              {
+                "field": "页面停留",
+                "value": "—",
+                "valid": true,
+                "score": 5
+              },
+              {
+                "field": "操作轨迹",
+                "value": "—",
+                "valid": true,
+                "score": 5
+              },
+              {
+                "field": "GPS定位",
+                "value": "—",
+                "valid": true,
+                "score": 5
+              },
+              {
+                "field": "与正常用户对比",
+                "value": "—",
+                "valid": true,
+                "score": 5
+              },
+              {
+                "field": "操作路径",
+                "value": "—",
+                "valid": true,
+                "score": 5
+              },
+              {
+                "field": "行为轨迹时间线",
+                "value": "—",
+                "valid": true,
+                "score": 5
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "gang_fraud",
+        "type": "data_source",
+        "name": "gang_fraud",
+        "groups": [
+          {
+            "name": "基础资料",
+            "items": [
+              {
+                "field": "团伙标签",
+                "value": "—",
+                "valid": true,
+                "score": 5
+              },
+              {
+                "field": "关联度评分",
+                "value": "—",
+                "valid": true,
+                "score": 5
+              },
+              {
+                "field": "关联维度",
+                "value": "—",
+                "valid": true,
+                "score": 5
+              },
+              {
+                "field": "关联节点数",
+                "value": "—",
+                "valid": true,
+                "score": 5
+              },
+              {
+                "field": "团伙规模",
+                "value": "—",
+                "valid": true,
+                "score": 5
+              },
+              {
+                "field": "历史案件",
+                "value": "—",
+                "valid": true,
+                "score": 5
+              },
+              {
+                "field": "关联图谱可视化",
+                "value": "—",
+                "valid": true,
+                "score": 5
+              },
+              {
+                "field": "关联列表",
+                "value": "—",
+                "valid": true,
+                "score": 5
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "blacklist_hit",
+        "type": "data_source",
+        "name": "blacklist_hit",
+        "groups": [
+          {
+            "name": "基础资料",
+            "items": [
+              {
+                "field": "黑名单类型",
+                "value": "—",
+                "valid": true,
+                "score": 5
+              },
+              {
+                "field": "命中字段",
+                "value": "—",
+                "valid": true,
+                "score": 5
+              },
+              {
+                "field": "来源",
+                "value": "—",
+                "valid": true,
+                "score": 5
+              },
+              {
+                "field": "原因",
+                "value": "—",
+                "valid": true,
+                "score": 5
+              },
+              {
+                "field": "命中时间",
+                "value": "—",
+                "valid": true,
+                "score": 5
+              },
+              {
+                "field": "等级",
+                "value": "—",
+                "valid": true,
+                "score": 5
+              },
+              {
+                "field": "命中记录表",
+                "value": "—",
+                "valid": true,
+                "score": 5
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "history_fraud",
+        "type": "data_source",
+        "name": "history_fraud",
+        "groups": [
+          {
+            "name": "基础资料",
+            "items": [
+              {
+                "field": "历史欺诈记录表",
+                "value": "—",
+                "valid": true,
+                "score": 5
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "opLogs": [
+      {
+        "time": "2026-08-02 15:00:22",
+        "actor": "系统",
+        "action": "生成报告",
+        "detail": "风控策略集 V2.6 自动生成"
+      },
+      {
+        "time": "2026-08-02 15:00:31",
+        "actor": "系统",
+        "action": "自动审核",
+        "detail": "结论 C"
+      }
+    ],
+    "specialRules": []
+  }
+}

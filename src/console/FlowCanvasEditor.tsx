@@ -29,7 +29,13 @@ function OpinionPresetsEditor({ node, patchNode, readOnly }: {
   patchNode: (id: string, p: Partial<FlowGraphNode>) => void
   readOnly?: boolean
 }) {
-  const presets = node.opinionPresets ?? defaultOpinionPresets()
+  const base = node.opinionPresets ?? defaultOpinionPresets()
+  // 用户节点可能只配了部分结果的预设 → 缺键兜底为空数组，避免 presets[r].length 崩溃
+  const presets: Record<ReviewResult, string[]> = {
+    '通过': base['通过'] ?? [],
+    '转人工': base['转人工'] ?? [],
+    '拒绝': base['拒绝'] ?? [],
+  }
   const [draft, setDraft] = useState<Record<ReviewResult, string>>({ '通过': '', '转人工': '', '拒绝': '' })
   const setGroup = (r: ReviewResult, next: string[]) => patchNode(node.id, { opinionPresets: { ...presets, [r]: next } })
   return (
@@ -87,6 +93,7 @@ export default function FlowCanvasEditor({ graph, onChange, readOnly, statusEnum
   const [linkFrom, setLinkFrom] = useState<string | null>(null)
   const dragRef = useRef<{ id: string; dx: number; dy: number } | null>(null)
   const [customCheck, setCustomCheck] = useState('')
+  const [showCheckPresets, setShowCheckPresets] = useState(false)
   // 视口变换：缩放 + 平移（用于 放大/缩小/全画幅/居中/全屏）
   const [scale, setScale] = useState(1)
   const [offset, setOffset] = useState({ x: 0, y: 0 })
@@ -242,6 +249,7 @@ export default function FlowCanvasEditor({ graph, onChange, readOnly, statusEnum
                       onClick={(ev) => { ev.stopPropagation(); setSelEdge(e.id); setSelNode(null) }} />
                     <path d={p.d} fill="none" stroke={sel ? '#2563EB' : '#94A3B8'} strokeWidth={sel ? 2 : 1.5} markerEnd={sel ? 'url(#fc-arrow-sel)' : 'url(#fc-arrow)'} />
                     {e.label && <text x={p.mx} y={p.my} textAnchor="middle" fontSize="11" fill={sel ? '#2563EB' : '#64748B'} style={{ paintOrder: 'stroke', stroke: '#FBFCFE', strokeWidth: 3 }}>{e.label}</text>}
+                    {e.result && <text x={p.mx} y={(p.my ?? 0) + 13} textAnchor="middle" fontSize="10" fill={sel ? '#DB2777' : '#BE185D'} style={{ paintOrder: 'stroke', stroke: '#FBFCFE', strokeWidth: 3 }}>if {e.result}</text>}
                   </g>
                 )
               })}
@@ -313,24 +321,33 @@ export default function FlowCanvasEditor({ graph, onChange, readOnly, statusEnum
                 </label>
                 <div style={{ fontSize: 12, color: '#6B7280' }}>弹出内容 · 审核事项
                   <div style={{ marginTop: 4, border: '1px solid #E5E7EB', borderRadius: 6, padding: '6px 8px', display: 'flex', flexDirection: 'column', gap: 4, maxHeight: 132, overflowY: 'auto' }}>
-                    {REVIEW_CHECK_ITEMS.map((it) => (
-                      <label key={it} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#374151', cursor: readOnly ? 'default' : 'pointer' }}>
-                        <input type="checkbox" disabled={readOnly} checked={(selected.checkItems ?? []).includes(it)}
-                          onChange={(e) => patchNode(selected.id, { checkItems: e.target.checked ? [...(selected.checkItems ?? []), it] : (selected.checkItems ?? []).filter((x) => x !== it) })} />
-                        {it}
-                      </label>
-                    ))}
-                    {(selected.checkItems ?? []).filter((x) => !(REVIEW_CHECK_ITEMS as readonly string[]).includes(x)).map((it) => (
-                      <div key={it} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6, fontSize: 12, color: '#374151', background: '#F1F5F9', borderRadius: 4, padding: '2px 6px' }}>
-                        <span>{it}</span>
-                        {!readOnly && <button onClick={() => patchNode(selected.id, { checkItems: (selected.checkItems ?? []).filter((x) => x !== it) })} style={{ border: 'none', background: 'transparent', color: '#DC2626', cursor: 'pointer', fontSize: 13, lineHeight: 1, padding: 0 }}>×</button>}
+                    {(selected.checkItems ?? []).length === 0 ? (
+                      <span style={{ fontSize: 11, color: '#9CA3AF' }}>（默认无审核事项，添加后生成标签）</span>
+                    ) : (
+                      (selected.checkItems ?? []).map((it) => (
+                        <div key={it} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6, fontSize: 12, color: '#374151', background: '#F1F5F9', borderRadius: 4, padding: '2px 6px' }}>
+                          <span>{it}</span>
+                          {!readOnly && <button onClick={() => patchNode(selected.id, { checkItems: (selected.checkItems ?? []).filter((x) => x !== it) })} style={{ border: 'none', background: 'transparent', color: '#DC2626', cursor: 'pointer', fontSize: 13, lineHeight: 1, padding: 0 }}>×</button>}
+                        </div>
+                      ))
+                    )}
+                    {showCheckPresets && (
+                      <div style={{ borderTop: '1px dashed #E5E7EB', marginTop: 2, paddingTop: 4, display: 'flex', flexDirection: 'column', gap: 2 }}>
+                        {REVIEW_CHECK_ITEMS.map((it) => (
+                          <label key={it} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#374151', cursor: readOnly ? 'default' : 'pointer' }}>
+                            <input type="checkbox" disabled={readOnly} checked={(selected.checkItems ?? []).includes(it)}
+                              onChange={(e) => patchNode(selected.id, { checkItems: e.target.checked ? [...(selected.checkItems ?? []), it] : (selected.checkItems ?? []).filter((x) => x !== it) })} />
+                            {it}
+                          </label>
+                        ))}
                       </div>
-                    ))}
+                    )}
                   </div>
                   {!readOnly && (
                     <div style={{ display: 'flex', gap: 6, marginTop: 4 }}>
                       <input value={customCheck} onChange={(e) => setCustomCheck(e.target.value)} placeholder="自定义审核事项" style={{ ...inp, flex: 1 }} />
                       <button onClick={() => { const v = customCheck.trim(); if (v && !(selected.checkItems ?? []).includes(v)) patchNode(selected.id, { checkItems: [...(selected.checkItems ?? []), v] }); setCustomCheck('') }} style={{ border: '1px solid #E5E7EB', borderRadius: 6, padding: '4px 10px', fontSize: 12, background: '#fff', cursor: 'pointer' }}>添加</button>
+                      <button onClick={() => setShowCheckPresets((v) => !v)} style={{ border: '1px solid #E5E7EB', borderRadius: 6, padding: '4px 10px', fontSize: 12, background: '#fff', cursor: 'pointer', whiteSpace: 'nowrap' }}>{showCheckPresets ? '收起预设' : '从预设选择'}</button>
                     </div>
                   )}
                 </div>
@@ -382,6 +399,15 @@ export default function FlowCanvasEditor({ graph, onChange, readOnly, statusEnum
             </div>
             <label style={{ fontSize: 12, color: '#6B7280' }}>连线标签
               <input disabled={readOnly} value={selectedEdge.label ?? ''} onChange={(e) => patchEdge(selectedEdge.id, { label: e.target.value })} placeholder="如：通过 / 拒绝 / 退回" style={{ ...inp, marginTop: 4 }} />
+            </label>
+            <label style={{ fontSize: 12, color: '#6B7280' }}>流转条件（if）—— 起点审批结果等于此值时走该线；无条件则作为兜底
+              <select disabled={readOnly} value={selectedEdge.result ?? ''} onChange={(e) => patchEdge(selectedEdge.id, { result: e.target.value || undefined })} style={{ ...inp, marginTop: 4 }}>
+                <option value="">无条件（兜底）</option>
+                {REVIEW_RESULTS.map((r) => (
+                  <option key={r} value={r}>审批结果 = {r}</option>
+                ))}
+              </select>
+              <span style={{ display: 'block', fontSize: 11, color: '#9CA3AF', marginTop: 3 }}>例：复审节点出两条线 —— 「通过」条件线 → 下一审核节点；「拒绝」条件线 → 结束（拒绝）。运行时按审批结果选线。</span>
             </label>
             {!readOnly && (
               <button onClick={() => removeEdge(selectedEdge.id)} style={{ padding: '5px 0', fontSize: 12, borderRadius: 6, cursor: 'pointer', background: '#FEF2F2', border: '1px solid #FCA5A5', color: '#DC2626' }}>删除连线</button>

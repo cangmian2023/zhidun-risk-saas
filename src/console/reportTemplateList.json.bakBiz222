@@ -114,53 +114,5 @@
     "description": "",
     "sectionCount": 7,
     "visibleCount": 7
-  },
-  {
-    "id": "tpl-credit-222",
-    "name": "信用风控综合模型（方案222备用）",
-    "reportType": "credit",
-    "status": "草稿",
-    "isDefault": false,
-    "version": "V2.6风控策略集",
-    "lastEditor": "admin",
-    "lastEditTime": "2026-08-03",
-    "scope": [
-      "全产品"
-    ],
-    "description": "信用风控「方案222备用」：按信息核验222 模板驱动架构新建，供新列表/详情页使用。",
-    "sectionCount": 8,
-    "visibleCount": 8
-  },
-  {
-    "id": "tpl-fraud-222",
-    "name": "欺诈识别综合模型（方案222备用）",
-    "reportType": "fraud",
-    "status": "草稿",
-    "isDefault": false,
-    "version": "V2.6风控策略集",
-    "lastEditor": "admin",
-    "lastEditTime": "2026-08-03",
-    "scope": [
-      "全产品"
-    ],
-    "description": "欺诈识别「方案222备用」：按信息核验222 模板驱动架构新建，供新列表/详情页使用。",
-    "sectionCount": 9,
-    "visibleCount": 9
-  },
-  {
-    "id": "tpl-decision-222",
-    "name": "进件审核综合模型（方案222备用）",
-    "reportType": "decision",
-    "status": "草稿",
-    "isDefault": false,
-    "version": "V2.6风控策略集",
-    "lastEditor": "admin",
-    "lastEditTime": "2026-08-03",
-    "scope": [
-      "全产品"
-    ],
-    "description": "进件审核「方案222备用」：按信息核验222 模板驱动架构新建，供新列表/详情页使用。",
-    "sectionCount": 5,
-    "visibleCount": 5
   }
 ]

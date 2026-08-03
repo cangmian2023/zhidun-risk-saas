@@ -1,0 +1,647 @@
+{
+  "A": {
+    "reportId": "DC-20260801-A",
+    "computedAt": "2026-08-02 15:00:22",
+    "applicant": {
+      "姓名": "张伟",
+      "证件号": "3301**********1234",
+      "手机号": "138****6688",
+      "银行卡": "6222********1234",
+      "申请产品": "信用贷",
+      "申请额度": 80000
+    },
+    "dataBlocks": [
+      {
+        "id": "applicant_info",
+        "type": "data_source",
+        "name": "applicant_info",
+        "groups": [
+          {
+            "name": "基础资料",
+            "items": [
+              {
+                "field": "姓名",
+                "value": "—",
+                "valid": true,
+                "score": 5
+              },
+              {
+                "field": "身份证号",
+                "value": "—",
+                "valid": true,
+                "score": 5
+              },
+              {
+                "field": "手机号",
+                "value": "—",
+                "valid": true,
+                "score": 5
+              },
+              {
+                "field": "银行卡号",
+                "value": "—",
+                "valid": true,
+                "score": 5
+              },
+              {
+                "field": "年龄",
+                "value": "—",
+                "valid": true,
+                "score": 5
+              },
+              {
+                "field": "学历",
+                "value": "—",
+                "valid": true,
+                "score": 5
+              },
+              {
+                "field": "工作单位",
+                "value": "—",
+                "valid": true,
+                "score": 5
+              },
+              {
+                "field": "月收入",
+                "value": "—",
+                "valid": true,
+                "score": 5
+              },
+              {
+                "field": "居住地址",
+                "value": "—",
+                "valid": true,
+                "score": 5
+              },
+              {
+                "field": "婚姻",
+                "value": "—",
+                "valid": true,
+                "score": 5
+              },
+              {
+                "field": "设备指纹",
+                "value": "—",
+                "valid": true,
+                "score": 5
+              },
+              {
+                "field": "IP地址",
+                "value": "—",
+                "valid": true,
+                "score": 5
+              },
+              {
+                "field": "GPS定位",
+                "value": "—",
+                "valid": false,
+                "score": 0
+              },
+              {
+                "field": "进件渠道",
+                "value": "—",
+                "valid": false,
+                "score": 0
+              },
+              {
+                "field": "APP版本",
+                "value": "—",
+                "valid": false,
+                "score": 0
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "verify_summary",
+        "type": "api",
+        "name": "verify_summary",
+        "items": [
+          {
+            "name": "信息核验结论摘要",
+            "type": "text",
+            "value": "通过",
+            "valid": true,
+            "score": 5
+          },
+          {
+            "name": "关键风险点",
+            "type": "text",
+            "value": "—",
+            "valid": true,
+            "score": 5
+          },
+          {
+            "name": "展开查看完整信息核验报告入口",
+            "type": "text",
+            "value": "—",
+            "valid": true,
+            "score": 5
+          }
+        ]
+      },
+      {
+        "id": "credit_summary",
+        "type": "api",
+        "name": "credit_summary",
+        "items": [
+          {
+            "name": "信用风控结论摘要",
+            "type": "text",
+            "value": "通过",
+            "valid": true,
+            "score": 5
+          },
+          {
+            "name": "关键风险点",
+            "type": "text",
+            "value": "—",
+            "valid": true,
+            "score": 5
+          },
+          {
+            "name": "展开查看完整信用风控报告入口",
+            "type": "text",
+            "value": "—",
+            "valid": true,
+            "score": 5
+          }
+        ]
+      },
+      {
+        "id": "fraud_summary",
+        "type": "api",
+        "name": "fraud_summary",
+        "items": [
+          {
+            "name": "欺诈识别结论摘要",
+            "type": "text",
+            "value": "通过",
+            "valid": true,
+            "score": 5
+          },
+          {
+            "name": "关键风险点",
+            "type": "text",
+            "value": "—",
+            "valid": true,
+            "score": 5
+          },
+          {
+            "name": "展开查看完整欺诈识别报告入口",
+            "type": "text",
+            "value": "—",
+            "valid": true,
+            "score": 5
+          }
+        ]
+      }
+    ],
+    "opLogs": [
+      {
+        "time": "2026-08-02 15:00:22",
+        "actor": "系统",
+        "action": "生成报告",
+        "detail": "风控策略集 V2.6 自动生成"
+      },
+      {
+        "time": "2026-08-02 15:00:31",
+        "actor": "系统",
+        "action": "自动审核",
+        "detail": "结论 A"
+      }
+    ],
+    "specialRules": []
+  },
+  "B": {
+    "reportId": "DC-20260801-B",
+    "computedAt": "2026-08-02 15:00:22",
+    "applicant": {
+      "姓名": "李娜",
+      "证件号": "3301**********5678",
+      "手机号": "139****2345",
+      "银行卡": "6222********1234",
+      "申请产品": "信用贷",
+      "申请额度": 80000
+    },
+    "dataBlocks": [
+      {
+        "id": "applicant_info",
+        "type": "data_source",
+        "name": "applicant_info",
+        "groups": [
+          {
+            "name": "基础资料",
+            "items": [
+              {
+                "field": "姓名",
+                "value": "—",
+                "valid": true,
+                "score": 5
+              },
+              {
+                "field": "身份证号",
+                "value": "—",
+                "valid": true,
+                "score": 5
+              },
+              {
+                "field": "手机号",
+                "value": "—",
+                "valid": true,
+                "score": 5
+              },
+              {
+                "field": "银行卡号",
+                "value": "—",
+                "valid": true,
+                "score": 5
+              },
+              {
+                "field": "年龄",
+                "value": "—",
+                "valid": true,
+                "score": 5
+              },
+              {
+                "field": "学历",
+                "value": "—",
+                "valid": true,
+                "score": 5
+              },
+              {
+                "field": "工作单位",
+                "value": "—",
+                "valid": false,
+                "score": 0
+              },
+              {
+                "field": "月收入",
+                "value": "—",
+                "valid": false,
+                "score": 0
+              },
+              {
+                "field": "居住地址",
+                "value": "—",
+                "valid": false,
+                "score": 0
+              },
+              {
+                "field": "婚姻",
+                "value": "—",
+                "valid": false,
+                "score": 0
+              },
+              {
+                "field": "设备指纹",
+                "value": "—",
+                "valid": false,
+                "score": 0
+              },
+              {
+                "field": "IP地址",
+                "value": "—",
+                "valid": false,
+                "score": 0
+              },
+              {
+                "field": "GPS定位",
+                "value": "—",
+                "valid": false,
+                "score": 0
+              },
+              {
+                "field": "进件渠道",
+                "value": "—",
+                "valid": false,
+                "score": 0
+              },
+              {
+                "field": "APP版本",
+                "value": "—",
+                "valid": false,
+                "score": 0
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "verify_summary",
+        "type": "api",
+        "name": "verify_summary",
+        "items": [
+          {
+            "name": "信息核验结论摘要",
+            "type": "text",
+            "value": "通过",
+            "valid": true,
+            "score": 5
+          },
+          {
+            "name": "关键风险点",
+            "type": "text",
+            "value": "—",
+            "valid": true,
+            "score": 5
+          },
+          {
+            "name": "展开查看完整信息核验报告入口",
+            "type": "text",
+            "value": "—",
+            "valid": true,
+            "score": 5
+          }
+        ]
+      },
+      {
+        "id": "credit_summary",
+        "type": "api",
+        "name": "credit_summary",
+        "items": [
+          {
+            "name": "信用风控结论摘要",
+            "type": "text",
+            "value": "通过",
+            "valid": true,
+            "score": 5
+          },
+          {
+            "name": "关键风险点",
+            "type": "text",
+            "value": "—",
+            "valid": true,
+            "score": 5
+          },
+          {
+            "name": "展开查看完整信用风控报告入口",
+            "type": "text",
+            "value": "—",
+            "valid": false,
+            "score": 0
+          }
+        ]
+      },
+      {
+        "id": "fraud_summary",
+        "type": "api",
+        "name": "fraud_summary",
+        "items": [
+          {
+            "name": "欺诈识别结论摘要",
+            "type": "text",
+            "value": "通过",
+            "valid": true,
+            "score": 5
+          },
+          {
+            "name": "关键风险点",
+            "type": "text",
+            "value": "—",
+            "valid": false,
+            "score": 0
+          },
+          {
+            "name": "展开查看完整欺诈识别报告入口",
+            "type": "text",
+            "value": "—",
+            "valid": false,
+            "score": 0
+          }
+        ]
+      }
+    ],
+    "opLogs": [
+      {
+        "time": "2026-08-02 15:00:22",
+        "actor": "系统",
+        "action": "生成报告",
+        "detail": "风控策略集 V2.6 自动生成"
+      },
+      {
+        "time": "2026-08-02 15:00:31",
+        "actor": "系统",
+        "action": "自动审核",
+        "detail": "结论 B"
+      }
+    ],
+    "specialRules": []
+  },
+  "C": {
+    "reportId": "DC-20260801-C",
+    "computedAt": "2026-08-02 15:00:22",
+    "applicant": {
+      "姓名": "王强",
+      "证件号": "3301**********9012",
+      "手机号": "137****6789",
+      "银行卡": "6222********1234",
+      "申请产品": "信用贷",
+      "申请额度": 80000
+    },
+    "dataBlocks": [
+      {
+        "id": "applicant_info",
+        "type": "data_source",
+        "name": "applicant_info",
+        "groups": [
+          {
+            "name": "基础资料",
+            "items": [
+              {
+                "field": "姓名",
+                "value": "—",
+                "valid": true,
+                "score": 5
+              },
+              {
+                "field": "身份证号",
+                "value": "—",
+                "valid": true,
+                "score": 5
+              },
+              {
+                "field": "手机号",
+                "value": "—",
+                "valid": true,
+                "score": 5
+              },
+              {
+                "field": "银行卡号",
+                "value": "—",
+                "valid": false,
+                "score": 0
+              },
+              {
+                "field": "年龄",
+                "value": "—",
+                "valid": false,
+                "score": 0
+              },
+              {
+                "field": "学历",
+                "value": "—",
+                "valid": false,
+                "score": 0
+              },
+              {
+                "field": "工作单位",
+                "value": "—",
+                "valid": false,
+                "score": 0
+              },
+              {
+                "field": "月收入",
+                "value": "—",
+                "valid": false,
+                "score": 0
+              },
+              {
+                "field": "居住地址",
+                "value": "—",
+                "valid": false,
+                "score": 0
+              },
+              {
+                "field": "婚姻",
+                "value": "—",
+                "valid": false,
+                "score": 0
+              },
+              {
+                "field": "设备指纹",
+                "value": "—",
+                "valid": false,
+                "score": 0
+              },
+              {
+                "field": "IP地址",
+                "value": "—",
+                "valid": false,
+                "score": 0
+              },
+              {
+                "field": "GPS定位",
+                "value": "—",
+                "valid": false,
+                "score": 0
+              },
+              {
+                "field": "进件渠道",
+                "value": "—",
+                "valid": false,
+                "score": 0
+              },
+              {
+                "field": "APP版本",
+                "value": "—",
+                "valid": false,
+                "score": 0
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "verify_summary",
+        "type": "api",
+        "name": "verify_summary",
+        "items": [
+          {
+            "name": "信息核验结论摘要",
+            "type": "text",
+            "value": "通过",
+            "valid": true,
+            "score": 5
+          },
+          {
+            "name": "关键风险点",
+            "type": "text",
+            "value": "—",
+            "valid": false,
+            "score": 0
+          },
+          {
+            "name": "展开查看完整信息核验报告入口",
+            "type": "text",
+            "value": "—",
+            "valid": false,
+            "score": 0
+          }
+        ]
+      },
+      {
+        "id": "credit_summary",
+        "type": "api",
+        "name": "credit_summary",
+        "items": [
+          {
+            "name": "信用风控结论摘要",
+            "type": "text",
+            "value": "未通过",
+            "valid": false,
+            "score": 0
+          },
+          {
+            "name": "关键风险点",
+            "type": "text",
+            "value": "—",
+            "valid": false,
+            "score": 0
+          },
+          {
+            "name": "展开查看完整信用风控报告入口",
+            "type": "text",
+            "value": "—",
+            "valid": false,
+            "score": 0
+          }
+        ]
+      },
+      {
+        "id": "fraud_summary",
+        "type": "api",
+        "name": "fraud_summary",
+        "items": [
+          {
+            "name": "欺诈识别结论摘要",
+            "type": "text",
+            "value": "未通过",
+            "valid": false,
+            "score": 0
+          },
+          {
+            "name": "关键风险点",
+            "type": "text",
+            "value": "—",
+            "valid": false,
+            "score": 0
+          },
+          {
+            "name": "展开查看完整欺诈识别报告入口",
+            "type": "text",
+            "value": "—",
+            "valid": false,
+            "score": 0
+          }
+        ]
+      }
+    ],
+    "opLogs": [
+      {
+        "time": "2026-08-02 15:00:22",
+        "actor": "系统",
+        "action": "生成报告",
+        "detail": "风控策略集 V2.6 自动生成"
+      },
+      {
+        "time": "2026-08-02 15:00:31",
+        "actor": "系统",
+        "action": "自动审核",
+        "detail": "结论 C"
+      }
+    ],
+    "specialRules": []
+  }
+}
