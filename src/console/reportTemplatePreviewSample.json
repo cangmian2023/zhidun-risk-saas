@@ -1,0 +1,229 @@
+{
+  "info_verify": {
+    "scoreLabel": "异常值",
+    "sections": {
+      "score_model": {
+        "sv_big": "82",
+        "sv_denom": "100",
+        "sv_level": "高危",
+        "sv_threshold": "≥80 高危",
+        "sv_breakdown": "设备群控 +35 / 黑名单命中 +30 / 资料异常 +17",
+        "sv_total": "82",
+        "sv_rule": "命中规则 ≥3 条且异常值 ≥80 判定高危",
+        "sv_audit": "模型 v2.1 · 2026-07-27 计算",
+        "sv_weight": "查看"
+      },
+      "conclusion_process": {
+        "cp_system": "拒绝",
+        "cp_manual": "待确认",
+        "cp_operator": "初审：审核员 1",
+        "cp_advice": "拒绝授信",
+        "cp_reason": "异常值高危且命中黑名单",
+        "cp_pos": "无",
+        "cp_risk": "设备群控、黑名单命中",
+        "cp_amount": "0",
+        "cp_ops": "报告确认 / 强制复审",
+        "cp_timeline": "进件→多源核验→异常值计算",
+        "cp_step_icon": "⚠",
+        "cp_step_status": "异常",
+        "cp_step_cost": "1.2s"
+      },
+      "basic_info": {
+        "bi_name": "张*",
+        "bi_id": "3201**********33",
+        "bi_phone": "138****6677",
+        "bi_bank": "6222********1234",
+        "bi_age": "34",
+        "bi_edu": "本科",
+        "bi_company": "**科技",
+        "bi_income": "2.5万",
+        "bi_marriage": "已婚"
+      },
+      "id_images": {
+        "ii_front": "已采集",
+        "ii_back": "已采集",
+        "ii_live": "已采集",
+        "ii_bank": "已采集",
+        "ii_ocr": "姓名/证件号一致"
+      },
+      "single_verify": {
+        "sv_police": "通过",
+        "sv_bank4": "通过",
+        "sv_operator": "通过",
+        "sv_device": "异常",
+        "sv_link": "命中 2 项",
+        "sv_head": "公安/银行卡/运营商/设备/联防",
+        "sv_concl": "设备异常",
+        "sv_cause": "设备关联多个申请",
+        "sv_subfields": "指纹/机型/关联数",
+        "sv_serial": "V2026...",
+        "sv_time": "2026-07-27 14:02",
+        "sv_channel": "API",
+        "sv_cost": "320ms"
+      },
+      "cross_fusion": {
+        "cf_head": "综合风险：高危",
+        "cf_atom": "身份✓ 设备✗ 黑名单✗",
+        "cf_doubt": "同设备 3 笔申请",
+        "cf_abnormal": "设备群控 +35",
+        "cf_tags": "设备群控、黑名单命中",
+        "cf_rule": "交叉命中规则 R7",
+        "cf_audit": "融合 v1.4",
+        "cf_weight": "查看"
+      },
+      "op_logs": {
+        "ol_single": "设备核验异常",
+        "ol_report": "生成报告",
+        "ol_timeline": "14:02 进件",
+        "ol_attach": "—",
+        "ol_review": "待复核"
+      }
+    }
+  },
+  "credit": {
+    "scoreLabel": "信用评分",
+    "sections": {
+      "applicant_info": {
+        "ai_name": "李*",
+        "ai_id": "4401**********21",
+        "ai_phone": "139****2233",
+        "ai_age": "29",
+        "ai_edu": "硕士",
+        "ai_company": "**软件",
+        "ai_income": "3 万",
+        "ai_marriage": "未婚"
+      },
+      "credit_suggestion": {
+        "cs_text": "建议正常授信",
+        "cs_pos": "收入稳定、历史良好",
+        "cs_risk": "负债略高",
+        "cs_ops": "审核通过 / 拒绝授信 / 提交人工复核 / 退回补充材料"
+      },
+      "history_records": {
+        "hr_table": "2024 授信 3 万 正常结清"
+      },
+      "credit_logs": {
+        "cl_timeline": "14:10 初审通过"
+      }
+    }
+  },
+  "fraud": {
+    "scoreLabel": "欺诈分",
+    "sections": {
+      "fraud_score_model": {
+        "fsm_big": "88",
+        "fsm_level": "极高",
+        "fsm_threshold": "≥80 极高",
+        "fsm_hit": "命中 8/15 条，占比 53%",
+        "fsm_tags": "设备群控、团伙欺诈、黑名单命中",
+        "fsm_version": "反欺诈规则 v3.2"
+      },
+      "disposal_bar": {
+        "db_level": "极高",
+        "db_auto": "拒绝",
+        "db_status": "待确认",
+        "db_operator": "初审：审核员 1",
+        "db_ops": "报告确认 / 加入黑名单",
+        "db_advice": "强烈建议拒绝"
+      },
+      "basic_info": {
+        "fbi_name": "王*",
+        "fbi_id": "5101**********44",
+        "fbi_phone": "137****8899",
+        "fbi_age": "41",
+        "fbi_channel": "渠道C"
+      },
+      "identity_fraud": {
+        "if_table": "规则 R1 命中：证件号多人共用",
+        "if_detail": "查看",
+        "if_exempt": "标记豁免"
+      },
+      "info_forgery": {
+        "inf_table": "规则 R4 命中：收入证明造假",
+        "inf_detail": "查看",
+        "inf_exempt": "标记豁免"
+      },
+      "device_fraud": {
+        "df_fp": "fp_9a2c",
+        "df_type": "安卓",
+        "df_root": "已 Root",
+        "df_emulator": "模拟器",
+        "df_proxy": "代理",
+        "df_rel_id": "关联 12 个身份",
+        "df_rel_app": "关联 30 笔申请",
+        "df_first": "2026-07-20",
+        "df_graph": "关联图谱"
+      },
+      "behavior_fraud": {
+        "bf_cost": "38s",
+        "bf_speed": "极快",
+        "bf_stay": "短",
+        "bf_track": "异常",
+        "bf_gps": "多地跳动",
+        "bf_path": "直奔提交",
+        "bf_timeline": "行为轨迹"
+      },
+      "gang_fraud": {
+        "gf_tag": "团伙 T-07",
+        "gf_score": "92",
+        "gf_dim": "设备/手机号",
+        "gf_nodes": "18",
+        "gf_scale": "中",
+        "gf_case": "历史 2 起",
+        "gf_graph": "关联图谱",
+        "gf_list": "关联列表"
+      },
+      "blacklist_hit": {
+        "bh_type": "内部黑名单",
+        "bh_field": "手机号",
+        "bh_source": "联防联控",
+        "bh_reason": "命中欺诈名单",
+        "bh_time": "2026-07-27",
+        "bh_level": "高",
+        "bh_table": "命中记录"
+      },
+      "history_fraud": {
+        "hf_table": "2025 欺诈拒贷 1 次"
+      },
+      "fraud_logs": {
+        "fl_table": "单项+报告级合并"
+      }
+    }
+  },
+  "decision": {
+    "scoreLabel": "综合分",
+    "sections": {
+      "decision_overview": {
+        "do_three": "信用值 82 / 信用评分 70 / 欺诈分 88",
+        "do_level": "高危",
+        "do_advice": "拒绝授信",
+        "do_basis": "欺诈分极高主导"
+      },
+      "verify_summary": {
+        "vs_concl": "异常值高危",
+        "vs_risk": "设备群控",
+        "vs_jump": "查看完整报告"
+      },
+      "credit_summary": {
+        "cs2_concl": "信用良好",
+        "cs2_risk": "负债略高",
+        "cs2_jump": "查看完整报告"
+      },
+      "fraud_summary": {
+        "fs_concl": "欺诈极高",
+        "fs_risk": "团伙欺诈",
+        "fs_jump": "查看完整报告"
+      },
+      "decision_suggestion": {
+        "ds_text": "强烈建议拒绝",
+        "ds_pos": "信用良好",
+        "ds_risk": "欺诈极高",
+        "ds_ops": "决策按钮",
+        "ds_amount": "0"
+      },
+      "decision_logs": {
+        "dl_timeline": "综合时间线"
+      }
+    }
+  }
+}

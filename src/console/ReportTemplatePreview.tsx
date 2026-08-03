@@ -3,15 +3,38 @@
  * 从列表/详情页点击「预览」跳转至此，用样例数据渲染报告真实长相（只读）。
  * 顶栏可一键跳回对应报告模板详情页（cm:report-template?id=...）。
  * ========================================================================== */
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { DetailHeader, Panel, Badge, Button, SingleSelect } from '../components/ui'
 import {
-  ReportTemplate, ScoreGrade, DisplayComponent, REPORT_META, PREVIEW_STATES, PREVIEW_SAMPLE, gradeForScore, computeSectionScore,
+  ReportTemplate, ScoreGrade, DisplayComponent, REPORT_META, PREVIEW_STATES, gradeForScore, computeSectionScore,
   SECTION_SOURCE_LABEL, ROLES, ROLE_HINT, seedReportTemplates, type Role,
   RENDER_CONTAINER_LABEL, defaultContainer, type RenderContainer,
 } from './reportTemplateData'
 import { useTemplate } from './templateStore'
+import sampleStandard from './samples/sample-tpl-info-standard.json'
+import sampleCredit from './samples/sample-tpl-credit-loan.json'
+import sampleFraud from './samples/sample-tpl-fraud-standard.json'
+import sampleDecision from './samples/sample-tpl-decision-standard.json'
+import sampleAuthority from './samples/sample-tpl-info-authority.json'
+import sampleBackup222 from './samples/sample-tpl-info-backup222.json'
+import sampleNull from './samples/sample-tpl-null.json'
+
+/* 7 个模板各一份样例数据（本地 json 模拟数据：samples/sample-{模板id}.json）；按模板 id 取，缺省回落按类型 */
+const SAMPLE_BY_ID: Record<string, { scoreLabel: string; sections: Record<string, Record<string, string>> }> = {
+  'tpl-info-standard': sampleStandard as any,
+  'tpl-credit-loan': sampleCredit as any,
+  'tpl-fraud-standard': sampleFraud as any,
+  'tpl-decision-standard': sampleDecision as any,
+  'tpl-info-authority': sampleAuthority as any,
+  'tpl-info-backup222': sampleBackup222 as any,
+  'tpl-null': sampleNull as any,
+}
+
+/* 来源调试标签（与报告详情一致）：蓝=模板配置 / 橙=本地JSON模拟数据 / 灰=实时算法 */
+const tagS: React.CSSProperties = { display: 'inline-block', fontSize: 9, fontFamily: 'monospace', padding: '0 3px', borderRadius: 2, marginLeft: 3, verticalAlign: 'middle', lineHeight: '14px', fontWeight: 400 }
+const Dat = ({ f, v }: { f: string; v?: any }) => <span style={{ ...tagS, background: '#FFF7ED', color: '#C2410C', border: '1px solid #FDBA74' }}>{f}={v ?? 'null'}</span>
+const Cal = ({ f, v }: { f: string; v?: any }) => <span style={{ ...tagS, background: '#F3F4F6', color: '#6B7280', border: '1px solid #D1D5DB' }}>{f}={v ?? 'null'}</span>
 
 const SEL = '#3B82F6', SEL_BG = '#EFF6FF'
 
@@ -57,14 +80,14 @@ function ScoreHero({ score, grade, component }: { score: number; grade: ScoreGra
 }
 
 /* ---------- 实时预览（真预览：渲染报告真实长相） ---------- */
-function Preview({ tpl, stateKey }: { tpl: ReportTemplate; stateKey: string }) {
+function Preview({ tpl, stateKey, sample }: { tpl: ReportTemplate; stateKey: string; sample: { scoreLabel: string; sections: Record<string, Record<string, string>> } }) {
   const meta = REPORT_META[tpl.reportType]
   const states = PREVIEW_STATES[tpl.reportType]
   const st = states.find((s) => s.key === stateKey) ?? states[0]
   const grade = gradeForScore(tpl, st.score)
   const theme = tpl.theme
   const fs = theme.fontSize === '小' ? 13 : theme.fontSize === '大' ? 16 : 14
-  const sample = PREVIEW_SAMPLE[tpl.reportType]
+  /* sample 由父级传入：运行时文件优先，静态 map 兜底 */
   /* 解析字段的「呈现容器」与「类型」：数据源→表字段；接口→输出字段；规则集→标签 */
   const fieldMeta = (s: ReportTemplate['sections'][number], f: { sourceRef?: string }) => {
     if (s.sourceType === 'data_source') {
@@ -153,7 +176,7 @@ function Preview({ tpl, stateKey }: { tpl: ReportTemplate; stateKey: string }) {
                   </div>
                   {parts.map((p, i) => (
                     <div key={i} style={{ display: 'grid', gridTemplateColumns: '1.4fr 0.8fr 0.8fr', fontSize: fs - 2, padding: '6px 10px', borderTop: '1px solid #EEF2F7' }}>
-                      <span>{p.name}</span>
+                      <span>{p.name}<Cal f="computeSectionScore" v={p.total} /></span>
                       <span style={{ color: p.mode === 'deduct' ? '#DC2626' : '#047857', fontWeight: 600 }}>{p.mode === 'deduct' ? '−' : '+'}{Math.abs(p.total)}</span>
                       <span>{p.addCount} / {p.deductCount}</span>
                     </div>
@@ -175,6 +198,7 @@ function Preview({ tpl, stateKey }: { tpl: ReportTemplate; stateKey: string }) {
                 {s.name}
                 <span style={{ fontWeight: 400, fontSize: fs - 2, color: '#9CA3AF' }}>（{s.desc}）</span>
                 <span style={{ fontSize: fs - 3, padding: '1px 8px', borderRadius: 999, background: s.sourceType === 'data_source' ? '#ECFDF5' : s.sourceType === 'api' ? '#EFF6FF' : '#F5F3FF', border: `1px solid ${s.sourceType === 'data_source' ? '#A7F3D0' : s.sourceType === 'api' ? '#BFDBFE' : '#DDD6FE'}`, color: s.sourceType === 'data_source' ? '#047857' : s.sourceType === 'api' ? '#1D4ED8' : '#6D28D9' }}>{SECTION_SOURCE_LABEL[s.sourceType]}</span>
+                <Dat f="JSON:样例" v={Object.keys(sSample).length + '字段'} />
               </div>
               <div style={{ padding: 10 }}>
                 {s.sourceType === 'tpl_copy' ? (
@@ -244,6 +268,13 @@ export default function ReportTemplatePreview() {
   const meta = REPORT_META[tpl.reportType]
   const [stateKey, setStateKey] = useState<string>(PREVIEW_STATES[tpl.reportType][0].key)
   const [role, setRole] = useState<Role>('风控专员')
+  // 样例数据：优先读本地 samples/sample-{id}.json（含页面运行时新建/复制模板保存的），缺省回落静态 map
+  const [rtSample, setRtSample] = useState<{ scoreLabel: string; sections: Record<string, Record<string, string>> } | null>(null)
+  useEffect(() => {
+    let on = true
+    fetch(`/api/load-sample?id=${encodeURIComponent(tpl.id)}`).then((r) => (r.ok ? r.json() : null)).then((d) => { if (on && d) setRtSample(d) }).catch(() => {})
+    return () => { on = false }
+  }, [tpl.id])
 
   const back = () => nav(`/console/cm/report-template?id=${tpl.id}`)
 
@@ -267,7 +298,7 @@ export default function ReportTemplatePreview() {
           </>
         }
       />
-      <Panel title="报告预览（只读样例）" desc="用样例数据渲染该模板下报告的实际长相。可切换评分档与预览角色查看不同效果。">
+      <Panel title="报告预览（只读样例）" desc={<>用样例数据渲染该模板下报告的实际长相。可切换评分档与预览角色查看不同效果。<span style={{ fontSize: 11, color: '#6B7280' }}>数据来源：<span style={{ background: '#FFF7ED', color: '#C2410C', border: '1px solid #FDBA74', fontFamily: 'monospace', padding: '0 3px', borderRadius: 2, fontSize: 10 }}>橙=本地JSON样例(reportTemplatePreviewSample.json)</span> <span style={{ background: '#F3F4F6', color: '#6B7280', border: '1px solid #D1D5DB', fontFamily: 'monospace', padding: '0 3px', borderRadius: 2, fontSize: 10 }}>灰=实时算法</span> <span style={{ background: '#DBEAFE', color: '#1D4ED8', border: '1px solid #93C5FD', fontFamily: 'monospace', padding: '0 3px', borderRadius: 2, fontSize: 10 }}>蓝=模板配置</span></span></>}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10, flexWrap: 'wrap', background: '#F8FAFC', border: '1px solid #EEF2F7', borderRadius: 8, padding: '8px 12px' }}>
           <span style={{ fontSize: 13, fontWeight: 600, color: '#374151' }}>以角色预览：</span>
           <div style={{ width: 160 }}>
@@ -281,7 +312,7 @@ export default function ReportTemplatePreview() {
           ))}
         </div>
         <div style={{ background: '#fff', border: '1px solid #EEF2F7', borderRadius: 10, padding: 14 }}>
-          <Preview tpl={tpl} stateKey={stateKey} />
+          <Preview tpl={tpl} stateKey={stateKey} sample={rtSample ?? SAMPLE_BY_ID[tpl.id] ?? SAMPLE_BY_ID['tpl-info-standard']} />
         </div>
       </Panel>
     </div>

@@ -1,0 +1,46 @@
+{
+  "scoreLabel": "异常值",
+  "sections": {
+    "basic_info": {
+      "bi_name": "张*明",
+      "bi_id": "3301**********1234",
+      "bi_phone": "138****6688",
+      "bi_bank": "6222********1234",
+      "bi_bank_branch": "工商银行杭州分行",
+      "bi_age": "32",
+      "bi_edu": "本科",
+      "bi_company": "杭州某科技有限公司",
+      "bi_income": "¥15,000",
+      "bi_address": "杭州市西湖区",
+      "bi_marriage": "已婚",
+      "bi_fp": "FP-9A2B7C…",
+      "bi_ip": "223.104.xx.xx",
+      "bi_gps": "杭州·西湖区",
+      "bi_channel": "APP",
+      "bi_appver": "v3.2.1"
+    },
+    "id_images": {
+      "ii_front": "已采集",
+      "ii_back": "已采集",
+      "ii_live": "活体通过",
+      "ii_bank": "已采集",
+      "ii_ocr": "姓名/证件号一致"
+    },
+    "single_verify": {
+      "sv_police": "一致",
+      "sv_bank4": "一致",
+      "sv_operator": "已实名",
+      "sv_device": "真实设备",
+      "sv_link": "无异常",
+      "sv_serial": "OPR-20260721-143218",
+      "sv_time": "2026-07-21 15:00:12"
+    },
+    "cross_fusion": {
+      "R4": "异常",
+      "R5": "命中 2 项",
+      "R6": "命中",
+      "R7": "未命中",
+      "R8": "命中"
+    }
+  }
+}

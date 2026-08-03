@@ -29,13 +29,30 @@ import {
   SourceTestResult, testSourceConfig, parseCurl, buildCurl,
   FieldGroup,
   ScoreDisplayConfig,
-  syncFlowToGrades, buildTemplate, seedReportTemplates, DECISION_SCORE_VARS, buildDefaultScoreFormula, defaultABCGrades, buildDefaultGradesForRange, ScoreSummary,
+  syncFlowToGrades, buildTemplate, seedReportTemplates, DECISION_SCORE_VARS, buildDefaultScoreFormula, defaultABCGrades, buildDefaultGradesForRange, buildTemplateSample, ScoreSummary,
   FlowGraph, buildDefaultFlowGraph, summarizeFlowGraph, defaultButtonName,
 } from './reportTemplateData'
 import { touch } from './templateStore'
 import FormulaEditor from './formulaEditor'
 import FlowCanvasEditor from './FlowCanvasEditor'
 import { ScoreVisual } from './ScoreVisual'
+import listJson from './reportTemplateList.json'
+
+/* 模板列表元数据（2.1：列表展示数据来自本地 json 模拟数据 reportTemplateList.json，编辑后同步更新） */
+export interface TemplateListMeta {
+  id: string
+  name: string
+  reportType: string
+  status: string
+  isDefault: boolean
+  version: string
+  lastEditor: string
+  lastEditTime: string
+  scope: string[]
+  description: string
+  sectionCount: number
+  visibleCount: number
+}
 
 /* 显示方式下拉项：对给定类型推荐一个默认值，标注「（推荐）」以便用户可改 */
 const containerOptions = (rec: RenderContainer) =>
@@ -138,6 +155,18 @@ export default function ReportTemplateConfig() {
   const loc = useLocation()
   const initId = new URLSearchParams(loc.search).get('id')
   const [templates, setTemplates] = useState<ReportTemplate[]>(seedReportTemplates)
+  // 2.1 列表元数据：初始来自本地 json（reportTemplateList.json），编辑/增删同步更新
+  const [listMeta, setListMeta] = useState<TemplateListMeta[]>(listJson as TemplateListMeta[])
+  const syncMeta = (t: ReportTemplate) => setListMeta((l) => l.map((m) => m.id === t.id ? {
+    ...m, name: t.name, status: t.status, isDefault: !!t.isDefault, version: t.version,
+    lastEditor: t.lastEditor, lastEditTime: t.lastEditTime, scope: t.scope, description: t.description ?? '',
+    sectionCount: t.sections.length, visibleCount: t.sections.filter((s) => s.visible).length,
+  } : m))
+  // 页面新建/复制模板时，样例数据落本地（samples/sample-{id}.json，经 vite 代理写入）
+  const persistSample = (id: string, tpl: ReportTemplate) => {
+    const sample = buildTemplateSample(tpl)
+    fetch('/api/save-sample', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, sample }) }).catch(() => {})
+  }
   const [view, setView] = useState<'list' | 'detail'>(initId ? 'detail' : 'list')
   const [activeId, setActiveId] = useState<string>(initId ?? seedReportTemplates[0].id)
   const [tab, setTab] = useState<'content' | 'score' | 'flow'>('content')
@@ -196,6 +225,7 @@ export default function ReportTemplateConfig() {
       const i = seedReportTemplates.findIndex((s) => s.id === t.id)
       if (i >= 0) seedReportTemplates[i] = next
       touch() // 通知订阅了模板 store 的详情/预览组件实时刷新
+      syncMeta(next) // 同步列表元数据（json 模拟数据）
       return next
     }))
   const patchSection = (sid: string, fn: (s: SectionConfig) => SectionConfig) =>
@@ -267,6 +297,13 @@ export default function ReportTemplateConfig() {
   const scoreSummary = useMemo(() => computeScoreSummary(active), [active])
   const dimRows = useMemo(() => buildDimRows(active), [active])
   const gradeErrs = useMemo(() => validateGrades(active.scoreDisplay.grades, scoreSummary.min, scoreSummary.max), [active.scoreDisplay.grades, scoreSummary])
+  // 9.5 分值预测：max/min/命中即拒 由「总分公式 + sections 区间」实时算出，同步落盘到 scoreBlock（保存到 json，值相等不再写）
+  useEffect(() => {
+    const blk = active.scoreBlock
+    if (blk.min !== scoreSummary.min || blk.max !== scoreSummary.max || blk.rejectCount !== scoreSummary.rejectTotal) {
+      patch((t) => ({ ...t, scoreBlock: { ...t.scoreBlock, min: scoreSummary.min, max: scoreSummary.max, rejectCount: scoreSummary.rejectTotal } }))
+    }
+  }, [active.id, scoreSummary.min, scoreSummary.max, scoreSummary.rejectTotal])
   const patchFlow = (i: number, fn: (f: BusinessFlowConfig) => BusinessFlowConfig) =>
     patch((t) => ({ ...t, businessFlow: t.businessFlow.map((f, k) => (k === i ? fn(f) : f)) }))
 
@@ -542,6 +579,8 @@ export default function ReportTemplateConfig() {
       changeLogs: [{ version: 'V1.0', action: '创建', operator: '当前用户', timestamp: now, summary: `由「${src.name}」复制创建` }],
     }
     setTemplates((l) => [copy, ...l]); setActiveId(id); setView('detail')
+    setListMeta((l) => [{ id, name: copy.name, reportType: copy.reportType, status: copy.status, isDefault: false, version: copy.version, lastEditor: copy.lastEditor, lastEditTime: copy.lastEditTime, scope: copy.scope, description: copy.description ?? '', sectionCount: copy.sections.length, visibleCount: copy.sections.filter((s) => s.visible).length }, ...l])
+    persistSample(id, copy) // 复制模板样例落本地
   }
   const deleteTpl = (id: string) => {
     const t = templates.find((x) => x.id === id); if (!t) return
@@ -556,6 +595,7 @@ export default function ReportTemplateConfig() {
       const withLog = l.map((x) => x.id === id ? { ...x, changeLogs: [{ version: x.version, action: '删除' as const, operator: '当前用户', timestamp: now, summary: `删除模板「${x.name}」` }, ...x.changeLogs] } : x)
       return withLog.filter((x) => x.id !== id)
     })
+    setListMeta((l) => l.filter((x) => x.id !== id))
     if (activeId === id) {
       const rest = templates.filter((x) => x.id !== id)
       if (rest.length) { setActiveId(rest[0].id); setView('detail') } else setView('list')
@@ -570,9 +610,11 @@ export default function ReportTemplateConfig() {
     seedReportTemplates.unshift(t)
     touch()
     setTemplates((l) => [t, ...l]); setActiveId(id); setShowNew(false); setView('detail')
+    setListMeta((l) => [{ id, name: t.name, reportType: t.reportType, status: t.status, isDefault: false, version: t.version, lastEditor: t.lastEditor, lastEditTime: t.lastEditTime, scope: t.scope, description: t.description ?? '', sectionCount: t.sections.length, visibleCount: t.sections.filter((s) => s.visible).length }, ...l])
+    persistSample(id, t) // 新模板样例落本地（samples/sample-{id}.json）
   }
 
-  const statusBadge = (s: TplStatus) => <Badge kind={s === '已启用' ? 'green' : s === '已停用' ? 'gray' : 'amber'}>{s}</Badge>
+  const statusBadge = (s: string) => <Badge kind={s === '已启用' ? 'green' : s === '已停用' ? 'gray' : 'amber'}>{s}</Badge>
   /* ===================== 列表页 ===================== */
   if (view === 'list') {
     const scopeMatch = (scope: string[], f: string) => {
@@ -583,9 +625,9 @@ export default function ReportTemplateConfig() {
       if (cat) return cat.children.some((ch) => scope.includes(ch.name))
       return false
     }
-    const filtered = templates.filter((t) => {
+    const filtered = listMeta.filter((t) => {
       if (search && !t.name.includes(search)) return false
-      if (fType !== '全部' && REPORT_META[t.reportType].label !== fType) return false
+      if (fType !== '全部' && REPORT_META[t.reportType as ReportType]?.label !== fType) return false
       if (fStatus !== '全部' && t.status !== fStatus) return false
       if (fScope !== '全部' && !scopeMatch(t.scope, fScope)) return false
       return true
@@ -618,23 +660,21 @@ export default function ReportTemplateConfig() {
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16 }}>
             {filtered.map((t) => {
-              const meta = REPORT_META[t.reportType]
-              const secCount = t.sections.length
-              const visSec = t.sections.filter((s) => s.visible).length
+              const meta = REPORT_META[t.reportType as ReportType]
               return (
                 <div key={t.id} style={{ border: '1px solid #E5E7EB', borderRadius: 12, padding: 16, background: '#fff', position: 'relative', display: 'flex', flexDirection: 'column', height: '100%' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    <div style={{ fontWeight: 700, fontSize: 16 }}>{t.name}</div>
+                    <div style={{ fontWeight: 700, fontSize: 16 }}>{t.name}<span style={{ marginLeft: 6, display: 'inline-block', fontSize: 9, fontFamily: 'monospace', padding: '0 3px', borderRadius: 2, background: '#FFF7ED', color: '#C2410C', border: '1px solid #FDBA74', verticalAlign: 'middle', lineHeight: '14px', fontWeight: 400 }}>JSON:name</span></div>
                     {t.isDefault && <Badge kind="blue">默认</Badge>}
                   </div>
                   <div style={{ marginTop: 8, display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-                    <Badge kind={meta.color}>{meta.icon} {meta.label}</Badge>
+                    <Badge kind={meta?.color}>{meta?.icon} {meta?.label}</Badge>
                     {statusBadge(t.status)}
-                    <span style={{ fontSize: 12, color: '#6B7280' }}>{meta.hint}</span>
+                    <span style={{ fontSize: 12, color: '#6B7280' }}>{meta?.hint}</span>
                   </div>
                   <div style={{ marginTop: 10, fontSize: 13, color: '#6B7280', lineHeight: 1.7, flex: 1 }}>
                     <div>适用产品：{scopeLabel(t.scope)}</div>
-                    <div>分段：显示 {visSec}/{secCount} 个　·　版本 {t.version}</div>
+                    <div>分段：显示 {t.visibleCount}/{t.sectionCount} 个　·　版本 {t.version}</div>
                     <div>最近编辑：{t.lastEditor} · {t.lastEditTime}</div>
                   </div>
                   <div style={{ marginTop: 'auto', paddingTop: 12, display: 'flex', gap: 8 }}>
@@ -1095,6 +1135,13 @@ export default function ReportTemplateConfig() {
             {perm.del && active.status !== '已启用' && !active.isDefault && <Button variant="ghost" onClick={() => deleteTpl(active.id)}>删除</Button>}
           </>
         } />
+      {/* 数据来源图例（第 2 条：报告模板详情/预览的数据来源标注，与报告详情页标签一致） */}
+      <div style={{ margin: '10px 0', fontSize: 11, color: '#6B7280', display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+        <span>数据来源：</span>
+        <span style={{ background: '#DBEAFE', color: '#1D4ED8', border: '1px solid #93C5FD', fontFamily: 'monospace', padding: '0 4px', borderRadius: 2 }}>蓝=模板配置</span>
+        <span style={{ background: '#FFF7ED', color: '#C2410C', border: '1px solid #FDBA74', fontFamily: 'monospace', padding: '0 4px', borderRadius: 2 }}>橙=本地JSON样例(samples/sample-{active.id}.json)</span>
+        <span style={{ background: '#F3F4F6', color: '#6B7280', border: '1px solid #D1D5DB', fontFamily: 'monospace', padding: '0 4px', borderRadius: 2 }}>灰=实时算法</span>
+      </div>
       <div>
         <div className="min-w-0">
           {/* 基础信息（默认收起，缩略显示；展开可编辑、可收起） */}
@@ -1426,7 +1473,7 @@ export default function ReportTemplateConfig() {
                 {/* 分值预测：根据报告内容配置自动计算（不可手动编辑），与内容区块联动 */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '8px 12px', border: '1px solid #DBEAFE', background: '#EFF6FF', borderRadius: 8, flexWrap: 'wrap' }}>
                   <span style={{ fontSize: 13, fontWeight: 600, color: '#1E40AF' }}>分值预测</span>
-                  <span style={{ fontSize: 13, color: '#374151' }}>最小分值 <b style={{ color: '#DC2626' }}>{scoreSummary.min}</b></span>
+                  <span style={{ fontSize: 13, color: '#374151' }}>最小分值 <b style={{ color: '#DC2626' }}>{scoreSummary.min}</b><span style={{ fontSize: 9, fontFamily: 'monospace', padding: '0 3px', borderRadius: 2, marginLeft: 3, background: '#F3F4F6', color: '#6B7280', border: '1px solid #D1D5DB' }}>computeScoreSummary</span></span>
                   <span style={{ fontSize: 13, color: '#374151' }}>最大分值 <b style={{ color: '#047857' }}>{scoreSummary.max}</b></span>
                   <span style={{ fontSize: 13, color: '#374151' }}>命中即拒 <b style={{ color: '#DC2626' }}>{scoreSummary.rejectTotal}</b> 项</span>
                   <span style={{ fontSize: 11, color: '#9CA3AF', marginLeft: 4 }}>|</span>
@@ -1456,7 +1503,17 @@ export default function ReportTemplateConfig() {
                         }
                       })}
                   canEdit={canEdit}
-                  onSave={(f) => patch((t) => ({ ...t, scoreFormula: f }))}
+                  onSave={(f) => patch((t) => {
+                    // 9.4.1 公式权重联动：公式中 sec_xxx 项的 factor 同步回写对应 section 的 weight（保存到 json）
+                    const sections = t.sections.map((s) => {
+                      const term = f.terms.find((x) => x.kind === 'var' && x.varId === 'sec_' + s.id)
+                      if (term && term.factor != null && term.factor !== (s.weight ?? 1)) {
+                        return { ...s, weight: term.factor }
+                      }
+                      return s
+                    })
+                    return { ...t, scoreFormula: f, sections }
+                  })}
                 />
               </div>
               <div style={active.scoreBlock.show ? undefined : { opacity: 0.45, pointerEvents: 'none', userSelect: 'none' }}>
@@ -1494,6 +1551,7 @@ export default function ReportTemplateConfig() {
                       <input type="range" min={pvMin} max={pvMax} value={pvScore} onChange={(e) => setDemoScore(+e.target.value)} style={{ width: 160 }} />
                       <input type="number" value={pvScore} onChange={(e) => setDemoScore(+e.target.value)} style={{ ...numSm, width: 70 }} />
                     </div>
+                    <span style={{ fontSize: 11, color: '#6B7280' }}>评分卡形态预览：<span style={{ background: '#DBEAFE', color: '#1D4ED8', border: '1px solid #93C5FD', fontFamily: 'monospace', padding: '0 3px', borderRadius: 2, fontSize: 9 }}>模板配置</span><span style={{ background: '#F3F4F6', color: '#6B7280', border: '1px solid #D1D5DB', fontFamily: 'monospace', padding: '0 3px', borderRadius: 2, fontSize: 9, marginLeft: 3 }}>示例分={pvScore} 实时算</span></span>
                     <ScoreCardPreview key={active.scoreDisplay.grades.map(g => g.grade + '|' + (g.tags ?? '')).join(',')} sd={active.scoreDisplay} score={pvScore} />
                   </div>
                 )
@@ -1608,13 +1666,13 @@ export default function ReportTemplateConfig() {
 
                 <div style={active.showSectionTotals ? { padding: 12 } : { padding: 12, opacity: 0.45, pointerEvents: 'none', userSelect: 'none' }}>
                   {/* 逐维度档位配置表：每个维度独立配 一/二/三 分段区间与标签 */}
-                  <div style={{ fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 6 }}>评分维度分布（{dimRows.length} 个集合 · 报告详情首卡按此渲染，每个维度独立配 一/二/三 分段）</div>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 6 }}>评分维度分布（{dimRows.length} 个集合 · 报告详情首卡按此渲染，每个维度独立配 一/二/三 分段）<span style={{ fontSize: 9, fontFamily: 'monospace', padding: '0 3px', borderRadius: 2, marginLeft: 3, background: '#F3F4F6', color: '#6B7280', border: '1px solid #D1D5DB' }}>buildDimRows 实时</span></div>
                   <div style={{ border: '1px solid #E5E7EB', borderRadius: 8, overflow: 'hidden', background: '#fff', overflowX: 'auto' }}>
                     <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12, minWidth: 900 }}>
                       <thead>
                         <tr style={{ background: '#F1F5F9', color: '#94A3B8' }}>
                           <th style={{ ...dimTh, textAlign: 'left' }}>维度</th>
-                          <th style={{ ...dimTh, textAlign: 'right', width: 64 }}>得分</th>
+                          <th style={{ ...dimTh, textAlign: 'right', width: 80 }}>本卡总分</th>
                           <th style={{ ...dimTh, textAlign: 'right', width: 56 }}>权重</th>
                           <th style={{ ...dimTh, textAlign: 'center', minWidth: 150 }}>一分段（区间·标签）</th>
                           <th style={{ ...dimTh, textAlign: 'center', minWidth: 150 }}>二分段（区间·标签）</th>
@@ -1630,9 +1688,9 @@ export default function ReportTemplateConfig() {
                           const secBands = sec?.dimBands ?? active.dimBands ?? defaultDimBandsForScore(r.score)
                           return (
                             <tr key={r.id} style={{ borderTop: '1px solid #F1F5F9' }}>
-                              <td style={{ ...dimTd, fontWeight: 600, color: '#111827' }}>{r.name}</td>
-                              <td style={{ ...dimTd, textAlign: 'right', fontWeight: 700, color: r.score < 0 ? '#E11D48' : '#059669' }}>{r.score < 0 ? '−' : '+'}{Math.abs(r.score)}</td>
-                              <td style={{ ...dimTd, textAlign: 'right', color: '#9CA3AF' }}>{r.weightPct}%</td>
+                              <td style={{ ...dimTd, fontWeight: 600, color: '#111827' }}>{r.name}<span style={{ fontSize: 9, fontFamily: 'monospace', padding: '0 3px', borderRadius: 2, marginLeft: 3, background: '#DBEAFE', color: '#1D4ED8', border: '1px solid #93C5FD' }}>sections[{r.id}].name</span></td>
+                              <td style={{ ...dimTd, textAlign: 'right', fontWeight: 700, color: r.score < 0 ? '#E11D48' : '#059669' }}>{r.score < 0 ? '−' : '+'}{Math.abs(r.score)}<span style={{ fontSize: 9, fontFamily: 'monospace', padding: '0 3px', borderRadius: 2, marginLeft: 3, background: '#F3F4F6', color: '#6B7280', border: '1px solid #D1D5DB' }}>computeSectionScore</span></td>
+                              <td style={{ ...dimTd, textAlign: 'right', color: '#9CA3AF' }}>{r.weight}<span style={{ fontSize: 9, fontFamily: 'monospace', padding: '0 3px', borderRadius: 2, marginLeft: 3, background: '#DBEAFE', color: '#1D4ED8', border: '1px solid #93C5FD' }}>weight</span></td>
                               {(['低', '中', '高'] as DimLevel[]).map((lv) => {
                                 const bi = secBands.findIndex((b) => b.level === lv)
                                 const b = secBands[bi]
@@ -1660,7 +1718,7 @@ export default function ReportTemplateConfig() {
                     </table>
                   </div>
                   <div style={{ marginTop: 8, fontSize: 12, color: '#9CA3AF' }}>
-                    维度 = 集合名称 · 得分 = 本卡汇总得分 · 权重 = 本卡权重占比 · 一/二/三 分段区间与标签逐维度独立配置（不再全局共用一套）。
+                    维度 = 集合名称（来自 sections，蓝标）· 本卡总分 = 实时计算（灰标）· 权重 = sections 权重原值（蓝标，公式编辑器修改后同步）· 一/二/三 分段区间与标签逐维度独立配置（默认分支区间三等分，可编辑）。
                   </div>
                 </div>
               </div>

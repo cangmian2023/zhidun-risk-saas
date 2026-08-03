@@ -422,12 +422,12 @@ export default function PreVerifyDetail() {
   const variant = sysParam === '拒绝' ? 'REJECT' : sysParam === '预警' ? 'WARNING' : 'PASS'
   const d = buildInfoVerifyReport(variant)
 
-  // 报告内容卡片的「卡片汇总得分 / 小项得分 / 权重」来自模板「报告内容配置」分段：
-  // 现有内容卡片与模板分段按 section.id 一一对应（basic_info / id_images / single_verify / cross_fusion）。
+  // 报告内容卡片的「卡片汇总得分 / 小项得分 / 权重」来自模板「报告内容配置」分段。
+  // 模板 sections 是数组，此处统一按数组位置访问 sections[0/1/2/3]，不在代码里给每个区块定义独立变量名。
   const ivTpl = useTemplate(undefined, 'info_verify')
-  const ivSections: Record<string, SectionConfig | undefined> = ivTpl
-    ? Object.fromEntries(ivTpl.sections.map((s) => [s.id, s]))
-    : {}
+  const contentSections = (ivTpl?.sections ?? [])
+    .filter((s) => (s.homeTab ?? 'content') === 'content')
+    .sort((a, b) => a.order - b.order)
 
   // 报告名称按 模板类型 + 产品 + 时间 + 模块 综合生成（与模板名称独立）
   const ivReportName = buildReportName({
@@ -437,19 +437,25 @@ export default function PreVerifyDetail() {
     module: getModuleByRoute(location.pathname),
   })
 
+  // 位置约定（与 SECTION_CATALOG.info_verify 中 content 分段的定义顺序一致）：
+  const basicSec = contentSections[0]   // 用户基本信息
+  const idSec = contentSections[1]      // 用户证件照
+  const singleSec = contentSections[2]  // 多源并行核验单项报告
+  const crossSec = contentSections[3]   // 数据交叉融合综合报告
+
   // 各内容分段的「得分方向」与「展示项→分值」查表（供卡片内联标注）
-  const basicDeduct = ivSections['basic_info'] ? computeSectionScore(ivSections['basic_info']!).mode === 'deduct' : false
-  const idDeduct = ivSections['id_images'] ? computeSectionScore(ivSections['id_images']!).mode === 'deduct' : false
-  const singleDeduct = ivSections['single_verify'] ? computeSectionScore(ivSections['single_verify']!).mode === 'deduct' : false
+  const basicDeduct = basicSec ? computeSectionScore(basicSec).mode === 'deduct' : false
+  const idDeduct = idSec ? computeSectionScore(idSec).mode === 'deduct' : false
+  const singleDeduct = singleSec ? computeSectionScore(singleSec).mode === 'deduct' : false
   // 各内容分段「显示方式」（列表/小卡片），由详情页图标按钮切换并落库到模板分段
-  const basicMode = ivSections['basic_info']?.displayMode ?? 'list'
-  const idMode = ivSections['id_images']?.displayMode ?? 'list'
-  const singleMode = ivSections['single_verify']?.displayMode ?? 'list'
-  const crossMode = ivSections['cross_fusion']?.displayMode ?? 'list'
-  const basicLookup = makeScoreLookup(ivSections['basic_info'])
-  const idLookup = makeScoreLookup(ivSections['id_images'])
+  const basicMode = basicSec?.displayMode ?? 'list'
+  const idMode = idSec?.displayMode ?? 'list'
+  const singleMode = singleSec?.displayMode ?? 'list'
+  const crossMode = crossSec?.displayMode ?? 'list'
+  const basicLookup = makeScoreLookup(basicSec)
+  const idLookup = makeScoreLookup(idSec)
   // 多源核验：模板前 5 个展示项（公安/银行卡/运营商/设备/联防联控）按序对应 5 个数据源卡
-  const singleScores = (ivSections['single_verify']?.fields ?? [])
+  const singleScores = (singleSec?.fields ?? [])
     .filter((f) => f.visible && !f.hitReject)
     .slice(0, 5)
     .map((f) => f.scorePoints ?? 0)
@@ -483,16 +489,20 @@ export default function PreVerifyDetail() {
     setLogs((prev) => [{ ...entry, id: `log${Date.now()}` }, ...prev])
   }
 
-  // 章节导航
+  // 章节导航：固定头部（信用值）+ 内容分段（按模板 sections 动态取值）+ 可选（操作日志/结论与终审）
   const navCards: { id: string; label: string; tone: 'ok' | 'alert' | 'normal' }[] = [
     { id: 'score', label: '信用值', tone: d.cross.overallRisk === 'low' ? 'ok' : 'alert' },
-    { id: 'basic', label: '用户基本信息', tone: d.basic.some((f) => !f.valid) ? 'alert' : 'ok' },
-    { id: 'photos', label: '用户证件照', tone: 'ok' },
-    { id: 'single', label: '多源核验单项报告', tone: d.single.some((s) => s.conclusion !== 'pass') ? 'alert' : 'ok' },
-    { id: 'cross', label: '交叉融合综合报告', tone: d.cross.finalConclusion === 'reject' || d.cross.finalConclusion === 'warning' ? 'alert' : 'ok' },
+    ...contentSections.map((s) => {
+      let tone: 'ok' | 'alert' | 'normal' = 'normal'
+      if (s.id === 'basic_info') tone = d.basic.some((f) => !f.valid) ? 'alert' : 'ok'
+      else if (s.id === 'id_images') tone = 'ok'
+      else if (s.id === 'single_verify') tone = d.single.some((sr) => sr.conclusion !== 'pass') ? 'alert' : 'ok'
+      else if (s.id === 'cross_fusion') tone = d.cross.finalConclusion === 'reject' || d.cross.finalConclusion === 'warning' ? 'alert' : 'ok'
+      return { id: s.id, label: s.name, tone }
+    }),
     // 操作日志锚点随 showOpLog 开关一起显隐
     ...((ivTpl?.showOpLog ?? true) ? [{ id: 'merged-ops', label: '全量操作日志', tone: 'normal' as const }] : []),
-    { id: 'conclusion', label: '结论与终审', tone: 'normal' },
+    { id: 'conclusion', label: ivTpl?.flowBlock?.title || '结论与终审', tone: 'normal' as const },
   ]
 
   return (
@@ -517,9 +527,9 @@ export default function PreVerifyDetail() {
             <VerifyActionBar row={verifyRow} onApply={applyVerify} flash={flash} showView={false} grade={ivGradeFromRisk(d.cross.riskScore)} />
           </div>
 
-          {/* 一、用户基本信息 */}
-          <Panel title="一、用户基本信息" id="basic" actions={<DisplayModeToggle reportType="info_verify" sectionId="basic_info" />}>
-            <CardScoreHead section={ivSections['basic_info']} show={ivTpl?.showSectionTotals} />
+          {/* 用户基本信息（contentSections[0]） */}
+          <Panel title={basicSec?.name || '用户基本信息'} id={basicSec?.id || 'basic_info'} actions={<DisplayModeToggle reportType="info_verify" sectionId={basicSec?.id || 'basic_info'} />}>
+            <CardScoreHead section={basicSec} show={ivTpl?.showSectionTotals} />
             {basicMode === 'list' ? (
               <div className="space-y-4">
                 <SectionTable head={['字段', '内容', '校验', '得分']}>
@@ -581,9 +591,9 @@ export default function PreVerifyDetail() {
             )}
           </Panel>
 
-          {/* 二、用户证件照 */}
-          <Panel title="二、用户证件照" id="photos" actions={<DisplayModeToggle reportType="info_verify" sectionId="id_images" />}>
-            <CardScoreHead section={ivSections['id_images']} show={ivTpl?.showSectionTotals} />
+          {/* 用户证件照（contentSections[1]） */}
+          <Panel title={idSec?.name || '用户证件照'} id={idSec?.id || 'id_images'} actions={<DisplayModeToggle reportType="info_verify" sectionId={idSec?.id || 'id_images'} />}>
+            <CardScoreHead section={idSec} show={ivTpl?.showSectionTotals} />
             {idMode === 'list' ? (
               <SectionTable head={['预览', '名称', '类型', 'OCR 识别']}>
                 {d.images.map((img) => (
@@ -644,9 +654,9 @@ export default function PreVerifyDetail() {
             )}
           </Panel>
 
-          {/* 三、多源并行核验单项报告 */}
-          <Panel title="三、多源并行核验单项报告" id="single" actions={<DisplayModeToggle reportType="info_verify" sectionId="single_verify" />}>
-            <CardScoreHead section={ivSections['single_verify']} show={ivTpl?.showSectionTotals} />
+          {/* 多源并行核验单项报告（contentSections[2]） */}
+          <Panel title={singleSec?.name || '多源并行核验单项报告'} id={singleSec?.id || 'single_verify'} actions={<DisplayModeToggle reportType="info_verify" sectionId={singleSec?.id || 'single_verify'} />}>
+            <CardScoreHead section={singleSec} show={ivTpl?.showSectionTotals} />
             {(() => {
               const revert = (name: string) => addLog({ target: name, actionType: '重新核验', operator: '当前用户', time: new Date().toLocaleString('zh-CN'), remark: `二次核验流水号：TD${Date.now()}` })
               const note = (name: string) => setModal({ type: 'note', target: name })
@@ -692,13 +702,13 @@ export default function PreVerifyDetail() {
             })()}
           </Panel>
 
-          {/* 五、数据交叉融合综合报告 · 5项 */}
+          {/* 数据交叉融合综合报告（contentSections[3]） */}
           <Panel
-            title="五、数据交叉融合综合报告 · 5项"
-            id="cross"
-            actions={<div className="flex items-center gap-2"><DisplayModeToggle reportType="info_verify" sectionId="cross_fusion" /><Button variant="ghost" size="sm" onClick={() => setModal({ type: 'weights', target: '' })}>查看打分权重明细</Button></div>}
+            title={crossSec?.name || '数据交叉融合综合报告'}
+            id={crossSec?.id || 'cross_fusion'}
+            actions={<div className="flex items-center gap-2"><DisplayModeToggle reportType="info_verify" sectionId={crossSec?.id || 'cross_fusion'} /><Button variant="ghost" size="sm" onClick={() => setModal({ type: 'weights', target: '' })}>查看打分权重明细</Button></div>}
           >
-            <CardScoreHead section={ivSections['cross_fusion']} show={ivTpl?.showSectionTotals} />
+            <CardScoreHead section={crossSec} show={ivTpl?.showSectionTotals} />
             {/* ===== 顶层总览区：5 项评估维度 ===== */}
               {crossMode === 'card' ? (
                 <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-5">

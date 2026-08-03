@@ -1,0 +1,81 @@
+{
+  "scoreLabel": "异常值",
+  "sections": {
+    "score_model": {
+      "sv_big": "82",
+      "sv_denom": "100",
+      "sv_level": "高危",
+      "sv_threshold": "≥80 高危",
+      "sv_breakdown": "设备群控 +35 / 黑名单命中 +30 / 资料异常 +17",
+      "sv_total": "82",
+      "sv_rule": "命中规则 ≥3 条且异常值 ≥80 判定高危",
+      "sv_audit": "模型 v2.1 · 2026-07-27 计算",
+      "sv_weight": "查看"
+    },
+    "conclusion_process": {
+      "cp_system": "拒绝",
+      "cp_manual": "待确认",
+      "cp_operator": "初审：审核员 1",
+      "cp_advice": "拒绝授信",
+      "cp_reason": "异常值高危且命中黑名单",
+      "cp_pos": "无",
+      "cp_risk": "设备群控、黑名单命中",
+      "cp_amount": "0",
+      "cp_ops": "报告确认 / 强制复审",
+      "cp_timeline": "进件→多源核验→异常值计算",
+      "cp_step_icon": "⚠",
+      "cp_step_status": "异常",
+      "cp_step_cost": "1.2s"
+    },
+    "basic_info": {
+      "bi_name": "张*",
+      "bi_id": "3201**********33",
+      "bi_phone": "138****6677",
+      "bi_bank": "6222********1234",
+      "bi_age": "34",
+      "bi_edu": "本科",
+      "bi_company": "**科技",
+      "bi_income": "2.5万",
+      "bi_marriage": "已婚"
+    },
+    "id_images": {
+      "ii_front": "已采集",
+      "ii_back": "已采集",
+      "ii_live": "已采集",
+      "ii_bank": "已采集",
+      "ii_ocr": "姓名/证件号一致"
+    },
+    "single_verify": {
+      "sv_police": "通过",
+      "sv_bank4": "通过",
+      "sv_operator": "通过",
+      "sv_device": "异常",
+      "sv_link": "命中 2 项",
+      "sv_head": "公安/银行卡/运营商/设备/联防",
+      "sv_concl": "设备异常",
+      "sv_cause": "设备关联多个申请",
+      "sv_subfields": "指纹/机型/关联数",
+      "sv_serial": "V2026...",
+      "sv_time": "2026-07-27 14:02",
+      "sv_channel": "API",
+      "sv_cost": "320ms"
+    },
+    "cross_fusion": {
+      "cf_head": "综合风险：高危",
+      "cf_atom": "身份✓ 设备✗ 黑名单✗",
+      "cf_doubt": "同设备 3 笔申请",
+      "cf_abnormal": "设备群控 +35",
+      "cf_tags": "设备群控、黑名单命中",
+      "cf_rule": "交叉命中规则 R7",
+      "cf_audit": "融合 v1.4",
+      "cf_weight": "查看"
+    },
+    "op_logs": {
+      "ol_single": "设备核验异常",
+      "ol_report": "生成报告",
+      "ol_timeline": "14:02 进件",
+      "ol_attach": "—",
+      "ol_review": "待复核"
+    }
+  }
+}

@@ -536,6 +536,52 @@ export function matchGrade(raw: number, grades: ScoreGrade[]): ScoreGrade | unde
   return grades.find((g) => raw >= g.minScore && raw <= g.maxScore)
 }
 
+/* ---------- 信息核验列表「得分」生成（按模板分段生成真实数据） ----------
+ * 按行的自动审核结果从模板 grades 分段内动态取分（分数恒在模板 min~max 内）：
+ *   - 通过 → 命中 autoResult='通过' 的分段，取段内偏高值
+ *   - 拒绝 → 命中 autoResult='拒绝' 的分段，取段内偏低值
+ *   - 预警/转人工 → 命中 autoResult='转人工' 的分段，取段内中值
+ *   - 处理中 → 尚未出分，返回 null（列表得分列显示 —）
+ * 列表自动审核列 = matchGrade(score).autoResult，与详情页总分落段口径一致。 */
+export function scoreForVerifySys(sys: string, grades: ScoreGrade[]): number | null {
+  if (sys === '处理中') return null
+  const target: AutoResult = sys === '通过' ? '通过' : sys === '拒绝' ? '拒绝' : '转人工'
+  const g = grades.find((x) => x.autoResult === target)
+  if (!g) return null
+  const mid = (g.minScore + g.maxScore) / 2
+  if (target === '通过') return Math.round(mid + (g.maxScore - mid) * 0.6)
+  if (target === '拒绝') return Math.round(mid - (mid - g.minScore) * 0.6)
+  return Math.round(mid)
+}
+
+/* ---------- 模板驱动的报告总分（列表得分与详情总分共用同一算法，杜绝两边不一致） ----------
+ * 输入模板 + 一份样例数据（按 section.id 取），输出：
+ *   - scoreById：各 content 分段的总分（数据源按 fieldGroups 分组名取数，其余数组直接求和）
+ *   - total：综合总分 = 模板 scoreFormula（变量 = 各分段总分）实时求值；公式不可用时退化为各段相加
+ * 列表页「得分」列与详情页「评分卡」都调用它，保证同一进件两边数字一致。 */
+export function computeReportTotal(tpl: ReportTemplate, sampleData: Record<string, any>): { total: number; scoreById: Record<string, number> } {
+  const sumScores = (arr: any[] | undefined): number => (arr ?? []).reduce((a: number, x: any) => a + (typeof x.score === 'number' ? x.score : 0), 0)
+  const contentSecs = tpl.sections.filter((s) => (s.homeTab ?? 'content') === 'content' && s.visible)
+  const scoreById: Record<string, number> = {}
+  for (const s of contentSecs) {
+    const raw = (sampleData ?? {})[s.id]
+    if (!raw) { scoreById[s.id] = 0; continue }
+    if (s.sourceType === 'data_source' && (s.fieldGroups?.length ?? 0) > 0) {
+      scoreById[s.id] = (s.fieldGroups ?? []).reduce((a: number, g: any) => a + sumScores(raw[g.name]), 0)
+    } else if (Array.isArray(raw)) {
+      scoreById[s.id] = sumScores(raw)
+    } else {
+      scoreById[s.id] = 0
+    }
+  }
+  const formula = tpl.scoreFormula ?? buildDefaultScoreFormula(tpl.sections)
+  const sv: Record<string, number> = {}
+  for (const s of contentSecs) sv['sec_' + s.id] = scoreById[s.id] ?? 0
+  for (const t of formula.terms) if (t.varId && !(t.varId in sv)) sv[t.varId] = 0
+  const total = evaluateFormula(formula, sv) ?? contentSecs.reduce((a, s) => a + (scoreById[s.id] ?? 0), 0)
+  return { total, scoreById }
+}
+
 /* ---------- 特殊命中规则（自动审核 Tab · 分值分段之下） ----------
  * 场景：某条规则一旦命中，不论总分多少都直接定结论（如「黑名单命中 → 拒绝」）。
  * 规则项从「报告内容配置」里已选的展示项（规则集/数据源/接口项）中挑选。
@@ -629,18 +675,36 @@ export const FLOW_NODE_TYPE_COLOR: Record<FlowNodeType, { bg: string; border: st
 export const REVIEW_CHECK_ITEMS = [
   '身份真实性核验', '资料完整性检查', '收入与负债评估', '征信报告复核', '反欺诈规则复核', '额度与利率合理性',
 ] as const
-// 审批结果：固定三选一，驱动流程走向（不可自定义）
-export type ReviewResult = '通过' | '驳回' | '拒绝'
-export const REVIEW_RESULTS: ReviewResult[] = ['通过', '驳回', '拒绝']
-// 审批意见：按审批结果分组的预设选项（可自定义增删），并始终允许手输
+// 审批结果：固定三选一，驱动流程走向（不可自定义；「驳回」已按需求改为「转人工」）
+export type ReviewResult = '通过' | '转人工' | '拒绝'
+export const REVIEW_RESULTS: ReviewResult[] = ['通过', '转人工', '拒绝']
+// 审批意见：按审批结果分组的预设选项（默认空，配置端添加后才有标签；运行时另允许手输）
 export const DEFAULT_OPINIONS: Record<ReviewResult, string[]> = {
   '通过': ['调整利率', '调整借贷金额'],
-  '驳回': ['缺少信息，请重新填写', '请重新审核信息'],
+  '转人工': ['信息存疑，请人工复核'],
   '拒绝': ['风控评分不足', '反欺诈规则命中'],
 }
 // 深拷贝默认审批意见预设（避免共用同一数组引用）
 export function defaultOpinionPresets(): Record<ReviewResult, string[]> {
-  return { '通过': [...DEFAULT_OPINIONS['通过']], '驳回': [...DEFAULT_OPINIONS['驳回']], '拒绝': [...DEFAULT_OPINIONS['拒绝']] }
+  return { '通过': [...DEFAULT_OPINIONS['通过']], '转人工': [...DEFAULT_OPINIONS['转人工']], '拒绝': [...DEFAULT_OPINIONS['拒绝']] }
+}
+/** 兼容旧数据：审批结果里的「驳回」统一归一化为「转人工」（含意见预设键迁移，旧持久化模板仍可运行） */
+export function normalizeReviewResults(
+  results: string[] | undefined,
+  opinionPresets?: Partial<Record<string, string[]>>,
+): { results: ReviewResult[]; opinionPresets: Record<ReviewResult, string[]> } {
+  const norm = (r: string) => (r === '驳回' ? '转人工' : r)
+  const rs = (results ?? REVIEW_RESULTS).map(norm)
+  const uniq = [...new Set(rs)].filter((r): r is ReviewResult => (REVIEW_RESULTS as string[]).includes(r))
+  const merged: ReviewResult[] = uniq.length ? uniq : [...REVIEW_RESULTS]
+  const presets = { '通过': [], '转人工': [], '拒绝': [] } as Record<ReviewResult, string[]>
+  if (opinionPresets) {
+    for (const k of ['通过', '转人工', '拒绝', '驳回'] as const) {
+      const arr = opinionPresets[k] ?? []
+      if (arr.length) presets[norm(k) as ReviewResult] = [...(presets[norm(k) as ReviewResult] ?? []), ...arr]
+    }
+  }
+  return { results: merged, opinionPresets: presets }
 }
 /* （超时处理类型已移除：节点类型收敛为 开始/普通/结束 三类） */
 
@@ -685,12 +749,12 @@ export function buildDefaultFlowGraph(flow: BusinessFlowConfig, autoResult: Auto
   let prev = 'n_start'
   const link = (to: string, label?: string) => { edges.push({ id: `e_${prev}_${to}`, from: prev, to, label }); prev = to }
   if (autoResult === '通过') {
-    nodes.push({ id: 'n_audit', type: 'normal', label: '人工确认', x: 320, y: 120, role: flow.passConfirmRole, checkItems: ['资料完整性检查'], results: ['通过', '驳回'], opinionPresets: defaultOpinionPresets(), postState: '通过' })
+    nodes.push({ id: 'n_audit', type: 'normal', label: '人工确认', x: 320, y: 120, role: flow.passConfirmRole, checkItems: ['资料完整性检查'], results: ['通过', '转人工'], opinionPresets: defaultOpinionPresets(), postState: '通过' })
     link('n_audit')
   } else if (autoResult === '拒绝') {
     if (flow.rejectAllowRecheck) {
-      nodes.push({ id: 'n_resubmit', type: 'normal', label: '复审发起', x: 320, y: 60, role: flow.recheckSubmitRole, checkItems: ['资料完整性检查', '征信报告复核'], results: ['通过', '驳回', '拒绝'], opinionPresets: defaultOpinionPresets(), postState: '待复审' })
-      nodes.push({ id: 'n_reapprove', type: 'normal', label: '复审审核', x: 600, y: 60, role: flow.recheckApproveRole, checkItems: ['征信报告复核', '反欺诈规则复核'], results: ['通过', '驳回', '拒绝'], opinionPresets: defaultOpinionPresets(), postState: '已复审' })
+      nodes.push({ id: 'n_resubmit', type: 'normal', label: '复审发起', x: 320, y: 60, role: flow.recheckSubmitRole, checkItems: ['资料完整性检查', '征信报告复核'], results: ['通过', '转人工', '拒绝'], opinionPresets: defaultOpinionPresets(), postState: '待复审' })
+      nodes.push({ id: 'n_reapprove', type: 'normal', label: '复审审核', x: 600, y: 60, role: flow.recheckApproveRole, checkItems: ['征信报告复核', '反欺诈规则复核'], results: ['通过', '转人工', '拒绝'], opinionPresets: defaultOpinionPresets(), postState: '已复审' })
       edges.push({ id: 'e_start_resubmit', from: 'n_start', to: 'n_resubmit', label: '申请复审' })
       edges.push({ id: 'e_resubmit_reapprove', from: 'n_resubmit', to: 'n_reapprove' })
       prev = 'n_reapprove'
@@ -699,9 +763,9 @@ export function buildDefaultFlowGraph(flow: BusinessFlowConfig, autoResult: Auto
       link('n_reject')
     }
   } else {
-    nodes.push({ id: 'n_suggest', type: 'normal', label: '提交建议', x: 320, y: 120, role: flow.manualSuggestRole, checkItems: ['身份真实性核验', '收入与负债评估'], results: ['通过', '驳回', '拒绝'], opinionPresets: defaultOpinionPresets(), postState: '待人工' })
+    nodes.push({ id: 'n_suggest', type: 'normal', label: '提交建议', x: 320, y: 120, role: flow.manualSuggestRole, checkItems: ['身份真实性核验', '收入与负债评估'], results: ['通过', '转人工', '拒绝'], opinionPresets: defaultOpinionPresets(), postState: '待人工' })
     link('n_suggest')
-    nodes.push({ id: 'n_approve', type: 'normal', label: '审核建议', x: 600, y: 120, role: flow.manualApproveRole, checkItems: ['征信报告复核', '额度与利率合理性'], results: ['通过', '驳回', '拒绝'], opinionPresets: defaultOpinionPresets(), postState: '已审核' })
+    nodes.push({ id: 'n_approve', type: 'normal', label: '审核建议', x: 600, y: 120, role: flow.manualApproveRole, checkItems: ['征信报告复核', '额度与利率合理性'], results: ['通过', '转人工', '拒绝'], opinionPresets: defaultOpinionPresets(), postState: '已审核' })
     link('n_approve')
   }
   const ex = prev === 'n_approve' || prev === 'n_reapprove'
@@ -1438,7 +1502,7 @@ function mkAuditGraph(
 ): FlowGraph {
   const opin: Record<ReviewResult, string[]> = {
     '通过': content.opinion?.['通过'] ?? ['正常通过'],
-    '驳回': content.opinion?.['驳回'] ?? ['信息存疑，请复核'],
+    '转人工': content.opinion?.['转人工'] ?? (content.opinion as any)?.['驳回'] ?? ['信息存疑，请复核'],
     '拒绝': content.opinion?.['拒绝'] ?? ['风险过高，建议拒绝'],
   }
   const post: string = autoResult === '通过' ? '已通过' : autoResult === '拒绝' ? '已拒绝' : '已审核'
@@ -1471,22 +1535,22 @@ export const FLOW_PRESETS: Record<ReportType, BusinessFlowConfig[]> = {
     defaultFlowRow('—', '系统正在计算异常值，请稍候…'),
     mkFlow('安全', GRADE_PRESETS.info_verify[0].description, '通过', {
       checkItems: ['身份真实性核验', '资料完整性检查'],
-      results: ['通过', '驳回'],
-      opinion: { '通过': ['异常值低位，正常通过'], '驳回': ['信息存疑，退回补充'] },
+      results: ['通过', '转人工'],
+      opinion: { '通过': ['异常值低位，正常通过'], '转人工': ['信息存疑，退回补充'] },
     }),
     mkFlow('关注', GRADE_PRESETS.info_verify[1].description, '转人工', {
       checkItems: ['异常项人工复核', '收入与负债评估'],
-      results: ['通过', '驳回', '拒绝'],
+      results: ['通过', '转人工', '拒绝'],
       opinion: { '通过': ['风险可控，予以通过'], '拒绝': ['存在关注项，谨慎拒绝'] },
     }),
     mkFlow('警示', GRADE_PRESETS.info_verify[2].description, '转人工', {
       checkItems: ['设备群控核查', '黑名单命中复核', '公安/运营商联防复核'],
-      results: ['通过', '驳回', '拒绝'],
+      results: ['通过', '转人工', '拒绝'],
       opinion: { '拒绝': ['异常值较高，建议拒绝'] },
     }),
     mkFlow('高危', GRADE_PRESETS.info_verify[3].description, '拒绝', {
       checkItems: ['设备群控核查', '黑名单命中复核', '公安/运营商联防复核'],
-      results: ['通过', '驳回', '拒绝'],
+      results: ['通过', '转人工', '拒绝'],
       opinion: { '拒绝': ['异常值极高，建议拒绝处置', '命中黑名单，强制拦截'] },
     }),
   ],
@@ -1495,22 +1559,22 @@ export const FLOW_PRESETS: Record<ReportType, BusinessFlowConfig[]> = {
     defaultFlowRow('—', '系统正在计算评分…'),
     mkFlow('A', GRADE_PRESETS.credit[0].description, '通过', {
       checkItems: ['征信报告复核', '额度与利率合理性'],
-      results: ['通过', '驳回'],
+      results: ['通过', '转人工'],
       opinion: { '通过': ['信用优秀，正常授信'] },
     }),
     mkFlow('B', GRADE_PRESETS.credit[1].description, '通过', {
       checkItems: ['征信报告复核', '额度与利率合理性'],
-      results: ['通过', '驳回'],
+      results: ['通过', '转人工'],
       opinion: { '通过': ['信用良好，正常授信'] },
     }),
     mkFlow('C', GRADE_PRESETS.credit[2].description, '转人工', {
       checkItems: ['信用历史核查', '负债率评估'],
-      results: ['通过', '驳回', '拒绝'],
+      results: ['通过', '转人工', '拒绝'],
       opinion: { '拒绝': ['信用一般，谨慎授信'] },
     }),
     mkFlow('D', GRADE_PRESETS.credit[3].description, '拒绝', {
       checkItems: ['征信报告复核', '偿债能力评估'],
-      results: ['通过', '驳回', '拒绝'],
+      results: ['通过', '转人工', '拒绝'],
       opinion: { '拒绝': ['信用较差，建议拒绝授信'] },
     }),
   ],
@@ -1519,27 +1583,27 @@ export const FLOW_PRESETS: Record<ReportType, BusinessFlowConfig[]> = {
     defaultFlowRow('—', '系统正在计算评分，请稍候…'),
     mkFlow('极低', GRADE_PRESETS.fraud[0].description, '通过', {
       checkItems: ['反欺诈规则复核'],
-      results: ['通过', '驳回'],
+      results: ['通过', '转人工'],
       opinion: { '通过': ['极低风险，正常通过'] },
     }),
     mkFlow('低', GRADE_PRESETS.fraud[1].description, '通过', {
       checkItems: ['反欺诈规则复核'],
-      results: ['通过', '驳回'],
+      results: ['通过', '转人工'],
       opinion: { '通过': ['低风险，正常通过'] },
     }),
     mkFlow('中', GRADE_PRESETS.fraud[2].description, '转人工', {
       checkItems: ['团伙欺诈核查', '设备关联图谱复核'],
-      results: ['通过', '驳回', '拒绝'],
+      results: ['通过', '转人工', '拒绝'],
       opinion: { '拒绝': ['中风险，建议人工研判'] },
     }),
     mkFlow('高', GRADE_PRESETS.fraud[3].description, '拒绝', {
       checkItems: ['团伙欺诈核查', '黑名单命中复核'],
-      results: ['通过', '驳回', '拒绝'],
+      results: ['通过', '转人工', '拒绝'],
       opinion: { '拒绝': ['高风险，建议拒绝授信'] },
     }),
     mkFlow('极高', GRADE_PRESETS.fraud[4].description, '拒绝', {
       checkItems: ['团伙欺诈核查', '黑名单命中复核', '设备群控核查'],
-      results: ['通过', '驳回', '拒绝'],
+      results: ['通过', '转人工', '拒绝'],
       opinion: { '拒绝': ['欺诈分极高，建议拒绝并加入黑名单'] },
     }),
   ],
@@ -1548,27 +1612,27 @@ export const FLOW_PRESETS: Record<ReportType, BusinessFlowConfig[]> = {
     defaultFlowRow('—', '系统正在生成综合决策，请稍候…'),
     mkFlow('优先通过', GRADE_PRESETS.decision[0].description, '通过', {
       checkItems: ['三项子报告一致性核对', '额度与利率合理性'],
-      results: ['通过', '驳回'],
+      results: ['通过', '转人工'],
       opinion: { '通过': ['综合风险极低，优先授信'] },
     }),
     mkFlow('通过', GRADE_PRESETS.decision[1].description, '通过', {
       checkItems: ['三项子报告一致性核对'],
-      results: ['通过', '驳回'],
+      results: ['通过', '转人工'],
       opinion: { '通过': ['综合风险低，正常授信'] },
     }),
     mkFlow('限制额度', GRADE_PRESETS.decision[2].description, '转人工', {
       checkItems: ['信用与欺诈综合研判'],
-      results: ['通过', '驳回', '拒绝'],
+      results: ['通过', '转人工', '拒绝'],
       opinion: { '拒绝': ['综合风险中等，限制额度'] },
     }),
     mkFlow('严格限制', GRADE_PRESETS.decision[3].description, '拒绝', {
       checkItems: ['信用与欺诈综合研判'],
-      results: ['通过', '驳回', '拒绝'],
+      results: ['通过', '转人工', '拒绝'],
       opinion: { '拒绝': ['综合风险较高，严格限制'] },
     }),
     mkFlow('拒绝', GRADE_PRESETS.decision[4].description, '拒绝', {
       checkItems: ['欺诈分主导研判', '信用复核'],
-      results: ['通过', '驳回', '拒绝'],
+      results: ['通过', '转人工', '拒绝'],
       opinion: { '拒绝': ['综合风险高，建议拒绝授信'] },
     }),
   ],
@@ -1740,7 +1804,8 @@ export function computeScoreSummary(t: ReportTemplate): ScoreSummary {
     rows, baseScore, addMax, deductMax,
     min: baseScore + formulaMin,
     max: baseScore + formulaMax,
-    rejectTotal: enabled.reduce((sum, r) => sum + r.rejectItems, 0) + specialRejectCount,
+    // 9.5.1 命中即拒 = 特殊命中规则中「命中-拒绝」的条目总数（用户定义；不再累加字段级命中即拒项）
+    rejectTotal: specialRejectCount,
   }
 }
 
@@ -2512,11 +2577,12 @@ export function getAuditFlow(type: ReportType, suggestion: string, graphIndex = 
   const manual = g.nodes.filter((n) => n.results && n.results.length)
   if (!manual.length) return fallback
   const node = manual.reduce((a, b) => ((b.results?.length ?? 0) > (a.results?.length ?? 0) ? b : a))
+  const { results, opinionPresets } = normalizeReviewResults(node.results as string[] | undefined, node.opinionPresets)
   return {
     nodeLabel: node.buttonName ?? node.label,
     checkItems: node.checkItems ?? [],
-    results: node.results ?? [...REVIEW_RESULTS],
-    opinionPresets: node.opinionPresets ?? defaultOpinionPresets(),
+    results,
+    opinionPresets,
     resultStates: node.resultStates,
   }
 }
@@ -2525,11 +2591,51 @@ export function getDecisionAuditFlow(suggestion: string): AuditFlow {
   return getAuditFlow('decision', suggestion)
 }
 
+/** 按模板分段名（gradeId，如 A/B/C）取审批弹窗配置——直接定位 businessFlow 行，不走 GRADE_PRESETS。
+ * 供模板动态分段（buildDefaultGradesForRange 生成 A/B/C 等）的报告详情页使用；
+ * graphIndex 对应该分段 flowGraphs 数组下标（一个分段多条业务 = 多个按钮）。 */
+export function getAuditFlowByGrade(tpl: ReportTemplate | undefined, gradeId: string, graphIndex = 0, nodeIndex = 0): AuditFlow {
+  const fallback: AuditFlow = {
+    nodeLabel: '审核建议',
+    checkItems: [],
+    results: [...REVIEW_RESULTS] as ReviewResult[],
+    opinionPresets: defaultOpinionPresets(),
+  }
+  if (!tpl) return fallback
+  const bf = (tpl.businessFlow ?? []).find((x) => x.gradeId === gradeId)
+  const autoResult: AutoResult = tpl.scoreDisplay.grades.find((g) => g.grade === gradeId)?.autoResult ?? '转人工'
+  const g = bf?.flowGraphs?.[graphIndex] ?? bf?.flowGraphs?.[0] ?? buildDefaultFlowGraph(bf ?? defaultFlowRow(gradeId, ''), autoResult)
+  const manual = g.nodes.filter((n) => n.results && n.results.length)
+  const node = manual[nodeIndex] ?? manual[manual.length - 1]
+  if (!node) return fallback
+  const { results, opinionPresets } = normalizeReviewResults(node.results as string[] | undefined, node.opinionPresets)
+  return {
+    nodeLabel: node.buttonName ?? node.label,
+    checkItems: node.checkItems ?? [],
+    results,
+    opinionPresets,
+    resultStates: node.resultStates,
+  }
+}
+
 /**
  * 运行时「按分段渲染多按钮」：返回当前评分/结论分段对应的全部触发按钮。
  * 设计：每个评分分段有 N 条业务流程（businessFlow[i].flowGraphs）= N 个操作按钮，
  * 按钮文案取自该流程 start 节点的 buttonName；无流程时回退到自动结果默认按钮。
  */
+/** 从模板的 demoValues 生成「预览格式」样例数据（{ scoreLabel, sections: { sectionId: { fieldId: value } } }），
+ * 供预览页/详情页使用；页面新建/复制模板时调用并落本地（samples/sample-{id}.json）。 */
+export function buildTemplateSample(tpl: ReportTemplate): { scoreLabel: string; sections: Record<string, Record<string, string>> } {
+  const sections: Record<string, Record<string, string>> = {}
+  for (const s of tpl.sections ?? []) {
+    const dv = s.demoValues ?? {}
+    const map: Record<string, string> = {}
+    for (const [k, v] of Object.entries(dv)) map[k] = (v as any)?.value != null ? String((v as any).value) : String(v)
+    if (Object.keys(map).length) sections[s.id] = map
+  }
+  return { scoreLabel: tpl.reportType === 'info_verify' || tpl.reportType === 'fraud' ? '异常值' : '综合分', sections }
+}
+
 export function getSegmentButtons(type: ReportType, suggestion: string): { idx: number; label: string }[] {
   const tpl = seedReportTemplates.find((t) => t.reportType === type)
   if (!tpl) return [{ idx: 0, label: '审批' }]

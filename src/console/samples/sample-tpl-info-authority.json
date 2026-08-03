@@ -1,0 +1,51 @@
+{
+  "scoreLabel": "异常值",
+  "sections": {
+    "sec_identity": {
+      "iv_no": "格式正确",
+      "iv_2e": "一致",
+      "iv_exp": "有效期内",
+      "iv_lost": "正常",
+      "iv_photo": "一致"
+    },
+    "sec_liveness": {
+      "lv_live": "通过",
+      "lv_face": "98.2%",
+      "lv_spoof": "未命中"
+    },
+    "sec_ocr": {
+      "oc_id": "识别成功",
+      "oc_bank": "识别成功"
+    },
+    "sec_bank": {
+      "bk_3e": "一致",
+      "bk_4e": "一致",
+      "bk_stat": "正常",
+      "bk_type": "借记卡"
+    },
+    "sec_operator": {
+      "op_3e": "一致",
+      "op_dur": "36 个月",
+      "op_stat": "正常",
+      "op_prov": "一致"
+    },
+    "sec_blacklist": {
+      "bl_ovd": "未命中",
+      "bl_sx": "未命中",
+      "bl_pol": "未命中",
+      "bl_link": "未命中"
+    },
+    "sec_device": {
+      "dv_farm": "未命中",
+      "dv_abn": "命中（关联 3 个申请）",
+      "dv_geo": "命中（2 省）",
+      "dv_root": "未命中"
+    },
+    "sec_multi": {
+      "ml_org": "6 家",
+      "ml_qry": "9 次",
+      "ml_ovd": "无",
+      "ml_cur": "2 笔"
+    }
+  }
+}

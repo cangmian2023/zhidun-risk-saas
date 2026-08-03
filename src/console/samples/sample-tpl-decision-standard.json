@@ -1,0 +1,36 @@
+{
+  "scoreLabel": "综合分",
+  "sections": {
+    "decision_overview": {
+      "do_three": "信用值 82 / 信用评分 70 / 欺诈分 88",
+      "do_level": "高危",
+      "do_advice": "拒绝授信",
+      "do_basis": "欺诈分极高主导"
+    },
+    "verify_summary": {
+      "vs_concl": "异常值高危",
+      "vs_risk": "设备群控",
+      "vs_jump": "查看完整报告"
+    },
+    "credit_summary": {
+      "cs2_concl": "信用良好",
+      "cs2_risk": "负债略高",
+      "cs2_jump": "查看完整报告"
+    },
+    "fraud_summary": {
+      "fs_concl": "欺诈极高",
+      "fs_risk": "团伙欺诈",
+      "fs_jump": "查看完整报告"
+    },
+    "decision_suggestion": {
+      "ds_text": "强烈建议拒绝",
+      "ds_pos": "信用良好",
+      "ds_risk": "欺诈极高",
+      "ds_ops": "决策按钮",
+      "ds_amount": "0"
+    },
+    "decision_logs": {
+      "dl_timeline": "综合时间线"
+    }
+  }
+}

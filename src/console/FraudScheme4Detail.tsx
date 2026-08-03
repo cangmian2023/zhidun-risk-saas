@@ -23,18 +23,16 @@ import {
   type FraudScheme4SysResult,
 } from './FraudScheme4Ops'
 import { ExemptModal } from './ExemptModal'
-import { seedReportTemplates, computeSectionScore, evalSpecialRules, SPECIAL_TRIGGER_LABEL, buildReportName, getModuleByRoute, fieldGridClass, type SectionConfig } from './reportTemplateData'
+import { computeSectionScore, evalSpecialRules, SPECIAL_TRIGGER_LABEL, buildReportName, getModuleByRoute, fieldGridClass, type SectionConfig } from './reportTemplateData'
 import { TemplateDimTable } from './TemplateDimTable'
 import { ScoreVisual } from './ScoreVisual'
 import { DisplayModeToggle } from './DisplayModeToggle'
-import { useSectionDisplayMode } from './templateStore'
+import { useSectionDisplayMode, useTemplate } from './templateStore'
 
 const cn = (...c: (string | false | undefined)[]) => c.filter(Boolean).join(' ')
 
-/* —— 模板驱动的卡片汇总分 / 单项得分（汇总分为信用风控同款大数字分块，单项标签与信息核验 ScoreTag 一致）—— */
-const s4Tpl = seedReportTemplates.find((t) => t.reportType === 'fraud')
-const s4Sections: Record<string, SectionConfig> = Object.fromEntries((s4Tpl?.sections ?? []).map((s) => [s.id, s]))
-const secDeduct = (id: string) => s4Sections[id]?.cardScoreMode === 'deduct'
+/* —— 模板驱动的卡片汇总分 / 单项得分（汇总分为信用风控同款大数字分块，单项标签与信息核验 ScoreTag 一致）——
+ * 模板经 useTemplate 订阅（见主组件），配置改动后本页实时刷新；以下 s4Tpl 及 lookup 均为主组件内每次渲染重建。 */
 function s4ScoreLookup(sec?: SectionConfig): (label: string) => number | undefined {
   const items = (sec?.fields ?? []).filter((f) => f.visible && !f.hitReject)
   return (label: string) => {
@@ -44,11 +42,6 @@ function s4ScoreLookup(sec?: SectionConfig): (label: string) => number | undefin
     return part?.scorePoints
   }
 }
-const devLookup = s4ScoreLookup(s4Sections['device_fraud'])
-const behLookup = s4ScoreLookup(s4Sections['behavior_fraud'])
-const gangLookup = s4ScoreLookup(s4Sections['gang_fraud'])
-const blkLookup = s4ScoreLookup(s4Sections['blacklist_hit'])
-const hisLookup = s4ScoreLookup(s4Sections['history_fraud'])
 function S4ScoreTag({ pts, deduct }: { pts?: number; deduct?: boolean }) {
   if (pts == null || pts === 0) return null
   return (
@@ -58,8 +51,8 @@ function S4ScoreTag({ pts, deduct }: { pts?: number; deduct?: boolean }) {
   )
 }
 /* 卡片汇总得分（统一采用信用风控报告的大数字分样式：大数字 + 胶囊 + 权重提示行，置于卡体顶部） */
-function S4CardScoreHead({ sec }: { sec?: SectionConfig }) {
-  if (!sec || s4Tpl?.showSectionTotals === false) return null
+function S4CardScoreHead({ sec, showTotals }: { sec?: SectionConfig; showTotals?: boolean }) {
+  if (!sec || showTotals === false) return null
   const sc = computeSectionScore(sec)
   const deduct = sc.mode === 'deduct'
   const signed = `${sc.total < 0 ? '−' : '+'}${Math.abs(sc.total)}`
@@ -73,8 +66,8 @@ function S4CardScoreHead({ sec }: { sec?: SectionConfig }) {
     </div>
   )
 }
-function S4RuleScoreHead({ rules }: { rules: FraudS4Rule[] }) {
-  if (s4Tpl?.showSectionTotals === false) return null
+function S4RuleScoreHead({ rules, showTotals }: { rules: FraudS4Rule[]; showTotals?: boolean }) {
+  if (showTotals === false) return null
   const hits = rules.filter((r) => r.status === '命中')
   const total = hits.reduce((s, r) => s + (r.score ?? 0), 0)
   return (
@@ -304,6 +297,28 @@ function behaviorFieldState(k: string, raw: string): FieldState {
 /* ========================= 主页面 ========================= */
 export default function FraudScheme4Detail() {
   const { mode: basicMode } = useSectionDisplayMode('fraud', 'basic_info')
+  // 订阅 fraud 模板：配置页任何改动（分段/分值/评分卡/特殊规则/汇总开关）都实时反映到本页。
+  // 模板 sections 是数组，此处统一按数组位置访问，不在代码里给每个区块定义独立变量名。
+  const s4Tpl = useTemplate(undefined, 'fraud')
+  const contentSections = (s4Tpl?.sections ?? [])
+    .filter((s) => (s.homeTab ?? 'content') === 'content')
+    .sort((a, b) => a.order - b.order)
+
+  // 位置约定（与 SECTION_CATALOG.fraud 中 content 分段的定义顺序一致）：
+  const basicSec = contentSections[0]    // 用户基本信息
+  const identitySec = contentSections[1]  // 身份欺诈详情
+  const forgerySec = contentSections[2]  // 信息伪造详情
+  const deviceSec = contentSections[3]   // 设备欺诈详情
+  const behaviorSec = contentSections[4] // 行为欺诈详情
+  const gangSec = contentSections[5]     // 团伙欺诈详情
+  const blkSec = contentSections[6]      // 黑名单命中详情
+  const hisSec = contentSections[7]      // 历史欺诈记录
+  const secDeduct = (sec?: SectionConfig) => sec?.cardScoreMode === 'deduct'
+  const devLookup = s4ScoreLookup(deviceSec)
+  const behLookup = s4ScoreLookup(behaviorSec)
+  const gangLookup = s4ScoreLookup(gangSec)
+  const blkLookup = s4ScoreLookup(blkSec)
+  const hisLookup = s4ScoreLookup(hisSec)
   const nav = useNavigate()
   const [params] = useSearchParams()
   const sysParam = (params.get('sys') as FraudScheme4SysResult) ?? '极高'
@@ -362,15 +377,21 @@ export default function FraudScheme4Detail() {
     attachments: l.attachments,
   }))
 
+  // 章节导航：固定头部（欺诈评分）+ 内容分段（按模板 sections 动态取值）+ 处置建议 + 操作日志
   const navCards: { id: string; label: string; tone: 'ok' | 'alert' | 'normal' }[] = [
     { id: 'score', label: '欺诈评分', tone: d.scoreBand === '极低' || d.scoreBand === '低' ? 'ok' : 'alert' },
-    { id: 'basic', label: '用户基本信息', tone: d.basic.some((f) => !f.valid) ? 'alert' : 'ok' },
-    { id: 'rules', label: '身份欺诈详情', tone: d.rules.some((r) => r.type === '身份欺诈' && r.status === '命中') ? 'alert' : 'ok' },
-    { id: 'forge', label: '信息伪造详情', tone: d.rules.some((r) => r.type === '信息伪造' && r.status === '命中') ? 'alert' : 'ok' },
-    { id: 'device', label: '设备欺诈详情', tone: d.device.riskTags.length > 0 ? 'alert' : 'ok' },
-    { id: 'behavior', label: '行为欺诈详情', tone: d.behavior.anomalies.length > 0 ? 'alert' : 'ok' },
-    { id: 'graph', label: '团伙欺诈详情', tone: d.graph.gangTag.includes('团伙') ? 'alert' : 'ok' },
-    { id: 'blacklist', label: '黑名单命中详情', tone: d.blacklistRecords.length > 0 ? 'alert' : 'ok' },
+    ...contentSections.map((s) => {
+      let tone: 'ok' | 'alert' | 'normal' = 'normal'
+      if (s.id === 'basic_info') tone = d.basic.some((f) => !f.valid) ? 'alert' : 'ok'
+      else if (s.id === 'identity_fraud') tone = d.rules.some((r) => r.type === '身份欺诈' && r.status === '命中') ? 'alert' : 'ok'
+      else if (s.id === 'info_forgery') tone = d.rules.some((r) => r.type === '信息伪造' && r.status === '命中') ? 'alert' : 'ok'
+      else if (s.id === 'device_fraud') tone = d.device.riskTags.length > 0 ? 'alert' : 'ok'
+      else if (s.id === 'behavior_fraud') tone = d.behavior.anomalies.length > 0 ? 'alert' : 'ok'
+      else if (s.id === 'gang_fraud') tone = d.graph.gangTag.includes('团伙') ? 'alert' : 'ok'
+      else if (s.id === 'blacklist_hit') tone = d.blacklistRecords.length > 0 ? 'alert' : 'ok'
+      else if (s.id === 'history_fraud') tone = d.history.length > 0 ? 'alert' : 'ok'
+      return { id: s.id, label: s.name, tone }
+    }),
     { id: 'disposition', label: '处置建议', tone: d.autoDecision === '拒绝' ? 'alert' : 'ok' },
     { id: 'logs', label: '操作日志', tone: 'ok' },
   ]
@@ -548,8 +569,8 @@ export default function FraudScheme4Detail() {
             </div>
           </div>
 
-          {/* 一、用户基本信息（简化、弱化） */}
-          <Panel title="一、用户基本信息" id="basic" actions={<DisplayModeToggle reportType="fraud" sectionId="basic_info" />}>
+          {/* 用户基本信息（contentSections[0]） */}
+          <Panel title={basicSec?.name || '用户基本信息'} id={basicSec?.id || 'basic_info'} actions={<DisplayModeToggle reportType="fraud" sectionId={basicSec?.id || 'basic_info'} />}>
             {basicMode === 'list' ? (
               <div className={fieldGridClass('list')}>
                 {d.basic.map((f) => (
@@ -571,21 +592,21 @@ export default function FraudScheme4Detail() {
             )}
           </Panel>
 
-          {/* 二、身份欺诈详情 */}
-          <Panel title="二、身份欺诈详情" id="rules" desc="展示身份维度的命中规则，可查看详情或标记规则豁免">
-            <S4RuleScoreHead rules={d.rules.filter((r) => r.type === '身份欺诈')} />
+          {/* 身份欺诈详情（contentSections[1]） */}
+          <Panel title={identitySec?.name || '身份欺诈详情'} id={identitySec?.id || 'identity_fraud'} desc="展示身份维度的命中规则，可查看详情或标记规则豁免">
+            <S4RuleScoreHead rules={d.rules.filter((r) => r.type === '身份欺诈')} showTotals={s4Tpl?.showSectionTotals} />
             <RuleTable rules={d.rules.filter((r) => r.type === '身份欺诈')} onExempt={(name) => setModal({ type: 'exempt', target: name })} />
           </Panel>
 
-          {/* 三、信息伪造详情 */}
-          <Panel title="三、信息伪造详情" id="forge" desc="展示信息伪造维度的命中规则，可查看详情或标记规则豁免">
-            <S4RuleScoreHead rules={d.rules.filter((r) => r.type === '信息伪造')} />
+          {/* 信息伪造详情（contentSections[2]） */}
+          <Panel title={forgerySec?.name || '信息伪造详情'} id={forgerySec?.id || 'info_forgery'} desc="展示信息伪造维度的命中规则，可查看详情或标记规则豁免">
+            <S4RuleScoreHead rules={d.rules.filter((r) => r.type === '信息伪造')} showTotals={s4Tpl?.showSectionTotals} />
             <RuleTable rules={d.rules.filter((r) => r.type === '信息伪造')} onExempt={(name) => setModal({ type: 'exempt', target: name })} />
           </Panel>
 
-          {/* 四、设备欺诈详情（原设备指纹分析） */}
-          <Panel title="四、设备欺诈详情" id="device">
-            <S4CardScoreHead sec={s4Sections['device_fraud']} />
+          {/* 设备欺诈详情（contentSections[3]） */}
+          <Panel title={deviceSec?.name || '设备欺诈详情'} id={deviceSec?.id || 'device_fraud'}>
+            <S4CardScoreHead sec={deviceSec} showTotals={s4Tpl?.showSectionTotals} />
             <div className="grid grid-cols-1 gap-x-8 gap-y-2 sm:grid-cols-2 lg:grid-cols-3">
               {([
                 { k: '设备指纹', v: d.device.fingerprint },
@@ -604,7 +625,7 @@ export default function FraudScheme4Detail() {
                     <span className="text-sm text-slate-500">{e.k}</span>
                     <span className="flex items-center gap-2">
                       <span className={cn('text-right text-sm font-medium', FIELD_STATE_COLOR[st])}>{e.v}</span>
-                      <S4ScoreTag pts={devLookup(e.k)} deduct={secDeduct('device_fraud')} />
+                      <S4ScoreTag pts={devLookup(e.k)} deduct={secDeduct(deviceSec)} />
                       {e.exempt && (
                         disabled
                           ? <span className="whitespace-nowrap text-xs text-slate-300 cursor-not-allowed">豁免</span>
@@ -624,9 +645,9 @@ export default function FraudScheme4Detail() {
             </div>
           </Panel>
 
-          {/* 五、行为欺诈详情（原行为轨迹分析） */}
-          <Panel title="五、行为欺诈详情" id="behavior">
-            <S4CardScoreHead sec={s4Sections['behavior_fraud']} />
+          {/* 行为欺诈详情（contentSections[4]） */}
+          <Panel title={behaviorSec?.name || '行为欺诈详情'} id={behaviorSec?.id || 'behavior_fraud'}>
+            <S4CardScoreHead sec={behaviorSec} showTotals={s4Tpl?.showSectionTotals} />
             <div className="grid grid-cols-1 gap-x-8 gap-y-2 sm:grid-cols-2">
               {([
                 { k: '申请耗时', v: d_b(d).duration },
@@ -641,7 +662,7 @@ export default function FraudScheme4Detail() {
                 return (
                   <div key={e.k} className="flex flex-col gap-0.5 rounded-lg bg-slate-50 px-3.5 py-2">
                     <span className="text-xs text-slate-400">{e.k}</span>
-                    <span className="flex items-center"><span className={cn('text-sm font-medium', FIELD_STATE_COLOR[st])}>{e.v}</span><S4ScoreTag pts={behLookup(e.k)} deduct={secDeduct('behavior_fraud')} /></span>
+                    <span className="flex items-center"><span className={cn('text-sm font-medium', FIELD_STATE_COLOR[st])}>{e.v}</span><S4ScoreTag pts={behLookup(e.k)} deduct={secDeduct(behaviorSec)} /></span>
                     {e.exempt && (
                       disabled
                         ? <span className="mt-0.5 self-start whitespace-nowrap text-xs text-slate-300 cursor-not-allowed">豁免</span>
@@ -653,7 +674,7 @@ export default function FraudScheme4Detail() {
             </div>
             <div className="mt-2 flex flex-col gap-0.5 rounded-lg bg-slate-50 px-3.5 py-2">
               <span className="text-xs text-slate-400">操作路径</span>
-              <span className="flex items-center"><span className="text-sm font-medium text-ink-900">{d_b(d).path}</span><S4ScoreTag pts={behLookup('操作路径')} deduct={secDeduct('behavior_fraud')} /></span>
+              <span className="flex items-center"><span className="text-sm font-medium text-ink-900">{d_b(d).path}</span><S4ScoreTag pts={behLookup('操作路径')} deduct={secDeduct(behaviorSec)} /></span>
             </div>
             <div className="mt-4">
               <div className="mb-2 flex items-center text-xs font-medium text-slate-500">行为轨迹时间线</div>
@@ -680,9 +701,9 @@ export default function FraudScheme4Detail() {
             </div>
           </Panel>
 
-          {/* 六、团伙欺诈详情（原关联图谱分析） */}
-          <Panel title="六、团伙欺诈详情" id="graph">
-            <S4CardScoreHead sec={s4Sections['gang_fraud']} />
+          {/* 团伙欺诈详情（contentSections[5]） */}
+          <Panel title={gangSec?.name || '团伙欺诈详情'} id={gangSec?.id || 'gang_fraud'}>
+            <S4CardScoreHead sec={gangSec} showTotals={s4Tpl?.showSectionTotals} />
             <div className="grid grid-cols-1 gap-x-8 gap-y-2 sm:grid-cols-2 lg:grid-cols-3">
               {[
                 { k: '团伙标签', v: d.graph.gangTag },
@@ -694,7 +715,7 @@ export default function FraudScheme4Detail() {
               ].map((e) => (
                 <div key={e.k} className="flex items-center justify-between rounded-lg bg-slate-50 px-3.5 py-2">
                   <span className="text-sm text-slate-500">{e.k}</span>
-                  <span className="flex items-center"><span className="text-right text-sm font-medium text-ink-900">{e.v}</span><S4ScoreTag pts={gangLookup(e.k)} deduct={secDeduct('gang_fraud')} /></span>
+                  <span className="flex items-center"><span className="text-right text-sm font-medium text-ink-900">{e.v}</span><S4ScoreTag pts={gangLookup(e.k)} deduct={secDeduct(gangSec)} /></span>
                 </div>
               ))}
             </div>
@@ -731,9 +752,9 @@ export default function FraudScheme4Detail() {
             </div>
           </Panel>
 
-          {/* 七、黑名单命中详情 */}
-          <Panel title="七、黑名单命中详情" id="blacklist">
-            <S4CardScoreHead sec={s4Sections['blacklist_hit']} />
+          {/* 黑名单命中详情（contentSections[6]） */}
+          <Panel title={blkSec?.name || '黑名单命中详情'} id={blkSec?.id || 'blacklist_hit'}>
+            <S4CardScoreHead sec={blkSec} showTotals={s4Tpl?.showSectionTotals} />
             <div className="grid grid-cols-1 gap-x-8 gap-y-2 sm:grid-cols-2 lg:grid-cols-3">
               {[
                 { k: '黑名单类型', v: d.blacklistHit.type },
@@ -745,7 +766,7 @@ export default function FraudScheme4Detail() {
               ].map((e) => (
                 <div key={e.k} className="flex items-center justify-between rounded-lg bg-slate-50 px-3.5 py-2">
                   <span className="text-sm text-slate-500">{e.k}</span>
-                  <span className="flex items-center"><span className="text-right text-sm font-medium text-ink-900">{e.v}</span><S4ScoreTag pts={blkLookup(e.k === '入库时间' ? '命中时间' : e.k)} deduct={secDeduct('blacklist_hit')} /></span>
+                  <span className="flex items-center"><span className="text-right text-sm font-medium text-ink-900">{e.v}</span><S4ScoreTag pts={blkLookup(e.k === '入库时间' ? '命中时间' : e.k)} deduct={secDeduct(blkSec)} /></span>
                 </div>
               ))}
             </div>
@@ -775,7 +796,7 @@ export default function FraudScheme4Detail() {
                         <td className="px-3 py-2 text-slate-500">{r.reason}</td>
                         <td className="px-3 py-2 text-slate-500">{r.time}</td>
                         <td className={cn('px-3 py-2 font-medium', blacklistLevelCls[r.level])}>{r.level}</td>
-                        <td className="px-3 py-2"><S4ScoreTag pts={blkLookup('命中记录表')} deduct={secDeduct('blacklist_hit')} /></td>
+                        <td className="px-3 py-2"><S4ScoreTag pts={blkLookup('命中记录表')} deduct={secDeduct(blkSec)} /></td>
                       </tr>
                     ))}
                   </tbody>
@@ -784,9 +805,9 @@ export default function FraudScheme4Detail() {
             </div>
           </Panel>
 
-          {/* 八、历史欺诈记录 */}
-          <Panel title="八、历史欺诈记录" id="history">
-            <S4CardScoreHead sec={s4Sections['history_fraud']} />
+          {/* 历史欺诈记录（contentSections[7]） */}
+          <Panel title={hisSec?.name || '历史欺诈记录'} id={hisSec?.id || 'history_fraud'}>
+            <S4CardScoreHead sec={hisSec} showTotals={s4Tpl?.showSectionTotals} />
             <div className="mb-2 flex items-center text-xs font-medium text-slate-500">历史欺诈记录表</div>
             <div className="overflow-hidden rounded-xl border border-slate-100">
               <table className="w-full text-left text-xs">
@@ -814,7 +835,7 @@ export default function FraudScheme4Detail() {
                       <td className="px-3 py-2 text-ink-900">{h.result}</td>
                       <td className="px-3 py-2 text-slate-500">{h.operator}</td>
                       <td className="px-3 py-2 text-slate-500">{h.opTime}</td>
-                      <td className="px-3 py-2"><S4ScoreTag pts={hisLookup('历史欺诈记录表')} deduct={secDeduct('history_fraud')} /></td>
+                      <td className="px-3 py-2"><S4ScoreTag pts={hisLookup('历史欺诈记录表')} deduct={secDeduct(hisSec)} /></td>
                       </tr>
                   ))}
                 </tbody>

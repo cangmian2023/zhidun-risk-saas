@@ -415,7 +415,7 @@ function useVerifyActions(
   const closeSeg = () => setSegModal(null)
   const applySegAudit = (p: { result: ReviewResult; checks: string[]; opinionText: string; fileName: string }) => {
     const af = getAuditFlow('info_verify', effectiveGrade, segModal ?? 0)
-    const fallback = p.result === '通过' ? '复核通过' : p.result === '驳回' ? '待审核' : '复核拒绝'
+    const fallback = p.result === '通过' ? '复核通过' : p.result === '转人工' ? '待审核' : '复核拒绝'
     onApply({ operator: '初审：审核员 1；终审：主管 1', workStatus: (af.resultStates?.[p.result] as VerifyRow['workStatus']) ?? fallback })
     flash?.(`已审批（${p.result}）｜审核事项 ${p.checks.length} 项｜意见：${p.opinionText}${p.fileName ? `｜附件：${p.fileName}` : ''}`)
     closeSeg()
@@ -476,7 +476,7 @@ function useVerifyActions(
   // 收敛后的「审批」入口：弹窗内容由业务流程配置驱动（getAuditFlow → ApprovalModal）
   const applyAudit = (p: { result: ReviewResult; checks: string[]; opinionText: string; fileName: string }) => {
     const af = getAuditFlow('info_verify', effectiveGrade)
-    const fallback = p.result === '通过' ? '复核通过' : p.result === '驳回' ? '待审核' : '复核拒绝'
+    const fallback = p.result === '通过' ? '复核通过' : p.result === '转人工' ? '待审核' : '复核拒绝'
     const next: Partial<VerifyRow> = { operator: '初审：审核员 1；终审：主管 1', workStatus: (af.resultStates?.[p.result] as VerifyRow['workStatus']) ?? fallback }
     onApply(next)
     flash?.(`已审批（${p.result}）｜审核事项 ${p.checks.length} 项｜意见：${p.opinionText}${p.fileName ? `｜附件：${p.fileName}` : ''}`)

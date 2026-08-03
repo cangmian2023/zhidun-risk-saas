@@ -2,20 +2,31 @@ import { useMemo, useRef, useState, type CSSProperties } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { PageHeader, Panel, Badge, StatCard, SingleSelect, Button, DecisionTag, StatusTag, type SelectOption } from '../components/ui'
 import {
-  VerifyRowActions,
   type VerifyRow,
-  type SysResult,
-  type WorkStatus,
 } from './VerifyOps'
+import { useTemplate } from './templateStore'
+import { matchGrade, scoreForVerifySys, computeReportTotal, type ScoreGrade } from './reportTemplateData'
 import seedJson from './infoVerify222Data.json'
+import detailSamples from './infoVerify222DetailData.json'
+import defaultSample from './infoVerify222Sample.json'
 
-/* ───────────────────────── 信息核验222 · 数据从本地 JSON 读取 ───────────────────────── */
-const SYS_RESULTS: SysResult[] = ['处理中', '通过', '拒绝', '预警']
-const WORK_STATUSES: WorkStatus[] = [
-  '核验计算中', '待确认', '已确认', '待审核', '提交复核', '复核通过', '复核拒绝', '强制放行',
-]
+/* ───────────────────────── 信息核验222 · 数据从本地 JSON 读取，得分/自动审核按模板分段生成 ───────────────────────── */
+const SYS_RESULTS: string[] = ['处理中', '通过', '转人工', '拒绝']
 
 const seedRows: VerifyRow[] = seedJson as VerifyRow[]
+
+/* 来源调试标签（与详情页一致）：蓝=模板配置 / 橙=本地JSON数据 / 灰=实时算法 */
+const tagS: CSSProperties = { display: 'inline-block', fontSize: 9, fontFamily: 'monospace', padding: '0 3px', borderRadius: 2, marginLeft: 3, verticalAlign: 'middle', lineHeight: '14px', fontWeight: 400 }
+const Tpl = ({ f, v }: { f: string; v?: any }) => <span style={{ ...tagS, background: '#DBEAFE', color: '#1D4ED8', border: '1px solid #93C5FD' }}>{f}={v ?? 'null'}</span>
+const Dat = ({ f, v }: { f: string; v?: any }) => <span style={{ ...tagS, background: '#FFF7ED', color: '#C2410C', border: '1px solid #FDBA74' }}>{f}={v ?? 'null'}</span>
+const Cal = ({ f, v }: { f: string; v?: any }) => <span style={{ ...tagS, background: '#F3F4F6', color: '#6B7280', border: '1px solid #D1D5DB' }}>{f}={v ?? 'null'}</span>
+
+/* 行增强：按模板分段生成得分与自动审核结果 */
+interface Row222 extends VerifyRow {
+  segScore: number | null
+  segGrade?: string
+  segResult: string
+}
 
 const PRODUCTS = ['信用贷', '抵押贷', '经营贷']
 const CHANNELS = ['APP', 'H5', '小程序', '线下']
@@ -25,12 +36,14 @@ const TIME_OPTIONS: SelectOption[] = [
   { value: '90', label: '近 90 天' },
 ]
 
-const SYS_KIND: Record<SysResult, 'gray' | 'green' | 'red' | 'amber'> = {
-  处理中: 'gray', 通过: 'green', 拒绝: 'red', 预警: 'amber',
+const SYS_KIND: Record<string, 'gray' | 'green' | 'red' | 'amber'> = {
+  处理中: 'gray', 通过: 'green', 拒绝: 'red', 预警: 'amber', 转人工: 'amber',
 }
-const WORK_KIND: Record<WorkStatus, 'gray' | 'blue' | 'green' | 'amber' | 'red' | 'violet'> = {
+/* 人工审核状态配色：模板 statusEnum（待人工/通过/拒绝/驳回）+ 兼容旧值 */
+const WORK_KIND: Record<string, 'gray' | 'blue' | 'green' | 'amber' | 'red' | 'violet'> = {
   核验计算中: 'gray', 待确认: 'blue', 已确认: 'green', 待审核: 'amber',
   提交复核: 'amber', '复核通过': 'green', '复核拒绝': 'red', 强制放行: 'violet',
+  待人工: 'blue', 通过: 'green', 拒绝: 'red', 驳回: 'amber',
 }
 
 function MultiChip<T extends string>({ label, options, selected, onChange }: {
@@ -80,12 +93,35 @@ const bodyStyle = (w: number, side: Side, offset = 0): CSSProperties => {
 }
 
 export default function InfoVerify222() {
-  const [rows] = useState<VerifyRow[]>(seedRows)
+  const tpl = useTemplate('tpl-info-backup222') ?? useTemplate(undefined, 'info_verify')
+  const grades: ScoreGrade[] = tpl?.scoreDisplay.grades ?? []
+  // 得分/自动审核：先按原 sysResult 反推落段（通过→A、预警/转人工→B、拒绝→C），
+  // 得分 = 该段样例数据经模板公式实时算出的总分（与详情页共用 computeReportTotal，两边必然一致）
+  const [rows] = useState<Row222[]>(() =>
+    seedRows.map((r) => {
+      const design = scoreForVerifySys(r.sysResult, grades)
+      const seg = design != null ? matchGrade(design, grades) : undefined
+      const sampleData: any = (seg && (detailSamples as any)[seg.grade]) || defaultSample
+      const sc = seg && tpl ? computeReportTotal(tpl, sampleData).total : null
+      const g = sc != null ? matchGrade(sc, grades) : undefined
+      return { ...r, segScore: sc, segGrade: g?.grade ?? seg?.grade, segResult: g?.autoResult ?? r.sysResult }
+    }),
+  )
+  // 该行落段对应的人工审核业务流程按钮（与详情页第二卡片一致：模板 businessFlow → flowGraphs 起点按钮名）
+  const segButtonsOf = (gradeId?: string): string[] => {
+    if (!gradeId || !tpl) return []
+    return (tpl.businessFlow ?? [])
+      .filter((bf) => bf.gradeId === gradeId)
+      .flatMap((bf) => bf.flowGraphs ?? [])
+      .map((fg) => fg.nodes.find((n) => n.type === 'start')?.buttonName ?? fg.name ?? '操作')
+  }
   const [kw, setKw] = useState('')
+  // 人工审核状态枚举：来自模板「人工审核配置 - 状态枚举类」（flowBlock.statusEnum），用户数据（json）值须在其内
+  const statusEnum: string[] = tpl?.flowBlock?.statusEnum?.length ? tpl.flowBlock.statusEnum : ['待人工', '通过', '拒绝', '驳回']
   const [products, setProducts] = useState<string[]>([])
   const [channels, setChannels] = useState<string[]>([])
-  const [sysResults, setSysResults] = useState<SysResult[]>([])
-  const [workStatuses, setWorkStatuses] = useState<WorkStatus[]>([])
+  const [sysResults, setSysResults] = useState<string[]>([])
+  const [workStatuses, setWorkStatuses] = useState<string[]>([])
   const [opKw, setOpKw] = useState('')
   const [creditMax, setCreditMax] = useState('')
   const [amountMax, setAmountMax] = useState('')
@@ -117,10 +153,10 @@ export default function InfoVerify222() {
       if (kw && !`${r.id} ${r.name}`.toLowerCase().includes(kw.toLowerCase())) return false
       if (products.length && !products.includes(r.product)) return false
       if (channels.length && !channels.includes(r.channel)) return false
-      if (sysResults.length && !sysResults.includes(r.sysResult)) return false
+      if (sysResults.length && !sysResults.includes(r.segResult)) return false
       if (workStatuses.length && !workStatuses.includes(r.workStatus)) return false
       if (opKw && !r.operator.toLowerCase().includes(opKw.toLowerCase())) return false
-      if (creditMax && 100 - r.fraudScore > Number(creditMax)) return false
+      if (creditMax && r.segScore != null && r.segScore > Number(creditMax)) return false
       if (amountMax && r.amount > Number(amountMax)) return false
       if (timeRange) {
         const t = new Date(r.auditTime.replace(' ', 'T')).getTime()
@@ -161,12 +197,12 @@ export default function InfoVerify222() {
               <MultiChip label="产品" options={PRODUCTS} selected={products} onChange={setProducts} />
               <MultiChip label="渠道" options={CHANNELS} selected={channels} onChange={setChannels} />
               <MultiChip label="自动审核" options={SYS_RESULTS} selected={sysResults} onChange={setSysResults} />
-              <MultiChip label="人工审核" options={WORK_STATUSES} selected={workStatuses} onChange={setWorkStatuses} />
+              <MultiChip label="人工审核" options={statusEnum} selected={workStatuses} onChange={setWorkStatuses} />
               <input value={opKw} onChange={(e) => setOpKw(e.target.value)} placeholder="搜索审核人" className="w-40 rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100" />
             </div>
             <div className="hidden min-w-[1rem] flex-1 xl:block" />
             <div className="flex flex-wrap items-center gap-3">
-              <input value={creditMax} onChange={(e) => setCreditMax(e.target.value)} placeholder="信用值 ≤" className="w-28 rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-violet-400" />
+              <input value={creditMax} onChange={(e) => setCreditMax(e.target.value)} placeholder="得分 ≤" className="w-28 rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-violet-400" />
               <input value={amountMax} onChange={(e) => setAmountMax(e.target.value)} placeholder="申请额度 ≤" className="w-28 rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-violet-400" />
               <SingleSelect label="申请时间" options={TIME_OPTIONS} value={timeRange} onChange={setTimeRange} clearable />
               <Button variant="ghost" onClick={resetFilters}>重置</Button>
@@ -184,7 +220,7 @@ export default function InfoVerify222() {
                   <th style={headStyle(C.product, null)} className="border-b border-slate-200 bg-slate-50 px-3 py-3 text-left font-medium">产品</th>
                   <th style={headStyle(C.channel, null)} className="border-b border-slate-200 bg-slate-50 px-3 py-3 text-left font-medium">渠道</th>
                   <th style={headStyle(C.amount, null)} className="border-b border-slate-200 bg-slate-50 px-3 py-3 text-right font-medium">申请额度</th>
-                  <th style={headStyle(C.score, null)} className="border-b border-slate-200 bg-slate-50 px-3 py-3 text-right font-medium">信用值</th>
+                  <th style={headStyle(C.score, null)} className="border-b border-slate-200 bg-slate-50 px-3 py-3 text-right font-medium">得分</th>
                   <th style={headStyle(C.sys, null)} className="border-b border-slate-200 bg-slate-50 px-3 py-3 text-center font-medium">自动审核</th>
                   <th style={headStyle(C.work, null)} className="border-b border-slate-200 bg-slate-50 px-3 py-3 text-center font-medium">人工审核</th>
                   <th style={headStyle(C.operator, null)} className="border-b border-slate-200 bg-slate-50 px-3 py-3 text-left font-medium">审核人</th>
@@ -194,29 +230,42 @@ export default function InfoVerify222() {
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {pageRows.map((r) => {
-                  const credit = 100 - r.fraudScore
+                  const seg = r.segScore != null ? matchGrade(r.segScore, grades) : undefined
                   return (
                     <tr key={r.id} className="group hover:bg-slate-50/60">
                       <td style={bodyStyle(C.id, 'left', 0)} className="whitespace-nowrap bg-white px-3 py-3 font-mono text-xs text-slate-700 group-hover:bg-slate-50/60">
                         <button onClick={() => goReport(r)} className="font-medium text-brand-600 hover:underline">{r.id}</button>
+                        <Dat f="JSON:id" v={r.id} />
                       </td>
-                      <td style={bodyStyle(C.name, 'left', C.id)} className="whitespace-nowrap bg-white px-3 py-3 text-slate-800 group-hover:bg-slate-50/60">{r.name}</td>
-                      <td style={bodyStyle(C.product, null)} className="whitespace-nowrap px-3 py-3 text-slate-600">{r.product}</td>
-                      <td style={bodyStyle(C.channel, null)} className="whitespace-nowrap px-3 py-3 text-slate-600">{r.channel}</td>
-                      <td style={bodyStyle(C.amount, null)} className="whitespace-nowrap px-3 py-3 text-right tabular-nums text-slate-700">¥{r.amount.toLocaleString()}</td>
+                      <td style={bodyStyle(C.name, 'left', C.id)} className="whitespace-nowrap bg-white px-3 py-3 text-slate-800 group-hover:bg-slate-50/60">{r.name}<Dat f="JSON:name" v={r.name} /></td>
+                      <td style={bodyStyle(C.product, null)} className="whitespace-nowrap px-3 py-3 text-slate-600">{r.product}<Dat f="JSON:product" v={r.product} /></td>
+                      <td style={bodyStyle(C.channel, null)} className="whitespace-nowrap px-3 py-3 text-slate-600">{r.channel}<Dat f="JSON:channel" v={r.channel} /></td>
+                      <td style={bodyStyle(C.amount, null)} className="whitespace-nowrap px-3 py-3 text-right tabular-nums text-slate-700">¥{r.amount.toLocaleString()}<Dat f="JSON:amount" v={r.amount} /></td>
                       <td style={bodyStyle(C.score, null)} className="whitespace-nowrap px-3 py-3 text-right">
-                        <span className={`tabular-nums font-semibold ${credit >= 80 ? 'text-emerald-600' : credit >= 20 ? 'text-amber-600' : 'text-rose-600'}`}>{credit}</span>
+                        {r.segScore != null ? (
+                          <span className="tabular-nums font-semibold" style={{ color: seg?.color ?? '#6B7280' }}>{r.segScore}</span>
+                        ) : (
+                          <span className="text-slate-300">—</span>
+                        )}
+                        <Cal f="模板分段生成" v={r.segScore ?? '—'} />
                       </td>
                       <td style={bodyStyle(C.sys, null)} className="whitespace-nowrap px-3 py-3 text-center">
-                        <DecisionTag kind={SYS_KIND[r.sysResult]} soft={r.sysResult === '处理中'}>{r.sysResult}</DecisionTag>
+                        <DecisionTag kind={SYS_KIND[r.segResult]} soft={r.segResult === '处理中'}>{r.segResult}</DecisionTag>
+                        <Cal f="matchGrade" v={r.segResult} />
                       </td>
                       <td style={bodyStyle(C.work, null)} className="whitespace-nowrap px-3 py-3 text-center">
                         <StatusTag kind={WORK_KIND[r.workStatus]}>{r.workStatus}</StatusTag>
+                        <Dat f="JSON:workStatus" v={r.workStatus} />
                       </td>
-                      <td style={bodyStyle(C.operator, null)} className="whitespace-nowrap px-3 py-3 text-slate-600">{r.operator}</td>
+                      <td style={bodyStyle(C.operator, null)} className="whitespace-nowrap px-3 py-3 text-slate-600">{r.operator}<Dat f="JSON:operator" v={r.operator} /></td>
                       <td style={bodyStyle(C.time, null)} className="whitespace-nowrap px-3 py-3 tabular-nums text-slate-500">{r.auditTime}</td>
                       <td style={bodyStyle(C.op, 'right', 0)} className="whitespace-nowrap bg-white px-3 py-3 pr-[22px] text-left group-hover:bg-slate-50/60">
-                        <VerifyRowActions row={r} onApply={() => {}} onView={() => goReport(r)} flash={() => {}} />
+                        <div className="flex flex-wrap items-center justify-start gap-3">
+                          <button type="button" onClick={() => goReport(r)} className="whitespace-nowrap text-xs font-medium text-brand-600 hover:underline">查看</button>
+                          {segButtonsOf(r.segGrade).map((b, bi) => (
+                            <button key={`${r.id}-seg-${bi}`} type="button" onClick={() => goReport(r)} className="whitespace-nowrap text-xs font-medium text-brand-600 hover:underline">{b}<Tpl f="业务按钮" v={b} /></button>
+                          ))}
+                        </div>
                       </td>
                     </tr>
                   )

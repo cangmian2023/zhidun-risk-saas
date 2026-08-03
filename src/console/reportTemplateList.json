@@ -1,0 +1,118 @@
+[
+  {
+    "id": "tpl-info-standard",
+    "name": "标准信息核验报告模板",
+    "reportType": "info_verify",
+    "status": "已启用",
+    "isDefault": true,
+    "version": "V2.1",
+    "lastEditor": "admin",
+    "lastEditTime": "今天",
+    "scope": [
+      "全产品"
+    ],
+    "description": "信息核验报告标准展示模板，覆盖全部 7 个分段。异常值越高风险越高。",
+    "sectionCount": 7,
+    "visibleCount": 7
+  },
+  {
+    "id": "tpl-credit-loan",
+    "name": "信用贷信用风控报告模板",
+    "reportType": "credit",
+    "status": "已启用",
+    "isDefault": false,
+    "version": "V1.3",
+    "lastEditor": "主管",
+    "lastEditTime": "3天前",
+    "scope": [
+      "工薪贷",
+      "公积金贷",
+      "社保贷",
+      "学历贷",
+      "商户贷"
+    ],
+    "description": "面向信用贷客群的信用风控报告模板。",
+    "sectionCount": 8,
+    "visibleCount": 8
+  },
+  {
+    "id": "tpl-fraud-standard",
+    "name": "欺诈识别标准模板",
+    "reportType": "fraud",
+    "status": "草稿",
+    "isDefault": false,
+    "version": "V1.0",
+    "lastEditor": "admin",
+    "lastEditTime": "刚刚",
+    "scope": [
+      "全产品"
+    ],
+    "description": "欺诈识别报告草稿模板，待配置后启用。",
+    "sectionCount": 11,
+    "visibleCount": 11
+  },
+  {
+    "id": "tpl-decision-standard",
+    "name": "决策报告综合模板",
+    "reportType": "decision",
+    "status": "已停用",
+    "isDefault": false,
+    "version": "V1.2",
+    "lastEditor": "admin",
+    "lastEditTime": "1周前",
+    "scope": [
+      "全产品"
+    ],
+    "description": "整合三大报告的综合决策报告模板，当前已停用。",
+    "sectionCount": 7,
+    "visibleCount": 7
+  },
+  {
+    "id": "tpl-info-authority",
+    "name": "权威信息核验报告模板（备用）",
+    "reportType": "info_verify",
+    "status": "草稿",
+    "isDefault": false,
+    "version": "V1.0",
+    "lastEditor": "admin",
+    "lastEditTime": "今天",
+    "scope": [
+      "全产品"
+    ],
+    "description": "依据行业权威身份核验能力设计的备用演示模板：8 个集合均已配置具体数据项（数据源绑定/脱敏/计分条件），覆盖身份证要素、人像比对、活体、OCR、银行卡、运营商、黑名单、设备、多头。用于验证「模板驱动报告」链路，不替换现有标准模板。",
+    "sectionCount": 8,
+    "visibleCount": 8
+  },
+  {
+    "id": "tpl-info-backup222",
+    "name": "综合信用模型（方案222备用）",
+    "reportType": "info_verify",
+    "status": "草稿",
+    "isDefault": false,
+    "version": "V2.6风控策略集",
+    "lastEditor": "admin",
+    "lastEditTime": "2026-07-21",
+    "scope": [
+      "全产品"
+    ],
+    "description": "方案222 备用：按 0802 映射关系新建的模板 + 样例数据，用于验证「模板驱动还原报告」。不替换现有信息核验标准模板。",
+    "sectionCount": 7,
+    "visibleCount": 7
+  },
+  {
+    "id": "tpl-null",
+    "name": "空模板（所有字段值为null）",
+    "reportType": "info_verify",
+    "status": "草稿",
+    "isDefault": false,
+    "version": null,
+    "lastEditor": null,
+    "lastEditTime": null,
+    "scope": [
+      "全产品"
+    ],
+    "description": "",
+    "sectionCount": 7,
+    "visibleCount": 7
+  }
+]

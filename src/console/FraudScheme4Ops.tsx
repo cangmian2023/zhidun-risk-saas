@@ -225,7 +225,7 @@ function fraudScheme4UseActions(
   const applyAudit = (p: { result: ReviewResult; checks: string[]; opinionText: string; fileName: string }) => {
     const fallback: Record<ReviewResult, FraudS4WorkStatus> = {
       通过: '已确认',
-      驳回: '待审核',
+      转人工: '待审核',
       拒绝: '复核拒绝 - 拒绝办结',
     }
     const af = getAuditFlow('fraud', row.scoreBand)

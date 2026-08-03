@@ -1,0 +1,27 @@
+{
+  "scoreLabel": "信用评分",
+  "sections": {
+    "applicant_info": {
+      "ai_name": "李*",
+      "ai_id": "4401**********21",
+      "ai_phone": "139****2233",
+      "ai_age": "29",
+      "ai_edu": "硕士",
+      "ai_company": "**软件",
+      "ai_income": "3 万",
+      "ai_marriage": "未婚"
+    },
+    "credit_suggestion": {
+      "cs_text": "建议正常授信",
+      "cs_pos": "收入稳定、历史良好",
+      "cs_risk": "负债略高",
+      "cs_ops": "审核通过 / 拒绝授信 / 提交人工复核 / 退回补充材料"
+    },
+    "history_records": {
+      "hr_table": "2024 授信 3 万 正常结清"
+    },
+    "credit_logs": {
+      "cl_timeline": "14:10 初审通过"
+    }
+  }
+}

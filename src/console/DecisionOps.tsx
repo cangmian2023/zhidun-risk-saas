@@ -207,7 +207,7 @@ export function useDecisionActions(row: DecisionRow | null, onApply: (patch: Par
   const applySeg = (p: { result: ReviewResult; checks: string[]; opinionText: string; fileName: string }) => {
     if (!row) return
     const af = getAuditFlow('decision', row.suggestion, segModal ?? 0)
-    const fallback: ApprovalStatus = p.result === '通过' ? '审批中' : p.result === '驳回' ? '已退回' : '已拒绝'
+    const fallback: ApprovalStatus = p.result === '通过' ? '审批中' : p.result === '转人工' ? '已退回' : '已拒绝'
     onApply({ approvalStatus: ((af.resultStates?.[p.result] ?? fallback) as ApprovalStatus), operator: '李娜' })
     flash(`已审批（${p.result}）｜审核事项 ${p.checks.length} 项｜意见：${p.opinionText}${p.fileName ? `｜附件：${p.fileName}` : ''}`)
     closeSeg()

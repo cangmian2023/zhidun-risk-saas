@@ -39,7 +39,7 @@ export function Panel({
   className = '',
 }: {
   title?: string
-  desc?: string
+  desc?: string | ReactNode
   note?: string
   actions?: ReactNode
   children: ReactNode
