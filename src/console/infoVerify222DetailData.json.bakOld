@@ -1,0 +1,1106 @@
+{
+  "A": {
+    "reportId": "CR20260801001",
+    "computedAt": "2026-08-01 14:35:12",
+    "basic_info": {
+      "基础资料": [
+        {
+          "field": "姓名",
+          "value": "张*明",
+          "valid": true,
+          "score": 5
+        },
+        {
+          "field": "身份证号",
+          "value": "3301**********1234",
+          "valid": true,
+          "score": 5
+        },
+        {
+          "field": "手机号",
+          "value": "138****6688",
+          "valid": true,
+          "score": 5
+        },
+        {
+          "field": "银行卡号",
+          "value": "6222********1234",
+          "valid": true,
+          "score": 5
+        },
+        {
+          "field": "开户行",
+          "value": "工商银行杭州分行",
+          "valid": true,
+          "score": 5
+        },
+        {
+          "field": "年龄",
+          "value": "32",
+          "valid": true,
+          "score": 5
+        },
+        {
+          "field": "学历",
+          "value": "本科",
+          "valid": true,
+          "score": 5
+        },
+        {
+          "field": "工作单位",
+          "value": "杭州某科技有限公司",
+          "valid": true,
+          "score": 5
+        },
+        {
+          "field": "月收入",
+          "value": "¥15,000",
+          "valid": true,
+          "score": 5
+        },
+        {
+          "field": "居住地址",
+          "value": "杭州市西湖区",
+          "valid": true,
+          "score": 5
+        },
+        {
+          "field": "婚姻",
+          "value": "已婚",
+          "valid": true,
+          "score": 0
+        }
+      ],
+      "环境采集": [
+        {
+          "field": "设备指纹",
+          "value": "FP-9A2B7C",
+          "valid": true,
+          "score": 5
+        },
+        {
+          "field": "IP地址",
+          "value": "223.104.12.88",
+          "valid": true,
+          "score": 5
+        },
+        {
+          "field": "GPS定位",
+          "value": "杭州·西湖区",
+          "valid": true,
+          "score": 0
+        },
+        {
+          "field": "进件渠道",
+          "value": "APP",
+          "valid": true,
+          "score": 0
+        },
+        {
+          "field": "APP版本",
+          "value": "v3.2.1",
+          "valid": true,
+          "score": 0
+        }
+      ]
+    },
+    "id_images": [
+      {
+        "name": "身份证人像面",
+        "value": "已采集",
+        "valid": true,
+        "score": 5,
+        "type": "图片"
+      },
+      {
+        "name": "身份证国徽面",
+        "value": "已采集",
+        "valid": true,
+        "score": 5,
+        "type": "图片"
+      },
+      {
+        "name": "活体人脸",
+        "value": "活体通过",
+        "valid": true,
+        "score": 5,
+        "type": "视频"
+      },
+      {
+        "name": "银行卡",
+        "value": "已采集",
+        "valid": true,
+        "score": 5,
+        "type": "图片"
+      },
+      {
+        "name": "OCR识别文本",
+        "value": "姓名/证件号一致",
+        "valid": true,
+        "score": 0,
+        "type": "图片"
+      }
+    ],
+    "single_verify": [
+      {
+        "name": "公安实名",
+        "conclusion": "通过",
+        "score": 5,
+        "callStatus": "success",
+        "costMs": 120,
+        "verifyTime": "2026-08-01 14:33:50",
+        "channel": "公安",
+        "items": [
+          {
+            "label": "姓名一致",
+            "value": "一致",
+            "status": "pass"
+          },
+          {
+            "label": "证件号一致",
+            "value": "一致",
+            "status": "pass"
+          }
+        ]
+      },
+      {
+        "name": "银行卡四要素",
+        "conclusion": "通过",
+        "score": 0,
+        "callStatus": "success",
+        "costMs": 85,
+        "verifyTime": "2026-08-01 14:33:55",
+        "channel": "银联",
+        "items": [
+          {
+            "label": "姓名",
+            "value": "一致",
+            "status": "pass"
+          },
+          {
+            "label": "证件号",
+            "value": "一致",
+            "status": "pass"
+          }
+        ]
+      },
+      {
+        "name": "运营商实名",
+        "conclusion": "通过",
+        "score": 0,
+        "callStatus": "success",
+        "costMs": 95,
+        "verifyTime": "2026-08-01 14:34:00",
+        "channel": "运营商",
+        "items": [
+          {
+            "label": "实名状态",
+            "value": "已实名",
+            "status": "pass"
+          }
+        ]
+      },
+      {
+        "name": "设备真实性",
+        "conclusion": "通过",
+        "score": 0,
+        "callStatus": "success",
+        "costMs": 150,
+        "verifyTime": "2026-08-01 14:34:05",
+        "channel": "设备指纹",
+        "items": [
+          {
+            "label": "设备类型",
+            "value": "真实设备",
+            "status": "pass"
+          },
+          {
+            "label": "模拟器检测",
+            "value": "未检出",
+            "status": "pass"
+          }
+        ]
+      },
+      {
+        "name": "联防联控",
+        "conclusion": "通过",
+        "score": 0,
+        "callStatus": "success",
+        "costMs": 110,
+        "verifyTime": "2026-08-01 14:34:10",
+        "channel": "联防联控",
+        "items": [
+          {
+            "label": "黑名单",
+            "value": "未命中",
+            "status": "pass"
+          },
+          {
+            "label": "多头借贷",
+            "value": "1 笔",
+            "status": "pass"
+          }
+        ]
+      }
+    ],
+    "cross_fusion": [
+      {
+        "name": "设备真实性",
+        "conclusion": "通过",
+        "score": 5,
+        "items": [
+          {
+            "label": "设备类型",
+            "value": "真实设备",
+            "status": "pass"
+          },
+          {
+            "label": "模拟器",
+            "value": "未检出",
+            "status": "pass"
+          }
+        ],
+        "costMs": 80,
+        "verifyTime": "2026-08-01 14:34:15",
+        "channel": "设备指纹"
+      },
+      {
+        "name": "联防联控",
+        "conclusion": "通过",
+        "score": 5,
+        "items": [
+          {
+            "label": "命中项",
+            "value": "无",
+            "status": "pass"
+          }
+        ],
+        "costMs": 65,
+        "verifyTime": "2026-08-01 14:34:16",
+        "channel": "联防联控"
+      },
+      {
+        "name": "设备群控",
+        "conclusion": "通过",
+        "score": 5,
+        "items": [
+          {
+            "label": "群控特征",
+            "value": "未发现",
+            "status": "pass"
+          }
+        ],
+        "costMs": 90,
+        "verifyTime": "2026-08-01 14:34:17",
+        "channel": "设备指纹"
+      },
+      {
+        "name": "团伙关联",
+        "conclusion": "通过",
+        "score": 5,
+        "items": [
+          {
+            "label": "关联人",
+            "value": "无",
+            "status": "pass"
+          }
+        ],
+        "costMs": 70,
+        "verifyTime": "2026-08-01 14:34:18",
+        "channel": "关联网络"
+      },
+      {
+        "name": "黑名单命中",
+        "conclusion": "未命中",
+        "score": 0,
+        "items": [
+          {
+            "label": "黑名单类型",
+            "value": "无",
+            "status": "pass"
+          }
+        ],
+        "costMs": 55,
+        "verifyTime": "2026-08-01 14:34:19",
+        "channel": "风控"
+      }
+    ],
+    "op_logs": [
+      {
+        "time": "2026-08-01 14:35:12",
+        "actor": "系统",
+        "action": "生成报告",
+        "detail": "综合信用模型 V2.6 自动生成"
+      },
+      {
+        "time": "2026-08-01 14:34:12",
+        "actor": "数据源",
+        "action": "核验完成",
+        "detail": "多源核验全部完成"
+      },
+      {
+        "time": "2026-08-01 14:33:50",
+        "actor": "风控",
+        "action": "规则评估",
+        "detail": "特殊命中规则评估完成"
+      }
+    ],
+    "specialRules": [
+      {
+        "ruleId": "sr1",
+        "hit": false
+      },
+      {
+        "ruleId": "sr2",
+        "hit": false
+      },
+      {
+        "ruleId": "sr3",
+        "hit": false
+      },
+      {
+        "ruleId": "sr4",
+        "hit": false
+      }
+    ]
+  },
+  "B": {
+    "reportId": "CR20260801002",
+    "computedAt": "2026-08-01 15:13:40",
+    "basic_info": {
+      "基础资料": [
+        {
+          "field": "姓名",
+          "value": "李*娜",
+          "valid": true,
+          "score": 5
+        },
+        {
+          "field": "身份证号",
+          "value": "4201**********5678",
+          "valid": true,
+          "score": 5
+        },
+        {
+          "field": "手机号",
+          "value": "139****2233",
+          "valid": true,
+          "score": 5
+        },
+        {
+          "field": "银行卡号",
+          "value": "6228********8899",
+          "valid": true,
+          "score": 5
+        },
+        {
+          "field": "开户行",
+          "value": "建设银行武汉分行",
+          "valid": true,
+          "score": 5
+        },
+        {
+          "field": "年龄",
+          "value": "28",
+          "valid": true,
+          "score": 5
+        },
+        {
+          "field": "学历",
+          "value": "大专",
+          "valid": true,
+          "score": 0
+        },
+        {
+          "field": "工作单位",
+          "value": "武汉某商贸公司",
+          "valid": true,
+          "score": 0
+        },
+        {
+          "field": "月收入",
+          "value": "¥8,000",
+          "valid": true,
+          "score": 0
+        },
+        {
+          "field": "居住地址",
+          "value": "武汉市洪山区",
+          "valid": true,
+          "score": 0
+        },
+        {
+          "field": "婚姻",
+          "value": "未婚",
+          "valid": true,
+          "score": 0
+        }
+      ],
+      "环境采集": [
+        {
+          "field": "设备指纹",
+          "value": "FP-7C3D8E",
+          "valid": true,
+          "score": 0
+        },
+        {
+          "field": "IP地址",
+          "value": "113.57.190.22",
+          "valid": true,
+          "score": 0
+        },
+        {
+          "field": "GPS定位",
+          "value": "武汉·洪山区",
+          "valid": true,
+          "score": 0
+        },
+        {
+          "field": "进件渠道",
+          "value": "线下",
+          "valid": true,
+          "score": 2
+        },
+        {
+          "field": "APP版本",
+          "value": "v3.2.0",
+          "valid": true,
+          "score": 0
+        }
+      ]
+    },
+    "id_images": [
+      {
+        "name": "身份证人像面",
+        "value": "已采集",
+        "valid": true,
+        "score": 5,
+        "type": "图片"
+      },
+      {
+        "name": "身份证国徽面",
+        "value": "已采集",
+        "valid": true,
+        "score": 5,
+        "type": "图片"
+      },
+      {
+        "name": "活体人脸",
+        "value": "活体通过",
+        "valid": true,
+        "score": 2,
+        "type": "视频"
+      },
+      {
+        "name": "银行卡",
+        "value": "已采集",
+        "valid": true,
+        "score": 0,
+        "type": "图片"
+      },
+      {
+        "name": "OCR识别文本",
+        "value": "姓名/证件号一致",
+        "valid": true,
+        "score": 0,
+        "type": "图片"
+      }
+    ],
+    "single_verify": [
+      {
+        "name": "公安实名",
+        "conclusion": "通过",
+        "score": 5,
+        "callStatus": "success",
+        "costMs": 118,
+        "verifyTime": "2026-08-01 15:12:50",
+        "channel": "公安",
+        "items": [
+          {
+            "label": "姓名一致",
+            "value": "一致",
+            "status": "pass"
+          },
+          {
+            "label": "证件号一致",
+            "value": "一致",
+            "status": "pass"
+          }
+        ]
+      },
+      {
+        "name": "银行卡四要素",
+        "conclusion": "通过",
+        "score": 5,
+        "callStatus": "success",
+        "costMs": 88,
+        "verifyTime": "2026-08-01 15:12:55",
+        "channel": "银联",
+        "items": [
+          {
+            "label": "姓名",
+            "value": "一致",
+            "status": "pass"
+          },
+          {
+            "label": "证件号",
+            "value": "一致",
+            "status": "pass"
+          }
+        ]
+      },
+      {
+        "name": "运营商实名",
+        "conclusion": "通过",
+        "score": 5,
+        "callStatus": "success",
+        "costMs": 96,
+        "verifyTime": "2026-08-01 15:13:00",
+        "channel": "运营商",
+        "items": [
+          {
+            "label": "实名状态",
+            "value": "已实名",
+            "status": "pass"
+          }
+        ]
+      },
+      {
+        "name": "设备真实性",
+        "conclusion": "预警",
+        "score": 0,
+        "callStatus": "success",
+        "costMs": 148,
+        "verifyTime": "2026-08-01 15:13:05",
+        "channel": "设备指纹",
+        "items": [
+          {
+            "label": "设备类型",
+            "value": "真实设备",
+            "status": "pass"
+          },
+          {
+            "label": "模拟器检测",
+            "value": "疑似",
+            "status": "warn"
+          }
+        ]
+      },
+      {
+        "name": "联防联控",
+        "conclusion": "通过",
+        "score": 0,
+        "callStatus": "success",
+        "costMs": 108,
+        "verifyTime": "2026-08-01 15:13:10",
+        "channel": "联防联控",
+        "items": [
+          {
+            "label": "黑名单",
+            "value": "未命中",
+            "status": "pass"
+          },
+          {
+            "label": "多头借贷",
+            "value": "3 笔",
+            "status": "warn"
+          }
+        ]
+      }
+    ],
+    "cross_fusion": [
+      {
+        "name": "设备真实性",
+        "conclusion": "通过",
+        "score": 5,
+        "items": [
+          {
+            "label": "设备类型",
+            "value": "真实设备",
+            "status": "pass"
+          },
+          {
+            "label": "模拟器",
+            "value": "未检出",
+            "status": "pass"
+          }
+        ],
+        "costMs": 78,
+        "verifyTime": "2026-08-01 15:13:15",
+        "channel": "设备指纹"
+      },
+      {
+        "name": "联防联控",
+        "conclusion": "通过",
+        "score": 0,
+        "items": [
+          {
+            "label": "命中项",
+            "value": "多头 3 笔",
+            "status": "warn"
+          }
+        ],
+        "costMs": 66,
+        "verifyTime": "2026-08-01 15:13:16",
+        "channel": "联防联控"
+      },
+      {
+        "name": "设备群控",
+        "conclusion": "预警",
+        "score": -5,
+        "items": [
+          {
+            "label": "群控特征",
+            "value": "同网段 2 台",
+            "status": "warn"
+          }
+        ],
+        "costMs": 88,
+        "verifyTime": "2026-08-01 15:13:17",
+        "channel": "设备指纹"
+      },
+      {
+        "name": "团伙关联",
+        "conclusion": "通过",
+        "score": 5,
+        "items": [
+          {
+            "label": "关联人",
+            "value": "无",
+            "status": "pass"
+          }
+        ],
+        "costMs": 72,
+        "verifyTime": "2026-08-01 15:13:18",
+        "channel": "关联网络"
+      },
+      {
+        "name": "黑名单命中",
+        "conclusion": "未命中",
+        "score": -5,
+        "items": [
+          {
+            "label": "黑名单类型",
+            "value": "可疑名单 1 条",
+            "status": "warn"
+          }
+        ],
+        "costMs": 54,
+        "verifyTime": "2026-08-01 15:13:19",
+        "channel": "风控"
+      }
+    ],
+    "op_logs": [
+      {
+        "time": "2026-08-01 15:13:40",
+        "actor": "系统",
+        "action": "生成报告",
+        "detail": "综合信用模型 V2.6 自动生成"
+      },
+      {
+        "time": "2026-08-01 15:13:12",
+        "actor": "数据源",
+        "action": "核验完成",
+        "detail": "多源核验全部完成"
+      },
+      {
+        "time": "2026-08-01 15:12:50",
+        "actor": "风控",
+        "action": "规则评估",
+        "detail": "特殊命中规则评估完成"
+      }
+    ],
+    "specialRules": [
+      {
+        "ruleId": "sr1",
+        "hit": true,
+        "autoResult": "转人工",
+        "priority": "warning",
+        "note": "命中设备群控特征"
+      },
+      {
+        "ruleId": "sr2",
+        "hit": false
+      },
+      {
+        "ruleId": "sr3",
+        "hit": false
+      },
+      {
+        "ruleId": "sr4",
+        "hit": false
+      }
+    ]
+  },
+  "C": {
+    "reportId": "CR20260801003",
+    "computedAt": "2026-08-01 15:51:30",
+    "basic_info": {
+      "基础资料": [
+        {
+          "field": "姓名",
+          "value": "王*强",
+          "valid": true,
+          "score": 5
+        },
+        {
+          "field": "身份证号",
+          "value": "4401**********9012",
+          "valid": true,
+          "score": 5
+        },
+        {
+          "field": "手机号",
+          "value": "137****4411",
+          "valid": true,
+          "score": 0
+        },
+        {
+          "field": "银行卡号",
+          "value": "6217********3456",
+          "valid": false,
+          "score": 0
+        },
+        {
+          "field": "开户行",
+          "value": "农业银行深圳分行",
+          "valid": true,
+          "score": 0
+        },
+        {
+          "field": "年龄",
+          "value": "26",
+          "valid": true,
+          "score": 0
+        },
+        {
+          "field": "学历",
+          "value": "高中",
+          "valid": true,
+          "score": 0
+        },
+        {
+          "field": "工作单位",
+          "value": "自由职业",
+          "valid": false,
+          "score": 0
+        },
+        {
+          "field": "月收入",
+          "value": "¥5,000",
+          "valid": true,
+          "score": 0
+        },
+        {
+          "field": "居住地址",
+          "value": "深圳市龙岗区",
+          "valid": true,
+          "score": 0
+        },
+        {
+          "field": "婚姻",
+          "value": "未婚",
+          "valid": true,
+          "score": 0
+        }
+      ],
+      "环境采集": [
+        {
+          "field": "设备指纹",
+          "value": "FP-2E5F9A",
+          "valid": true,
+          "score": 0
+        },
+        {
+          "field": "IP地址",
+          "value": "183.14.132.66",
+          "valid": true,
+          "score": 0
+        },
+        {
+          "field": "GPS定位",
+          "value": "深圳市龙岗区",
+          "valid": true,
+          "score": 0
+        },
+        {
+          "field": "进件渠道",
+          "value": "H5",
+          "valid": true,
+          "score": 0
+        },
+        {
+          "field": "APP版本",
+          "value": "v3.1.9",
+          "valid": true,
+          "score": 0
+        }
+      ]
+    },
+    "id_images": [
+      {
+        "name": "身份证人像面",
+        "value": "已采集",
+        "valid": true,
+        "score": 5,
+        "type": "图片"
+      },
+      {
+        "name": "身份证国徽面",
+        "value": "已采集",
+        "valid": true,
+        "score": 0,
+        "type": "图片"
+      },
+      {
+        "name": "活体人脸",
+        "value": "活体通过",
+        "valid": true,
+        "score": 0,
+        "type": "视频"
+      },
+      {
+        "name": "银行卡",
+        "value": "已采集",
+        "valid": true,
+        "score": 0,
+        "type": "图片"
+      },
+      {
+        "name": "OCR识别文本",
+        "value": "姓名/证件号一致",
+        "valid": true,
+        "score": 0,
+        "type": "图片"
+      }
+    ],
+    "single_verify": [
+      {
+        "name": "公安实名",
+        "conclusion": "通过",
+        "score": 5,
+        "callStatus": "success",
+        "costMs": 122,
+        "verifyTime": "2026-08-01 15:50:50",
+        "channel": "公安",
+        "items": [
+          {
+            "label": "姓名一致",
+            "value": "一致",
+            "status": "pass"
+          },
+          {
+            "label": "证件号一致",
+            "value": "一致",
+            "status": "pass"
+          }
+        ]
+      },
+      {
+        "name": "银行卡四要素",
+        "conclusion": "通过",
+        "score": 5,
+        "callStatus": "success",
+        "costMs": 84,
+        "verifyTime": "2026-08-01 15:50:55",
+        "channel": "银联",
+        "items": [
+          {
+            "label": "姓名",
+            "value": "一致",
+            "status": "pass"
+          },
+          {
+            "label": "证件号",
+            "value": "一致",
+            "status": "pass"
+          }
+        ]
+      },
+      {
+        "name": "运营商实名",
+        "conclusion": "通过",
+        "score": 5,
+        "callStatus": "success",
+        "costMs": 94,
+        "verifyTime": "2026-08-01 15:51:00",
+        "channel": "运营商",
+        "items": [
+          {
+            "label": "实名状态",
+            "value": "已实名",
+            "status": "pass"
+          }
+        ]
+      },
+      {
+        "name": "设备真实性",
+        "conclusion": "预警",
+        "score": 5,
+        "callStatus": "success",
+        "costMs": 152,
+        "verifyTime": "2026-08-01 15:51:05",
+        "channel": "设备指纹",
+        "items": [
+          {
+            "label": "设备类型",
+            "value": "模拟器",
+            "status": "warn"
+          },
+          {
+            "label": "模拟器检测",
+            "value": "检出",
+            "status": "warn"
+          }
+        ]
+      },
+      {
+        "name": "联防联控",
+        "conclusion": "通过",
+        "score": 0,
+        "callStatus": "success",
+        "costMs": 109,
+        "verifyTime": "2026-08-01 15:51:10",
+        "channel": "联防联控",
+        "items": [
+          {
+            "label": "黑名单",
+            "value": "未命中",
+            "status": "pass"
+          },
+          {
+            "label": "多头借贷",
+            "value": "5 笔",
+            "status": "warn"
+          }
+        ]
+      }
+    ],
+    "cross_fusion": [
+      {
+        "name": "设备真实性",
+        "conclusion": "预警",
+        "score": -5,
+        "items": [
+          {
+            "label": "设备类型",
+            "value": "模拟器",
+            "status": "warn"
+          },
+          {
+            "label": "模拟器",
+            "value": "检出",
+            "status": "warn"
+          }
+        ],
+        "costMs": 82,
+        "verifyTime": "2026-08-01 15:51:15",
+        "channel": "设备指纹"
+      },
+      {
+        "name": "联防联控",
+        "conclusion": "通过",
+        "score": 0,
+        "items": [
+          {
+            "label": "命中项",
+            "value": "多头 5 笔",
+            "status": "warn"
+          }
+        ],
+        "costMs": 64,
+        "verifyTime": "2026-08-01 15:51:16",
+        "channel": "联防联控"
+      },
+      {
+        "name": "设备群控",
+        "conclusion": "预警",
+        "score": -5,
+        "items": [
+          {
+            "label": "群控特征",
+            "value": "同网段 5 台",
+            "status": "warn"
+          }
+        ],
+        "costMs": 92,
+        "verifyTime": "2026-08-01 15:51:17",
+        "channel": "设备指纹"
+      },
+      {
+        "name": "团伙关联",
+        "conclusion": "通过",
+        "score": 0,
+        "items": [
+          {
+            "label": "关联人",
+            "value": "无",
+            "status": "pass"
+          }
+        ],
+        "costMs": 68,
+        "verifyTime": "2026-08-01 15:51:18",
+        "channel": "关联网络"
+      },
+      {
+        "name": "黑名单命中",
+        "conclusion": "拒绝",
+        "score": -5,
+        "items": [
+          {
+            "label": "黑名单类型",
+            "value": "欺诈黑名单",
+            "status": "reject"
+          }
+        ],
+        "costMs": 56,
+        "verifyTime": "2026-08-01 15:51:19",
+        "channel": "风控"
+      }
+    ],
+    "op_logs": [
+      {
+        "time": "2026-08-01 15:51:30",
+        "actor": "系统",
+        "action": "生成报告",
+        "detail": "综合信用模型 V2.6 自动生成"
+      },
+      {
+        "time": "2026-08-01 15:51:12",
+        "actor": "数据源",
+        "action": "核验完成",
+        "detail": "多源核验全部完成"
+      },
+      {
+        "time": "2026-08-01 15:50:50",
+        "actor": "风控",
+        "action": "规则评估",
+        "detail": "特殊命中规则评估完成"
+      }
+    ],
+    "specialRules": [
+      {
+        "ruleId": "sr1",
+        "hit": false
+      },
+      {
+        "ruleId": "sr2",
+        "hit": true,
+        "autoResult": "拒绝",
+        "priority": "decisive",
+        "note": "命中风控黑名单"
+      },
+      {
+        "ruleId": "sr3",
+        "hit": false
+      },
+      {
+        "ruleId": "sr4",
+        "hit": true,
+        "autoResult": "拒绝",
+        "priority": "decisive",
+        "note": "活体检测分数偏低"
+      }
+    ]
+  }
+}

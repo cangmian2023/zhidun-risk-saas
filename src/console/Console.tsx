@@ -8,6 +8,12 @@ import PreVerifyDetail from './PreVerifyDetail'
 import InfoVerifyList from './InfoVerifyList'
 import InfoVerify222 from './InfoVerify222'
 import InfoVerify222Detail from './InfoVerify222Detail'
+import CreditVerify222 from './CreditVerify222'
+import CreditVerify222Detail from './CreditVerify222Detail'
+import FraudVerify222 from './FraudVerify222'
+import FraudVerify222Detail from './FraudVerify222Detail'
+import DecisionVerify222 from './DecisionVerify222'
+import DecisionVerify222Detail from './DecisionVerify222Detail'
 import FraudScheme4List from './FraudScheme4List'
 import FraudScheme4Detail from './FraudScheme4Detail'
 import CreditKimiList from './CreditKimiList'
@@ -121,6 +127,10 @@ export default function Console() {
     // 零售信贷风控
     'cr:pre-application': 'audit',
     'cr:pre-verify': 'verify',
+    'cr:pre-verify-222': 'verify',
+    'cr:credit-verify-222': 'shield',
+    'cr:fraud-verify-222': 'alert',
+    'cr:decision-verify-222': 'report',
     'cr:pre-verify-config': 'filter',
     'cr:credit-kimi': 'shield',
     'cr:credit-kimi-config': 'sliders',
@@ -418,6 +428,18 @@ export default function Console() {
               <InfoVerify222 />
             ) : key === 'cr:pre-verify-222-detail' ? (
               <InfoVerify222Detail />
+            ) : key === 'cr:credit-verify-222' ? (
+              <CreditVerify222 />
+            ) : key === 'cr:credit-verify-222-detail' ? (
+              <CreditVerify222Detail />
+            ) : key === 'cr:fraud-verify-222' ? (
+              <FraudVerify222 />
+            ) : key === 'cr:fraud-verify-222-detail' ? (
+              <FraudVerify222Detail />
+            ) : key === 'cr:decision-verify-222' ? (
+              <DecisionVerify222 />
+            ) : key === 'cr:decision-verify-222-detail' ? (
+              <DecisionVerify222Detail />
             ) : key === 'cr:pre-verify-detail' ? (
               <PreVerifyDetail />
             ) : key === 'cr:pre-fraud' ? (

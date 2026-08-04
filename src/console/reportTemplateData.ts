@@ -119,9 +119,10 @@ export const ALIGN_LABEL: Record<Align, string> = { left: '左对齐', center: '
 export interface FieldConfig {
   id: string
   name: string
-  desc: string
   displayLabel?: string   // 报告展示标签（默认 = name；数据源取 DbField.label / 接口取 ApiOutput.label）
   group?: string          // 所属内部分组 id（数据源/接口合集可内部分组并命名；缺省归入首个分组）
+  type?: string           // 数据源/接口：字段类型（varchar/int/datetime/string/image…，来自表结构/接口输出定义）
+  container?: RenderContainer  // 数据源/接口：显示方式（text/image…，报告中如何呈现）
   visible: boolean
   /* —— 来源相关配置（按所属分段的 sourceType 解释） —— */
   sourceRef?: string    // 数据源：绑定的表字段名 / 接口：输出字段 key / 规则集：规则 id
@@ -349,6 +350,7 @@ export interface DimRow {
   id: string
   name: string
   score: number        // 本卡汇总得分（含正负）
+  mode: CardScoreMode  // 计分方向（add/deduct/reject），用于展示分值区间
   weight: number       // 本卡权重原值
   weightPct: number    // 权重占比（%）
   level?: DimLevel
@@ -363,11 +365,12 @@ export function buildDimRows(tpl: ReportTemplate): DimRow[] {
       ? (tpl.sections.find((x) => x.id === s.copyFromId) ?? s)
       : s
     const total = computeSectionScore(scoreSec).total
+    const mode = computeSectionScore(scoreSec).mode
     const w = s.weight ?? 1
     const bands = s.dimBands ?? tpl.dimBands ?? defaultDimBandsForScore(total)
     const band = matchDimBand(total, bands)
     return {
-      id: s.id, name: s.name, score: total, weight: w,
+      id: s.id, name: s.name, score: total, mode, weight: w,
       weightPct: Math.round((w / sumW) * 100),
       level: band?.level,
       note: (s.dimNote ?? '').trim() || band?.note || '',
@@ -562,12 +565,21 @@ export function scoreForVerifySys(sys: string, grades: ScoreGrade[]): number | n
 export function computeReportTotal(tpl: ReportTemplate, sampleData: Record<string, any>): { total: number; scoreById: Record<string, number> } {
   const sumScores = (arr: any[] | undefined): number => (arr ?? []).reduce((a: number, x: any) => a + (typeof x.score === 'number' ? x.score : 0), 0)
   const contentSecs = tpl.sections.filter((s) => (s.homeTab ?? 'content') === 'content' && s.visible)
+  /* 新结构 dataBlocks 数组（按 id 匹配）；旧结构按顶层 key 直取，兼容未迁移数据 */
+  const blocks = Array.isArray(sampleData?.dataBlocks) ? sampleData.dataBlocks : []
+  const findBlock = (id: string) => (blocks.find((b: any) => b.id === id)) ?? { groups: (sampleData ?? {})[id] }
   const scoreById: Record<string, number> = {}
   for (const s of contentSecs) {
-    const raw = (sampleData ?? {})[s.id]
+    const blk = findBlock(s.id)
+    const raw = blk.groups ?? blk.items
     if (!raw) { scoreById[s.id] = 0; continue }
-    if (s.sourceType === 'data_source' && (s.fieldGroups?.length ?? 0) > 0) {
-      scoreById[s.id] = (s.fieldGroups ?? []).reduce((a: number, g: any) => a + sumScores(raw[g.name]), 0)
+    if (s.sourceType === 'data_source' && Array.isArray(blk.groups)) {
+      // 新结构 block.groups（有无 fieldGroups 都适用）：每组 {name, items}
+      scoreById[s.id] = (blk.groups as any[]).reduce((a: number, g: any) => a + sumScores(g.items), 0)
+    } else if (s.sourceType === 'data_source' && (s.fieldGroups?.length ?? 0) > 0) {
+      // 旧结构顶层对象 {组名: items}
+      const groups: any[] = Object.entries(raw).map(([name, items]) => ({ name, items }))
+      scoreById[s.id] = groups.reduce((a: number, g: any) => a + sumScores(g.items), 0)
     } else if (Array.isArray(raw)) {
       scoreById[s.id] = sumScores(raw)
     } else {
@@ -729,6 +741,7 @@ export interface FlowGraphEdge {
   from: string
   to: string
   label?: string         // 连线语义（如 通过/拒绝/退回）
+  result?: string        // 条件：from 节点审批结果为该值时走此边；空 = 无条件兜底（无匹配条件边时走）
 }
 export interface FlowGraph {
   name?: string          // 流程名称（运行时操作按钮的标识；如「确认通过」「转人工审核」）
@@ -774,7 +787,16 @@ export function buildDefaultFlowGraph(flow: BusinessFlowConfig, autoResult: Auto
   return { name: startLabel, nodes, edges }
 }
 
-/* 画布图 → 缩写摘要（回显在分段表「业务流程配置」列，如：评分完成 → 自动通过 → 人工确认(风控主管) → 结束） */
+/* 条件边步进：从 fromId 节点出发，按审批结果 result 选下一条边——
+ * 优先匹配 result===result 的条件边，否则走无条件边（result 为空）兜底，再否则取第一条边。 */
+export function nextNodeByResult(g: FlowGraph, fromId: string, result?: string): FlowGraphNode | undefined {
+  const outs = (g.edges ?? []).filter((e) => e.from === fromId)
+  const hit = result ? outs.find((e) => e.result === result) : undefined
+  const fallback = hit ?? outs.find((e) => !e.result) ?? outs[0]
+  return fallback ? g.nodes.find((n) => n.id === fallback.to) : undefined
+}
+
+/** 画布图 → 缩写摘要（回显在分段表「业务流程配置」列，如：评分完成 → 自动通过 → 人工确认(风控主管) → 结束） */
 export function summarizeFlowGraph(g: FlowGraph): string {
   if (!g.nodes.length) return '（空流程）'
   const nodeMap = new Map(g.nodes.map((n) => [n.id, n]))
@@ -1473,6 +1495,7 @@ export function buildDefaultGradesForRange(
       maxScore: hi,
       riskLevel: idx === 0 ? '低' : idx === 1 ? '中' : '高',
       color: colors[idx % colors.length],
+      tags: '',  // 风险标签（空格分隔）默认空，配置页可编辑，保证 JSON 始终有记录
       autoResult: idx === 0 ? '通过' : idx === count - 1 ? '拒绝' : '转人工',
       description: `分段 ${g}`,
     })
@@ -2034,7 +2057,11 @@ const FLOW_SECTION: Partial<Record<ReportType, string>> = {
 function buildSections(type: ReportType): SectionConfig[] {
   // built 用于 tpl_copy 段引用同模板内已建好的来源段（如「数据交叉融合」复用「多源并行核验」）
   const built: Record<string, SectionConfig> = {}
-  return SECTION_CATALOG[type].map((s, i) => {
+  // 评分卡（得分计算）与结论卡（结论与终审）由 scoreBlock/flowBlock 配置驱动，
+  // 不再作为 sections 分段生成（历史遗留的 score/flow 分段无任何渲染使用）
+  return SECTION_CATALOG[type]
+    .filter((s) => s.id !== SCORE_SECTION[type] && s.id !== FLOW_SECTION[type])
+    .map((s, i) => {
     const sType = SECTION_SOURCE[s.id] ?? 'data_source'
     let ds: DataSourceConfig | undefined
     let api: ApiConfig | undefined
@@ -2049,19 +2076,16 @@ function buildSections(type: ReportType): SectionConfig[] {
       // 数据源：初始用 seed 字段名作为表字段占位（type 默认 varchar）；用户配连接后可"读取表字段"覆盖
       const tableFields = s.fields.map((f) => ({ name: f.name, type: inferDbType(f.name), visible: true, scorePoints: 5, condType: 'eq' as FieldCondType, group: f.group }))
       ds = { dbType: 'MySQL', ip: '', port: '3306', username: '', password: '', database: '', table: '', tableFields }
-      fields = ds.tableFields.map((tf, k) => ({ id: s.fields[k].id, name: tf.name, desc: s.fields[k].desc, visible: true, sourceRef: tf.name, mask: /身份证|手机|银行卡|证件|姓名/.test(tf.name), maskRule: autoMaskRule(tf.name), scorePoints: 5, condType: 'eq' as FieldCondType, group: tf.group }))
+      fields = ds.tableFields.map((tf, k) => ({ id: s.fields[k].id, name: tf.name, displayLabel: tf.name, type: tf.type, container: recommendDbContainer(tf.type), visible: true, sourceRef: tf.name, mask: /身份证|手机|银行卡|证件|姓名/.test(tf.name), maskRule: autoMaskRule(tf.name), scorePoints: 5, condType: 'eq' as FieldCondType, condValue: '', exempt: false, group: tf.group }))
     } else if (sType === 'api') {
       const inputs: ApiParam[] = s.id === 'id_images'
         ? [{ key: 'applicantId', from: '进件表单.申请人ID', required: true }, { key: 'idCard', from: '进件表单.身份证号', required: true }]
-        : s.id === 'score_model' ? [{ key: 'applicantId', from: '进件表单.申请人ID', required: true }, { key: 'deviceFp', from: '设备SDK.指纹', required: false }]
-        : s.id === 'fraud_score_model' ? [{ key: 'deviceFp', from: '设备SDK.指纹', required: true }, { key: 'ip', from: '请求上下文.IP', required: false }]
-        : s.id === 'decision_overview' ? [{ key: 'verifyScore', from: '信息核验.异常值', required: true }, { key: 'creditScore', from: '信用风控.信用分', required: true }, { key: 'fraudScore', from: '欺诈识别.欺诈分', required: true }]
         : []
       // 证件照类合集：输出几乎都是影像（OCR 识别文本例外为纯文本）
       const containerOf = (name: string): RenderContainer => (/ocr|文本|文字/i.test(name) ? 'text' : 'image')
       const outputs: ApiOutput[] = s.fields.map((f) => ({ key: f.id, label: f.name, type: inferFieldType(f.name, f.desc), container: s.id === 'id_images' ? containerOf(f.name) : inferApiContainer(f.name, f.desc), visible: true, scorePoints: 5, condType: 'eq' as FieldCondType }))
       api = { url: '', method: 'POST', headers: [], inputs, bodyType: 'none', bodyText: '', outputs }
-      fields = api.outputs.map((o, k) => ({ id: s.fields[k].id, name: o.label, desc: s.fields[k].desc, visible: true, sourceRef: o.key, scorePoints: 5, condType: 'eq' as FieldCondType }))
+      fields = api.outputs.map((o, k) => ({ id: s.fields[k].id, name: o.label, displayLabel: o.label, type: o.type, container: o.container, visible: true, sourceRef: o.key, scorePoints: 5, condType: 'eq' as FieldCondType, condValue: '', exempt: false, group: o.group }))
     } else if (sType === 'tpl_copy') {
       // 模板复制：集成来源段的只读快照，本模板不可改、不计分
       const fromId = SECTION_COPY_FROM[s.id] ?? ''
@@ -2076,7 +2100,7 @@ function buildSections(type: ReportType): SectionConfig[] {
       const rsId = SECTION_RULESET[s.id] ?? RULE_SETS[0].id
       ruleSetId = rsId
       const rs = RULE_SETS.find((r) => r.id === rsId)!
-      fields = rs.rules.map((r) => ({ id: r.id, name: r.name, desc: r.desc, visible: true, sourceRef: r.id, hitText: '命中', missText: '未命中', severity: 'mid' as Severity, hitReject: false, scorePoints: 5, condType: 'hit' as FieldCondType }))
+      fields = rs.rules.map((r) => ({ id: r.id, name: r.name, visible: true, sourceRef: r.id, weight: 1, hitText: '命中', missText: '未命中', severity: 'mid' as Severity, hitReject: false, exempt: false, scorePoints: 5, condType: 'hit' as FieldCondType, condValue: '' }))
     }
 
     const sec: SectionConfig = {
@@ -2089,11 +2113,15 @@ function buildSections(type: ReportType): SectionConfig[] {
       // 模板复制段为「仅展示」型：不参与风险计分；用户基本信息现在按普通集合参与计分
       scoreable: sType === 'tpl_copy' ? false : undefined,
       cardScoreMode: SECTION_SCORE_MODE[s.id] ?? (sType === 'rule_set' ? 'deduct' : 'add'),
-      homeTab: s.id === SCORE_SECTION[type] ? 'score' : s.id === FLOW_SECTION[type] ? 'flow' : /logs?$/i.test(s.id) ? 'log' : 'content',
+      homeTab: /logs?$/i.test(s.id) ? 'log' : 'content',
       sourceName: s.name,
       ds, api, ruleSetId, copyFromId, copyFromName, copySections, copyScoreRange,
       fieldGroups: s.groups ? s.groups.map((g) => ({ ...g })) : undefined,
       fields,
+    }
+    // 评分维度分布默认档位：content 分段预填 dimBands（按本卡总分等比三等分），保证 JSON 始终有记录
+    if ((sec.homeTab ?? 'content') === 'content' && sec.sourceType !== 'tpl_copy') {
+      sec.dimBands = defaultDimBandsForScore(computeSectionScore(sec).total)
     }
     built[s.id] = sec
     return sec
@@ -2488,7 +2516,8 @@ export function buildBackup222Template(): ReportTemplate {
   // 重新计算分值预测并同步分段和业务流程
   t.scoreDisplay.scoreSemantic = 'risk'
   const s2 = computeScoreSummary(t)
-  t.scoreBlock = { show: true, title: '得分计算', min: s2.min, max: s2.max, rejectCount: s2.rejectTotal }
+  t.scoreBlock = { show: true, title: '信息核验自动审核得分', min: s2.min, max: s2.max, rejectCount: s2.rejectTotal }
+  t.flowBlock = { ...t.flowBlock, title: '信息核验人工审核' }
   t.scoreDisplay.grades = buildDefaultGradesForRange(s2.min, s2.max, 3, 'risk')
   t.businessFlow = syncFlowToGrades(t.businessFlow, t.scoreDisplay.grades)
   t.scoreFormula = buildDefaultScoreFormula(t.sections)
@@ -2514,6 +2543,31 @@ export function buildBackup222Template(): ReportTemplate {
 }
 
 /* ---------- 种子数据（对应文档卡片示例） ---------- */
+
+/**
+ * 方案222 风格模板生成器：在 buildTemplate(type) 基础上统一定制，与 buildBackup222Template 保持一致：
+ * - scoreSemantic='risk'（不翻转，分值直接对应刻度条位置）
+ * - scoreBlock/分值预测 = computeScoreSummary 实时结果，保存 min/max/rejectCount
+ * - grades 按实际范围自动三等分（A/B/C），businessFlow 与分段同步，scoreFormula 按 sections 重新生成
+ * 供「N. 按信息核验结构改造 信用风控/欺诈识别/进件审核」使用。
+ */
+export function buildBiz222Template(type: ReportType, o: BuildOpts & { autoTitle?: string; manualTitle?: string }): ReportTemplate {
+  const t = buildTemplate(type, { ...o, scope: o.scope ?? ['全产品'], isDefault: o.isDefault ?? false })
+  t.scoreDisplay.scoreSemantic = 'risk'
+  t.scoreDisplay.title = o.name
+  // 先按当前 sections 重新生成公式（decision 的旧 DEFAULT_DECISION_FORMULA varId 与 sections 对不上），
+  // 再 computeScoreSummary —— 否则公式项引用不到变量，分值预测恒为 0
+  t.scoreFormula = buildDefaultScoreFormula(t.sections)
+  const s2 = computeScoreSummary(t)
+  t.scoreBlock = { show: true, title: o.autoTitle ?? '', min: s2.min, max: s2.max, rejectCount: s2.rejectTotal }
+  t.flowBlock = { ...t.flowBlock, title: o.manualTitle ?? '' }
+  t.scoreDisplay.grades = buildDefaultGradesForRange(s2.min, s2.max, 3, 'risk')
+  t.businessFlow = syncFlowToGrades(t.businessFlow, t.scoreDisplay.grades)
+  t.showSectionTotals = true
+  t.showOpLog = true
+  return t
+}
+
 export const seedReportTemplates: ReportTemplate[] = [
   buildTemplate('info_verify', {
     id: 'tpl-info-standard', name: '标准信息核验报告模板', status: '已启用', scope: ['全产品'],
@@ -2533,6 +2587,25 @@ export const seedReportTemplates: ReportTemplate[] = [
   }),
   buildAuthorityInfoTemplate(),
   buildBackup222Template(),
+  // N/M：按信息核验222 架构新建的 信用风控/欺诈识别/进件审核 「方案222备用」模板
+  buildBiz222Template('credit', {
+    id: 'tpl-credit-222', name: '信用风控综合模型（方案222备用）', status: '草稿',
+    version: 'V2.6风控策略集', lastEditor: 'admin', lastEditTime: '2026-08-03',
+    description: '信用风控「方案222备用」：按信息核验222 模板驱动架构新建，供新列表/详情页使用。',
+    autoTitle: '信用风控自动审核得分', manualTitle: '信用风控人工审核',
+  }),
+  buildBiz222Template('fraud', {
+    id: 'tpl-fraud-222', name: '欺诈识别综合模型（方案222备用）', status: '草稿',
+    version: 'V2.6风控策略集', lastEditor: 'admin', lastEditTime: '2026-08-03',
+    description: '欺诈识别「方案222备用」：按信息核验222 模板驱动架构新建，供新列表/详情页使用。',
+    autoTitle: '欺诈识别自动审核得分', manualTitle: '欺诈识别人工审核',
+  }),
+  buildBiz222Template('decision', {
+    id: 'tpl-decision-222', name: '进件审核综合模型（方案222备用）', status: '草稿',
+    version: 'V2.6风控策略集', lastEditor: 'admin', lastEditTime: '2026-08-03',
+    description: '进件审核「方案222备用」：按信息核验222 模板驱动架构新建，供新列表/详情页使用。',
+    autoTitle: '进件审核自动审核得分', manualTitle: '进件审核人工审核',
+  }),
 ]
 
 // 加载 templateNull.json（空骨架模板，供用户对照补全字段）
@@ -2594,7 +2667,7 @@ export function getDecisionAuditFlow(suggestion: string): AuditFlow {
 /** 按模板分段名（gradeId，如 A/B/C）取审批弹窗配置——直接定位 businessFlow 行，不走 GRADE_PRESETS。
  * 供模板动态分段（buildDefaultGradesForRange 生成 A/B/C 等）的报告详情页使用；
  * graphIndex 对应该分段 flowGraphs 数组下标（一个分段多条业务 = 多个按钮）。 */
-export function getAuditFlowByGrade(tpl: ReportTemplate | undefined, gradeId: string, graphIndex = 0, nodeIndex = 0): AuditFlow {
+export function getAuditFlowByGrade(tpl: ReportTemplate | undefined, gradeId: string, graphIndex = 0, nodeIndex = 0, nodeId?: string): AuditFlow {
   const fallback: AuditFlow = {
     nodeLabel: '审核建议',
     checkItems: [],
@@ -2606,8 +2679,9 @@ export function getAuditFlowByGrade(tpl: ReportTemplate | undefined, gradeId: st
   const autoResult: AutoResult = tpl.scoreDisplay.grades.find((g) => g.grade === gradeId)?.autoResult ?? '转人工'
   const g = bf?.flowGraphs?.[graphIndex] ?? bf?.flowGraphs?.[0] ?? buildDefaultFlowGraph(bf ?? defaultFlowRow(gradeId, ''), autoResult)
   const manual = g.nodes.filter((n) => n.results && n.results.length)
-  const node = manual[nodeIndex] ?? manual[manual.length - 1]
-  if (!node) return fallback
+  // 优先按 nodeId 定位（条件边分支后的当前节点）；否则按 manual 数组索引（线性流程兼容）
+  const node = nodeId ? g.nodes.find((n) => n.id === nodeId) : (manual[nodeIndex] ?? manual[manual.length - 1])
+  if (!node || !node.results?.length) return fallback
   const { results, opinionPresets } = normalizeReviewResults(node.results as string[] | undefined, node.opinionPresets)
   return {
     nodeLabel: node.buttonName ?? node.label,
