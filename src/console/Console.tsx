@@ -35,6 +35,12 @@ import MidDashboardConfig from './MidDashboardConfig'
 import MidAlertWorkbench from './MidAlertWorkbench'
 import MidCustDetail from './MidCustDetail'
 import MidDisposeWorkbench from './MidDisposeWorkbench'
+import MidDataSourceDetail from './MidDataSourceDetail'
+import MidMetricDetail from './MidMetricDetail'
+import MidStrategyDetail from './MidStrategyDetail'
+import MidDashboardDetail from './MidDashboardDetail'
+import MidAlertDetail from './MidAlertDetail'
+import MidDisposeDetail from './MidDisposeDetail'
 import { getDashboardByKey } from './dashboardData'
 import { creditRiskMenu, scoringMenu, entMenu, dmMenu, cmMenu, type MenuGroup } from './menus'
 import SidebarMenu from './SidebarMenu'
@@ -513,6 +519,18 @@ export default function Console() {
               <MidDisposeWorkbench />
             ) : key === 'cr:mid-cust-detail' ? (
               <MidCustDetail />
+            ) : key === 'cm:mid-data-source-detail' ? (
+              <MidDataSourceDetail />
+            ) : key === 'cm:mid-metric-detail' ? (
+              <MidMetricDetail />
+            ) : key === 'cm:mid-strategy-detail' ? (
+              <MidStrategyDetail />
+            ) : key === 'cm:mid-dashboard-detail' ? (
+              <MidDashboardDetail />
+            ) : key === 'cr:mid-alert-detail' ? (
+              <MidAlertDetail />
+            ) : key === 'cr:mid-dispose-detail' ? (
+              <MidDisposeDetail />
             ) : getDashboardByKey(key) ? (
               <MidDashboardPage pageKey={key} />
             ) : isQuery && queryProd ? (

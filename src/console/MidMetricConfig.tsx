@@ -1,259 +1,176 @@
-// ② 指标库（管理中心 · 贷中监控配置）
-import { useState, useMemo } from 'react';
-import { PageHeader, Panel, Button, DataTable } from '../components/ui';
-import type { Column } from '../components/ui';
-import { useMidDataSources, useMidMetrics, useMidStrategy, useMidDashboards, updateMetrics, midNewId, useMidSaveStatus } from './midStore';
-import { MidSaveToast, Cfg, Sam, Cal } from './SourceTag';
-import { computeAgg, evalMetricFormula, AGG_LABEL } from './midData';
-import type { MidMetric, MetricType, AggOp } from './midData';
+// ② 指标库（管理中心 · 配置域）— 配置JSON 蓝；公式预览 灰（实时计算）
+import { useEffect, useRef, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Panel, DataTable, Modal, Button } from '../components/ui';
+import type { Column, Row } from '../components/ui';
+import { Cfg, Cal, Sam } from './SourceTag';
+import { PageShell } from './PageShell';
+import { useMidMetrics, updateMetrics, useMidDataSources, midNewId } from './midStore';
+import {
+  type MidMetric, type MetricType, type AggOp, type MidDataSource,
+  AGG_LABEL, evalMetricFormula, computeAgg, resolveMetricsForRows,
+} from './midData';
 
-const aggCols: Column[] = [
-  { key: 'id', label: '指标ID' },
-  { key: 'name', label: '名称' },
-  { key: 'type', label: '类型', type: 'badge' },
-  { key: 'src', label: '数据源' },
-  { key: 'expr', label: '聚合 / 公式' },
-  { key: 'ref', label: '引用' },
-];
+const inp: React.CSSProperties = { padding: '6px 8px', borderRadius: 6, border: '1px solid #E2E8F0', fontSize: 12, width: '100%', background: '#fff' };
+const lbl: React.CSSProperties = { display: 'flex', flexDirection: 'column', gap: 4, fontSize: 12, color: '#475569', minWidth: 160 };
 
-const AGG_OPTIONS: AggOp[] = ['sum', 'count', 'avg', 'max', 'min', 'distinct'];
+const TYPE_LABEL: Record<MetricType, string> = { base: '基础指标', derived: '派生指标' };
 
 export default function MidMetricConfig() {
-  const dataSources = useMidDataSources();
   const metrics = useMidMetrics();
-  const strategy = useMidStrategy();
-  const dashboards = useMidDashboards();
-  const saveStatus = useMidSaveStatus();
-  const [activeId, setActiveId] = useState<string | null>(metrics[0]?.id ?? null);
-  const [draft, setDraft] = useState<MidMetric | null>(null);   // 新建/编辑草稿
-  const [kw, setKw] = useState('');
-  const [groupFilter, setGroupFilter] = useState<string>('');
-
-  const groups = Array.from(new Set(metrics.map((m) => m.group ?? '未分组')));
-
-  const active = metrics.find((m) => m.id === activeId) ?? null;
-  const dsName = (id: string) => dataSources.find((d) => d.id === id)?.name ?? id;
-  const dsFields = (dsId: string) => dataSources.find((d) => d.id === dsId)?.fields ?? [];
-
-  // 基础指标实时聚合值（灰）
-  const baseValue = useMemo(() => {
-    if (!active || active.type !== 'base') return null;
-    const ds = dataSources.find((d) => d.id === active.dataSourceId);
-    if (!ds) return null;
-    return computeAgg(ds.rows, active.field, active.agg);
-  }, [active, dataSources]);
-
-  // 派生指标实时计算值（灰）：先算全部基础指标，再代公式
-  const derivedValue = useMemo(() => {
-    if (!active || active.type !== 'derived') return null;
-    const vals: Record<string, number> = {};
-    for (const m of metrics) {
-      if (m.type === 'base') {
-        const ds = dataSources.find((d) => d.id === m.dataSourceId);
-        if (ds) vals[m.id] = computeAgg(ds.rows, m.field, m.agg);
-      }
+  const sources = useMidDataSources();
+  const [editing, setEditing] = useState<MidMetric | null>(null);
+  const [open, setOpen] = useState(false);
+  const nav = useNavigate();
+  const [params] = useSearchParams();
+  const openedRef = useRef<string | null>(null);
+  useEffect(() => {
+    const eid = params.get('edit');
+    if (eid && openedRef.current !== eid) {
+      const m = metrics.find((x) => x.id === eid);
+      if (m) { openedRef.current = eid; setEditing(JSON.parse(JSON.stringify(m))); setOpen(true); }
     }
-    return evalMetricFormula(active.formula ?? '', vals);
-  }, [active, metrics, dataSources]);
+  }, [params, metrics]);
 
-  // 引用计数：被其他指标公式 / 策略任务规则 / 页面组件引用
-  const refCount = (id: string) => {
-    let n = 0;
-    if (metrics.some((m) => m.type === 'derived' && m.formula?.includes(id))) n += 1;
-    if (strategy.tasks.some((t) => t.metricIds.includes(id))) n += 1;
-    if (strategy.rules.some((r) => r.metricId === id)) n += 1;
-    if (dashboards.some((p) => p.widgets.some((w) => w.metricId === id))) n += 1;
-    return n;
+  const srcById = (id: string) => sources.find((s) => s.id === id);
+
+  const openAdd = () => {
+    setEditing({ id: midNewId('m'), name: '', group: '未分组', dataSourceId: sources[0]?.id ?? '', type: 'base', field: '', agg: 'sum', precision: 0 });
+    setOpen(true);
   };
-
-  const rows = metrics
-    .filter((m) => (!groupFilter || (m.group ?? '未分组') === groupFilter))
-    .filter((m) => !kw || m.name.includes(kw) || m.id.includes(kw))
-    .map((m) => ({
-      id: m.id, name: m.name,
-      type: m.type === 'base' ? '基础' : '派生',
-      src: dsName(m.dataSourceId),
-      expr: m.type === 'base' ? `${m.field ?? ''} · ${AGG_LABEL[m.agg ?? 'count']}` : m.formula ?? '',
-      ref: refCount(m.id),
-    }));
-
-  const insertToFormula = (token: string) => {
-    if (!draft || draft.type !== 'derived') return;
-    setDraft({ ...draft, formula: `${draft.formula ?? ''}${draft.formula ? ' ' : ''}${token} ` });
+  const save = () => {
+    if (!editing) return;
+    updateMetrics((list) => {
+      const i = list.findIndex((x) => x.id === editing.id);
+      return i < 0 ? [...list, editing] : list.map((x) => (x.id === editing.id ? editing : x));
+    });
+    setOpen(false); setEditing(null);
   };
+  const remove = (id: string) => updateMetrics((list) => list.filter((x) => x.id !== id));
+
+  const cols: Column[] = [
+    { key: 'name', label: '指标名称' },
+    { key: 'group', label: '分组' },
+    { key: 'typeLabel', label: '类型' },
+    { key: 'def', label: '口径', type: 'badge' },
+    { key: 'source', label: '数据源', type: 'badge' },
+    { key: 'preview', label: '实时预览', align: 'right' },
+  ];
+
+  // 全局实时计算预览（灰）：用各数据源样例行解析基础指标，派生指标经公式求值
+  const allMetricVals = resolveMetricsForRows(metrics, sources.flatMap((s) => s.rows ?? []));
+
+  const rows: Row[] = metrics.map((m) => {
+    const src = srcById(m.dataSourceId);
+    const def = m.type === 'base'
+      ? `${AGG_LABEL[m.agg ?? 'count']}·${src?.fields.find((f) => f.key === m.field)?.label ?? m.field ?? '-'}`
+      : `公式：${m.formula ?? '-'}`;
+    const preview = m.type === 'base'
+      ? (src ? computeAgg(src.rows ?? [], m.field, m.agg) : 0)
+      : (allMetricVals[m.id] ?? evalMetricFormula(m.formula ?? '', allMetricVals));
+    return {
+      id: m.id,
+      name: m.name,
+      group: m.group ?? '-',
+      typeLabel: TYPE_LABEL[m.type],
+      def,
+      source: src?.name ?? m.dataSourceId,
+      preview: fmt(preview, m.precision, m.unit),
+    } as unknown as Row;
+  });
 
   return (
-    <div style={{ padding: 24, maxWidth: 1200 }}>
-      <PageHeader
-        title="指标库"
-        crumb="管理中心 / 贷中监控配置 / 指标库"
-        subtitle="定义可复用指标（基础 + 派生公式），被监控策略、看板组件引用"
-        actions={<Button onClick={() => { setDraft({ id: midNewId('m'), name: '', group: '客群', dataSourceId: dataSources[0]?.id ?? '', type: 'base', field: '', agg: 'count', precision: 0 }); }}>新建指标</Button>}
-      />
-      <MidSaveToast status={saveStatus} />
+    <div style={{ padding: 24, maxWidth: 1180 }}>
+      <PageShell title="指标库" crumb="零售信贷风控 / 管理中心 / 贷中监控配置"
+        subtitle="定义可复用指标（基础聚合 + 派生公式），被监控策略、看板组件引用"
+        actions={<><Cfg label="配置JSON" value="midMetrics.json" /><Button size="sm" onClick={openAdd}>新建指标</Button></>} />
+      <Panel title="指标列表" desc="配置即落盘；基础指标取数据源字段聚合，派生指标用公式引用其它指标"
+        actions={<Sam label="样例数据" value={`${sources.reduce((a, s) => a + (s.rows?.length || 0), 0)} 行驱动`} />}>
+        <DataTable columns={cols} rows={rows} clickableKey="name"
+          onCellClick={(r) => nav('/console/cm:mid-metric-detail?id=' + String(r.id))} />
+      </Panel>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '380px 1fr', gap: 16, marginTop: 16 }}>
-        <Panel title="指标列表" desc={<span>点击选中查看 / 编辑 <Cfg label="指标配置" /></span>}
-          actions={<div style={{ display: 'flex', gap: 6 }}>
-            <input value={kw} onChange={(e) => setKw(e.target.value)} placeholder="搜索名称/ID" style={{ ...inp, width: 130, fontSize: 12, padding: '5px 8px' }} />
-            <select value={groupFilter} onChange={(e) => setGroupFilter(e.target.value)} style={{ ...sel, width: 90, fontSize: 12, padding: '5px 6px' }}>
-              <option value="">全部分组</option>
-              {groups.map((g) => <option key={g} value={g}>{g}</option>)}
-            </select>
-          </div>}
-        >
-          <DataTable columns={aggCols} rows={rows} clickableKey="id" onCellClick={(r) => setActiveId(r.id as string)} />
-        </Panel>
-
-        <Panel
-          title={draft ? '编辑指标' : (active ? active.name : '请选择指标')}
-          desc={active && !draft ? `${dsName(active.dataSourceId)} · ${active.type === 'base' ? '基础指标' : '派生指标'}` : undefined}
-          actions={active && !draft ? (
-            <>
-              <Button variant="ghost" size="sm" onClick={() => {
-                if (refCount(active.id) > 0) { alert(`该指标被 ${refCount(active.id)} 处引用（策略/看板/公式），禁止删除`); return; }
-                if (confirm(`确认删除指标 ${active.name}？`)) updateMetrics((l) => l.filter((m) => m.id !== active.id));
-              }}>删除</Button>
-              <Button size="sm" onClick={() => setDraft({ ...active })}>编辑</Button>
-            </>
-          ) : undefined}
-        >
-          {draft ? (
-            <div style={{ display: 'grid', gap: 12 }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                <div><label style={lb}>名称 <Cfg /></label><input value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} style={inp} /></div>
-                <div><label style={lb}>分组</label><input value={draft.group ?? ''} onChange={(e) => setDraft({ ...draft, group: e.target.value })} style={inp} placeholder="风险 / 预警 / 经营" /></div>
-              </div>
-              <div><label style={lb}>所属数据源 <Cfg /></label>
-                <select style={sel} value={draft.dataSourceId} onChange={(e) => setDraft({ ...draft, dataSourceId: e.target.value, field: '' })}>
-                  {dataSources.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
-                </select>
-              </div>
-              <div>
-                <label style={lb}>指标类型 <Cfg /></label>
-                <div style={{ display: 'flex', gap: 8 }}>
-                  {(['base', 'derived'] as MetricType[]).map((t) => (
-                    <button key={t} onClick={() => setDraft({ ...draft, type: t })} style={{
-                      padding: '6px 12px', borderRadius: 6, fontSize: 13, cursor: 'pointer',
-                      border: draft.type === t ? '1px solid #2563EB' : '1px solid #E2E8F0',
-                      background: draft.type === t ? '#EFF6FF' : '#fff', color: draft.type === t ? '#1D4ED8' : '#475569',
-                    }}>{t === 'base' ? '基础指标（字段+聚合）' : '派生指标（公式）'}</button>
-                  ))}
-                </div>
-              </div>
-
-              {draft.type === 'base' ? (
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                  <div><label style={lb}>字段</label>
-                    <select style={sel} value={draft.field} onChange={(e) => setDraft({ ...draft, field: e.target.value })}>
-                      <option value="">选择字段</option>
-                      {dsFields(draft.dataSourceId).filter((f) => f.kind === 'measure').map((f) => <option key={f.key} value={f.key}>{f.label}（{f.key}）</option>)}
-                    </select>
-                  </div>
-                  <div><label style={lb}>聚合</label>
-                    <select style={sel} value={draft.agg} onChange={(e) => setDraft({ ...draft, agg: e.target.value as AggOp })}>
-                      {AGG_OPTIONS.map((a) => <option key={a} value={a}>{a}</option>)}
-                    </select>
-                  </div>
-                </div>
-              ) : (
-                <div>
-                  <label style={lb}>公式 <Cfg label="公式配置" /></label>
-                  <textarea value={draft.formula ?? ''} onChange={(e) => setDraft({ ...draft, formula: e.target.value })} style={{ ...inp, width: '100%', minHeight: 60, fontFamily: 'monospace' }} placeholder="m_overdue_amt / m_loan_balance * 100" />
-                  <div style={{ marginTop: 8, fontSize: 12, color: '#64748B' }}>变量面板（点击插入指标引用，支持 m_ 指标 + 四则运算 + ratio/mom/yoy）：</div>
-                  {(() => {
-                    const refs = metrics.filter((m) => m.id !== draft.id);
-                    const gs = Array.from(new Set(refs.map((m) => m.group ?? '未分组')));
-                    return gs.map((g) => (
-                      <div key={g} style={{ marginTop: 6 }}>
-                        <div style={{ fontSize: 11, color: '#94A3B8' }}>{g}</div>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 3 }}>
-                          {refs.filter((m) => (m.group ?? '未分组') === g).map((m) => (
-                            <button key={m.id} onClick={() => insertToFormula(m.id)} title={`${m.name}`} style={chip}>{m.id}</button>
-                          ))}
-                        </div>
-                      </div>
-                    ));
-                  })()}
-                </div>
-              )}
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                <div><label style={lb}>单位</label><input value={draft.unit ?? ''} onChange={(e) => setDraft({ ...draft, unit: e.target.value })} style={inp} placeholder="元 / % / 无" /></div>
-                <div><label style={lb}>小数位</label><input type="number" value={draft.precision ?? 0} onChange={(e) => setDraft({ ...draft, precision: Number(e.target.value) })} style={inp} /></div>
-              </div>
-              <div><label style={lb}>说明</label><input value={draft.desc ?? ''} onChange={(e) => setDraft({ ...draft, desc: e.target.value })} style={inp} /></div>
-
-              <div style={{ borderTop: '1px solid #F1F5F9', paddingTop: 12 }}>
-                <div style={{ fontSize: 13, fontWeight: 500, marginBottom: 6 }}>
-                  实时预览 <Cal label="样例数据实时计算" /> <Sam label="样例数据源" value={dsName(draft.dataSourceId)} />
-                </div>
-                <div style={{ fontSize: 20, fontWeight: 600, color: '#0F172A' }}>
-                  {draft.type === 'base'
-                    ? (baseValue ?? '—')
-                    : (derivedValue !== null ? derivedValue.toFixed(draft.precision ?? 2) : '—')}
-                </div>
-                <div style={{ fontSize: 12, color: '#94A3B8', marginTop: 4 }}>
-                  使用数据源样例数据（橘）{draft.type === 'base' ? '聚合计算' : '公式求值'}，结果实时（灰），不落盘
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-                <Button variant="secondary" onClick={() => setDraft(null)}>取消</Button>
-                <Button onClick={() => {
-                  if (!draft.name.trim()) { alert('请填写指标名称'); return; }
-                  if (draft.type === 'base' && !draft.field) { alert('请选择字段'); return; }
-                  const exists = metrics.some((m) => m.id === draft.id);
-                  updateMetrics((l) => exists ? l.map((m) => (m.id === draft.id ? draft : m)) : [...l, draft]);
-                  setActiveId(draft.id);
-                  setDraft(null);
-                }}>保存指标</Button>
-              </div>
-            </div>
-          ) : active ? (
-            <div style={{ display: 'grid', gap: 10, fontSize: 13, color: '#334155' }}>
-              <div>ID：<b>{active.id}</b></div>
-              <div>数据源：{dsName(active.dataSourceId)}</div>
-              <div>类型：{active.type === 'base' ? '基础指标' : '派生指标'}</div>
-              {active.type === 'base' ? (
-                <div>计算：字段 <b>{active.field}</b> 聚合 <b>{active.agg}</b> <Cal label="实时计算" value={baseValue} /></div>
-              ) : (
-                <div>公式：<code style={{ background: '#F8FAFC', padding: '2px 6px', borderRadius: 4 }}>{active.formula}</code> <Cal label="实时计算" value={derivedValue !== null ? derivedValue.toFixed(active.precision ?? 2) : undefined} /></div>
-              )}
-              <div>单位：{active.unit || '无'} ｜ 小数位：{active.precision ?? 0}</div>
-              <div>说明：{active.desc || '—'}</div>
-              <div style={{ borderTop: '1px solid #F1F5F9', paddingTop: 8 }}>
-                <div style={{ fontWeight: 500, marginBottom: 4 }}>引用管理（{refCount(active.id)} 处） <Cfg label="被引用关系" /></div>
-                {(() => {
-                  const r: string[] = [];
-                  metrics.filter((m) => m.type === 'derived' && m.formula?.includes(active.id)).forEach((m) => r.push(`指标公式：${m.name}`));
-                  strategy.tasks.filter((t) => t.metricIds.includes(active.id)).forEach((t) => r.push(`监控任务：${t.name}`));
-                  strategy.rules.filter((x) => x.metricId === active.id).forEach((x) => r.push(`预警规则：${x.name}`));
-                  dashboards.forEach((p) => p.widgets.filter((w) => w.metricId === active.id).forEach((w) => r.push(`看板组件：${p.name} / ${w.title}`)));
-                  return r.length ? (
-                    <div style={{ display: 'grid', gap: 4 }}>
-                      {r.map((x, i) => <div key={i} style={{ fontSize: 12, color: '#475569', background: '#F8FAFC', borderRadius: 4, padding: '4px 8px' }}>{x}</div>)}
-                    </div>
-                  ) : <div style={{ fontSize: 12, color: '#94A3B8' }}>未被引用，可安全删除</div>;
-                })()}
-              </div>
-            </div>
-          ) : <div style={{ color: '#94A3B8', padding: 24, textAlign: 'center' }}>左侧选择指标，或点击右上「新建指标」</div>}
-        </Panel>
-      </div>
+      <Modal open={open} onClose={() => setOpen(false)}
+        title={editing && metrics.find((m) => m.id === editing.id) ? '编辑指标' : '新建指标'} width="max-w-2xl"
+        footer={<><Button onClick={save}>保存</Button><Button variant="secondary" onClick={() => setOpen(false)}>取消</Button></>}>
+        {editing && <Editor value={editing} metrics={metrics} sources={sources} onChange={setEditing} onRemove={() => { if (editing) { remove(editing.id); setOpen(false); setEditing(null); } }} />}
+      </Modal>
     </div>
   );
 }
 
-const lb: React.CSSProperties = { display: 'block', fontSize: 12, color: '#64748B', marginBottom: 4 };
-const inp: React.CSSProperties = {
-  padding: '7px 10px', borderRadius: 6, border: '1px solid #E2E8F0', fontSize: 13,
-  outline: 'none', color: '#0F172A', background: '#fff', width: '100%', boxSizing: 'border-box',
-};
-const sel: React.CSSProperties = {
-  padding: '6px 8px', borderRadius: 6, border: '1px solid #E2E8F0', fontSize: 13, background: '#fff', color: '#0F172A', width: '100%',
-};
-const chip: React.CSSProperties = {
-  padding: '3px 8px', borderRadius: 4, fontSize: 11, fontFamily: 'monospace',
-  border: '1px solid #C7D2FE', background: '#EEF2FF', color: '#4338CA', cursor: 'pointer',
-};
+function Editor({ value, metrics, sources, onChange, onRemove }: { value: MidMetric; metrics: MidMetric[]; sources: MidDataSource[]; onChange: (v: MidMetric) => void; onRemove: () => void }) {
+  const set = (p: Partial<MidMetric>) => onChange({ ...value, ...p });
+  const src = sources.find((s) => s.id === value.dataSourceId);
+  const allRows = sources.flatMap((s) => s.rows ?? []);
+  const ctx = resolveMetricsForRows(metrics, allRows); // 实时计算上下文（灰）
+
+  // 实时计算预览（灰）：该指标在当前样例上的值
+  const preview = value.type === 'base'
+    ? (src ? computeAgg(src.rows ?? [], value.field, value.agg) : 0)
+    : evalMetricFormula(value.formula ?? '', ctx);
+
+  return (
+    <div style={{ display: 'grid', gap: 12 }}>
+      <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+        <label style={lbl}>指标名称<input style={inp} value={value.name} onChange={(e) => set({ name: e.target.value })} /></label>
+        <label style={lbl}>分组<input style={inp} value={value.group ?? ''} onChange={(e) => set({ group: e.target.value })} /></label>
+        <label style={lbl}>类型
+          <select style={inp} value={value.type} onChange={(e) => set({ type: e.target.value as MetricType })}>
+            <option value="base">基础指标</option><option value="derived">派生指标</option>
+          </select>
+        </label>
+      </div>
+
+      <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+        <label style={lbl}>数据源（字段来源） <Cfg label="配置JSON" value="midDataSources.json" />
+          <select style={inp} value={value.dataSourceId} onChange={(e) => set({ dataSourceId: e.target.value, field: '' })}>
+            {sources.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+          </select>
+        </label>
+        {value.type === 'base' && (
+          <>
+            <label style={lbl}>度量字段
+              <select style={inp} value={value.field ?? ''} onChange={(e) => set({ field: e.target.value })}>
+                <option value="">— 选择字段 —</option>
+                {(src?.fields.filter((f) => f.kind === 'measure') ?? []).map((f) => <option key={f.key} value={f.key}>{f.label}</option>)}
+              </select>
+            </label>
+            <label style={lbl}>聚合方式
+              <select style={inp} value={value.agg ?? 'sum'} onChange={(e) => set({ agg: e.target.value as AggOp })}>
+                {(Object.keys(AGG_LABEL) as AggOp[]).map((k) => <option key={k} value={k}>{AGG_LABEL[k]}</option>)}
+              </select>
+            </label>
+          </>
+        )}
+        <label style={lbl}>单位<input style={inp} value={value.unit ?? ''} onChange={(e) => set({ unit: e.target.value })} placeholder="元 / % / 次" /></label>
+        <label style={lbl}>精度<input style={inp} type="number" value={value.precision ?? 0} onChange={(e) => set({ precision: Number(e.target.value) })} /></label>
+      </div>
+
+      {value.type === 'derived' && (
+        <div>
+          <div style={{ fontSize: 13, fontWeight: 500, marginBottom: 6 }}>派生公式 <Cal label="实时计算" /></div>
+          <input style={{ ...inp, fontFamily: 'monospace' }} value={value.formula ?? ''}
+            placeholder="例如 m_overdue_amt / m_loan_balance * 100" onChange={(e) => set({ formula: e.target.value })} />
+          <p style={{ fontSize: 11, color: '#94A3B8', marginTop: 4 }}>
+            引用方式：<code>m_指标ID</code>，支持 + - * / 与括号；可用 ratio(a,b) 表示 a/b*100。
+          </p>
+        </div>
+      )}
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', background: '#F3F4F6', borderRadius: 8 }}>
+        <Cal label="实时计算" />
+        <span style={{ fontSize: 12, color: '#6B7280' }}>当前样例值：</span>
+        <strong style={{ fontSize: 16, color: '#374151' }}>{fmt(preview, value.precision, value.unit)}</strong>
+      </div>
+
+      {value.id && <Button variant="ghost" size="sm" onClick={onRemove}>删除该指标</Button>}
+    </div>
+  );
+}
+
+function fmt(v: number | null, precision = 0, unit = ''): string {
+  if (v === null || v === undefined || Number.isNaN(v as number)) return '-';
+  const n = Number(v);
+  return `${n.toLocaleString(undefined, { maximumFractionDigits: precision, minimumFractionDigits: 0 })}${unit}`;
+}

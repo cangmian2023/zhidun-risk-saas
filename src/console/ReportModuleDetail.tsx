@@ -33,7 +33,9 @@ function SectionTable({ head, children }: { head: string[]; children: ReactNode 
 }
 
 function ScoreTag({ pts, max }: { pts?: number; max?: number }) {
-  if (pts == null || pts === 0) return null
+  if (pts == null) return null
+  // 0 分也要显示（用户：得分等于 0 时不能只看到 JSON 标签）；中性灰
+  if (pts === 0) return <span className="ml-1.5 inline-flex shrink-0 items-center rounded-md bg-slate-50 px-1.5 py-0.5 text-[11px] font-medium tabular-nums text-slate-500 ring-1 ring-slate-200">0分</span>
   const minus = pts < 0
   return <span className={cn('ml-1.5 inline-flex shrink-0 items-center rounded-md px-1.5 py-0.5 text-[11px] font-medium tabular-nums', minus ? 'bg-rose-50 text-rose-600 ring-1 ring-rose-200' : 'bg-emerald-50 text-emerald-600 ring-1 ring-emerald-200')}>{minus ? '−' : '+'}{Math.abs(pts)}分{max != null && max !== Math.abs(pts) ? <span className="ml-0.5 text-[9px] opacity-60">/{max}</span> : null}</span>
 }
@@ -227,6 +229,50 @@ function RuleSetSection({ section, data, title, secId, totalScore, reportType }:
           </tr>
         ))}
       </SectionTable>
+      )}
+    </Panel>
+  )
+}
+
+/* ─── 模板复制（现有模板）区块：摘要卡 —— 显示 section 名称 + 得分 + 统计（总/有效/正常/异常），可展开成列表 ─── */
+function TplCopySection({ section, data, title, secId, totalScore, reportType }: { section?: SectionConfig; data: any[]; title: ReactNode; secId: string; totalScore: number; reportType: ReportType }) {
+  const [open, setOpen] = useState(false)
+  const copys = section?.copySections ?? []
+  // 统计口径：总数/有效 = 模板 copySections 的字段（可见即有效）；正常/异常 = 样例数据该段 items 的 valid/conclusion
+  const totalItems = copys.reduce((a, cs) => a + (cs.fields ?? []).length, 0)
+  const validItems = copys.reduce((a, cs) => a + (cs.fields ?? []).filter((f) => f.visible !== false).length, 0)
+  const items = (data as any[]) ?? []
+  const normal = items.filter((i) => i.valid === true || i.conclusion === '通过').length
+  const abnormal = items.length - normal
+
+  return (
+    <Panel title={title} id={secId} actions={<DisplayModeToggle reportType={reportType} sectionId={secId} />}>
+      <div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-2">
+        <div className="flex items-center gap-2">
+          <span className={cn('text-2xl font-bold tabular-nums', totalScore >= 0 ? 'text-emerald-600' : 'text-rose-600')}>{totalScore >= 0 ? '+' : '−'}{Math.abs(totalScore)}</span>
+          <Cal f="得分汇总" v={totalScore} />
+        </div>
+        <span className="text-xs text-slate-500">共 {totalItems} 项 · 有效 {validItems} 项 · 正常 {normal} 项 · 异常 {abnormal} 项<Cal f="模板fields/样例valid" v={`${totalItems}/${validItems}/${normal}/${abnormal}`} /></span>
+        <button onClick={() => setOpen((o) => !o)} className="rounded border border-slate-200 px-2 py-0.5 text-[11px] text-slate-600">{open ? '收起 ▴' : '展开 ▾'}</button>
+      </div>
+      {open && (
+        <div className="space-y-3">
+          {copys.map((cs, i) => {
+            const fields = (cs.fields ?? []).filter((f: any) => f.visible !== false)
+            return (
+              <div key={cs.id ?? i} className="rounded-xl border border-slate-200 bg-white p-3">
+                <div className="mb-2 flex items-center gap-2 text-xs font-medium text-slate-600">{cs.name}<Tpl f={`copySections[${i}].name`} v={cs.name} /><span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] text-slate-500">{cs.sourceType === 'rule_set' ? '规则集' : cs.sourceType === 'data_source' ? '数据源' : '接口'}</span></div>
+                <div className="flex flex-wrap gap-1.5">
+                  {fields.map((f: any, k: number) => (
+                    <span key={k} className="rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] text-slate-600">{f.name}<b className="ml-1 text-slate-400">{f.scorePoints ?? 0}分</b><Tpl f={`fields[${k}].name`} v={f.name} /></span>
+                  ))}
+                  {fields.length === 0 && <span className="text-[11px] text-slate-300">（无展示项）</span>}
+                </div>
+              </div>
+            )
+          })}
+          {copys.length === 0 && <div className="text-xs text-slate-400">无集成维度<Tpl f="copySections" v="[]" /></div>}
+        </div>
       )}
     </Panel>
   )
@@ -479,6 +525,9 @@ export function ReportModuleDetail({ cfg }: { cfg: ReportModuleCfg }) {
             }
             if (s.sourceType === 'api') {
               return <ApiSection key={s.id} section={s} data={data} title={title} secId={s.id} totalScore={sid} reportType={tpl.reportType} />
+            }
+            if (s.sourceType === 'tpl_copy') {
+              return <TplCopySection key={s.id} section={s} data={data} title={title} secId={s.id} totalScore={sid} reportType={tpl.reportType} />
             }
             return <RuleSetSection key={s.id} section={s} data={data} title={title} secId={s.id} totalScore={sid} reportType={tpl.reportType} />
           })}

@@ -1,6 +1,7 @@
 // 数据来源标签（贷中监控全页面统一使用）
 // 蓝=配置JSON（管理中心的配置）｜ 橘=样例JSON（本地样例数据）｜ 灰=实时计算（聚合/公式）
 import type { ReactNode } from 'react';
+import { useShowSourceTags } from './sourceTagConfig';
 
 const tagS: React.CSSProperties = {
   display: 'inline-block',
@@ -24,6 +25,7 @@ const KIND_META: Record<SourceKind, { label: string; bg: string; fg: string; bd:
 };
 
 export function SourceTag({ kind, label, value }: { kind: SourceKind; label?: string; value?: ReactNode }) {
+  if (!useShowSourceTags()) return null;
   const m = KIND_META[kind];
   return (
     <span
@@ -44,6 +46,19 @@ export function SourceTag({ kind, label, value }: { kind: SourceKind; label?: st
 export const Cfg = (props: { label?: string; value?: ReactNode }) => <SourceTag kind="cfg" {...props} />;
 export const Sam = (props: { label?: string; value?: ReactNode }) => <SourceTag kind="sample" {...props} />;
 export const Cal = (props: { label?: string; value?: ReactNode }) => <SourceTag kind="calc" {...props} />;
+
+// 页面级标签图例（蓝=配置 ｜ 橘=样例 ｜ 灰=实时计算），随全局开关显隐
+export function SourceTagLegend() {
+  return (
+    <div style={{ display: 'flex', gap: 10, alignItems: 'center', margin: '8px 0 16px', fontSize: 11, color: '#94A3B8' }}>
+      <span style={{ fontWeight: 500, color: '#64748B' }}>数据来源：</span>
+      <Cfg />
+      <Sam />
+      <Cal />
+      <span style={{ marginLeft: 2 }}>（蓝=配置JSON ｜ 橘=样例JSON ｜ 灰=实时计算）</span>
+    </div>
+  );
+}
 
 // 保存状态提示条
 export function MidSaveToast({ status }: { status: 'idle' | 'saving' | 'saved' | 'error' }) {

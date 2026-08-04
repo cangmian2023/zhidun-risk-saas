@@ -399,19 +399,23 @@ export default function ReportTemplateConfig() {
     patch((t) => ({ ...t, sections: [...t.sections, ns] })); logChange('编辑', `新增分段「${ns.name}」`)
     setOpenSecs((p) => new Set(p).add(sid)); setFlashId(ns.id); setTimeout(() => setFlashId((cur) => (cur === ns.id ? null : cur)), 1600)
   }
-  /* 复制现有模板：把来源模板「报告内容配置」的全部分段快照进一个只读卡片（一个卡片、多个列表，配置不可修改） */
+  /* 复制现有模板（模板复制类型）：把来源模板「报告内容配置」的全部分段快照进一个只读卡片（一个卡片、多个分析维度，配置不可修改） */
+  const copyLock = useRef(0) // 防重复触发（双击/事件重复会一次加两个区块）
   const addTplCopySection = (src: (typeof templates)[number]) => {
-    if (!canEdit) return
+    if (!canEdit || !copyPick) return
+    const now = Date.now()
+    if (now - copyLock.current < 600) return
+    copyLock.current = now
     const snap = src.sections
       .filter((x) => (x.homeTab ?? 'content') === 'content')
       .map((x) => JSON.parse(JSON.stringify(x)) as SectionConfig)
     const ns: SectionConfig = {
-      id: `sec_${Date.now()}`, name: `复制 · ${src.name}`, desc: '复制现有模板', order: nextOrder(active.sections),
+      id: `sec_${Date.now()}`, name: `复制 · ${src.name}`, desc: '模板复制', order: nextOrder(active.sections),
       visible: true, sourceType: 'tpl_copy', sourceName: src.name, fields: [],
       copyFromId: src.id, copyFromName: src.name, copySections: snap,
       copyScoreRange: (() => { const m = computeScoreSummary(src); return { min: m.min, max: m.max, base: m.baseScore } })(),
     }
-    patch((t) => ({ ...t, sections: [...t.sections, ns] })); logChange('编辑', `复制模板「${src.name}」的报告内容配置（${snap.length} 个列表，只读）`)
+    patch((t) => ({ ...t, sections: [...t.sections, ns] })); logChange('编辑', `复制模板「${src.name}」的报告内容配置（${snap.length} 个分析维度，只读）`)
     setOpenSecs((p) => new Set(p).add(ns.id)); setCopyPick(false)
     setFlashId(ns.id); setTimeout(() => setFlashId((cur) => (cur === ns.id ? null : cur)), 1600)
   }
@@ -858,7 +862,7 @@ export default function ReportTemplateConfig() {
           <input disabled={!canEdit} value={s.name} onChange={(e) => patchSection(s.id, (x) => ({ ...x, name: e.target.value }))} style={{ ...inp, width: 190, fontWeight: 600, fontSize: 14 }} />
           <span style={{ fontSize: 12, fontWeight: 600, background: '#fff', border: `1px solid ${stColor.bd}`, color: stColor.tx, padding: '2px 8px', borderRadius: 999 }}>{SECTION_SOURCE_LABEL[st]}</span>
           {st === 'tpl_copy'
-            ? <span style={{ fontSize: 12, color: '#9CA3AF' }}>集成 {(s.copySections ?? []).length} 个列表{s.copyScoreRange ? <> · 总分区间 <b style={{ color: '#B45309' }}>{s.copyScoreRange.min} ~ {s.copyScoreRange.max}</b>（基础分 {s.copyScoreRange.base}）</> : null} · 配置只读</span>
+            ? <span style={{ fontSize: 12, color: '#9CA3AF' }}>集成 {(s.copySections ?? []).length} 个分析维度{s.copyScoreRange ? <> · 总分区间 <b style={{ color: '#B45309' }}>{s.copyScoreRange.min} ~ {s.copyScoreRange.max}</b></> : null}</span>
             : <span style={{ fontSize: 12, color: '#9CA3AF' }}>展示 {s.fields.filter((f) => f.visible).length}/{s.fields.length}</span>}
           <div style={{ display: 'flex', gap: 6, marginLeft: 'auto' }}>
             {opts.showConfigBtn && (
@@ -1274,7 +1278,7 @@ export default function ReportTemplateConfig() {
                         {(['data_source', 'api', 'rule_set'] as SectionSource[]).map((st) => (
                           <button key={st} onClick={() => addSection(st)} style={miniBtn}>＋ {SECTION_SOURCE_LABEL[st]}</button>
                         ))}
-                        <button onClick={() => setCopyPick(true)} style={{ ...miniBtn, borderColor: '#FDE68A', color: '#B45309' }}>＋ 复制现有模板</button>
+                        <button onClick={() => setCopyPick(true)} style={{ ...miniBtn, borderColor: '#FDE68A', color: '#B45309' }}>＋ 模板复制</button>
                       </div>
                     )}
                   </div>
@@ -1313,8 +1317,8 @@ export default function ReportTemplateConfig() {
             </div>
           )}
 
-          {/* 复制现有模板弹窗：选择来源模板，整卡集成其报告内容配置（只读） */}
-          <Modal open={copyPick} onClose={() => setCopyPick(false)} title="复制现有模板 · 选择来源" width="max-w-md">
+          {/* 模板复制弹窗：选择来源模板，整卡集成其报告内容配置（只读） */}
+          <Modal open={copyPick} onClose={() => setCopyPick(false)} title="模板复制 · 选择来源" width="max-w-md">
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {templates.filter((t) => t.id !== active.id).map((t) => {
                 const n = t.sections.filter((x) => (x.homeTab ?? 'content') === 'content').length
@@ -1326,7 +1330,7 @@ export default function ReportTemplateConfig() {
                 )
               })}
             </div>
-            <div style={{ marginTop: 10, fontSize: 12, color: '#9CA3AF' }}>复制来源模板「报告内容配置」的全部分段，在本模板中合成一个只读卡片（一个卡片、多个列表），配置全部集成、不可修改。</div>
+            <div style={{ marginTop: 10, fontSize: 12, color: '#9CA3AF' }}>复制来源模板「报告内容配置」的全部分段，在本模板中合成一个只读卡片（一个卡片、多个分析维度），配置全部集成、不可修改。</div>
           </Modal>
 
           {/* 特殊命中规则 · 选择规则项弹窗：只列「报告内容配置」里已启用分段的已勾选展示项 */}

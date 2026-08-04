@@ -262,6 +262,12 @@ export const plannedExtras: PlannedExtra[] = [
   { key: 'ep:ent-graph-detail', sub: 'ep', group: '企业关联图谱', label: '企业关联图谱详情页', desc: '展示企业间的股权关系、担保关系、关联交易等' },
   { key: 'dm:herald-task-detail', sub: 'dm', group: '猎客信使', label: '触达任务详情页', desc: '展示任务的执行进度、触达明细、转化效果' },
   { key: 'dm:rta-detail', sub: 'dm', group: 'RTA服务', label: 'RTA请求详情页', desc: '展示单次 RTA 请求的响应分、策略建议、响应耗时' },
+  { key: 'cm:mid-data-source-detail', sub: 'cm', group: '贷中监控配置', label: '数据源详情页', desc: '查看数据源字段口径、样例数据与被指标库引用情况' },
+  { key: 'cm:mid-metric-detail', sub: 'cm', group: '贷中监控配置', label: '指标详情页', desc: '查看指标口径、实时计算预览与引用关系' },
+  { key: 'cm:mid-strategy-detail', sub: 'cm', group: '贷中监控配置', label: '监控策略详情页', desc: '查看监控任务/预警规则/处置策略配置与联动预警' },
+  { key: 'cm:mid-dashboard-detail', sub: 'cm', group: '贷中监控配置', label: '监控页面配置详情页', desc: '查看看板页面组件配置与实时渲染入口' },
+  { key: 'cr:mid-alert-detail', sub: 'cr', group: '预警处置', label: '预警详情页', desc: '查看预警信息、建议处置策略并推进状态流转' },
+  { key: 'cr:mid-dispose-detail', sub: 'cr', group: '处置闭环', label: '处置工单详情页', desc: '查看工单信息、回填处置与操作日志' },
 ]
 
 /* ============ 模块规格（页面内容） ============ */

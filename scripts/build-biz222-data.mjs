@@ -8,12 +8,17 @@ import path from 'node:path'
 const DIR = '/Users/mandy/work/project/risk/SaaS/src/console'
 const disk = JSON.parse(fs.readFileSync(path.join(DIR, 'templateSeed.json'), 'utf-8'))
 
-/* 字段名（name）从模板 fields 读取，保证与配置一致 */
+/* 字段名（name）从模板读取；tpl_copy 摘要段（verify_summary 等）字段在 copySections 快照里 */
 const tplFields = (tplId, secId) => {
   const t = disk.find((x) => x.id === tplId)
   const sec = [...(t.content?.sections ?? [])].find((s) => s.id === secId)
-  return (sec?.fields ?? []).filter((f) => f.visible !== false).map((f) => f.name)
+  const flds = sec?.sourceType === 'tpl_copy'
+    ? (sec.copySections ?? []).flatMap((cs) => cs.fields ?? [])
+    : (sec?.fields ?? [])
+  return flds.filter((f) => f.visible !== false).map((f) => f.name)
 }
+
+const ONLY = process.argv[2] // 可选：只生成指定模块（credit/fraud/decision）
 
 const M = {
   credit: {
@@ -35,9 +40,10 @@ const M = {
   decision: {
     tplId: 'tpl-decision-222', idPrefix: 'DC-20260801', status0: '待审批', prod: ['信用贷', '抵押贷', '经营贷'],
     plan: {
-      A: { applicant_info: 12, verify_summary: 3, credit_summary: 3, fraud_summary: 3 },
-      B: { applicant_info: 6, verify_summary: 3, credit_summary: 2, fraud_summary: 1 },
-      C: { applicant_info: 3, verify_summary: 1, credit_summary: 0, fraud_summary: 0 },
+      // verify/fraud_summary 为 tpl_copy 摘要段（公式负号扣减，命中项 +5）；credit_summary 加分段
+      A: { applicant_info: 12, verify_summary: 1, credit_summary: 9, fraud_summary: 1 },
+      B: { applicant_info: 6, verify_summary: 4, credit_summary: 3, fraud_summary: 2 },
+      C: { applicant_info: 3, verify_summary: 10, credit_summary: 0, fraud_summary: 14 },
     },
   },
 }
@@ -72,8 +78,8 @@ function makeSample(mod, grade) {
   for (const [secId, hit] of Object.entries(plan)) {
     const fields = tplFields(tplId, secId)
     const secName = fields.length ? secId : secId // name 由渲染层从模板取，JSON 里留 secId 名
-    if (secId === 'identity_fraud' || secId === 'info_forgery') blocks.push(rsBlock(secId, secName, fields, hit))
-    else if (secId === 'verify_summary' || secId === 'credit_summary' || secId === 'fraud_summary' || secId === 'credit_suggestion') {
+    if (secId === 'identity_fraud' || secId === 'info_forgery' || secId === 'verify_summary' || secId === 'fraud_summary') blocks.push(rsBlock(secId, secName, fields, hit))
+    else if (secId === 'credit_summary' || secId === 'credit_suggestion') {
       blocks.push(apiBlock(secId, secName, fields, hit, (f) => (f.includes('结论') ? (hit > 0 ? '通过' : '未通过') : f.includes('建议') ? '同意' : '—')))
     }
     else blocks.push(dsBlock(secId, secName, fields, hit))
@@ -113,7 +119,8 @@ function makeList(mod) {
   }))
 }
 
-for (const [key, mod] of Object.entries(M)) {
+const MODULES = ONLY ? { [ONLY]: M[ONLY] } : M
+for (const [key, mod] of Object.entries(MODULES)) {
   fs.writeFileSync(path.join(DIR, `${key}VerifyData.json`), JSON.stringify(makeList(mod), null, 2) + '\n', 'utf-8')
   fs.writeFileSync(path.join(DIR, `${key}VerifySample.json`), JSON.stringify(makeSample(mod, 'A'), null, 2) + '\n', 'utf-8')
   const pool = {}
@@ -124,7 +131,7 @@ for (const [key, mod] of Object.entries(M)) {
 
 /* 校验：A/B/C 池总分落段 */
 const sum = (arr) => (arr ?? []).reduce((a, x) => a + (typeof x.score === 'number' ? x.score : 0), 0)
-for (const [key, mod] of Object.entries(M)) {
+for (const [key, mod] of Object.entries(MODULES)) {
   const t = disk.find((x) => x.id === mod.tplId)
   const grades = t.autoReview.scoreDisplay.grades
   const formula = t.autoReview.scoreFormula

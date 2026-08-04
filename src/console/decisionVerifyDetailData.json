@@ -115,29 +115,168 @@
       },
       {
         "id": "verify_summary",
-        "type": "api",
+        "type": "rule_set",
         "name": "verify_summary",
         "items": [
           {
-            "name": "信息核验结论摘要",
-            "type": "text",
-            "value": "通过",
-            "valid": true,
-            "score": 5
+            "name": "公安实名",
+            "conclusion": "拒绝",
+            "score": 5,
+            "callStatus": "success",
+            "costMs": 120,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "命中",
+                "status": "fail"
+              }
+            ]
           },
           {
-            "name": "关键风险点",
-            "type": "text",
-            "value": "—",
-            "valid": true,
-            "score": 5
+            "name": "银行卡四要素",
+            "conclusion": "通过",
+            "score": 0,
+            "callStatus": "success",
+            "costMs": 143,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "未命中",
+                "status": "pass"
+              }
+            ]
           },
           {
-            "name": "展开查看完整信息核验报告入口",
-            "type": "text",
-            "value": "—",
-            "valid": true,
-            "score": 5
+            "name": "运营商实名",
+            "conclusion": "通过",
+            "score": 0,
+            "callStatus": "success",
+            "costMs": 166,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "未命中",
+                "status": "pass"
+              }
+            ]
+          },
+          {
+            "name": "设备真实性",
+            "conclusion": "通过",
+            "score": 0,
+            "callStatus": "success",
+            "costMs": 189,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "未命中",
+                "status": "pass"
+              }
+            ]
+          },
+          {
+            "name": "联防联控",
+            "conclusion": "通过",
+            "score": 0,
+            "callStatus": "success",
+            "costMs": 212,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "未命中",
+                "status": "pass"
+              }
+            ]
+          },
+          {
+            "name": "设备群控",
+            "conclusion": "通过",
+            "score": 0,
+            "callStatus": "success",
+            "costMs": 235,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "未命中",
+                "status": "pass"
+              }
+            ]
+          },
+          {
+            "name": "团伙关联",
+            "conclusion": "通过",
+            "score": 0,
+            "callStatus": "success",
+            "costMs": 258,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "未命中",
+                "status": "pass"
+              }
+            ]
+          },
+          {
+            "name": "黑名单命中",
+            "conclusion": "通过",
+            "score": 0,
+            "callStatus": "success",
+            "costMs": 281,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "未命中",
+                "status": "pass"
+              }
+            ]
+          },
+          {
+            "name": "资料一致性",
+            "conclusion": "通过",
+            "score": 0,
+            "callStatus": "success",
+            "costMs": 304,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "未命中",
+                "status": "pass"
+              }
+            ]
+          },
+          {
+            "name": "行为异常",
+            "conclusion": "通过",
+            "score": 0,
+            "callStatus": "success",
+            "costMs": 327,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "未命中",
+                "status": "pass"
+              }
+            ]
           }
         ]
       },
@@ -147,53 +286,319 @@
         "name": "credit_summary",
         "items": [
           {
-            "name": "信用风控结论摘要",
-            "type": "text",
-            "value": "通过",
-            "valid": true,
-            "score": 5
-          },
-          {
-            "name": "关键风险点",
+            "name": "信用评分",
             "type": "text",
             "value": "—",
             "valid": true,
             "score": 5
           },
           {
-            "name": "展开查看完整信用风控报告入口",
+            "name": "风险等级",
             "type": "text",
             "value": "—",
             "valid": true,
             "score": 5
+          },
+          {
+            "name": "行业对比",
+            "type": "text",
+            "value": "—",
+            "valid": true,
+            "score": 5
+          },
+          {
+            "name": "六维评分",
+            "type": "text",
+            "value": "—",
+            "valid": true,
+            "score": 5
+          },
+          {
+            "name": "风险标签",
+            "type": "text",
+            "value": "—",
+            "valid": true,
+            "score": 5
+          },
+          {
+            "name": "六维因子卡片",
+            "type": "text",
+            "value": "—",
+            "valid": true,
+            "score": 5
+          },
+          {
+            "name": "维度得分",
+            "type": "text",
+            "value": "—",
+            "valid": true,
+            "score": 5
+          },
+          {
+            "name": "维度权重",
+            "type": "text",
+            "value": "—",
+            "valid": true,
+            "score": 5
+          },
+          {
+            "name": "维度等级",
+            "type": "text",
+            "value": "—",
+            "valid": true,
+            "score": 5
+          },
+          {
+            "name": "维度逻辑",
+            "type": "text",
+            "value": "—",
+            "valid": false,
+            "score": 0
+          },
+          {
+            "name": "维度来源",
+            "type": "text",
+            "value": "—",
+            "valid": false,
+            "score": 0
+          },
+          {
+            "name": "维度说明表",
+            "type": "text",
+            "value": "—",
+            "valid": false,
+            "score": 0
           }
         ]
       },
       {
         "id": "fraud_summary",
-        "type": "api",
+        "type": "rule_set",
         "name": "fraud_summary",
         "items": [
           {
-            "name": "欺诈识别结论摘要",
-            "type": "text",
-            "value": "通过",
-            "valid": true,
-            "score": 5
+            "name": "公安实名",
+            "conclusion": "拒绝",
+            "score": 5,
+            "callStatus": "success",
+            "costMs": 120,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "命中",
+                "status": "fail"
+              }
+            ]
           },
           {
-            "name": "关键风险点",
-            "type": "text",
-            "value": "—",
-            "valid": true,
-            "score": 5
+            "name": "银行卡四要素",
+            "conclusion": "通过",
+            "score": 0,
+            "callStatus": "success",
+            "costMs": 143,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "未命中",
+                "status": "pass"
+              }
+            ]
           },
           {
-            "name": "展开查看完整欺诈识别报告入口",
-            "type": "text",
-            "value": "—",
-            "valid": true,
-            "score": 5
+            "name": "运营商实名",
+            "conclusion": "通过",
+            "score": 0,
+            "callStatus": "success",
+            "costMs": 166,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "未命中",
+                "status": "pass"
+              }
+            ]
+          },
+          {
+            "name": "设备真实性",
+            "conclusion": "通过",
+            "score": 0,
+            "callStatus": "success",
+            "costMs": 189,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "未命中",
+                "status": "pass"
+              }
+            ]
+          },
+          {
+            "name": "资料一致性",
+            "conclusion": "通过",
+            "score": 0,
+            "callStatus": "success",
+            "costMs": 212,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "未命中",
+                "status": "pass"
+              }
+            ]
+          },
+          {
+            "name": "设备指纹",
+            "conclusion": "通过",
+            "score": 0,
+            "callStatus": "success",
+            "costMs": 235,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "未命中",
+                "status": "pass"
+              }
+            ]
+          },
+          {
+            "name": "越狱/ROOT",
+            "conclusion": "通过",
+            "score": 0,
+            "callStatus": "success",
+            "costMs": 258,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "未命中",
+                "status": "pass"
+              }
+            ]
+          },
+          {
+            "name": "SIM更换",
+            "conclusion": "通过",
+            "score": 0,
+            "callStatus": "success",
+            "costMs": 281,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "未命中",
+                "status": "pass"
+              }
+            ]
+          },
+          {
+            "name": "虚拟机",
+            "conclusion": "通过",
+            "score": 0,
+            "callStatus": "success",
+            "costMs": 304,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "未命中",
+                "status": "pass"
+              }
+            ]
+          },
+          {
+            "name": "GPS异常",
+            "conclusion": "通过",
+            "score": 0,
+            "callStatus": "success",
+            "costMs": 327,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "未命中",
+                "status": "pass"
+              }
+            ]
+          },
+          {
+            "name": "IP异常",
+            "conclusion": "通过",
+            "score": 0,
+            "callStatus": "success",
+            "costMs": 350,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "未命中",
+                "status": "pass"
+              }
+            ]
+          },
+          {
+            "name": "操作时段",
+            "conclusion": "通过",
+            "score": 0,
+            "callStatus": "success",
+            "costMs": 373,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "未命中",
+                "status": "pass"
+              }
+            ]
+          },
+          {
+            "name": "操作速度",
+            "conclusion": "通过",
+            "score": 0,
+            "callStatus": "success",
+            "costMs": 396,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "未命中",
+                "status": "pass"
+              }
+            ]
+          },
+          {
+            "name": "多开设备",
+            "conclusion": "通过",
+            "score": 0,
+            "callStatus": "success",
+            "costMs": 419,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "未命中",
+                "status": "pass"
+              }
+            ]
           }
         ]
       }
@@ -330,29 +735,168 @@
       },
       {
         "id": "verify_summary",
-        "type": "api",
+        "type": "rule_set",
         "name": "verify_summary",
         "items": [
           {
-            "name": "信息核验结论摘要",
-            "type": "text",
-            "value": "通过",
-            "valid": true,
-            "score": 5
+            "name": "公安实名",
+            "conclusion": "拒绝",
+            "score": 5,
+            "callStatus": "success",
+            "costMs": 120,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "命中",
+                "status": "fail"
+              }
+            ]
           },
           {
-            "name": "关键风险点",
-            "type": "text",
-            "value": "—",
-            "valid": true,
-            "score": 5
+            "name": "银行卡四要素",
+            "conclusion": "拒绝",
+            "score": 5,
+            "callStatus": "success",
+            "costMs": 143,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "命中",
+                "status": "fail"
+              }
+            ]
           },
           {
-            "name": "展开查看完整信息核验报告入口",
-            "type": "text",
-            "value": "—",
-            "valid": true,
-            "score": 5
+            "name": "运营商实名",
+            "conclusion": "拒绝",
+            "score": 5,
+            "callStatus": "success",
+            "costMs": 166,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "命中",
+                "status": "fail"
+              }
+            ]
+          },
+          {
+            "name": "设备真实性",
+            "conclusion": "拒绝",
+            "score": 5,
+            "callStatus": "success",
+            "costMs": 189,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "命中",
+                "status": "fail"
+              }
+            ]
+          },
+          {
+            "name": "联防联控",
+            "conclusion": "通过",
+            "score": 0,
+            "callStatus": "success",
+            "costMs": 212,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "未命中",
+                "status": "pass"
+              }
+            ]
+          },
+          {
+            "name": "设备群控",
+            "conclusion": "通过",
+            "score": 0,
+            "callStatus": "success",
+            "costMs": 235,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "未命中",
+                "status": "pass"
+              }
+            ]
+          },
+          {
+            "name": "团伙关联",
+            "conclusion": "通过",
+            "score": 0,
+            "callStatus": "success",
+            "costMs": 258,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "未命中",
+                "status": "pass"
+              }
+            ]
+          },
+          {
+            "name": "黑名单命中",
+            "conclusion": "通过",
+            "score": 0,
+            "callStatus": "success",
+            "costMs": 281,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "未命中",
+                "status": "pass"
+              }
+            ]
+          },
+          {
+            "name": "资料一致性",
+            "conclusion": "通过",
+            "score": 0,
+            "callStatus": "success",
+            "costMs": 304,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "未命中",
+                "status": "pass"
+              }
+            ]
+          },
+          {
+            "name": "行为异常",
+            "conclusion": "通过",
+            "score": 0,
+            "callStatus": "success",
+            "costMs": 327,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "未命中",
+                "status": "pass"
+              }
+            ]
           }
         ]
       },
@@ -362,21 +906,84 @@
         "name": "credit_summary",
         "items": [
           {
-            "name": "信用风控结论摘要",
-            "type": "text",
-            "value": "通过",
-            "valid": true,
-            "score": 5
-          },
-          {
-            "name": "关键风险点",
+            "name": "信用评分",
             "type": "text",
             "value": "—",
             "valid": true,
             "score": 5
           },
           {
-            "name": "展开查看完整信用风控报告入口",
+            "name": "风险等级",
+            "type": "text",
+            "value": "—",
+            "valid": true,
+            "score": 5
+          },
+          {
+            "name": "行业对比",
+            "type": "text",
+            "value": "—",
+            "valid": true,
+            "score": 5
+          },
+          {
+            "name": "六维评分",
+            "type": "text",
+            "value": "—",
+            "valid": false,
+            "score": 0
+          },
+          {
+            "name": "风险标签",
+            "type": "text",
+            "value": "—",
+            "valid": false,
+            "score": 0
+          },
+          {
+            "name": "六维因子卡片",
+            "type": "text",
+            "value": "—",
+            "valid": false,
+            "score": 0
+          },
+          {
+            "name": "维度得分",
+            "type": "text",
+            "value": "—",
+            "valid": false,
+            "score": 0
+          },
+          {
+            "name": "维度权重",
+            "type": "text",
+            "value": "—",
+            "valid": false,
+            "score": 0
+          },
+          {
+            "name": "维度等级",
+            "type": "text",
+            "value": "—",
+            "valid": false,
+            "score": 0
+          },
+          {
+            "name": "维度逻辑",
+            "type": "text",
+            "value": "—",
+            "valid": false,
+            "score": 0
+          },
+          {
+            "name": "维度来源",
+            "type": "text",
+            "value": "—",
+            "valid": false,
+            "score": 0
+          },
+          {
+            "name": "维度说明表",
             "type": "text",
             "value": "—",
             "valid": false,
@@ -386,29 +993,232 @@
       },
       {
         "id": "fraud_summary",
-        "type": "api",
+        "type": "rule_set",
         "name": "fraud_summary",
         "items": [
           {
-            "name": "欺诈识别结论摘要",
-            "type": "text",
-            "value": "通过",
-            "valid": true,
-            "score": 5
+            "name": "公安实名",
+            "conclusion": "拒绝",
+            "score": 5,
+            "callStatus": "success",
+            "costMs": 120,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "命中",
+                "status": "fail"
+              }
+            ]
           },
           {
-            "name": "关键风险点",
-            "type": "text",
-            "value": "—",
-            "valid": false,
-            "score": 0
+            "name": "银行卡四要素",
+            "conclusion": "拒绝",
+            "score": 5,
+            "callStatus": "success",
+            "costMs": 143,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "命中",
+                "status": "fail"
+              }
+            ]
           },
           {
-            "name": "展开查看完整欺诈识别报告入口",
-            "type": "text",
-            "value": "—",
-            "valid": false,
-            "score": 0
+            "name": "运营商实名",
+            "conclusion": "通过",
+            "score": 0,
+            "callStatus": "success",
+            "costMs": 166,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "未命中",
+                "status": "pass"
+              }
+            ]
+          },
+          {
+            "name": "设备真实性",
+            "conclusion": "通过",
+            "score": 0,
+            "callStatus": "success",
+            "costMs": 189,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "未命中",
+                "status": "pass"
+              }
+            ]
+          },
+          {
+            "name": "资料一致性",
+            "conclusion": "通过",
+            "score": 0,
+            "callStatus": "success",
+            "costMs": 212,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "未命中",
+                "status": "pass"
+              }
+            ]
+          },
+          {
+            "name": "设备指纹",
+            "conclusion": "通过",
+            "score": 0,
+            "callStatus": "success",
+            "costMs": 235,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "未命中",
+                "status": "pass"
+              }
+            ]
+          },
+          {
+            "name": "越狱/ROOT",
+            "conclusion": "通过",
+            "score": 0,
+            "callStatus": "success",
+            "costMs": 258,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "未命中",
+                "status": "pass"
+              }
+            ]
+          },
+          {
+            "name": "SIM更换",
+            "conclusion": "通过",
+            "score": 0,
+            "callStatus": "success",
+            "costMs": 281,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "未命中",
+                "status": "pass"
+              }
+            ]
+          },
+          {
+            "name": "虚拟机",
+            "conclusion": "通过",
+            "score": 0,
+            "callStatus": "success",
+            "costMs": 304,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "未命中",
+                "status": "pass"
+              }
+            ]
+          },
+          {
+            "name": "GPS异常",
+            "conclusion": "通过",
+            "score": 0,
+            "callStatus": "success",
+            "costMs": 327,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "未命中",
+                "status": "pass"
+              }
+            ]
+          },
+          {
+            "name": "IP异常",
+            "conclusion": "通过",
+            "score": 0,
+            "callStatus": "success",
+            "costMs": 350,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "未命中",
+                "status": "pass"
+              }
+            ]
+          },
+          {
+            "name": "操作时段",
+            "conclusion": "通过",
+            "score": 0,
+            "callStatus": "success",
+            "costMs": 373,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "未命中",
+                "status": "pass"
+              }
+            ]
+          },
+          {
+            "name": "操作速度",
+            "conclusion": "通过",
+            "score": 0,
+            "callStatus": "success",
+            "costMs": 396,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "未命中",
+                "status": "pass"
+              }
+            ]
+          },
+          {
+            "name": "多开设备",
+            "conclusion": "通过",
+            "score": 0,
+            "callStatus": "success",
+            "costMs": 419,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "未命中",
+                "status": "pass"
+              }
+            ]
           }
         ]
       }
@@ -545,29 +1355,168 @@
       },
       {
         "id": "verify_summary",
-        "type": "api",
+        "type": "rule_set",
         "name": "verify_summary",
         "items": [
           {
-            "name": "信息核验结论摘要",
-            "type": "text",
-            "value": "通过",
-            "valid": true,
-            "score": 5
+            "name": "公安实名",
+            "conclusion": "拒绝",
+            "score": 5,
+            "callStatus": "success",
+            "costMs": 120,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "命中",
+                "status": "fail"
+              }
+            ]
           },
           {
-            "name": "关键风险点",
-            "type": "text",
-            "value": "—",
-            "valid": false,
-            "score": 0
+            "name": "银行卡四要素",
+            "conclusion": "拒绝",
+            "score": 5,
+            "callStatus": "success",
+            "costMs": 143,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "命中",
+                "status": "fail"
+              }
+            ]
           },
           {
-            "name": "展开查看完整信息核验报告入口",
-            "type": "text",
-            "value": "—",
-            "valid": false,
-            "score": 0
+            "name": "运营商实名",
+            "conclusion": "拒绝",
+            "score": 5,
+            "callStatus": "success",
+            "costMs": 166,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "命中",
+                "status": "fail"
+              }
+            ]
+          },
+          {
+            "name": "设备真实性",
+            "conclusion": "拒绝",
+            "score": 5,
+            "callStatus": "success",
+            "costMs": 189,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "命中",
+                "status": "fail"
+              }
+            ]
+          },
+          {
+            "name": "联防联控",
+            "conclusion": "拒绝",
+            "score": 5,
+            "callStatus": "success",
+            "costMs": 212,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "命中",
+                "status": "fail"
+              }
+            ]
+          },
+          {
+            "name": "设备群控",
+            "conclusion": "拒绝",
+            "score": 5,
+            "callStatus": "success",
+            "costMs": 235,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "命中",
+                "status": "fail"
+              }
+            ]
+          },
+          {
+            "name": "团伙关联",
+            "conclusion": "拒绝",
+            "score": 5,
+            "callStatus": "success",
+            "costMs": 258,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "命中",
+                "status": "fail"
+              }
+            ]
+          },
+          {
+            "name": "黑名单命中",
+            "conclusion": "拒绝",
+            "score": 5,
+            "callStatus": "success",
+            "costMs": 281,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "命中",
+                "status": "fail"
+              }
+            ]
+          },
+          {
+            "name": "资料一致性",
+            "conclusion": "拒绝",
+            "score": 5,
+            "callStatus": "success",
+            "costMs": 304,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "命中",
+                "status": "fail"
+              }
+            ]
+          },
+          {
+            "name": "行为异常",
+            "conclusion": "拒绝",
+            "score": 5,
+            "callStatus": "success",
+            "costMs": 327,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "命中",
+                "status": "fail"
+              }
+            ]
           }
         ]
       },
@@ -577,21 +1526,84 @@
         "name": "credit_summary",
         "items": [
           {
-            "name": "信用风控结论摘要",
-            "type": "text",
-            "value": "未通过",
-            "valid": false,
-            "score": 0
-          },
-          {
-            "name": "关键风险点",
+            "name": "信用评分",
             "type": "text",
             "value": "—",
             "valid": false,
             "score": 0
           },
           {
-            "name": "展开查看完整信用风控报告入口",
+            "name": "风险等级",
+            "type": "text",
+            "value": "—",
+            "valid": false,
+            "score": 0
+          },
+          {
+            "name": "行业对比",
+            "type": "text",
+            "value": "—",
+            "valid": false,
+            "score": 0
+          },
+          {
+            "name": "六维评分",
+            "type": "text",
+            "value": "—",
+            "valid": false,
+            "score": 0
+          },
+          {
+            "name": "风险标签",
+            "type": "text",
+            "value": "—",
+            "valid": false,
+            "score": 0
+          },
+          {
+            "name": "六维因子卡片",
+            "type": "text",
+            "value": "—",
+            "valid": false,
+            "score": 0
+          },
+          {
+            "name": "维度得分",
+            "type": "text",
+            "value": "—",
+            "valid": false,
+            "score": 0
+          },
+          {
+            "name": "维度权重",
+            "type": "text",
+            "value": "—",
+            "valid": false,
+            "score": 0
+          },
+          {
+            "name": "维度等级",
+            "type": "text",
+            "value": "—",
+            "valid": false,
+            "score": 0
+          },
+          {
+            "name": "维度逻辑",
+            "type": "text",
+            "value": "—",
+            "valid": false,
+            "score": 0
+          },
+          {
+            "name": "维度来源",
+            "type": "text",
+            "value": "—",
+            "valid": false,
+            "score": 0
+          },
+          {
+            "name": "维度说明表",
             "type": "text",
             "value": "—",
             "valid": false,
@@ -601,29 +1613,232 @@
       },
       {
         "id": "fraud_summary",
-        "type": "api",
+        "type": "rule_set",
         "name": "fraud_summary",
         "items": [
           {
-            "name": "欺诈识别结论摘要",
-            "type": "text",
-            "value": "未通过",
-            "valid": false,
-            "score": 0
+            "name": "公安实名",
+            "conclusion": "拒绝",
+            "score": 5,
+            "callStatus": "success",
+            "costMs": 120,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "命中",
+                "status": "fail"
+              }
+            ]
           },
           {
-            "name": "关键风险点",
-            "type": "text",
-            "value": "—",
-            "valid": false,
-            "score": 0
+            "name": "银行卡四要素",
+            "conclusion": "拒绝",
+            "score": 5,
+            "callStatus": "success",
+            "costMs": 143,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "命中",
+                "status": "fail"
+              }
+            ]
           },
           {
-            "name": "展开查看完整欺诈识别报告入口",
-            "type": "text",
-            "value": "—",
-            "valid": false,
-            "score": 0
+            "name": "运营商实名",
+            "conclusion": "拒绝",
+            "score": 5,
+            "callStatus": "success",
+            "costMs": 166,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "命中",
+                "status": "fail"
+              }
+            ]
+          },
+          {
+            "name": "设备真实性",
+            "conclusion": "拒绝",
+            "score": 5,
+            "callStatus": "success",
+            "costMs": 189,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "命中",
+                "status": "fail"
+              }
+            ]
+          },
+          {
+            "name": "资料一致性",
+            "conclusion": "拒绝",
+            "score": 5,
+            "callStatus": "success",
+            "costMs": 212,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "命中",
+                "status": "fail"
+              }
+            ]
+          },
+          {
+            "name": "设备指纹",
+            "conclusion": "拒绝",
+            "score": 5,
+            "callStatus": "success",
+            "costMs": 235,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "命中",
+                "status": "fail"
+              }
+            ]
+          },
+          {
+            "name": "越狱/ROOT",
+            "conclusion": "拒绝",
+            "score": 5,
+            "callStatus": "success",
+            "costMs": 258,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "命中",
+                "status": "fail"
+              }
+            ]
+          },
+          {
+            "name": "SIM更换",
+            "conclusion": "拒绝",
+            "score": 5,
+            "callStatus": "success",
+            "costMs": 281,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "命中",
+                "status": "fail"
+              }
+            ]
+          },
+          {
+            "name": "虚拟机",
+            "conclusion": "拒绝",
+            "score": 5,
+            "callStatus": "success",
+            "costMs": 304,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "命中",
+                "status": "fail"
+              }
+            ]
+          },
+          {
+            "name": "GPS异常",
+            "conclusion": "拒绝",
+            "score": 5,
+            "callStatus": "success",
+            "costMs": 327,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "命中",
+                "status": "fail"
+              }
+            ]
+          },
+          {
+            "name": "IP异常",
+            "conclusion": "拒绝",
+            "score": 5,
+            "callStatus": "success",
+            "costMs": 350,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "命中",
+                "status": "fail"
+              }
+            ]
+          },
+          {
+            "name": "操作时段",
+            "conclusion": "拒绝",
+            "score": 5,
+            "callStatus": "success",
+            "costMs": 373,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "命中",
+                "status": "fail"
+              }
+            ]
+          },
+          {
+            "name": "操作速度",
+            "conclusion": "拒绝",
+            "score": 5,
+            "callStatus": "success",
+            "costMs": 396,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "命中",
+                "status": "fail"
+              }
+            ]
+          },
+          {
+            "name": "多开设备",
+            "conclusion": "拒绝",
+            "score": 5,
+            "callStatus": "success",
+            "costMs": 419,
+            "verifyTime": "2026-08-02 15:00:12",
+            "channel": "api-v3",
+            "items": [
+              {
+                "label": "核验项",
+                "value": "命中",
+                "status": "fail"
+              }
+            ]
           }
         ]
       }

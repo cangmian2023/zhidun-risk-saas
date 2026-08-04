@@ -1,203 +1,145 @@
-// ⑪ 个体详情页（贷中监控 · 使用域）— 规则还原 + 画像 + 评分历史 + 预警/处置 + 处置操作（模拟对接）
-// 样例数据=橘（midCustomers.json）｜ 处置策略/规则配置=蓝（midStrategies.json）｜ 模拟执行=灰（实时）
-import { useState } from 'react';
-import { PageHeader, Panel, DataTable, Button, Modal } from '../components/ui';
-import type { Column, Row } from '../components/ui';
+// ⑦ 个体详情页（使用域）— 读客户样例 midCustomers.json 橘；打分/额度使用率实时计算 灰
+import { useMemo } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { DetailHeader, Panel, StatCard, Badge, StatusTag, Button } from '../components/ui';
 import { LineChart } from '../components/charts';
-import { useMidCustomers, updateCustomers, useMidStrategy, useMidDisposeTasks } from './midStore';
-import { Cfg, Sam, Cal } from './SourceTag';
-import type { MidDispose } from './midData';
+import { Sam, Cal } from './SourceTag';
+import { PageShell } from './PageShell';
+import { useMidCustomers, useMidAlerts, useMidDisposeTasks } from './midStore';
+import { LEVEL_META, type MidCustomer } from './midData';
 
-const LEVEL_COLOR: Record<string, string> = { RED: '#DC2626', YELLOW: '#D97706', OPPORTUNITY: '#2563EB' };
-const LEVEL_LABEL: Record<string, string> = { RED: '红灯', YELLOW: '黄灯', OPPORTUNITY: '机会信号' };
+const STATUS_KIND: Record<string, 'red' | 'amber' | 'blue' | 'green' | 'violet' | 'gray'> = {
+  待处置: 'red', 核实中: 'amber', 处置中: 'blue', 已解除: 'green', 已升级: 'violet', 误报: 'gray',
+};
 
 export default function MidCustDetail() {
+  const [params] = useSearchParams();
+  const custId = params.get('cust') ?? '';
   const customers = useMidCustomers();
-  const strategy = useMidStrategy();
-  const disposeTasks = useMidDisposeTasks();
-  const [exec, setExec] = useState<{ action: string; steps: string[]; done: boolean } | null>(null);
+  const alerts = useMidAlerts();
+  const tasks = useMidDisposeTasks();
+  const nav = useNavigate();
 
-  const qs = new URLSearchParams(window.location.search);
-  const custId = qs.get('custId') ?? 'C0001';
-  const from = qs.get('from') ?? '';
-  const cust = customers.find((c) => c.custId === custId) ?? customers[0];
-  if (!cust) return <div style={{ padding: 24, color: '#94A3B8' }}>未找到客户 {custId}</div>;
+  const cust: MidCustomer | undefined = useMemo(
+    () => customers.find((c) => c.custId === custId) ?? customers[0],
+    [customers, custId],
+  );
 
-  const latestAlert = cust.alerts[cust.alerts.length - 1];
-  const level = (latestAlert?.level ?? 'YELLOW') as keyof typeof LEVEL_LABEL;
+  // 实时计算（灰）：额度使用率
+  const usage = cust ? (cust.creditLine ? (cust.loanBalance / cust.creditLine) * 100 : 0) : 0;
 
-  // 与当前风险等级匹配的处置动作（读策略配置，蓝）
-  const matchedDisposes = strategy.disposes.filter((d) => d.triggerLevel === level);
+  const custAlerts = cust ? alerts.filter((a) => a.cust_id === cust.custId) : [];
+  const custTasks = cust ? tasks.filter((t) => t.custId === cust.custId) : [];
 
-  const doDispose = (d: MidDispose) => {
-    const steps: string[] = [`下发处置指令：${d.action} → ${d.targetSystem}`];
-    if (d.needApprove) steps.push('提交风控主管审批… 审批通过');
-    if (d.needNotify) steps.push('触达客户通知（短信/APP Push）');
-    const ok = Math.random() > 0.25;
-    steps.push(ok ? `模拟执行：${d.targetSystem} 执行成功` : '模拟执行：目标系统返回异常，已回滚');
-    setExec({ action: d.action, steps, done: true });
-  };
-
-  const confirmDispose = () => {
-    if (!exec || !exec.done) return;
-    updateCustomers((list) => list.map((c) => {
-      if (c.custId !== cust.custId) return c;
-      const note = exec.steps[exec.steps.length - 1].startsWith('模拟执行') && exec.steps[exec.steps.length - 1].includes('成功')
-        ? '处置已执行' : '执行异常，待重试';
-      return {
-        ...c,
-        disposes: [...c.disposes, { time: new Date().toISOString().slice(0, 10), operator: '风控专员（演示）', action: exec.action, result: note }],
-      };
-    }));
-    setExec(null);
-  };
-
-  const alertCols: Column[] = [
-    { key: 'time', label: '时间' }, { key: 'level', label: '等级', type: 'badge' },
-    { key: 'scene', label: '场景' }, { key: 'rule', label: '命中规则' },
-    { key: 'v', label: '指标值/阈值' }, { key: 'status', label: '状态', type: 'badge' },
-  ];
-  const alertRows: Row[] = [...cust.alerts].reverse().map((a) => ({
-    id: a.time + a.scene, time: a.time, level: LEVEL_LABEL[a.level] ?? a.level,
-    scene: a.scene, rule: a.ruleName, v: `${a.metricValue} / ${a.threshold}`, status: a.status,
-  }));
-
-  const disposeCols: Column[] = [
-    { key: 'time', label: '时间' }, { key: 'operator', label: '处置人' },
-    { key: 'action', label: '动作' }, { key: 'result', label: '结果' }, { key: 'note', label: '备注' },
-  ];
-  const disposeRows: Row[] = [...cust.disposes].reverse().map((d, i) => ({
-    id: `d${i}`, time: d.time, operator: d.operator, action: d.action, result: d.result, note: d.note ?? '',
-  }));
+  if (!cust) {
+    return <div style={{ padding: 24 }}><PageShell header={<DetailHeader title="个体详情" crumb="零售信贷风控 / 贷中监控" backLabel="← 返回" onBack={() => nav(-1)} />} /></div>;
+  }
 
   return (
-    <div style={{ padding: 24, maxWidth: 1280 }}>
-      <PageHeader
-        title={`个体详情 · ${cust.name}`}
+    <div style={{ padding: 24, maxWidth: 1100 }}>
+      <PageShell header={<DetailHeader
+        title={<span>{cust.name} <Sam label="客户样例" value="midCustomers.json" /></span>}
         crumb="零售信贷风控 / 贷中监控 / 个体详情"
-        subtitle={from ? `来自：${from}` : '单客风险全视图'}
-        actions={<>
-          <Sam label="客户样例 JSON" value={cust.custId} />
-          <Cfg label="处置策略" value={`${matchedDisposes.length} 条匹配`} />
-        </>}
-      />
+        subtitle={`客户号 ${cust.custId} ｜ 产品 ${cust.product}`}
+        backLabel="← 返回"
+        onBack={() => nav(-1)}
+        actions={<Button variant="secondary" size="sm" onClick={() => nav('/console/cr/mid-alert-workbench')}>前往预警工作台</Button>}
+      />} />
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 14, marginTop: 14 }}>
-        {/* 画像卡 */}
-        <Panel title="客户画像" desc="样例数据" note="身份信息已脱敏">
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, fontSize: 13 }}>
-            <div style={{ color: '#64748B' }}>姓名</div><div><b>{cust.name}</b></div>
-            <div style={{ color: '#64748B' }}>证件</div><div>{cust.idCard}</div>
-            <div style={{ color: '#64748B' }}>产品</div><div>{cust.product}</div>
-            <div style={{ color: '#64748B' }}>授信额度</div><div>{cust.creditLine.toLocaleString()} 元</div>
-            <div style={{ color: '#64748B' }}>在贷余额</div><div>{cust.loanBalance.toLocaleString()} 元</div>
-            <div style={{ color: '#64748B' }}>在贷状态</div><div>{cust.loanStatus}</div>
-            <div style={{ color: '#64748B' }}>风险等级</div>
-            <div><span style={{ color: LEVEL_COLOR[cust.riskLevel === '高风险' ? 'RED' : cust.riskLevel === '中风险' ? 'YELLOW' : 'GREEN'] || '#334155', fontWeight: 600 }}>{cust.riskLevel}</span></div>
-          </div>
+      {/* 画像 + 关键指标 */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0,1fr))', gap: 12, margin: '4px 0 16px' }}>
+        <StatCard label="授信额度" value={`¥${cust.creditLine.toLocaleString()}`} accent="brand" />
+        <StatCard label="在贷余额" value={`¥${cust.loanBalance.toLocaleString()}`} accent="violet" />
+        <StatCard label="额度使用率" value={`${usage.toFixed(1)}%`} accent={usage > 80 ? 'rose' : 'emerald'} hint={<Cal label="实时计算" />} />
+        <StatCard label="风险等级" value={cust.riskLevel} accent={cust.riskLevel === '高风险' ? 'rose' : cust.riskLevel === '中风险' ? 'amber' : 'emerald'} />
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) minmax(0,1fr)', gap: 16, alignItems: 'start' }}>
+        <Panel title="基础画像" desc={<span><Sam label="样例字段" /></span>}>
+          <Profile c={cust} />
         </Panel>
 
-        {/* 规则还原 */}
-        <Panel
-          title="预警规则还原"
-          desc="为什么预警 · 命中规则明细快照"
-          note="规则明细随预警事件保存（样例），定级逻辑来自监控策略配置"
-          actions={<Cfg label="规则定级配置" value={`${strategy.rules.length} 条规则`} />}
-        >
-          <div style={{ display: 'grid', gap: 8 }}>
-            <div style={{ border: '1px solid #FEE2E2', borderRadius: 8, background: '#FEF2F2', padding: '10px 12px' }}>
-              <div style={{ fontSize: 12, color: '#991B1B' }}>
-                最新预警：<b>{LEVEL_LABEL[level]} · {latestAlert?.scene}</b>（{latestAlert?.time}）
-              </div>
-              <div style={{ fontSize: 13, marginTop: 6, color: '#1E293B' }}>
-                命中规则：<b>{latestAlert?.ruleName}</b> <Cal label="指标值" value={latestAlert?.metricValue} /> <Cal label="阈值" value={latestAlert?.threshold} />
-              </div>
-            </div>
-            <DataTable columns={alertCols} rows={alertRows.slice(0, 6)} />
-          </div>
+        <Panel title="行为分趋势" desc={<span>近 6 个月行为分 vs 同客群均值 <Sam label="样例" /></span>}>
+          {cust.scoreHistory.length ? (
+            <LineChart
+              labels={cust.scoreHistory.map((s) => s.month)}
+              series={[
+                { name: '行为分', color: '#2563EB', data: cust.scoreHistory.map((s) => s.score) },
+                { name: '同客群均值', color: '#94A3B8', data: cust.scoreHistory.map((s) => s.cohortAvg) },
+              ]}
+              unit="分"
+              height={240}
+            />
+          ) : <div style={{ fontSize: 13, color: '#94A3B8' }}>暂无评分历史</div>}
         </Panel>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 14, marginTop: 14 }}>
-        {/* 评分历史 */}
-        <Panel title="行为评分历史" desc="近 6 个月 vs 客群均值" actions={<Sam label="评分历史样例" />}>
-          <LineChart
-            labels={cust.scoreHistory.map((s) => s.month)}
-            series={[
-              { name: '该客户', data: cust.scoreHistory.map((s) => s.score), color: '#DC2626' },
-              { name: '客群均值', data: cust.scoreHistory.map((s) => s.cohortAvg), color: '#94A3B8' },
-            ]}
-          />
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 6, marginTop: 8, fontSize: 12, textAlign: 'center' }}>
-            {cust.scoreHistory.map((s) => (
-              <div key={s.month} style={{ background: '#F8FAFC', borderRadius: 6, padding: '6px 4px' }}>
-                <div style={{ color: '#94A3B8' }}>{s.month}</div>
-                <div style={{ fontWeight: 600, color: '#DC2626' }}>{s.score}</div>
-                <div style={{ color: '#94A3B8' }}>客群 {s.cohortAvg}</div>
-              </div>
-            ))}
-          </div>
+      <div style={{ marginTop: 16, display: 'grid', gridTemplateColumns: 'minmax(0,1fr) minmax(0,1fr)', gap: 16, alignItems: 'start' }}>
+        <Panel title={`预警时间线 (${custAlerts.length})`} desc={<span>该客户历史预警事件 <Sam label="样例" /></span>}>
+          {custAlerts.length ? (
+            <Timeline items={custAlerts.map((a) => ({
+              time: a.alert_date, color: LEVEL_META[a.level].fill,
+              title: `${LEVEL_META[a.level].label} · ${a.scene}`,
+              sub: `命中「${a.rule_name}」 指标值 ${a.metric_value}/阈值 ${a.threshold}`,
+              tag: <StatusTag kind={STATUS_KIND[a.status]}>{a.status}</StatusTag>,
+            }))} />
+          ) : <div style={{ fontSize: 13, color: '#94A3B8' }}>暂无预警记录</div>}
         </Panel>
 
-        {/* 处置操作 */}
-        <Panel
-          title="处置操作"
-          desc="按钮来自监控策略配置（匹配当前风险等级）"
-          actions={<Cfg label="处置策略配置" />}
-        >
-          <div style={{ display: 'grid', gap: 8 }}>
-            {matchedDisposes.map((d) => (
-              <div key={d.id} style={{ border: '1px solid #E2E8F0', borderRadius: 8, padding: '8px 10px' }}>
-                <div style={{ fontSize: 13, fontWeight: 500 }}>{d.action} <Cfg label="对接" value={d.targetSystem} /></div>
-                <div style={{ fontSize: 12, color: '#64748B', marginTop: 2 }}>
-                  {d.needApprove ? '需主管审批 · ' : ''}{d.needNotify ? '需触达客户 · ' : ''}分派 {d.assignTo}
-                </div>
-                <Button size="sm" style={{ marginTop: 6 }} onClick={() => doDispose(d)}>执行处置</Button>
-              </div>
-            ))}
-            {matchedDisposes.length === 0 && <div style={{ fontSize: 12, color: '#94A3B8' }}>当前等级无匹配处置策略</div>}
-          </div>
-          <div style={{ marginTop: 10, borderTop: '1px solid #F1F5F9', paddingTop: 8 }}>
-            <div style={{ fontSize: 12, color: '#64748B', marginBottom: 4 }}>处置记录 <Sam label="样例数据" /></div>
-            <DataTable columns={disposeCols} rows={disposeRows.slice(0, 4)} />
-          </div>
+        <Panel title={`处置记录 (${custTasks.length})`} desc={<span>关联处置工单 <Sam label="样例" /></span>}>
+          {custTasks.length ? (
+            <Timeline items={custTasks.map((t) => ({
+              time: t.updatedAt, color: '#2563EB',
+              title: `工单 ${t.id} · ${t.action}`,
+              sub: `状态：${t.status} ｜ 分派 ${t.assignTo}`,
+              tag: <StatusTag kind={STATUS_KIND[t.status]}>{t.status}</StatusTag>,
+            }))} />
+          ) : cust.disposes.length ? (
+            <Timeline items={cust.disposes.map((d) => ({
+              time: d.time, color: '#2563EB',
+              title: `${d.action} · ${d.result}`,
+              sub: d.note ? `备注：${d.note}` : `操作人：${d.operator}`,
+              tag: <Badge kind="blue">{d.operator}</Badge>,
+            }))} />
+          ) : <div style={{ fontSize: 13, color: '#94A3B8' }}>暂无处置记录</div>}
         </Panel>
       </div>
+    </div>
+  );
+}
 
-      <div style={{ marginTop: 14 }}>
-        <Panel title="关联处置工单" desc="该客户的处置任务（样例）">
-          {(() => {
-            const tasks = disposeTasks.filter((t) => t.custId === cust.custId);
-            return tasks.length ? (
-              <DataTable
-                columns={[
-                  { key: 'id', label: '工单ID' }, { key: 'action', label: '动作' },
-                  { key: 'targetSystem', label: '对接系统' }, { key: 'status', label: '状态', type: 'badge' }, { key: 'updatedAt', label: '更新时间' },
-                ]}
-                rows={tasks.map((t) => ({ id: t.id, action: t.action, targetSystem: t.targetSystem, status: t.status, updatedAt: t.updatedAt }))}
-                clickableKey="id"
-                onCellClick={() => { window.location.href = '/console/cr/mid-dispose-workbench'; }}
-              />
-            ) : <div style={{ color: '#94A3B8', fontSize: 13, padding: 10 }}>暂无关联工单</div>;
-          })()}
-        </Panel>
-      </div>
-
-      {/* 模拟对接执行弹层 */}
-      <Modal open={!!exec} onClose={() => setExec(null)} title={`处置执行 · ${exec?.action ?? ''}`} footer={<>
-        <Button variant="secondary" onClick={() => setExec(null)}>取消</Button>
-        <Button onClick={confirmDispose}>确认并回填</Button>
-      </>}>
-        <div style={{ display: 'grid', gap: 8 }}>
-          <div style={{ fontSize: 12, color: '#94A3B8', marginBottom: 4 }}>模拟对接执行轨迹 <Cal label="实时模拟" /></div>
-          {exec?.steps.map((s, i) => (
-            <div key={i} style={{ display: 'flex', gap: 8, alignItems: 'center', fontSize: 13, color: '#334155' }}>
-              <span style={{ width: 18, height: 18, borderRadius: 9, background: i === exec.steps.length - 1 ? '#DCFCE7' : '#EFF6FF', color: i === exec.steps.length - 1 ? '#15803D' : '#1D4ED8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11 }}>{i + 1}</span>
-              {s}
-            </div>
-          ))}
+function Profile({ c }: { c: MidCustomer }) {
+  const m: [string, string][] = [
+    ['客户号', c.custId], ['姓名', c.name], ['证件号', c.idCard],
+    ['产品', c.product], ['贷款状态', c.loanStatus], ['风险等级', c.riskLevel],
+  ];
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0,1fr))', gap: '6px 16px', fontSize: 13 }}>
+      {m.map(([k, v]) => (
+        <div key={k} style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px dashed #F1F5F9', paddingBottom: 4 }}>
+          <span style={{ color: '#94A3B8' }}>{k}</span>
+          <span style={{ color: '#334155', fontWeight: 500 }}>{v}</span>
         </div>
-      </Modal>
+      ))}
+    </div>
+  );
+}
+
+function Timeline({ items }: { items: { time: string; color: string; title: string; sub: string; tag: React.ReactNode }[] }) {
+  return (
+    <div style={{ position: 'relative', paddingLeft: 18 }}>
+      <div style={{ position: 'absolute', left: 5, top: 4, bottom: 4, width: 2, background: '#E2E8F0' }} />
+      {items.map((it, i) => (
+        <div key={i} style={{ position: 'relative', paddingBottom: 14 }}>
+          <span style={{ position: 'absolute', left: -16, top: 4, width: 10, height: 10, borderRadius: '50%', background: it.color, border: '2px solid #fff', boxShadow: '0 0 0 1px #E2E8F0' }} />
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 13, fontWeight: 600, color: '#334155' }}>{it.title}</span>
+            {it.tag}
+          </div>
+          <div style={{ fontSize: 12, color: '#94A3B8', marginTop: 2 }}>{it.sub}</div>
+          <div style={{ fontSize: 11, color: '#CBD5E1', marginTop: 1 }}>{it.time}</div>
+        </div>
+      ))}
     </div>
   );
 }

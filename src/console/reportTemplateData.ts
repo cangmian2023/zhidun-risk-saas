@@ -299,6 +299,19 @@ export interface RuleSet { id: string; name: string; rules: RuleSetItem[] }
 export function computeSectionScore(s: SectionConfig): { total: number; addCount: number; deductCount: number; mode: CardScoreMode } {
   const mode: CardScoreMode = s.cardScoreMode ?? (s.sourceType === 'rule_set' ? 'deduct' : 'add')
   if (s.scoreable === false) return { total: 0, addCount: 0, deductCount: 0, mode }
+  // 模板复制摘要段（如决策的 信息核验摘要）：字段在 copySections 只读快照里，按本卡统一方向（deduct/add）累加
+  if (s.sourceType === 'tpl_copy') {
+    let total = 0, addCount = 0, deductCount = 0
+    for (const cs of s.copySections ?? []) {
+      for (const f of cs.fields ?? []) {
+        if (!f || f.visible === false || f.hitReject) continue
+        const pts = f.scorePoints ?? 0
+        if (mode === 'add') { total += pts; addCount++ }
+        else if (mode === 'deduct') { total -= pts; deductCount++ }
+      }
+    }
+    return { total, addCount, deductCount, mode }
+  }
   // 计分字段取「权威来源」：数据源读 tableFields、接口读 outputs、规则集读 fields；
   // 避免配置页改了「分值」列却没同步到 s.fields，导致本卡总分（如用户基本信息）恒为 0。
   const raw = s.sourceType === 'data_source' ? s.ds?.tableFields
@@ -1884,8 +1897,11 @@ export const SECTION_SOURCE: Record<string, SectionSource> = {
   // 展示项即字段本身（设备指纹、填写速度…），这样详情页每个 item 才能取到自己的分值。
   device_fraud: 'data_source', behavior_fraud: 'data_source', gang_fraud: 'data_source', blacklist_hit: 'data_source',
   history_fraud: 'data_source', fraud_logs: 'api',
-  // 决策报告
-  decision_overview: 'api', verify_summary: 'api', credit_summary: 'api', fraud_summary: 'api',
+  // 决策报告（进件审核）
+  decision_overview: 'api',
+  // 信息核验摘要/信用风控摘要/欺诈识别摘要：不是接口调用，是「现有模板」类型（tpl_copy），
+  // 集成对应报告模板的分析维度快照（见 SUMMARY_SRC）
+  verify_summary: 'tpl_copy', credit_summary: 'tpl_copy', fraud_summary: 'tpl_copy',
   decision_suggestion: 'api', decision_logs: 'api',
 }
 /* 分段计分方向覆盖表：默认「规则集=扣分 / 其余=加分」，此处显式指定的以此为准。
@@ -1953,6 +1969,45 @@ export const SECTION_RULESET: Record<string, string> = {
 /* 模板复制类分段 → 复制来源分段 id（复用既有内容合集，如「数据交叉融合」复用「多源并行核验」） */
 export const SECTION_COPY_FROM: Record<string, string> = {
   cross_fusion: 'single_verify',
+}
+
+/* 跨模板摘要复制源：决策（进件审核）模板的「信息核验摘要 / 信用风控摘要 / 欺诈识别摘要」为 tpl_copy 类型，
+ * 集成对应报告的分析维度快照（手写精简字段清单，避免 SECTION_CATALOG 的展示性字段混入）。
+ * 计分方向统一：核验/欺诈摘要 = deduct（异常扣分），信用摘要 = add（评分加分）；与公式引擎按 section 粒度一致。 */
+export const SUMMARY_SRC: Record<string, { name: string; cardScoreMode: CardScoreMode; sections: { id: string; name: string; sourceType: SectionSource; fields: { id: string; name: string; scorePoints?: number }[] }[] }> = {
+  verify_summary: {
+    name: '信息核验摘要', cardScoreMode: 'deduct',
+    sections: [
+      { id: 'single_verify', name: '多源并行核验', sourceType: 'rule_set', fields: [
+        { id: 'R1', name: '公安实名' }, { id: 'R2', name: '银行卡四要素' }, { id: 'R3', name: '运营商实名' }, { id: 'R4', name: '设备真实性' }, { id: 'R5', name: '联防联控' },
+      ]},
+      { id: 'cross_fusion', name: '数据交叉融合', sourceType: 'rule_set', fields: [
+        { id: 'R6', name: '设备群控' }, { id: 'R7', name: '团伙关联' }, { id: 'R8', name: '黑名单命中' }, { id: 'R9', name: '资料一致性' }, { id: 'R10', name: '行为异常' },
+      ]},
+    ],
+  },
+  credit_summary: {
+    name: '信用风控摘要', cardScoreMode: 'add',
+    sections: [
+      { id: 'credit_overview', name: '信用评分总览', sourceType: 'data_source', fields: [
+        { id: 'co_ring', name: '信用评分', scorePoints: 10 }, { id: 'co_level', name: '风险等级' }, { id: 'co_industry', name: '行业对比' }, { id: 'co_dims', name: '六维评分' }, { id: 'co_tags', name: '风险标签' },
+      ]},
+      { id: 'credit_factors', name: '风险因子', sourceType: 'data_source', fields: [
+        { id: 'cf_dim_card', name: '六维因子卡片' }, { id: 'cf_dim_score', name: '维度得分' }, { id: 'cf_dim_weight', name: '维度权重' }, { id: 'cf_dim_level', name: '维度等级' }, { id: 'cf_dim_logic', name: '维度逻辑' }, { id: 'cf_dim_source', name: '维度来源' }, { id: 'cf_table', name: '维度说明表' },
+      ]},
+    ],
+  },
+  fraud_summary: {
+    name: '欺诈识别摘要', cardScoreMode: 'deduct',
+    sections: [
+      { id: 'identity_fraud', name: '身份欺诈', sourceType: 'rule_set', fields: [
+        { id: 'R1', name: '公安实名' }, { id: 'R2', name: '银行卡四要素' }, { id: 'R3', name: '运营商实名' }, { id: 'R4', name: '设备真实性' }, { id: 'R9', name: '资料一致性' },
+      ]},
+      { id: 'device_fraud', name: '设备欺诈', sourceType: 'data_source', fields: [
+        { id: 'df_fp', name: '设备指纹' }, { id: 'df_root', name: '越狱/ROOT' }, { id: 'df_sim', name: 'SIM更换' }, { id: 'df_vm', name: '虚拟机' }, { id: 'df_gps', name: 'GPS异常' }, { id: 'df_ip', name: 'IP异常' }, { id: 'df_time', name: '操作时段' }, { id: 'df_speed', name: '操作速度' }, { id: 'df_multi', name: '多开设备' },
+      ]},
+    ],
+  },
 }
 
 /* 模拟读取数据库表结构：根据表名给出示例列（仅用于演示，真实场景由后端返回）。
@@ -2071,6 +2126,7 @@ function buildSections(type: ReportType): SectionConfig[] {
     let copySections: SectionConfig[] | undefined
     let copyScoreRange: { min: number; max: number; base: number } | undefined
     let fields: FieldConfig[]
+    let secCardMode: CardScoreMode | undefined // 跨模板摘要段的整体计分方向（覆盖默认 add）
 
     if (sType === 'data_source') {
       // 数据源：初始用 seed 字段名作为表字段占位（type 默认 varchar）；用户配连接后可"读取表字段"覆盖
@@ -2090,10 +2146,32 @@ function buildSections(type: ReportType): SectionConfig[] {
       // 模板复制：集成来源段的只读快照，本模板不可改、不计分
       const fromId = SECTION_COPY_FROM[s.id] ?? ''
       const fromSec = built[fromId]
-      copyFromId = fromId
-      copyFromName = fromSec?.name
-      copySections = fromSec ? [fromSec] : undefined
-      copyScoreRange = fromSec ? { min: 0, max: fromSec.fields.reduce((a, f) => a + (f.scorePoints ?? 0), 0), base: 0 } : undefined
+      // 跨模板摘要（决策的 信息核验摘要/信用风控摘要/欺诈识别摘要）：按 SUMMARY_SRC 手写精简快照
+      const sumSrc = SUMMARY_SRC[s.id]
+      if (sumSrc) {
+        copyFromName = sumSrc.name
+        copySections = sumSrc.sections.map((ss) => ({
+          id: ss.id, name: ss.name, desc: ss.name, order: 0, visible: true,
+          sourceType: ss.sourceType, sourceName: ss.name,
+          cardScoreMode: (ss.sourceType === 'rule_set' ? 'deduct' : 'add'),
+          fields: ss.fields.map((f) => ({
+            id: f.id, name: f.name, visible: true, sourceRef: f.id,
+            scorePoints: f.scorePoints ?? 5, condType: (ss.sourceType === 'rule_set' ? 'hit' : 'eq') as FieldCondType,
+          })),
+        }) as SectionConfig[])
+        copyScoreRange = {
+          min: 0,
+          max: copySections.reduce((a, cs) => a + (cs.fields ?? []).reduce((x, f) => x + (f.scorePoints ?? 0), 0), 0),
+          base: 0,
+        }
+        // 摘要段整体计分方向（核验/欺诈=deduct、信用=add），写入 cardScoreMode 供公式/范围计算一致
+        secCardMode = sumSrc.cardScoreMode
+      } else {
+        copyFromId = fromId
+        copyFromName = fromSec?.name
+        copySections = fromSec ? [fromSec] : undefined
+        copyScoreRange = fromSec ? { min: 0, max: fromSec.fields.reduce((a, f) => a + (f.scorePoints ?? 0), 0), base: 0 } : undefined
+      }
       fields = []
     } else {
       // 规则集：默认选中一个系统规则合集，展开后的规则项即合集内的规则
@@ -2110,9 +2188,9 @@ function buildSections(type: ReportType): SectionConfig[] {
       order: i + 1,
       visible: true,
       sourceType: sType,
-      // 模板复制段为「仅展示」型：不参与风险计分；用户基本信息现在按普通集合参与计分
-      scoreable: sType === 'tpl_copy' ? false : undefined,
-      cardScoreMode: SECTION_SCORE_MODE[s.id] ?? (sType === 'rule_set' ? 'deduct' : 'add'),
+      // 模板复制段为「仅展示」型：不参与风险计分；跨模板摘要段（SUMMARY_SRC）参与计分（与 backup222 的 cross_fusion 先例一致）
+      scoreable: sType === 'tpl_copy' ? (SUMMARY_SRC[s.id] ? undefined : false) : undefined,
+      cardScoreMode: secCardMode ?? SECTION_SCORE_MODE[s.id] ?? (sType === 'rule_set' ? 'deduct' : 'add'),
       homeTab: /logs?$/i.test(s.id) ? 'log' : 'content',
       sourceName: s.name,
       ds, api, ruleSetId, copyFromId, copyFromName, copySections, copyScoreRange,

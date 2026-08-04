@@ -136,6 +136,7 @@ export interface MidPageFilter {
   id: string;
   label: string;
   kind: 'dateRange' | 'select' | 'input';
+  field?: string;            // 绑定到数据集字段（用于看板交叉筛选）
 }
 
 export interface MidDashboardPage {
@@ -280,8 +281,8 @@ export const SEED_DASHBOARDS: MidDashboardPage[] = [
     id: 'db-mid-overview', key: 'cr:mid-overview', name: '监控大盘', group: '监控总览', order: 0, enabled: true,
     desc: '管理层全局总览：预警量、红黄灯分布、逾期率、处置效率',
     filters: [
-      { id: 'flt_date', label: '日期范围', kind: 'dateRange' },
-      { id: 'flt_level', label: '预警等级', kind: 'select' },
+      { id: 'flt_date', label: '日期范围', kind: 'dateRange', field: 'alert_date' },
+      { id: 'flt_level', label: '预警等级', kind: 'select', field: 'level' },
     ],
     widgets: [
       { id: 'w1', type: 'metric', title: '预警总数', datasetId: 'ds_alert', metricId: 'm_alert_cnt', span: 1 },
@@ -308,6 +309,32 @@ export const SEED_DASHBOARDS: MidDashboardPage[] = [
       { id: 'w3', type: 'line', title: '行为分趋势', datasetId: 'ds_behavior', metricId: 'm_score_avg', dimensions: ['month'], span: 2 },
     ],
   },
+];
+
+// ---------------- 使用域：预警事件样例（橘，本地 JSON）----------------
+// 预警工作台 / 监控看板 共用的预警事件清单；首次加载由 store 落盘 midAlerts.json
+export type MidAlertStatus = '待处置' | '核实中' | '处置中' | '已解除' | '已升级' | '误报';
+
+export interface MidAlert {
+  alert_id: string;
+  cust_id: string;
+  cust_name: string;
+  scene: string;
+  level: 'RED' | 'YELLOW' | 'OPPORTUNITY';
+  alert_date: string;
+  rule_name: string;
+  metric_value: number;
+  threshold: number;
+  status: MidAlertStatus;
+}
+
+export const SEED_ALERTS: MidAlert[] = [
+  { alert_id: 'AL240804-001', cust_id: 'C0001', cust_name: '张*明', scene: '负债激增', level: 'RED', alert_date: '2026-08-04', rule_name: '近30天新增贷款≥3笔', metric_value: 5, threshold: 3, status: '待处置' },
+  { alert_id: 'AL240804-002', cust_id: 'C0004', cust_name: '赵*强', scene: '司法涉诉', level: 'RED', alert_date: '2026-08-04', rule_name: '新增被执行记录', metric_value: 1, threshold: 0, status: '待处置' },
+  { alert_id: 'AL240804-003', cust_id: 'C0002', cust_name: '李*华', scene: '设备异常', level: 'YELLOW', alert_date: '2026-08-04', rule_name: '7日内更换设备', metric_value: 2, threshold: 1, status: '待处置' },
+  { alert_id: 'AL240803-004', cust_id: 'C0005', cust_name: '陈*敏', scene: '还款能力', level: 'YELLOW', alert_date: '2026-08-03', rule_name: '临期余额不足', metric_value: 1, threshold: 0, status: '待处置' },
+  { alert_id: 'AL240803-005', cust_id: 'C0001', cust_name: '张*明', scene: '行为评分', level: 'RED', alert_date: '2026-08-03', rule_name: '行为分<40', metric_value: 33, threshold: 40, status: '待处置' },
+  { alert_id: 'AL240802-006', cust_id: 'C0003', cust_name: '王*芳', scene: '需求上升', level: 'OPPORTUNITY', alert_date: '2026-08-02', rule_name: '额度使用率>80%', metric_value: 88, threshold: 80, status: '待处置' },
 ];
 
 // 公式引擎：派生指标求值（轻量：m_ 引用 + 四则运算 + ratio/mom/yoy 占位）
@@ -522,3 +549,42 @@ export function computeAgg(rows: Record<string, unknown>[], field: string | unde
     default: return rows.length;
   }
 }
+
+// 在一组数据行上解析所有指标（基础聚合 + 派生公式），返回 metricId → 数值。
+// 用于看板 widget 的实时计算（灰）：先算基础指标，再迭代求解派生指标依赖。
+export function resolveMetricsForRows(metrics: MidMetric[], rows: Record<string, unknown>[]): Record<string, number> {
+  const vals: Record<string, number> = {};
+  let changed = true;
+  let guard = 0;
+  while (changed && guard++ < 16) {
+    changed = false;
+    for (const m of metrics) {
+      if (m.type === 'base') {
+        const v = computeAgg(rows, m.field, m.agg);
+        if (vals[m.id] !== v) { vals[m.id] = v; changed = true; }
+      } else {
+        const v = evalMetricFormula(m.formula ?? '', vals);
+        if (v !== null && vals[m.id] !== v) { vals[m.id] = v; changed = true; }
+      }
+    }
+  }
+  return vals;
+}
+
+// 按维度字段分组
+export function groupRowsByDim(rows: Record<string, unknown>[], dim: string): { key: string; rows: Record<string, unknown>[] }[] {
+  const map = new Map<string, Record<string, unknown>[]>();
+  for (const r of rows) {
+    const k = String(r[dim] ?? '未知');
+    if (!map.has(k)) map.set(k, []);
+    map.get(k)!.push(r);
+  }
+  return Array.from(map.entries()).map(([key, rs]) => ({ key, rows: rs }));
+}
+
+// 红黄灯等级 → 配色（看板 / 工作台统一）
+export const LEVEL_META: Record<string, { label: string; badge: 'red' | 'amber' | 'cyan' | 'gray'; fill: string; soft: string }> = {
+  RED: { label: '红灯', badge: 'red', fill: '#E11D48', soft: '#FFE4E6' },
+  YELLOW: { label: '黄灯', badge: 'amber', fill: '#D97706', soft: '#FEF3C7' },
+  OPPORTUNITY: { label: '机会', badge: 'cyan', fill: '#0891B2', soft: '#CFFAFE' },
+};

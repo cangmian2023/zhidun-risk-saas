@@ -8797,7 +8797,7 @@
           },
           "dimBands": [
             {
-              "level": "��������",
+              "level": "��������������",
               "min": 0,
               "max": 9,
               "note": "该维度表现正常，无明显风险"
@@ -14195,102 +14195,123 @@
           "desc": "从信息核验报告摘录的关键结论。",
           "order": 2,
           "visible": true,
-          "sourceType": "api",
-          "cardScoreMode": "add",
+          "sourceType": "tpl_copy",
+          "cardScoreMode": "deduct",
           "homeTab": "content",
           "sourceName": "信息核验摘要",
-          "api": {
-            "url": "",
-            "method": "POST",
-            "headers": [],
-            "inputs": [],
-            "bodyType": "none",
-            "bodyText": "",
-            "outputs": [
-              {
-                "key": "vs_concl",
-                "label": "信息核验结论摘要",
-                "type": "boolean",
-                "visible": true,
-                "scorePoints": 5,
-                "condType": "eq"
-              },
-              {
-                "key": "vs_risk",
-                "label": "关键风险点",
-                "type": "string",
-                "visible": true,
-                "scorePoints": 5,
-                "condType": "eq"
-              },
-              {
-                "key": "vs_jump",
-                "label": "展开查看完整信息核验报告入口",
-                "type": "boolean",
-                "visible": true,
-                "scorePoints": 5,
-                "condType": "eq"
-              }
-            ]
-          },
-          "fields": [
+          "copyFromName": "信息核验摘要",
+          "copySections": [
             {
-              "id": "vs_concl",
-              "name": "信息核验结论摘要",
-              "displayLabel": "信息核验结论摘要",
-              "type": "boolean",
+              "id": "single_verify",
+              "name": "多源并行核验",
+              "desc": "多源并行核验",
+              "order": 0,
               "visible": true,
-              "sourceRef": "vs_concl",
-              "scorePoints": 5,
-              "condType": "eq",
-              "condValue": "",
-              "exempt": false
+              "sourceType": "rule_set",
+              "sourceName": "多源并行核验",
+              "cardScoreMode": "deduct",
+              "fields": [
+                {
+                  "id": "R1",
+                  "name": "公安实名",
+                  "visible": true,
+                  "sourceRef": "R1",
+                  "scorePoints": 5,
+                  "condType": "hit"
+                },
+                {
+                  "id": "R2",
+                  "name": "银行卡四要素",
+                  "visible": true,
+                  "sourceRef": "R2",
+                  "scorePoints": 5,
+                  "condType": "hit"
+                },
+                {
+                  "id": "R3",
+                  "name": "运营商实名",
+                  "visible": true,
+                  "sourceRef": "R3",
+                  "scorePoints": 5,
+                  "condType": "hit"
+                },
+                {
+                  "id": "R4",
+                  "name": "设备真实性",
+                  "visible": true,
+                  "sourceRef": "R4",
+                  "scorePoints": 5,
+                  "condType": "hit"
+                },
+                {
+                  "id": "R5",
+                  "name": "联防联控",
+                  "visible": true,
+                  "sourceRef": "R5",
+                  "scorePoints": 5,
+                  "condType": "hit"
+                }
+              ]
             },
             {
-              "id": "vs_risk",
-              "name": "关键风险点",
-              "displayLabel": "关键风险点",
-              "type": "string",
+              "id": "cross_fusion",
+              "name": "数据交叉融合",
+              "desc": "数据交叉融合",
+              "order": 0,
               "visible": true,
-              "sourceRef": "vs_risk",
-              "scorePoints": 5,
-              "condType": "eq",
-              "condValue": "",
-              "exempt": false
-            },
-            {
-              "id": "vs_jump",
-              "name": "展开查看完整信息核验报告入口",
-              "displayLabel": "展开查看完整信息核验报告入口",
-              "type": "boolean",
-              "visible": true,
-              "sourceRef": "vs_jump",
-              "scorePoints": 5,
-              "condType": "eq",
-              "condValue": "",
-              "exempt": false
+              "sourceType": "rule_set",
+              "sourceName": "数据交叉融合",
+              "cardScoreMode": "deduct",
+              "fields": [
+                {
+                  "id": "R6",
+                  "name": "设备群控",
+                  "visible": true,
+                  "sourceRef": "R6",
+                  "scorePoints": 5,
+                  "condType": "hit"
+                },
+                {
+                  "id": "R7",
+                  "name": "团伙关联",
+                  "visible": true,
+                  "sourceRef": "R7",
+                  "scorePoints": 5,
+                  "condType": "hit"
+                },
+                {
+                  "id": "R8",
+                  "name": "黑名单命中",
+                  "visible": true,
+                  "sourceRef": "R8",
+                  "scorePoints": 5,
+                  "condType": "hit"
+                },
+                {
+                  "id": "R9",
+                  "name": "资料一致性",
+                  "visible": true,
+                  "sourceRef": "R9",
+                  "scorePoints": 5,
+                  "condType": "hit"
+                },
+                {
+                  "id": "R10",
+                  "name": "行为异常",
+                  "visible": true,
+                  "sourceRef": "R10",
+                  "scorePoints": 5,
+                  "condType": "hit"
+                }
+              ]
             }
           ],
-          "dimBands": [
-            {
-              "level": "低",
-              "min": 0,
-              "max": 5,
-              "note": "该维度表现正常，无明显风险"
-            },
-            {
-              "level": "中",
-              "min": 6,
-              "max": 10,
-              "note": "该维度存在一定异常，建议关注"
-            },
-            {
-              "level": "高",
-              "min": 11,
-              "max": 15,
-              "note": "该维度风险突出，需重点核查"
-            }
-          ]
+          "copyScoreRange": {
+            "min": 0,
+            "max": 50,
+            "base": 0
+          },
+          "fields": []
         },
         {
           "id": "credit_summary",
@@ -14298,102 +14319,139 @@
           "desc": "从信用风控报告摘录的关键结论。",
           "order": 3,
           "visible": true,
-          "sourceType": "api",
+          "sourceType": "tpl_copy",
           "cardScoreMode": "add",
           "homeTab": "content",
           "sourceName": "信用风控摘要",
-          "api": {
-            "url": "",
-            "method": "POST",
-            "headers": [],
-            "inputs": [],
-            "bodyType": "none",
-            "bodyText": "",
-            "outputs": [
-              {
-                "key": "cs2_concl",
-                "label": "信用风控结论摘要",
-                "type": "string",
-                "visible": true,
-                "scorePoints": 5,
-                "condType": "eq"
-              },
-              {
-                "key": "cs2_risk",
-                "label": "关键风险点",
-                "type": "string",
-                "visible": true,
-                "scorePoints": 5,
-                "condType": "eq"
-              },
-              {
-                "key": "cs2_jump",
-                "label": "展开查看完整信用风控报告入口",
-                "type": "string",
-                "visible": true,
-                "scorePoints": 5,
-                "condType": "eq"
-              }
-            ]
-          },
-          "fields": [
+          "copyFromName": "信用风控摘要",
+          "copySections": [
             {
-              "id": "cs2_concl",
-              "name": "信用风控结论摘要",
-              "displayLabel": "信用风控结论摘要",
-              "type": "string",
+              "id": "credit_overview",
+              "name": "信用评分总览",
+              "desc": "信用评分总览",
+              "order": 0,
               "visible": true,
-              "sourceRef": "cs2_concl",
-              "scorePoints": 5,
-              "condType": "eq",
-              "condValue": "",
-              "exempt": false
+              "sourceType": "data_source",
+              "sourceName": "信用评分总览",
+              "cardScoreMode": "add",
+              "fields": [
+                {
+                  "id": "co_ring",
+                  "name": "信用评分",
+                  "visible": true,
+                  "sourceRef": "co_ring",
+                  "scorePoints": 10,
+                  "condType": "eq"
+                },
+                {
+                  "id": "co_level",
+                  "name": "风险等级",
+                  "visible": true,
+                  "sourceRef": "co_level",
+                  "scorePoints": 5,
+                  "condType": "eq"
+                },
+                {
+                  "id": "co_industry",
+                  "name": "行业对比",
+                  "visible": true,
+                  "sourceRef": "co_industry",
+                  "scorePoints": 5,
+                  "condType": "eq"
+                },
+                {
+                  "id": "co_dims",
+                  "name": "六维评分",
+                  "visible": true,
+                  "sourceRef": "co_dims",
+                  "scorePoints": 5,
+                  "condType": "eq"
+                },
+                {
+                  "id": "co_tags",
+                  "name": "风险标签",
+                  "visible": true,
+                  "sourceRef": "co_tags",
+                  "scorePoints": 5,
+                  "condType": "eq"
+                }
+              ]
             },
             {
-              "id": "cs2_risk",
-              "name": "关键风险点",
-              "displayLabel": "关键风险点",
-              "type": "string",
+              "id": "credit_factors",
+              "name": "风险因子",
+              "desc": "风险因子",
+              "order": 0,
               "visible": true,
-              "sourceRef": "cs2_risk",
-              "scorePoints": 5,
-              "condType": "eq",
-              "condValue": "",
-              "exempt": false
-            },
-            {
-              "id": "cs2_jump",
-              "name": "展开查看完整信用风控报告入口",
-              "displayLabel": "展开查看完整信用风控报告入口",
-              "type": "string",
-              "visible": true,
-              "sourceRef": "cs2_jump",
-              "scorePoints": 5,
-              "condType": "eq",
-              "condValue": "",
-              "exempt": false
+              "sourceType": "data_source",
+              "sourceName": "风险因子",
+              "cardScoreMode": "add",
+              "fields": [
+                {
+                  "id": "cf_dim_card",
+                  "name": "六维因子卡片",
+                  "visible": true,
+                  "sourceRef": "cf_dim_card",
+                  "scorePoints": 5,
+                  "condType": "eq"
+                },
+                {
+                  "id": "cf_dim_score",
+                  "name": "维度得分",
+                  "visible": true,
+                  "sourceRef": "cf_dim_score",
+                  "scorePoints": 5,
+                  "condType": "eq"
+                },
+                {
+                  "id": "cf_dim_weight",
+                  "name": "维度权重",
+                  "visible": true,
+                  "sourceRef": "cf_dim_weight",
+                  "scorePoints": 5,
+                  "condType": "eq"
+                },
+                {
+                  "id": "cf_dim_level",
+                  "name": "维度等级",
+                  "visible": true,
+                  "sourceRef": "cf_dim_level",
+                  "scorePoints": 5,
+                  "condType": "eq"
+                },
+                {
+                  "id": "cf_dim_logic",
+                  "name": "维度逻辑",
+                  "visible": true,
+                  "sourceRef": "cf_dim_logic",
+                  "scorePoints": 5,
+                  "condType": "eq"
+                },
+                {
+                  "id": "cf_dim_source",
+                  "name": "维度来源",
+                  "visible": true,
+                  "sourceRef": "cf_dim_source",
+                  "scorePoints": 5,
+                  "condType": "eq"
+                },
+                {
+                  "id": "cf_table",
+                  "name": "维度说明表",
+                  "visible": true,
+                  "sourceRef": "cf_table",
+                  "scorePoints": 5,
+                  "condType": "eq"
+                }
+              ]
             }
           ],
-          "dimBands": [
-            {
-              "level": "低",
-              "min": 0,
-              "max": 5,
-              "note": "该维度表现正常，无明显风险"
-            },
-            {
-              "level": "中",
-              "min": 6,
-              "max": 10,
-              "note": "该维度存在一定异常，建议关注"
-            },
-            {
-              "level": "高",
-              "min": 11,
-              "max": 15,
-              "note": "该维度风险突出，需重点核查"
-            }
-          ]
+          "copyScoreRange": {
+            "min": 0,
+            "max": 65,
+            "base": 0
+          },
+          "fields": []
         },
         {
           "id": "fraud_summary",
@@ -14401,102 +14459,155 @@
           "desc": "从欺诈识别报告摘录的关键结论。",
           "order": 4,
           "visible": true,
-          "sourceType": "api",
-          "cardScoreMode": "add",
+          "sourceType": "tpl_copy",
+          "cardScoreMode": "deduct",
           "homeTab": "content",
           "sourceName": "欺诈识别摘要",
-          "api": {
-            "url": "",
-            "method": "POST",
-            "headers": [],
-            "inputs": [],
-            "bodyType": "none",
-            "bodyText": "",
-            "outputs": [
-              {
-                "key": "fs_concl",
-                "label": "欺诈识别结论摘要",
-                "type": "string",
-                "visible": true,
-                "scorePoints": 5,
-                "condType": "eq"
-              },
-              {
-                "key": "fs_risk",
-                "label": "关键风险点",
-                "type": "string",
-                "visible": true,
-                "scorePoints": 5,
-                "condType": "eq"
-              },
-              {
-                "key": "fs_jump",
-                "label": "展开查看完整欺诈识别报告入口",
-                "type": "string",
-                "visible": true,
-                "scorePoints": 5,
-                "condType": "eq"
-              }
-            ]
-          },
-          "fields": [
+          "copyFromName": "欺诈识别摘要",
+          "copySections": [
             {
-              "id": "fs_concl",
-              "name": "欺诈识别结论摘要",
-              "displayLabel": "欺诈识别结论摘要",
-              "type": "string",
+              "id": "identity_fraud",
+              "name": "身份欺诈",
+              "desc": "身份欺诈",
+              "order": 0,
               "visible": true,
-              "sourceRef": "fs_concl",
-              "scorePoints": 5,
-              "condType": "eq",
-              "condValue": "",
-              "exempt": false
+              "sourceType": "rule_set",
+              "sourceName": "身份欺诈",
+              "cardScoreMode": "deduct",
+              "fields": [
+                {
+                  "id": "R1",
+                  "name": "公安实名",
+                  "visible": true,
+                  "sourceRef": "R1",
+                  "scorePoints": 5,
+                  "condType": "hit"
+                },
+                {
+                  "id": "R2",
+                  "name": "银行卡四要素",
+                  "visible": true,
+                  "sourceRef": "R2",
+                  "scorePoints": 5,
+                  "condType": "hit"
+                },
+                {
+                  "id": "R3",
+                  "name": "运营商实名",
+                  "visible": true,
+                  "sourceRef": "R3",
+                  "scorePoints": 5,
+                  "condType": "hit"
+                },
+                {
+                  "id": "R4",
+                  "name": "设备真实性",
+                  "visible": true,
+                  "sourceRef": "R4",
+                  "scorePoints": 5,
+                  "condType": "hit"
+                },
+                {
+                  "id": "R9",
+                  "name": "资料一致性",
+                  "visible": true,
+                  "sourceRef": "R9",
+                  "scorePoints": 5,
+                  "condType": "hit"
+                }
+              ]
             },
             {
-              "id": "fs_risk",
-              "name": "关键风险点",
-              "displayLabel": "关键风险点",
-              "type": "string",
+              "id": "device_fraud",
+              "name": "设备欺诈",
+              "desc": "设备欺诈",
+              "order": 0,
               "visible": true,
-              "sourceRef": "fs_risk",
-              "scorePoints": 5,
-              "condType": "eq",
-              "condValue": "",
-              "exempt": false
-            },
-            {
-              "id": "fs_jump",
-              "name": "展开查看完整欺诈识别报告入口",
-              "displayLabel": "展开查看完整欺诈识别报告入口",
-              "type": "string",
-              "visible": true,
-              "sourceRef": "fs_jump",
-              "scorePoints": 5,
-              "condType": "eq",
-              "condValue": "",
-              "exempt": false
+              "sourceType": "data_source",
+              "sourceName": "设备欺诈",
+              "cardScoreMode": "add",
+              "fields": [
+                {
+                  "id": "df_fp",
+                  "name": "设备指纹",
+                  "visible": true,
+                  "sourceRef": "df_fp",
+                  "scorePoints": 5,
+                  "condType": "eq"
+                },
+                {
+                  "id": "df_root",
+                  "name": "越狱/ROOT",
+                  "visible": true,
+                  "sourceRef": "df_root",
+                  "scorePoints": 5,
+                  "condType": "eq"
+                },
+                {
+                  "id": "df_sim",
+                  "name": "SIM更换",
+                  "visible": true,
+                  "sourceRef": "df_sim",
+                  "scorePoints": 5,
+                  "condType": "eq"
+                },
+                {
+                  "id": "df_vm",
+                  "name": "虚拟机",
+                  "visible": true,
+                  "sourceRef": "df_vm",
+                  "scorePoints": 5,
+                  "condType": "eq"
+                },
+                {
+                  "id": "df_gps",
+                  "name": "GPS异常",
+                  "visible": true,
+                  "sourceRef": "df_gps",
+                  "scorePoints": 5,
+                  "condType": "eq"
+                },
+                {
+                  "id": "df_ip",
+                  "name": "IP异常",
+                  "visible": true,
+                  "sourceRef": "df_ip",
+                  "scorePoints": 5,
+                  "condType": "eq"
+                },
+                {
+                  "id": "df_time",
+                  "name": "操作时段",
+                  "visible": true,
+                  "sourceRef": "df_time",
+                  "scorePoints": 5,
+                  "condType": "eq"
+                },
+                {
+                  "id": "df_speed",
+                  "name": "操作速度",
+                  "visible": true,
+                  "sourceRef": "df_speed",
+                  "scorePoints": 5,
+                  "condType": "eq"
+                },
+                {
+                  "id": "df_multi",
+                  "name": "多开设备",
+                  "visible": true,
+                  "sourceRef": "df_multi",
+                  "scorePoints": 5,
+                  "condType": "eq"
+                }
+              ]
             }
           ],
-          "dimBands": [
-            {
-              "level": "低",
-              "min": 0,
-              "max": 5,
-              "note": "该维度表现正常，无明显风险"
-            },
-            {
-              "level": "中",
-              "min": 6,
-              "max": 10,
-              "note": "该维度存在一定异常，建议关注"
-            },
-            {
-              "level": "高",
-              "min": 11,
-              "max": 15,
-              "note": "该维度风险突出，需重点核查"
-            }
-          ]
+          "copyScoreRange": {
+            "min": 0,
+            "max": 70,
+            "base": 0
+          },
+          "fields": []
         },
         {
           "id": "decision_logs",
@@ -14547,8 +14658,8 @@
       "scoreBlock": {
         "show": true,
         "title": "进件审核自动审核得分",
-        "min": 0,
-        "max": 120,
+        "min": -120,
+        "max": 140,
         "rejectCount": 0
       },
       "scoreDisplay": {
@@ -14563,8 +14674,8 @@
           {
             "grade": "C",
             "label": "C",
-            "minScore": 0,
-            "maxScore": 39,
+            "minScore": -120,
+            "maxScore": -34,
             "riskLevel": "高",
             "color": "#F97316",
             "tags": "",
@@ -14574,8 +14685,8 @@
           {
             "grade": "B",
             "label": "B",
-            "minScore": 40,
-            "maxScore": 79,
+            "minScore": -33,
+            "maxScore": 53,
             "riskLevel": "中",
             "color": "#F59E0B",
             "tags": "",
@@ -14585,8 +14696,8 @@
           {
             "grade": "A",
             "label": "A",
-            "minScore": 80,
-            "maxScore": 120,
+            "minScore": 54,
+            "maxScore": 140,
             "riskLevel": "低",
             "color": "#10B981",
             "tags": "",
@@ -14606,7 +14717,7 @@
           },
           {
             "id": "t2",
-            "op": "+",
+            "op": "-",
             "kind": "var",
             "varId": "sec_verify_summary",
             "factor": 1
@@ -14620,7 +14731,7 @@
           },
           {
             "id": "t4",
-            "op": "+",
+            "op": "-",
             "kind": "var",
             "varId": "sec_fraud_summary",
             "factor": 1

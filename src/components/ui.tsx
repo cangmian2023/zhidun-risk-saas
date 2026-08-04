@@ -80,7 +80,7 @@ export function StatCard({
   value: string
   delta?: string
   deltaType?: 'up' | 'down' | 'flat'
-  hint?: string
+  hint?: ReactNode
   accent?: 'brand' | 'cyan' | 'violet' | 'amber' | 'emerald' | 'rose'
 }) {
   const accents: Record<string, string> = {

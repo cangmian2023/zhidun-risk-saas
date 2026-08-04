@@ -1,184 +1,91 @@
-// ⑫ 处置工单页（贷中监控 · 使用域）— 工单跟进 / 回填 / 审批 / 状态机
-// 工单数据=样例 JSON（橘）｜ 处置动作/对接=读监控策略配置（蓝）｜ 状态流转=实时（灰）
-import { useState } from 'react';
-import { PageHeader, Panel, DataTable, Button } from '../components/ui';
+// ⑧ 处置工单（使用域 · 列表）— 读 midDisposeTasks.json 橘；实时统计 灰
+// 行点击跳转工单详情页（cr:mid-dispose-detail），处置回填与流转在详情页完成
+import { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Panel, StatCard, DataTable } from '../components/ui';
 import type { Column, Row } from '../components/ui';
-import { useMidDisposeTasks, updateDisposeTasks, useMidStrategy } from './midStore';
-import { Cfg, Sam, Cal } from './SourceTag';
+import { Sam, Cal } from './SourceTag';
+import { PageShell } from './PageShell';
+import { useMidDisposeTasks, useMidSaveStatus } from './midStore';
 import type { MidDisposeTask } from './midData';
 
-const STATUS_COLOR: Record<string, string> = {
-  待处置: '#D97706', 核实中: '#2563EB', 处置中: '#7C3AED', 已解除: '#16A34A', 已升级: '#DC2626', 误报: '#64748B',
+type Status = MidDisposeTask['status'];
+const STATUS_KIND: Record<Status, 'red' | 'amber' | 'blue' | 'green' | 'violet' | 'gray'> = {
+  待处置: 'red', 核实中: 'amber', 处置中: 'blue', 已解除: 'green', 已升级: 'violet', 误报: 'gray',
 };
 
 export default function MidDisposeWorkbench() {
   const tasks = useMidDisposeTasks();
-  const strategy = useMidStrategy();
-  const [filter, setFilter] = useState<string>('');
-  const [detail, setDetail] = useState<MidDisposeTask | null>(null);
-  const [note, setNote] = useState('');
-  const [approve, setApprove] = useState<'approve' | 'reject' | null>(null);
+  const saveStatus = useMidSaveStatus();
+  const nav = useNavigate();
 
-  const patch = (t: MidDisposeTask, p: Partial<MidDisposeTask>) => {
-    updateDisposeTasks((l) => l.map((x) => (x.id === t.id ? { ...x, ...p, updatedAt: new Date().toLocaleString('zh-CN', { hour12: false }).slice(0, 16) } : x)));
-  };
-  const addLog = (t: MidDisposeTask, who: string, what: string) => {
-    updateDisposeTasks((l) => l.map((x) => x.id === t.id
-      ? { ...x, logs: [...x.logs, { time: new Date().toLocaleString('zh-CN', { hour12: false }).slice(0, 16), who, what }] }
-      : x));
-  };
+  const [status, setStatus] = useState<string>('');
+  const [assign, setAssign] = useState<string>('');
 
-  const statusFlow = (t: MidDisposeTask): { label: string; run: () => void }[] => {
-    const actions: { label: string; run: () => void }[] = [];
-    if (t.status === '待处置') actions.push({ label: '开始处理', run: () => { patch(t, { status: '核实中' }); addLog(t, '风控专员（演示）', '开始处理，进入核实'); } });
-    if (t.status === '核实中') {
-      actions.push({
-        label: t.needApprove ? '核实完成·提交审批' : '核实完成·执行处置',
-        run: () => {
-          patch(t, { status: '处置中' });
-          addLog(t, '风控专员（演示）', t.needApprove ? '核实完成，提交审批' : '核实完成，直接执行处置');
-        },
-      });
-      actions.push({ label: '标记误报', run: () => { patch(t, { status: '误报' }); addLog(t, '风控专员（演示）', '核实为误报，工单关闭'); } });
-    }
-    if (t.status === '处置中') {
-      actions.push({
-        label: '回填结果·解除',
-        run: () => { patch(t, { status: '已解除' }); addLog(t, '处置人（演示）', '处置完成，预警解除'); },
-      });
-      actions.push({
-        label: '风险恶化·升级',
-        run: () => { patch(t, { status: '已升级' }); addLog(t, '系统', '风险持续恶化，工单升级'); },
-      });
-    }
-    return actions;
-  };
+  const assigns = useMemo(() => Array.from(new Set(tasks.map((t) => t.assignTo))), [tasks]);
+  const filtered = tasks.filter((t) => (!status || t.status === status) && (!assign || t.assignTo === assign));
+
+  const counts = useMemo(() => {
+    const c: Record<string, number> = { 待处置: 0, 核实中: 0, 处置中: 0, 已解除: 0, 已升级: 0, 误报: 0 };
+    tasks.forEach((t) => { c[t.status] = (c[t.status] ?? 0) + 1; });
+    return c;
+  }, [tasks]);
 
   const cols: Column[] = [
-    { key: 'id', label: '工单ID' }, { key: 'custName', label: '客户' },
-    { key: 'action', label: '处置动作' }, { key: 'targetSystem', label: '对接系统' },
-    { key: 'approve', label: '审批' }, { key: 'assignTo', label: '分派' },
-    { key: 'status', label: '状态', type: 'badge' }, { key: 'updatedAt', label: '更新时间' },
+    { key: 'id', label: '工单号', type: 'text', width: '150px' },
+    { key: 'custName', label: '客户', type: 'text', width: '90px' },
+    { key: 'action', label: '建议动作', type: 'text', width: '100px' },
+    { key: 'status', label: '状态', type: 'badge', badgeKind: 'gray', width: '90px' },
+    { key: 'updatedAt', label: '更新时间', type: 'text', width: '150px' },
   ];
-  const rows: Row[] = tasks
-    .filter((t) => !filter || t.status === filter)
-    .map((t) => ({
-      id: t.id, custName: t.custName, action: t.action, targetSystem: t.targetSystem,
-      approve: t.needApprove ? '需审批' : '—', assignTo: t.assignTo, status: t.status, updatedAt: t.updatedAt,
-    }));
-
-  const openDetail = (id: string) => {
-    const t = tasks.find((x) => x.id === id);
-    if (t) { setDetail(t); setNote(''); setApprove(null); }
-  };
-
-  const strategyOf = (t: MidDisposeTask) => strategy.disposes.find((d) => d.action === t.action);
+  const rows: Row[] = filtered.map((t) => ({
+    id: t.id,
+    custName: t.custName,
+    action: t.action,
+    status: { v: t.status, kind: STATUS_KIND[t.status] },
+    updatedAt: t.updatedAt,
+  }));
 
   return (
-    <div style={{ padding: 24, maxWidth: 1280 }}>
-      <PageHeader
-        title="处置工单"
-        crumb="零售信贷风控 / 贷中监控 / 处置工单"
-        subtitle="工单跟进、处置回填、审批流转（工单数据来自本地样例 JSON，动作/对接来自监控策略配置）"
-        actions={<>
-          <Sam label="工单样例 JSON" value={`${tasks.length} 单`} />
-          <Cfg label="处置策略" value={`${strategy.disposes.length} 条`} />
-        </>}
-      />
+    <div style={{ padding: 24, maxWidth: 1360 }}>
+      <PageShell title="处置工单" crumb="零售信贷风控 / 贷中监控 / 处置闭环" subtitle="工单队列 · 点击任意一条查看详情并回填处置"
+        actions={<><Sam label="工单样例" value={`${tasks.length} 条`} /><Cal label="实时统计" /></>} />
 
-      <div style={{ marginTop: 14, display: 'flex', gap: 8, alignItems: 'center', marginBottom: 10 }}>
-        <select value={filter} onChange={(e) => setFilter(e.target.value)} style={sel}>
-          <option value="">全部状态</option>
-          {Object.keys(STATUS_COLOR).map((s) => <option key={s} value={s}>{s}</option>)}
-        </select>
-        <span style={{ fontSize: 12, color: '#94A3B8' }}>
-          状态机：待处置 → 核实中 → 处置中 → 已解除 / 已升级 / 误报 <Cal label="实时流转" />
-        </span>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, minmax(0,1fr))', gap: 12, margin: '4px 0 16px' }}>
+        {(['待处置', '核实中', '处置中', '已解除', '已升级', '误报'] as Status[]).map((s) => (
+          <StatCard key={s} label={s} value={String(counts[s])} accent={s === '待处置' ? 'rose' : s === '已解除' ? 'emerald' : 'brand'} />
+        ))}
       </div>
 
-      <Panel title="工单列表" desc="点击行打开工单处理" note="处置动作与对接系统来自「监控策略配置 · 处置策略」">
-        <DataTable columns={cols} rows={rows} clickableKey="id" onCellClick={(r) => openDetail(String(r.id))} />
+      <Panel title="工单队列" desc={<span>筛选后共 <b>{filtered.length}</b> 条 <Cal label="实时过滤" /></span>}
+        actions={
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            <Sel value={status} onChange={setStatus} opts={[{ v: '', l: '全部状态' }, ...(['待处置', '核实中', '处置中', '已解除', '已升级', '误报'] as Status[]).map((x) => ({ v: x, l: x }))]} />
+            <Sel value={assign} onChange={setAssign} opts={[{ v: '', l: '全部分派' }, ...assigns.map((x) => ({ v: x, l: x }))]} />
+          </div>
+        }>
+        <DataTable columns={cols} rows={rows} empty="无匹配工单"
+          clickableKey="id"
+          onCellClick={(r) => nav('/console/cr:mid-dispose-detail?id=' + String(r.id))} />
       </Panel>
 
-      {detail && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(15,23,42,.35)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setDetail(null)}>
-          <div style={{ background: '#fff', borderRadius: 12, padding: 20, width: 640, maxHeight: '85vh', overflow: 'auto', boxShadow: '0 8px 30px rgba(0,0,0,.15)' }} onClick={(e) => e.stopPropagation()}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-              <div style={{ fontSize: 15, fontWeight: 500 }}>
-                工单 {detail.id} <span style={{ color: STATUS_COLOR[detail.status], fontWeight: 600 }}>{detail.status}</span>
-              </div>
-              <Button variant="ghost" size="sm" onClick={() => setDetail(null)}>关闭</Button>
-            </div>
+      <div style={{ marginTop: 10, fontSize: 11, color: '#94A3B8' }}>
+        <Cal label="实时" /> 当前工单总数 {tasks.length}；工单状态流转：待处置 → 核实中 → 处置中 → 已解除 / 已升级 / 误报
+      </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, fontSize: 13, background: '#F8FAFC', borderRadius: 8, padding: '10px 12px', marginBottom: 12 }}>
-              <div><span style={{ color: '#64748B' }}>客户：</span><b>{detail.custName}</b>（<a href={`/console/cr/mid-cust-detail?custId=${detail.custId}&from=${encodeURIComponent('处置工单/' + detail.id)}`} style={{ color: '#2563EB' }}>查看个体详情</a>）</div>
-              <div><span style={{ color: '#64748B' }}>预警：</span>{detail.alertId}</div>
-              <div><span style={{ color: '#64748B' }}>处置动作：</span><b>{detail.action}</b> <Cfg label="对接" value={detail.targetSystem} /></div>
-              <div><span style={{ color: '#64748B' }}>分派：</span>{detail.assignTo} · {detail.operator}</div>
-              <div><span style={{ color: '#64748B' }}>审批：</span>{detail.needApprove ? '需主管审批' : '无需审批'}</div>
-              <div><span style={{ color: '#64748B' }}>更新时间：</span>{detail.updatedAt}</div>
-            </div>
-
-            {strategyOf(detail) && (
-              <div style={{ fontSize: 12, color: '#64748B', marginBottom: 10 }}>
-                策略配置：{strategyOf(detail)!.name}（触发 {strategyOf(detail)!.triggerLevel}）{strategyOf(detail)!.needNotify ? '· 需触达客户' : ''}
-              </div>
-            )}
-
-            {/* 状态流转操作 */}
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>
-              {statusFlow(detail).map((a) => (
-                <Button key={a.label} size="sm" variant={a.label.includes('误报') || a.label.includes('升级') ? 'secondary' : 'primary'} onClick={() => a.run()}>
-                  {a.label}
-                </Button>
-              ))}
-              {detail.needApprove && detail.status === '处置中' && approve === null && (
-                <>
-                  <Button size="sm" onClick={() => setApprove('approve')}>主管审批·通过</Button>
-                  <Button size="sm" variant="secondary" onClick={() => setApprove('reject')}>主管审批·驳回</Button>
-                </>
-              )}
-            </div>
-
-            {approve && (
-              <div style={{ border: '1px solid #E2E8F0', borderRadius: 8, padding: '10px 12px', marginBottom: 12, fontSize: 13 }}>
-                <div style={{ marginBottom: 6 }}><Cal label="模拟审批" value={approve === 'approve' ? '通过 → 对接核心信贷系统执行成功' : '驳回 → 退回处置中'} /></div>
-                {approve === 'approve' ? (
-                  <Button size="sm" onClick={() => { addLog(detail, '风控主管（演示）', '审批通过，对接' + detail.targetSystem + '执行成功'); patch(detail, { status: '已解除' }); setApprove(null); }}>确认执行</Button>
-                ) : (
-                  <Button size="sm" variant="secondary" onClick={() => { addLog(detail, '风控主管（演示）', '审批驳回，退回'); setApprove(null); }}>确认驳回</Button>
-                )}
-              </div>
-            )}
-
-            <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
-              <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="处置结果 / 备注（回填）" style={{ ...inp, flex: 1 }} />
-              <Button size="sm" variant="secondary" onClick={() => {
-                if (!note.trim()) { alert('请填写备注'); return; }
-                addLog(detail, '处置人（演示）', '回填：' + note);
-                setNote('');
-              }}>回填备注</Button>
-            </div>
-
-            <div style={{ fontSize: 13, fontWeight: 500, marginBottom: 6 }}>操作日志 <Sam label="样例 + 本次操作" /></div>
-            <div style={{ display: 'grid', gap: 6 }}>
-              {detail.logs.map((l, i) => (
-                <div key={i} style={{ fontSize: 12, color: '#475569', background: '#F8FAFC', borderRadius: 6, padding: '6px 10px' }}>
-                  <span style={{ color: '#94A3B8', fontFamily: 'monospace' }}>{l.time}</span> · <b>{l.who}</b>：{l.what}
-                </div>
-              ))}
-            </div>
-          </div>
+      {saveStatus === 'error' && (
+        <div style={{ position: 'fixed', right: 24, top: 72, zIndex: 999, padding: '6px 12px', borderRadius: 6, fontSize: 12, background: '#FEF2F2', color: '#B91C1C', border: '1px solid #FCA5A5' }}>
+          保存失败，请检查本地 JSON 写入
         </div>
       )}
     </div>
   );
 }
 
-const sel: React.CSSProperties = {
-  padding: '6px 8px', borderRadius: 6, border: '1px solid #E2E8F0', fontSize: 12, background: '#fff', color: '#0F172A',
-};
-const inp: React.CSSProperties = {
-  padding: '7px 10px', borderRadius: 6, border: '1px solid #E2E8F0', fontSize: 13,
-  outline: 'none', color: '#0F172A', background: '#fff', boxSizing: 'border-box',
-};
+function Sel({ value, onChange, opts }: { value: string; onChange: (v: string) => void; opts: { v: string; l: string }[] }) {
+  return (
+    <select value={value} onChange={(e) => onChange(e.target.value)} style={{ padding: '4px 8px', borderRadius: 6, border: '1px solid #E2E8F0', fontSize: 12, background: '#fff' }}>
+      {opts.map((o) => <option key={o.v} value={o.v}>{o.l}</option>)}
+    </select>
+  );
+}
