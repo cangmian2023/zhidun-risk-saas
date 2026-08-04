@@ -5,7 +5,7 @@
  * ========================================================================== */
 import { useState, useEffect, type ReactNode } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { Badge, DetailHeader, Panel } from '../components/ui'
+import { Badge, Button, DetailHeader, Panel } from '../components/ui'
 import { ApprovalModal } from './ApprovalModal'
 import { ScoreVisual } from './ScoreVisual'
 import { TemplateDimTable } from './TemplateDimTable'
@@ -377,36 +377,41 @@ export default function InfoVerify222Detail() {
             })}</SectionTable></div>}
           </Panel>
 
-          {/* 结论与终审 */}
+          {/* 结论与终审（样式对齐原报告：标题 + VerifyActionBar 同款动作条） */}
           <div id="conclusion" className="rounded-2xl border border-slate-100 bg-white p-5 shadow-card">
             <div className="mb-3 text-base font-semibold text-ink-900">{tpl.flowBlock?.title || '结论与终审'}<Tpl f="flowBlock.title" v={tpl.flowBlock?.title} /></div>
-            <div className="space-y-1.5 text-sm text-slate-500">
-              <div className="flex items-center gap-2">
-                <span>自动审核：</span>
-                <Badge kind={grade?.autoResult === '拒绝' ? 'red' : grade?.autoResult === '转人工' ? 'amber' : 'green'}>{grade?.autoResult ?? '—'}</Badge>
-                <Tpl f="scoreDisplay.grades" v={tpl.scoreDisplay.grades.map(g => `${g.grade}:${g.minScore}~${g.maxScore}`).join(' ')} />
+            <div className="rounded-2xl border border-slate-100 bg-white p-3 shadow-sm">
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-slate-400">自动审核</span>
+                  <Badge kind={grade?.autoResult === '拒绝' ? 'red' : grade?.autoResult === '转人工' ? 'amber' : 'green'}>{grade?.autoResult ?? '—'}</Badge>
+                  <Tpl f="scoreDisplay.grades" v={tpl.scoreDisplay.grades.map(g => `${g.grade}:${g.minScore}~${g.maxScore}`).join(' ')} />
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-slate-400">人工审核</span>
+                  <Badge kind={WORK_KIND[workStatus] ?? 'blue'}>{workStatus}</Badge>
+                  <Tpl f="flowBlock.statusEnum" v={tpl.flowBlock?.statusEnum?.join(' / ') ?? '—'} />
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-slate-400">操作人员</span>
+                  <span className="text-sm text-slate-700">{operatorText}</span>
+                </div>
+                <div className="ml-auto flex flex-wrap items-center gap-2">
+                  {bizButtons.length === 0 && <span className="text-xs text-slate-400">无业务流程按钮<Tpl f="businessFlow" v={`${tpl.businessFlow?.length ?? 0}条`} /><Tpl f="grades" v={`${tpl.scoreDisplay.grades.map(g=>g.grade).join(',')}`} /></span>}
+                  {bizButtons.map((fg, fi) => {
+                    const b = flowButton(fi)
+                    if (b.hidden) return null
+                    return (
+                      <Button key={fi} size="md" variant={b.done ? 'secondary' : 'primary'} disabled={b.done}
+                        onClick={() => { setActiveFlow(fi); setAuditIdx(fi) }}
+                        className={b.done ? 'cursor-not-allowed opacity-60' : ''}>
+                        {b.label}
+                        <Tpl f="businessFlow.flowGraphs" v={fg.name} />
+                      </Button>
+                    )
+                  })}
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <span>人工审核：</span>
-                <Badge kind={WORK_KIND[workStatus] ?? 'blue'}>{workStatus}</Badge>
-                <span className="text-xs text-slate-400">操作人员 {operatorText}</span>
-                <Tpl f="flowBlock.statusEnum" v={tpl.flowBlock?.statusEnum?.join(' / ') ?? '—'} />
-              </div>
-            </div>
-            <div className="mt-3 flex flex-wrap gap-2">
-              {bizButtons.length === 0 && <span className="text-xs text-slate-400">无业务流程按钮<Tpl f="businessFlow" v={`${tpl.businessFlow?.length ?? 0}条`} /><Tpl f="grades" v={`${tpl.scoreDisplay.grades.map(g=>g.grade).join(',')}`} /></span>}
-              {bizButtons.map((fg, fi) => {
-                const b = flowButton(fi)
-                if (b.hidden) return null
-                return (
-                  <button key={fi} disabled={b.done}
-                    onClick={() => { setActiveFlow(fi); setAuditIdx(fi) }}
-                    className={`rounded-lg border px-4 py-2 text-sm ${b.done ? 'cursor-not-allowed border-slate-200 text-slate-300' : 'border-slate-300 text-slate-700 hover:bg-slate-50'}`}>
-                    {b.label}
-                    <Tpl f="businessFlow.flowGraphs" v={fg.name} />
-                  </button>
-                )
-              })}
             </div>
           </div>
 
