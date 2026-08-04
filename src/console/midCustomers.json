@@ -1,0 +1,120 @@
+[
+  {
+    "custId": "C0001",
+    "name": "张*明",
+    "idCard": "3301**********1234",
+    "product": "信用贷",
+    "creditLine": 80000,
+    "loanBalance": 42000,
+    "loanStatus": "在贷",
+    "riskLevel": "高风险",
+    "scoreHistory": [
+      { "month": "2026-02", "score": 62, "cohortAvg": 74 },
+      { "month": "2026-03", "score": 58, "cohortAvg": 74 },
+      { "month": "2026-04", "score": 51, "cohortAvg": 73 },
+      { "month": "2026-05", "score": 44, "cohortAvg": 72 },
+      { "month": "2026-06", "score": 38, "cohortAvg": 72 },
+      { "month": "2026-07", "score": 33, "cohortAvg": 71 }
+    ],
+    "alerts": [
+      { "time": "2026-07-03", "level": "YELLOW", "scene": "负债上升", "ruleName": "近30天新增贷款≥2笔", "metricValue": 2, "threshold": 2, "status": "已解除" },
+      { "time": "2026-07-18", "level": "RED", "scene": "行为评分", "ruleName": "行为分<40", "metricValue": 38, "threshold": 40, "status": "处置中" },
+      { "time": "2026-08-04", "level": "RED", "scene": "负债激增", "ruleName": "近30天新增贷款≥3笔", "metricValue": 5, "threshold": 3, "status": "待处置" }
+    ],
+    "disposes": [
+      { "time": "2026-07-18", "operator": "李四", "action": "电话核实", "result": "确认多笔网贷，收入下降", "note": "建议降额并预催" },
+      { "time": "2026-07-19", "operator": "王五", "action": "降额", "result": "已执行：80000→40000", "note": "审批通过" }
+    ]
+  },
+  {
+    "custId": "C0002",
+    "name": "李*华",
+    "idCard": "3301**********5678",
+    "product": "消费贷",
+    "creditLine": 50000,
+    "loanBalance": 18000,
+    "loanStatus": "在贷",
+    "riskLevel": "中风险",
+    "scoreHistory": [
+      { "month": "2026-02", "score": 55, "cohortAvg": 74 },
+      { "month": "2026-03", "score": 54, "cohortAvg": 74 },
+      { "month": "2026-04", "score": 56, "cohortAvg": 73 },
+      { "month": "2026-05", "score": 53, "cohortAvg": 72 },
+      { "month": "2026-06", "score": 52, "cohortAvg": 72 },
+      { "month": "2026-07", "score": 52, "cohortAvg": 71 }
+    ],
+    "alerts": [
+      { "time": "2026-08-04", "level": "YELLOW", "scene": "设备异常", "ruleName": "7日内更换设备", "metricValue": 2, "threshold": 1, "status": "待处置" }
+    ],
+    "disposes": []
+  },
+  {
+    "custId": "C0003",
+    "name": "王*芳",
+    "idCard": "3301**********9012",
+    "product": "信用贷",
+    "creditLine": 100000,
+    "loanBalance": 35000,
+    "loanStatus": "在贷",
+    "riskLevel": "低风险",
+    "scoreHistory": [
+      { "month": "2026-02", "score": 76, "cohortAvg": 74 },
+      { "month": "2026-03", "score": 77, "cohortAvg": 74 },
+      { "month": "2026-04", "score": 76, "cohortAvg": 73 },
+      { "month": "2026-05", "score": 78, "cohortAvg": 72 },
+      { "month": "2026-06", "score": 78, "cohortAvg": 72 },
+      { "month": "2026-07", "score": 78, "cohortAvg": 71 }
+    ],
+    "alerts": [
+      { "time": "2026-08-02", "level": "OPPORTUNITY", "scene": "需求上升", "ruleName": "额度使用率>80%", "metricValue": 88, "threshold": 80, "status": "待处置" }
+    ],
+    "disposes": []
+  },
+  {
+    "custId": "C0004",
+    "name": "赵*强",
+    "idCard": "3301**********3456",
+    "product": "经营贷",
+    "creditLine": 200000,
+    "loanBalance": 156000,
+    "loanStatus": "在贷",
+    "riskLevel": "高风险",
+    "scoreHistory": [
+      { "month": "2026-02", "score": 50, "cohortAvg": 74 },
+      { "month": "2026-03", "score": 45, "cohortAvg": 74 },
+      { "month": "2026-04", "score": 41, "cohortAvg": 73 },
+      { "month": "2026-05", "score": 36, "cohortAvg": 72 },
+      { "month": "2026-06", "score": 31, "cohortAvg": 72 },
+      { "month": "2026-07", "score": 28, "cohortAvg": 71 }
+    ],
+    "alerts": [
+      { "time": "2026-07-25", "level": "RED", "scene": "司法涉诉", "ruleName": "新增被执行记录", "metricValue": 1, "threshold": 0, "status": "处置中" },
+      { "time": "2026-08-04", "level": "RED", "scene": "司法涉诉", "ruleName": "新增被执行记录", "metricValue": 1, "threshold": 0, "status": "待处置" }
+    ],
+    "disposes": [
+      { "time": "2026-07-26", "operator": "李四", "action": "冻结额度", "result": "已冻结全部可用额度", "note": "待评估" }
+    ]
+  },
+  {
+    "custId": "C0005",
+    "name": "陈*敏",
+    "idCard": "3301**********7890",
+    "product": "消费贷",
+    "creditLine": 30000,
+    "loanBalance": 9000,
+    "loanStatus": "在贷",
+    "riskLevel": "中风险",
+    "scoreHistory": [
+      { "month": "2026-02", "score": 60, "cohortAvg": 74 },
+      { "month": "2026-03", "score": 61, "cohortAvg": 74 },
+      { "month": "2026-04", "score": 60, "cohortAvg": 73 },
+      { "month": "2026-05", "score": 61, "cohortAvg": 72 },
+      { "month": "2026-06", "score": 61, "cohortAvg": 72 },
+      { "month": "2026-07", "score": 61, "cohortAvg": 71 }
+    ],
+    "alerts": [
+      { "time": "2026-08-03", "level": "YELLOW", "scene": "还款能力", "ruleName": "临期余额不足", "metricValue": 1, "threshold": 0, "status": "待处置" }
+    ],
+    "disposes": []
+  }
+]

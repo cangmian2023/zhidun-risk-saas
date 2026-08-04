@@ -34,27 +34,25 @@ export const creditRiskMenu: MenuGroup[] = [
   { group: '信用风控', section: '贷前审核', items: [{ label: '信用风控', key: 'cr:credit-kimi', desc: '展示信用风控审核进件列表，支持按信用等级、自动审核结果筛选' }, { label: '信用风控222', key: 'cr:credit-verify-222', desc: '模板驱动的信用风控报告（方案222备用，数据从本地 JSON 读取）' }] },
   { group: '欺诈识别', section: '贷前审核', items: [{ label: '欺诈识别', key: 'cr:pre-fraud', desc: '展示欺诈识别进件列表，支持按风险评分、命中规则筛选' }, { label: '欺诈识别222', key: 'cr:fraud-verify-222', desc: '模板驱动的欺诈识别报告（方案222备用，数据从本地 JSON 读取）' }] },
   { group: '进件审核222', section: '贷前审核', items: [{ label: '进件审核222', key: 'cr:decision-verify-222', desc: '模板驱动的进件审核报告（方案222备用，数据从本地 JSON 读取）' }] },
-  // 贷中监控（业务作业 · 对外）
-  { group: '监控任务看板', section: '贷中监控', items: [{ label: '监控任务看板', key: 'cr:mid-task', desc: '展示所有监控任务，支持按产品、场景、频次筛选' }] },
-  { group: '红黄灯预警', section: '贷中监控', items: [{ label: '预警', key: 'cr:mid-alert', desc: '展示所有红黄灯预警记录，支持按预警等级、监控场景筛选' }] },
+  // 贷中监控（业务作业 · 对外）—— v3 规划：看板由监控页面配置驱动，工作台/工单/单客视图为作业页
   {
-    group: '客群风险',
+    group: '监控看板',
     section: '贷中监控',
     items: [
-      { label: '客群风险', key: 'cr:mid-crowd', desc: '展示各客群的实时风险分布、趋势变化' },
-      { label: '单客风险', key: 'cr:mid-crowd-single', desc: '追踪单个客户的风险评分变化历史、预警记录' },
-      { label: '风险趋势', key: 'cr:mid-crowd-trend', desc: '展示客群风险评分的趋势变化、同比环比分析' },
+      { label: '监控大盘', key: 'cr:mid-overview', keep: true, desc: '全局总览：预警量、红黄灯分布、逾期率、处置效率（页面来自监控页面配置）' },
+      { label: '红黄灯预警', key: 'cr:mid-alert', keep: true, desc: '红黄灯预警明细与等级分布（页面来自监控页面配置）' },
+      { label: '客群风险', key: 'cr:mid-crowd', keep: true, desc: '在贷余额、逾期率与行为分趋势（页面来自监控页面配置）' },
     ],
   },
   {
-    group: '处置管理',
+    group: '预警处置',
     section: '贷中监控',
     items: [
-      { label: '处置任务', key: 'cr:mid-dispose', desc: '展示待处置的预警任务，支持分配、转派、批量处置' },
-      { label: '处置', key: 'cr:mid-dispose-record', desc: '展示所有处置历史，含处置人、处置时间、处置结果' },
+      { label: '预警工作台', key: 'cr:mid-alert-workbench', keep: true, desc: '红黄灯预警任务队列：逐条查看、核实、发起处置' },
+      { label: '处置工单', key: 'cr:mid-dispose-workbench', keep: true, desc: '工单跟进、处置回填、审批流转' },
+      { label: '单客视图', key: 'cr:mid-cust-detail', keep: true, desc: '个体详情：规则还原、画像、评分历史、处置' },
     ],
   },
-
 ]
 
 /* ============================================================
@@ -202,9 +200,7 @@ export const dmMenu: MenuGroup[] = [
  * 五、管理中心（跨子系统共用，原公共模块）
  * ========================================================== */
 export const cmMenu: MenuGroup[] = [
-  { group: '概览看板', section: '工作台', items: [{ label: '概览看板', key: 'cm:overview', desc: '展示管理中心的整体运行概览' }] },
-  { group: '备份一申贷审核', items: [{ label: '备份一申贷审核', key: 'cm:pre-application', desc: '展示所有申贷申请进件，支持按渠道、产品、状态筛选与审核（零售信贷风控·申贷审核的备份副本）' }] },
-  // 公共配置（运营人员 · 规则 / 模型 / 模板 / 看板）—— 由原「零售信贷风控」迁入「管理中心」
+  // 公共配置（运营人员 · 规则 / 模型 / 模板 / 看板）—— 由原「零售信贷风控」迁入「管理中心」；未落地的模块暂不下发菜单
   {
     group: '规则集合',
     section: '公共配置',
@@ -217,61 +213,18 @@ export const cmMenu: MenuGroup[] = [
       { label: '处置策略', key: 'cm:mid-dispose-strategy', desc: '配置自动处置策略（如自动降额、自动冻结）' },
     ],
   },
-  { group: '模型', section: '公共配置', items: [{ label: '信用模型', key: 'cm:credit-kimi-config', desc: '配置六大维度的权重、评分规则、叠加惩罚机制' }] },
   { group: '报告模板', section: '公共配置', items: [{ label: '报告模板', key: 'cm:report-template', desc: '统一管理信息核验 / 信用风控 / 欺诈识别 / 决策报告四类报告的展示模板、评分等级、结论与导出样式' }] },
-  { group: '数据看板配置', section: '公共配置', items: [{ label: '数据看板配置', key: 'cm:dashboard-config', desc: '统一管理贷中监控下的数据看板页面：增删改查、页面位置、展示数据与可视化配置', keep: true }] },
   {
-    group: '监控配置',
+    group: '贷中监控配置',
     section: '公共配置',
     items: [
-      { label: '监控任务管理', key: 'cm:mid-task-config', desc: '创建/编辑监控任务，配置扫描频次、客群范围、预警规则' },
-      { label: '监控任务日志', key: 'cm:mid-task-log', desc: '展示监控任务的执行历史、耗时、扫描客群数' },
-    ],
-  },
-  {
-    group: '结果输出',
-    section: '公共配置',
-    items: [
-      { label: 'API接口', key: 'cm:mid-output-api', desc: '管理 API 接口的调用权限、限流、计费' },
-      { label: '推送', key: 'cm:mid-output-push', desc: '配置 URL 推送、文件交换的接收地址、格式、频次' },
-      { label: '下载中心', key: 'cm:mid-output-download', desc: '支持按时间范围、客群范围下载监控结果文件' },
-    ],
-  },
-  {
-    group: '用户中心',
-    items: [
-      { label: '用户', key: 'cm:user-list', desc: '管理系统用户，支持按角色、部门筛选' },
-      { label: '角色权限', key: 'cm:user-role', desc: '配置角色（系统管理员、风控专员、风控主管、数据分析师等）的权限' },
-      { label: '个人中心页', key: 'cm:user-profile', desc: '展示个人信息、修改密码、操作日志' },
-    ],
-  },
-  {
-    group: '系统配置',
-    items: [
-      { label: '数据源', key: 'cm:sys-datasource', desc: '配置外部数据源的接入参数（公安库、运营商、征信等）' },
-      { label: '规则引擎', key: 'cm:sys-rule-engine', desc: '配置决策引擎的规则、策略、流程' },
-      { label: '通知', key: 'cm:sys-notify', desc: '配置邮件、短信、钉钉等通知渠道' },
-      { label: '日志审计页', key: 'cm:sys-audit', desc: '展示系统操作日志、安全审计日志' },
-    ],
-  },
-  {
-    group: '数据看板',
-    items: [
-      { label: '业务总览看板', key: 'cm:dash-biz', desc: '展示各子系统的核心业务指标' },
-      { label: '实时监控看板', key: 'cm:dash-realtime', desc: '展示系统实时 QPS、响应耗时、错误率' },
-      { label: '数据报表页', key: 'cm:dash-report', desc: '支持自定义报表、定时发送、导出下载' },
-    ],
-  },
-  {
-    group: '帮助中心',
-    items: [
-      { label: '产品文档页', key: 'cm:help-doc', desc: '展示各产品的使用文档、API 文档' },
-      { label: '常见问题页', key: 'cm:help-faq', desc: '展示 FAQ、操作指南' },
-      { label: '在线客服页', key: 'cm:help-service', desc: '接入在线客服系统' },
+      { label: '数据源管理', key: 'cm:mid-data-source', keep: true, desc: '对接多种数据源，为指标库提供字段与样例数据' },
+      { label: '指标库', key: 'cm:mid-metric', keep: true, desc: '定义可复用指标（基础 + 派生公式），被监控策略、看板组件引用' },
+      { label: '监控策略配置', key: 'cm:mid-strategy', keep: true, desc: '监控任务 / 预警规则 / 红黄灯定级 / 处置策略（内容来自指标库）' },
+      { label: '监控页面配置', key: 'cm:mid-dashboard-config', keep: true, desc: '配置监控看板页面与可视化组件，保存后由监控看板渲染' },
     ],
   },
 ]
-
 /* ============================================================
  * 子系统元信息 & 菜单汇总
  * ========================================================== */

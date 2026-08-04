@@ -28,7 +28,14 @@ import ReportTemplate from './ReportTemplate'
 import ReportTemplatePreview from './ReportTemplatePreview'
 import MidDashboardPage from './MidDashboardPage'
 import DashboardConfig from './DashboardConfig'
-import { loadDashboards, mergeMidMenu, getDashboardByKey } from './dashboardData'
+import MidDataSourceConfig from './MidDataSourceConfig'
+import MidMetricConfig from './MidMetricConfig'
+import MidStrategyConfig from './MidStrategyConfig'
+import MidDashboardConfig from './MidDashboardConfig'
+import MidAlertWorkbench from './MidAlertWorkbench'
+import MidCustDetail from './MidCustDetail'
+import MidDisposeWorkbench from './MidDisposeWorkbench'
+import { getDashboardByKey } from './dashboardData'
 import { creditRiskMenu, scoringMenu, entMenu, dmMenu, cmMenu, type MenuGroup } from './menus'
 import SidebarMenu from './SidebarMenu'
 import { MenuIcon, type IconName } from '../components/icons'
@@ -269,11 +276,21 @@ export default function Console() {
     'cm:mid-output-api': 'cloud',
     'cm:mid-output-push': 'link',
     'cm:mid-output-download': 'grid',
+    // 贷中监控配置（v3 规划）
+    'cm:mid-data-source': 'database',
+    'cm:mid-metric': 'sliders',
+    'cm:mid-strategy': 'work_flow',
+    'cm:mid-dashboard-config': 'grid',
+    // 贷中监控使用域（v3）
+    'cr:mid-overview': 'chart',
+    'cr:mid-alert-workbench': 'zoom',
+    'cr:mid-dispose-workbench': 'work_flow',
+    'cr:mid-cust-detail': 'monitor',
   }
   const menuIcon = (key: string): IconName => MENU_ICON[key] ?? 'dashboard'
 
   const menu: MenuGroup[] =
-    sub === 'cr' ? mergeMidMenu(creditRiskMenu, loadDashboards()) :
+    sub === 'cr' ? creditRiskMenu :
     sub === 'sc' ? scoringMenu :
     sub === 'ep' ? entMenu :
     sub === 'dm' ? dmMenu :
@@ -295,8 +312,16 @@ export default function Console() {
     nav('/login')
   }
   function switchSub(key: string) {
-    nav(`/console/${key}/overview`)
+    // 管理中心默认落到「核验规则」（原 overview 入口已随菜单下架）
+    nav(`/console/${key}/${key === 'cm' ? 'pre-verify-config' : 'overview'}`)
   }
+
+  // 管理中心：访问 /console/cm/overview（旧入口/书签）时重定向到第一个有效菜单「核验规则」
+  useEffect(() => {
+    if (sub === 'cm' && cur === 'overview') {
+      nav('/console/cm/pre-verify-config', { replace: true })
+    }
+  }, [sub, cur, nav])
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -472,6 +497,22 @@ export default function Console() {
               <ReportTemplatePreview />
             ) : key === 'cm:dashboard-config' ? (
               <DashboardConfig />
+            ) : key === 'cm:mid-data-source' ? (
+              <MidDataSourceConfig />
+            ) : key === 'cm:mid-metric' ? (
+              <MidMetricConfig />
+            ) : key === 'cm:mid-strategy' ? (
+              <MidStrategyConfig />
+            ) : key === 'cm:mid-dashboard-config' ? (
+              <MidDashboardConfig />
+            ) : key === 'cr:mid-overview' || key === 'cr:mid-alert' || key === 'cr:mid-crowd' ? (
+              <MidDashboardPage pageKey={key} />
+            ) : key === 'cr:mid-alert-workbench' ? (
+              <MidAlertWorkbench />
+            ) : key === 'cr:mid-dispose-workbench' ? (
+              <MidDisposeWorkbench />
+            ) : key === 'cr:mid-cust-detail' ? (
+              <MidCustDetail />
             ) : getDashboardByKey(key) ? (
               <MidDashboardPage pageKey={key} />
             ) : isQuery && queryProd ? (
