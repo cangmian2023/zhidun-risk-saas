@@ -2507,13 +2507,13 @@ export function buildBackup222Template(): ReportTemplate {
   const t = buildTemplate('info_verify', {
     id: 'tpl-info-backup222',
     name: '综合信用模型（方案222备用）',
-    status: '草稿',
+    status: '已启用',
     scope: ['全产品'],
-    isDefault: false,
+    isDefault: true,
     version: 'V2.6风控策略集',
     lastEditor: 'admin',
     lastEditTime: '2026-07-21',
-    description: '方案222 备用：按 0802 映射关系新建的模板 + 样例数据，用于验证「模板驱动还原报告」。不替换现有信息核验标准模板。',
+    description: '信息核验当前启用模板：模板驱动还原报告（方案222），数据从本地 JSON 读取。',
   })
   const sec = (id: string) => t.sections.find((s) => s.id === id)!
 
@@ -2647,41 +2647,42 @@ export function buildBiz222Template(type: ReportType, o: BuildOpts & { autoTitle
 }
 
 export const seedReportTemplates: ReportTemplate[] = [
+  // 下架旧版模板（信息核验/信用风控/欺诈识别/决策 四报告改用 222 方案模板）
   buildTemplate('info_verify', {
-    id: 'tpl-info-standard', name: '标准信息核验报告模板', status: '已启用', scope: ['全产品'],
-    isDefault: true, version: 'V2.1', lastEditor: 'admin', lastEditTime: '今天', description: '信息核验报告标准展示模板，覆盖全部 7 个分段。异常值越高风险越高。',
+    id: 'tpl-info-standard', name: '标准信息核验报告模板', status: '已停用', scope: ['全产品'],
+    isDefault: false, version: 'V2.1', lastEditor: 'admin', lastEditTime: '今天', description: '信息核验报告标准展示模板（已下架，由 综合信用模型（方案222备用） 替代）。',
   }),
   buildTemplate('credit', {
-    id: 'tpl-credit-loan', name: '信用贷信用风控报告模板', status: '已启用', scope: ['工薪贷', '公积金贷', '社保贷', '学历贷', '商户贷'],
-    version: 'V1.3', lastEditor: '主管', lastEditTime: '3天前', description: '面向信用贷客群的信用风控报告模板。',
+    id: 'tpl-credit-loan', name: '信用贷信用风控报告模板', status: '已停用', scope: ['工薪贷', '公积金贷', '社保贷', '学历贷', '商户贷'],
+    version: 'V1.3', lastEditor: '主管', lastEditTime: '3天前', description: '面向信用贷客群的信用风控报告模板（已下架，由 信用风控综合模型（方案222备用） 替代）。',
   }),
   buildTemplate('fraud', {
-    id: 'tpl-fraud-standard', name: '欺诈识别标准模板', status: '草稿', scope: ['全产品'],
-    version: 'V1.0', lastEditor: 'admin', lastEditTime: '刚刚', description: '欺诈识别报告草稿模板，待配置后启用。',
+    id: 'tpl-fraud-standard', name: '欺诈识别标准模板', status: '已停用', scope: ['全产品'],
+    version: 'V1.0', lastEditor: 'admin', lastEditTime: '刚刚', description: '欺诈识别报告模板（已下架，由 欺诈识别综合模型（方案222备用） 替代）。',
   }),
   buildTemplate('decision', {
     id: 'tpl-decision-standard', name: '决策报告综合模板', status: '已停用', scope: ['全产品'],
-    version: 'V1.2', lastEditor: 'admin', lastEditTime: '1周前', description: '整合三大报告的综合决策报告模板，当前已停用。',
+    version: 'V1.2', lastEditor: 'admin', lastEditTime: '1周前', description: '整合三大报告的综合决策报告模板（已下架，由 进件审核综合模型（方案222备用） 替代）。',
   }),
   buildAuthorityInfoTemplate(),
   buildBackup222Template(),
-  // N/M：按信息核验222 架构新建的 信用风控/欺诈识别/进件审核 「方案222备用」模板
+  // 222 方案模板：四报告当前启用模板（默认模板）
   buildBiz222Template('credit', {
-    id: 'tpl-credit-222', name: '信用风控综合模型（方案222备用）', status: '草稿',
+    id: 'tpl-credit-222', name: '信用风控综合模型（方案222备用）', status: '已启用', isDefault: true,
     version: 'V2.6风控策略集', lastEditor: 'admin', lastEditTime: '2026-08-03',
-    description: '信用风控「方案222备用」：按信息核验222 模板驱动架构新建，供新列表/详情页使用。',
+    description: '信用风控当前启用模板：按信息核验222 模板驱动架构，供 信用风控 列表/详情页使用。',
     autoTitle: '信用风控自动审核得分', manualTitle: '信用风控人工审核',
   }),
   buildBiz222Template('fraud', {
-    id: 'tpl-fraud-222', name: '欺诈识别综合模型（方案222备用）', status: '草稿',
+    id: 'tpl-fraud-222', name: '欺诈识别综合模型（方案222备用）', status: '已启用', isDefault: true,
     version: 'V2.6风控策略集', lastEditor: 'admin', lastEditTime: '2026-08-03',
-    description: '欺诈识别「方案222备用」：按信息核验222 模板驱动架构新建，供新列表/详情页使用。',
+    description: '欺诈识别当前启用模板：按信息核验222 模板驱动架构，供 欺诈识别 列表/详情页使用。',
     autoTitle: '欺诈识别自动审核得分', manualTitle: '欺诈识别人工审核',
   }),
   buildBiz222Template('decision', {
-    id: 'tpl-decision-222', name: '进件审核综合模型（方案222备用）', status: '草稿',
+    id: 'tpl-decision-222', name: '进件审核综合模型（方案222备用）', status: '已启用', isDefault: true,
     version: 'V2.6风控策略集', lastEditor: 'admin', lastEditTime: '2026-08-03',
-    description: '进件审核「方案222备用」：按信息核验222 模板驱动架构新建，供新列表/详情页使用。',
+    description: '进件审核当前启用模板：按信息核验222 模板驱动架构，供 进件审核 列表/详情页使用。',
     autoTitle: '进件审核自动审核得分', manualTitle: '进件审核人工审核',
   }),
 ]

@@ -7,8 +7,8 @@
       "scope": [
         "全产品"
       ],
-      "status": "已停用",
-      "isDefault": false,
+      "status": "已启用",
+      "isDefault": true,
       "description": "信息核验报告标准展示模板，覆盖全部 7 个分段。异常值越高风险越高。",
       "version": "V2.3",
       "lastEditor": "当前用户",
@@ -1471,7 +1471,7 @@
         "学历贷",
         "商户贷"
       ],
-      "status": "已停用",
+      "status": "已启用",
       "isDefault": false,
       "description": "面向信用贷客群的信用风控报告模板。",
       "version": "V1.3",
@@ -3171,7 +3171,7 @@
       "scope": [
         "全产品"
       ],
-      "status": "已停用",
+      "status": "草稿",
       "isDefault": false,
       "description": "欺诈识别报告草稿模板，待配置后启用。",
       "version": "V1.0",
@@ -8092,8 +8092,8 @@
       "scope": [
         "全产品"
       ],
-      "status": "已启用",
-      "isDefault": true,
+      "status": "草稿",
+      "isDefault": false,
       "description": "方案222 备用：按 0802 映射关系新建的模板 + 样例数据，用于验证「模板驱动还原报告」。不替换现有信息核验标准模板。",
       "version": "V1.18",
       "lastEditor": "当前用户",

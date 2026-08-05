@@ -4,8 +4,6 @@ import { useAuth } from '../auth/AuthContext'
 import Logo from '../components/Logo'
 import ModulePage from './ModulePage'
 import PreApplication from './PreApplication'
-import PreVerifyDetail from './PreVerifyDetail'
-import InfoVerifyList from './InfoVerifyList'
 import InfoVerify222 from './InfoVerify222'
 import InfoVerify222Detail from './InfoVerify222Detail'
 import CreditVerify222 from './CreditVerify222'
@@ -14,13 +12,6 @@ import FraudVerify222 from './FraudVerify222'
 import FraudVerify222Detail from './FraudVerify222Detail'
 import DecisionVerify222 from './DecisionVerify222'
 import DecisionVerify222Detail from './DecisionVerify222Detail'
-import FraudScheme4List from './FraudScheme4List'
-import FraudScheme4Detail from './FraudScheme4Detail'
-import CreditKimiList from './CreditKimiList'
-import CreditKimiDetail from './CreditKimiDetail'
-import CreditModelConfig from './CreditModelConfig'
-import DecisionList from './DecisionList'
-import DecisionDetail from './DecisionDetail'
 import ScoreQueryPage from './ScoreQueryPage'
 import VerifyRuleList from './VerifyRuleList'
 import VerifyRuleConfig from './VerifyRuleConfig'
@@ -141,10 +132,6 @@ export default function Console() {
     // 零售信贷风控
     'cr:pre-application': 'audit',
     'cr:pre-verify': 'verify',
-    'cr:pre-verify-222': 'verify',
-    'cr:credit-verify-222': 'shield',
-    'cr:fraud-verify-222': 'alert',
-    'cr:decision-verify-222': 'report',
     'cr:pre-verify-config': 'filter',
     'cr:credit-kimi': 'shield',
     'cr:credit-kimi-config': 'sliders',
@@ -456,39 +443,21 @@ export default function Console() {
             ) : key === 'cm:pre-application' ? (
               <PreApplication />
             ) : key === 'cr:pre-verify' ? (
-              <InfoVerifyList />
-            ) : key === 'cr:pre-verify-222' ? (
               <InfoVerify222 />
-            ) : key === 'cr:pre-verify-222-detail' ? (
-              <InfoVerify222Detail />
-            ) : key === 'cr:credit-verify-222' ? (
-              <CreditVerify222 />
-            ) : key === 'cr:credit-verify-222-detail' ? (
-              <CreditVerify222Detail />
-            ) : key === 'cr:fraud-verify-222' ? (
-              <FraudVerify222 />
-            ) : key === 'cr:fraud-verify-222-detail' ? (
-              <FraudVerify222Detail />
-            ) : key === 'cr:decision-verify-222' ? (
-              <DecisionVerify222 />
-            ) : key === 'cr:decision-verify-222-detail' ? (
-              <DecisionVerify222Detail />
             ) : key === 'cr:pre-verify-detail' ? (
-              <PreVerifyDetail />
-            ) : key === 'cr:pre-fraud' ? (
-              <FraudScheme4List />
-            ) : key === 'cr:pre-fraud-detail' ? (
-              <FraudScheme4Detail />
+              <InfoVerify222Detail />
             ) : key === 'cr:credit-kimi' ? (
-              <CreditKimiList />
+              <CreditVerify222 />
             ) : key === 'cr:credit-kimi-detail' ? (
-              <CreditKimiDetail />
-            ) : key === 'cr:credit-kimi-config' ? (
-              <CreditModelConfig />
+              <CreditVerify222Detail />
+            ) : key === 'cr:pre-fraud' ? (
+              <FraudVerify222 />
+            ) : key === 'cr:pre-fraud-detail' ? (
+              <FraudVerify222Detail />
             ) : key === 'cr:pre-report' ? (
-              <DecisionList />
+              <DecisionVerify222 />
             ) : key === 'cr:pre-report-detail' ? (
-              <DecisionDetail />
+              <DecisionVerify222Detail />
             ) : key === 'cr:pre-verify-config' ? (
               <VerifyRuleList />
             ) : key === 'cr:pre-verify-config-detail' ? (
@@ -497,8 +466,6 @@ export default function Console() {
               <VerifyRuleList />
             ) : key === 'cm:pre-verify-config-detail' ? (
               <VerifyRuleConfig />
-            ) : key === 'cm:credit-kimi-config' ? (
-              <CreditModelConfig />
             ) : key === 'cm:report-template' ? (
               <ReportTemplate />
             ) : key === 'cm:report-template-preview' ? (

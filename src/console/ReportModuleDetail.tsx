@@ -13,6 +13,7 @@ import { useTemplate } from './templateStore'
 import { DisplayModeToggle } from './DisplayModeToggle'
 import { computeSectionScore, matchGrade, scoreForVerifySys, computeReportTotal, getAuditFlowByGrade, nextNodeByResult, type SectionConfig, type ReviewResult, type ReportType } from './reportTemplateData'
 import type { ReportModuleCfg } from './ReportModule'
+import { useReportRows, updateReportRows } from './reportListStore'
 
 const cn = (...c: (string | false | undefined)[]) => c.filter(Boolean).join(' ')
 const V = (v: any) => (v != null ? String(v) : 'null')
@@ -284,9 +285,11 @@ export function ReportModuleDetail({ cfg }: { cfg: ReportModuleCfg }) {
   const [params] = useSearchParams()
   // URL 进件号：决定本页展示哪份报告（列表「查看」跳转时携带）；缺省回落到样例 JSON
   const urlId = params.get('id') ?? undefined
-  const row = urlId ? (cfg.listJson as any[]).find((r) => r.id === urlId) : undefined
   let tpl = useTemplate(cfg.templateId)
   if (!tpl) tpl = useTemplate(undefined, cfg.fallbackType)
+  // 列表数据来自运行时磁盘读取（共享 store）；缺失回落打包 JSON。审核状态按 id 取该行
+  const allRows = useReportRows(cfg.saveFile, cfg.listJson)
+  const row = urlId ? (allRows as any[]).find((r) => r.id === urlId) : undefined
   // 样例数据：按该行得分匹配的分段（A/B/C）从样例池选取；无进件/处理中回落默认样例
   const rowScore = row ? scoreForVerifySys((row as any).sysResult ?? '', tpl?.scoreDisplay.grades ?? []) : null
   const segGrade = rowScore != null ? matchGrade(rowScore, tpl?.scoreDisplay.grades ?? [])?.grade : undefined
@@ -330,6 +333,13 @@ export function ReportModuleDetail({ cfg }: { cfg: ReportModuleCfg }) {
   // 流程进度从持久化恢复：flowNodeId=当前待审节点（刷新后按钮显示正确节点）；flowDone=是否已走完
   const [flowNodeId, setFlowNodeId] = useState<string | null>((row as any)?.flowNodeId ?? null)
   const [flowDone, setFlowDone] = useState<boolean>((row as any)?.flowDone === true)
+  // 从磁盘恢复的审核进度（flowNodeId/flowDone/workStatus）同步到本地状态：列表或详情刷新后能恢复审批进度
+  useEffect(() => {
+    if (!row) return
+    setWorkStatus((row as any)?.workStatus ?? (bizButtons.length ? statusEnum[0] : (grade?.autoResult ?? statusEnum[0])))
+    setFlowNodeId((row as any)?.flowNodeId ?? null)
+    setFlowDone((row as any)?.flowDone === true)
+  }, [row])
   // 3.6 审核人轨迹（已完成节点名 + 操作人）；初始来自用户数据（json operator）
   const [auditTrail, setAuditTrail] = useState<{ node: string; operator: string }[]>([])
   // 3.5 本次会话的人工审核操作日志（追加在报告末尾操作日志区）
@@ -370,14 +380,15 @@ export function ReportModuleDetail({ cfg }: { cfg: ReportModuleCfg }) {
     const nextNode = nextNodeByResult(curGraph, node.id, p.result)
     const hasNext = !!(nextNode && nextNode.results?.length && nextNode.type !== 'end')
     try {
-      const updated = (cfg.listJson as any[]).map((r) => r.id === reportId ? {
+      const updated = (allRows as any[]).map((r) => r.id === reportId ? {
         ...r,
         workStatus: next ?? (row as any)?.workStatus ?? null,
         operator: fullOp,
         flowNodeId: hasNext ? nextNode.id : undefined,
         flowDone: hasNext ? undefined : true,
       } : r)
-      fetch(`/api/save-list?file=${cfg.saveFile}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(updated) }).catch(() => {})
+      // 落盘：经共享 store 写回本地 JSON（与列表页同一缓存，跨页一致），刷新不丢
+      updateReportRows(cfg.saveFile, () => updated)
     } catch { /* 持久化失败不影响交互 */ }
     // 沿边步进：按审批结果选下一条边（匹配 result===审批结果 的条件边，否则无条件兜底）
     if (hasNext) {

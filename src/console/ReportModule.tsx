@@ -3,12 +3,13 @@
  * 信息核验 / 信用风控 / 欺诈识别 / 进件审核 共用同一列表逻辑：
  *   数据从本地 JSON 读取，得分/自动审核按模板分段生成，人工审核弹窗按模板业务流程沿边走
  * ========================================================================== */
-import { useMemo, useState, type CSSProperties } from 'react'
+import { useEffect, useMemo, useState, type CSSProperties } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { PageHeader, Panel, Badge, StatCard, SingleSelect, Button, DecisionTag, StatusTag, type SelectOption } from '../components/ui'
 import { ApprovalModal } from './ApprovalModal'
 import type { VerifyRow } from './VerifyOps'
 import { useTemplate } from './templateStore'
+import { useReportRows, updateReportRows } from './reportListStore'
 import { matchGrade, scoreForVerifySys, computeReportTotal, getAuditFlowByGrade, nextNodeByResult, type ScoreGrade, type ReviewResult, type ReportType } from './reportTemplateData'
 import infoListJson from './infoVerify222Data.json'
 import infoDetailSamples from './infoVerify222DetailData.json'
@@ -43,28 +44,28 @@ export const INFO_MODULE: ReportModuleCfg = {
   key: 'info', title: '信息核验', subtitle: '模板驱动 · 数据从本地 JSON 文件读取（infoVerify222Data.json）',
   crumb: '零售信贷风控 / 贷前审核', templateId: 'tpl-info-backup222', fallbackType: 'info_verify',
   listJson: infoListJson as VerifyRow[], detailSamples: infoDetailSamples as Record<string, any>, defaultSample: infoDefaultSample,
-  listRoute: '/console/cr/pre-verify-222', detailRoute: '/console/cr/pre-verify-222-detail', saveFile: 'infoVerify222Data.json',
+  listRoute: '/console/cr/pre-verify', detailRoute: '/console/cr/pre-verify-detail', saveFile: 'infoVerify222Data.json',
 }
 
 export const CREDIT_MODULE: ReportModuleCfg = {
   key: 'credit', title: '信用风控', subtitle: '模板驱动 · 数据从本地 JSON 文件读取（creditVerifyData.json）',
   crumb: '零售信贷风控 / 贷前审核', templateId: 'tpl-credit-222', fallbackType: 'credit',
   listJson: creditListJson as VerifyRow[], detailSamples: creditDetailSamples as Record<string, any>, defaultSample: creditDefaultSample,
-  listRoute: '/console/cr/credit-verify-222', detailRoute: '/console/cr/credit-verify-222-detail', saveFile: 'creditVerifyData.json',
+  listRoute: '/console/cr/credit-kimi', detailRoute: '/console/cr/credit-kimi-detail', saveFile: 'creditVerifyData.json',
 }
 
 export const FRAUD_MODULE: ReportModuleCfg = {
   key: 'fraud', title: '欺诈识别', subtitle: '模板驱动 · 数据从本地 JSON 文件读取（fraudVerifyData.json）',
   crumb: '零售信贷风控 / 贷前审核', templateId: 'tpl-fraud-222', fallbackType: 'fraud',
   listJson: fraudListJson as VerifyRow[], detailSamples: fraudDetailSamples as Record<string, any>, defaultSample: fraudDefaultSample,
-  listRoute: '/console/cr/fraud-verify-222', detailRoute: '/console/cr/fraud-verify-222-detail', saveFile: 'fraudVerifyData.json',
+  listRoute: '/console/cr/pre-fraud', detailRoute: '/console/cr/pre-fraud-detail', saveFile: 'fraudVerifyData.json',
 }
 
 export const DECISION_MODULE: ReportModuleCfg = {
   key: 'decision', title: '进件审核', subtitle: '模板驱动 · 数据从本地 JSON 文件读取（decisionVerifyData.json）',
   crumb: '零售信贷风控 / 贷前审核', templateId: 'tpl-decision-222', fallbackType: 'decision',
   listJson: decisionListJson as VerifyRow[], detailSamples: decisionDetailSamples as Record<string, any>, defaultSample: decisionDefaultSample,
-  listRoute: '/console/cr/decision-verify-222', detailRoute: '/console/cr/decision-verify-222-detail', saveFile: 'decisionVerifyData.json',
+  listRoute: '/console/cr/pre-report', detailRoute: '/console/cr/pre-report-detail', saveFile: 'decisionVerifyData.json',
 }
 
 /* ── 来源调试标签（蓝=模板配置 / 橙=本地JSON数据 / 灰=实时算法） ── */
@@ -151,30 +152,21 @@ const bodyStyle = (w: number, side: Side, offset = 0): CSSProperties => {
 export function ReportModuleList({ cfg }: { cfg: ReportModuleCfg }) {
   const tpl = useTemplate(cfg.templateId) ?? useTemplate(undefined, cfg.fallbackType)
   const grades: ScoreGrade[] = tpl?.scoreDisplay.grades ?? []
-  // 得分/自动审核：先按原 sysResult 反推落段（通过→A、预警/转人工→B、拒绝→C），
-  // 得分 = 该段样例数据经模板公式实时算出的总分（与详情页共用 computeReportTotal，两边必然一致）
-  const [rows, setRows] = useState<ModuleRow[]>(() =>
-    cfg.listJson.map((r) => {
-      const design = scoreForVerifySys(r.sysResult, grades)
-      const seg = design != null ? matchGrade(design, grades) : undefined
-      const sampleData: any = (seg && cfg.detailSamples[seg.grade]) || cfg.defaultSample
-      const sc = seg && tpl ? computeReportTotal(tpl, sampleData).total : null
-      const g = sc != null ? matchGrade(sc, grades) : undefined
-      return { ...r, segScore: sc, segGrade: g?.grade ?? seg?.grade, segResult: g?.autoResult ?? r.sysResult }
-    }),
-  )
+  // 列表数据来自运行时磁盘读取（共享 store）；缺失回落打包 JSON。得分/自动审核实时算（与详情页共用算法）
+  const allRows = useReportRows(cfg.saveFile, cfg.listJson)
+  const enrichRow = (r: VerifyRow): ModuleRow => {
+    const design = scoreForVerifySys(r.sysResult, grades)
+    const seg = design != null ? matchGrade(design, grades) : undefined
+    const sampleData: any = (seg && cfg.detailSamples[seg.grade]) || cfg.defaultSample
+    const sc = seg && tpl ? computeReportTotal(tpl, sampleData).total : null
+    const g = sc != null ? matchGrade(sc, grades) : undefined
+    return { ...r, segScore: sc, segGrade: g?.grade ?? seg?.grade, segResult: g?.autoResult ?? r.sysResult }
+  }
+  const rows = useMemo<ModuleRow[]>(() => allRows.map(enrichRow), [allRows])
   // 该行落段对应的人工审核业务流程按钮（与详情页第二卡片一致：模板 businessFlow → flowGraphs 起点按钮名）
   const listGraphsOf = (gradeId?: string): any[] => {
     if (!gradeId || !tpl) return []
     return (tpl.businessFlow ?? []).filter((bf) => bf.gradeId === gradeId).flatMap((bf) => bf.flowGraphs ?? [])
-  }
-  // 审批结果持久化：写回本地 {saveFile}（保留流程进度 flowNodeId/flowDone，刷新后按钮/节点恢复）
-  const persistRows = (rs: ModuleRow[]) => {
-    const clean = rs.map(({ segScore, segGrade, segResult, ...raw }) => raw)
-    fetch(`/api/save-list?file=${cfg.saveFile}`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(clean),
-    }).catch((e) => console.error('[save-list] 保存失败:', e))
   }
   const [auditRow, setAuditRow] = useState<ModuleRow | null>(null)      // 正在审批的行
   const [auditGraphIdx, setAuditGraphIdx] = useState(0)              // 该行第几条流程
@@ -199,11 +191,16 @@ export function ReportModuleList({ cfg }: { cfg: ReportModuleCfg }) {
       workStatus: (next as any) ?? x.workStatus,
       operator: x.operator && x.operator !== '--' ? `${x.operator}；${node?.buttonName ?? node?.label ?? '审批'}：${op}` : `${node?.buttonName ?? node?.label ?? '审批'}：${op}`,
     })
-    if (nextNode && nextNode.results?.length && nextNode.type !== 'end') {
-      setRows((rs) => { const nextRs = rs.map((x) => x.id === auditRow.id ? { ...upd(x), flowNodeId: nextNode.id } : x); persistRows(nextRs); return nextRs })
-    } else {
-      setRows((rs) => { const nextRs = rs.map((x) => x.id === auditRow.id ? { ...upd(x), flowDone: true, flowNodeId: undefined } : x); persistRows(nextRs); return nextRs })
-    }
+    // 落盘：经共享 store 写回本地 JSON（与详情页同一缓存，跨列表/详情页一致），刷新不丢
+    const updated = rows.map((x) =>
+      x.id === auditRow.id
+        ? (nextNode && nextNode.results?.length && nextNode.type !== 'end'
+            ? { ...upd(x), flowNodeId: nextNode.id }
+            : { ...upd(x), flowDone: true, flowNodeId: undefined })
+        : x,
+    )
+    const clean = (rs: ModuleRow[]) => rs.map(({ segScore, segGrade, segResult, ...raw }) => raw)
+    updateReportRows(cfg.saveFile, () => clean(updated))
     // 与详情页一致：确认后关闭弹窗，按钮变为下一节点名，再点按钮打开下一节点弹窗
     setListNodeId(null); setAuditRow(null)
   }
