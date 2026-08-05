@@ -1,8 +1,8 @@
-// 预警详情（使用域）— 读 midAlerts.json 橘；策略配置 midStrategy.json 蓝；实时统计 灰
+// 预警详情（使用域）— 读 midAlerts.json 橘（样例）；关联策略样例 橘；实时统计 灰
 import { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Panel, Button, Badge, StatusTag } from '../components/ui';
-import { Cfg, Sam, Cal } from './SourceTag';
+import { Sam, Cal } from './SourceTag';
 import { PageShell } from './PageShell';
 import { useMidStrategy, useMidAlerts, useMidDisposeTasks, updateAlerts, updateDisposeTasks, midNewId } from './midStore';
 import { LEVEL_META, type MidAlert } from './midData';
@@ -41,7 +41,7 @@ export default function MidAlertDetail() {
   }
 
   const disposes = strategy.disposes.filter((d) => d.triggerLevel === a.level);
-  const linkedTask = disposeTasks.find((t) => t.alertId === a.alert_id);
+  const linkedTasks = disposeTasks.filter((t) => t.alertId === a.alert_id);
 
   const advance = (to: Status, extra?: string) => {
     const who = '风控专员-当前';
@@ -65,7 +65,7 @@ export default function MidAlertDetail() {
       <PageShell title={`预警详情 · ${a.alert_id}`} crumb="贷中监控 / 预警处置"
         subtitle={a.cust_name}
         actions={<>
-          <Cfg label="策略配置" value="midStrategy.json" />
+          <Sam label="策略配置" value="midStrategy.json" />
           <Sam label="预警样例" value={`${alerts.length} 条`} />
           <Cal label="实时统计" />
           <Button size="sm" variant="secondary" onClick={() => nav(-1)}>返回队列</Button>
@@ -93,7 +93,7 @@ export default function MidAlertDetail() {
         </div>
       </Panel>
 
-      <Panel title="建议处置策略" desc={<span><Cfg label="读取" value="midStrategy.json" /> 按命中等级匹配</span>}>
+      <Panel title="建议处置策略" desc={<span><Sam label="读取" value="midStrategy.json" /> 按命中等级匹配</span>}>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           {disposes.length ? disposes.map((d) => (
             <span key={d.id} className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs text-slate-600">
@@ -115,11 +115,13 @@ export default function MidAlertDetail() {
         </div>
         <div style={{ marginTop: 10, fontSize: 11, color: '#94A3B8' }}>
           <Cal label="实时" /> 指标值 {a.metric_value} / 阈值 {a.threshold}
-          {linkedTask && ' ｜ 已生成处置工单 ' + linkedTask.id}
+          {linkedTasks.length > 0 && ` ｜ 已生成处置工单 ${linkedTasks.length} 条`}
         </div>
-        {linkedTask && (
-          <div style={{ marginTop: 8 }}>
-            <Button size="sm" variant="ghost" onClick={() => nav('/console/cr/mid-dispose-detail?id=' + linkedTask.id)}>查看关联工单 →</Button>
+        {linkedTasks.length > 0 && (
+          <div style={{ marginTop: 8, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            {linkedTasks.map((t) => (
+              <Button key={t.id} size="sm" variant="ghost" onClick={() => nav('/console/cr/mid-dispose-detail?id=' + t.id)}>{t.id} · {t.status} →</Button>
+            ))}
           </div>
         )}
       </Panel>

@@ -1,0 +1,1127 @@
+{
+  "flows": [
+    {
+      "id": "f-info_verify-C",
+      "domain": "info_verify",
+      "gradeId": "C",
+      "name": "C档",
+      "suggestionText": "异常值处于低位，风险可控，建议正常通过",
+      "passNeedConfirm": true,
+      "passConfirmRole": "初审员",
+      "rejectAllowRecheck": true,
+      "recheckSubmitRole": "复审员",
+      "recheckApproveRole": "风控主管",
+      "manualSuggestRole": "初审员",
+      "manualApproveRole": "风控主管",
+      "flowGraphs": [
+        {
+          "nodes": [
+            {
+              "id": "n_start",
+              "type": "start",
+              "label": "确认报告",
+              "buttonName": "确认报告",
+              "x": 40,
+              "y": 140,
+              "checkItems": [
+                "身份真实性核验",
+                "资料完整性检查",
+                "收入与负债评估"
+              ],
+              "results": [
+                "通过",
+                "拒绝"
+              ],
+              "resultStates": {
+                "通过": "待复核",
+                "拒绝": "拒绝"
+              }
+            },
+            {
+              "id": "n_msd993ak_0",
+              "type": "normal",
+              "label": "复核",
+              "x": 234,
+              "y": 86,
+              "role": "复审员",
+              "checkItems": [],
+              "results": [
+                "通过",
+                "拒绝"
+              ],
+              "opinionPresets": {
+                "通过": [],
+                "转人工": [],
+                "拒绝": []
+              },
+              "buttonName": "复核",
+              "resultStates": {
+                "通过": "通过",
+                "拒绝": "拒绝"
+              }
+            },
+            {
+              "id": "n_msd99s9a_5",
+              "type": "end",
+              "label": "结束节点",
+              "x": 429,
+              "y": 228,
+              "role": "初审员",
+              "checkItems": [],
+              "results": [
+                "通过",
+                "转人工",
+                "拒绝"
+              ],
+              "opinionPresets": {
+                "通过": [],
+                "转人工": [],
+                "拒绝": []
+              },
+              "showButton": false
+            },
+            {
+              "id": "n_msd9bpog_8",
+              "type": "end",
+              "label": "结束节点",
+              "x": 437,
+              "y": 86,
+              "role": "初审员",
+              "checkItems": [],
+              "results": [
+                "通过",
+                "转人工",
+                "拒绝"
+              ],
+              "opinionPresets": {
+                "通过": [],
+                "转人工": [],
+                "拒绝": []
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "e_msd99cvp_1",
+              "from": "n_start",
+              "to": "n_msd993ak_0",
+              "result": "通过"
+            },
+            {
+              "id": "e_msd9a7ar_7",
+              "from": "n_start",
+              "to": "n_msd99s9a_5",
+              "result": "拒绝"
+            },
+            {
+              "id": "e_msd9btcy_9",
+              "from": "n_msd993ak_0",
+              "to": "n_msd9bpog_8"
+            }
+          ]
+        }
+      ],
+      "pageName": "信息核验·详情页",
+      "pageRoute": "/console/cr/pre-verify-detail"
+    },
+    {
+      "id": "f-info_verify-B",
+      "domain": "info_verify",
+      "gradeId": "B",
+      "name": "B档",
+      "suggestionText": "异常值中等，建议关注个别风险项",
+      "passNeedConfirm": true,
+      "passConfirmRole": "初审员",
+      "rejectAllowRecheck": true,
+      "recheckSubmitRole": "复审员",
+      "recheckApproveRole": "风控主管",
+      "manualSuggestRole": "初审员",
+      "manualApproveRole": "风控主管",
+      "flowGraphs": [
+        {
+          "nodes": [
+            {
+              "id": "n_start",
+              "type": "start",
+              "label": "转人工审核",
+              "buttonName": "转人工审核",
+              "x": 40,
+              "y": 140,
+              "results": [
+                "通过",
+                "拒绝"
+              ],
+              "resultStates": {
+                "通过": "待复核",
+                "拒绝": "待复核"
+              }
+            },
+            {
+              "id": "n_audit",
+              "type": "normal",
+              "label": "终审审核",
+              "x": 360,
+              "y": 140,
+              "role": "风控主管",
+              "checkItems": [
+                "异常项人工复核",
+                "收入与负债评估"
+              ],
+              "results": [
+                "通过",
+                "驳回",
+                "拒绝"
+              ],
+              "opinionPresets": {
+                "通过": [
+                  "风险可控，予以通过"
+                ],
+                "驳回": [
+                  "信息存疑，请复核"
+                ],
+                "拒绝": [
+                  "存在关注项，谨慎拒绝"
+                ]
+              },
+              "postState": "已审核",
+              "buttonName": "终审审核",
+              "resultStates": {
+                "通过": "通过",
+                "拒绝": "拒绝"
+              }
+            },
+            {
+              "id": "n_end",
+              "type": "end",
+              "label": "结束",
+              "x": 640,
+              "y": 140,
+              "showButton": false
+            }
+          ],
+          "edges": [
+            {
+              "id": "e1",
+              "from": "n_start",
+              "to": "n_audit"
+            },
+            {
+              "id": "e2",
+              "from": "n_audit",
+              "to": "n_end"
+            }
+          ]
+        }
+      ],
+      "pageName": "信息核验·详情页",
+      "pageRoute": "/console/cr/pre-verify-detail"
+    },
+    {
+      "id": "f-info_verify-A",
+      "domain": "info_verify",
+      "gradeId": "A",
+      "name": "A档",
+      "suggestionText": "异常值较高，建议人工复核",
+      "passNeedConfirm": true,
+      "passConfirmRole": "初审员",
+      "rejectAllowRecheck": true,
+      "recheckSubmitRole": "复审员",
+      "recheckApproveRole": "风控主管",
+      "manualSuggestRole": "初审员",
+      "manualApproveRole": "风控主管",
+      "flowGraphs": [],
+      "pageName": "信息核验·详情页",
+      "pageRoute": "/console/cr/pre-verify-detail"
+    },
+    {
+      "id": "f-credit-C",
+      "domain": "credit",
+      "gradeId": "C",
+      "name": "C档",
+      "suggestionText": "信用优秀，建议正常授信",
+      "passNeedConfirm": true,
+      "passConfirmRole": "初审员",
+      "rejectAllowRecheck": true,
+      "recheckSubmitRole": "复审员",
+      "recheckApproveRole": "风控主管",
+      "manualSuggestRole": "初审员",
+      "manualApproveRole": "风控主管",
+      "flowGraphs": [
+        {
+          "name": "确认通过",
+          "nodes": [
+            {
+              "id": "n_start",
+              "type": "start",
+              "label": "确认通过",
+              "buttonName": "确认通过",
+              "x": 40,
+              "y": 140
+            },
+            {
+              "id": "n_audit",
+              "type": "normal",
+              "label": "终审审核",
+              "x": 360,
+              "y": 140,
+              "role": "风控主管",
+              "checkItems": [
+                "征信报告复核",
+                "额度与利率合理性"
+              ],
+              "results": [
+                "通过",
+                "转人工"
+              ],
+              "opinionPresets": {
+                "通过": [
+                  "信用优秀，正常授信"
+                ],
+                "转人工": [
+                  "信息存疑，请复核"
+                ],
+                "拒绝": [
+                  "风险过高，建议拒绝"
+                ]
+              },
+              "postState": "已通过"
+            },
+            {
+              "id": "n_end",
+              "type": "end",
+              "label": "结束",
+              "x": 640,
+              "y": 140,
+              "showButton": true
+            }
+          ],
+          "edges": [
+            {
+              "id": "e1",
+              "from": "n_start",
+              "to": "n_audit"
+            },
+            {
+              "id": "e2",
+              "from": "n_audit",
+              "to": "n_end"
+            }
+          ]
+        }
+      ],
+      "pageName": "信用风控·详情页",
+      "pageRoute": "/console/cr/credit-kimi-detail"
+    },
+    {
+      "id": "f-credit-B",
+      "domain": "credit",
+      "gradeId": "B",
+      "name": "B档",
+      "suggestionText": "信用良好，建议正常授信",
+      "passNeedConfirm": true,
+      "passConfirmRole": "初审员",
+      "rejectAllowRecheck": true,
+      "recheckSubmitRole": "复审员",
+      "recheckApproveRole": "风控主管",
+      "manualSuggestRole": "初审员",
+      "manualApproveRole": "风控主管",
+      "flowGraphs": [
+        {
+          "name": "确认通过",
+          "nodes": [
+            {
+              "id": "n_start",
+              "type": "start",
+              "label": "确认通过",
+              "buttonName": "确认通过",
+              "x": 40,
+              "y": 140
+            },
+            {
+              "id": "n_audit",
+              "type": "normal",
+              "label": "终审审核",
+              "x": 360,
+              "y": 140,
+              "role": "风控主管",
+              "checkItems": [
+                "征信报告复核",
+                "额度与利率合理性"
+              ],
+              "results": [
+                "通过",
+                "转人工"
+              ],
+              "opinionPresets": {
+                "通过": [
+                  "信用良好，正常授信"
+                ],
+                "转人工": [
+                  "信息存疑，请复核"
+                ],
+                "拒绝": [
+                  "风险过高，建议拒绝"
+                ]
+              },
+              "postState": "已通过"
+            },
+            {
+              "id": "n_end",
+              "type": "end",
+              "label": "结束",
+              "x": 640,
+              "y": 140,
+              "showButton": true
+            }
+          ],
+          "edges": [
+            {
+              "id": "e1",
+              "from": "n_start",
+              "to": "n_audit"
+            },
+            {
+              "id": "e2",
+              "from": "n_audit",
+              "to": "n_end"
+            }
+          ]
+        }
+      ],
+      "pageName": "信用风控·详情页",
+      "pageRoute": "/console/cr/credit-kimi-detail"
+    },
+    {
+      "id": "f-credit-A",
+      "domain": "credit",
+      "gradeId": "A",
+      "name": "A档",
+      "suggestionText": "信用一般，建议人工复核",
+      "passNeedConfirm": true,
+      "passConfirmRole": "初审员",
+      "rejectAllowRecheck": true,
+      "recheckSubmitRole": "复审员",
+      "recheckApproveRole": "风控主管",
+      "manualSuggestRole": "初审员",
+      "manualApproveRole": "风控主管",
+      "flowGraphs": [
+        {
+          "name": "转人工审核",
+          "nodes": [
+            {
+              "id": "n_start",
+              "type": "start",
+              "label": "转人工审核",
+              "buttonName": "转人工审核",
+              "x": 40,
+              "y": 140
+            },
+            {
+              "id": "n_audit",
+              "type": "normal",
+              "label": "终审审核",
+              "x": 360,
+              "y": 140,
+              "role": "风控主管",
+              "checkItems": [
+                "信用历史核查",
+                "负债率评估"
+              ],
+              "results": [
+                "通过",
+                "转人工",
+                "拒绝"
+              ],
+              "opinionPresets": {
+                "通过": [
+                  "正常通过"
+                ],
+                "转人工": [
+                  "信息存疑，请复核"
+                ],
+                "拒绝": [
+                  "信用一般，谨慎授信"
+                ]
+              },
+              "postState": "已审核"
+            },
+            {
+              "id": "n_end",
+              "type": "end",
+              "label": "结束",
+              "x": 640,
+              "y": 140,
+              "showButton": true
+            }
+          ],
+          "edges": [
+            {
+              "id": "e1",
+              "from": "n_start",
+              "to": "n_audit"
+            },
+            {
+              "id": "e2",
+              "from": "n_audit",
+              "to": "n_end"
+            }
+          ]
+        }
+      ],
+      "pageName": "信用风控·详情页",
+      "pageRoute": "/console/cr/credit-kimi-detail"
+    },
+    {
+      "id": "f-fraud-C",
+      "domain": "fraud",
+      "gradeId": "C",
+      "name": "C档",
+      "suggestionText": "极低风险，可正常通过",
+      "passNeedConfirm": true,
+      "passConfirmRole": "初审员",
+      "rejectAllowRecheck": true,
+      "recheckSubmitRole": "复审员",
+      "recheckApproveRole": "风控主管",
+      "manualSuggestRole": "初审员",
+      "manualApproveRole": "风控主管",
+      "flowGraphs": [
+        {
+          "name": "确认通过",
+          "nodes": [
+            {
+              "id": "n_start",
+              "type": "start",
+              "label": "确认通过",
+              "buttonName": "确认通过",
+              "x": 40,
+              "y": 140
+            },
+            {
+              "id": "n_audit",
+              "type": "normal",
+              "label": "终审审核",
+              "x": 360,
+              "y": 140,
+              "role": "风控主管",
+              "checkItems": [
+                "反欺诈规则复核"
+              ],
+              "results": [
+                "通过",
+                "转人工"
+              ],
+              "opinionPresets": {
+                "通过": [
+                  "极低风险，正常通过"
+                ],
+                "转人工": [
+                  "信息存疑，请复核"
+                ],
+                "拒绝": [
+                  "风险过高，建议拒绝"
+                ]
+              },
+              "postState": "已通过"
+            },
+            {
+              "id": "n_end",
+              "type": "end",
+              "label": "结束",
+              "x": 640,
+              "y": 140,
+              "showButton": true
+            }
+          ],
+          "edges": [
+            {
+              "id": "e1",
+              "from": "n_start",
+              "to": "n_audit"
+            },
+            {
+              "id": "e2",
+              "from": "n_audit",
+              "to": "n_end"
+            }
+          ]
+        }
+      ],
+      "pageName": "欺诈识别·详情页",
+      "pageRoute": "/console/cr/pre-fraud-detail"
+    },
+    {
+      "id": "f-fraud-B",
+      "domain": "fraud",
+      "gradeId": "B",
+      "name": "B档",
+      "suggestionText": "低风险，建议正常通过",
+      "passNeedConfirm": true,
+      "passConfirmRole": "初审员",
+      "rejectAllowRecheck": true,
+      "recheckSubmitRole": "复审员",
+      "recheckApproveRole": "风控主管",
+      "manualSuggestRole": "初审员",
+      "manualApproveRole": "风控主管",
+      "flowGraphs": [
+        {
+          "name": "确认通过",
+          "nodes": [
+            {
+              "id": "n_start",
+              "type": "start",
+              "label": "确认通过",
+              "buttonName": "确认通过",
+              "x": 40,
+              "y": 140
+            },
+            {
+              "id": "n_audit",
+              "type": "normal",
+              "label": "终审审核",
+              "x": 360,
+              "y": 140,
+              "role": "风控主管",
+              "checkItems": [
+                "反欺诈规则复核"
+              ],
+              "results": [
+                "通过",
+                "转人工"
+              ],
+              "opinionPresets": {
+                "通过": [
+                  "低风险，正常通过"
+                ],
+                "转人工": [
+                  "信息存疑，请复核"
+                ],
+                "拒绝": [
+                  "风险过高，建议拒绝"
+                ]
+              },
+              "postState": "已通过"
+            },
+            {
+              "id": "n_end",
+              "type": "end",
+              "label": "结束",
+              "x": 640,
+              "y": 140,
+              "showButton": true
+            }
+          ],
+          "edges": [
+            {
+              "id": "e1",
+              "from": "n_start",
+              "to": "n_audit"
+            },
+            {
+              "id": "e2",
+              "from": "n_audit",
+              "to": "n_end"
+            }
+          ]
+        }
+      ],
+      "pageName": "欺诈识别·详情页",
+      "pageRoute": "/console/cr/pre-fraud-detail"
+    },
+    {
+      "id": "f-fraud-A",
+      "domain": "fraud",
+      "gradeId": "A",
+      "name": "A档",
+      "suggestionText": "中风险，建议人工复核",
+      "passNeedConfirm": true,
+      "passConfirmRole": "初审员",
+      "rejectAllowRecheck": true,
+      "recheckSubmitRole": "复审员",
+      "recheckApproveRole": "风控主管",
+      "manualSuggestRole": "初审员",
+      "manualApproveRole": "风控主管",
+      "flowGraphs": [
+        {
+          "name": "转人工审核",
+          "nodes": [
+            {
+              "id": "n_start",
+              "type": "start",
+              "label": "转人工审核",
+              "buttonName": "转人工审核",
+              "x": 40,
+              "y": 140
+            },
+            {
+              "id": "n_audit",
+              "type": "normal",
+              "label": "终审审核",
+              "x": 360,
+              "y": 140,
+              "role": "风控主管",
+              "checkItems": [
+                "团伙欺诈核查",
+                "设备关联图谱复核"
+              ],
+              "results": [
+                "通过",
+                "转人工",
+                "拒绝"
+              ],
+              "opinionPresets": {
+                "通过": [
+                  "正常通过"
+                ],
+                "转人工": [
+                  "信息存疑，请复核"
+                ],
+                "拒绝": [
+                  "中风险，建议人工研判"
+                ]
+              },
+              "postState": "已审核"
+            },
+            {
+              "id": "n_end",
+              "type": "end",
+              "label": "结束",
+              "x": 640,
+              "y": 140,
+              "showButton": true
+            }
+          ],
+          "edges": [
+            {
+              "id": "e1",
+              "from": "n_start",
+              "to": "n_audit"
+            },
+            {
+              "id": "e2",
+              "from": "n_audit",
+              "to": "n_end"
+            }
+          ]
+        }
+      ],
+      "pageName": "欺诈识别·详情页",
+      "pageRoute": "/console/cr/pre-fraud-detail"
+    },
+    {
+      "id": "f-decision-C",
+      "domain": "decision",
+      "gradeId": "C",
+      "name": "C档",
+      "suggestionText": "综合风险极低，建议优先授信",
+      "passNeedConfirm": true,
+      "passConfirmRole": "初审员",
+      "rejectAllowRecheck": true,
+      "recheckSubmitRole": "复审员",
+      "recheckApproveRole": "风控主管",
+      "manualSuggestRole": "初审员",
+      "manualApproveRole": "风控主管",
+      "flowGraphs": [
+        {
+          "name": "确认通过",
+          "nodes": [
+            {
+              "id": "n_start",
+              "type": "start",
+              "label": "确认通过",
+              "buttonName": "确认通过",
+              "x": 40,
+              "y": 140
+            },
+            {
+              "id": "n_audit",
+              "type": "normal",
+              "label": "终审审核",
+              "x": 360,
+              "y": 140,
+              "role": "风控主管",
+              "checkItems": [
+                "三项子报告一致性核对",
+                "额度与利率合理性"
+              ],
+              "results": [
+                "通过",
+                "转人工"
+              ],
+              "opinionPresets": {
+                "通过": [
+                  "综合风险极低，优先授信"
+                ],
+                "转人工": [
+                  "信息存疑，请复核"
+                ],
+                "拒绝": [
+                  "风险过高，建议拒绝"
+                ]
+              },
+              "postState": "已通过"
+            },
+            {
+              "id": "n_end",
+              "type": "end",
+              "label": "结束",
+              "x": 640,
+              "y": 140,
+              "showButton": true
+            }
+          ],
+          "edges": [
+            {
+              "id": "e1",
+              "from": "n_start",
+              "to": "n_audit"
+            },
+            {
+              "id": "e2",
+              "from": "n_audit",
+              "to": "n_end"
+            }
+          ]
+        },
+        {
+          "name": "确认拒绝",
+          "nodes": [
+            {
+              "id": "n_start",
+              "type": "start",
+              "label": "确认拒绝",
+              "buttonName": "确认拒绝",
+              "x": 40,
+              "y": 120
+            },
+            {
+              "id": "n_resubmit",
+              "type": "normal",
+              "label": "复审发起",
+              "x": 320,
+              "y": 60,
+              "role": "复审员",
+              "checkItems": [
+                "资料完整性检查",
+                "征信报告复核"
+              ],
+              "results": [
+                "通过",
+                "转人工",
+                "拒绝"
+              ],
+              "opinionPresets": {
+                "通过": [
+                  "调整利率",
+                  "调整借贷金额"
+                ],
+                "转人工": [
+                  "信息存疑，请人工复核"
+                ],
+                "拒绝": [
+                  "风控评分不足",
+                  "反欺诈规则命中"
+                ]
+              },
+              "postState": "待复审"
+            },
+            {
+              "id": "n_reapprove",
+              "type": "normal",
+              "label": "复审审核",
+              "x": 600,
+              "y": 60,
+              "role": "风控主管",
+              "checkItems": [
+                "征信报告复核",
+                "反欺诈规则复核"
+              ],
+              "results": [
+                "通过",
+                "转人工",
+                "拒绝"
+              ],
+              "opinionPresets": {
+                "通过": [
+                  "调整利率",
+                  "调整借贷金额"
+                ],
+                "转人工": [
+                  "信息存疑，请人工复核"
+                ],
+                "拒绝": [
+                  "风控评分不足",
+                  "反欺诈规则命中"
+                ]
+              },
+              "postState": "已复审"
+            },
+            {
+              "id": "n_end",
+              "type": "end",
+              "label": "结束",
+              "x": 860,
+              "y": 120,
+              "showButton": true
+            }
+          ],
+          "edges": [
+            {
+              "id": "e_start_resubmit",
+              "from": "n_start",
+              "to": "n_resubmit",
+              "label": "申请复审"
+            },
+            {
+              "id": "e_resubmit_reapprove",
+              "from": "n_resubmit",
+              "to": "n_reapprove"
+            },
+            {
+              "id": "e_n_reapprove_n_end",
+              "from": "n_reapprove",
+              "to": "n_end"
+            }
+          ]
+        }
+      ],
+      "pageName": "进件审核·详情页",
+      "pageRoute": "/console/cr/pre-report-detail"
+    },
+    {
+      "id": "f-decision-B",
+      "domain": "decision",
+      "gradeId": "B",
+      "name": "B档",
+      "suggestionText": "综合风险低，建议正常授信",
+      "passNeedConfirm": true,
+      "passConfirmRole": "初审员",
+      "rejectAllowRecheck": true,
+      "recheckSubmitRole": "复审员",
+      "recheckApproveRole": "风控主管",
+      "manualSuggestRole": "初审员",
+      "manualApproveRole": "风控主管",
+      "flowGraphs": [
+        {
+          "name": "确认通过",
+          "nodes": [
+            {
+              "id": "n_start",
+              "type": "start",
+              "label": "确认通过",
+              "buttonName": "确认通过",
+              "x": 40,
+              "y": 140
+            },
+            {
+              "id": "n_audit",
+              "type": "normal",
+              "label": "终审审核",
+              "x": 360,
+              "y": 140,
+              "role": "风控主管",
+              "checkItems": [
+                "三项子报告一致性核对"
+              ],
+              "results": [
+                "通过",
+                "转人工"
+              ],
+              "opinionPresets": {
+                "通过": [
+                  "综合风险低，正常授信"
+                ],
+                "转人工": [
+                  "信息存疑，请复核"
+                ],
+                "拒绝": [
+                  "风险过高，建议拒绝"
+                ]
+              },
+              "postState": "已通过"
+            },
+            {
+              "id": "n_end",
+              "type": "end",
+              "label": "结束",
+              "x": 640,
+              "y": 140,
+              "showButton": true
+            }
+          ],
+          "edges": [
+            {
+              "id": "e1",
+              "from": "n_start",
+              "to": "n_audit"
+            },
+            {
+              "id": "e2",
+              "from": "n_audit",
+              "to": "n_end"
+            }
+          ]
+        }
+      ],
+      "pageName": "进件审核·详情页",
+      "pageRoute": "/console/cr/pre-report-detail"
+    },
+    {
+      "id": "f-decision-A",
+      "domain": "decision",
+      "gradeId": "A",
+      "name": "A档",
+      "suggestionText": "综合风险中等，建议限制额度",
+      "passNeedConfirm": true,
+      "passConfirmRole": "初审员",
+      "rejectAllowRecheck": true,
+      "recheckSubmitRole": "复审员",
+      "recheckApproveRole": "风控主管",
+      "manualSuggestRole": "初审员",
+      "manualApproveRole": "风控主管",
+      "flowGraphs": [
+        {
+          "name": "转人工审核",
+          "nodes": [
+            {
+              "id": "n_start",
+              "type": "start",
+              "label": "转人工审核",
+              "buttonName": "转人工审核",
+              "x": 40,
+              "y": 140
+            },
+            {
+              "id": "n_audit",
+              "type": "normal",
+              "label": "终审审核",
+              "x": 360,
+              "y": 140,
+              "role": "风控主管",
+              "checkItems": [
+                "信用与欺诈综合研判"
+              ],
+              "results": [
+                "通过",
+                "转人工",
+                "拒绝"
+              ],
+              "opinionPresets": {
+                "通过": [
+                  "正常通过"
+                ],
+                "转人工": [
+                  "信息存疑，请复核"
+                ],
+                "拒绝": [
+                  "综合风险中等，限制额度"
+                ]
+              },
+              "postState": "已审核"
+            },
+            {
+              "id": "n_end",
+              "type": "end",
+              "label": "结束",
+              "x": 640,
+              "y": 140,
+              "showButton": true
+            }
+          ],
+          "edges": [
+            {
+              "id": "e1",
+              "from": "n_start",
+              "to": "n_audit"
+            },
+            {
+              "id": "e2",
+              "from": "n_audit",
+              "to": "n_end"
+            }
+          ]
+        }
+      ],
+      "pageName": "进件审核·详情页",
+      "pageRoute": "/console/cr/pre-report-detail"
+    },
+    {
+      "id": "f-msg3yybc-weib",
+      "name": "A档",
+      "suggestionText": "",
+      "passNeedConfirm": true,
+      "passConfirmRole": "初审员",
+      "rejectAllowRecheck": true,
+      "recheckSubmitRole": "复审员",
+      "recheckApproveRole": "风控主管",
+      "manualSuggestRole": "初审员",
+      "manualApproveRole": "风控主管",
+      "flowGraphs": [
+        {
+          "nodes": [
+            {
+              "id": "n_start",
+              "type": "start",
+              "label": "确认通过",
+              "buttonName": "确认通过",
+              "x": 40,
+              "y": 120
+            },
+            {
+              "id": "n_audit",
+              "type": "normal",
+              "label": "人工确认",
+              "x": 320,
+              "y": 120,
+              "role": "初审员",
+              "checkItems": [
+                "资料完整性检查"
+              ],
+              "results": [
+                "通过",
+                "转人工"
+              ],
+              "opinionPresets": {
+                "通过": [
+                  "调整利率",
+                  "调整借贷金额"
+                ],
+                "转人工": [
+                  "信息存疑，请人工复核"
+                ],
+                "拒绝": [
+                  "风控评分不足",
+                  "反欺诈规则命中"
+                ]
+              },
+              "postState": "通过"
+            },
+            {
+              "id": "n_end",
+              "type": "end",
+              "label": "结束",
+              "x": 600,
+              "y": 120,
+              "showButton": true
+            }
+          ],
+          "edges": [
+            {
+              "id": "e_n_start_n_audit",
+              "from": "n_start",
+              "to": "n_audit"
+            },
+            {
+              "id": "e_n_audit_n_end",
+              "from": "n_audit",
+              "to": "n_end"
+            }
+          ]
+        }
+      ],
+      "domain": "info_verify",
+      "gradeId": "A",
+      "pageName": "信息核验·详情页",
+      "pageRoute": "/console/cr/pre-verify-detail"
+    }
+  ]
+}

@@ -1,8 +1,8 @@
-// 监控策略详情（管理中心 · 配置域）— 读 midStrategy.json 蓝；监控内容来自指标库 蓝；实时说明 灰
+// 监控策略详情（管理中心）— 读 midStrategy.json 橘（样例）；关联指标库（样例） 橘；实时说明 灰
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Panel, DataTable, Button, Badge, InfoCell } from '../components/ui';
 import type { Column, Row } from '../components/ui';
-import { Cfg, Sam, Cal } from './SourceTag';
+import { Sam, Cal } from './SourceTag';
 import { PageShell } from './PageShell';
 import { useMidStrategy, useMidMetrics, useMidAlerts, updateStrategy } from './midStore';
 import { LEVEL_META, type AlertLevel, type RuleOp, type TaskFrequency, type MidTask, type MidRule, type MidDispose } from './midData';
@@ -46,16 +46,17 @@ export default function MidStrategyDetail() {
   };
 
   const confCols: Column[] = [
-    { key: 'k', label: '项目', tag: { kind: 'cfg', value: 'midStrategy.json' } },
-    { key: 'v', label: '内容', tag: { kind: 'cfg', value: 'midStrategy.json' } },
+    { key: 'k', label: '项目', tag: { kind: 'sample', value: 'midStrategy.json' } },
+    { key: 'v', label: '内容', tag: { kind: 'sample', value: 'midStrategy.json' } },
   ];
   const confRows: Row[] =
     kind === 'task' ? ([
       { id: '1', k: '客群', v: (item as MidTask).crowd },
       { id: '2', k: '频率', v: FREQ_LABEL[(item as MidTask).frequency] },
-      { id: '3', k: '输出方式', v: OUTPUT_LABEL[(item as MidTask).output] },
-      { id: '4', k: '状态', v: (item as MidTask).enabled ? '启用' : '停用' },
-      { id: '5', k: '说明', v: (item as MidTask).desc || '-' },
+      { id: '3', k: '执行时刻', v: (item as MidTask).schedule || '-' },
+      { id: '4', k: '输出方式', v: OUTPUT_LABEL[(item as MidTask).output] },
+      { id: '5', k: '状态', v: (item as MidTask).enabled ? '启用' : '停用' },
+      { id: '6', k: '说明', v: (item as MidTask).desc || '-' },
     ] as unknown as Row[])
     : kind === 'rule' ? ([
       { id: '1', k: '监控指标', v: metricName((item as MidRule).metricId) },
@@ -80,8 +81,8 @@ export default function MidStrategyDetail() {
       title={(item as any).name}
       crumbParts={['策略配置', kindLabel]}
       actions={<>
-        <Cfg value="midMetrics.json" />
-        <Cfg value="midStrategy.json" />
+        <Sam value="midMetrics.json" />
+        <Sam value="midStrategy.json" />
         <Button size="sm" onClick={() => nav(`/console/cm/mid-strategy?edit=${id}&kind=${kind}`)}>编辑</Button>
         {kind === 'task' && (
           <Button size="sm" variant={(item as MidTask).enabled ? 'secondary' : 'primary'} onClick={toggleEnabled}>
@@ -119,12 +120,12 @@ export default function MidStrategyDetail() {
         </div>
       }
     >
-      <Panel title="配置详情" desc={<Cfg value="midStrategy.json" />}>
+      <Panel title="配置详情" desc={<Sam value="midStrategy.json" />}>
         <DataTable columns={confCols} rows={confRows} />
       </Panel>
 
       {metricIds.length > 0 && (
-        <Panel title="关联指标" desc={<>监控内容来自指标库 <Cfg value="midMetrics.json" /></>}>
+        <Panel title="关联指标" desc={<>监控内容来自指标库 <Sam value="midMetrics.json" /></>}>
           <div className="flex flex-wrap gap-2">
             {metricIds.map((mid) => (
               <Button key={mid} size="sm" variant="ghost" onClick={() => nav('/console/cm/mid-metric-detail?id=' + mid)}>{metricName(mid)}</Button>

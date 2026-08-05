@@ -1,10 +1,10 @@
-// ⑥ 预警工作台（使用域 · 列表）— 读 midAlerts.json 橘；策略 midStrategy.json 蓝；实时统计 灰
+// ⑥ 预警工作台（使用域）— 读 midAlerts.json 橘（样例）；关联策略样例 橘；实时统计 灰
 // 行点击跳转预警详情页（cr:mid-alert-detail），处置动作在详情页完成
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Panel, StatCard, DataTable } from '../components/ui';
 import type { Column, Row } from '../components/ui';
-import { Cfg, Sam, Cal } from './SourceTag';
+import { Sam, Cal } from './SourceTag';
 import { PageShell } from './PageShell';
 import { useMidAlerts, useMidSaveStatus } from './midStore';
 import { LEVEL_META, type MidAlert } from './midData';
@@ -53,7 +53,7 @@ export default function MidAlertWorkbench() {
   return (
     <div style={{ padding: 24, maxWidth: 1360 }}>
       <PageShell title="预警工作台" crumb="零售信贷风控 / 贷中监控 / 预警处置" subtitle="预警队列 · 点击任意一条查看详情并处置"
-        actions={<><Cfg label="策略配置" value="midStrategy.json" /><Sam label="预警样例" value={`${alerts.length} 条`} /><Cal label="实时统计" /></>} />
+        actions={<><Sam label="策略配置" value="midStrategy.json" /><Sam label="预警样例" value={`${alerts.length} 条`} /><Cal label="实时统计" /></>} />
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, minmax(0,1fr))', gap: 12, margin: '4px 0 16px' }}>
         {(['待处置', '核实中', '处置中', '已解除', '已升级', '误报'] as Status[]).map((s) => (

@@ -8797,7 +8797,7 @@
           },
           "dimBands": [
             {
-              "level": "��������������",
+              "level": "���������������",
               "min": 0,
               "max": 9,
               "note": "该维度表现正常，无明显风险"
@@ -9383,7 +9383,8 @@
           "拒绝",
           "待复核",
           "驳回"
-        ]
+        ],
+        "flowRefId": "info_verify"
       },
       "businessFlow": [
         {
@@ -11667,7 +11668,8 @@
           "复核中",
           "已办结",
           "转人工"
-        ]
+        ],
+        "flowRefId": "credit"
       },
       "businessFlow": [
         {
@@ -13517,7 +13519,8 @@
           "加入黑名单",
           "已办结",
           "转人工"
-        ]
+        ],
+        "flowRefId": "fraud"
       },
       "businessFlow": [
         {
@@ -14751,7 +14754,8 @@
           "退回",
           "已办结",
           "转人工"
-        ]
+        ],
+        "flowRefId": "decision"
       },
       "businessFlow": [
         {
@@ -14834,6 +14838,107 @@
                 {
                   "id": "e2",
                   "from": "n_audit",
+                  "to": "n_end"
+                }
+              ]
+            },
+            {
+              "name": "确认拒绝",
+              "nodes": [
+                {
+                  "id": "n_start",
+                  "type": "start",
+                  "label": "确认拒绝",
+                  "buttonName": "确认拒绝",
+                  "x": 40,
+                  "y": 120
+                },
+                {
+                  "id": "n_resubmit",
+                  "type": "normal",
+                  "label": "复审发起",
+                  "x": 320,
+                  "y": 60,
+                  "role": "复审员",
+                  "checkItems": [
+                    "资料完整性检查",
+                    "征信报告复核"
+                  ],
+                  "results": [
+                    "通过",
+                    "转人工",
+                    "拒绝"
+                  ],
+                  "opinionPresets": {
+                    "通过": [
+                      "调整利率",
+                      "调整借贷金额"
+                    ],
+                    "转人工": [
+                      "信息存疑，请人工复核"
+                    ],
+                    "拒绝": [
+                      "风控评分不足",
+                      "反欺诈规则命中"
+                    ]
+                  },
+                  "postState": "待复审"
+                },
+                {
+                  "id": "n_reapprove",
+                  "type": "normal",
+                  "label": "复审审核",
+                  "x": 600,
+                  "y": 60,
+                  "role": "风控主管",
+                  "checkItems": [
+                    "征信报告复核",
+                    "反欺诈规则复核"
+                  ],
+                  "results": [
+                    "通过",
+                    "转人工",
+                    "拒绝"
+                  ],
+                  "opinionPresets": {
+                    "通过": [
+                      "调整利率",
+                      "调整借贷金额"
+                    ],
+                    "转人工": [
+                      "信息存疑，请人工复核"
+                    ],
+                    "拒绝": [
+                      "风控评分不足",
+                      "反欺诈规则命中"
+                    ]
+                  },
+                  "postState": "已复审"
+                },
+                {
+                  "id": "n_end",
+                  "type": "end",
+                  "label": "结束",
+                  "x": 860,
+                  "y": 120,
+                  "showButton": true
+                }
+              ],
+              "edges": [
+                {
+                  "id": "e_start_resubmit",
+                  "from": "n_start",
+                  "to": "n_resubmit",
+                  "label": "申请复审"
+                },
+                {
+                  "id": "e_resubmit_reapprove",
+                  "from": "n_resubmit",
+                  "to": "n_reapprove"
+                },
+                {
+                  "id": "e_n_reapprove_n_end",
+                  "from": "n_reapprove",
                   "to": "n_end"
                 }
               ]

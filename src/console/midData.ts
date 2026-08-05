@@ -12,7 +12,7 @@ export interface MidField {
   unit?: string;
 }
 
-export type DataSourceType = 'sample' | 'api' | 'sql';
+export type DataSourceType = 'sql';
 
 // 按类型的前置连接配置（创建时确定类型后按类型配置）
 export interface MidConnConfig {
@@ -38,7 +38,7 @@ export interface MidDataSource {
   desc?: string;
   conn?: MidConnConfig;      // 前置连接配置
   fields: MidField[];
-  rows: Record<string, unknown>[];   // 样例数据行（sample 源）
+  rows: Record<string, unknown>[];   // 样例数据行
   status?: 'connected' | 'failed';
   updatedAt?: string;
 }
@@ -63,10 +63,30 @@ export interface MidMetric {
   unit?: string;
   precision?: number;
   enabled?: boolean;        // 是否启用（默认 true）；停用后暂停采集/计算
+  filters?: MidMetricFilter[];   // 筛选条件（基础指标，聚合前过滤数据源样例行）
+  groupBy?: string[];            // 分组维度（基础指标，用于可视化预览）
+  dedupField?: string;           // 去重字段（agg=distinct 时计数依据；默认 field）
+  expr?: string;                 // 多字段计算表达式（基础指标，引用源字段 key，如 loan_balance/credit_line*100）
+  vizType?: 'table' | 'bar' | 'line' | 'area' | 'pie' | 'hbar' | 'burndown' | 'radar';  // 可视化预览首选类型（默认 bar）
+  vizSampleId?: string;          // 可视化预览所用样例数据集 ID（对应 midVizSamples.json 中的 id；默认取第一套）
+}
+
+// 可视化预览样例数据集（midVizSamples.json · 样例橘）
+export interface VizSample {
+  id: string;
+  name: string;
+  unit?: string;
+  precision?: number;
+  data: { key: string; value: number }[];
 }
 
 // 监控策略（一页三 tab，一个 JSON 文件）
-export type TaskFrequency = 'daily' | 'weekly' | 'monthly';
+export type TaskFrequency = 'realtime' | 'every5m' | 'hourly' | 'daily' | 'weekly' | 'monthly';
+
+// 指标筛选操作符（聚合前的 WHERE 条件）
+export type MetricFilterOp = 'eq' | 'neq' | 'gt' | 'gte' | 'lt' | 'lte' | 'contains';
+export const FILTER_OP_LABEL: Record<MetricFilterOp, string> = { eq: '=', neq: '≠', gt: '>', gte: '≥', lt: '<', lte: '≤', contains: '包含' };
+export interface MidMetricFilter { field: string; op: MetricFilterOp; value: string; }
 export type OutputWay = 'api' | 'url' | 'file' | 'web';
 export type AlertLevel = 'RED' | 'YELLOW' | 'OPPORTUNITY';
 export type RuleOp = 'gt' | 'gte' | 'lt' | 'lte' | 'eq' | 'neq';
@@ -79,6 +99,7 @@ export interface MidTask {
   metricIds: string[];        // 关联指标
   output: OutputWay;          // 输出方式
   enabled: boolean;
+  schedule?: string;          // 执行时刻，如 "02:00"
   desc?: string;
 }
 
@@ -160,7 +181,8 @@ export interface MidDashboardPage {
 
 export const SEED_DATA_SOURCES: MidDataSource[] = [
   {
-    id: 'ds_customer', name: '客户信息', type: 'sample', desc: '在贷客户主档（样例）',
+    id: 'ds_customer', name: '客户信息', type: 'sql', desc: '在贷客户主档',
+    conn: { dbType: 'mysql', host: '10.20.30.11', port: 3306, database: 'crm', username: 'crm_rw', password: 'Crm@2026****', connStr: 'mysql://crm_rw:***@10.20.30.11:3306/crm', query: 'SELECT cust_id, cust_name, product, risk_level, credit_line, loan_balance, behavior_score FROM cust_master' },
     fields: [
       { key: 'cust_id', label: '客户ID', kind: 'dim', type: 'string' },
       { key: 'cust_name', label: '客户姓名', kind: 'dim', type: 'string' },
@@ -180,7 +202,8 @@ export const SEED_DATA_SOURCES: MidDataSource[] = [
     status: 'connected',
   },
   {
-    id: 'ds_alert', name: '预警明细', type: 'sample', desc: '红黄灯预警事件（样例，带规则明细快照）',
+    id: 'ds_alert', name: '预警明细', type: 'sql', desc: '红黄灯预警事件',
+    conn: { dbType: 'oracle', host: '10.20.30.22', port: 1521, database: 'risk_db', username: 'alert_ro', password: 'Alert@2026****', connStr: 'oracle://alert_ro:***@10.20.30.22:1521/risk_db', query: 'SELECT alert_id, cust_id, cust_name, scene, level, alert_date, rule_name, metric_value, threshold FROM alert_event' },
     fields: [
       { key: 'alert_id', label: '预警ID', kind: 'dim', type: 'string' },
       { key: 'cust_id', label: '客户ID', kind: 'dim', type: 'string' },
@@ -203,7 +226,8 @@ export const SEED_DATA_SOURCES: MidDataSource[] = [
     status: 'connected',
   },
   {
-    id: 'ds_loan', name: '贷款台账', type: 'sample', desc: '在贷余额与逾期台账（样例）',
+    id: 'ds_loan', name: '贷款台账', type: 'sql', desc: '在贷余额与逾期台账',
+    conn: { dbType: 'mysql', host: '10.20.30.33', port: 3306, database: 'core_loan', username: 'loan_rw', password: 'Loan@2026****', connStr: 'mysql://loan_rw:***@10.20.30.33:3306/core_loan', query: 'SELECT cust_id, product, loan_balance, overdue_amt, credit_line FROM loan_ledger' },
     fields: [
       { key: 'cust_id', label: '客户ID', kind: 'dim', type: 'string' },
       { key: 'product', label: '产品', kind: 'dim', type: 'string' },
@@ -221,7 +245,8 @@ export const SEED_DATA_SOURCES: MidDataSource[] = [
     status: 'connected',
   },
   {
-    id: 'ds_behavior', name: '行为指标月表', type: 'sample', desc: '客户月度行为指标（样例）',
+    id: 'ds_behavior', name: '行为指标月表', type: 'sql', desc: '客户月度行为指标',
+    conn: { dbType: 'postgres', host: '10.20.30.44', port: 5432, database: 'behavior', username: 'beh_ro', password: 'Beh@2026****', connStr: 'postgres://beh_ro:***@10.20.30.44:5432/behavior', query: 'SELECT cust_id, month, score, new_loans, overdue_amt, active_days FROM behavior_monthly' },
     fields: [
       { key: 'cust_id', label: '客户ID', kind: 'dim', type: 'string' },
       { key: 'month', label: '月份', kind: 'dim', type: 'date' },
@@ -242,8 +267,8 @@ export const SEED_DATA_SOURCES: MidDataSource[] = [
     status: 'connected',
   },
   {
-    id: 'ds_api_demo', name: '外部征信API', type: 'api', desc: '第三方征信接口（演示连接配置）',
-    conn: { method: 'POST', authType: 'bearer', host: 'api.credit.example.com', account: 'app_2026', password: 'sk_live_9f3a****' },
+    id: 'ds_api_demo', name: '外部征信库', type: 'sql', desc: '第三方征信数据（演示连接配置）',
+    conn: { dbType: 'mysql', host: '10.20.30.55', port: 3306, database: 'credit_ref', username: 'ref_ro', password: 'Ref@2026****', connStr: 'mysql://ref_ro:***@10.20.30.55:3306/credit_ref', query: 'SELECT id_no, score, query_cnt FROM credit_report' },
     fields: [
       { key: 'id_no', label: '证件号', kind: 'dim', type: 'string' },
       { key: 'score', label: '征信分', kind: 'measure', type: 'number' },
@@ -277,21 +302,21 @@ export const SEED_METRICS: MidMetric[] = [
   { id: 'm_new_cust', name: '本月新增客户数', group: '客群', dataSourceId: 'ds_customer', type: 'base', field: 'new_loans', agg: 'sum', precision: 0, enabled: false },
   { id: 'm_active_days', name: '平均活跃天数', group: '客群', dataSourceId: 'ds_customer', type: 'base', field: 'active_days', agg: 'avg', precision: 1, enabled: false },
   // 风险
-  { id: 'm_loan_balance', name: '在贷余额', group: '风险', dataSourceId: 'ds_loan', type: 'base', field: 'loan_balance', agg: 'sum', unit: '元', precision: 0, enabled: true },
-  { id: 'm_overdue_amt', name: '逾期金额', group: '风险', dataSourceId: 'ds_loan', type: 'base', field: 'overdue_amt', agg: 'sum', unit: '元', precision: 0, enabled: true },
-  { id: 'm_credit_line', name: '授信额度', group: '风险', dataSourceId: 'ds_loan', type: 'base', field: 'credit_line', agg: 'sum', unit: '元', precision: 0, enabled: true },
-  { id: 'm_score_avg', name: '行为均分', group: '风险', dataSourceId: 'ds_behavior', type: 'base', field: 'score', agg: 'avg', precision: 1, enabled: true },
-  { id: 'm_overdue_rate', name: '逾期率', group: '风险', dataSourceId: 'ds_loan', type: 'derived', formula: 'm_overdue_amt / m_loan_balance * 100', unit: '%', precision: 2, enabled: true },
-  { id: 'm_util_rate', name: '额度使用率', group: '风险', dataSourceId: 'ds_loan', type: 'derived', formula: 'm_loan_balance / m_credit_line * 100', unit: '%', precision: 1, enabled: true },
-  { id: 'm_npl_amt', name: '不良金额', group: '风险', dataSourceId: 'ds_loan', type: 'base', field: 'overdue_amt', agg: 'sum', unit: '元', precision: 0, enabled: true },
-  { id: 'm_npl_rate', name: '不良率', group: '风险', dataSourceId: 'ds_loan', type: 'derived', formula: 'm_npl_amt / m_loan_balance * 100', unit: '%', precision: 2, enabled: false },
+  { id: 'm_loan_balance', name: '在贷余额', group: '风险', dataSourceId: 'ds_loan', type: 'base', field: 'loan_balance', agg: 'sum', unit: '元', precision: 0, enabled: true, groupBy: ['product'], vizType: 'bar', vizSampleId: 'vs_product_loan' },
+  { id: 'm_overdue_amt', name: '逾期金额', group: '风险', dataSourceId: 'ds_loan', type: 'base', field: 'overdue_amt', agg: 'sum', unit: '元', precision: 0, enabled: true, groupBy: ['product'], vizType: 'line', vizSampleId: 'vs_monthly_overdue' },
+  { id: 'm_credit_line', name: '授信额度', group: '风险', dataSourceId: 'ds_loan', type: 'base', field: 'credit_line', agg: 'sum', unit: '元', precision: 0, enabled: true, vizType: 'bar', vizSampleId: 'vs_quarter_revenue' },
+  { id: 'm_score_avg', name: '行为均分', group: '风险', dataSourceId: 'ds_behavior', type: 'base', field: 'score', agg: 'avg', precision: 1, enabled: true, groupBy: ['month'], vizType: 'radar', vizSampleId: 'vs_region_score' },
+  { id: 'm_overdue_rate', name: '逾期率', group: '风险', dataSourceId: 'ds_loan', type: 'derived', formula: 'm_overdue_amt / m_loan_balance * 100', unit: '%', precision: 2, enabled: true, vizType: 'line', vizSampleId: 'vs_monthly_overdue' },
+  { id: 'm_util_rate', name: '额度使用率', group: '风险', dataSourceId: 'ds_loan', type: 'derived', formula: 'm_loan_balance / m_credit_line * 100', unit: '%', precision: 1, enabled: true, vizType: 'pie', vizSampleId: 'vs_risk_level' },
+  { id: 'm_npl_amt', name: '不良金额', group: '风险', dataSourceId: 'ds_loan', type: 'base', field: 'overdue_amt', agg: 'sum', unit: '元', precision: 0, enabled: true, vizType: 'bar', vizSampleId: 'vs_product_loan' },
+  { id: 'm_npl_rate', name: '不良率', group: '风险', dataSourceId: 'ds_loan', type: 'derived', formula: 'm_npl_amt / m_loan_balance * 100', unit: '%', precision: 2, enabled: false, vizType: 'pie', vizSampleId: 'vs_risk_level' },
   // 预警
-  { id: 'm_alert_cnt', name: '预警总数', group: '预警', dataSourceId: 'ds_alert', type: 'base', field: 'alert_id', agg: 'count', precision: 0, enabled: true },
-  { id: 'm_red_cnt', name: '红灯预警数', group: '预警', dataSourceId: 'ds_alert', type: 'base', field: 'alert_id', agg: 'count', precision: 0, enabled: true },
-  { id: 'm_opp_cnt', name: '机会预警数', group: '预警', dataSourceId: 'ds_alert', type: 'base', field: 'alert_id', agg: 'count', precision: 0, enabled: true },
+  { id: 'm_alert_cnt', name: '预警总数', group: '预警', dataSourceId: 'ds_alert', type: 'base', field: 'alert_id', agg: 'count', precision: 0, enabled: true, groupBy: ['level'], vizType: 'pie', vizSampleId: 'vs_risk_level' },
+  { id: 'm_red_cnt', name: '红灯预警数', group: '预警', dataSourceId: 'ds_alert', type: 'base', field: 'alert_id', agg: 'count', precision: 0, enabled: true, vizType: 'bar', vizSampleId: 'vs_age_risk' },
+  { id: 'm_opp_cnt', name: '机会预警数', group: '预警', dataSourceId: 'ds_alert', type: 'base', field: 'alert_id', agg: 'count', precision: 0, enabled: true, vizType: 'hbar', vizSampleId: 'vs_channel_approval' },
   // 处置
-  { id: 'm_dispose_cnt', name: '处置次数', group: '处置', dataSourceId: 'ds_alert', type: 'base', field: 'alert_id', agg: 'count', precision: 0, enabled: true },
-  { id: 'm_dispose_rate', name: '处置率', group: '处置', dataSourceId: 'ds_alert', type: 'derived', formula: 'm_dispose_cnt / m_alert_cnt * 100', unit: '%', precision: 1, enabled: true },
+  { id: 'm_dispose_cnt', name: '处置次数', group: '处置', dataSourceId: 'ds_alert', type: 'base', field: 'alert_id', agg: 'count', precision: 0, enabled: true, vizType: 'burndown', vizSampleId: 'vs_burndown_task' },
+  { id: 'm_dispose_rate', name: '处置率', group: '处置', dataSourceId: 'ds_alert', type: 'derived', formula: 'm_dispose_cnt / m_alert_cnt * 100', unit: '%', precision: 1, enabled: true, vizType: 'area', vizSampleId: 'vs_channel_approval' },
 ];
 
 export const SEED_STRATEGY: MidStrategy = {
@@ -607,6 +632,98 @@ export const SEED_DISPOSE_TASKS: MidDisposeTask[] = [
   },
 ];
 
+export const SEED_VIZ_SAMPLES: VizSample[] = [
+  {
+    id: 'vs_product_loan',
+    name: '各产品在贷余额分布',
+    unit: '万元',
+    precision: 0,
+    data: [
+      { key: '信用贷', value: 45200 },
+      { key: '抵押贷', value: 38600 },
+      { key: '车贷', value: 21800 },
+      { key: '消费贷', value: 16400 },
+      { key: '经营贷', value: 12900 },
+      { key: '其他', value: 5300 },
+    ],
+  },
+  {
+    id: 'vs_monthly_overdue',
+    name: '月度逾期金额趋势',
+    unit: '万元',
+    precision: 0,
+    data: [
+      { key: '1月', value: 3200 }, { key: '2月', value: 2850 }, { key: '3月', value: 4100 },
+      { key: '4月', value: 3650 }, { key: '5月', value: 5200 }, { key: '6月', value: 4800 },
+      { key: '7月', value: 5900 }, { key: '8月', value: 5400 }, { key: '9月', value: 6300 },
+      { key: '10月', value: 5800 }, { key: '11月', value: 6700 }, { key: '12月', value: 7200 },
+    ],
+  },
+  {
+    id: 'vs_risk_level',
+    name: '风险等级分布',
+    unit: '人',
+    precision: 0,
+    data: [
+      { key: '低风险', value: 12450 },
+      { key: '中风险', value: 5230 },
+      { key: '高风险', value: 1860 },
+      { key: '极高风险', value: 420 },
+    ],
+  },
+  {
+    id: 'vs_region_score',
+    name: '各区域风控评分',
+    unit: '分',
+    precision: 1,
+    data: [
+      { key: '华东', value: 82.5 }, { key: '华南', value: 76.3 }, { key: '华北', value: 79.8 },
+      { key: '华中', value: 71.2 }, { key: '西南', value: 68.5 }, { key: '西北', value: 65.0 },
+    ],
+  },
+  {
+    id: 'vs_channel_approval',
+    name: '各渠道审批通过率',
+    unit: '%',
+    precision: 1,
+    data: [
+      { key: 'APP申请', value: 78.5 }, { key: '网页申请', value: 72.3 }, { key: '线下网点', value: 85.1 },
+      { key: '合作方', value: 69.8 }, { key: '电销', value: 63.2 },
+    ],
+  },
+  {
+    id: 'vs_burndown_task',
+    name: '风控任务燃尽追踪',
+    unit: '个',
+    precision: 0,
+    data: [
+      { key: 'D1', value: 120 }, { key: 'D2', value: 105 }, { key: 'D3', value: 92 },
+      { key: 'D4', value: 78 }, { key: 'D5', value: 65 }, { key: 'D6', value: 51 },
+      { key: 'D7', value: 38 }, { key: 'D8', value: 25 }, { key: 'D9', value: 15 }, { key: 'D10', value: 6 },
+    ],
+  },
+  {
+    id: 'vs_age_risk',
+    name: '年龄段违约率',
+    unit: '%',
+    precision: 1,
+    data: [
+      { key: '18-25', value: 5.8 }, { key: '26-35', value: 3.2 }, { key: '36-45', value: 2.1 },
+      { key: '46-55', value: 1.5 }, { key: '56-65', value: 2.7 }, { key: '65+', value: 4.3 },
+    ],
+  },
+  {
+    id: 'vs_quarter_revenue',
+    name: '季度放款金额',
+    unit: '万元',
+    precision: 0,
+    data: [
+      { key: 'Q1-2025', value: 8600 }, { key: 'Q2-2025', value: 12300 }, { key: 'Q3-2025', value: 15800 },
+      { key: 'Q4-2025', value: 19200 }, { key: 'Q1-2026', value: 16500 }, { key: 'Q2-2026', value: 21400 },
+    ],
+  },
+];
+
 export function computeAgg(rows: Record<string, unknown>[], field: string | undefined, agg: AggOp | undefined): number {
   if (!field || !rows.length) return 0;
   const nums = rows
@@ -618,9 +735,95 @@ export function computeAgg(rows: Record<string, unknown>[], field: string | unde
     case 'max': return nums.length ? Math.max(...nums) : 0;
     case 'min': return nums.length ? Math.min(...nums) : 0;
     case 'distinct': return new Set(rows.map((r) => r[field])).size;
-    case 'count':
-    default: return rows.length;
+  case 'count':
+  default: return rows.length;
   }
+}
+
+// ---- 指标高级定义：筛选 / 分组 / 去重 / 多字段计算 ----
+// 筛选条件：聚合前对数据源样例行做 WHERE 过滤
+export function applyMetricFilters(rows: Record<string, unknown>[], filters?: MidMetricFilter[]): Record<string, unknown>[] {
+  if (!filters || !filters.length) return rows;
+  return rows.filter((r) => filters.every((f) => {
+    const cell = r[f.field];
+    const cv = Number(cell);
+    const nv = Number(f.value);
+    const isnum = f.value !== '' && Number.isFinite(cv) && !Number.isNaN(nv);
+    switch (f.op) {
+      case 'eq': return String(cell) === f.value;
+      case 'neq': return String(cell) !== f.value;
+      case 'gt': return isnum && cv > nv;
+      case 'gte': return isnum && cv >= nv;
+      case 'lt': return isnum && cv < nv;
+      case 'lte': return isnum && cv <= nv;
+      case 'contains': return String(cell).includes(f.value);
+      default: return true;
+    }
+  }));
+}
+
+// 多字段计算：在单行上按字段表达式求值（引用源字段 key，支持 + - * / 与括号）
+export function evalFieldExpr(expr: string, row: Record<string, unknown>): number | null {
+  if (!expr) return null;
+  const e = expr.replace(/[A-Za-z_][A-Za-z0-9_]*/g, (tok) => {
+    if (Object.prototype.hasOwnProperty.call(row, tok)) {
+      const v = Number(row[tok]);
+      return Number.isFinite(v) ? String(v) : '0';
+    }
+    return tok;
+  });
+  if (!/^[0-9+\-*/().\s]+$/.test(e)) return null;
+  try {
+    const v = new Function(`"use strict"; return (${e});`)();
+    return typeof v === 'number' && isFinite(v) ? v : null;
+  } catch {
+    return null;
+  }
+}
+
+// 基础指标标量求值（应用筛选 / 多字段表达式 / 聚合；忽略 groupBy 以维持 widget 标量语义）
+export function computeMetricValue(m: MidMetric, rows: Record<string, unknown>[]): number {
+  if (m.type === 'derived') return 0;
+  const filtered = applyMetricFilters(rows, m.filters);
+  const nums = filtered.map((r) => (m.expr ? (evalFieldExpr(m.expr, r) ?? 0) : Number(r[m.field ?? ''])));
+  switch (m.agg) {
+    case 'sum': return nums.reduce((a, b) => a + b, 0);
+    case 'avg': return nums.length ? nums.reduce((a, b) => a + b, 0) / nums.length : 0;
+    case 'max': return nums.length ? Math.max(...nums) : 0;
+    case 'min': return nums.length ? Math.min(...nums) : 0;
+    case 'distinct': return new Set(filtered.map((r) => r[m.dedupField ?? m.field ?? ''])).size;
+    case 'count':
+    default: return filtered.length;
+  }
+}
+
+// 分组预览：按维度聚合，返回 分组→数值（用于可视化预览）
+// 未设分组维度时返回整体单值（label「整体」），保证可视化始终有内容
+export function computeMetricGrouped(m: MidMetric, rows: Record<string, unknown>[]): { key: string; value: number }[] {
+  if (m.type === 'derived') return [];
+  const filtered = applyMetricFilters(rows, m.filters);
+  if (!m.groupBy || !m.groupBy.length) {
+    return [{ key: '整体', value: computeMetricValue(m, rows) }];
+  }
+  const map = new Map<string, Record<string, unknown>[]>();
+  for (const r of filtered) {
+    const k = m.groupBy!.map((d) => String(r[d] ?? '未知')).join(' / ');
+    if (!map.has(k)) map.set(k, []);
+    map.get(k)!.push(r);
+  }
+  return Array.from(map.entries()).map(([key, rs]) => {
+    const nums = rs.map((r) => (m.expr ? (evalFieldExpr(m.expr, r) ?? 0) : Number(r[m.field ?? ''])));
+    let value = 0;
+    switch (m.agg) {
+      case 'sum': value = nums.reduce((a, b) => a + b, 0); break;
+      case 'avg': value = nums.length ? nums.reduce((a, b) => a + b, 0) / nums.length : 0; break;
+      case 'max': value = nums.length ? Math.max(...nums) : 0; break;
+      case 'min': value = nums.length ? Math.min(...nums) : 0; break;
+      case 'distinct': value = new Set(rs.map((r) => r[m.dedupField ?? m.field ?? ''])).size; break;
+      default: value = rs.length;
+    }
+    return { key, value };
+  }).sort((a, b) => b.value - a.value);
 }
 
 // 在一组数据行上解析所有指标（基础聚合 + 派生公式），返回 metricId → 数值。
@@ -633,7 +836,7 @@ export function resolveMetricsForRows(metrics: MidMetric[], rows: Record<string,
     changed = false;
     for (const m of metrics) {
       if (m.type === 'base') {
-        const v = computeAgg(rows, m.field, m.agg);
+        const v = computeMetricValue(m, rows);
         if (vals[m.id] !== v) { vals[m.id] = v; changed = true; }
       } else {
         const v = evalMetricFormula(m.formula ?? '', vals);

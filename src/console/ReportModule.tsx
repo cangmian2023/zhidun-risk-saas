@@ -9,6 +9,7 @@ import { PageHeader, Panel, Badge, StatCard, SingleSelect, Button, DecisionTag, 
 import { ApprovalModal } from './ApprovalModal'
 import type { VerifyRow } from './VerifyOps'
 import { useTemplate } from './templateStore'
+import { withResolvedFlows } from './flowStore'
 import { useReportRows, updateReportRows } from './reportListStore'
 import { matchGrade, scoreForVerifySys, computeReportTotal, getAuditFlowByGrade, nextNodeByResult, type ScoreGrade, type ReviewResult, type ReportType } from './reportTemplateData'
 import infoListJson from './infoVerify222Data.json'
@@ -164,21 +165,23 @@ export function ReportModuleList({ cfg }: { cfg: ReportModuleCfg }) {
   }
   const rows = useMemo<ModuleRow[]>(() => allRows.map(enrichRow), [allRows])
   // 该行落段对应的人工审核业务流程按钮（与详情页第二卡片一致：模板 businessFlow → flowGraphs 起点按钮名）
+  // 流程库注入：模板 flowRefId 关联 bizFlows.json（方案A），消费函数零改动
+  const rtpl = withResolvedFlows(tpl, [cfg.listRoute, cfg.detailRoute])
   const listGraphsOf = (gradeId?: string): any[] => {
-    if (!gradeId || !tpl) return []
-    return (tpl.businessFlow ?? []).filter((bf) => bf.gradeId === gradeId).flatMap((bf) => bf.flowGraphs ?? [])
+    if (!gradeId || !rtpl) return []
+    return (rtpl.businessFlow ?? []).filter((bf) => !bf.gradeId || bf.gradeId === gradeId).flatMap((bf) => bf.flowGraphs ?? [])
   }
   const [auditRow, setAuditRow] = useState<ModuleRow | null>(null)      // 正在审批的行
   const [auditGraphIdx, setAuditGraphIdx] = useState(0)              // 该行第几条流程
   const [listNodeId, setListNodeId] = useState<string | null>(null)  // 当前待审节点 id
   const listCurGraph = auditRow ? listGraphsOf(auditRow.segGrade)[auditGraphIdx] : undefined
   const listCurNode = listCurGraph && listNodeId ? listCurGraph.nodes.find((n: any) => n.id === listNodeId) : undefined
-  const listAuditFlow = auditRow && listCurGraph ? getAuditFlowByGrade(tpl, auditRow.segGrade ?? '', auditGraphIdx, 0, listNodeId ?? undefined) : null
+  const listAuditFlow = auditRow && listCurGraph ? getAuditFlowByGrade(rtpl, auditRow.segGrade ?? '', auditGraphIdx, 0, listNodeId ?? undefined) : null
   const applyListAudit = (p: { result: ReviewResult; checks: string[]; opinionText: string; fileName: string }) => {
     if (!auditRow || !listCurGraph) return
     const node = listCurNode ?? listCurGraph.nodes.find((n: any) => n.type === 'start')
     if (!node) return
-    const af = getAuditFlowByGrade(tpl, auditRow.segGrade ?? '', auditGraphIdx, 0, node.id)
+    const af = getAuditFlowByGrade(rtpl, auditRow.segGrade ?? '', auditGraphIdx, 0, node.id)
     const fallback: Record<string, string> = { 通过: '已确认', 转人工: '待审核', 拒绝: '复核拒绝' }
     const next = af.resultStates?.[p.result] ?? fallback[p.result]
     const roleToUser: Record<string, string> = { 初审员: '张三', 复审员: '李四', 风控主管: '王五', 风控经理: '赵六', 风控总监: '管理员' }

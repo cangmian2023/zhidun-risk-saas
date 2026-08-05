@@ -1,0 +1,121 @@
+[
+  {
+    "id": "vs_product_loan",
+    "name": "各产品在贷余额分布",
+    "unit": "万元",
+    "precision": 0,
+    "data": [
+      { "key": "信用贷", "value": 45200 },
+      { "key": "抵押贷", "value": 38600 },
+      { "key": "车贷", "value": 21800 },
+      { "key": "消费贷", "value": 16400 },
+      { "key": "经营贷", "value": 12900 },
+      { "key": "其他", "value": 5300 }
+    ]
+  },
+  {
+    "id": "vs_monthly_overdue",
+    "name": "月度逾期金额趋势",
+    "unit": "万元",
+    "precision": 0,
+    "data": [
+      { "key": "1月", "value": 3200 },
+      { "key": "2月", "value": 2850 },
+      { "key": "3月", "value": 4100 },
+      { "key": "4月", "value": 3650 },
+      { "key": "5月", "value": 5200 },
+      { "key": "6月", "value": 4800 },
+      { "key": "7月", "value": 5900 },
+      { "key": "8月", "value": 5400 },
+      { "key": "9月", "value": 6300 },
+      { "key": "10月", "value": 5800 },
+      { "key": "11月", "value": 6700 },
+      { "key": "12月", "value": 7200 }
+    ]
+  },
+  {
+    "id": "vs_risk_level",
+    "name": "风险等级分布",
+    "unit": "人",
+    "precision": 0,
+    "data": [
+      { "key": "低风险", "value": 12450 },
+      { "key": "中风险", "value": 5230 },
+      { "key": "高风险", "value": 1860 },
+      { "key": "极高风险", "value": 420 }
+    ]
+  },
+  {
+    "id": "vs_region_score",
+    "name": "各区域风控评分",
+    "unit": "分",
+    "precision": 1,
+    "data": [
+      { "key": "华东", "value": 82.5 },
+      { "key": "华南", "value": 76.3 },
+      { "key": "华北", "value": 79.8 },
+      { "key": "华中", "value": 71.2 },
+      { "key": "西南", "value": 68.5 },
+      { "key": "西北", "value": 65.0 }
+    ]
+  },
+  {
+    "id": "vs_channel_approval",
+    "name": "各渠道审批通过率",
+    "unit": "%",
+    "precision": 1,
+    "data": [
+      { "key": "APP申请", "value": 78.5 },
+      { "key": "网页申请", "value": 72.3 },
+      { "key": "线下网点", "value": 85.1 },
+      { "key": "合作方", "value": 69.8 },
+      { "key": "电销", "value": 63.2 }
+    ]
+  },
+  {
+    "id": "vs_burndown_task",
+    "name": "风控任务燃尽追踪",
+    "unit": "个",
+    "precision": 0,
+    "data": [
+      { "key": "D1", "value": 120 },
+      { "key": "D2", "value": 105 },
+      { "key": "D3", "value": 92 },
+      { "key": "D4", "value": 78 },
+      { "key": "D5", "value": 65 },
+      { "key": "D6", "value": 51 },
+      { "key": "D7", "value": 38 },
+      { "key": "D8", "value": 25 },
+      { "key": "D9", "value": 15 },
+      { "key": "D10", "value": 6 }
+    ]
+  },
+  {
+    "id": "vs_age_risk",
+    "name": "年龄段违约率",
+    "unit": "%",
+    "precision": 1,
+    "data": [
+      { "key": "18-25", "value": 5.8 },
+      { "key": "26-35", "value": 3.2 },
+      { "key": "36-45", "value": 2.1 },
+      { "key": "46-55", "value": 1.5 },
+      { "key": "56-65", "value": 2.7 },
+      { "key": "65+", "value": 4.3 }
+    ]
+  },
+  {
+    "id": "vs_quarter_revenue",
+    "name": "季度放款金额",
+    "unit": "万元",
+    "precision": 0,
+    "data": [
+      { "key": "Q1-2025", "value": 8600 },
+      { "key": "Q2-2025", "value": 12300 },
+      { "key": "Q3-2025", "value": 15800 },
+      { "key": "Q4-2025", "value": 19200 },
+      { "key": "Q1-2026", "value": 16500 },
+      { "key": "Q2-2026", "value": 21400 }
+    ]
+  }
+]

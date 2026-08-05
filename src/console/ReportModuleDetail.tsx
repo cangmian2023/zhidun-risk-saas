@@ -10,6 +10,7 @@ import { ApprovalModal } from './ApprovalModal'
 import { ScoreVisual } from './ScoreVisual'
 import { TemplateDimTable } from './TemplateDimTable'
 import { useTemplate } from './templateStore'
+import { withResolvedFlows } from './flowStore'
 import { DisplayModeToggle } from './DisplayModeToggle'
 import { computeSectionScore, matchGrade, scoreForVerifySys, computeReportTotal, getAuditFlowByGrade, nextNodeByResult, type SectionConfig, type ReviewResult, type ReportType } from './reportTemplateData'
 import type { ReportModuleCfg } from './ReportModule'
@@ -320,7 +321,9 @@ export function ReportModuleDetail({ cfg }: { cfg: ReportModuleCfg }) {
   const isPending = (row as any)?.sysResult === '处理中'
   // 命中分段（A/B/C）+ 业务按钮：按钮来自模板 businessFlow 对应分段的 flowGraphs，标签取 start 节点 buttonName
   const grade = isPending ? undefined : tpl.scoreDisplay.grades.find((g) => totalScore >= g.minScore && totalScore <= g.maxScore)
-  const bizButtons = isPending ? [] : (tpl.businessFlow ?? []).filter(bf => bf.gradeId === grade?.grade).flatMap(bf => bf.flowGraphs ?? [])
+  // 流程库注入：模板 flowRefId 关联 bizFlows.json（方案A），消费函数零改动
+  const rtpl = withResolvedFlows(tpl, [cfg.detailRoute])
+  const bizButtons = isPending ? [] : (rtpl.businessFlow ?? []).filter(bf => !bf.gradeId || bf.gradeId === grade?.grade).flatMap(bf => bf.flowGraphs ?? [])
   // 3.2 状态枚举类来自模板人工审核配置（斜杠分割）；无业务流程时人工审核继承自动审核结果
   const statusEnum: string[] = tpl.flowBlock?.statusEnum?.length ? tpl.flowBlock.statusEnum : ['待人工', '通过', '拒绝', '驳回']
 
@@ -351,12 +354,12 @@ export function ReportModuleDetail({ cfg }: { cfg: ReportModuleCfg }) {
   const curFlow = auditIdx != null ? bizButtons[auditIdx] : undefined
   const curGraph = activeFlow != null ? bizButtons[activeFlow] : undefined
   const curNode = curGraph && flowNodeId ? curGraph.nodes.find((n: any) => n.id === flowNodeId) : undefined
-  const auditFlow = auditIdx != null && grade && curGraph ? getAuditFlowByGrade(tpl, grade.grade, auditIdx, 0, flowNodeId ?? undefined) : null
+  const auditFlow = auditIdx != null && grade && curGraph ? getAuditFlowByGrade(rtpl, grade.grade, auditIdx, 0, flowNodeId ?? undefined) : null
   const applyAudit = (p: { result: ReviewResult; checks: string[]; opinionText: string; fileName: string }) => {
     if (!curGraph) return
     const node = curNode ?? curGraph.nodes.find((n: any) => n.type === 'start')
     if (!node) return
-    const af = getAuditFlowByGrade(tpl, grade?.grade ?? '', auditIdx ?? 0, 0, node.id)
+    const af = getAuditFlowByGrade(rtpl, grade?.grade ?? '', auditIdx ?? 0, 0, node.id)
     // 状态 = 模板决策节点 resultStates（结果→状态）；未配置用默认兜底
     const fallback: Record<string, string> = { 通过: '已确认', 转人工: '待审核', 拒绝: '复核拒绝' }
     const next = af.resultStates?.[p.result] ?? fallback[p.result]
@@ -486,7 +489,7 @@ export function ReportModuleDetail({ cfg }: { cfg: ReportModuleCfg }) {
               </div>
             </div>
             <div className="mt-3 flex flex-wrap gap-2">
-              {bizButtons.length === 0 && <span className="text-xs text-slate-400">无业务流程按钮<Tpl f="businessFlow" v={`${tpl.businessFlow?.length ?? 0}条`} /><Tpl f="grades" v={`${tpl.scoreDisplay.grades.map(g=>g.grade).join(',')}`} /></span>}
+              {bizButtons.length === 0 && <span className="text-xs text-slate-400">无业务流程按钮<Tpl f="businessFlow" v={`${rtpl.businessFlow?.length ?? 0}条`} /><Tpl f="grades" v={`${tpl.scoreDisplay.grades.map(g=>g.grade).join(',')}`} /></span>}
               {bizButtons.map((fg, fi) => {
                 const b = flowButton(fi)
                 if (b.hidden) return null

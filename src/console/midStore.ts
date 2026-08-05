@@ -1,16 +1,16 @@
 // 贷中监控 · 数据层（useSyncExternalStore + 本地 JSON 分文件持久化）
 // 数据流向（严格按需求细则）：
-//   配置 JSON（蓝，管理中心作者）: midDataSources / midMetrics / midStrategy / midDashboards
-//   样例 JSON（橘，使用域作者）: midAlerts / midCustomers / midDisposeTasks
+//   配置 JSON（蓝，管理中心作者）: midMetrics / midStrategy / midDashboards
+//   样例 JSON（橘，使用域作者）: midDataSources / midAlerts / midCustomers / midDisposeTasks
 // 启动：逐个 /api/load-mid?file= 加载；文件不存在则用代码 SEED 并立即落盘（创建样例 JSON）。
 import { useSyncExternalStore } from 'react';
 import {
   SEED_DATA_SOURCES, SEED_METRICS, SEED_STRATEGY, SEED_DASHBOARDS,
-  SEED_ALERTS, SEED_CUSTOMERS, SEED_DISPOSE_TASKS,
+  SEED_ALERTS, SEED_CUSTOMERS, SEED_DISPOSE_TASKS, SEED_VIZ_SAMPLES,
 } from './midData';
 import type {
   MidDataSource, MidMetric, MidStrategy, MidDashboardPage,
-  MidAlert, MidCustomer, MidDisposeTask,
+  MidAlert, MidCustomer, MidDisposeTask, VizSample,
 } from './midData';
 
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
@@ -23,6 +23,7 @@ const FILES = {
   alerts: 'midAlerts.json',
   customers: 'midCustomers.json',
   disposeTasks: 'midDisposeTasks.json',
+  vizSamples: 'midVizSamples.json',
 } as const;
 
 function loadOne(file: string): Promise<unknown | null> {
@@ -49,6 +50,7 @@ let dashboards: MidDashboardPage[] = [...SEED_DASHBOARDS];
 let alerts: MidAlert[] = [...SEED_ALERTS];
 let customers: MidCustomer[] = [...SEED_CUSTOMERS];
 let disposeTasks: MidDisposeTask[] = [...SEED_DISPOSE_TASKS];
+let vizSamples: VizSample[] = [...SEED_VIZ_SAMPLES];
 
 let version = 0;
 const listeners = new Set<() => void>();
@@ -73,7 +75,7 @@ function scheduleSave(file: keyof typeof FILES, data: unknown) {
 
 // 启动加载：文件存在则用磁盘数据；不存在则用 SEED 并立即落盘（创建本地 JSON）
 async function bootstrap() {
-  const [ds, mt, st, db, al, cu, dp] = await Promise.all([
+  const [ds, mt, st, db, al, cu, dp, vz] = await Promise.all([
     loadOne(FILES.dataSources),
     loadOne(FILES.metrics),
     loadOne(FILES.strategy),
@@ -81,6 +83,7 @@ async function bootstrap() {
     loadOne(FILES.alerts),
     loadOne(FILES.customers),
     loadOne(FILES.disposeTasks),
+    loadOne(FILES.vizSamples),
   ]);
   // dev 期形态校验（仅告警，不改行为）：样例/配置 JSON 结构与预期不符时提示
   if (import.meta.env.DEV) {
@@ -105,6 +108,7 @@ async function bootstrap() {
   if (Array.isArray(al) && al.length) alerts = al as MidAlert[]; else saveOne(FILES.alerts, alerts);
   if (Array.isArray(cu) && cu.length) customers = cu as MidCustomer[]; else saveOne(FILES.customers, customers);
   if (Array.isArray(dp) && dp.length) disposeTasks = dp as MidDisposeTask[]; else saveOne(FILES.disposeTasks, disposeTasks);
+  if (Array.isArray(vz) && vz.length) vizSamples = vz as VizSample[]; else saveOne(FILES.vizSamples, vizSamples);
   notify();
 }
 void bootstrap();
@@ -120,6 +124,7 @@ export function useMidDashboards(): MidDashboardPage[] { return useSnap(() => da
 export function useMidAlerts(): MidAlert[] { return useSnap(() => alerts); }
 export function useMidCustomers(): MidCustomer[] { return useSnap(() => customers); }
 export function useMidDisposeTasks(): MidDisposeTask[] { return useSnap(() => disposeTasks); }
+export function useMidVizSamples(): VizSample[] { return useSnap(() => vizSamples); }
 
 export function useMidSaveStatus(): SaveStatus {
   useSyncExternalStore(
@@ -150,6 +155,9 @@ export function updateCustomers(fn: (list: MidCustomer[]) => MidCustomer[]) {
 }
 export function updateDisposeTasks(fn: (list: MidDisposeTask[]) => MidDisposeTask[]) {
   disposeTasks = fn(disposeTasks); notify(); scheduleSave('disposeTasks', disposeTasks);
+}
+export function updateVizSamples(fn: (list: VizSample[]) => VizSample[]) {
+  vizSamples = fn(vizSamples); notify(); scheduleSave('vizSamples', vizSamples);
 }
 
 export function midNewId(prefix: string): string {

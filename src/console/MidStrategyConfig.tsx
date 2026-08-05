@@ -1,9 +1,9 @@
-// ③ 监控策略配置（管理中心 · 配置域）— 策略配置JSON 橘（规则3）；监控内容来自指标库 蓝
+// ③ 监控策略配置（管理中心）— 策略样例JSON 橘；监控内容关联指标库（样例） 橘；实时说明 灰
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button, Badge } from '../components/ui';
 import type { Column, Row } from '../components/ui';
-import { Cfg, Cal } from './SourceTag';
+import { Sam, Cal } from './SourceTag';
 import { useMidStrategy, updateStrategy, useMidMetrics, midNewId } from './midStore';
 import {
   type MidTask, type MidRule, type MidDispose, type AlertLevel, type TaskFrequency,
@@ -37,7 +37,7 @@ export default function MidStrategyConfig() {
   const metricName = (id: string) => metrics.find((m) => m.id === id)?.name ?? id;
 
   const openEdit = (kind: 'task' | 'rule' | 'dispose', data?: any) => {
-    if (kind === 'task') setEditing({ kind, data: data ?? { id: midNewId('t'), name: '', crowd: '', frequency: 'daily', metricIds: [], output: 'web', enabled: true, desc: '' } });
+    if (kind === 'task') setEditing({ kind, data: data ?? { id: midNewId('t'), name: '', crowd: '', frequency: 'daily', schedule: '02:00', metricIds: [], output: 'web', enabled: true, desc: '' } });
     if (kind === 'rule') setEditing({ kind, data: data ?? { id: midNewId('r'), name: '', metricId: metrics[0]?.id ?? '', op: 'gt', value: 0, level: 'RED', desc: '' } });
     if (kind === 'dispose') setEditing({ kind, data: data ?? { id: midNewId('d'), name: '', triggerLevel: 'RED', action: '关注', targetSystem: '', needApprove: false, needNotify: false, assignTo: '', desc: '' } });
     setOpen(true);
@@ -82,7 +82,7 @@ export default function MidStrategyConfig() {
       title="策略配置"
       crumbPath="策略配置"
       subtitle="配置监控任务、红黄灯预警规则与处置策略；监控内容引用指标库"
-        actions={<><Cfg label="读指标库" value="midMetrics.json" /><Cfg value="midStrategy.json" /></>}
+        actions={<><Sam label="读指标库" value="midMetrics.json" /><Sam value="midStrategy.json" /></>}
         panelTitle="策略配置"
         panelDesc="监控任务 / 预警规则 / 处置策略 三类配置，监控内容引用指标库"
         panelActions={(
@@ -107,6 +107,7 @@ export default function MidStrategyConfig() {
   function taskRow(t: MidTask): Row {
     return {
       id: t.id, name: t.name, crowd: t.crowd, freq: FREQ_LABEL[t.frequency],
+      sched: t.schedule || '-',
       metrics: t.metricIds.map(metricName).join('、') || '-', output: OUTPUT_LABEL[t.output],
       enabled: t.enabled ? { v: '启用', kind: 'green' } : { v: '停用', kind: 'gray' },
     } as unknown as Row;
@@ -127,28 +128,29 @@ export default function MidStrategyConfig() {
 
 function taskCols(): Column[] {
   return [
-    { key: 'name', label: '任务名称', tag: { kind: 'cfg', value: 'midStrategy.json.tasks.name' } },
-    { key: 'crowd', label: '客群', tag: { kind: 'cfg', value: 'midStrategy.json.tasks.crowd' } },
-    { key: 'freq', label: '频率', tag: { kind: 'cfg', value: 'midStrategy.json.tasks.frequency' } },
-    { key: 'metrics', label: '关联指标', tag: { kind: 'cfg', value: 'midMetrics.json' } },
-    { key: 'output', label: '输出', tag: { kind: 'cfg', value: 'midStrategy.json.tasks.output' } },
-    { key: 'enabled', label: '状态', type: 'badge', tag: { kind: 'cfg', value: 'midStrategy.json.tasks.enabled' } },
+    { key: 'name', label: '任务名称', tag: { kind: 'sample', value: 'midStrategy.json.tasks.name' } },
+    { key: 'crowd', label: '客群', tag: { kind: 'sample', value: 'midStrategy.json.tasks.crowd' } },
+    { key: 'freq', label: '频率', tag: { kind: 'sample', value: 'midStrategy.json.tasks.frequency' } },
+    { key: 'sched', label: '执行时刻', tag: { kind: 'sample', value: 'midStrategy.json.tasks.schedule' } },
+    { key: 'metrics', label: '关联指标', tag: { kind: 'sample', value: 'midMetrics.json' } },
+    { key: 'output', label: '输出', tag: { kind: 'sample', value: 'midStrategy.json.tasks.output' } },
+    { key: 'enabled', label: '状态', type: 'badge', tag: { kind: 'sample', value: 'midStrategy.json.tasks.enabled' } },
   ];
 }
 function ruleCols(): Column[] {
   return [
-    { key: 'name', label: '规则名称', tag: { kind: 'cfg', value: 'midStrategy.json.rules.name' } },
-    { key: 'metric', label: '监控指标', type: 'badge', tag: { kind: 'cfg', value: 'midMetrics.json' } },
-    { key: 'cond', label: '触发条件', tag: { kind: 'cfg', value: 'midStrategy.json.rules.op' } },
-    { key: 'level', label: '命中定级', type: 'badge', tag: { kind: 'cfg', value: 'midStrategy.json.rules.level' } },
+    { key: 'name', label: '规则名称', tag: { kind: 'sample', value: 'midStrategy.json.rules.name' } },
+    { key: 'metric', label: '监控指标', type: 'badge', tag: { kind: 'sample', value: 'midMetrics.json' } },
+    { key: 'cond', label: '触发条件', tag: { kind: 'sample', value: 'midStrategy.json.rules.op' } },
+    { key: 'level', label: '命中定级', type: 'badge', tag: { kind: 'sample', value: 'midStrategy.json.rules.level' } },
   ];
 }
 const disposeCols: Column[] = [
-  { key: 'name', label: '策略名称', tag: { kind: 'cfg', value: 'midStrategy.json.disposes.name' } },
-  { key: 'trigger', label: '触发等级', type: 'badge', tag: { kind: 'cfg', value: 'midStrategy.json.disposes.triggerLevel' } },
-  { key: 'action', label: '动作', tag: { kind: 'cfg', value: 'midStrategy.json.disposes.action' } },
-  { key: 'system', label: '对接系统', tag: { kind: 'cfg', value: 'midStrategy.json.disposes.targetSystem' } },
-  { key: 'approve', label: '审批', tag: { kind: 'cfg', value: 'midStrategy.json.disposes.needApprove' } },
+  { key: 'name', label: '策略名称', tag: { kind: 'sample', value: 'midStrategy.json.disposes.name' } },
+  { key: 'trigger', label: '触发等级', type: 'badge', tag: { kind: 'sample', value: 'midStrategy.json.disposes.triggerLevel' } },
+  { key: 'action', label: '动作', tag: { kind: 'sample', value: 'midStrategy.json.disposes.action' } },
+  { key: 'system', label: '对接系统', tag: { kind: 'sample', value: 'midStrategy.json.disposes.targetSystem' } },
+  { key: 'approve', label: '审批', tag: { kind: 'sample', value: 'midStrategy.json.disposes.needApprove' } },
 ];
 
 function Editor({ kind, value, metrics, onChange, onRemove }: {
@@ -175,6 +177,9 @@ function Editor({ kind, value, metrics, onChange, onRemove }: {
                 {(Object.keys(OUTPUT_LABEL) as OutputWay[]).map((o) => <option key={o} value={o}>{OUTPUT_LABEL[o]}</option>)}
               </select>
             </label>
+            <label style={lbl}>执行时刻
+              <input style={inp} value={value.schedule ?? ''} onChange={(e) => set({ schedule: e.target.value })} placeholder="如 02:00 / 每整点" />
+            </label>
           </div>
           <label style={{ ...lbl, minWidth: '100%' }}>关联指标（可多选，Ctrl/⌘ 多选）
             <select multiple style={{ ...inp, minHeight: 80 }} value={value.metricIds}
@@ -192,7 +197,7 @@ function Editor({ kind, value, metrics, onChange, onRemove }: {
         <>
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
             <label style={lbl}>规则名称<input style={inp} value={value.name} onChange={(e) => set({ name: e.target.value })} /></label>
-            <label style={lbl}>监控指标 <Cfg label="读指标库" value="midMetrics.json" />
+            <label style={lbl}>监控指标 <Sam label="读指标库" value="midMetrics.json" />
               <select style={inp} value={value.metricId} onChange={(e) => set({ metricId: e.target.value })}>
                 {metricOpts.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
               </select>

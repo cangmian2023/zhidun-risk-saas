@@ -1793,6 +1793,11 @@ export default function ReportTemplateConfig() {
 
           {tab === 'flow' && (
             <Panel title="人工审核配置" id="flow-panel">
+              {(active.flowBlock as any).flowRefId && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: '#B45309', background: '#FFFBEB', border: '1px solid #FDE68A', borderRadius: 10, padding: '8px 12px', marginBottom: 12 }}>
+                  该模板使用公共业务流程库（<b>{(active.flowBlock as any).flowRefId}</b> 域）——流程请到「管理中心 → 业务流程配置」编辑，此处仅可修改 标题 / 启用 / 状态枚举。
+                </div>
+              )}
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', border: '1px solid #E5E7EB', borderRadius: 10, background: '#F8FAFC', marginBottom: 12 }}>
                 <span style={{ fontSize: 13, color: '#374151' }}>标题<span style={{ color: '#DC2626', marginLeft: 2 }}>*</span></span>
                 <input disabled={!canEdit} value={active.flowBlock.title}
@@ -1816,7 +1821,7 @@ export default function ReportTemplateConfig() {
                 <Dat f="JSON:flowBlock.statusEnum" v={active.flowBlock.statusEnum?.join('/')} />
                 <span style={{ fontSize: 12, color: '#9CA3AF', whiteSpace: 'nowrap' }}>共 {(active.flowBlock.statusEnum ?? []).length} 个状态<Dat f="JSON:flowBlock.statusEnum.length" v={(active.flowBlock.statusEnum ?? []).length} /></span>
               </div>
-              <div style={active.flowBlock.show ? undefined : { opacity: 0.45, pointerEvents: 'none', userSelect: 'none' }}>
+              <div style={(!active.flowBlock.show || (active.flowBlock as any).flowRefId) ? { opacity: 0.45, pointerEvents: 'none', userSelect: 'none' } : undefined}>
               {syncHint && <div style={{ fontSize: 12, color: '#1D4ED8', background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: 8, padding: '6px 10px', marginBottom: 10 }}>{syncHint}</div>}
               <table style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed', fontSize: 13 }}>
                 <colgroup><col style={{ width: 190 }} /><col style={{ width: 90 }} /><col /></colgroup>

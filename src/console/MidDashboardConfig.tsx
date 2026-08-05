@@ -1,9 +1,9 @@
-// ④ 监控页面配置（管理中心 · 配置域）— 页面配置JSON 橘（规则4）；监控内容来自指标库 蓝
+// ④ 监控页面配置（管理中心）— 页面样例JSON 橘；组件关联指标库/数据源（样例） 橘；实时渲染 灰
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '../components/ui';
 import type { Column, Row } from '../components/ui';
-import { Cfg } from './SourceTag';
+import { Sam } from './SourceTag';
 import { useMidDashboards, updateDashboards, useMidMetrics, useMidDataSources, midNewId } from './midStore';
 import {
   type MidDashboardPage, type MidWidget, type WidgetType, type MidDataSource,
@@ -46,11 +46,11 @@ export default function MidDashboardConfig() {
   const remove = (id: string) => updateDashboards((list) => list.filter((x) => x.id !== id));
 
   const cols: Column[] = [
-    { key: 'name', label: '页面名称', tag: { kind: 'cfg', value: 'midDashboards.json.name' } },
-    { key: 'group', label: '分组', tag: { kind: 'cfg', value: 'midDashboards.json.group' } },
-    { key: 'key', label: '路由key', tag: { kind: 'cfg', value: 'midDashboards.json.key' } },
-    { key: 'widgetCnt', label: '组件数', tag: { kind: 'cfg', value: 'midDashboards.json.widgets' } },
-    { key: 'enabled', label: '启用', type: 'badge', tag: { kind: 'cfg', value: 'midDashboards.json.enabled' } },
+    { key: 'name', label: '页面名称', tag: { kind: 'sample', value: 'midDashboards.json.name' } },
+    { key: 'group', label: '分组', tag: { kind: 'sample', value: 'midDashboards.json.group' } },
+    { key: 'key', label: '路由key', tag: { kind: 'sample', value: 'midDashboards.json.key' } },
+    { key: 'widgetCnt', label: '组件数', tag: { kind: 'sample', value: 'midDashboards.json.widgets' } },
+    { key: 'enabled', label: '启用', type: 'badge', tag: { kind: 'sample', value: 'midDashboards.json.enabled' } },
   ];
   const rows: Row[] = dashboards.map((d) => ({
     id: d.id, name: d.name, group: d.group, key: d.key,
@@ -65,7 +65,7 @@ export default function MidDashboardConfig() {
       subtitle="配置监控看板页面与可视化组件，保存后由监控看板按配置渲染"
       addLabel="新建页面"
       onAdd={openAdd}
-      actions={<Cfg label="读指标库" value="midMetrics.json" />}
+      actions={<Sam label="读指标库" value="midMetrics.json" />}
       panelTitle="看板页面"
       panelDesc="页面 + 组件（指标卡 / 折线 / 柱状 / 环形 / 明细表）配置，引用指标库与数据源"
       columns={cols}
@@ -116,7 +116,7 @@ function Editor({ value, metrics, sources, onChange, onRemove }: {
       {/* 组件列表 */}
       <div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-          <span style={{ fontSize: 13, fontWeight: 500 }}>可视化组件 <Cfg value="midDashboards.json.widgets" /></span>
+          <span style={{ fontSize: 13, fontWeight: 500 }}>可视化组件 <Sam value="midDashboards.json.widgets" /></span>
           <Button size="sm" variant="secondary" onClick={addWidget}>添加组件</Button>
         </div>
         <div style={{ display: 'grid', gap: 10 }}>
@@ -134,7 +134,7 @@ function Editor({ value, metrics, sources, onChange, onRemove }: {
                     {sources.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
                   </select>
                 </label>
-                <label style={lbl}>监控指标 <Cfg label="读指标库" value="midMetrics.json" />
+                <label style={lbl}>监控指标 <Sam label="读指标库" value="midMetrics.json" />
                   <select style={inpSm} value={w.metricId} onChange={(e) => setWidget(i, { metricId: e.target.value })}>
                     {metrics.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
                   </select>

@@ -1,10 +1,10 @@
-// ⑤ 监控看板（使用域）— 读页面配置 midDashboards.json 蓝；数据源样例 橘；实时计算 灰
+// ⑤ 监控看板（使用域）— 读页面样例 midDashboards.json 橘；数据源样例 橘；实时计算 灰
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Panel, StatCard, DataTable } from '../components/ui';
 import type { Column, Row } from '../components/ui';
 import { LineChart, BarChart, DonutChart } from '../components/charts';
-import { Cfg, Sam, Cal } from './SourceTag';
+import { Sam, Cal } from './SourceTag';
 import { PageShell } from './PageShell';
 import { useMidDashboards, useMidDataSources, useMidMetrics } from './midStore';
 import {
@@ -63,7 +63,7 @@ export default function MidDashboardPage({ pageKey }: { pageKey: string }) {
   return (
     <div style={{ padding: 24, maxWidth: 1280 }}>
       <PageShell title={page.name} crumb={`零售信贷风控 / 贷中监控 / ${page.group}`} subtitle={page.desc}
-        actions={<><Cfg label="页面配置" value="midDashboards.json" /><Sam label="样例数据" value={`${pageDs.reduce((a, s) => a + (s.rows?.length || 0), 0)} 行`} /><Cal label="实时计算" /></>} />
+        actions={<><Sam label="页面配置" value="midDashboards.json" /><Sam label="样例数据" value={`${pageDs.reduce((a, s) => a + (s.rows?.length || 0), 0)} 行`} /><Cal label="实时计算" /></>} />
 
       {/* 交叉筛选条 */}
       {page.filters && page.filters.length > 0 && (

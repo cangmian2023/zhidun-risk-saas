@@ -14,9 +14,9 @@ export function crumb(...parts: string[]) {
 export const CONFIG_CONTAINER = 'mx-auto max-w-6xl space-y-5 px-4 py-6 lg:px-8';
 
 // ---- 共享文案映射（集中维护，4 模块一致） ----
-export const SRC_TYPE_LABEL: Record<string, string> = { sample: '本地样例', api: 'API', sql: '数据库' };
+export const SRC_TYPE_LABEL: Record<string, string> = { sql: '数据库' };
 export const METRIC_TYPE_LABEL: Record<string, string> = { base: '基础指标', derived: '派生指标' };
-export const FREQ_LABEL: Record<string, string> = { daily: '每日', weekly: '每周', monthly: '每月' };
+export const FREQ_LABEL: Record<string, string> = { realtime: '实时', every5m: '每5分钟', hourly: '每小时', daily: '每日', weekly: '每周', monthly: '每月' };
 export const OUTPUT_LABEL: Record<string, string> = { api: 'API 推送', url: '页面 URL', file: '文件导出', web: '监控看板' };
 export const OP_LABEL: Record<string, string> = { gt: '>', gte: '≥', lt: '<', lte: '≤', eq: '=', neq: '≠' };
 export const WTYPE_LABEL: Record<string, string> = { metric: '指标卡', line: '折线', bar: '柱状', donut: '环形', table: '明细表' };
@@ -85,7 +85,7 @@ export function ConfigListPage(p: ConfigListPageProps) {
       )}
 
       <Panel title={p.panelTitle} desc={p.panelDesc}
-        actions={<><>{p.panelActions}</>{p.addLabel && <Button size="sm" onClick={p.onAdd}>{p.addLabel}</Button>}</>}>
+        actions={<>{p.panelActions}</>}>
         <DataTable columns={columns} rows={rows}
           actions={(r) => (
             <Button size="sm" variant="ghost" onClick={() => onView(r)}>查看</Button>

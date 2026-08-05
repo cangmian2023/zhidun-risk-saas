@@ -1,7 +1,7 @@
-// 监控页面配置详情（管理中心 · 配置域）— 读 midDashboards.json 蓝；组件引用指标库 蓝；实时渲染 灰
+// 监控页面配置详情（管理中心）— 读 midDashboards.json 橘（样例）；组件关联指标库（样例） 橘；实时渲染 灰
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Panel, Button, Badge, InfoCell } from '../components/ui';
-import { Cfg } from './SourceTag';
+import { Sam } from './SourceTag';
 import { PageShell } from './PageShell';
 import { useMidDashboards, useMidMetrics, useMidDataSources } from './midStore';
 import { ConfigDetailPage, crumb, WTYPE_LABEL } from './ConfigTemplate';
@@ -33,21 +33,21 @@ export default function MidDashboardDetail() {
       crumbParts={['页面配置']}
       subtitle={d.desc}
       actions={<>
-        <Cfg value="midMetrics.json" />
-        <Cfg value="midDashboards.json" />
+        <Sam value="midMetrics.json" />
+        <Sam value="midDashboards.json" />
         <Button size="sm" onClick={() => nav('/console/cm/mid-dashboard-config?edit=' + d.id)}>编辑</Button>
         <Button size="sm" variant="secondary" onClick={() => nav(-1)}>返回</Button>
       </>}
       infoCells={
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <InfoCell label="分组" value={d.group} tag={<Cfg value="midDashboards.json.group" />} />
-          <InfoCell label="路由 key" value={<code className="font-mono text-xs">{d.key}</code>} tag={<Cfg value="midDashboards.json.key" />} />
-          <InfoCell label="排序" value={String(d.order)} tag={<Cfg value="midDashboards.json.order" />} />
-          <InfoCell label="状态" value={<Badge kind={d.enabled ? 'green' : 'red'}>{d.enabled ? '启用' : '停用'}</Badge>} tag={<Cfg value="midDashboards.json.enabled" />} />
+          <InfoCell label="分组" value={d.group} tag={<Sam value="midDashboards.json.group" />} />
+          <InfoCell label="路由 key" value={<code className="font-mono text-xs">{d.key}</code>} tag={<Sam value="midDashboards.json.key" />} />
+          <InfoCell label="排序" value={String(d.order)} tag={<Sam value="midDashboards.json.order" />} />
+          <InfoCell label="状态" value={<Badge kind={d.enabled ? 'green' : 'red'}>{d.enabled ? '启用' : '停用'}</Badge>} tag={<Sam value="midDashboards.json.enabled" />} />
         </div>
       }
     >
-      <Panel title="可视化组件" desc={<span><Cfg value="midDashboards.json.widgets" /> 共 {d.widgets.length} 个组件，保存后由监控看板按配置渲染</span>}>
+      <Panel title="可视化组件" desc={<span><Sam value="midDashboards.json.widgets" /> 共 {d.widgets.length} 个组件，保存后由监控看板按配置渲染</span>}>
         {d.widgets.length ? (
           <div className="grid gap-3 sm:grid-cols-2">
             {d.widgets.map((w) => (
@@ -58,10 +58,10 @@ export default function MidDashboardDetail() {
                   <span className="text-[11px] text-slate-400">{w.span === 2 ? '跨 2 列' : '1 列'}</span>
                 </div>
                 <div className="flex flex-wrap gap-x-4 gap-y-1.5 text-xs text-slate-600">
-                  <span>数据集：{srcName(w.datasetId)} <Cfg value="midDashboards.json.widgets.datasetId" /></span>
-                  <span>指标：{metricName(w.metricId)} <Cfg value="midMetrics.json" /></span>
-                  {w.dimensions && w.dimensions.length > 0 && <span>维度：{w.dimensions.join('、')} <Cfg value="midDashboards.json.widgets.dimensions" /></span>}
-                  {w.drill && w.drill.type !== 'none' && <span className="text-brand-600">支持下钻：{w.drill.title} <Cfg value="midDashboards.json.widgets.drill" /></span>}
+                  <span>数据集：{srcName(w.datasetId)} <Sam value="midDashboards.json.widgets.datasetId" /></span>
+                  <span>指标：{metricName(w.metricId)} <Sam value="midMetrics.json" /></span>
+                  {w.dimensions && w.dimensions.length > 0 && <span>维度：{w.dimensions.join('、')} <Sam value="midDashboards.json.widgets.dimensions" /></span>}
+                  {w.drill && w.drill.type !== 'none' && <span className="text-brand-600">支持下钻：{w.drill.title} <Sam value="midDashboards.json.widgets.drill" /></span>}
                 </div>
                 <div className="mt-2">
                   <Button size="sm" variant="ghost" onClick={() => nav('/console/cm/mid-metric-detail?id=' + w.metricId)}>查看指标 →</Button>

@@ -74,6 +74,7 @@ export default function MidDisposeDetail() {
           <div style={{ gridColumn: 'span 2' }}><StatusTag kind={STATUS_KIND[t.status]}>{t.status}</StatusTag></div>
         </div>
         <Button size="sm" variant="ghost" onClick={() => nav(`/console/cr/mid-cust-detail?cust=${t.custId}`)}>查看客户详情 →</Button>
+        <Button size="sm" variant="ghost" onClick={() => nav(`/console/cr/mid-alert-detail?id=${t.alertId}`)}>查看关联预警 →</Button>
       </Panel>
 
       <Panel title="处置回填" desc="按状态流转推进闭环">
