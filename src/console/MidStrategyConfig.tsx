@@ -1,22 +1,18 @@
 // ③ 监控策略配置（管理中心 · 配置域）— 策略配置JSON 橘（规则3）；监控内容来自指标库 蓝
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Panel, DataTable, Modal, Button, Badge } from '../components/ui';
+import { Button, Badge } from '../components/ui';
 import type { Column, Row } from '../components/ui';
-import { Cfg, Sam, Cal } from './SourceTag';
-import { PageShell } from './PageShell';
+import { Cfg, Cal } from './SourceTag';
 import { useMidStrategy, updateStrategy, useMidMetrics, midNewId } from './midStore';
 import {
   type MidTask, type MidRule, type MidDispose, type AlertLevel, type TaskFrequency,
   type OutputWay, type RuleOp, LEVEL_META,
 } from './midData';
+import { ConfigListPage, type ListTab, FREQ_LABEL, OUTPUT_LABEL, OP_LABEL } from './ConfigTemplate';
 
 const inp: React.CSSProperties = { padding: '6px 8px', borderRadius: 6, border: '1px solid #E2E8F0', fontSize: 12, width: '100%', background: '#fff' };
 const lbl: React.CSSProperties = { display: 'flex', flexDirection: 'column', gap: 4, fontSize: 12, color: '#475569', minWidth: 150 };
-
-const FREQ_LABEL: Record<TaskFrequency, string> = { daily: '每日', weekly: '每周', monthly: '每月' };
-const OUTPUT_LABEL: Record<OutputWay, string> = { api: 'API 推送', url: '页面 URL', file: '文件导出', web: '监控看板' };
-const OP_LABEL: Record<RuleOp, string> = { gt: '>', gte: '≥', lt: '<', lte: '≤', eq: '=', neq: '≠' };
 
 export default function MidStrategyConfig() {
   const strategy = useMidStrategy();
@@ -75,50 +71,36 @@ export default function MidStrategyConfig() {
     { key: 'dispose', label: '处置策略', count: strategy.disposes.length },
   ];
 
+  const tabs: ListTab[] = [
+    { key: 'task', label: '监控任务', count: strategy.tasks.length, columns: taskCols(), rows: strategy.tasks.map(taskRow) },
+    { key: 'rule', label: '预警规则', count: strategy.rules.length, columns: ruleCols(), rows: strategy.rules.map(ruleRow) },
+    { key: 'dispose', label: '处置策略', count: strategy.disposes.length, columns: disposeCols, rows: strategy.disposes.map(disposeRow) },
+  ];
+
   return (
-    <div style={{ padding: 24, maxWidth: 1180 }}>
-      <PageShell title="监控策略配置" crumb="零售信贷风控 / 管理中心 / 贷中监控配置"
-        subtitle="配置监控任务、红黄灯预警规则与处置策略；监控内容引用指标库"
-        actions={<><Cfg label="读指标库" value="midMetrics.json" /><Sam label="策略配置JSON" value="midStrategy.json" /></>} />
-
-      <div style={{ display: 'flex', gap: 4, marginBottom: 16, borderBottom: '1px solid #E2E8F0' }}>
-        {TABS.map((t) => (
-          <button key={t.key} type="button" onClick={() => setTab(t.key)}
-            style={{ padding: '8px 16px', fontSize: 13, fontWeight: 500, border: 'none', background: 'transparent', cursor: 'pointer',
-              color: tab === t.key ? '#1D4ED8' : '#64748B', borderBottom: tab === t.key ? '2px solid #1D4ED8' : '2px solid transparent' }}>
-            {t.label} <span style={{ fontSize: 11, opacity: .7 }}>({t.count})</span>
-          </button>
-        ))}
-      </div>
-
-      {tab === 'task' && (
-        <Panel title="监控任务" desc="按客群周期性扫描，关联指标并输出到看板/文件/接口"
-          actions={<Button size="sm" onClick={() => openEdit('task')}>新建任务</Button>}>
-          <DataTable columns={taskCols()} rows={strategy.tasks.map(taskRow)} clickableKey="name"
-            onCellClick={(r) => nav(`/console/cm:mid-strategy-detail?kind=task&id=${String(r.id)}`)} />
-        </Panel>
-      )}
-      {tab === 'rule' && (
-        <Panel title="预警规则" desc="命中即定级红/黄灯；规则引用指标库的实时计算值"
-          actions={<Button size="sm" onClick={() => openEdit('rule')}>新建规则</Button>}>
-          <DataTable columns={ruleCols()} rows={strategy.rules.map(ruleRow)} clickableKey="name"
-            onCellClick={(r) => nav(`/console/cm:mid-strategy-detail?kind=rule&id=${String(r.id)}`)} />
-        </Panel>
-      )}
-      {tab === 'dispose' && (
-        <Panel title="处置策略" desc="按预警等级匹配动作，对接催收/核心/营销系统并触发审批或触达"
-          actions={<Button size="sm" onClick={() => openEdit('dispose')}>新建策略</Button>}>
-          <DataTable columns={disposeCols} rows={strategy.disposes.map(disposeRow)} clickableKey="name"
-            onCellClick={(r) => nav(`/console/cm:mid-strategy-detail?kind=dispose&id=${String(r.id)}`)} />
-        </Panel>
-      )}
-
-      <Modal open={open} onClose={() => setOpen(false)}
-        title={editing ? `${TABS.find((t) => t.key === editing.kind)?.label}编辑` : '编辑'} width="max-w-2xl"
-        footer={<><Button onClick={save}>保存</Button><Button variant="secondary" onClick={() => setOpen(false)}>取消</Button></>}>
+    <ConfigListPage
+      title="策略配置"
+      crumbPath="策略配置"
+      subtitle="配置监控任务、红黄灯预警规则与处置策略；监控内容引用指标库"
+        actions={<><Cfg label="读指标库" value="midMetrics.json" /><Cfg value="midStrategy.json" /></>}
+        panelTitle="策略配置"
+        panelDesc="监控任务 / 预警规则 / 处置策略 三类配置，监控内容引用指标库"
+        panelActions={(
+          <>
+            <Button size="sm" variant="secondary" onClick={() => openEdit('task')}>新建任务</Button>
+            <Button size="sm" variant="secondary" onClick={() => openEdit('rule')}>新建规则</Button>
+            <Button size="sm" variant="secondary" onClick={() => openEdit('dispose')}>新建策略</Button>
+          </>
+        )}
+        tabs={tabs}
+        onView={(r, k) => nav(`/console/cm/mid-strategy-detail?kind=${k ?? 'task'}&id=${String(r.id)}`)}
+        editOpen={open}
+        editTitle={editing ? `${TABS.find((t) => t.key === editing.kind)?.label}编辑` : '编辑'}
+        onCloseEdit={() => setOpen(false)}
+        onSave={save}
+      >
         {editing && <Editor kind={editing.kind} value={editing.data} metrics={metrics} onChange={(data) => setEditing({ ...editing, data })} onRemove={() => { if (editing) { remove(editing.kind, editing.data.id); setOpen(false); setEditing(null); } }} />}
-      </Modal>
-    </div>
+      </ConfigListPage>
   );
 
   // ---- 行映射 ----
@@ -145,20 +127,28 @@ export default function MidStrategyConfig() {
 
 function taskCols(): Column[] {
   return [
-    { key: 'name', label: '任务名称' }, { key: 'crowd', label: '客群' }, { key: 'freq', label: '频率' },
-    { key: 'metrics', label: '关联指标' }, { key: 'output', label: '输出' },
-    { key: 'enabled', label: '状态', type: 'badge' },
+    { key: 'name', label: '任务名称', tag: { kind: 'cfg', value: 'midStrategy.json.tasks.name' } },
+    { key: 'crowd', label: '客群', tag: { kind: 'cfg', value: 'midStrategy.json.tasks.crowd' } },
+    { key: 'freq', label: '频率', tag: { kind: 'cfg', value: 'midStrategy.json.tasks.frequency' } },
+    { key: 'metrics', label: '关联指标', tag: { kind: 'cfg', value: 'midMetrics.json' } },
+    { key: 'output', label: '输出', tag: { kind: 'cfg', value: 'midStrategy.json.tasks.output' } },
+    { key: 'enabled', label: '状态', type: 'badge', tag: { kind: 'cfg', value: 'midStrategy.json.tasks.enabled' } },
   ];
 }
 function ruleCols(): Column[] {
   return [
-    { key: 'name', label: '规则名称' }, { key: 'metric', label: '监控指标', type: 'badge' },
-    { key: 'cond', label: '触发条件' }, { key: 'level', label: '命中定级', type: 'badge' },
+    { key: 'name', label: '规则名称', tag: { kind: 'cfg', value: 'midStrategy.json.rules.name' } },
+    { key: 'metric', label: '监控指标', type: 'badge', tag: { kind: 'cfg', value: 'midMetrics.json' } },
+    { key: 'cond', label: '触发条件', tag: { kind: 'cfg', value: 'midStrategy.json.rules.op' } },
+    { key: 'level', label: '命中定级', type: 'badge', tag: { kind: 'cfg', value: 'midStrategy.json.rules.level' } },
   ];
 }
 const disposeCols: Column[] = [
-  { key: 'name', label: '策略名称' }, { key: 'trigger', label: '触发等级', type: 'badge' },
-  { key: 'action', label: '动作' }, { key: 'system', label: '对接系统' }, { key: 'approve', label: '审批' },
+  { key: 'name', label: '策略名称', tag: { kind: 'cfg', value: 'midStrategy.json.disposes.name' } },
+  { key: 'trigger', label: '触发等级', type: 'badge', tag: { kind: 'cfg', value: 'midStrategy.json.disposes.triggerLevel' } },
+  { key: 'action', label: '动作', tag: { kind: 'cfg', value: 'midStrategy.json.disposes.action' } },
+  { key: 'system', label: '对接系统', tag: { kind: 'cfg', value: 'midStrategy.json.disposes.targetSystem' } },
+  { key: 'approve', label: '审批', tag: { kind: 'cfg', value: 'midStrategy.json.disposes.needApprove' } },
 ];
 
 function Editor({ kind, value, metrics, onChange, onRemove }: {

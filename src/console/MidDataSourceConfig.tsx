@@ -1,14 +1,12 @@
 // ① 数据源管理（管理中心 · 配置域）— 配置JSON 蓝；样例数据行 橘
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Panel, DataTable, Modal, Button } from '../components/ui';
+import { DataTable, Button } from '../components/ui';
 import type { Column, Row } from '../components/ui';
-import { Cfg, Sam, Cal } from './SourceTag';
-import { PageShell } from './PageShell';
+import { Cfg, Sam } from './SourceTag';
 import { useMidDataSources, updateDataSources, midNewId } from './midStore';
 import type { MidDataSource, MidField, DataSourceType } from './midData';
-
-const TYPE_LABEL: Record<DataSourceType, string> = { sample: '本地样例', api: 'API', sql: '数据库' };
+import { ConfigListPage, SRC_TYPE_LABEL } from './ConfigTemplate';
 const inp: React.CSSProperties = { padding: '6px 8px', borderRadius: 6, border: '1px solid #E2E8F0', fontSize: 12, width: '100%', background: '#fff' };
 const lbl: React.CSSProperties = { display: 'flex', flexDirection: 'column', gap: 4, fontSize: 12, color: '#475569', minWidth: 180 };
 const th: React.CSSProperties = { padding: '6px 8px', borderBottom: '1px solid #E2E8F0', fontWeight: 500, textAlign: 'left' };
@@ -46,36 +44,42 @@ export default function MidDataSourceConfig() {
   const remove = (id: string) => updateDataSources((list) => list.filter((x) => x.id !== id));
 
   const cols: Column[] = [
-    { key: 'name', label: '名称' },
-    { key: 'typeLabel', label: '类型' },
-    { key: 'status', label: '状态', type: 'badge' },
-    { key: 'fieldCnt', label: '字段数' },
-    { key: 'rowCnt', label: '样例行' },
-    { key: 'updatedAt', label: '更新时间' },
+    { key: 'name', label: '名称', tag: { kind: 'cfg', value: 'midDataSources.json.name' } },
+    { key: 'typeLabel', label: '类型', tag: { kind: 'cfg', value: 'midDataSources.json.type' } },
+    { key: 'status', label: '状态', type: 'badge', tag: { kind: 'cfg', value: 'midDataSources.json.status' } },
+    { key: 'fieldCnt', label: '字段数', tag: { kind: 'cfg', value: 'midDataSources.json.fields' } },
+    { key: 'rowCnt', label: '样例行', tag: { kind: 'sample', value: 'midDataSources.json.rows' } },
+    { key: 'updatedAt', label: '更新时间', tag: { kind: 'cfg', value: 'midDataSources.json.updatedAt' } },
   ];
   const rows: Row[] = sources.map((s) => ({
-    id: s.id, name: s.name, typeLabel: TYPE_LABEL[s.type],
+    id: s.id, name: s.name, typeLabel: SRC_TYPE_LABEL[s.type],
     status: s.status ?? 'connected', fieldCnt: String(s.fields.length),
     rowCnt: String(s.rows?.length ?? 0), updatedAt: s.updatedAt ?? '',
   } as unknown as Row));
 
-  return (
-    <div style={{ padding: 24, maxWidth: 1180 }}>
-      <PageShell title="数据源管理" crumb="零售信贷风控 / 管理中心 / 贷中监控配置"
-        subtitle="对接多种数据源，为指标库提供字段与样例数据"
-        actions={<><Cfg label="配置JSON" value="midDataSources.json" /><Button size="sm" onClick={openAdd}>新建数据源</Button></>} />
-      <Panel title="数据源列表" desc="配置即落盘；字段口径统一后供指标库引用"
-        actions={<Sam label="样例数据" value={`${sources.reduce((a, s) => a + (s.rows?.length || 0), 0)} 行`} />}>
-        <DataTable columns={cols} rows={rows} clickableKey="name"
-          onCellClick={(r) => nav('/console/cm:mid-data-source-detail?id=' + String(r.id))} />
-      </Panel>
+  const totalRows = sources.reduce((a, s) => a + (s.rows?.length || 0), 0);
 
-      <Modal open={open} onClose={() => setOpen(false)}
-        title={editing && sources.find((s) => s.id === editing.id) ? '编辑数据源' : '新建数据源'} width="max-w-3xl"
-        footer={<><Button onClick={save}>保存</Button><Button variant="secondary" onClick={() => setOpen(false)}>取消</Button></>}>
-        {editing && <Editor value={editing} onChange={setEditing} onRemove={() => { if (editing) { remove(editing.id); setOpen(false); setEditing(null); } }} />}
-      </Modal>
-    </div>
+  return (
+    <ConfigListPage
+      title="数据源管理"
+      crumbPath="数据源管理"
+      subtitle="对接多种数据源，为指标库提供字段与样例数据"
+      addLabel="新建数据源"
+      onAdd={openAdd}
+      actions={<Cfg value="midDataSources.json" />}
+      panelTitle="数据源列表"
+      panelDesc={`列表每行 = 1 个数据源（读取本地 JSON 全量）；样例行 = 该数据源的样例数据条数；全部样例行合计 ${totalRows} 行`}
+      columns={cols}
+      rows={rows}
+      onView={(r) => nav('/console/cm/mid-data-source-detail?id=' + String(r.id))}
+      editOpen={open}
+      editTitle={editing && sources.find((s) => s.id === editing.id) ? '编辑数据源' : '新建数据源'}
+      onCloseEdit={() => setOpen(false)}
+      onSave={save}
+      modalWidth="max-w-3xl"
+    >
+      {editing && <Editor value={editing} onChange={setEditing} onRemove={() => { if (editing) { remove(editing.id); setOpen(false); setEditing(null); } }} />}
+    </ConfigListPage>
   );
 }
 
@@ -97,7 +101,7 @@ function Editor({ value, onChange, onRemove }: { value: MidDataSource; onChange:
       </div>
       <div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-          <span style={{ fontSize: 13, fontWeight: 500 }}>字段清单 <Cal label="字段口径" /></span>
+          <span style={{ fontSize: 13, fontWeight: 500 }}>字段清单 <Cfg value="midDataSources.json.fields" /></span>
           <Button size="sm" variant="secondary" onClick={addField}>添加字段</Button>
         </div>
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
@@ -121,7 +125,7 @@ function Editor({ value, onChange, onRemove }: { value: MidDataSource; onChange:
         </table>
       </div>
       <div>
-        <div style={{ fontSize: 13, fontWeight: 500, marginBottom: 6 }}>数据预览 <Sam label="样例数据" value={`${value.rows.length} 行`} /></div>
+        <div style={{ fontSize: 13, fontWeight: 500, marginBottom: 6 }}>数据预览 <Sam value={`${value.rows.length} 行`} /></div>
         <div style={{ maxHeight: 180, overflow: 'auto', border: '1px solid #E2E8F0', borderRadius: 8 }}>
           <DataTable columns={(value.fields.length ? value.fields : [{ key: '_', label: '_', kind: 'dim' as const, type: 'string' as const }]).map((f) => ({ key: f.key, label: f.label }))}
             rows={value.rows.slice(0, 10).map((r, i) => ({ id: String(i), ...r } as unknown as Row))} />

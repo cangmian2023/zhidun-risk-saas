@@ -19,10 +19,14 @@ export interface MidConnConfig {
   // api
   method?: 'GET' | 'POST';
   authType?: 'none' | 'bearer' | 'apikey' | 'basic';
-  account?: string;
-  password?: string;
+  host?: string;            // 域名 / IP
+  account?: string;         // 账号
+  password?: string;        // 密钥 / 密码
   // sql
   dbType?: string;          // mysql / oracle / postgres
+  port?: number;            // 端口
+  database?: string;        // 库名
+  username?: string;        // 用户名
   connStr?: string;         // 连接串
   query?: string;           // 查询语句
 }
@@ -58,6 +62,7 @@ export interface MidMetric {
   formula?: string;           // derived：公式（m_xxx 引用指标、数字、四则运算、函数）
   unit?: string;
   precision?: number;
+  enabled?: boolean;        // 是否启用（默认 true）；停用后暂停采集/计算
 }
 
 // 监控策略（一页三 tab，一个 JSON 文件）
@@ -236,36 +241,74 @@ export const SEED_DATA_SOURCES: MidDataSource[] = [
     ],
     status: 'connected',
   },
+  {
+    id: 'ds_api_demo', name: '外部征信API', type: 'api', desc: '第三方征信接口（演示连接配置）',
+    conn: { method: 'POST', authType: 'bearer', host: 'api.credit.example.com', account: 'app_2026', password: 'sk_live_9f3a****' },
+    fields: [
+      { key: 'id_no', label: '证件号', kind: 'dim', type: 'string' },
+      { key: 'score', label: '征信分', kind: 'measure', type: 'number' },
+      { key: 'query_cnt', label: '查询次数', kind: 'measure', type: 'number' },
+    ],
+    rows: [
+      { id_no: '3301**********1234', score: 682, query_cnt: 3 },
+      { id_no: '4401**********5678', score: 551, query_cnt: 7 },
+    ],
+    status: 'connected',
+  },
+  {
+    id: 'ds_sql_demo', name: '核心信贷库', type: 'sql', desc: '核心系统数据库（演示连接配置）',
+    conn: { dbType: 'mysql', host: '10.20.30.40', port: 3306, database: 'core_loan', username: 'etl_rw', password: 'Core@2026****', connStr: 'mysql://etl_rw:***@10.20.30.40:3306/core_loan', query: 'SELECT cust_id, loan_balance, overdue_amt FROM loan_ledger' },
+    fields: [
+      { key: 'cust_id', label: '客户ID', kind: 'dim', type: 'string' },
+      { key: 'loan_balance', label: '在贷余额', kind: 'measure', type: 'number', unit: '元' },
+      { key: 'overdue_amt', label: '逾期金额', kind: 'measure', type: 'number', unit: '元' },
+    ],
+    rows: [
+      { cust_id: 'C0001', loan_balance: 42000, overdue_amt: 3200 },
+      { cust_id: 'C0004', loan_balance: 156000, overdue_amt: 12800 },
+    ],
+    status: 'connected',
+  },
 ];
 
 export const SEED_METRICS: MidMetric[] = [
-  { id: 'm_cust_cnt', name: '在贷客户数', group: '客群', dataSourceId: 'ds_customer', type: 'base', field: 'cust_id', agg: 'count', precision: 0 },
-  { id: 'm_loan_balance', name: '在贷余额', group: '风险', dataSourceId: 'ds_loan', type: 'base', field: 'loan_balance', agg: 'sum', unit: '元', precision: 0 },
-  { id: 'm_overdue_amt', name: '逾期金额', group: '风险', dataSourceId: 'ds_loan', type: 'base', field: 'overdue_amt', agg: 'sum', unit: '元', precision: 0 },
-  { id: 'm_overdue_rate', name: '逾期率', group: '风险', dataSourceId: 'ds_loan', type: 'derived', formula: 'm_overdue_amt / m_loan_balance * 100', unit: '%', precision: 2 },
-  { id: 'm_alert_cnt', name: '预警数', group: '预警', dataSourceId: 'ds_alert', type: 'base', field: 'alert_id', agg: 'count', precision: 0 },
-  { id: 'm_red_cnt', name: '红灯预警数', group: '预警', dataSourceId: 'ds_alert', type: 'base', field: 'alert_id', agg: 'count', precision: 0 },
-  { id: 'm_score_avg', name: '行为均分', group: '风险', dataSourceId: 'ds_behavior', type: 'base', field: 'score', agg: 'avg', precision: 1 },
-  { id: 'm_dispose_cnt', name: '处置次数', group: '处置', dataSourceId: 'ds_alert', type: 'base', field: 'alert_id', agg: 'count', precision: 0 },
+  // 客群
+  { id: 'm_cust_cnt', name: '在贷客户数', group: '客群', dataSourceId: 'ds_customer', type: 'base', field: 'cust_id', agg: 'count', precision: 0, enabled: true },
+  { id: 'm_new_cust', name: '本月新增客户数', group: '客群', dataSourceId: 'ds_customer', type: 'base', field: 'new_loans', agg: 'sum', precision: 0, enabled: false },
+  { id: 'm_active_days', name: '平均活跃天数', group: '客群', dataSourceId: 'ds_customer', type: 'base', field: 'active_days', agg: 'avg', precision: 1, enabled: false },
+  // 风险
+  { id: 'm_loan_balance', name: '在贷余额', group: '风险', dataSourceId: 'ds_loan', type: 'base', field: 'loan_balance', agg: 'sum', unit: '元', precision: 0, enabled: true },
+  { id: 'm_overdue_amt', name: '逾期金额', group: '风险', dataSourceId: 'ds_loan', type: 'base', field: 'overdue_amt', agg: 'sum', unit: '元', precision: 0, enabled: true },
+  { id: 'm_credit_line', name: '授信额度', group: '风险', dataSourceId: 'ds_loan', type: 'base', field: 'credit_line', agg: 'sum', unit: '元', precision: 0, enabled: true },
+  { id: 'm_score_avg', name: '行为均分', group: '风险', dataSourceId: 'ds_behavior', type: 'base', field: 'score', agg: 'avg', precision: 1, enabled: true },
+  { id: 'm_overdue_rate', name: '逾期率', group: '风险', dataSourceId: 'ds_loan', type: 'derived', formula: 'm_overdue_amt / m_loan_balance * 100', unit: '%', precision: 2, enabled: true },
+  { id: 'm_util_rate', name: '额度使用率', group: '风险', dataSourceId: 'ds_loan', type: 'derived', formula: 'm_loan_balance / m_credit_line * 100', unit: '%', precision: 1, enabled: true },
+  { id: 'm_npl_amt', name: '不良金额', group: '风险', dataSourceId: 'ds_loan', type: 'base', field: 'overdue_amt', agg: 'sum', unit: '元', precision: 0, enabled: true },
+  { id: 'm_npl_rate', name: '不良率', group: '风险', dataSourceId: 'ds_loan', type: 'derived', formula: 'm_npl_amt / m_loan_balance * 100', unit: '%', precision: 2, enabled: false },
+  // 预警
+  { id: 'm_alert_cnt', name: '预警总数', group: '预警', dataSourceId: 'ds_alert', type: 'base', field: 'alert_id', agg: 'count', precision: 0, enabled: true },
+  { id: 'm_red_cnt', name: '红灯预警数', group: '预警', dataSourceId: 'ds_alert', type: 'base', field: 'alert_id', agg: 'count', precision: 0, enabled: true },
+  { id: 'm_opp_cnt', name: '机会预警数', group: '预警', dataSourceId: 'ds_alert', type: 'base', field: 'alert_id', agg: 'count', precision: 0, enabled: true },
+  // 处置
+  { id: 'm_dispose_cnt', name: '处置次数', group: '处置', dataSourceId: 'ds_alert', type: 'base', field: 'alert_id', agg: 'count', precision: 0, enabled: true },
+  { id: 'm_dispose_rate', name: '处置率', group: '处置', dataSourceId: 'ds_alert', type: 'derived', formula: 'm_dispose_cnt / m_alert_cnt * 100', unit: '%', precision: 1, enabled: true },
 ];
 
 export const SEED_STRATEGY: MidStrategy = {
   tasks: [
-    {
-      id: 't1', name: '全量在贷客群·日扫', crowd: '全部在贷客户', frequency: 'daily',
-      metricIds: ['m_overdue_rate', 'm_alert_cnt', 'm_score_avg'], output: 'web', enabled: true,
-      desc: '每日 02:00 扫描全量在贷客群，输出红黄灯预警',
-    },
-    {
-      id: 't2', name: '经营贷客群·周扫', crowd: '经营贷产品客户', frequency: 'weekly',
-      metricIds: ['m_loan_balance', 'm_overdue_amt'], output: 'file', enabled: true,
-      desc: '每周一扫描经营贷客群，产出监控报表文件',
-    },
+    { id: 't1', name: '全量在贷客群·日扫', crowd: '全部在贷客户', frequency: 'daily', metricIds: ['m_overdue_rate', 'm_alert_cnt', 'm_score_avg'], output: 'web', enabled: true, desc: '每日 02:00 扫描全量在贷客群，输出红黄灯预警' },
+    { id: 't2', name: '经营贷客群·周扫', crowd: '经营贷产品客户', frequency: 'weekly', metricIds: ['m_loan_balance', 'm_overdue_amt'], output: 'file', enabled: true, desc: '每周一扫描经营贷客群，产出监控报表文件' },
+    { id: 't3', name: '白领客群·月扫', crowd: '白领消费客群', frequency: 'monthly', metricIds: ['m_util_rate', 'm_npl_rate'], output: 'api', enabled: false, desc: '每月扫描白领客群额度使用与不良，暂停中' },
+    { id: 't4', name: '高风险客群·日扫', crowd: '历史逾期客群', frequency: 'daily', metricIds: ['m_overdue_rate', 'm_npl_rate', 'm_red_cnt'], output: 'web', enabled: true, desc: '每日扫描高风险客群，重点盯防红灯' },
   ],
   rules: [
     { id: 'r1', name: '逾期率超阈值', metricId: 'm_overdue_rate', op: 'gt', value: 5, level: 'RED', desc: '客群逾期率超过 5% 触发红灯' },
     { id: 'r2', name: '行为分过低', metricId: 'm_score_avg', op: 'lt', value: 40, level: 'RED', desc: '行为均分低于 40 触发红灯' },
     { id: 'r3', name: '预警量激增', metricId: 'm_alert_cnt', op: 'gte', value: 3, level: 'YELLOW', desc: '单日预警数≥3 触发黄灯' },
+    { id: 'r4', name: '额度使用率过高', metricId: 'm_util_rate', op: 'gt', value: 80, level: 'RED', desc: '额度使用率超过 80% 触发红灯' },
+    { id: 'r5', name: '不良率超阈值', metricId: 'm_npl_rate', op: 'gt', value: 3, level: 'RED', desc: '不良率超过 3% 触发红灯' },
+    { id: 'r6', name: '机会营销', metricId: 'm_opp_cnt', op: 'gt', value: 0, level: 'OPPORTUNITY', desc: '出现机会预警可触发提额营销' },
+    { id: 'r7', name: '红灯预警激增', metricId: 'm_red_cnt', op: 'gte', value: 2, level: 'YELLOW', desc: '单日红灯≥2 触发黄灯关注' },
   ],
   disposes: [
     { id: 'd1', name: '红灯预催', triggerLevel: 'RED', action: '预催', targetSystem: '催收系统', needApprove: false, needNotify: true, assignTo: '催收专员' },
@@ -273,6 +316,8 @@ export const SEED_STRATEGY: MidStrategy = {
     { id: 'd3', name: '黄灯关注', triggerLevel: 'YELLOW', action: '关注', targetSystem: '工单系统', needApprove: false, needNotify: false, assignTo: '客户经理' },
     { id: 'd4', name: '机会提额', triggerLevel: 'OPPORTUNITY', action: '提额', targetSystem: '营销系统', needApprove: true, needNotify: true, assignTo: '客户经理' },
     { id: 'd5', name: '红灯冻结', triggerLevel: 'RED', action: '冻结', targetSystem: '核心信贷系统', needApprove: true, needNotify: true, assignTo: '风控主管' },
+    { id: 'd6', name: '黄灯促活', triggerLevel: 'YELLOW', action: '促活', targetSystem: '营销系统', needApprove: false, needNotify: true, assignTo: '客户经理' },
+    { id: 'd7', name: '红灯止付', triggerLevel: 'RED', action: '止付', targetSystem: '核心信贷系统', needApprove: true, needNotify: true, assignTo: '风控主管' },
   ],
 };
 
@@ -307,6 +352,34 @@ export const SEED_DASHBOARDS: MidDashboardPage[] = [
       { id: 'w1', type: 'metric', title: '在贷余额', datasetId: 'ds_loan', metricId: 'm_loan_balance', span: 1 },
       { id: 'w2', type: 'metric', title: '逾期率', datasetId: 'ds_loan', metricId: 'm_overdue_rate', span: 1 },
       { id: 'w3', type: 'line', title: '行为分趋势', datasetId: 'ds_behavior', metricId: 'm_score_avg', dimensions: ['month'], span: 2 },
+    ],
+  },
+  {
+    id: 'db-mid-dispose', key: 'cr:mid-dispose', name: '处置闭环', group: '处置', order: 3, enabled: true,
+    desc: '处置工单量、处置率与动作分布',
+    widgets: [
+      { id: 'w1', type: 'metric', title: '处置次数', datasetId: 'ds_alert', metricId: 'm_dispose_cnt', span: 1 },
+      { id: 'w2', type: 'metric', title: '处置率', datasetId: 'ds_alert', metricId: 'm_dispose_rate', span: 1 },
+      { id: 'w3', type: 'bar', title: '处置动作分布', datasetId: 'ds_alert', metricId: 'm_dispose_cnt', dimensions: ['action'], span: 2 },
+    ],
+  },
+  {
+    id: 'db-mid-quota', key: 'cr:mid-quota', name: '额度使用监控', group: '风险', order: 4, enabled: true,
+    desc: '授信额度、在贷余额与额度使用率',
+    widgets: [
+      { id: 'w1', type: 'metric', title: '额度使用率', datasetId: 'ds_loan', metricId: 'm_util_rate', span: 1 },
+      { id: 'w2', type: 'metric', title: '授信额度', datasetId: 'ds_loan', metricId: 'm_credit_line', span: 1 },
+      { id: 'w3', type: 'metric', title: '在贷余额', datasetId: 'ds_loan', metricId: 'm_loan_balance', span: 1 },
+      { id: 'w4', type: 'line', title: '额度使用率趋势', datasetId: 'ds_loan', metricId: 'm_util_rate', dimensions: ['month'], span: 2 },
+    ],
+  },
+  {
+    id: 'db-mid-opp', key: 'cr:mid-opp', name: '营销机会', group: '机会', order: 5, enabled: false,
+    desc: '机会预警与高行为分客群的营销提额场景',
+    widgets: [
+      { id: 'w1', type: 'metric', title: '机会预警数', datasetId: 'ds_alert', metricId: 'm_opp_cnt', span: 1 },
+      { id: 'w2', type: 'metric', title: '行为均分', datasetId: 'ds_behavior', metricId: 'm_score_avg', span: 1 },
+      { id: 'w3', type: 'donut', title: '机会场景分布', datasetId: 'ds_alert', metricId: 'm_opp_cnt', dimensions: ['scene'], span: 1 },
     ],
   },
 ];

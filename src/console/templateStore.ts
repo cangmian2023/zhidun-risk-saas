@@ -89,13 +89,15 @@ function scheduleSave() {
 }
 
 // 启动时尝试加载已保存的文件
-try {
-  const saved = await fetch('/api/load-templates').then(r => r.ok ? r.json() : null).catch(() => null)
-  if (saved && Array.isArray(saved) && saved.length > 0) {
-    seedReportTemplates.length = 0
-    seedReportTemplates.push(...saved.map(convertFromDisk))
-  }
-} catch { /* 首次启动无文件时用代码 seed */ }
+;(async () => {
+  try {
+    const saved = await fetch('/api/load-templates').then(r => r.ok ? r.json() : null).catch(() => null)
+    if (saved && Array.isArray(saved) && saved.length > 0) {
+      seedReportTemplates.length = 0
+      seedReportTemplates.push(...saved.map(convertFromDisk))
+    }
+  } catch { /* 首次启动无文件时用代码 seed */ }
+})()
 
 let version = 0
 const listeners = new Set<() => void>()

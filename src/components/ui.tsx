@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import type { ReactNode, ButtonHTMLAttributes } from 'react'
 import { createPortal } from 'react-dom'
+import { SourceTag } from '../console/SourceTag'
 
 /* ---------- Page header ---------- */
 export function PageHeader({
@@ -64,6 +65,32 @@ export function Panel({
       )}
       {children}
     </section>
+  )
+}
+
+/* ---------- Info cell（详情页顶部紧凑元信息条） ---------- */
+export function InfoCell({
+  label,
+  value,
+  icon,
+  tag,
+}: {
+  label: ReactNode
+  value: ReactNode
+  icon?: ReactNode
+  tag?: ReactNode
+}) {
+  return (
+    <div className="flex items-center gap-3 rounded-xl border border-slate-100 bg-white px-3.5 py-2.5 shadow-card">
+      {icon && <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-slate-50 text-slate-400">{icon}</span>}
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-xs text-slate-400">{label}</span>
+          {tag}
+        </div>
+        <div className="mt-0.5 truncate text-sm font-semibold text-ink-900">{value}</div>
+      </div>
+    </div>
   )
 }
 
@@ -253,6 +280,7 @@ export interface Column {
   progressColor?: string
   align?: 'left' | 'right' | 'center'
   hint?: string
+  tag?: 'cfg' | 'sample' | 'calc' | { kind: 'cfg' | 'sample' | 'calc'; value: string }
 }
 
 export interface BadgeVal {
@@ -271,43 +299,55 @@ export function DataTable({
   empty = '暂无数据',
   clickableKey,
   onCellClick,
+  actions,
 }: {
   columns: Column[]
   rows: Row[]
   empty?: string
   clickableKey?: string
   onCellClick?: (row: Row) => void
+  actions?: (row: Row) => ReactNode
 }) {
   return (
     <div className="overflow-x-auto">
       <table className="w-full border-collapse text-sm">
         <thead>
           <tr className="border-b border-slate-200 text-left text-xs font-medium uppercase tracking-wide text-slate-400">
-            {columns.map((c) => (
+            {columns.map((c, i) => (
               <th
                 key={c.key}
-                className="whitespace-nowrap px-3 py-3"
+                className={`whitespace-nowrap px-3 py-3 bg-white ${i === 0 ? 'sticky left-0 z-20' : ''}`}
                 style={{ width: c.width, textAlign: c.align ?? 'left' }}
               >
-                {c.label}
+                <div className="flex items-center gap-1.5">
+                  <span>{c.label}</span>
+                  {c.tag && <ColumnTag tag={c.tag} />}
+                </div>
               </th>
             ))}
+            {actions && (
+              <th className="whitespace-nowrap px-3 py-3 bg-white sticky right-0 z-20 text-left">操作</th>
+            )}
           </tr>
         </thead>
         <tbody>
           {rows.length === 0 ? (
             <tr>
-              <td colSpan={columns.length} className="px-3 py-10 text-center text-sm text-slate-400">
+              <td colSpan={columns.length + (actions ? 1 : 0)} className="px-3 py-10 text-center text-sm text-slate-400">
                 {empty}
               </td>
             </tr>
           ) : (
             rows.map((r) => (
-              <tr key={r.id} className="border-b border-slate-50 transition hover:bg-slate-50/60">
-                {columns.map((c) => {
+              <tr key={r.id} className="group border-b border-slate-50 transition hover:bg-slate-50/60">
+                {columns.map((c, i) => {
                   const clickable = !!clickableKey && c.key === clickableKey
                   return (
-                    <td key={c.key} className="whitespace-nowrap px-3 py-3 text-slate-600" style={{ textAlign: c.align ?? 'left' }}>
+                    <td
+                      key={c.key}
+                      className={`whitespace-nowrap px-3 py-3 text-slate-600 ${i === 0 ? 'sticky left-0 z-10 bg-white group-hover:bg-slate-50/60' : ''}`}
+                      style={{ textAlign: c.align ?? 'left' }}
+                    >
                       {clickable ? (
                         <button
                           type="button"
@@ -322,6 +362,11 @@ export function DataTable({
                     </td>
                   )
                 })}
+                {actions && (
+                  <td className="whitespace-nowrap px-3 py-3 text-left sticky right-0 z-10 bg-white group-hover:bg-slate-50/60">
+                    {actions(r)}
+                  </td>
+                )}
               </tr>
             ))
           )}
@@ -329,6 +374,13 @@ export function DataTable({
       </table>
     </div>
   )
+}
+
+// 列级来源标签：渲染在表头（每列一次），避免每个单元格重复堆叠标签
+function ColumnTag({ tag }: { tag: Column['tag'] }) {
+  if (!tag) return null;
+  if (typeof tag === 'string') return <SourceTag kind={tag} />;
+  return <SourceTag kind={tag.kind} value={tag.value} />;
 }
 
 function renderCell(v: CellVal, c: Column) {

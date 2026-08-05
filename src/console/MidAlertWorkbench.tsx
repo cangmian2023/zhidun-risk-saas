@@ -71,7 +71,7 @@ export default function MidAlertWorkbench() {
         }>
         <DataTable columns={cols} rows={rows} empty="无匹配预警"
           clickableKey="alert_id"
-          onCellClick={(r) => nav('/console/cr:mid-alert-detail?id=' + String(r.id))} />
+          onCellClick={(r) => nav('/console/cr/mid-alert-detail?id=' + String(r.id))} />
       </Panel>
 
       <Modal open={saveStatus === 'error'} onClose={() => {}} title="保存提示">

@@ -1,20 +1,18 @@
 // ② 指标库（管理中心 · 配置域）— 配置JSON 蓝；公式预览 灰（实时计算）
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Panel, DataTable, Modal, Button } from '../components/ui';
+import { Button } from '../components/ui';
 import type { Column, Row } from '../components/ui';
 import { Cfg, Cal, Sam } from './SourceTag';
-import { PageShell } from './PageShell';
 import { useMidMetrics, updateMetrics, useMidDataSources, midNewId } from './midStore';
 import {
   type MidMetric, type MetricType, type AggOp, type MidDataSource,
   AGG_LABEL, evalMetricFormula, computeAgg, resolveMetricsForRows,
 } from './midData';
+import { ConfigListPage, METRIC_TYPE_LABEL, fmt } from './ConfigTemplate';
 
 const inp: React.CSSProperties = { padding: '6px 8px', borderRadius: 6, border: '1px solid #E2E8F0', fontSize: 12, width: '100%', background: '#fff' };
 const lbl: React.CSSProperties = { display: 'flex', flexDirection: 'column', gap: 4, fontSize: 12, color: '#475569', minWidth: 160 };
-
-const TYPE_LABEL: Record<MetricType, string> = { base: '基础指标', derived: '派生指标' };
 
 export default function MidMetricConfig() {
   const metrics = useMidMetrics();
@@ -49,12 +47,13 @@ export default function MidMetricConfig() {
   const remove = (id: string) => updateMetrics((list) => list.filter((x) => x.id !== id));
 
   const cols: Column[] = [
-    { key: 'name', label: '指标名称' },
-    { key: 'group', label: '分组' },
-    { key: 'typeLabel', label: '类型' },
-    { key: 'def', label: '口径', type: 'badge' },
-    { key: 'source', label: '数据源', type: 'badge' },
-    { key: 'preview', label: '实时预览', align: 'right' },
+    { key: 'name', label: '指标名称', tag: { kind: 'cfg', value: 'midMetrics.json.name' } },
+    { key: 'group', label: '分组', tag: { kind: 'cfg', value: 'midMetrics.json.group' } },
+    { key: 'typeLabel', label: '类型', tag: { kind: 'cfg', value: 'midMetrics.json.type' } },
+    { key: 'def', label: '口径', type: 'badge', tag: { kind: 'cfg', value: 'midMetrics.json.formula' } },
+    { key: 'source', label: '数据源', type: 'badge', tag: { kind: 'cfg', value: 'midMetrics.json.dataSourceId' } },
+    { key: 'status', label: '状态', type: 'badge', tag: { kind: 'cfg', value: 'midMetrics.json.enabled' } },
+    { key: 'preview', label: '实时预览', align: 'right', tag: { kind: 'calc' } },
   ];
 
   // 全局实时计算预览（灰）：用各数据源样例行解析基础指标，派生指标经公式求值
@@ -72,30 +71,34 @@ export default function MidMetricConfig() {
       id: m.id,
       name: m.name,
       group: m.group ?? '-',
-      typeLabel: TYPE_LABEL[m.type],
+      typeLabel: METRIC_TYPE_LABEL[m.type],
       def,
       source: src?.name ?? m.dataSourceId,
+      status: m.enabled === false ? { v: '停用', kind: 'red' } : { v: '启用', kind: 'green' },
       preview: fmt(preview, m.precision, m.unit),
     } as unknown as Row;
   });
 
   return (
-    <div style={{ padding: 24, maxWidth: 1180 }}>
-      <PageShell title="指标库" crumb="零售信贷风控 / 管理中心 / 贷中监控配置"
-        subtitle="定义可复用指标（基础聚合 + 派生公式），被监控策略、看板组件引用"
-        actions={<><Cfg label="配置JSON" value="midMetrics.json" /><Button size="sm" onClick={openAdd}>新建指标</Button></>} />
-      <Panel title="指标列表" desc="配置即落盘；基础指标取数据源字段聚合，派生指标用公式引用其它指标"
-        actions={<Sam label="样例数据" value={`${sources.reduce((a, s) => a + (s.rows?.length || 0), 0)} 行驱动`} />}>
-        <DataTable columns={cols} rows={rows} clickableKey="name"
-          onCellClick={(r) => nav('/console/cm:mid-metric-detail?id=' + String(r.id))} />
-      </Panel>
-
-      <Modal open={open} onClose={() => setOpen(false)}
-        title={editing && metrics.find((m) => m.id === editing.id) ? '编辑指标' : '新建指标'} width="max-w-2xl"
-        footer={<><Button onClick={save}>保存</Button><Button variant="secondary" onClick={() => setOpen(false)}>取消</Button></>}>
-        {editing && <Editor value={editing} metrics={metrics} sources={sources} onChange={setEditing} onRemove={() => { if (editing) { remove(editing.id); setOpen(false); setEditing(null); } }} />}
-      </Modal>
-    </div>
+    <ConfigListPage
+      title="指标库"
+      crumbPath="指标库"
+      subtitle="定义可复用指标（基础聚合 + 派生公式），被监控策略、看板组件引用"
+      addLabel="新建指标"
+      onAdd={openAdd}
+      actions={<Cfg value="midMetrics.json" />}
+      panelTitle="指标列表"
+      panelDesc="配置即落盘；基础指标取数据源字段聚合，派生指标用公式引用其它指标（实时计算见「实时预览」列）"
+      columns={cols}
+      rows={rows}
+      onView={(r) => nav('/console/cm/mid-metric-detail?id=' + String(r.id))}
+      editOpen={open}
+      editTitle={editing && metrics.find((m) => m.id === editing.id) ? '编辑指标' : '新建指标'}
+      onCloseEdit={() => setOpen(false)}
+      onSave={save}
+    >
+      {editing && <Editor value={editing} metrics={metrics} sources={sources} onChange={setEditing} onRemove={() => { if (editing) { remove(editing.id); setOpen(false); setEditing(null); } }} />}
+    </ConfigListPage>
   );
 }
 
@@ -123,7 +126,7 @@ function Editor({ value, metrics, sources, onChange, onRemove }: { value: MidMet
       </div>
 
       <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-        <label style={lbl}>数据源（字段来源） <Cfg label="配置JSON" value="midDataSources.json" />
+        <label style={lbl}>数据源（字段来源） <Cfg value="midDataSources.json" />
           <select style={inp} value={value.dataSourceId} onChange={(e) => set({ dataSourceId: e.target.value, field: '' })}>
             {sources.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
           </select>
@@ -167,10 +170,4 @@ function Editor({ value, metrics, sources, onChange, onRemove }: { value: MidMet
       {value.id && <Button variant="ghost" size="sm" onClick={onRemove}>删除该指标</Button>}
     </div>
   );
-}
-
-function fmt(v: number | null, precision = 0, unit = ''): string {
-  if (v === null || v === undefined || Number.isNaN(v as number)) return '-';
-  const n = Number(v);
-  return `${n.toLocaleString(undefined, { maximumFractionDigits: precision, minimumFractionDigits: 0 })}${unit}`;
 }

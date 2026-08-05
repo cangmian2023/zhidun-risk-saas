@@ -1,1 +1,26 @@
-{"tasks":[{"id":"t1","name":"全量在贷客群·日扫","crowd":"全部在贷客户","frequency":"daily","metricIds":["m_overdue_rate","m_alert_cnt","m_score_avg"],"output":"web","enabled":true,"desc":"每日 02:00 扫描全量在贷客群，输出红黄灯预警"},{"id":"t2","name":"经营贷客群·周扫","crowd":"经营贷产品客户","frequency":"weekly","metricIds":["m_loan_balance","m_overdue_amt"],"output":"file","enabled":true,"desc":"每周一扫描经营贷客群，产出监控报表文件"}],"rules":[{"id":"r1","name":"逾期率超阈值","metricId":"m_overdue_rate","op":"gt","value":5,"level":"RED","desc":"客群逾期率超过 5% 触发红灯"},{"id":"r2","name":"行为分过低","metricId":"m_score_avg","op":"lt","value":40,"level":"RED","desc":"行为均分低于 40 触发红灯"},{"id":"r3","name":"预警量激增","metricId":"m_alert_cnt","op":"gte","value":3,"level":"YELLOW","desc":"单日预警数≥3 触发黄灯"}],"disposes":[{"id":"d1","name":"红灯预催","triggerLevel":"RED","action":"预催","targetSystem":"催收系统","needApprove":false,"needNotify":true,"assignTo":"催收专员"},{"id":"d2","name":"红灯降额","triggerLevel":"RED","action":"降额","targetSystem":"核心信贷系统","needApprove":true,"needNotify":true,"assignTo":"风控主管"},{"id":"d3","name":"黄灯关注","triggerLevel":"YELLOW","action":"关注","targetSystem":"工单系统","needApprove":false,"needNotify":false,"assignTo":"客户经理"},{"id":"d4","name":"机会提额","triggerLevel":"OPPORTUNITY","action":"提额","targetSystem":"营销系统","needApprove":true,"needNotify":true,"assignTo":"客户经理"},{"id":"d5","name":"红灯冻结","triggerLevel":"RED","action":"冻结","targetSystem":"核心信贷系统","needApprove":true,"needNotify":true,"assignTo":"风控主管"}]}
+{
+  "tasks": [
+    { "id": "t1", "name": "全量在贷客群·日扫", "crowd": "全部在贷客户", "frequency": "daily", "metricIds": ["m_overdue_rate", "m_alert_cnt", "m_score_avg"], "output": "web", "enabled": true, "desc": "每日 02:00 扫描全量在贷客群，输出红黄灯预警" },
+    { "id": "t2", "name": "经营贷客群·周扫", "crowd": "经营贷产品客户", "frequency": "weekly", "metricIds": ["m_loan_balance", "m_overdue_amt"], "output": "file", "enabled": true, "desc": "每周一扫描经营贷客群，产出监控报表文件" },
+    { "id": "t3", "name": "白领客群·月扫", "crowd": "白领消费客群", "frequency": "monthly", "metricIds": ["m_util_rate", "m_npl_rate"], "output": "api", "enabled": false, "desc": "每月扫描白领客群额度使用与不良，暂停中" },
+    { "id": "t4", "name": "高风险客群·日扫", "crowd": "历史逾期客群", "frequency": "daily", "metricIds": ["m_overdue_rate", "m_npl_rate", "m_red_cnt"], "output": "web", "enabled": true, "desc": "每日扫描高风险客群，重点盯防红灯" }
+  ],
+  "rules": [
+    { "id": "r1", "name": "逾期率超阈值", "metricId": "m_overdue_rate", "op": "gt", "value": 5, "level": "RED", "desc": "客群逾期率超过 5% 触发红灯" },
+    { "id": "r2", "name": "行为分过低", "metricId": "m_score_avg", "op": "lt", "value": 40, "level": "RED", "desc": "行为均分低于 40 触发红灯" },
+    { "id": "r3", "name": "预警量激增", "metricId": "m_alert_cnt", "op": "gte", "value": 3, "level": "YELLOW", "desc": "单日预警数≥3 触发黄灯" },
+    { "id": "r4", "name": "额度使用率过高", "metricId": "m_util_rate", "op": "gt", "value": 80, "level": "RED", "desc": "额度使用率超过 80% 触发红灯" },
+    { "id": "r5", "name": "不良率超阈值", "metricId": "m_npl_rate", "op": "gt", "value": 3, "level": "RED", "desc": "不良率超过 3% 触发红灯" },
+    { "id": "r6", "name": "机会营销", "metricId": "m_opp_cnt", "op": "gt", "value": 0, "level": "OPPORTUNITY", "desc": "出现机会预警可触发提额营销" },
+    { "id": "r7", "name": "红灯预警激增", "metricId": "m_red_cnt", "op": "gte", "value": 2, "level": "YELLOW", "desc": "单日红灯≥2 触发黄灯关注" }
+  ],
+  "disposes": [
+    { "id": "d1", "name": "红灯预催", "triggerLevel": "RED", "action": "预催", "targetSystem": "催收系统", "needApprove": false, "needNotify": true, "assignTo": "催收专员" },
+    { "id": "d2", "name": "红灯降额", "triggerLevel": "RED", "action": "降额", "targetSystem": "核心信贷系统", "needApprove": true, "needNotify": true, "assignTo": "风控主管" },
+    { "id": "d3", "name": "黄灯关注", "triggerLevel": "YELLOW", "action": "关注", "targetSystem": "工单系统", "needApprove": false, "needNotify": false, "assignTo": "客户经理" },
+    { "id": "d4", "name": "机会提额", "triggerLevel": "OPPORTUNITY", "action": "提额", "targetSystem": "营销系统", "needApprove": true, "needNotify": true, "assignTo": "客户经理" },
+    { "id": "d5", "name": "红灯冻结", "triggerLevel": "RED", "action": "冻结", "targetSystem": "核心信贷系统", "needApprove": true, "needNotify": true, "assignTo": "风控主管" },
+    { "id": "d6", "name": "黄灯促活", "triggerLevel": "YELLOW", "action": "促活", "targetSystem": "营销系统", "needApprove": false, "needNotify": true, "assignTo": "客户经理" },
+    { "id": "d7", "name": "红灯止付", "triggerLevel": "RED", "action": "止付", "targetSystem": "核心信贷系统", "needApprove": true, "needNotify": true, "assignTo": "风控主管" }
+  ]
+}

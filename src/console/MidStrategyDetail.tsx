@@ -1,14 +1,12 @@
-// 监控策略详情（管理中心 · 配置域）— 读 midStrategy.json 橘；监控内容来自指标库 蓝；实时说明 灰
+// 监控策略详情（管理中心 · 配置域）— 读 midStrategy.json 蓝；监控内容来自指标库 蓝；实时说明 灰
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Panel, Button, Badge } from '../components/ui';
+import { Panel, DataTable, Button, Badge, InfoCell } from '../components/ui';
+import type { Column, Row } from '../components/ui';
 import { Cfg, Sam, Cal } from './SourceTag';
 import { PageShell } from './PageShell';
-import { useMidStrategy, useMidMetrics, useMidAlerts } from './midStore';
-import { LEVEL_META, type AlertLevel, type RuleOp, type TaskFrequency, type OutputWay, type MidTask, type MidRule, type MidDispose } from './midData';
-
-const FREQ_LABEL: Record<TaskFrequency, string> = { daily: '每日', weekly: '每周', monthly: '每月' };
-const OUTPUT_LABEL: Record<OutputWay, string> = { api: 'API 推送', url: '页面 URL', file: '文件导出', web: '监控看板' };
-const OP_LABEL: Record<RuleOp, string> = { gt: '>', gte: '≥', lt: '<', lte: '≤', eq: '=', neq: '≠' };
+import { useMidStrategy, useMidMetrics, useMidAlerts, updateStrategy } from './midStore';
+import { LEVEL_META, type AlertLevel, type RuleOp, type TaskFrequency, type MidTask, type MidRule, type MidDispose } from './midData';
+import { ConfigDetailPage, crumb, FREQ_LABEL, OUTPUT_LABEL, OP_LABEL } from './ConfigTemplate';
 
 export default function MidStrategyDetail() {
   const [params] = useSearchParams();
@@ -26,9 +24,9 @@ export default function MidStrategyDetail() {
 
   if (!item) {
     return (
-      <div style={{ padding: 24 }}>
-        <PageShell title="策略详情" crumb="管理中心 / 贷中监控配置 / 监控策略" actions={<Button size="sm" variant="secondary" onClick={() => nav(-1)}>返回</Button>} />
-        <div style={{ padding: 24, color: '#94A3B8', fontSize: 13 }}>未找到该策略项（{kind} / {id}）。</div>
+      <div className="mx-auto max-w-6xl px-4 py-10 lg:px-8">
+        <PageShell title="策略详情" crumb={crumb('策略配置')} actions={<Button size="sm" variant="secondary" onClick={() => nav(-1)}>返回</Button>} />
+        <div className="mt-6 rounded-xl bg-slate-50 px-4 py-10 text-center text-sm text-slate-400">未找到该策略项（{kind} / {id}）。</div>
       </div>
     );
   }
@@ -42,89 +40,119 @@ export default function MidStrategyDetail() {
     : false,
   );
 
+  const toggleEnabled = () => {
+    if (kind !== 'task') return;
+    updateStrategy((s) => ({ ...s, tasks: s.tasks.map((t) => t.id === id ? { ...t, enabled: !t.enabled } : t) }));
+  };
+
+  const confCols: Column[] = [
+    { key: 'k', label: '项目', tag: { kind: 'cfg', value: 'midStrategy.json' } },
+    { key: 'v', label: '内容', tag: { kind: 'cfg', value: 'midStrategy.json' } },
+  ];
+  const confRows: Row[] =
+    kind === 'task' ? ([
+      { id: '1', k: '客群', v: (item as MidTask).crowd },
+      { id: '2', k: '频率', v: FREQ_LABEL[(item as MidTask).frequency] },
+      { id: '3', k: '输出方式', v: OUTPUT_LABEL[(item as MidTask).output] },
+      { id: '4', k: '状态', v: (item as MidTask).enabled ? '启用' : '停用' },
+      { id: '5', k: '说明', v: (item as MidTask).desc || '-' },
+    ] as unknown as Row[])
+    : kind === 'rule' ? ([
+      { id: '1', k: '监控指标', v: metricName((item as MidRule).metricId) },
+      { id: '2', k: '触发条件', v: `${OP_LABEL[(item as MidRule).op]} ${(item as MidRule).value}` },
+      { id: '3', k: '命中定级', v: LEVEL_META[(item as MidRule).level].label },
+      { id: '4', k: '说明', v: (item as MidRule).desc || '-' },
+    ] as unknown as Row[])
+    : ([
+      { id: '1', k: '触发等级', v: LEVEL_META[(item as MidDispose).triggerLevel].label },
+      { id: '2', k: '动作', v: (item as MidDispose).action },
+      { id: '3', k: '对接系统', v: (item as MidDispose).targetSystem || '-' },
+      { id: '4', k: '分派角色', v: (item as MidDispose).assignTo || '-' },
+      { id: '5', k: '需审批', v: (item as MidDispose).needApprove ? '是' : '否' },
+      { id: '6', k: '需触达客户', v: (item as MidDispose).needNotify ? '是' : '否' },
+      { id: '7', k: '说明', v: (item as MidDispose).desc || '-' },
+    ] as unknown as Row[]);
+
+  const metricIds = kind === 'task' ? (item as MidTask).metricIds : kind === 'rule' ? [(item as MidRule).metricId] : [];
+
   return (
-    <div style={{ padding: 24, maxWidth: 1180 }}>
-      <PageShell title={(item as any).name} crumb={`管理中心 / 贷中监控配置 / 监控策略 / ${kindLabel}`}
-        actions={<>
-          <Cfg label="读指标库" value="midMetrics.json" />
-          <Sam label="策略配置JSON" value="midStrategy.json" />
-          <Button size="sm" onClick={() => nav(`/console/cm:mid-strategy?edit=${id}&kind=${kind}`)}>编辑</Button>
-          <Button size="sm" variant="secondary" onClick={() => nav(-1)}>返回</Button>
-        </>} />
+    <ConfigDetailPage
+      title={(item as any).name}
+      crumbParts={['策略配置', kindLabel]}
+      actions={<>
+        <Cfg value="midMetrics.json" />
+        <Cfg value="midStrategy.json" />
+        <Button size="sm" onClick={() => nav(`/console/cm/mid-strategy?edit=${id}&kind=${kind}`)}>编辑</Button>
+        {kind === 'task' && (
+          <Button size="sm" variant={(item as MidTask).enabled ? 'secondary' : 'primary'} onClick={toggleEnabled}>
+            {(item as MidTask).enabled ? '停用' : '启用'}
+          </Button>
+        )}
+        <Button size="sm" variant="secondary" onClick={() => nav(-1)}>返回</Button>
+      </>}
+      infoCells={
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+          {kind === 'task' ? (
+            <>
+              <InfoCell label="类型" value="监控任务" />
+              <InfoCell label="状态" value={<Badge kind={(item as MidTask).enabled ? 'green' : 'red'}>{(item as MidTask).enabled ? '启用' : '停用'}</Badge>} />
+              <InfoCell label="客群" value={(item as MidTask).crowd} />
+              <InfoCell label="频率" value={FREQ_LABEL[(item as MidTask).frequency]} />
+              <InfoCell label="输出" value={OUTPUT_LABEL[(item as MidTask).output]} />
+            </>
+          ) : kind === 'rule' ? (
+            <>
+              <InfoCell label="类型" value="预警规则" />
+              <InfoCell label="命中定级" value={<Badge kind={LEVEL_META[(item as MidRule).level].badge}>{LEVEL_META[(item as MidRule).level].label}</Badge>} />
+              <InfoCell label="监控指标" value={metricName((item as MidRule).metricId)} />
+              <InfoCell label="触发条件" value={`${OP_LABEL[(item as MidRule).op]} ${(item as MidRule).value}`} />
+            </>
+          ) : (
+            <>
+              <InfoCell label="类型" value="处置策略" />
+              <InfoCell label="触发等级" value={<Badge kind={LEVEL_META[(item as MidDispose).triggerLevel].badge}>{LEVEL_META[(item as MidDispose).triggerLevel].label}</Badge>} />
+              <InfoCell label="动作" value={(item as MidDispose).action} />
+              <InfoCell label="对接系统" value={(item as MidDispose).targetSystem || '-'} />
+              <InfoCell label="分派角色" value={(item as MidDispose).assignTo || '-'} />
+            </>
+          )}
+        </div>
+      }
+    >
+      <Panel title="配置详情" desc={<Cfg value="midStrategy.json" />}>
+        <DataTable columns={confCols} rows={confRows} />
+      </Panel>
 
-      {kind === 'task' && <TaskView t={item as MidTask} metricName={metricName} />}
-      {kind === 'rule' && <RuleView r={item as MidRule} metricName={metricName} />}
-      {kind === 'dispose' && <DisposeView d={item as MidDispose} />}
-
-      <Panel title="联动预警" desc={<span><Sam label="实时" value={`${linkedAlerts.length} 条`} /> 当前已有预警命中该{ kind === 'rule' ? '规则定级' : '处置触发等级' }</span>}>
-        {linkedAlerts.length ? (
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            {linkedAlerts.slice(0, 12).map((a) => (
-              <Button key={a.alert_id} size="sm" variant="ghost" onClick={() => nav('/console/cr:mid-alert-detail?id=' + a.alert_id)}>{a.alert_id} · {a.cust_name}</Button>
+      {metricIds.length > 0 && (
+        <Panel title="关联指标" desc={<>监控内容来自指标库 <Cfg value="midMetrics.json" /></>}>
+          <div className="flex flex-wrap gap-2">
+            {metricIds.map((mid) => (
+              <Button key={mid} size="sm" variant="ghost" onClick={() => nav('/console/cm/mid-metric-detail?id=' + mid)}>{metricName(mid)}</Button>
             ))}
           </div>
-        ) : <div style={{ color: '#94A3B8', fontSize: 12 }}>暂无命中预警</div>}
-        <div style={{ marginTop: 10 }}>
-          <Button size="sm" variant="secondary" onClick={() => nav('/console/cr:mid-alert-workbench')}>前往预警工作台 →</Button>
-        </div>
-      </Panel>
-    </div>
-  );
+        </Panel>
+      )}
 
-  function TaskView({ t, metricName }: { t: MidTask; metricName: (id: string) => string }) {
-    const rows = [
-      ['客群', t.crowd], ['频率', FREQ_LABEL[t.frequency]], ['输出方式', OUTPUT_LABEL[t.output]],
-      ['状态', t.enabled ? '启用' : '停用'], ['说明', t.desc || '-'],
-    ];
-    return (
-      <Panel title="任务配置" desc="按客群周期扫描，关联指标并输出">
-        <Meta rows={rows} />
-        <div style={{ marginTop: 10, fontSize: 13, fontWeight: 500 }}>关联指标 <Cfg label="读指标库" value="midMetrics.json" /></div>
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 6 }}>
-          {t.metricIds.map((mid) => (
-            <Button key={mid} size="sm" variant="ghost" onClick={() => nav('/console/cm:mid-metric-detail?id=' + mid)}>{metricName(mid)}</Button>
-          ))}
-          {t.metricIds.length === 0 && <span style={{ color: '#94A3B8', fontSize: 12 }}>未关联指标</span>}
-        </div>
-      </Panel>
-    );
-  }
-
-  function RuleView({ r, metricName }: { r: MidRule; metricName: (id: string) => string }) {
-    return (
-      <Panel title="规则配置" desc="命中即定级红/黄灯">
-        <Meta rows={[['监控指标', metricName(r.metricId)], ['触发条件', `${OP_LABEL[r.op]} ${r.value}`], ['命中定级', LEVEL_META[r.level].label], ['说明', r.desc || '-']]} />
-        <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', background: '#F3F4F6', borderRadius: 8, fontSize: 12, color: '#6B7280' }}>
-          <Cal label="实时计算" /> 当「{metricName(r.metricId)}」{OP_LABEL[r.op as RuleOp]} {r.value} 时，自动定级为 <Badge kind={LEVEL_META[r.level].badge}>{LEVEL_META[r.level].label}</Badge>
-        </div>
-        <div style={{ marginTop: 8 }}>
-          <Button size="sm" variant="ghost" onClick={() => nav('/console/cm:mid-metric-detail?id=' + r.metricId)}>查看指标：{metricName(r.metricId)} →</Button>
-        </div>
-      </Panel>
-    );
-  }
-
-  function DisposeView({ d }: { d: MidDispose }) {
-    return (
-      <Panel title="处置策略配置" desc="按预警等级匹配动作，对接外部系统">
-        <Meta rows={[
-          ['触发等级', LEVEL_META[d.triggerLevel].label], ['动作', d.action], ['对接系统', d.targetSystem || '-'],
-          ['分派角色', d.assignTo || '-'], ['需审批', d.needApprove ? '是' : '否'], ['需触达客户', d.needNotify ? '是' : '否'], ['说明', d.desc || '-'],
-        ]} />
-      </Panel>
-    );
-  }
-
-  function Meta({ rows }: { rows: [string, string][] }) {
-    return (
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0,1fr))', gap: '6px 16px', fontSize: 13 }}>
-        {rows.map(([k, v]) => (
-          <div key={k} style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px dashed #F1F5F9', paddingBottom: 4 }}>
-            <span style={{ color: '#94A3B8' }}>{k}</span>
-            <span style={{ color: '#334155', fontWeight: 500 }}>{v}</span>
+      {kind === 'rule' && (
+        <Panel title="实时口径" desc={<span><Cal /></span>}>
+          <div className="flex items-center gap-2 rounded-lg bg-slate-100 px-3 py-2.5 text-xs text-slate-500">
+            当「{metricName((item as MidRule).metricId)}」{OP_LABEL[(item as MidRule).op]} {(item as MidRule).value} 时，自动定级为 <Badge kind={LEVEL_META[(item as MidRule).level].badge}>{LEVEL_META[(item as MidRule).level].label}</Badge>
           </div>
-        ))}
-      </div>
-    );
-  }
+        </Panel>
+      )}
+
+      <Panel title="联动预警" desc={<span><Sam value={`${linkedAlerts.length} 条`} /> 当前已有预警命中该{ kind === 'rule' ? '规则定级' : '处置触发等级' }</span>}>
+        {linkedAlerts.length ? (
+          <div className="flex flex-wrap gap-2">
+            {linkedAlerts.slice(0, 12).map((a) => (
+              <Button key={a.alert_id} size="sm" variant="ghost" onClick={() => nav('/console/cr/mid-alert-detail?id=' + a.alert_id)}>{a.alert_id} · {a.cust_name}</Button>
+            ))}
+          </div>
+        ) : <div className="rounded-lg bg-slate-50 px-3 py-6 text-center text-sm text-slate-400">暂无命中预警</div>}
+        <div className="mt-3">
+          <Button size="sm" variant="secondary" onClick={() => nav('/console/cr/mid-alert-workbench')}>前往预警工作台 →</Button>
+        </div>
+      </Panel>
+    </ConfigDetailPage>
+  );
 }

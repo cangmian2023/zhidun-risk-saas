@@ -66,7 +66,7 @@ export default function MidDisposeWorkbench() {
         }>
         <DataTable columns={cols} rows={rows} empty="无匹配工单"
           clickableKey="id"
-          onCellClick={(r) => nav('/console/cr:mid-dispose-detail?id=' + String(r.id))} />
+          onCellClick={(r) => nav('/console/cr/mid-dispose-detail?id=' + String(r.id))} />
       </Panel>
 
       <div style={{ marginTop: 10, fontSize: 11, color: '#94A3B8' }}>

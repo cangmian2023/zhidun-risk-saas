@@ -1,20 +1,18 @@
 // ④ 监控页面配置（管理中心 · 配置域）— 页面配置JSON 橘（规则4）；监控内容来自指标库 蓝
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Panel, DataTable, Modal, Button } from '../components/ui';
+import { Button } from '../components/ui';
 import type { Column, Row } from '../components/ui';
-import { Cfg, Sam, Cal } from './SourceTag';
-import { PageShell } from './PageShell';
+import { Cfg } from './SourceTag';
 import { useMidDashboards, updateDashboards, useMidMetrics, useMidDataSources, midNewId } from './midStore';
 import {
   type MidDashboardPage, type MidWidget, type WidgetType, type MidDataSource,
 } from './midData';
+import { ConfigListPage, WTYPE_LABEL } from './ConfigTemplate';
 
 const inp: React.CSSProperties = { padding: '6px 8px', borderRadius: 6, border: '1px solid #E2E8F0', fontSize: 12, width: '100%', background: '#fff' };
 const lbl: React.CSSProperties = { display: 'flex', flexDirection: 'column', gap: 4, fontSize: 12, color: '#475569', minWidth: 150 };
 const inpSm: React.CSSProperties = { padding: '4px 6px', borderRadius: 6, border: '1px solid #E2E8F0', fontSize: 12, width: '100%', background: '#fff' };
-
-const WTYPE_LABEL: Record<WidgetType, string> = { metric: '指标卡', line: '折线', bar: '柱状', donut: '环形', table: '明细表' };
 
 export default function MidDashboardConfig() {
   const dashboards = useMidDashboards();
@@ -48,8 +46,11 @@ export default function MidDashboardConfig() {
   const remove = (id: string) => updateDashboards((list) => list.filter((x) => x.id !== id));
 
   const cols: Column[] = [
-    { key: 'name', label: '页面名称' }, { key: 'group', label: '分组' }, { key: 'key', label: '路由key' },
-    { key: 'widgetCnt', label: '组件数' }, { key: 'enabled', label: '启用', type: 'badge' },
+    { key: 'name', label: '页面名称', tag: { kind: 'cfg', value: 'midDashboards.json.name' } },
+    { key: 'group', label: '分组', tag: { kind: 'cfg', value: 'midDashboards.json.group' } },
+    { key: 'key', label: '路由key', tag: { kind: 'cfg', value: 'midDashboards.json.key' } },
+    { key: 'widgetCnt', label: '组件数', tag: { kind: 'cfg', value: 'midDashboards.json.widgets' } },
+    { key: 'enabled', label: '启用', type: 'badge', tag: { kind: 'cfg', value: 'midDashboards.json.enabled' } },
   ];
   const rows: Row[] = dashboards.map((d) => ({
     id: d.id, name: d.name, group: d.group, key: d.key,
@@ -58,23 +59,27 @@ export default function MidDashboardConfig() {
   } as unknown as Row));
 
   return (
-    <div style={{ padding: 24, maxWidth: 1180 }}>
-      <PageShell title="监控页面配置" crumb="零售信贷风控 / 管理中心 / 贷中监控配置"
-        subtitle="配置监控看板页面与可视化组件，保存后由监控看板按配置渲染"
-        actions={<><Cfg label="读指标库" value="midMetrics.json" /><Sam label="页面配置JSON" value="midDashboards.json" /></>} />
-      <Panel title="看板页面" desc="页面 + 组件（指标卡 / 折线 / 柱状 / 环形 / 明细表）配置，引用指标库与数据源"
-        actions={<Button size="sm" onClick={openAdd}>新建页面</Button>}>
-        <DataTable columns={cols} rows={rows} clickableKey="name"
-          onCellClick={(r) => nav('/console/cm:mid-dashboard-detail?id=' + String(r.id))} />
-      </Panel>
-
-      <Modal open={open} onClose={() => setOpen(false)}
-        title={editing && dashboards.find((d) => d.id === editing.id) ? '编辑页面' : '新建页面'} width="max-w-4xl"
-        footer={<><Button onClick={save}>保存</Button><Button variant="secondary" onClick={() => setOpen(false)}>取消</Button></>}>
-        {editing && <Editor value={editing} metrics={metrics} sources={sources}
-          onChange={setEditing} onRemove={() => { if (editing) { remove(editing.id); setOpen(false); setEditing(null); } }} />}
-      </Modal>
-    </div>
+    <ConfigListPage
+      title="页面配置"
+      crumbPath="页面配置"
+      subtitle="配置监控看板页面与可视化组件，保存后由监控看板按配置渲染"
+      addLabel="新建页面"
+      onAdd={openAdd}
+      actions={<Cfg label="读指标库" value="midMetrics.json" />}
+      panelTitle="看板页面"
+      panelDesc="页面 + 组件（指标卡 / 折线 / 柱状 / 环形 / 明细表）配置，引用指标库与数据源"
+      columns={cols}
+      rows={rows}
+      onView={(r) => nav('/console/cm/mid-dashboard-detail?id=' + String(r.id))}
+      editOpen={open}
+      editTitle={editing && dashboards.find((d) => d.id === editing.id) ? '编辑页面' : '新建页面'}
+      onCloseEdit={() => setOpen(false)}
+      onSave={save}
+      modalWidth="max-w-4xl"
+    >
+      {editing && <Editor value={editing} metrics={metrics} sources={sources}
+        onChange={setEditing} onRemove={() => { if (editing) { remove(editing.id); setOpen(false); setEditing(null); } }} />}
+    </ConfigListPage>
   );
 }
 
@@ -111,7 +116,7 @@ function Editor({ value, metrics, sources, onChange, onRemove }: {
       {/* 组件列表 */}
       <div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-          <span style={{ fontSize: 13, fontWeight: 500 }}>可视化组件 <Cal label="实时计算" /></span>
+          <span style={{ fontSize: 13, fontWeight: 500 }}>可视化组件 <Cfg value="midDashboards.json.widgets" /></span>
           <Button size="sm" variant="secondary" onClick={addWidget}>添加组件</Button>
         </div>
         <div style={{ display: 'grid', gap: 10 }}>

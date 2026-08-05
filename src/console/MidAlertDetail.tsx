@@ -89,7 +89,7 @@ export default function MidAlertDetail() {
           </div>
         </div>
         <div style={{ marginTop: 10 }}>
-          <Button size="sm" variant="ghost" onClick={() => nav(`/console/cr:mid-cust-detail?cust=${a.cust_id}`)}>查看个体详情 →</Button>
+          <Button size="sm" variant="ghost" onClick={() => nav(`/console/cr/mid-cust-detail?cust=${a.cust_id}`)}>查看个体详情 →</Button>
         </div>
       </Panel>
 
@@ -119,7 +119,7 @@ export default function MidAlertDetail() {
         </div>
         {linkedTask && (
           <div style={{ marginTop: 8 }}>
-            <Button size="sm" variant="ghost" onClick={() => nav('/console/cr:mid-dispose-detail?id=' + linkedTask.id)}>查看关联工单 →</Button>
+            <Button size="sm" variant="ghost" onClick={() => nav('/console/cr/mid-dispose-detail?id=' + linkedTask.id)}>查看关联工单 →</Button>
           </div>
         )}
       </Panel>

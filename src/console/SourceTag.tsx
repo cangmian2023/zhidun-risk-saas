@@ -27,6 +27,9 @@ const KIND_META: Record<SourceKind, { label: string; bg: string; fg: string; bd:
 export function SourceTag({ kind, label, value }: { kind: SourceKind; label?: string; value?: ReactNode }) {
   if (!useShowSourceTags()) return null;
   const m = KIND_META[kind];
+  // 冗余去重：当 label 与大类默认名相同（如 "配置JSON"）时跳过，避免 "配置JSON·配置JSON"
+  const showLabel = label && label !== m.label ? `·${label}` : '';
+  const text = `${m.label}${showLabel}${value !== undefined ? `:${value}` : ''}`;
   return (
     <span
       style={{
@@ -35,9 +38,9 @@ export function SourceTag({ kind, label, value }: { kind: SourceKind; label?: st
         color: m.fg,
         border: `1px solid ${m.bd}`,
       }}
-      title={`数据来源：${m.label}${label ? ` · ${label}` : ''}`}
+      title={`数据来源：${m.label}${showLabel}`}
     >
-      {m.label}{label ? `·${label}` : ''}{value !== undefined ? `:${value}` : ''}
+      {text}
     </span>
   );
 }

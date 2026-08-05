@@ -39,6 +39,7 @@ import MidDataSourceDetail from './MidDataSourceDetail'
 import MidMetricDetail from './MidMetricDetail'
 import MidStrategyDetail from './MidStrategyDetail'
 import MidDashboardDetail from './MidDashboardDetail'
+import MidBizFlowConfig from './MidBizFlowConfig'
 import MidAlertDetail from './MidAlertDetail'
 import MidDisposeDetail from './MidDisposeDetail'
 import { getDashboardByKey } from './dashboardData'
@@ -287,6 +288,7 @@ export default function Console() {
     'cm:mid-metric': 'sliders',
     'cm:mid-strategy': 'work_flow',
     'cm:mid-dashboard-config': 'grid',
+    'cm:biz-flow': 'work_flow',
     // 贷中监控使用域（v3）
     'cr:mid-overview': 'chart',
     'cr:mid-alert-workbench': 'zoom',
@@ -511,6 +513,8 @@ export default function Console() {
               <MidStrategyConfig />
             ) : key === 'cm:mid-dashboard-config' ? (
               <MidDashboardConfig />
+            ) : key === 'cm:biz-flow' ? (
+              <MidBizFlowConfig />
             ) : key === 'cr:mid-overview' || key === 'cr:mid-alert' || key === 'cr:mid-crowd' ? (
               <MidDashboardPage pageKey={key} />
             ) : key === 'cr:mid-alert-workbench' ? (
