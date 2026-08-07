@@ -7,6 +7,7 @@ import { Sam } from './SourceTag';
 import { useMidDataSources, useMidMetrics } from './midStore';
 import type { MidConnConfig } from './midData';
 import { ConfigDetailPage, SRC_TYPE_LABEL } from './ConfigTemplate';
+import { PageShell } from './PageShell';
 
 const CONN_SQL: { key: keyof MidConnConfig; label: string; mask?: boolean }[] = [
   { key: 'dbType', label: '数据库类型' },
@@ -31,7 +32,7 @@ export default function MidDataSourceDetail() {
   if (!ds) {
     return (
       <div className="mx-auto max-w-6xl px-4 py-10 lg:px-8">
-        <PageShell title="数据源详情" crumb="零售信贷风控 / 管理中心 / 数据源管理" actions={<Button size="sm" variant="secondary" onClick={() => nav(-1)}>返回</Button>} />
+        <PageShell title="数据源详情" crumb="零售信贷风控 / 管理中心 / 数据源管理" actions={<Button size="sm" variant="secondary" onClick={() => nav('/console/cm/mid-data-source')}>返回列表</Button>} />
         <div className="mt-6 rounded-xl bg-slate-50 px-4 py-10 text-center text-sm text-slate-400">未找到该数据源（{id}）。</div>
       </div>
     );
@@ -50,7 +51,7 @@ export default function MidDataSourceDetail() {
       subtitle={ds.desc}
       actions={<>
         <Button size="sm" onClick={() => nav('/console/cm/mid-data-source?edit=' + ds.id)}>编辑</Button>
-        <Button size="sm" variant="secondary" onClick={() => nav(-1)}>返回</Button>
+        <Button size="sm" variant="secondary" onClick={() => nav('/console/cm/mid-data-source')}>返回列表</Button>
       </>}
       infoCells={
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">

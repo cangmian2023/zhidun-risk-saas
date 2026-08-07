@@ -13,22 +13,17 @@ import FlowCanvasEditor from './FlowCanvasEditor'
 import { CONFIG_CONTAINER, crumb } from './ConfigTemplate'
 import { Cfg } from './SourceTag'
 import { useFlows, addFlowItem, updateFlowItem, removeFlowItem, patchFlowItemGraphs, type FlowItem } from './flowStore'
-import { useTemplates } from './templateStore'
 import {
-  summarizeFlowGraph, buildDefaultFlowGraph, defaultButtonName, AUTO_RESULT_COLOR,
-  type FlowGraph, type AutoResult,
+  summarizeFlowGraph, buildDefaultFlowGraph, defaultButtonName,
+  type FlowGraph,
 } from './reportTemplateData'
 
 /* 可关联的业务页面（页面名称 + 路由地址）——列表页/详情页操作列均来自关联的业务流程 */
 const PAGES = [
-  { name: '信息核验·列表页', route: '/console/cr/pre-verify' },
-  { name: '信息核验·详情页', route: '/console/cr/pre-verify-detail' },
-  { name: '信用风控·列表页', route: '/console/cr/credit-kimi' },
-  { name: '信用风控·详情页', route: '/console/cr/credit-kimi-detail' },
-  { name: '欺诈识别·列表页', route: '/console/cr/pre-fraud' },
-  { name: '欺诈识别·详情页', route: '/console/cr/pre-fraud-detail' },
-  { name: '进件审核·列表页', route: '/console/cr/pre-report' },
-  { name: '进件审核·详情页', route: '/console/cr/pre-report-detail' },
+  { name: '信息核验', route: '/console/cr/pre-verify' },
+  { name: '信用风控', route: '/console/cr/credit-kimi' },
+  { name: '欺诈识别', route: '/console/cr/pre-fraud' },
+  { name: '进件审核', route: '/console/cr/pre-report' },
 ]
 const GRADES = [
   { grade: '', label: '全部（不分段）' },
@@ -42,7 +37,6 @@ const SEL = '#2563EB'
 const miniBtn: React.CSSProperties = { padding: '3px 10px', fontSize: 12, borderRadius: 6, cursor: 'pointer', background: '#fff', border: '1px solid #E5E7EB' }
 
 export default function MidBizFlowConfig() {
-  const templates = useTemplates()
   const flows = useFlows()
   // 视图：list = 业务流程列表；detail = 选中业务流程的流程列表
   const [view, setView] = useState<'list' | 'detail'>('list')
@@ -111,28 +105,24 @@ export default function MidBizFlowConfig() {
           actions={<Button variant="primary" onClick={() => setShowNew(true)}>＋ 新建业务流程</Button>}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
             <thead><tr style={{ background: '#F8FAFC' }}>
-              {['业务流程名称', '关联业务页面', '页面地址', '分段', '流程数', '操作'].map((h) => (
+              {['业务流程名称', '关联业务页面', '页面地址', '流程数', '操作'].map((h) => (
                 <th key={h} style={{ padding: '8px', fontSize: 12, fontWeight: 600, color: '#6B7280', textAlign: 'left', borderBottom: '1px solid #E5E7EB' }}>{h}</th>
               ))}
             </tr></thead>
             <tbody>
               {flows.length === 0 && (
-                <tr><td colSpan={6} style={{ padding: '24px', textAlign: 'center', color: '#9CA3AF', fontSize: 12 }}>暂无业务流程，点击右上角「＋ 新建业务流程」创建。</td></tr>
+                <tr><td colSpan={5} style={{ padding: '24px', textAlign: 'center', color: '#9CA3AF', fontSize: 12 }}>暂无业务流程，点击右上角「＋ 新建业务流程」创建。</td></tr>
               )}
               {flows.map((it) => {
                 const pm = pageMeta(it.pageRoute)
-                const gm = gradeMeta(it.gradeId)
                 return (
                   <tr key={it.id} style={{ borderTop: '1px solid #F1F5F9' }}>
                     <td style={{ padding: '8px', fontWeight: 600, color: '#111827' }}>{it.name}<Cfg f="flows[].name" v={it.name} /></td>
                     <td style={{ padding: '8px', color: '#374151' }}>{it.pageName ?? pm?.name ?? '—'}</td>
                     <td style={{ padding: '8px', fontFamily: 'monospace', fontSize: 12, color: '#6B7280' }}>{it.pageRoute ?? '—'}</td>
-                    <td style={{ padding: '8px' }}>
-                      <span style={{ fontSize: 11, padding: '1px 8px', borderRadius: 999, background: it.gradeId ? '#EFF6FF' : '#F1F5F9', color: it.gradeId ? '#1D4ED8' : '#6B7280' }}>{gm?.label ?? '全部'}</span>
-                    </td>
                     <td style={{ padding: '8px', color: '#6B7280' }}>{it.flowGraphs?.length ?? 0} 条</td>
                     <td style={{ padding: '8px', display: 'flex', gap: 6 }}>
-                      <button onClick={() => openDetail(it)} style={{ ...miniBtn, borderColor: SEL, color: SEL }}>进入</button>
+                      <button onClick={() => openDetail(it)} style={{ ...miniBtn, borderColor: SEL, color: SEL }}>查看</button>
                       <button onClick={() => { if (window.confirm(`删除业务流程「${it.name}」？`)) removeFlowItem(it.id) }}
                         style={{ ...miniBtn, borderColor: '#FCA5A5', color: '#DC2626' }}>删除</button>
                     </td>
@@ -143,7 +133,7 @@ export default function MidBizFlowConfig() {
           </table>
           <div style={{ marginTop: 10, fontSize: 12, color: '#6B7280', lineHeight: 1.7 }}>
             说明：业务流程独立于报告模板存储；运行时按「关联页面地址」把流程挂到该页面的操作列（列表页操作列 / 详情页按钮共用）。
-            每条流程 = 页面操作列的一个按钮，流程名称即按钮文案；分段用于区分不同得分落段的按钮（不选则所有行都显示）。
+            每条流程 = 页面操作列的一个按钮，流程名称即按钮文案；可按得分落段（A/B/C）区分按钮，不选则所有行都显示。
           </div>
         </Panel>
       ) : (

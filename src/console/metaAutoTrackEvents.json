@@ -1,0 +1,28 @@
+[
+ {
+  "id": "at_web",
+  "displayName": "点击_神策数据｜大数据分析与营_公司介绍_Web",
+  "platform": "Web",
+  "eventType": "点击事件",
+  "visible": "可见",
+  "match30": "-",
+  "lastVersion": "-",
+  "lastUpdater": "官网demo责任人",
+  "updatedAt": "2026-06-24 18:35",
+  "creator": "-",
+  "createdAt": "2023-04-28 14:54"
+ },
+ {
+  "id": "at_web",
+  "displayName": "浏览_神策数据｜大数据分析与营_Web",
+  "platform": "Web",
+  "eventType": "浏览事件",
+  "visible": "可见",
+  "match30": "-",
+  "lastVersion": "-",
+  "lastUpdater": "官网demo责任人",
+  "updatedAt": "2026-06-24 18:35",
+  "creator": "-",
+  "createdAt": "2023-04-28 11:57"
+ }
+]

@@ -86,18 +86,25 @@ export default function MidDashboardPage({ pageKey }: { pageKey: string }) {
   );
 }
 
-function WidgetView({ w, ds, metric, metrics, rows, onDrill, nav }: {
+export function WidgetView({ w, ds, metric, metrics, rows, onDrill, nav, onEdit, onDelete }: {
   w: MidWidget; ds?: MidDataSource; metric?: MidMetric; metrics: MidMetric[];
-  rows: Record<string, unknown>[]; onDrill: () => void; nav: (p: string) => void;
+  rows: Record<string, unknown>[]; onDrill: () => void; nav: (p: string) => void; onEdit?: () => void; onDelete?: () => void;
 }) {
-  if (!ds || !metric) return <Panel title={w.title}><div style={{ fontSize: 12, color: '#94A3B8' }}>配置缺失：数据集或指标未找到</div></Panel>;
+  const editAction = (
+    <div style={{ display: 'flex', gap: 6 }}>
+      {onEdit && <button type="button" onClick={onEdit} style={{ fontSize: 12, color: '#1D4ED8', background: 'none', border: '1px solid #C7D2FE', borderRadius: 6, padding: '2px 8px', cursor: 'pointer' }}>编辑</button>}
+      {onDelete && <button type="button" onClick={onDelete} style={{ fontSize: 12, color: '#B91C1C', background: 'none', border: '1px solid #FECACA', borderRadius: 6, padding: '2px 8px', cursor: 'pointer' }}>删除</button>}
+    </div>
+  );
+
+  if (!ds || !metric) return <Panel title={w.title} actions={editAction}><div style={{ fontSize: 12, color: '#94A3B8' }}>配置缺失：数据集或指标未找到</div></Panel>;
 
   const vals = resolveMetricsForRows(metrics, rows);
 
   if (w.type === 'metric') {
     const v = vals[w.metricId] ?? 0;
     return (
-      <Panel title={w.title}>
+      <Panel title={w.title} actions={editAction}>
         <StatCard label={metric.name} value={fmt(v, metric.precision, metric.unit)} accent="brand" />
       </Panel>
     );
@@ -120,13 +127,13 @@ function WidgetView({ w, ds, metric, metrics, rows, onDrill, nav }: {
 
   if (w.type === 'donut') {
     const data = groups.map((g) => ({ label: g.key, value: resolveMetricsForRows(metrics, g.rows)[w.metricId] ?? 0, color: colorOf(g.key) }));
-    return <Panel title={w.title}>{footer}<DonutChart data={data} centerLabel={metric.name} centerValue={fmt(vals[w.metricId] ?? 0, metric.precision, metric.unit)} height={220} /></Panel>;
+    return <Panel title={w.title} actions={editAction}>{footer}<DonutChart data={data} centerLabel={metric.name} centerValue={fmt(vals[w.metricId] ?? 0, metric.precision, metric.unit)} height={220} /></Panel>;
   }
   if (w.type === 'bar') {
-    return <Panel title={w.title}>{footer}<BarChart labels={labels} series={[{ name: metric.name, color: '#2563EB', data: seriesData }]} unit={metric.unit ?? ''} height={240} /></Panel>;
+    return <Panel title={w.title} actions={editAction}>{footer}<BarChart labels={labels} series={[{ name: metric.name, color: '#2563EB', data: seriesData }]} unit={metric.unit ?? ''} height={240} /></Panel>;
   }
   if (w.type === 'line') {
-    return <Panel title={w.title}>{footer}<LineChart labels={labels} series={[{ name: metric.name, color: '#2563EB', data: seriesData }]} unit={metric.unit ?? ''} height={240} /></Panel>;
+    return <Panel title={w.title} actions={editAction}>{footer}<LineChart labels={labels} series={[{ name: metric.name, color: '#2563EB', data: seriesData }]} unit={metric.unit ?? ''} height={240} /></Panel>;
   }
   // table
   const cols: Column[] = (w.dimensions ?? []).map((d) => {
@@ -141,8 +148,14 @@ function WidgetView({ w, ds, metric, metrics, rows, onDrill, nav }: {
     });
     return o as Row;
   });
+  const tableActions = (
+    <>
+      {drillable && <button type="button" onClick={onDrill} style={{ fontSize: 12, color: '#1D4ED8', background: 'none', border: 'none', cursor: 'pointer' }}>下钻 →</button>}
+      {editAction}
+    </>
+  );
   return (
-    <Panel title={w.title} actions={drillable ? <button type="button" onClick={onDrill} style={{ fontSize: 12, color: '#1D4ED8', background: 'none', border: 'none', cursor: 'pointer' }}>下钻 →</button> : undefined}>
+    <Panel title={w.title} actions={tableActions}>
       <DataTable columns={cols} rows={trows} clickableKey={w.dimensions?.[0]} onCellClick={(r) => { if (drillable && w.drill?.rowKey) { const raw = rows[Number(r.id)]; const cid = raw?.[w.drill.rowKey]; if (cid) nav(`/console/cr/mid-cust-detail?cust=${cid}`); } }} />
     </Panel>
   );

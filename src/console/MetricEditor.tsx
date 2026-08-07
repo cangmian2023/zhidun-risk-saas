@@ -1,10 +1,11 @@
-// 指标编辑器（内联，无弹窗）— 步骤化：选字段 → 筛选 → 计算 → 可视化
+// 指标编辑器（内联，无弹窗）— 三步：选择数据源 → SQL编辑器 → 可视化预览
 // 数据源/字段为 样例JSON 橘（midDataSources.json · 用户连接中台落本地）；实时计算 灰
-import { Button } from '../components/ui';
+import { useState } from 'react';
+import { Button, Badge } from '../components/ui';
 import { Sam, Cal } from './SourceTag';
 import {
-  type MidMetric, type MetricType, type AggOp, type MidDataSource, type MidMetricFilter, type MetricFilterOp, type VizSample,
-  AGG_LABEL, evalMetricFormula, computeMetricValue, resolveMetricsForRows, FILTER_OP_LABEL,
+  type MidMetric, type MetricType, type AggOp, type MidDataSource, type VizSample,
+  evalMetricFormula, computeMetricValue, resolveMetricsForRows,
 } from './midData';
 import { useMidVizSamples } from './midStore';
 import { MetricViz, type MetricVizType } from './MetricChart';
@@ -17,141 +18,208 @@ const card: React.CSSProperties = { border: '1px solid #E2E8F0', borderRadius: 1
 const cardHead: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 600, color: '#0F172A', marginBottom: 10 };
 const stepTag: React.CSSProperties = { background: '#2563EB', color: '#fff', borderRadius: 6, padding: '2px 8px', fontSize: 11, fontWeight: 600 };
 const hint: React.CSSProperties = { fontSize: 11, fontWeight: 400, color: '#94A3B8' };
-const warn: React.CSSProperties = { fontSize: 11, color: '#B45309', background: '#FFFBEB', border: '1px solid #FDE68A', borderRadius: 6, padding: '4px 8px', marginTop: 6 };
 const VIZ_LABEL: Record<MetricVizType, string> = { table: '表格', bar: '柱状图', line: '折线图', area: '面积图', pie: '饼状图', hbar: '条形图', burndown: '燃尽图', radar: '雷达图' };
 const VIZ_ORDER: MetricVizType[] = ['table', 'bar', 'hbar', 'line', 'area', 'pie', 'burndown', 'radar'];
 function vizBtn(active: boolean): React.CSSProperties {
   return { padding: '5px 12px', borderRadius: 6, fontSize: 12, border: `1px solid ${active ? '#2563EB' : '#E2E8F0'}`, background: active ? '#EFF6FF' : '#fff', color: active ? '#2563EB' : '#475569', cursor: 'pointer', fontWeight: active ? 600 : 400 };
 }
-function chip(on: boolean): React.CSSProperties {
-  return { padding: '4px 10px', borderRadius: 999, fontSize: 12, border: `1px solid ${on ? '#2563EB' : '#E2E8F0'}`, background: on ? '#EFF6FF' : '#fff', color: on ? '#2563EB' : '#64748B', cursor: 'pointer', fontWeight: on ? 600 : 400 };
+
+// 由结构化定义 + 关联生成可读 SQL（用作 SQL 编辑框的初始占位与提示）
+const SQL_AGG: Record<AggOp, string> = { sum: 'SUM', count: 'COUNT', avg: 'AVG', max: 'MAX', min: 'MIN', distinct: 'COUNT' };
+function buildSql(value: MidMetric, sources: MidDataSource[]): string {
+  const main = sources.find((s) => s.id === value.dataSourceId);
+  const from = main?.conn?.database || main?.name || 'table';
+  if (value.type === 'derived') {
+    const expr = value.formula?.trim() || 'm_指标A / m_指标B * 100';
+    let sql = `SELECT (${expr}) AS val\nFROM ${from}`;
+    for (const j of value.joins ?? []) {
+      const other = sources.find((s) => s.id === j.sourceId);
+      if (other) sql += `\nJOIN ${other.conn?.database || other.name} ON ${from}.${j.key} = ${(other.conn?.database || other.name)}.${j.key}`;
+    }
+    return sql;
+  }
+  const agg = value.agg ?? 'sum';
+  const field = value.field || 'field';
+  const measure = agg === 'distinct'
+    ? `COUNT(DISTINCT ${value.dedupField || value.field || 'field'})`
+    : agg === 'count' ? 'COUNT(*)' : `${SQL_AGG[agg]}(${field})`;
+  let sql = `SELECT ${measure} AS val\nFROM ${from}`;
+  for (const j of value.joins ?? []) {
+    const other = sources.find((s) => s.id === j.sourceId);
+    if (other) sql += `\nJOIN ${other.conn?.database || other.name} ON ${from}.${j.key} = ${(other.conn?.database || other.name)}.${j.key}`;
+  }
+  const conds = (value.filters ?? [])
+    .filter((f) => f.field && String(f.value) !== '')
+    .map((f) => `${f.field} = ${/^\d+(\.\d+)?$/.test(String(f.value)) ? f.value : `'${f.value}'`}`);
+  if (conds.length) sql += `\nWHERE ${conds.join(' AND ')}`;
+  if (value.groupBy?.length) sql += `\nGROUP BY ${value.groupBy.join(', ')}`;
+  return sql;
 }
 
-export function MetricEditor({ value, metrics, sources, onChange, onRemove }: {
+export function MetricEditor({ value, metrics, sources, onChange, onRemove, sourceViewSlot }: {
   value: MidMetric; metrics: MidMetric[]; sources: MidDataSource[];
-  onChange: (v: MidMetric) => void; onRemove?: () => void;
+  onChange: (v: MidMetric) => void; onRemove?: () => void; sourceViewSlot?: React.ReactNode;
 }) {
   const set = (p: Partial<MidMetric>) => onChange({ ...value, ...p });
-  const toggleGroupBy = (k: string) => {
-    const cur = value.groupBy ?? [];
-    set({ groupBy: cur.includes(k) ? cur.filter((x) => x !== k) : [...cur, k] });
-  };
-  const src = sources.find((s) => s.id === value.dataSourceId);
-  const allRows = sources.flatMap((s) => s.rows ?? []);
-  const ctx = resolveMetricsForRows(metrics, allRows); // 实时计算上下文（灰）
-  const preview = value.type === 'base'
-    ? computeMetricValue(value, src?.rows ?? [])
-    : evalMetricFormula(value.formula ?? '', ctx);
 
-  // 可视化预览数据：来自 midVizSamples.json（样例橘），不依赖指标配置
+  // 步骤 1 下拉选择器的本地状态：展开 / 搜索关键字
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [kw, setKw] = useState('');
+
+  // 步骤 1：已选数据源（多选）
+  const selIds = (value.dataSourceIds && value.dataSourceIds.length)
+    ? value.dataSourceIds
+    : (value.dataSourceId ? [value.dataSourceId] : []);
+  const toggleSource = (id: string) => {
+    const next = selIds.includes(id) ? selIds.filter((x) => x !== id) : [...selIds, id];
+    const nextPrimary = next.includes(value.dataSourceId) ? value.dataSourceId : next[0] ?? '';
+    set({ dataSourceIds: next, dataSourceId: nextPrimary });
+  };
+  // 主数据源（FROM）：默认已选中第一项，供步骤 1 卡片高亮与步骤 2 生成占位 SQL
+  const mainId = selIds.includes(value.dataSourceId) ? value.dataSourceId : (selIds[0] ?? '');
+  const generatedSql = buildSql(value, sources);
+
+  // 步骤 1 下拉：按业务域分组 + 关键字筛选
+  const kwLower = kw.trim().toLowerCase();
+  const filteredSrc = sources.filter((s) => {
+    if (!kwLower) return true;
+    const hay = `${s.name} ${s.desc ?? ''} ${s.category ?? ''}`.toLowerCase();
+    return hay.includes(kwLower);
+  });
+  const dsGroups = new Map<string, MidDataSource[]>();
+  for (const s of filteredSrc) {
+    const cat = s.category || '未分类';
+    if (!dsGroups.has(cat)) dsGroups.set(cat, []);
+    dsGroups.get(cat)!.push(s);
+  }
+  const CAT_ORDER = ['客户域', '预警域', '信贷域', '行为域', '外部数据'];
+  const orderedGroups = [...dsGroups.keys()].sort((a, b) => {
+    const ia = CAT_ORDER.indexOf(a); const ib = CAT_ORDER.indexOf(b);
+    return (ia < 0 ? 999 : ia) - (ib < 0 ? 999 : ib);
+  });
+
+  // 可视化预览数据
   const vizSamples = useMidVizSamples();
   const vizSample: VizSample | undefined = vizSamples.find((s) => s.id === value.vizSampleId) ?? vizSamples[0];
   const vizData = vizSample?.data ?? [];
   const vizUnit = vizSample?.unit ?? value.unit;
   const vizPrecision = vizSample?.precision ?? value.precision;
   const vizType: MetricVizType = value.vizType ?? 'bar';
-  const vizStep = value.type === 'base' ? 4 : 2;
 
   return (
     <div style={{ display: 'grid', gap: 14 }}>
-      {/* 基本信息 */}
+      {/* 基本信息（每个字段标注来源） */}
       <div style={card}>
         <div style={cardHead}>基本信息 <span style={hint}>指标的身份与展示</span> <Sam value="midMetrics.json" /></div>
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-          <label style={lbl}>指标名称<input style={inp} value={value.name} onChange={(e) => set({ name: e.target.value })} placeholder="如 在贷余额" /></label>
-          <label style={lbl}>分组<input style={inp} value={value.group ?? ''} onChange={(e) => set({ group: e.target.value })} placeholder="如 风险 / 预警" /></label>
-          <label style={lbl}>类型
+          <label style={lbl}>指标名称 <Sam value="midMetrics.json.name" /><input style={inp} value={value.name} onChange={(e) => set({ name: e.target.value })} placeholder="如 在贷余额" /></label>
+          <label style={lbl}>分组 <Sam value="midMetrics.json.group" /><input style={inp} value={value.group ?? ''} onChange={(e) => set({ group: e.target.value })} placeholder="如 风险 / 预警" /></label>
+          <label style={lbl}>类型 <Sam value="midMetrics.json.type" />
             <select style={inp} value={value.type} onChange={(e) => set({ type: e.target.value as MetricType })}>
               <option value="base">基础指标（统计字段）</option>
               <option value="derived">派生指标（公式）</option>
             </select>
           </label>
-          <label style={lbl}>单位<input style={inp} value={value.unit ?? ''} onChange={(e) => set({ unit: e.target.value })} placeholder="元 / % / 次" /></label>
-          <label style={lbl}>精度<input style={inp} type="number" value={value.precision ?? 0} onChange={(e) => set({ precision: Number(e.target.value) })} /></label>
+          <label style={lbl}>单位 <Sam value="midMetrics.json.unit" /><input style={inp} value={value.unit ?? ''} onChange={(e) => set({ unit: e.target.value })} placeholder="元 / % / 次" /></label>
+          <label style={lbl}>精度 <Sam value="midMetrics.json.precision" /><input style={inp} type="number" value={value.precision ?? 0} onChange={(e) => set({ precision: Number(e.target.value) })} /></label>
+          <label style={lbl}>描述 <Sam value="midMetrics.json.desc" /><input style={inp} value={value.desc ?? ''} onChange={(e) => set({ desc: e.target.value })} placeholder="指标的口径说明" /></label>
         </div>
       </div>
 
-      {value.type === 'base' ? (
-        <>
-          {/* 步骤 1 选字段 */}
-          <div style={card}>
-            <div style={cardHead}><span style={stepTag}>步骤 1</span> 选择字段 <span style={hint}>先选数据源，再选要统计的度量字段</span></div>
-            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-              <label style={lbl}>数据源（字段来源） <Sam value="midDataSources.json" />
-                <select style={inp} value={value.dataSourceId} onChange={(e) => set({ dataSourceId: e.target.value, field: '' })}>
-                  {sources.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-                </select>
-              </label>
-              <label style={lbl}>度量字段 <Sam value="midMetrics.json.field" />
-                <select style={inp} value={value.field ?? ''} onChange={(e) => set({ field: e.target.value })}>
-                  <option value="">— 选择字段 —</option>
-                  {(src?.fields.filter((f) => f.kind === 'measure') ?? []).map((f) => <option key={f.key} value={f.key}>{f.label}</option>)}
-                </select>
-              </label>
-            </div>
-            {!src && <div style={warn}>请先选择数据源</div>}
-            {src && !src.fields.some((f) => f.kind === 'measure') && <div style={warn}>该数据源没有可用的度量字段</div>}
-          </div>
+      {/* 步骤 1：选择数据源（下拉选择 + 分类分组 + 搜索筛选；已选卡片展示详情与字段） */}
+      <div style={card}>
+        <div style={cardHead}><span style={stepTag}>步骤 1</span> 选择数据源 <Sam value="midDataSources.json" /> <span style={hint}>可多选，来自数据源管理页配置</span>{sourceViewSlot && <span style={{ marginLeft: 'auto' }}>{sourceViewSlot}</span>}</div>
 
-          {/* 步骤 2 筛选 */}
-          <div style={card}>
-            <div style={cardHead}><span style={stepTag}>步骤 2</span> 筛选条件 <span style={hint}>统计前按维度过滤样例行（可多条；留空=不过滤）</span> <Sam value="midMetrics.json.filters" /></div>
-            <FilterEditor value={value} src={src} setFilters={(nf) => set({ filters: nf })} />
-          </div>
-
-          {/* 步骤 3 计算 */}
-          <div style={card}>
-            <div style={cardHead}><span style={stepTag}>步骤 3</span> 计算方式 <span style={hint}>聚合方式，或写多字段表达式</span></div>
-            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-              <label style={lbl}>聚合方式 <Sam value="midMetrics.json.agg" />
-                <select style={inp} value={value.agg ?? 'sum'} onChange={(e) => set({ agg: e.target.value as AggOp })}>
-                  {(Object.keys(AGG_LABEL) as AggOp[]).map((k) => <option key={k} value={k}>{AGG_LABEL[k]}</option>)}
-                </select>
-              </label>
-              {value.agg === 'distinct' && (
-                <label style={lbl}>去重字段 <Sam value="midMetrics.json.dedupField" />
-                  <select style={inp} value={value.dedupField ?? value.field ?? ''} onChange={(e) => set({ dedupField: e.target.value })}>
-                    <option value="">— 同度量字段 —</option>
-                    {(src?.fields ?? []).map((f) => <option key={f.key} value={f.key}>{f.label}</option>)}
-                  </select>
-                </label>
-              )}
-            </div>
-
-            {/* 分组维度（可视化用） */}
-            <div style={{ ...lbl, minWidth: '100%', marginTop: 10 }}>
-              分组维度（可选·用于可视化按维度分布） <Sam value="midMetrics.json.groupBy" />
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 4 }}>
-                {(src?.fields.filter((f) => f.kind === 'dim') ?? []).map((f) => (
-                  <button key={f.key} type="button" onClick={() => toggleGroupBy(f.key)} style={chip((value.groupBy ?? []).includes(f.key))}>{f.label}</button>
+        <div style={{ position: 'relative', display: 'inline-block' }}>
+          <button type="button" onClick={() => { setPickerOpen((v) => !v); setKw(''); }}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 8, border: '1px solid #2563EB', background: '#EFF6FF', color: '#2563EB', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+            + 添加数据源{selIds.length > 0 && <span style={{ background: '#2563EB', color: '#fff', borderRadius: 999, padding: '0 6px', fontSize: 11 }}>{selIds.length}</span>}
+          </button>
+          {pickerOpen && (
+            <>
+              <div style={{ position: 'fixed', inset: 0, zIndex: 40 }} onClick={() => setPickerOpen(false)} />
+              <div style={{ position: 'absolute', top: 'calc(100% + 6px)', left: 0, zIndex: 50, width: 340, maxHeight: 340, overflowY: 'auto', background: '#fff', border: '1px solid #E2E8F0', borderRadius: 10, boxShadow: '0 8px 24px rgba(15,23,42,.12)', padding: 8 }}>
+                <input autoFocus style={{ ...inp, marginBottom: 8 }} placeholder="🔍 搜索名称 / 描述 / 分类" value={kw} onChange={(e) => setKw(e.target.value)} />
+                {orderedGroups.length === 0 && <div style={{ fontSize: 12, color: '#94A3B8', padding: '8px 4px' }}>无匹配数据源</div>}
+                {orderedGroups.map((cat) => (
+                  <div key={cat}>
+                    <div style={{ fontSize: 11, fontWeight: 600, color: '#94A3B8', padding: '8px 4px 4px' }}>{cat}</div>
+                    {dsGroups.get(cat)!.map((s) => {
+                      const on = selIds.includes(s.id);
+                      return (
+                        <div key={s.id} onClick={() => toggleSource(s.id)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 8px', borderRadius: 6, cursor: 'pointer', background: on ? '#EFF6FF' : 'transparent', border: on ? '1px solid #BFDBFE' : '1px solid transparent' }}>
+                          <span style={{ width: 16, height: 16, borderRadius: 4, border: `1px solid ${on ? '#2563EB' : '#CBD5E1'}`, background: on ? '#2563EB' : '#fff', color: '#fff', fontSize: 10, lineHeight: '14px', textAlign: 'center' }}>{on ? '✓' : ''}</span>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontSize: 13, color: '#0F172A' }}>{s.name}</div>
+                            <div style={{ fontSize: 11, color: '#94A3B8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.desc ?? ''}</div>
+                          </div>
+                          <Badge kind="slate">{s.type}</Badge>
+                          <span style={{ fontSize: 12, color: on ? '#2563EB' : '#64748B', fontWeight: on ? 600 : 400 }}>{on ? '已选' : '＋加入'}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
                 ))}
               </div>
-            </div>
-            {!src && <div style={warn}>请先在「步骤 1」选择数据源后再设分组维度</div>}
-            {src && !src.fields.some((f) => f.kind === 'dim') && <div style={warn}>该数据源没有维度字段，无法按维度分组（预览将显示整体值）</div>}
-
-            <label style={{ ...lbl, minWidth: '100%', marginTop: 10 }}>
-              多字段计算（可选·引用源字段 key，如 loan_balance/credit_line*100）<Sam value="midDataSources.json" />
-              <input style={{ ...inp, fontFamily: 'monospace' }} value={value.expr ?? ''} placeholder="留空则直接用上方度量字段做聚合"
-                onChange={(e) => set({ expr: e.target.value })} />
-              <span style={{ fontSize: 11, color: '#94A3B8', marginTop: 2 }}>填写后将替代上方「聚合方式」，单独用于计算</span>
-            </label>
-          </div>
-        </>
-      ) : (
-        <div style={card}>
-          <div style={cardHead}><span style={stepTag}>步骤 1</span> 定义公式 <span style={hint}>引用其它指标算派生值</span></div>
-          <input style={{ ...inp, fontFamily: 'monospace' }} value={value.formula ?? ''} placeholder="例如 m_overdue_amt / m_loan_balance * 100"
-            onChange={(e) => set({ formula: e.target.value })} />
-          <p style={{ fontSize: 11, color: '#94A3B8', marginTop: 4 }}>
-            引用方式：<code>m_指标ID</code>，支持 + - * / 与括号；可用 ratio(a,b) 表示 a/b*100。
-          </p>
+            </>
+          )}
         </div>
-      )}
 
-      {/* 可视化 */}
+        {/* 已选详情 */}
+        <div style={{ display: 'grid', gap: 8, marginTop: 10 }}>
+          {selIds.map((id) => {
+            const s = sources.find((x) => x.id === id); if (!s) return null;
+            const m = s.fields.filter((f) => f.kind === 'measure');
+            const d = s.fields.filter((f) => f.kind === 'dim');
+            const isPrimary = id === mainId;
+            return (
+              <div key={id} style={{ border: '1px solid #EEF2F7', borderRadius: 8, padding: '10px 12px', background: isPrimary ? '#F8FAFF' : '#FBFCFE' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <strong style={{ fontSize: 13, color: '#0F172A' }}>{s.name}</strong>
+                  <Badge kind="slate">{s.category ?? '未分类'}</Badge>
+                  {isPrimary && <Badge kind="blue">主源 · FROM</Badge>}
+                  <button type="button" onClick={() => toggleSource(id)} style={{ marginLeft: 'auto', border: 'none', background: 'transparent', color: '#94A3B8', cursor: 'pointer', fontSize: 14 }}>✕</button>
+                </div>
+                <div style={{ fontSize: 11, color: '#64748B', marginTop: 5 }}>
+                  库：{s.conn?.database ?? '-'}　·　主机：{s.conn?.host ?? '-'}　·　端口：{s.conn?.port ?? '-'}　·　用户：{s.conn?.username ?? '-'}
+                </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginTop: 6 }}>
+                  {m.map((f) => <span key={f.key} style={{ fontSize: 11, padding: '1px 7px', borderRadius: 5, background: '#EFF6FF', color: '#2563EB' }}>{f.label}<span style={{ color: '#94A3B8' }}>·度量</span></span>)}
+                  {d.map((f) => <span key={f.key} style={{ fontSize: 11, padding: '1px 7px', borderRadius: 5, background: '#F1F5F9', color: '#475569' }}>{f.label}<span style={{ color: '#94A3B8' }}>·维度</span></span>)}
+                  {!s.fields.length && <span style={{ fontSize: 11, color: '#94A3B8' }}>该数据源暂无字段</span>}
+                </div>
+              </div>
+            );
+          })}
+          {!selIds.length && <span style={{ fontSize: 12, color: '#94A3B8' }}>尚未选择数据源，点「+ 添加数据源」选择。步骤 2 的字段选项依赖所选数据源。</span>}
+        </div>
+      </div>
+
+      {/* 步骤 2：SQL 编辑器（仅 SQL 语句） */}
       <div style={card}>
-        <div style={cardHead}><span style={stepTag}>步骤 {vizStep}</span> 可视化预览 <Sam value="midVizSamples.json" /> <span style={hint}>样例数据 · 选图表类型查看效果</span></div>
+        <div style={cardHead}><span style={stepTag}>步骤 2</span> SQL编辑器 <Sam value="midMetrics.json.sql" /> <span style={hint}>直接编写 SQL 定义取数逻辑</span></div>
+        <textarea style={{ ...inp, minHeight: 160, fontFamily: 'ui-monospace, monospace', resize: 'vertical', whiteSpace: 'pre' }} value={value.sql ?? ''}
+          placeholder={generatedSql} onChange={(e) => set({ sql: e.target.value })} />
+        <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 6 }}>SELECT 结果需返回单列 <code>val</code>，作为该指标实时值；保存后由调度任务执行。</div>
+
+        {/* 已选数据源字段提示（极简弱化，仅一行浅灰小字） */}
+        {selIds.length > 0 && (
+          <div style={{ marginTop: 8, fontSize: 11, color: '#9AA7B8', lineHeight: 1.8 }}>
+            <span style={{ color: '#94A3B8' }}>参考字段（来自已选数据源）：</span>
+            {selIds.flatMap((id) => {
+              const s = sources.find((x) => x.id === id); if (!s) return [];
+              const lib = s.conn?.database ?? s.name;
+              return s.fields.map((f) => ({ tok: `${lib}.${f.key}`, label: f.label }));
+            }).map((it, i) => (
+              <span key={i} style={{ marginLeft: 6, fontFamily: 'ui-monospace, monospace', color: '#AEB9C9' }}>{it.tok}<span style={{ color: '#CDD6E0', marginLeft: 2 }}>{it.label}</span></span>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* 步骤 3：可视化预览（保持现状） */}
+      <div style={card}>
+        <div style={cardHead}><span style={stepTag}>步骤 3</span> 可视化预览 <Sam value="midVizSamples.json" /> <span style={hint}>样例数据 · 选图表类型查看效果</span></div>
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 10, alignItems: 'flex-end' }}>
           <label style={{ ...lbl, minWidth: 220 }}>
             样例数据集 <Sam value="midVizSamples.json" />
@@ -168,42 +236,37 @@ export function MetricEditor({ value, metrics, sources, onChange, onRemove }: {
         <MetricViz data={vizData} type={vizType} unit={vizUnit} precision={vizPrecision} />
       </div>
 
-      {/* 实时值 */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', background: '#F3F4F6', borderRadius: 8 }}>
-        <Cal label="实时计算" />
-        <span style={{ fontSize: 12, color: '#6B7280' }}>当前样例值：</span>
-        <strong style={{ fontSize: 16, color: '#374151' }}>{fmt(preview, value.precision, value.unit)}</strong>
-      </div>
+      {/* 实时值（基于主源样例数据计算，作为量级参考） */}
+      <RealtimeCard value={value} sources={sources} metrics={metrics} />
 
       {onRemove && value.id && <Button variant="ghost" size="sm" onClick={onRemove}>删除该指标</Button>}
     </div>
   );
 }
 
-function FilterEditor({ value, src, setFilters }: { value: MidMetric; src?: MidDataSource; setFilters: (nf: MidMetricFilter[]) => void }) {
-  const filters = value.filters ?? [];
+// 实时值（基于主源样例数据计算；跨源字段不计入实时）
+function RealtimeCard({ value, sources, metrics }: { value: MidMetric; sources: MidDataSource[]; metrics: MidMetric[] }) {
+  const mainSrc = sources.find((s) => s.id === value.dataSourceId);
+  const mainKeys = new Set((mainSrc?.fields ?? []).map((f) => f.key));
+  const rtFilters = (value.filters ?? []).filter((f) => mainKeys.has(f.field));
+  let preview: number | string; let crossNote = '';
+  if (value.type === 'base') {
+    const cross = !!value.field && !mainKeys.has(value.field);
+    const v = computeMetricValue({ ...value, filters: rtFilters }, mainSrc?.rows ?? []);
+    preview = Number.isFinite(v) ? v : '—';
+    if (cross) crossNote = '度量字段来自关联源，实时值仅按主源近似';
+  } else {
+    const ctx = resolveMetricsForRows(metrics, mainSrc?.rows ?? []);
+    const v = evalMetricFormula(value.formula ?? '', ctx);
+    preview = (v == null || !Number.isFinite(v)) ? '—' : v;
+  }
   return (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-        <span style={{ fontSize: 12, color: '#475569' }}>已设 {filters.length} 条</span>
-        <Button size="sm" variant="ghost" onClick={() => setFilters([...filters, { field: src?.fields[0]?.key ?? '', op: 'eq', value: '' }])}>+ 添加筛选</Button>
-      </div>
-      <div style={{ display: 'grid', gap: 6 }}>
-        {filters.map((f, i) => (
-          <div key={i} style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-            <select style={{ ...inp, flex: '0 0 140px' }} value={f.field} onChange={(e) => { const nf = [...filters]; nf[i] = { ...f, field: e.target.value }; setFilters(nf); }}>
-              <option value="">— 字段 —</option>
-              {(src?.fields ?? []).map((x) => <option key={x.key} value={x.key}>{x.label}</option>)}
-            </select>
-            <select style={{ ...inp, flex: '0 0 90px' }} value={f.op} onChange={(e) => { const nf = [...filters]; nf[i] = { ...f, op: e.target.value as MetricFilterOp }; setFilters(nf); }}>
-              {(Object.keys(FILTER_OP_LABEL) as MetricFilterOp[]).map((o) => <option key={o} value={o}>{FILTER_OP_LABEL[o]}</option>)}
-            </select>
-            <input style={{ ...inp, flex: 1 }} value={f.value} placeholder="值" onChange={(e) => { const nf = [...filters]; nf[i] = { ...f, value: e.target.value }; setFilters(nf); }} />
-            <Button size="sm" variant="ghost" onClick={() => setFilters(filters.filter((_, j) => j !== i))}>✕</Button>
-          </div>
-        ))}
-        {!filters.length && <span style={{ fontSize: 11, color: '#94A3B8' }}>无筛选，聚合全部样例行</span>}
-      </div>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', background: '#F3F4F6', borderRadius: 8 }}>
+      <Cal label="实时计算" />
+      <span style={{ fontSize: 12, color: '#6B7280' }}>当前样例值：</span>
+      <strong style={{ fontSize: 16, color: '#374151' }}>{typeof preview === 'number' ? fmt(preview, value.precision, value.unit) : preview}</strong>
+      <span style={{ fontSize: 11, color: '#94A3B8', marginLeft: 6 }}>(指标取数由 SQL 脚本执行，以下为样例数据参考值)</span>
+      {crossNote && <span style={{ fontSize: 11, color: '#B45309', marginLeft: 6 }}>· {crossNote}</span>}
     </div>
   );
 }

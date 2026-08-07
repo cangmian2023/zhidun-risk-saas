@@ -200,20 +200,40 @@ export const dmMenu: MenuGroup[] = [
  * ========================================================== */
 export const cmMenu: MenuGroup[] = [
   {
+    group: '行为分析',
+    items: [
+      { label: '事件分析', key: 'cm:event-analysis', keep: true, desc: '按事件指标、全局筛选与分组维度查询行为数据，支持折线/柱状/堆叠/环形图与明细表导出' },
+    ],
+  },
+  {
+    group: '元数据管理',
+    items: [
+      { label: '元事件', key: 'cm:meta-event', keep: true, desc: '管理已采集事件的元定义：显示名、显示状态、是否接收、埋点平台与触发时机' },
+      { label: '事件属性', key: 'cm:meta-event-prop', keep: true, desc: '管理事件上报时携带的属性字段：数据类型、字典、显示状态与关联事件' },
+      { label: '用户属性', key: 'cm:meta-user-prop', keep: true, desc: '管理用户维度的属性字段：数据类型、字典、显示状态与取值说明' },
+      { label: '维度表', key: 'cm:meta-dim-table', keep: true, desc: '管理用于关联分析的维度表及其字段结构' },
+      { label: '物品属性', key: 'cm:meta-item-prop', keep: true, desc: '管理物品维度的属性字段：物品类型、数据类型与显示状态' },
+      { label: '虚拟属性', key: 'cm:meta-virtual-prop', keep: true, desc: '基于 SQL 表达式派生的属性，查询时实时计算' },
+      { label: '虚拟事件', key: 'cm:meta-virtual-event', keep: true, desc: '组合多个事件与筛选条件形成的复合事件' },
+      { label: '可视化全埋点事件', key: 'cm:meta-auto-track', keep: true, desc: '通过可视化圈选生成的埋点事件及其匹配规则' },
+    ],
+  },
+  {
     group: '规则集合',
     items: [
       { label: '核验规则', key: 'cm:pre-verify-config', keep: true },
       { label: '反欺诈规则库', key: 'cm:fraud-rules', desc: '管理反欺诈规则，配置规则权重、命中条件、处置建议' },
       { label: '黑名单管理', key: 'cm:fraud-blacklist', desc: '管理手机号、设备指纹、身份证号、银行卡黑名单' },
       { label: '团伙库管理', key: 'cm:fraud-gang', desc: '管理已知欺诈团伙信息、团伙成员、团伙特征' },
-      { label: '预警规则', key: 'cm:mid-alert-config', desc: '配置红灯/黄灯预警的触发条件、阈值、通知方式' },
-      { label: '处置策略', key: 'cm:mid-dispose-strategy', desc: '配置自动处置策略（如自动降额、自动冻结）' },
     ],
   },
   { group: '报告模板', items: [{ label: '报告模板', key: 'cm:report-template', desc: '统一管理信息核验 / 信用风控 / 欺诈识别 / 决策报告四类报告的展示模板、评分等级、结论与导出样式' }] },
   { group: '数据源管理', items: [{ label: '数据源管理', key: 'cm:mid-data-source', keep: true, desc: '对接多种数据源，为指标库提供字段与样例数据' }] },
   { group: '指标库', items: [{ label: '指标库', key: 'cm:mid-metric', keep: true, desc: '定义可复用指标（基础 + 派生公式），被监控策略、看板组件引用' }] },
-  { group: '策略配置', items: [{ label: '策略配置', key: 'cm:mid-strategy', keep: true, desc: '监控任务 / 预警规则 / 红黄灯定级 / 处置策略（内容来自指标库）' }] },
+  { group: '策略配置', items: [
+    { label: '监控任务', key: 'cm:mid-strategy', keep: true, desc: '配置监控任务（对谁、何时、算哪些指标）；预警规则在任务详情中配置' },
+    { label: '处置策略', key: 'cm:mid-dispose-strategy', keep: true, desc: '配置自动处置策略（如自动降额、自动冻结），按预警等级路由' },
+  ] },
   { group: '页面配置', items: [{ label: '页面配置', key: 'cm:mid-dashboard-config', keep: true, desc: '配置监控看板页面与可视化组件，保存后由监控看板渲染' }] },
   { group: '业务流程', items: [{ label: '业务流程配置', key: 'cm:biz-flow', keep: true, desc: '按业务域配置审核操作流程（画布编辑节点与流转），实时生效于对应审核页操作按钮' }] },
 ]

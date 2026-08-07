@@ -1,0 +1,22 @@
+[
+ {
+  "id": "dt_items",
+  "name": "items",
+  "displayName": "items",
+  "fields": [
+   {
+    "name": "$is_valid",
+    "dataType": "BOOL"
+   },
+   {
+    "name": "$receive_time",
+    "dataType": "NUMBER"
+   },
+   {
+    "name": "$update_time",
+    "dataType": "NUMBER"
+   }
+  ],
+  "updatedAt": "2026-06-24 18:35"
+ }
+]

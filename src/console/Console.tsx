@@ -21,7 +21,8 @@ import MidDashboardPage from './MidDashboardPage'
 import DashboardConfig from './DashboardConfig'
 import MidDataSourceConfig from './MidDataSourceConfig'
 import MidMetricConfig from './MidMetricConfig'
-import MidStrategyConfig from './MidStrategyConfig'
+import MidMonitorConfig from './MidMonitorConfig'
+import MidDisposeConfig from './MidDisposeConfig'
 import MidDashboardConfig from './MidDashboardConfig'
 import MidAlertWorkbench from './MidAlertWorkbench'
 import MidCustDetail from './MidCustDetail'
@@ -33,6 +34,15 @@ import MidDashboardDetail from './MidDashboardDetail'
 import MidBizFlowConfig from './MidBizFlowConfig'
 import MidAlertDetail from './MidAlertDetail'
 import MidDisposeDetail from './MidDisposeDetail'
+import MetaEventConfig from './MetaEventConfig'
+import MetaEventPropConfig from './MetaEventPropConfig'
+import MetaUserPropConfig from './MetaUserPropConfig'
+import MetaDimTableConfig from './MetaDimTableConfig'
+import MetaItemPropConfig from './MetaItemPropConfig'
+import MetaVirtualPropConfig from './MetaVirtualPropConfig'
+import MetaVirtualEventConfig from './MetaVirtualEventConfig'
+import MetaAutoTrackConfig from './MetaAutoTrackConfig'
+import EventAnalysis from './EventAnalysis'
 import { getDashboardByKey } from './dashboardData'
 import { creditRiskMenu, scoringMenu, entMenu, dmMenu, cmMenu, type MenuGroup } from './menus'
 import SidebarMenu from './SidebarMenu'
@@ -146,7 +156,6 @@ export default function Console() {
     'cr:mid-task-config': 'settings',
     'cr:mid-task-log': 'clock',
     'cr:mid-alert': 'bell',
-    'cr:mid-alert-config': 'zoom',
     'cr:mid-crowd': 'chart',
     'cr:mid-crowd-single': 'flag',
     'cr:mid-crowd-trend': 'trend',
@@ -254,13 +263,23 @@ export default function Console() {
     'cm:help-doc': 'report',
     'cm:help-faq': 'flag',
     'cm:help-service': 'bell',
+    // 行为分析
+    'cm:event-analysis': 'analytics',
+    // 元数据管理（对齐神策元数据管理）
+    'cm:meta-event': 'pulse',
+    'cm:meta-event-prop': 'braces',
+    'cm:meta-user-prop': 'id',
+    'cm:meta-dim-table': 'database',
+    'cm:meta-item-prop': 'cube',
+    'cm:meta-virtual-prop': 'code',
+    'cm:meta-virtual-event': 'layers',
+    'cm:meta-auto-track': 'eye',
     // 管理中心（原公共模块）：由零售信贷风控迁入的「公共配置」
     'cm:pre-application': 'audit',
     'cm:pre-verify-config': 'filter',
     'cm:fraud-rules': 'layers',
     'cm:fraud-blacklist': 'plug',
     'cm:fraud-gang': 'link',
-    'cm:mid-alert-config': 'zoom',
     'cm:mid-dispose-strategy': 'work_flow',
     'cm:credit-kimi-config': 'sliders',
     'cm:report-template': 'stack',
@@ -477,11 +496,31 @@ export default function Console() {
             ) : key === 'cm:mid-metric' ? (
               <MidMetricConfig />
             ) : key === 'cm:mid-strategy' ? (
-              <MidStrategyConfig />
+              <MidMonitorConfig />
             ) : key === 'cm:mid-dashboard-config' ? (
               <MidDashboardConfig />
             ) : key === 'cm:biz-flow' ? (
               <MidBizFlowConfig />
+            ) : key === 'cm:mid-dispose-strategy' ? (
+              <MidDisposeConfig />
+            ) : key === 'cm:event-analysis' ? (
+              <EventAnalysis />
+            ) : key === 'cm:meta-event' ? (
+              <MetaEventConfig />
+            ) : key === 'cm:meta-event-prop' ? (
+              <MetaEventPropConfig />
+            ) : key === 'cm:meta-user-prop' ? (
+              <MetaUserPropConfig />
+            ) : key === 'cm:meta-dim-table' ? (
+              <MetaDimTableConfig />
+            ) : key === 'cm:meta-item-prop' ? (
+              <MetaItemPropConfig />
+            ) : key === 'cm:meta-virtual-prop' ? (
+              <MetaVirtualPropConfig />
+            ) : key === 'cm:meta-virtual-event' ? (
+              <MetaVirtualEventConfig />
+            ) : key === 'cm:meta-auto-track' ? (
+              <MetaAutoTrackConfig />
             ) : key === 'cr:mid-overview' || key === 'cr:mid-alert' || key === 'cr:mid-crowd' ? (
               <MidDashboardPage pageKey={key} />
             ) : key === 'cr:mid-alert-workbench' ? (

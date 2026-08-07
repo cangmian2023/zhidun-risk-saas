@@ -1,0 +1,3 @@
+@-webkit-keyframes loadingCircle{to{-webkit-transform:rotate(360deg);transform:rotate(360deg)}}@keyframes loadingCircle{to{-webkit-transform:rotate(360deg);transform:rotate(360deg)}}.sensorsd-icon{display:inline-block;color:inherit;font-style:normal;line-height:0;text-align:center;text-transform:none;vertical-align:-.125em;text-rendering:optimizeLegibility;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}.sensorsd-icon.sensorsd-icon-spin{display:inline-block;-webkit-animation:loadingcircle 1s infinite linear;animation:loadingCircle 1s infinite linear}
+
+/*# sourceMappingURL=src_fragments_historyPage.ede02225.css.map*/

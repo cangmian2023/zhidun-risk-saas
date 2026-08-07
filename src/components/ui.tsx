@@ -300,6 +300,9 @@ export function DataTable({
   clickableKey,
   onCellClick,
   actions,
+  pager = false,
+  defaultPageSize = 20,
+  pageSizeOptions = [10, 20, 50, 100],
 }: {
   columns: Column[]
   rows: Row[]
@@ -307,71 +310,108 @@ export function DataTable({
   clickableKey?: string
   onCellClick?: (row: Row) => void
   actions?: (row: Row) => ReactNode
+  pager?: boolean
+  defaultPageSize?: number
+  pageSizeOptions?: number[]
 }) {
+  const [page, setPage] = useState(1);
+  const [ps, setPs] = useState<number>(defaultPageSize);
+  const total = rows.length;
+  const totalPages = pager ? Math.max(1, Math.ceil(total / ps)) : 1;
+  const curPage = pager ? Math.min(page, totalPages) : 1;
+  const view = pager ? rows.slice((curPage - 1) * ps, curPage * ps) : rows;
+  useEffect(() => { setPage(1); }, [rows, ps]); // 数据或每页条数变化时回到第一页
+
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full border-collapse text-sm">
-        <thead>
-          <tr className="border-b border-slate-200 text-left text-xs font-medium uppercase tracking-wide text-slate-400">
-            {columns.map((c, i) => (
-              <th
-                key={c.key}
-                className={`whitespace-nowrap px-3 py-3 bg-white ${i === 0 ? 'sticky left-0 z-20' : ''}`}
-                style={{ width: c.width, textAlign: c.align ?? 'left' }}
-              >
-                <div className="flex items-center gap-1.5">
-                  <span>{c.label}</span>
-                  {c.tag && <ColumnTag tag={c.tag} />}
-                </div>
-              </th>
-            ))}
-            {actions && (
-              <th className="whitespace-nowrap px-3 py-3 bg-white sticky right-0 z-20 text-left">操作</th>
-            )}
-          </tr>
-        </thead>
-        <tbody>
-          {rows.length === 0 ? (
-            <tr>
-              <td colSpan={columns.length + (actions ? 1 : 0)} className="px-3 py-10 text-center text-sm text-slate-400">
-                {empty}
-              </td>
+    <div>
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse text-sm">
+          <thead>
+            <tr className="border-b border-slate-200 text-left text-xs font-medium uppercase tracking-wide text-slate-400">
+              {columns.map((c, i) => (
+                <th
+                  key={c.key}
+                  className={`whitespace-nowrap px-3 py-3 bg-white ${i === 0 ? 'sticky left-0 z-20' : ''}`}
+                  style={{ width: c.width, textAlign: c.align ?? 'left' }}
+                >
+                  <div className="flex items-center gap-1.5">
+                    <span>{c.label}</span>
+                    {c.tag && <ColumnTag tag={c.tag} />}
+                  </div>
+                </th>
+              ))}
+              {actions && (
+                <th className="whitespace-nowrap px-3 py-3 bg-white sticky right-0 z-20 text-left">操作</th>
+              )}
             </tr>
-          ) : (
-            rows.map((r) => (
-              <tr key={r.id} className="group border-b border-slate-50 transition hover:bg-slate-50/60">
-                {columns.map((c, i) => {
-                  const clickable = !!clickableKey && c.key === clickableKey
-                  return (
-                    <td
-                      key={c.key}
-                      className={`whitespace-nowrap px-3 py-3 text-slate-600 ${i === 0 ? 'sticky left-0 z-10 bg-white group-hover:bg-slate-50/60' : ''}`}
-                      style={{ textAlign: c.align ?? 'left' }}
-                    >
-                      {clickable ? (
-                        <button
-                          type="button"
-                          onClick={() => onCellClick?.(r)}
-                          className="font-medium text-brand-600 hover:underline"
-                        >
-                          {renderCell(r[c.key], c)}
-                        </button>
-                      ) : (
-                        renderCell(r[c.key], c)
-                      )}
-                    </td>
-                  )
-                })}
-                {actions && (
-                  <td className="whitespace-nowrap px-3 py-3 text-left sticky right-0 z-10 bg-white group-hover:bg-slate-50/60">
-                    {actions(r)}
-                  </td>
-                )}
+          </thead>
+          <tbody>
+            {view.length === 0 ? (
+              <tr>
+                <td colSpan={columns.length + (actions ? 1 : 0)} className="px-3 py-10 text-center text-sm text-slate-400">
+                  {empty}
+                </td>
               </tr>
-            ))
-          )}
-        </tbody>
-      </table>
+            ) : (
+              view.map((r) => (
+                <tr key={r.id} className="group border-b border-slate-50 transition hover:bg-slate-50/60">
+                  {columns.map((c, i) => {
+                    const clickable = !!clickableKey && c.key === clickableKey
+                    return (
+                      <td
+                        key={c.key}
+                        className={`whitespace-nowrap px-3 py-3 text-slate-600 ${i === 0 ? 'sticky left-0 z-10 bg-white group-hover:bg-slate-50/60' : ''}`}
+                        style={{ textAlign: c.align ?? 'left' }}
+                      >
+                        {clickable ? (
+                          <button
+                            type="button"
+                            onClick={() => onCellClick?.(r)}
+                            className="font-medium text-brand-600 hover:underline"
+                          >
+                            {renderCell(r[c.key], c)}
+                          </button>
+                        ) : (
+                          renderCell(r[c.key], c)
+                        )}
+                      </td>
+                    )
+                  })}
+                  {actions && (
+                    <td className="whitespace-nowrap px-3 py-3 text-left sticky right-0 z-10 bg-white group-hover:bg-slate-50/60">
+                      {actions(r)}
+                    </td>
+                  )}
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {pager && total > 0 && (
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-500">
+          <div className="flex items-center gap-2">
+            <span>每页显示</span>
+            <select value={ps} onChange={(e) => setPs(Number(e.target.value))}
+              style={{ height: 30, border: '1px solid #CBD5E1', borderRadius: 6, padding: '0 6px', fontSize: 12, background: '#fff' }}>
+              {pageSizeOptions.map((o) => <option key={o} value={o}>{o} 行</option>)}
+            </select>
+            <span>共 {total} 条</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span>第 {curPage} / {totalPages} 页</span>
+            <button type="button" disabled={curPage <= 1} onClick={() => setPage(curPage - 1)}
+              style={{ padding: '4px 10px', borderRadius: 6, border: '1px solid #E2E8F0', background: curPage <= 1 ? '#F1F5F9' : '#fff', color: curPage <= 1 ? '#94A3B8' : '#334155', cursor: curPage <= 1 ? 'not-allowed' : 'pointer' }}>
+              上一页
+            </button>
+            <button type="button" disabled={curPage >= totalPages} onClick={() => setPage(curPage + 1)}
+              style={{ padding: '4px 10px', borderRadius: 6, border: '1px solid #E2E8F0', background: curPage >= totalPages ? '#F1F5F9' : '#fff', color: curPage >= totalPages ? '#94A3B8' : '#334155', cursor: curPage >= totalPages ? 'not-allowed' : 'pointer' }}>
+              下一页
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

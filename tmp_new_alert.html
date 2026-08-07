@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>新建预警 · 临时预览</title>
+<style>
+  :root{
+    --text:#1f2329; --label:#646a73; --sub:#8a9099;
+    --border:#dee0e3; --border-strong:#c9cdd4;
+    --primary:#2f6bff; --primary-hover:#1f5af0;
+    --green:#00b96b; --green-soft:#e8f8f0;
+    --bg:#f5f6f7; --panel:#fff; --disabled-bg:#f2f3f5;
+    --radius:6px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;height:100%;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;color:var(--text);}
+  body{background:var(--bg);}
+  .mask{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;justify-content:flex-end;}
+  .drawer{width:760px;max-width:96vw;height:100%;background:#fff;display:flex;flex-direction:column;box-shadow:-8px 0 24px rgba(0,0,0,.12);animation:slideIn .22s ease;}
+  @keyframes slideIn{from{transform:translateX(40px);opacity:.6}to{transform:translateX(0);opacity:1}}
+
+  /* header */
+  .hd{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid var(--border);}
+  .hd-left{display:flex;align-items:center;gap:8px;}
+  .icon-btn{width:28px;height:28px;border:none;background:transparent;cursor:pointer;border-radius:6px;color:var(--label);font-size:18px;display:flex;align-items:center;justify-content:center;}
+  .icon-btn:hover{background:var(--disabled-bg);}
+  .hd-title{font-size:16px;font-weight:600;}
+  .hd-extra{display:flex;gap:12px;}
+  .btn{border:1px solid var(--border-strong);background:#fff;color:var(--text);padding:6px 16px;border-radius:var(--radius);cursor:pointer;font-size:14px;}
+  .btn:hover{color:var(--primary);border-color:var(--primary);}
+  .btn-primary{background:var(--primary);border-color:var(--primary);color:#fff;}
+  .btn-primary:hover{background:var(--primary-hover);border-color:var(--primary-hover);color:#fff;}
+  .btn-link{border:none;background:none;color:var(--primary);cursor:pointer;padding:4px 0;font-size:14px;}
+  .btn-link:hover{text-decoration:underline;}
+
+  /* body */
+  .body{flex:1;overflow-y:auto;padding:8px 24px 32px;}
+  .section{margin-top:18px;}
+  .sec-title{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;margin-bottom:14px;}
+  .green-line{width:3px;height:14px;background:var(--green);border-radius:2px;}
+
+  .form-item{display:flex;align-items:flex-start;margin-bottom:18px;}
+  .fi-label{width:100px;flex:none;padding-top:6px;color:var(--label);font-size:14px;text-align:right;padding-right:12px;}
+  .fi-label.sm{width:86px;}
+  .fi-req{color:#f5483b;margin-right:2px;}
+  .fi-opt{color:var(--sub);font-size:12px;margin-left:4px;}
+  .fi-ctrl{flex:1;min-width:0;}
+
+  .input,.select{height:32px;border:1px solid var(--border);border-radius:var(--radius);padding:0 10px;font-size:14px;background:#fff;color:var(--text);width:240px;}
+  .input:focus,.select:focus{outline:none;border-color:var(--primary);}
+  .input.wide{width:100%;}
+  .select.w318{width:318px;}
+  .select.disabled,.tag.disabled{background:var(--disabled-bg);color:var(--sub);cursor:not-allowed;border-color:var(--border);}
+
+  .tag{display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 8px;border:1px solid var(--border);border-radius:4px;background:#fff;font-size:13px;max-width:146px;overflow:hidden;}
+  .tag .t-text{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .tag-close{cursor:pointer;color:var(--sub);font-size:12px;}
+  .tag-sm{height:20px;font-size:11px;padding:0 6px;background:var(--green-soft);color:var(--green);border:none;}
+  .tag-icy{height:20px;font-size:11px;padding:0 6px;background:#e8f0ff;color:var(--primary);border:none;}
+
+  /* granularity row */
+  .inline{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  .help{color:var(--sub);cursor:help;font-size:13px;}
+
+  /* multiselect pills */
+  .pill-row{display:flex;align-items:center;gap:10px;}
+  .pill{border:1px solid var(--border);border-radius:var(--radius);height:32px;padding:0 12px;display:inline-flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;background:#fff;}
+  .pill .count{color:var(--label);}
+  .pill:hover{border-color:var(--primary);}
+
+  /* checkboxes */
+  .cb-group{display:flex;align-items:center;gap:20px;flex-wrap:wrap;}
+  .cb{display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-size:14px;}
+  .cb input{width:16px;height:16px;accent-color:var(--primary);cursor:pointer;}
+  .cb.disabled{color:var(--sub);cursor:not-allowed;}
+
+  .rule-block{position:relative;border-left:2px solid #eef0f2;padding-left:14px;margin-top:10px;}
+  .or-tag{position:absolute;left:-9px;top:2px;background:#fff;color:var(--sub);font-size:12px;padding:0 2px;}
+  .rule-card{border:1px solid var(--border);border-radius:8px;padding:12px 14px;margin-bottom:12px;background:#fafbfc;}
+  .rule-h{font-size:13px;font-weight:600;margin-bottom:6px;}
+  .rule-txt{font-size:13px;color:var(--label);line-height:1.6;}
+
+  /* table */
+  .tbl-wrap{margin-top:6px;border:1px solid var(--border);border-radius:8px;overflow:hidden;}
+  .tbl-top{display:flex;justify-content:space-between;padding:8px 12px;font-size:13px;color:var(--label);border-bottom:1px solid var(--border);}
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  th,td{text-align:left;padding:10px 12px;border-bottom:1px solid #f0f1f2;}
+  th{background:#fafbfc;color:var(--label);font-weight:500;}
+  tr:last-child td{border-bottom:none;}
+  .op{display:flex;gap:12px;}
+
+  /* switch */
+  .switch{display:inline-flex;align-items:center;gap:8px;cursor:pointer;}
+  .sw{width:40px;height:22px;border-radius:11px;background:var(--green);position:relative;transition:.2s;}
+  .sw::after{content:"";position:absolute;width:18px;height:18px;border-radius:50%;background:#fff;top:2px;left:20px;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.2);}
+  .sw.off{background:#c9cdd4;}
+  .sw.off::after{left:2px;}
+  .sw-label{font-size:13px;}
+
+  /* popover */
+  .pop{position:absolute;z-index:20;width:420px;background:#fff;border:1px solid var(--border);border-radius:8px;box-shadow:0 6px 24px rgba(0,0,0,.14);padding:16px;display:none;}
+  .pop.show{display:block;}
+  .pop-title{font-weight:600;margin-bottom:12px;font-size:14px;}
+  .pop-btns{display:flex;justify-content:flex-end;gap:10px;margin-top:14px;}
+  .num{width:80px;}
+
+  .legend{position:fixed;left:16px;bottom:16px;font-size:12px;color:var(--sub);background:rgba(255,255,255,.9);padding:6px 10px;border-radius:6px;border:1px solid var(--border);}
+</style>
+</head>
+<body>
+<div class="mask">
+  <aside class="drawer">
+    <header class="hd">
+      <div class="hd-left">
+        <button class="icon-btn" title="关闭">‹</button>
+        <div class="hd-title">新建预警</div>
+      </div>
+      <div class="hd-extra">
+        <button class="btn">放 弃</button>
+        <button class="btn btn-primary">保 存</button>
+      </div>
+    </header>
+
+    <div class="body">
+      <!-- 基本信息 -->
+      <div class="section">
+        <div class="sec-title"><span class="green-line"></span>基本信息</div>
+
+        <div class="form-item">
+          <div class="fi-label"><span class="fi-req">*</span>预警名称</div>
+          <div class="fi-ctrl"><input class="input wide" value="Web 视区停留的总次数" placeholder="请输入预警名称（不超过 60 字）" /></div>
+        </div>
+
+        <div class="form-item">
+          <div class="fi-label"><span class="fi-req">*</span>指标
+            <span class="help" title="选择要监控的指标">?</span></div>
+          <div class="fi-ctrl">
+            <select class="select" style="width:318px">
+              <option>Web 视区停留的总次数</option>
+              <option>App 启动次数</option>
+              <option>页面浏览次数</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-item">
+          <div class="fi-label"><span class="fi-req">*</span>分组
+            <span class="help" title="按分组分别监控">?</span></div>
+          <div class="fi-ctrl">
+            <span class="tag disabled"><span class="t-text">总体</span><span class="tag-close">×</span></span>
+          </div>
+        </div>
+
+        <div class="form-item">
+          <div class="fi-label">备注<span class="fi-opt">(选填)</span></div>
+          <div class="fi-ctrl"><input class="input wide" placeholder="请输入备注" /></div>
+        </div>
+      </div>
+
+      <!-- 预警设置 -->
+      <div class="section">
+        <div class="sec-title"><span class="green-line"></span>预警设置</div>
+
+        <div class="form-item">
+          <div class="fi-label sm"><span class="fi-req">*</span>监控粒度</div>
+          <div class="fi-ctrl">
+            <div class="inline">
+              <select class="select disabled" disabled><option>按小时</option></select>
+              <select class="select disabled" disabled style="width:120px"><option>UTC+08:00</option></select>
+              <span class="help" title="监控时间粒度与所属时区">?</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-item">
+          <div class="fi-label sm"><span class="fi-req">*</span>监控时段</div>
+          <div class="fi-ctrl">
+            <div class="pill-row" style="margin-bottom:10px">
+              <span>每周</span>
+              <div class="pill"><span class="count">已选择 7 项</span><span>▾</span></div>
+            </div>
+            <div class="pill-row">
+              <span>时段</span>
+              <div class="pill"><span class="count">已选择 24 项</span><span>▾</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-item">
+          <div class="fi-label sm"><span class="fi-req">*</span>预警方式</div>
+          <div class="fi-ctrl">
+            <div class="cb-group">
+              <label class="cb"><input type="checkbox" checked />智能预警 <span class="tag-icy">推荐</span></label>
+              <label class="cb"><input type="checkbox" checked />自定义规则</label>
+            </div>
+
+            <div class="rule-block">
+              <span class="or-tag">或</span>
+              <div class="rule-card">
+                <div class="rule-h">智能预警规则</div>
+                <div class="rule-txt">今日 12:00-13:00 智能预测区间为【134.13，154.92】</div>
+              </div>
+
+              <div class="rule-card">
+                <div class="rule-h" style="display:flex;justify-content:space-between;align-items:center">
+                  <span class="rule-h">自定义规则</span>
+                  <button class="btn-link" onclick="openPop()">＋ 添加自定义规则</button>
+                </div>
+                <div class="tbl-wrap">
+                  <div class="tbl-top"><span>共 <b id="ruleCount">1</b> 条</span></div>
+                  <table>
+                    <thead><tr>
+                      <th>分组值</th><th>触发方式</th><th>对比方式</th><th>对比值</th><th>阈值</th><th>操作</th>
+                    </tr></thead>
+                    <tbody id="ruleBody">
+                      <tr>
+                        <td>总体</td><td>绝对值变化</td><td>低于</td><td>昨天同期</td><td>1</td>
+                        <td class="op"><button class="btn-link">编辑</button><button class="btn-link">删除</button></td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-item">
+          <div class="fi-label sm"><span class="fi-req">*</span>通知方式</div>
+          <div class="fi-ctrl">
+            <div class="cb-group">
+              <label class="cb disabled"><input type="checkbox" checked disabled />系统通知 <span class="help">?</span></label>
+              <label class="cb"><input type="checkbox" />企业群通知 <span class="help">?</span></label>
+              <label class="cb"><input type="checkbox" />邮件通知</label>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-item">
+          <div class="fi-label sm"><span class="fi-req">*</span>监控状态</div>
+          <div class="fi-ctrl">
+            <div class="switch" onclick="toggleSw(this)">
+              <span class="sw" id="sw"></span><span class="sw-label" id="swLabel">已开启</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- 添加自定义规则 popover -->
+  <div class="pop" id="pop">
+    <div class="pop-title">添加自定义规则</div>
+    <div class="form-item" style="margin-bottom:12px">
+      <div class="fi-label sm" style="width:86px">分组值</div>
+      <div class="fi-ctrl"><span class="tag disabled"><span class="t-text">总体</span></span></div>
+    </div>
+    <div class="form-item" style="margin-bottom:12px">
+      <div class="fi-label sm" style="width:86px">触发方式</div>
+      <div class="fi-ctrl">
+        <div class="cb-group">
+          <label class="cb"><input type="radio" name="trig" value="绝对值变化" checked />绝对值变化</label>
+          <label class="cb"><input type="radio" name="trig" value="百分比变化" />百分比变化</label>
+        </div>
+      </div>
+    </div>
+    <div class="form-item" style="margin-bottom:0">
+      <div class="fi-label sm" style="width:86px">触发规则</div>
+      <div class="fi-ctrl inline">
+        <select class="select" id="cmpWay" style="width:110px"><option>低于</option><option>高于</option><option>波动</option></select>
+        <select class="select" id="cmpVal" style="width:130px"><option>昨天同期</option><option>上周同期</option><option>上月同期</option></select>
+        <input class="input num" id="thr" type="number" placeholder="阈值" />
+        <span class="help">?</span>
+      </div>
+    </div>
+    <div class="pop-btns">
+      <button class="btn btn-primary" onclick="submitRule()" id="submitBtn" disabled>提 交</button>
+      <button class="btn" onclick="closePop()">放 弃</button>
+    </div>
+  </div>
+</div>
+
+<div class="legend">神策「新建预警」抽屉 · 临时还原页（非工程内页面）</div>
+
+<script>
+  function toggleSw(el){
+    const sw = el.querySelector('.sw');
+    const on = sw.classList.toggle('off');
+    document.getElementById('swLabel').textContent = on ? '已关闭' : '已开启';
+  }
+  function openPop(){
+    const pop = document.getElementById('pop');
+    const r = event.currentTarget.getBoundingClientRect();
+    pop.style.top = (r.top + window.scrollY - 10) + 'px';
+    pop.style.left = (r.left + window.scrollX - 380) + 'px';
+    pop.classList.add('show');
+    document.getElementById('thr').addEventListener('input', checkSubmit);
+  }
+  function closePop(){ document.getElementById('pop').classList.remove('show'); }
+  function checkSubmit(){
+    document.getElementById('submitBtn').disabled = !document.getElementById('thr').value;
+  }
+  function submitRule(){
+    const trig = document.querySelector('input[name="trig"]:checked').value;
+    const way = document.getElementById('cmpWay').value;
+    const val = document.getElementById('cmpVal').value;
+    const thr = document.getElementById('thr').value;
+    const tb = document.getElementById('ruleBody');
+    const tr = document.createElement('tr');
+    tr.innerHTML = '<td>总体</td><td>'+trig+'</td><td>'+way+'</td><td>'+val+'</td><td>'+thr+'</td>'+
+      '<td class="op"><button class="btn-link">编辑</button><button class="btn-link">删除</button></td>';
+    tb.appendChild(tr);
+    document.getElementById('ruleCount').textContent = tb.children.length;
+    document.getElementById('thr').value='';
+    checkSubmit();
+    closePop();
+  }
+  // 点击遮罩空白处关闭 popover
+  document.querySelector('.mask').addEventListener('click', e=>{
+    if(!e.target.closest('.drawer') && !e.target.closest('.pop')) closePop();
+  });
+</script>
+</body>
+</html>

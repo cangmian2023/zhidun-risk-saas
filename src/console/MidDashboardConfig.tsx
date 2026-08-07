@@ -5,6 +5,7 @@ import { Button } from '../components/ui';
 import type { Column, Row } from '../components/ui';
 import { Sam } from './SourceTag';
 import { useMidDashboards, updateDashboards, useMidMetrics, useMidDataSources, midNewId } from './midStore';
+import { MetricPicker } from './MidMonitorConfig';
 import {
   type MidDashboardPage, type MidWidget, type WidgetType, type MidDataSource,
 } from './midData';
@@ -83,7 +84,7 @@ export default function MidDashboardConfig() {
   );
 }
 
-function Editor({ value, metrics, sources, onChange, onRemove }: {
+export function Editor({ value, metrics, sources, onChange, onRemove }: {
   value: MidDashboardPage; metrics: ReturnType<typeof useMidMetrics>; sources: MidDataSource[];
   onChange: (v: MidDashboardPage) => void; onRemove: () => void;
 }) {
@@ -122,7 +123,7 @@ function Editor({ value, metrics, sources, onChange, onRemove }: {
         <div style={{ display: 'grid', gap: 10 }}>
           {value.widgets.map((w, i) => (
             <div key={w.id} style={{ border: '1px solid #E2E8F0', borderRadius: 8, padding: 10, background: '#FAFAFB' }}>
-              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'flex-end' }}>
+              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'flex-start' }}>
                 <label style={lbl}>标题<input style={inpSm} value={w.title} onChange={(e) => setWidget(i, { title: e.target.value })} /></label>
                 <label style={lbl}>类型
                   <select style={inpSm} value={w.type} onChange={(e) => setWidget(i, { type: e.target.value as WidgetType })}>
@@ -134,10 +135,10 @@ function Editor({ value, metrics, sources, onChange, onRemove }: {
                     {sources.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
                   </select>
                 </label>
-                <label style={lbl}>监控指标 <Sam label="读指标库" value="midMetrics.json" />
-                  <select style={inpSm} value={w.metricId} onChange={(e) => setWidget(i, { metricId: e.target.value })}>
-                    {metrics.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
-                  </select>
+                <label style={lbl}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>监控指标 <Sam label="读指标库" value="midMetrics.json" /></span>
+                  <MetricPicker metrics={metrics} value={w.metricIds ?? (w.metricId ? [w.metricId] : [])}
+                    onChange={(v) => setWidget(i, { metricIds: v, metricId: v[0] ?? '' })} />
                 </label>
                 <label style={lbl}>跨列
                   <select style={inpSm} value={w.span ?? 1} onChange={(e) => setWidget(i, { span: Number(e.target.value) as 1 | 2 })}>

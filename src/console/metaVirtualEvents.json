@@ -1,0 +1,354 @@
+[
+ {
+  "id": "ve_yc_xiaoma",
+  "name": "yc_xiaoma",
+  "displayName": "小马测试",
+  "tags": "-",
+  "screenshot": "-",
+  "remark": "-",
+  "creator": "15894211454",
+  "createdAt": "2026-06-12 11:56:10",
+  "updatedAt": "2026-06-12 18:42:36",
+  "parts": [
+   {
+    "event": "$启动APP",
+    "condition": "-"
+   }
+  ]
+ },
+ {
+  "id": "ve_ffff",
+  "name": "ffff",
+  "displayName": "web和app新用户日活",
+  "tags": "-",
+  "screenshot": "-",
+  "remark": "-",
+  "creator": "15894211454",
+  "createdAt": "2026-06-12 11:56:10",
+  "updatedAt": "2026-06-12 18:42:36",
+  "parts": [
+   {
+    "event": "$启动APP",
+    "condition": "-"
+   },
+   {
+    "event": "Web 浏览页面",
+    "condition": "-"
+   }
+  ]
+ },
+ {
+  "id": "ve_yw_test1",
+  "name": "yw_test1",
+  "displayName": "web端和app端的新日活",
+  "tags": "-",
+  "screenshot": "-",
+  "remark": "-",
+  "creator": "15894211454",
+  "createdAt": "2026-06-12 11:56:10",
+  "updatedAt": "2026-06-12 18:42:36",
+  "parts": [
+   {
+    "event": "Web 浏览页面",
+    "condition": "是否首日访问 为真"
+   },
+   {
+    "event": "$启动APP",
+    "condition": "是否首日访问 为真"
+   }
+  ]
+ },
+ {
+  "id": "ve_xunishux",
+  "name": "xunishux",
+  "displayName": "虚拟属性测试",
+  "tags": "-",
+  "screenshot": "-",
+  "remark": "-",
+  "creator": "15894211454",
+  "createdAt": "2026-06-12 11:56:10",
+  "updatedAt": "2026-06-12 18:42:36",
+  "parts": [
+   {
+    "event": "$启动APP",
+    "condition": "-"
+   },
+   {
+    "event": "点击注册按钮",
+    "condition": "-"
+   }
+  ]
+ },
+ {
+  "id": "ve_adb",
+  "name": "adb",
+  "displayName": "23211",
+  "tags": "-",
+  "screenshot": "-",
+  "remark": "-",
+  "creator": "15894211454",
+  "createdAt": "2026-06-12 11:56:10",
+  "updatedAt": "2026-06-12 18:42:36",
+  "parts": [
+   {
+    "event": "$启动APP",
+    "condition": "-"
+   }
+  ]
+ },
+ {
+  "id": "ve_ddsds",
+  "name": "ddsds",
+  "displayName": "a s d",
+  "tags": "-",
+  "screenshot": "-",
+  "remark": "-",
+  "creator": "15894211454",
+  "createdAt": "2026-06-12 11:56:10",
+  "updatedAt": "2026-06-12 18:42:36",
+  "parts": [
+   {
+    "event": "$启动APP",
+    "condition": "-"
+   }
+  ]
+ },
+ {
+  "id": "ve_f23",
+  "name": "f23",
+  "displayName": "sa d f",
+  "tags": "-",
+  "screenshot": "-",
+  "remark": "-",
+  "creator": "15894211454",
+  "createdAt": "2026-06-12 11:56:10",
+  "updatedAt": "2026-06-12 18:42:36",
+  "parts": [
+   {
+    "event": "$启动APP",
+    "condition": "-"
+   }
+  ]
+ },
+ {
+  "id": "ve_fds",
+  "name": "fds",
+  "displayName": "dsfgf",
+  "tags": "-",
+  "screenshot": "-",
+  "remark": "-",
+  "creator": "15894211454",
+  "createdAt": "2026-06-12 11:56:10",
+  "updatedAt": "2026-06-12 18:42:36",
+  "parts": [
+   {
+    "event": "$启动APP",
+    "condition": "-"
+   }
+  ]
+ },
+ {
+  "id": "ve_dfgdf",
+  "name": "dfgdf",
+  "displayName": "dsfg",
+  "tags": "-",
+  "screenshot": "-",
+  "remark": "-",
+  "creator": "15894211454",
+  "createdAt": "2026-06-12 11:56:10",
+  "updatedAt": "2026-06-12 18:42:36",
+  "parts": [
+   {
+    "event": "$启动APP",
+    "condition": "-"
+   }
+  ]
+ },
+ {
+  "id": "ve_dsfg",
+  "name": "dsfg",
+  "displayName": "dg",
+  "tags": "-",
+  "screenshot": "-",
+  "remark": "-",
+  "creator": "15894211454",
+  "createdAt": "2026-06-12 11:56:10",
+  "updatedAt": "2026-06-12 18:42:36",
+  "parts": [
+   {
+    "event": "$启动APP",
+    "condition": "-"
+   }
+  ]
+ },
+ {
+  "id": "ve_sdgf",
+  "name": "sdgf",
+  "displayName": "dfsg",
+  "tags": "-",
+  "screenshot": "-",
+  "remark": "-",
+  "creator": "15894211454",
+  "createdAt": "2026-06-12 11:56:10",
+  "updatedAt": "2026-06-12 18:42:36",
+  "parts": [
+   {
+    "event": "$启动APP",
+    "condition": "-"
+   }
+  ]
+ },
+ {
+  "id": "ve_dfg",
+  "name": "dfg",
+  "displayName": "sdfg",
+  "tags": "-",
+  "screenshot": "-",
+  "remark": "-",
+  "creator": "15894211454",
+  "createdAt": "2026-06-12 11:56:10",
+  "updatedAt": "2026-06-12 18:42:36",
+  "parts": [
+   {
+    "event": "$启动APP",
+    "condition": "-"
+   }
+  ]
+ },
+ {
+  "id": "ve_dfsg",
+  "name": "dfsg",
+  "displayName": "fsdg",
+  "tags": "-",
+  "screenshot": "-",
+  "remark": "-",
+  "creator": "15894211454",
+  "createdAt": "2026-06-12 11:56:10",
+  "updatedAt": "2026-06-12 18:42:36",
+  "parts": [
+   {
+    "event": "$启动APP",
+    "condition": "-"
+   }
+  ]
+ },
+ {
+  "id": "ve_ds",
+  "name": "ds",
+  "displayName": "ad",
+  "tags": "-",
+  "screenshot": "-",
+  "remark": "-",
+  "creator": "15894211454",
+  "createdAt": "2026-06-12 11:56:10",
+  "updatedAt": "2026-06-12 18:42:36",
+  "parts": [
+   {
+    "event": "$启动APP",
+    "condition": "-"
+   }
+  ]
+ },
+ {
+  "id": "ve_fd",
+  "name": "fd",
+  "displayName": "ds",
+  "tags": "-",
+  "screenshot": "-",
+  "remark": "-",
+  "creator": "15894211454",
+  "createdAt": "2026-06-12 11:56:10",
+  "updatedAt": "2026-06-12 18:42:36",
+  "parts": [
+   {
+    "event": "$启动APP",
+    "condition": "-"
+   }
+  ]
+ },
+ {
+  "id": "ve_sss",
+  "name": "sss",
+  "displayName": "ss",
+  "tags": "-",
+  "screenshot": "-",
+  "remark": "-",
+  "creator": "15894211454",
+  "createdAt": "2026-06-12 11:56:10",
+  "updatedAt": "2026-06-12 18:42:36",
+  "parts": [
+   {
+    "event": "$启动APP",
+    "condition": "-"
+   }
+  ]
+ },
+ {
+  "id": "ve_d",
+  "name": "d",
+  "displayName": "d",
+  "tags": "-",
+  "screenshot": "-",
+  "remark": "-",
+  "creator": "15894211454",
+  "createdAt": "2026-06-12 11:56:10",
+  "updatedAt": "2026-06-12 18:42:36",
+  "parts": [
+   {
+    "event": "$启动APP",
+    "condition": "-"
+   }
+  ]
+ },
+ {
+  "id": "ve_s",
+  "name": "s",
+  "displayName": "s",
+  "tags": "-",
+  "screenshot": "-",
+  "remark": "-",
+  "creator": "15894211454",
+  "createdAt": "2026-06-12 11:56:10",
+  "updatedAt": "2026-06-12 18:42:36",
+  "parts": [
+   {
+    "event": "$启动APP",
+    "condition": "-"
+   }
+  ]
+ },
+ {
+  "id": "ve_ww",
+  "name": "ww",
+  "displayName": "ww",
+  "tags": "-",
+  "screenshot": "-",
+  "remark": "-",
+  "creator": "15894211454",
+  "createdAt": "2026-06-12 11:56:10",
+  "updatedAt": "2026-06-12 18:42:36",
+  "parts": [
+   {
+    "event": "$启动APP",
+    "condition": "-"
+   }
+  ]
+ },
+ {
+  "id": "ve_we",
+  "name": "we",
+  "displayName": "ew",
+  "tags": "-",
+  "screenshot": "-",
+  "remark": "-",
+  "creator": "15894211454",
+  "createdAt": "2026-06-12 11:56:10",
+  "updatedAt": "2026-06-12 18:42:36",
+  "parts": [
+   {
+    "event": "$启动APP",
+    "condition": "-"
+   }
+  ]
+ }
+]

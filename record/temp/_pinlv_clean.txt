@@ -1,0 +1,29 @@
+===== record/temp/pinlv (len=97452) =====
+
+
+----- context around [监控粒度] @ 2 -----
+1.监控粒度
+ 监控粒度 <span class="sens-typography sens-typography-el
+
+----- context around [监控粒度] @ 419 -----
+pography sens-typography-ellipsis sens-typography-single-line sens-typography-ellipsis-single-line">监控粒度 按小时 <path d=
+
+----- context around [监控时段] @ 4216 -----
+3 53.33 0 1 0 0-106.66 53.33 53.33 0 0 0 0 106.66Z"> 
+2.监控时段
+ 监控时段 每周 <span class="sen
+
+----- context around [监控时段] @ 4632 -----
+pography sens-typography-ellipsis sens-typography-single-line sens-typography-ellipsis-single-line">监控时段 每周 已选择 7 项 <svg viewBox="0 0 1024 1024" focusable="false" data-icon="down" width="1em" height="1em" fill="currentColor" aria-hidden="
+
+----- context around [监控时段] @ 51252 -----
+pography sens-typography-ellipsis sens-typography-single-line sens-typography-ellipsis-single-line">监控时段 每周 已选择 7 项 <svg viewBox="0 0 1024 1024" focusable="false" data-icon="down" width="1em" height="1em" fill="currentColor" aria-hidden="
+
+----- context around [预警规则] @ 50836 -----
+v> 
+3.预警规则
+ 监控时段 每周 <span class="sen
+
+----- context around [规则] @ 50838 -----
+3.预警规则
+ 监控时段 每周 <span class="sens-

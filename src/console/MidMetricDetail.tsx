@@ -2,17 +2,15 @@
 // 读 midMetrics.json 橘（样例·落本地）；关联数据源样例 橘；实时计算 灰
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Panel, DataTable, Button, Badge, InfoCell } from '../components/ui';
-import type { Column, Row } from '../components/ui';
+import { Panel, Button, Badge, InfoCell } from '../components/ui';
 import { Sam, Cal } from './SourceTag';
-import { PageShell } from './PageShell';
 import { useMidMetrics, useMidDataSources, useMidStrategy, useMidDashboards, updateMetrics, midNewId } from './midStore';
-import { type MidMetric, computeMetricValue, resolveMetricsForRows, evalMetricFormula, FILTER_OP_LABEL } from './midData';
-import { ConfigDetailPage, crumb, SRC_TYPE_LABEL, fmt } from './ConfigTemplate';
+import { type MidMetric } from './midData';
+import { ConfigDetailPage } from './ConfigTemplate';
 import { MetricEditor } from './MetricEditor';
 
 function blankMetric(sources: { id: string }[]): MidMetric {
-  return { id: midNewId('m'), name: '', group: '未分组', dataSourceId: sources[0]?.id ?? '', type: 'base', field: '', agg: 'sum', precision: 0, filters: [], groupBy: [], vizType: 'bar', vizSampleId: 'vs_product_loan' };
+  return { id: midNewId('m'), name: '', group: '未分组', dataSourceId: sources[0]?.id ?? '', dataSourceIds: sources[0] ? [sources[0].id] : [], type: 'base', field: '', agg: 'sum', precision: 0, filters: [], groupBy: [], vizType: 'bar', vizSampleId: 'vs_product_loan' };
 }
 
 export default function MidMetricDetail() {
@@ -40,12 +38,11 @@ export default function MidMetricDetail() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key, isNew, id]);
 
-  const src = sources.find((s) => s.id === draft.dataSourceId);
-  const allRows = sources.flatMap((s) => s.rows ?? []);
-  const ctx = resolveMetricsForRows(metrics, allRows);
-  const preview = draft.type === 'base'
-    ? computeMetricValue(draft, src?.rows ?? [])
-    : (ctx[draft.id] ?? evalMetricFormula(draft.formula ?? '', ctx));
+  const src = sources.find((s) => s.id === (draft.dataSourceIds?.[0] ?? draft.dataSourceId));
+  const sourceViewSlot = src ? (
+    <Button size="sm" variant="secondary" onClick={() => nav('/console/cm/mid-data-source-detail?id=' + src.id)}>查看数据源：{src.name} →</Button>
+  ) : null;
+  // 指标取数由 SQL 脚本执行，详情页不在此计算实时值
 
   const save = () => {
     if (!draft.name.trim()) { window.alert('请填写指标名称'); return; }
@@ -60,23 +57,9 @@ export default function MidMetricDetail() {
     setDraft(next);
     updateMetrics((list) => list.map((x) => (x.id === draft.id ? next : x)));
   };
-  const remove = () => {
-    if (draft.id) { updateMetrics((list) => list.filter((x) => x.id !== draft.id)); nav(-1); }
-  };
-
   // 被引用（基于已保存的 existing）
-  const usedByRules = existing ? strategy.rules.filter((r) => r.metricId === existing.id) : [];
+  const usedByRules = existing ? strategy.rules.filter((r) => r.conds.some((c) => c.metricId === existing.id)) : [];
   const usedByWidgets = existing ? dashboards.flatMap((d) => d.widgets).filter((w) => w.metricId === existing.id) : [];
-
-  const fieldCols: Column[] = [
-    { key: 'key', label: '字段 key', tag: { kind: 'sample', value: 'midDataSources.json.fields.key' } },
-    { key: 'label', label: '名称', tag: { kind: 'sample', value: 'midDataSources.json.fields.label' } },
-    { key: 'kind', label: '类型', type: 'badge', tag: { kind: 'sample', value: 'midDataSources.json.fields.kind' } },
-  ];
-  const fieldRows: Row[] = (src?.fields ?? []).map((f) => ({
-    id: f.key, key: f.key, label: f.label,
-    kind: { v: f.kind === 'measure' ? '度量' : '维度', kind: f.kind === 'measure' ? 'blue' : 'gray' },
-  } as unknown as Row));
 
   return (
     <ConfigDetailPage
@@ -87,8 +70,7 @@ export default function MidMetricDetail() {
         <Sam value="midMetrics.json" />
         <Button size="sm" variant="primary" onClick={save}>保存</Button>
         {existing && <Button size="sm" variant={draft.enabled === false ? 'primary' : 'secondary'} onClick={toggleEnabled}>{draft.enabled === false ? '启用' : '停用'}</Button>}
-        {existing && <Button size="sm" variant="ghost" onClick={remove}>删除</Button>}
-        <Button size="sm" variant="secondary" onClick={() => nav(-1)}>返回</Button>
+        <Button size="sm" variant="secondary" onClick={() => nav('/console/cm/mid-metric')}>返回列表</Button>
       </>}
       infoCells={
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
@@ -97,20 +79,11 @@ export default function MidMetricDetail() {
           <InfoCell label="分组" value={draft.group ?? '-'} tag={<Sam value="midMetrics.json.group" />} />
           <InfoCell label="单位" value={draft.unit ?? '-'} tag={<Sam value="midMetrics.json.unit" />} />
           <InfoCell label="精度" value={String(draft.precision ?? 0)} tag={<Sam value="midMetrics.json.precision" />} />
-          <InfoCell label="实时值" value={fmt(preview, draft.precision, draft.unit)} tag={<Cal />} />
+          <InfoCell label="实时值" value={'—'} tag={<Cal />} />
         </div>
       }
     >
-      <MetricEditor value={draft} metrics={metrics} sources={sources} onChange={setDraft} onRemove={existing ? remove : undefined} />
-
-      <Panel title="可用字段（数据源参考）" desc={<>来自 <Sam value="midDataSources.json" />，选字段时对照</>}>
-        {src ? <DataTable columns={fieldCols} rows={fieldRows} /> : <div className="text-sm text-slate-400">请先在上方「步骤 1」选择数据源</div>}
-        {src && (
-          <div className="mt-2">
-            <Button size="sm" variant="ghost" onClick={() => nav('/console/cm/mid-data-source-detail?id=' + src.id)}>查看数据源完整详情：{src.name} →</Button>
-          </div>
-        )}
-      </Panel>
+      <MetricEditor value={draft} metrics={metrics} sources={sources} onChange={setDraft} sourceViewSlot={sourceViewSlot} />
 
       {existing && (usedByRules.length > 0 || usedByWidgets.length > 0) && (
         <Panel title="被引用" desc="该指标被以下监控规则与看板组件引用">

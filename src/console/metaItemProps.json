@@ -1,0 +1,12 @@
+[
+ {
+  "id": "ip_is_valid",
+  "name": "$is_valid",
+  "displayName": "是否封禁",
+  "itemType": "-",
+  "dataType": "BOOL",
+  "unit": "-",
+  "visible": "可见",
+  "preset": "是"
+ }
+]

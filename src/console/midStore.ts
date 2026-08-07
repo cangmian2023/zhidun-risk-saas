@@ -7,6 +7,7 @@ import { useSyncExternalStore } from 'react';
 import {
   SEED_DATA_SOURCES, SEED_METRICS, SEED_STRATEGY, SEED_DASHBOARDS,
   SEED_ALERTS, SEED_CUSTOMERS, SEED_DISPOSE_TASKS, SEED_VIZ_SAMPLES,
+  normalizeStrategy,
 } from './midData';
 import type {
   MidDataSource, MidMetric, MidStrategy, MidDashboardPage,
@@ -103,7 +104,8 @@ async function bootstrap() {
   }
   if (Array.isArray(ds) && ds.length) dataSources = ds as MidDataSource[]; else saveOne(FILES.dataSources, dataSources);
   if (Array.isArray(mt) && mt.length) metrics = mt as MidMetric[]; else saveOne(FILES.metrics, metrics);
-  if (st && Array.isArray((st as MidStrategy).tasks)) strategy = st as MidStrategy; else saveOne(FILES.strategy, strategy);
+  // 策略：无论磁盘新旧结构，一律过一遍 normalizeStrategy 规整为新结构，避免旧数据白屏
+  if (st && Array.isArray((st as MidStrategy).tasks)) strategy = normalizeStrategy(st); else saveOne(FILES.strategy, strategy);
   if (Array.isArray(db) && db.length) dashboards = db as MidDashboardPage[]; else saveOne(FILES.dashboards, dashboards);
   if (Array.isArray(al) && al.length) alerts = al as MidAlert[]; else saveOne(FILES.alerts, alerts);
   if (Array.isArray(cu) && cu.length) customers = cu as MidCustomer[]; else saveOne(FILES.customers, customers);

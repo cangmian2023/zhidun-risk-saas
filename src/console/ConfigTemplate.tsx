@@ -5,6 +5,8 @@ import { useState, type ReactNode } from 'react';
 import { PageShell } from './PageShell';
 import { Panel, DataTable, Modal, Button } from '../components/ui';
 import type { Column, Row } from '../components/ui';
+import type { MidRule, MidTask, MonitorGranularity, RuleLogic } from './midData';
+import { WEEK_DAYS } from './midData';
 
 // ---- 面包屑 / 容器（统一） ----
 export const CONFIG_CRUMB = '零售信贷风控 / 管理中心';
@@ -16,9 +18,12 @@ export const CONFIG_CONTAINER = 'mx-auto max-w-6xl space-y-5 px-4 py-6 lg:px-8';
 // ---- 共享文案映射（集中维护，4 模块一致） ----
 export const SRC_TYPE_LABEL: Record<string, string> = { sql: '数据库' };
 export const METRIC_TYPE_LABEL: Record<string, string> = { base: '基础指标', derived: '派生指标' };
-export const FREQ_LABEL: Record<string, string> = { realtime: '实时', every5m: '每5分钟', hourly: '每小时', daily: '每日', weekly: '每周', monthly: '每月' };
+export const GRAN_LABEL: Record<MonitorGranularity, string> = { realtime: '实时', minute: '按分钟', hour: '按小时', day: '按天', week: '按周', month: '按月' };
+export const LOGIC_LABEL: Record<RuleLogic, string> = { and: '且', or: '或' };
 export const OUTPUT_LABEL: Record<string, string> = { api: 'API 推送', url: '页面 URL', file: '文件导出', web: '监控看板' };
-export const OP_LABEL: Record<string, string> = { gt: '>', gte: '≥', lt: '<', lte: '≤', eq: '=', neq: '≠' };
+export const OP_LABEL: Record<string, string> = { gt: '>', gte: '≥', lt: '<', lte: '≤', eq: '=', neq: '≠', exists: '有值', contains: '包含' };
+export const COMPARE_LABEL: Record<string, string> = { lt: '低于', gt: '高于', eq: '等于' };
+export const BASELINE_LABEL: Record<string, string> = { yesterday: '昨天同期', lastWeek: '上周同期', lastMonth: '上月同期' };
 export const WTYPE_LABEL: Record<string, string> = { metric: '指标卡', line: '折线', bar: '柱状', donut: '环形', table: '明细表' };
 
 // ---- 数值格式化（指标预览 / 详情共用） ----
@@ -28,6 +33,29 @@ export function fmt(v: number | string | undefined | null, precision = 0, unit =
   if (Number.isNaN(n)) return String(v);
   const s = precision > 0 ? n.toFixed(precision) : String(Math.round(n));
   return unit ? `${s}${unit}` : s;
+}
+
+// 预警规则摘要（多条件 + 且/或）——用于列表行与卡片一句话展示
+export function ruleSummary(r: MidRule, nameOf: (id: string) => string): string {
+  const parts = r.conds.map((c) => {
+    const op = OP_LABEL[c.op] ?? c.op;
+    if (c.op === 'exists') return `「${nameOf(c.metricId)}」有值`;
+    return `「${nameOf(c.metricId)}」${op} ${c.value}`;
+  });
+  return parts.join(r.logic === 'and' ? ' 且 ' : ' 或 ');
+}
+
+// 监控粒度 + 监控时段 → 一句话展示（对齐文件「监控粒度 / 监控时段」）
+export function granText(t: MidTask): string {
+  const g = GRAN_LABEL[t.granularity];
+  const p = t.period;
+  if (t.granularity === 'realtime' || t.granularity === 'minute' || t.granularity === 'hour') return g;
+  const parts: string[] = [];
+  if (t.granularity === 'week' && p?.days?.length) {
+    parts.push(p.days.map((d) => WEEK_DAYS.find((w) => w.key === d)?.label ?? d).join('/'));
+  }
+  if (p?.hours?.length) parts.push(p.hours.map((h) => `${h}:00`).join('、'));
+  return [g, ...parts].join(' · ') || g;
 }
 
 // ---- 列表页骨架（PageShell + Panel + DataTable 粘性首尾列 + 新建 + 编辑器弹窗） ----
@@ -89,7 +117,7 @@ export function ConfigListPage(p: ConfigListPageProps) {
         <DataTable columns={columns} rows={rows}
           actions={(r) => (
             <Button size="sm" variant="ghost" onClick={() => onView(r)}>查看</Button>
-          )} empty={p.emptyText} />
+          )} empty={p.emptyText} pager defaultPageSize={20} />
       </Panel>
 
       <Modal open={p.editOpen} onClose={p.onCloseEdit} title={p.editTitle} width={p.modalWidth ?? 'max-w-2xl'}
@@ -106,6 +134,7 @@ export interface ConfigDetailPageProps {
   crumbParts: string[]; // 面包屑末级片段（不含 CONFIG_CRUMB 前缀）
   subtitle?: string;
   actions?: ReactNode;
+  source?: ReactNode;   // 头条数据来源标签（如 <Sam value="midStrategy.json" />）
   infoCells: ReactNode; // 顶部 InfoCell 网格
   children: ReactNode; // Panels
 }
@@ -113,6 +142,11 @@ export function ConfigDetailPage(p: ConfigDetailPageProps) {
   return (
     <div className={CONFIG_CONTAINER}>
       <PageShell title={p.title} crumb={crumb(...p.crumbParts)} subtitle={p.subtitle} actions={p.actions} />
+      {p.source && (
+        <div className="mb-1 flex items-center gap-1 text-xs text-slate-400" style={{ marginTop: -6 }}>
+          数据来源：{p.source}
+        </div>
+      )}
       {p.infoCells}
       {p.children}
     </div>

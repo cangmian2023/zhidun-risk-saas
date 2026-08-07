@@ -1,0 +1,103 @@
+{
+ "subject": "用户 ID (默认)",
+ "timezone": "UTC-03:00",
+ "summaryCfg": "快速总和",
+ "events": [
+  {
+   "id": "A",
+   "event": "Web视区停留",
+   "metric": "总次数",
+   "color": "#2563eb"
+  },
+  {
+   "id": "B",
+   "event": "直播间-点击立即购买",
+   "metric": "人均次数",
+   "color": "#f59e0b"
+  },
+  {
+   "id": "C",
+   "event": "直播间-点击立即购买",
+   "metric": "自定义指标",
+   "color": "#10b981"
+  }
+ ],
+ "filterRel": "且",
+ "filters": [
+  {
+   "id": "f_ip",
+   "prop": "IP",
+   "op": "有值",
+   "values": []
+  },
+  {
+   "id": "f_dur",
+   "prop": "$启动时长",
+   "op": "大于",
+   "values": [
+    "0"
+   ]
+  },
+  {
+   "id": "f_ct",
+   "prop": "国家",
+   "op": "包含",
+   "values": [
+    "中国",
+    "美国",
+    "日本",
+    "瑞士",
+    "德国",
+    "土耳其",
+    "印度",
+    "英国",
+    "奥地利"
+   ]
+  }
+ ],
+ "groups": [
+  {
+   "id": "gp1",
+   "prop": "省份"
+  }
+ ],
+ "granularity": "day",
+ "monitorGranularity": "hour",
+ "monitorDays": [
+  "mon",
+  "tue",
+  "wed",
+  "thu",
+  "fri",
+  "sat",
+  "sun"
+ ],
+ "monitorHours": [
+  "00",
+  "01",
+  "02",
+  "03",
+  "04",
+  "05",
+  "06",
+  "07",
+  "08",
+  "09",
+  "10",
+  "11",
+  "12",
+  "13",
+  "14",
+  "15",
+  "16",
+  "17",
+  "18",
+  "19",
+  "20",
+  "21",
+  "22",
+  "23"
+ ],
+ "topN": 10,
+ "chartType": "line"
+}
