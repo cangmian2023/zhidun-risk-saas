@@ -3,7 +3,7 @@
 // 改一处即可全局生效，满足「所有页面用同一个模板，修改方便」。
 import { useState, type ReactNode } from 'react';
 import { PageShell } from './PageShell';
-import { Panel, DataTable, Modal, Button } from '../components/ui';
+import { Panel, DataTable, Modal, Button, DetailHeader } from '../components/ui';
 import type { Column, Row } from '../components/ui';
 import type { MidRule, MidTask, MonitorGranularity, RuleLogic } from './midData';
 import { WEEK_DAYS } from './midData';
@@ -82,6 +82,7 @@ export interface ConfigListPageProps {
   // 多表（分页签）模式，如策略配置
   tabs?: ListTab[];
   onView: (r: Row, tabKey?: string) => void;
+  rowActions?: (r: Row, tabKey?: string) => ReactNode; // 操作列自定义（默认「查看」）；用于追加业务流程操作按钮
   editOpen: boolean;
   editTitle: string;
   onCloseEdit: () => void;
@@ -115,9 +116,11 @@ export function ConfigListPage(p: ConfigListPageProps) {
       <Panel title={p.panelTitle} desc={p.panelDesc}
         actions={<>{p.panelActions}</>}>
         <DataTable columns={columns} rows={rows}
-          actions={(r) => (
-            <Button size="sm" variant="ghost" onClick={() => onView(r)}>查看</Button>
-          )} empty={p.emptyText} pager defaultPageSize={20} />
+          actions={(r) => p.rowActions
+            ? p.rowActions(r, active?.key)
+            : (
+              <Button size="sm" variant="ghost" onClick={() => onView(r)}>查看</Button>
+            )} empty={p.emptyText} pager defaultPageSize={20} />
       </Panel>
 
       <Modal open={p.editOpen} onClose={p.onCloseEdit} title={p.editTitle} width={p.modalWidth ?? 'max-w-2xl'}
@@ -137,11 +140,25 @@ export interface ConfigDetailPageProps {
   source?: ReactNode;   // 头条数据来源标签（如 <Sam value="midStrategy.json" />）
   infoCells: ReactNode; // 顶部 InfoCell 网格
   children: ReactNode; // Panels
+  backLabel?: string;   // 顶部左侧返回按钮文案（与报告模板详情页一致）
+  onBack?: () => void;  // 顶部左侧返回按钮动作
+  flowBar?: ReactNode;  // 需求21：流程操作行（面包屑下方，保存/流程按钮/状态标签）
 }
 export function ConfigDetailPage(p: ConfigDetailPageProps) {
+  const header = p.onBack ? (
+    <DetailHeader
+      title={p.title}
+      crumb={crumb(...p.crumbParts)}
+      subtitle={p.subtitle}
+      backLabel={p.backLabel ?? '返回列表'}
+      onBack={p.onBack}
+      actions={p.actions}
+      flowBar={p.flowBar}
+    />
+  ) : undefined;
   return (
     <div className={CONFIG_CONTAINER}>
-      <PageShell title={p.title} crumb={crumb(...p.crumbParts)} subtitle={p.subtitle} actions={p.actions} />
+      <PageShell title={p.title} crumb={crumb(...p.crumbParts)} subtitle={p.subtitle} actions={p.actions} header={header} />
       {p.source && (
         <div className="mb-1 flex items-center gap-1 text-xs text-slate-400" style={{ marginTop: -6 }}>
           数据来源：{p.source}

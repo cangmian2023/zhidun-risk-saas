@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useLayoutEffect } from 'react'
 import type { ReactNode, ButtonHTMLAttributes } from 'react'
 import { createPortal } from 'react-dom'
 import { SourceTag } from '../console/SourceTag'
@@ -17,10 +17,12 @@ export function PageHeader({
 }) {
   return (
     <div className="sticky top-14 z-30 -mx-4 border-b border-slate-100 bg-slate-50 px-4 pb-5 pt-1 lg:-mx-8 lg:px-8">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          {crumb && <p className="text-xs font-medium text-brand-600">{crumb}</p>}
-          <h1 className="mt-1 text-2xl font-bold tracking-tight text-ink-900">{title}</h1>
+      {/* 第一行：面包屑（与详情页 DetailHeader 一致，放最上面） */}
+      {crumb && <div className="text-xs text-slate-400">{crumb}</div>}
+      {/* 第二行：标题 + 右侧操作 */}
+      <div className="mt-2 flex flex-wrap items-start justify-between gap-4">
+        <div className="min-w-0 flex-1">
+          <h1 className="text-2xl font-bold tracking-tight text-ink-900">{title}</h1>
           {subtitle && <p className="mt-1.5 max-w-3xl text-sm leading-relaxed text-slate-500">{subtitle}</p>}
         </div>
         {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
@@ -38,6 +40,7 @@ export function Panel({
   children,
   id,
   className = '',
+  hoverTip,
 }: {
   title?: string
   desc?: string | ReactNode
@@ -46,13 +49,24 @@ export function Panel({
   children: ReactNode
   id?: string
   className?: string
+  hoverTip?: string // 需求38：标题旁问号角标，鼠标移入显示组件说明
 }) {
   return (
     <section id={id} className={`scroll-mt-24 rounded-2xl border border-slate-100 bg-white p-5 shadow-card ${className}`}>
       {(title || actions) && (
         <div className="mb-4 flex items-center justify-between gap-3">
           <div>
-            {title && (typeof title === 'string' ? <h3 className="text-base font-semibold text-ink-900">{title}</h3> : <h3 className="text-base font-semibold text-ink-900">{title}</h3>)}
+            <div className="flex items-center gap-1.5">
+              {title && (typeof title === 'string' ? <h3 className="text-base font-semibold text-ink-900">{title}</h3> : <h3 className="text-base font-semibold text-ink-900">{title}</h3>)}
+              {hoverTip && (
+                <span className="group relative inline-flex h-4 w-4 cursor-help items-center justify-center rounded-full bg-slate-100 text-[10px] font-bold text-slate-400">
+                  ?
+                  <span className="pointer-events-none absolute left-1/2 top-full z-40 mt-1.5 w-52 -translate-x-1/2 whitespace-normal rounded-lg border border-slate-200 bg-white px-3 py-2 text-left text-xs font-normal leading-relaxed text-slate-600 opacity-0 shadow-lg transition-opacity group-hover:opacity-100">
+                    {hoverTip}
+                  </span>
+                </span>
+              )}
+            </div>
             {desc && <p className="mt-0.5 text-xs text-slate-400">{desc}</p>}
           </div>
           {actions}
@@ -141,6 +155,7 @@ export function DetailHeader({
   onBack,
   actions,
   id,
+  flowBar,
 }: {
   title: ReactNode
   crumb?: string
@@ -149,9 +164,11 @@ export function DetailHeader({
   onBack?: () => void
   actions?: ReactNode
   id?: string
+  flowBar?: ReactNode // 需求21：流程操作行（面包屑下方，保存/流程按钮/状态标签）
 }) {
   return (
     <div id={id} className="sticky top-14 z-30 -mx-4 bg-slate-50 px-4 pb-4 pt-1 lg:-mx-8 lg:px-8">
+      {/* 第一行：返回按钮 + 面包屑 */}
       <div className="flex flex-wrap items-center gap-3">
         {onBack && (
           <button
@@ -162,12 +179,17 @@ export function DetailHeader({
             {backLabel ?? '← 返回'}
           </button>
         )}
-        <div>
+        {crumb && <span className="text-xs text-slate-400">{crumb}</span>}
+      </div>
+      {/* 流程操作行（面包屑下方一行，需求21） */}
+      {flowBar}
+      {/* 第二行：标题 + 右侧操作按钮 */}
+      <div className="mt-2 flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
           <h1 className="text-xl font-bold text-ink-900">{title}</h1>
-          {crumb && <p className="text-xs text-slate-400">{crumb}</p>}
-          {subtitle && <p className="mt-0.5 text-xs text-slate-400">{subtitle}</p>}
+          {subtitle && <div className="mt-0.5 text-xs text-slate-400">{subtitle}</div>}
         </div>
-        {actions && <div className="ml-auto flex flex-wrap items-center justify-end gap-2">{actions}</div>}
+        {actions && <div className="flex flex-wrap items-center justify-end gap-2">{actions}</div>}
       </div>
     </div>
   )
@@ -280,6 +302,8 @@ export interface Column {
   progressColor?: string
   align?: 'left' | 'right' | 'center'
   hint?: string
+  render?: (r: Row) => ReactNode  // 需求14：列级自定义渲染（整行传入），优先于 type
+  fixed?: 'left' | 'right'  // 需求15：固定列（左/右侧粘住，右侧自动让出操作列宽度）
   tag?: 'cfg' | 'sample' | 'calc' | { kind: 'cfg' | 'sample' | 'calc'; value: string }
 }
 
@@ -316,6 +340,12 @@ export function DataTable({
 }) {
   const [page, setPage] = useState(1);
   const [ps, setPs] = useState<number>(defaultPageSize);
+  // 需求15：右侧固定列需要知道操作列宽度（right 偏移）
+  const actionsRef = useRef<HTMLTableCellElement>(null)
+  const [actionsW, setActionsW] = useState(0)
+  useLayoutEffect(() => {
+    if (actionsRef.current) setActionsW(actionsRef.current.offsetWidth)
+  }, [actions, rows])
   const total = rows.length;
   const totalPages = pager ? Math.max(1, Math.ceil(total / ps)) : 1;
   const curPage = pager ? Math.min(page, totalPages) : 1;
@@ -331,8 +361,8 @@ export function DataTable({
               {columns.map((c, i) => (
                 <th
                   key={c.key}
-                  className={`whitespace-nowrap px-3 py-3 bg-white ${i === 0 ? 'sticky left-0 z-20' : ''}`}
-                  style={{ width: c.width, textAlign: c.align ?? 'left' }}
+                  className={`whitespace-nowrap px-3 py-3 bg-white ${c.fixed === 'left' || i === 0 ? 'sticky left-0 z-20' : ''} ${c.fixed === 'right' ? 'sticky z-20' : ''}`}
+                  style={{ width: c.width, textAlign: c.align ?? 'left', ...(c.fixed === 'right' ? { right: actionsW } : {}) }}
                 >
                   <div className="flex items-center gap-1.5">
                     <span>{c.label}</span>
@@ -341,7 +371,7 @@ export function DataTable({
                 </th>
               ))}
               {actions && (
-                <th className="whitespace-nowrap px-3 py-3 bg-white sticky right-0 z-20 text-left">操作</th>
+                <th ref={actionsRef} className="whitespace-nowrap px-3 py-3 bg-white sticky right-0 z-20 text-left">操作</th>
               )}
             </tr>
           </thead>
@@ -360,8 +390,8 @@ export function DataTable({
                     return (
                       <td
                         key={c.key}
-                        className={`whitespace-nowrap px-3 py-3 text-slate-600 ${i === 0 ? 'sticky left-0 z-10 bg-white group-hover:bg-slate-50/60' : ''}`}
-                        style={{ textAlign: c.align ?? 'left' }}
+                        className={`whitespace-nowrap px-3 py-3 text-slate-600 ${c.fixed === 'left' || i === 0 ? 'sticky left-0 z-10 bg-white group-hover:bg-slate-50/60' : ''} ${c.fixed === 'right' ? 'sticky z-10 bg-white group-hover:bg-slate-50/60' : ''}`}
+                        style={{ textAlign: c.align ?? 'left', ...(c.fixed === 'right' ? { right: actionsW } : {}) }}
                       >
                         {clickable ? (
                           <button
@@ -369,10 +399,10 @@ export function DataTable({
                             onClick={() => onCellClick?.(r)}
                             className="font-medium text-brand-600 hover:underline"
                           >
-                            {renderCell(r[c.key], c)}
+                            {renderCell(r, c)}
                           </button>
                         ) : (
-                          renderCell(r[c.key], c)
+                          renderCell(r, c)
                         )}
                       </td>
                     )
@@ -423,8 +453,11 @@ function ColumnTag({ tag }: { tag: Column['tag'] }) {
   return <SourceTag kind={tag.kind} value={tag.value} />;
 }
 
-function renderCell(v: CellVal, c: Column) {
+function renderCell(r: Row, c: Column) {
+  const v = r[c.key]
   const t = c.type ?? 'text'
+  // 列级自定义渲染（需求14）：整行传入，优先于 type
+  if (c.render) return c.render(r)
   // 稳健兜底：只要值是 { v, kind } 形态的徽标对象，无论列是否声明 type:'badge' 都按徽标渲染，
   // 避免把对象直接作为 React 子节点导致整页白屏。
   if (typeof v === 'object' && v !== null && 'kind' in v && 'v' in v) {
@@ -474,6 +507,51 @@ export function Button({
   )
 }
 
+/* ---------- RightDrawer（右侧抽屉，支持嵌套层级：level 越高越靠前，内层叠在外层上） ---------- */
+export function RightDrawer({
+  open,
+  onClose,
+  title,
+  children,
+  width = 560,
+  level = 1,
+}: {
+  open: boolean
+  onClose: () => void
+  title?: string
+  children: ReactNode
+  width?: number
+  level?: number
+}) {
+  if (!open) return null
+  const z = 50 + level * 10 // 外层 60 / 内层 70（逐层前置）
+  return createPortal(
+    <div className="fixed inset-0" style={{ zIndex: z }}>
+      {/* 遮罩：外层全屏；内层只盖住内层抽屉左侧（外层露出部分可见，体现层级包含） */}
+      <div
+        className="absolute inset-y-0 bg-slate-900/40"
+        style={{ left: 0, right: level > 1 ? width : 0, zIndex: z - 1 }}
+        onClick={onClose}
+      />
+      <div className="absolute inset-y-0 right-0 overflow-y-auto bg-white shadow-2xl" style={{ width, zIndex: z }}>
+        <div className="sticky top-0 flex items-center justify-between border-b border-slate-100 bg-white/95 px-5 py-4 backdrop-blur">
+          <h2 className="text-base font-semibold text-ink-900">{title}</h2>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="关闭"
+            className="rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
+          >
+            ✕
+          </button>
+        </div>
+        <div className="px-5 py-4">{children}</div>
+      </div>
+    </div>,
+    document.body,
+  )
+}
+
 /* ---------- Drawer ---------- */
 export function Drawer({
   open,
@@ -519,6 +597,7 @@ export function Modal({
   children,
   footer,
   width = 'max-w-lg',
+  zIndex = 50,
 }: {
   open: boolean
   onClose: () => void
@@ -526,10 +605,11 @@ export function Modal({
   children: ReactNode
   footer?: ReactNode
   width?: string
+  zIndex?: number // 弹窗层级（默认 50；嵌套在 RightDrawer 之上需调高，如抽屉 level=2 为 70）
 }) {
   if (!open) return null
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 flex items-center justify-center p-4" style={{ zIndex }}>
       <div className="absolute inset-0 bg-slate-900/40" onClick={onClose} />
       <div className={`relative w-full ${width} overflow-hidden rounded-2xl bg-white shadow-2xl`}>
         <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
@@ -582,6 +662,7 @@ export interface SearchSelectProps {
   fullWidth?: boolean
   width?: number | string
   exclusiveValues?: string[] // 选中其中之一即清空其余（如「全产品」互斥）
+  portal?: boolean // 浮层渲染到 body（fixed 定位），避免在 Modal 等 overflow 容器内被裁剪
 }
 export function SearchSelect({
   options,
@@ -597,13 +678,16 @@ export function SearchSelect({
   fullWidth = false,
   width,
   exclusiveValues = [],
+  portal = false,
 }: SearchSelectProps) {
   const [open, setOpen] = useState(false)
   const [q, setQ] = useState('')
   const ref = useRef<HTMLDivElement>(null)
+  const panelRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
     function onDocClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+      const t = e.target as Node
+      if (ref.current && !ref.current.contains(t) && panelRef.current && !panelRef.current.contains(t)) setOpen(false)
     }
     document.addEventListener('mousedown', onDocClick)
     return () => document.removeEventListener('mousedown', onDocClick)
@@ -656,6 +740,65 @@ export function SearchSelect({
     trigger = value ? <span>{labelOf(value as string)}</span> : <span className="text-slate-400">{placeholder}</span>
   }
 
+  const rect = ref.current?.getBoundingClientRect()
+  const panelBody = (
+    <>
+      <div className="border-b border-slate-100 p-2">
+        <input
+          autoFocus
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder={searchPlaceholder}
+          className="w-full rounded-lg border border-slate-200 px-2.5 py-1.5 text-sm outline-none focus:border-brand-400"
+        />
+      </div>
+      <div className="max-h-64 overflow-y-auto p-1.5">
+        {pinned.length > 0 && (
+          <div className="mb-1">
+            {pinned.map((p) => (
+              <Row key={p.value} opt={p} checked={isSel(p.value)} onToggle={() => toggle(p.value)} multiple={multiple} />
+            ))}
+            <div className="my-1 border-t border-slate-100" />
+          </div>
+        )}
+        {usedGroups.map((g) => {
+          const gOpts = options.filter((o) => o.group === g.key && matchOpt(o))
+          if (gOpts.length === 0) return null
+          const allOn = gOpts.every((o) => isSel(o.value))
+          const someOn = gOpts.some((o) => isSel(o.value))
+          return (
+            <div key={g.key} className="mb-1">
+              <div className="flex items-center gap-2 rounded-lg px-2 py-1 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                {multiple && (
+                  <input
+                    type="checkbox"
+                    checked={allOn}
+                    ref={(el) => { if (el) el.indeterminate = !allOn && someOn }}
+                    onChange={() => toggleGroup(g.key)}
+                  />
+                )}
+                <span>{g.label}</span>
+                {multiple && (
+                  <span className="ml-auto text-slate-300">{`${gOpts.filter((o) => isSel(o.value)).length}/${gOpts.length}`}</span>
+                )}
+              </div>
+              {gOpts.map((o) => (
+                <Row key={o.value} opt={o} checked={isSel(o.value)} onToggle={() => toggle(o.value)} multiple={multiple} />
+              ))}
+            </div>
+          )
+        })}
+        {totalMatch === 0 && <div className="px-2 py-6 text-center text-sm text-slate-400">{emptyText}</div>}
+      </div>
+      {multiple && (
+        <div className="flex items-center justify-between border-t border-slate-100 px-3 py-2 text-xs text-slate-500">
+          <span>已选 {(value as string[]).length} 项</span>
+          <button type="button" className="text-slate-400 hover:text-slate-600" onClick={() => onChange([])}>清空</button>
+        </div>
+      )}
+    </>
+  )
+
   return (
     <div className={`relative ${fullWidth ? 'w-full' : ''}`} ref={ref} style={width ? { width } : undefined}>
       <button
@@ -672,61 +815,18 @@ export function SearchSelect({
         <span className="pointer-events-none ml-1 text-xs text-slate-400">▾</span>
       </button>
       {open && (
-        <div className="absolute z-50 mt-1 w-full overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl">
-          <div className="border-b border-slate-100 p-2">
-            <input
-              autoFocus
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder={searchPlaceholder}
-              className="w-full rounded-lg border border-slate-200 px-2.5 py-1.5 text-sm outline-none focus:border-brand-400"
-            />
+        portal && ref.current ? (
+          createPortal(
+            <div ref={panelRef} style={{ position: 'fixed', left: rect?.left ?? 0, top: (rect?.bottom ?? 0) + 4, width: rect?.width ?? 240, zIndex: 999, maxHeight: '70vh' }} className="overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-xl">
+              {panelBody}
+            </div>,
+            document.body,
+          )
+        ) : (
+          <div ref={panelRef} className="absolute z-50 mt-1 w-full overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl">
+            {panelBody}
           </div>
-          <div className="max-h-64 overflow-y-auto p-1.5">
-            {pinned.length > 0 && (
-              <div className="mb-1">
-                {pinned.map((p) => (
-                  <Row key={p.value} opt={p} checked={isSel(p.value)} onToggle={() => toggle(p.value)} multiple={multiple} />
-                ))}
-                <div className="my-1 border-t border-slate-100" />
-              </div>
-            )}
-            {usedGroups.map((g) => {
-              const gOpts = options.filter((o) => o.group === g.key && matchOpt(o))
-              if (gOpts.length === 0) return null
-              const allOn = gOpts.every((o) => isSel(o.value))
-              const someOn = gOpts.some((o) => isSel(o.value))
-              return (
-                <div key={g.key} className="mb-1">
-                  <div className="flex items-center gap-2 rounded-lg px-2 py-1 text-xs font-semibold uppercase tracking-wide text-slate-400">
-                    {multiple && (
-                      <input
-                        type="checkbox"
-                        checked={allOn}
-                        ref={(el) => { if (el) el.indeterminate = !allOn && someOn }}
-                        onChange={() => toggleGroup(g.key)}
-                      />
-                    )}
-                    <span>{g.label}</span>
-                    {multiple && (
-                      <span className="ml-auto text-slate-300">{`${gOpts.filter((o) => isSel(o.value)).length}/${gOpts.length}`}</span>
-                    )}
-                  </div>
-                  {gOpts.map((o) => (
-                    <Row key={o.value} opt={o} checked={isSel(o.value)} onToggle={() => toggle(o.value)} multiple={multiple} />
-                  ))}
-                </div>
-              )
-            })}
-            {totalMatch === 0 && <div className="px-2 py-6 text-center text-sm text-slate-400">{emptyText}</div>}
-          </div>
-          {multiple && (
-            <div className="flex items-center justify-between border-t border-slate-100 px-3 py-2 text-xs text-slate-500">
-              <span>已选 {(value as string[]).length} 项</span>
-              <button type="button" className="text-slate-400 hover:text-slate-600" onClick={() => onChange([])}>清空</button>
-            </div>
-          )}
-        </div>
+        )
       )}
     </div>
   )

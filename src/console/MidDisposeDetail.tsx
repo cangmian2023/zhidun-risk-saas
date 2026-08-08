@@ -1,7 +1,7 @@
 // 处置工单详情（使用域）— 读 midDisposeTasks.json 橘；实时统计 灰
 import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Panel, Button, StatusTag } from '../components/ui';
+import { Panel, Button, StatusTag, DetailHeader } from '../components/ui';
 import { Sam, Cal } from './SourceTag';
 import { PageShell } from './PageShell';
 import { useMidDisposeTasks, updateDisposeTasks } from './midStore';
@@ -33,7 +33,7 @@ export default function MidDisposeDetail() {
   if (!t) {
     return (
       <div style={{ padding: 24 }}>
-        <PageShell title="工单详情" crumb="贷中监控 / 处置闭环" actions={<Button size="sm" variant="secondary" onClick={() => nav(-1)}>返回</Button>} />
+        <PageShell header={<DetailHeader title="工单详情" crumb="贷中监控 / 处置闭环" backLabel="返回队列" onBack={() => nav('/console/cr/mid-dispose-workbench')} />} />
         <div style={{ padding: 24, color: '#94A3B8', fontSize: 13 }}>未找到该工单（{id}）。</div>
       </div>
     );
@@ -52,13 +52,12 @@ export default function MidDisposeDetail() {
 
   return (
     <div style={{ padding: 24, maxWidth: 1080 }}>
-      <PageShell title={`工单详情 · ${t.id}`} crumb="贷中监控 / 处置闭环"
-        subtitle={t.custName}
+      <PageShell header={<DetailHeader title={`工单详情 · ${t.id}`} crumb="贷中监控 / 处置闭环" subtitle={t.custName}
+        backLabel="返回队列" onBack={() => nav('/console/cr/mid-dispose-workbench')}
         actions={<>
           <Sam label="工单样例" value={`${tasks.length} 条`} />
           <Cal label="实时统计" />
-          <Button size="sm" variant="secondary" onClick={() => nav(-1)}>返回队列</Button>
-        </>} />
+        </>} />} />
 
       <Panel title="工单信息" desc="处置工单基础信息">
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0,1fr))', gap: '6px 16px', fontSize: 13, marginBottom: 12 }}>

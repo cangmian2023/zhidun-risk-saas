@@ -7,6 +7,7 @@ import { Sam, Cal } from './SourceTag';
 import { useMidMetrics, useMidDataSources, useMidStrategy, useMidDashboards, updateMetrics, midNewId } from './midStore';
 import { type MidMetric } from './midData';
 import { ConfigDetailPage } from './ConfigTemplate';
+import FlowActionBar from './FlowActionBar';
 import { MetricEditor } from './MetricEditor';
 
 function blankMetric(sources: { id: string }[]): MidMetric {
@@ -39,9 +40,6 @@ export default function MidMetricDetail() {
   }, [key, isNew, id]);
 
   const src = sources.find((s) => s.id === (draft.dataSourceIds?.[0] ?? draft.dataSourceId));
-  const sourceViewSlot = src ? (
-    <Button size="sm" variant="secondary" onClick={() => nav('/console/cm/mid-data-source-detail?id=' + src.id)}>查看数据源：{src.name} →</Button>
-  ) : null;
   // 指标取数由 SQL 脚本执行，详情页不在此计算实时值
 
   const save = () => {
@@ -52,11 +50,6 @@ export default function MidMetricDetail() {
     });
     if (isNew) nav(`/console/cm/mid-metric-detail?id=${draft.id}`, { replace: true });
   };
-  const toggleEnabled = () => {
-    const next = { ...draft, enabled: !(draft.enabled ?? true) };
-    setDraft(next);
-    updateMetrics((list) => list.map((x) => (x.id === draft.id ? next : x)));
-  };
   // 被引用（基于已保存的 existing）
   const usedByRules = existing ? strategy.rules.filter((r) => r.conds.some((c) => c.metricId === existing.id)) : [];
   const usedByWidgets = existing ? dashboards.flatMap((d) => d.widgets).filter((w) => w.metricId === existing.id) : [];
@@ -66,11 +59,11 @@ export default function MidMetricDetail() {
       title={draft.name || (isNew ? '新建指标' : '指标详情')}
       crumbParts={['指标库']}
       subtitle={`${draft.type === 'base' ? '基础指标' : '派生指标'}　·　分组：${draft.group ?? '-'}　·　保存即落盘`}
+      backLabel="返回列表" onBack={() => nav('/console/cm/mid-metric')}
+      flowBar={<FlowActionBar flowId={draft.flowKey} state={draft.flowState}
+        onStateChange={(s) => setDraft({ ...draft, flowState: s })} onSave={save} />}
       actions={<>
         <Sam value="midMetrics.json" />
-        <Button size="sm" variant="primary" onClick={save}>保存</Button>
-        {existing && <Button size="sm" variant={draft.enabled === false ? 'primary' : 'secondary'} onClick={toggleEnabled}>{draft.enabled === false ? '启用' : '停用'}</Button>}
-        <Button size="sm" variant="secondary" onClick={() => nav('/console/cm/mid-metric')}>返回列表</Button>
       </>}
       infoCells={
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
@@ -83,7 +76,7 @@ export default function MidMetricDetail() {
         </div>
       }
     >
-      <MetricEditor value={draft} metrics={metrics} sources={sources} onChange={setDraft} sourceViewSlot={sourceViewSlot} />
+      <MetricEditor value={draft} metrics={metrics} sources={sources} onChange={setDraft} />
 
       {existing && (usedByRules.length > 0 || usedByWidgets.length > 0) && (
         <Panel title="被引用" desc="该指标被以下监控规则与看板组件引用">

@@ -6,64 +6,104 @@
  *   - 业务流程关联「业务页面」（页面名称 + 页面路由），运行时按页面路由挂到页面操作列
  * 数据独立存 bizFlows.json（flowStore），不依赖报告模板；模板 flowRefId 仅作兼容兜底。
  * ========================================================================== */
-import { useState } from 'react'
-import { Panel, Button, Modal } from '../components/ui'
+import { useState, useMemo } from 'react'
+import { useSearchParams } from 'react-router-dom'
+import { Panel, Button, Modal, DetailHeader } from '../components/ui'
+import type { SearchSelectOption, SearchSelectGroup } from '../components/ui'
 import { PageShell } from './PageShell'
 import FlowCanvasEditor from './FlowCanvasEditor'
 import { CONFIG_CONTAINER, crumb } from './ConfigTemplate'
-import { Cfg } from './SourceTag'
-import { useFlows, addFlowItem, updateFlowItem, removeFlowItem, patchFlowItemGraphs, type FlowItem } from './flowStore'
+import { Sam, Cal } from './SourceTag'
+import { MENU_BY_SUB, subNames } from './menus'
+import PagePicker from './PagePicker'
+import { useMidDashboards } from './midStore'
+import { useFlows, addFlowItem, updateFlowItem, removeFlowItem, patchFlowItemGraphs, parseFlowStepsInput, type FlowItem, type FlowStep } from './flowStore'
 import {
   summarizeFlowGraph, buildDefaultFlowGraph, defaultButtonName,
   type FlowGraph,
 } from './reportTemplateData'
 
-/* 可关联的业务页面（页面名称 + 路由地址）——列表页/详情页操作列均来自关联的业务流程 */
-const PAGES = [
-  { name: '信息核验', route: '/console/cr/pre-verify' },
-  { name: '信用风控', route: '/console/cr/credit-kimi' },
-  { name: '欺诈识别', route: '/console/cr/pre-fraud' },
-  { name: '进件审核', route: '/console/cr/pre-report' },
-]
-const GRADES = [
-  { grade: '', label: '全部（不分段）' },
-  { grade: 'A', label: 'A 档（通过）' },
-  { grade: 'B', label: 'B 档（转人工）' },
-  { grade: 'C', label: 'C 档（拒绝）' },
-]
+/* 可关联的业务页面 = 全部左侧菜单页面（按子系统分组），供关联页面下拉（支持模糊查询） */
+const ALL_PAGES: SearchSelectOption[] = Object.entries(MENU_BY_SUB).flatMap(([sub, groups]) =>
+  groups.flatMap((g) => g.items.map((it) => ({
+    value: `/console/${sub}/${it.key.split(':')[1]}`,
+    label: it.label,
+    group: sub,
+  }))),
+)
+const PAGE_GROUPS: SearchSelectGroup[] = Object.entries(MENU_BY_SUB).map(([sub]) => ({ key: sub, label: subNames[sub] ?? sub }))
 
 const inp: React.CSSProperties = { border: '1px solid #E5E7EB', borderRadius: 6, padding: '4px 8px', fontSize: 12, outline: 'none', width: '100%' }
 const SEL = '#2563EB'
 const miniBtn: React.CSSProperties = { padding: '3px 10px', fontSize: 12, borderRadius: 6, cursor: 'pointer', background: '#fff', border: '1px solid #E5E7EB' }
+const miniInp: React.CSSProperties = { padding: '4px 8px', fontSize: 12, borderRadius: 6, border: '1px solid #E2E8F0', outline: 'none', background: '#fff' }
+/* 标题/描述行内编辑（与页面配置详情一致：悬停描边、聚焦白底） */
+const DASH_EDIT_CSS = `
+  .dash-edit-input { background: transparent; border: 1px solid transparent; border-radius: 8px; transition: border-color .15s, background .15s; }
+  .dash-edit-input:hover { border-color: #E2E8F0; }
+  .dash-edit-input:focus { background: #fff; border-color: #C7D2FE; outline: none; }
+`
+const editTitleStyle: React.CSSProperties = { marginTop: 2, fontSize: 20, fontWeight: 700, letterSpacing: '-0.01em', color: '#0F172A', padding: '4px 10px', width: 360 }
+const editDescStyle: React.CSSProperties = { marginTop: 4, fontSize: 12, color: '#64748B', padding: '2px 10px', width: 480 }
 
 export default function MidBizFlowConfig() {
   const flows = useFlows()
-  // 视图：list = 业务流程列表；detail = 选中业务流程的流程列表
-  const [view, setView] = useState<'list' | 'detail'>('list')
-  const [selId, setSelId] = useState<string | null>(null)
+  const dashboards = useMidDashboards()
+  // 反向引用统计（实时扫描）：flowKey → { 组件数, 页面数, 页面名列表 }，来自看板/对象配置的 widget.flowKey
+  const refMap = useMemo(() => {
+    const m: Record<string, { comps: number; pages: Set<string>; pageNames: Set<string> }> = {}
+    for (const pg of dashboards) {
+      for (const w of pg.widgets ?? []) {
+        const fk = w.flowKey
+        if (!fk) continue
+        const e = (m[fk] ??= { comps: 0, pages: new Set(), pageNames: new Set() })
+        e.comps++
+        if (pg.key) e.pages.add(String(pg.key))
+        if (pg.name) e.pageNames.add(String(pg.name))
+      }
+    }
+    return m
+  }, [dashboards])
+  const refInfo = (flowKey?: string) => {
+    if (!flowKey) return { comps: 0, pages: 0, pageNames: [] as string[] }
+    const e = refMap[flowKey]
+    return { comps: e?.comps ?? 0, pages: e?.pages.size ?? 0, pageNames: [...(e?.pageNames ?? [])].slice(0, 4) }
+  }
+  // 视图态由 URL 路由管理（searchParams ?id=）：详情/列表切换产生 history 记录，浏览器后退正确回到列表
+  const [params, setParams] = useSearchParams()
+  const selId = params.get('id')
+  const view: 'list' | 'detail' = selId ? 'detail' : 'list'
   // 新建业务流程弹窗
   const [showNew, setShowNew] = useState(false)
   const [newName, setNewName] = useState('')
-  const [newPage, setNewPage] = useState(PAGES[1].route) // 默认详情页
-  const [newGrade, setNewGrade] = useState('')
+  const [newPages, setNewPages] = useState<string[]>(['/console/cr/pre-verify']) // 默认信息核验（可多选）
+  const [newSteps, setNewSteps] = useState('') // 需求30：审核状态机（斜线分隔：状态/动作/状态/动作/状态）
   // 画布弹窗草稿
   const [flowEdit, setFlowEdit] = useState<{ itemId: string; sub: number } | null>(null)
   const [draftGraph, setDraftGraph] = useState<FlowGraph | null>(null)
 
   const selItem = selId ? flows.find((i) => i.id === selId) : undefined
-  const pageMeta = (r?: string) => PAGES.find((p) => p.route === r)
+  const pageMeta = (r?: string) => ALL_PAGES.find((p) => p.value === r)
+  const pageListOf = (f: FlowItem) => (f.pageRoutes?.length ? f.pageRoutes : f.pageRoute ? [f.pageRoute] : [])
 
   /* ---- 列表页操作 ---- */
-  const openDetail = (it: FlowItem) => { setSelId(it.id); setView('detail') }
+  // 进入详情：路由跳转（pushSearchParams），与数据源/指标/策略/页面配置详情行为一致
+  const openDetail = (it: FlowItem) => setParams({ id: it.id })
+  // 返回列表：路由跳转，浏览器后退/前进能正确回到详情
+  const backToList = () => setParams({}, { replace: true })
   const doNew = () => {
-    const p = PAGES.find((x) => x.route === newPage)!
+    const routes = newPages.filter(Boolean)
+    const first = routes[0] ?? ''
+    const firstMeta = ALL_PAGES.find((x) => x.value === first)
     const it = addFlowItem({
-      domain: p.route.includes('pre-verify') ? 'info_verify' : p.route.includes('credit-kimi') ? 'credit' : p.route.includes('pre-fraud') ? 'fraud' : 'decision',
-      name: newName.trim() || `${p.name}·业务流程`,
-      gradeId: newGrade || undefined,
-      pageName: p.name, pageRoute: p.route,
+      domain: first.includes('pre-verify') ? 'info_verify' : first.includes('credit-kimi') ? 'credit' : first.includes('pre-fraud') ? 'fraud' : 'decision',
+      name: newName.trim() || `${firstMeta?.label ?? '页面'}·业务流程`,
+      pageName: firstMeta?.label, pageRoute: first || undefined,
+      pageNames: routes.map((r) => ALL_PAGES.find((x) => x.value === r)?.label ?? r),
+      pageRoutes: routes,
+      flowSteps: newSteps.trim() ? parseFlowStepsInput(newSteps) : undefined, // 需求30：自定义状态机（斜线分隔）
     })
-    setShowNew(false); setNewName(''); setNewGrade('')
+    setShowNew(false); setNewName(''); setNewSteps('')
     openDetail(it)
   }
 
@@ -92,38 +132,79 @@ export default function MidBizFlowConfig() {
     setFlowEdit(null); setDraftGraph(null)
   }
 
-  const gradeMeta = (g?: string) => GRADES.find((x) => x.grade === (g ?? ''))
+  // 需求14：流程节点（状态机）编辑——每个节点可设时限倒计时（分钟，空=不限制）
+  const flowStepsOf = (it: FlowItem | undefined): FlowStep[] => it?.flowSteps ?? []
+  const setFlowSteps = (it: FlowItem, steps: FlowStep[]) => {
+    const norm = steps.map((s, i) => ({ ...s, next: steps[i + 1]?.state ?? '' }))
+    updateFlowItem(it.id, (f) => ({ ...f, flowSteps: norm }))
+  }
+  const patchStep = (it: FlowItem, idx: number, p: Partial<FlowStep>) => {
+    const steps = flowStepsOf(it).map((s, i) => (i === idx ? { ...s, ...p } : s))
+    setFlowSteps(it, steps)
+  }
 
   return (
     <div className={CONFIG_CONTAINER}>
-      <PageShell title="业务流程配置" crumb={crumb('业务流程配置')}
-        subtitle="独立业务流程库（bizFlows.json）· 每条业务流程关联一个业务页面，配置后挂到页面操作列"
-        actions={<Cfg value="bizFlows.json (flows)" />} />
+      {view === 'list' ? (
+        <PageShell title="业务流程配置" crumb={crumb('业务流程配置')}
+          subtitle="独立业务流程库（bizFlows.json）· 每条业务流程关联一个业务页面，配置后挂到页面操作列"
+          actions={<Sam value="bizFlows.json (flows)" />} />
+      ) : (
+        <>
+          <style>{DASH_EDIT_CSS}</style>
+          <PageShell header={<DetailHeader
+            title={selItem
+              ? <input className="dash-edit-input" value={selItem.name} onChange={(e) => updateFlowItem(selItem.id, (f) => ({ ...f, name: e.target.value }))} style={editTitleStyle} />
+              : '业务流程配置'}
+            crumb="零售信贷风控 / 管理中心 / 业务流程配置"
+            subtitle={selItem
+              ? <input className="dash-edit-input" value={selItem.desc ?? ''} placeholder="业务流程描述（可选）" onChange={(e) => updateFlowItem(selItem.id, (f) => ({ ...f, desc: e.target.value }))} style={editDescStyle} />
+              : undefined}
+            backLabel="返回列表" onBack={backToList}
+            actions={<Sam value="bizFlows.json (flows)" />} />} />
+        </>
+      )}
 
       {view === 'list' ? (
         <Panel title="业务流程" desc="每行 = 一个业务流程（关联业务页面）；点「进入」管理该流程下的操作按钮流程"
           actions={<Button variant="primary" onClick={() => setShowNew(true)}>＋ 新建业务流程</Button>}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
             <thead><tr style={{ background: '#F8FAFC' }}>
-              {['业务流程名称', '关联业务页面', '页面地址', '流程数', '操作'].map((h) => (
+              {['业务流程名称', '关联业务页面', '页面地址', '流程数', '被引用', '操作'].map((h) => (
                 <th key={h} style={{ padding: '8px', fontSize: 12, fontWeight: 600, color: '#6B7280', textAlign: 'left', borderBottom: '1px solid #E5E7EB' }}>{h}</th>
               ))}
             </tr></thead>
             <tbody>
               {flows.length === 0 && (
-                <tr><td colSpan={5} style={{ padding: '24px', textAlign: 'center', color: '#9CA3AF', fontSize: 12 }}>暂无业务流程，点击右上角「＋ 新建业务流程」创建。</td></tr>
+                <tr><td colSpan={6} style={{ padding: '24px', textAlign: 'center', color: '#9CA3AF', fontSize: 12 }}>暂无业务流程，点击右上角「＋ 新建业务流程」创建。</td></tr>
               )}
               {flows.map((it) => {
-                const pm = pageMeta(it.pageRoute)
+                const pgNames = it.pageNames?.length
+                  ? it.pageNames
+                  : pageListOf(it).map((r) => pageMeta(r)?.label ?? r)
+                const pgRoutes = pageListOf(it)
+                const ref = refInfo(it.id)
+                const refTxt = ref.comps > 0 ? `${ref.comps} 个组件 / ${ref.pages} 个页面` : '—'
                 return (
                   <tr key={it.id} style={{ borderTop: '1px solid #F1F5F9' }}>
-                    <td style={{ padding: '8px', fontWeight: 600, color: '#111827' }}>{it.name}<Cfg f="flows[].name" v={it.name} /></td>
-                    <td style={{ padding: '8px', color: '#374151' }}>{it.pageName ?? pm?.name ?? '—'}</td>
-                    <td style={{ padding: '8px', fontFamily: 'monospace', fontSize: 12, color: '#6B7280' }}>{it.pageRoute ?? '—'}</td>
-                    <td style={{ padding: '8px', color: '#6B7280' }}>{it.flowGraphs?.length ?? 0} 条</td>
-                    <td style={{ padding: '8px', display: 'flex', gap: 6 }}>
+                    <td style={{ padding: '8px', fontWeight: 600, color: '#111827', maxWidth: 180, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={it.name}>{it.name}<Sam f="flows[].name" v={it.name} /></td>
+                    <td style={{ padding: '8px', color: '#374151', maxWidth: 220, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={pgNames.join(' / ')}>{pgNames.join(' / ') || '—'}</td>
+                    <td style={{ padding: '8px', fontFamily: 'monospace', fontSize: 12, color: '#6B7280', maxWidth: 260, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={pgRoutes.join('；')}>{pgRoutes.join('；') || '—'}</td>
+                    <td style={{ padding: '8px', color: '#6B7280', whiteSpace: 'nowrap' }}>{it.flowGraphs?.length ?? 0} 条</td>
+                    <td style={{ padding: '8px', color: '#6B7280', whiteSpace: 'nowrap' }}>
+                      <span style={{ color: '#6B7280' }}>{refTxt}</span>
+                      <Cal f="dashboards[].widgets[].flowKey" v={refTxt} />
+                    </td>
+                    <td style={{ padding: '8px', display: 'flex', gap: 6, whiteSpace: 'nowrap' }}>
                       <button onClick={() => openDetail(it)} style={{ ...miniBtn, borderColor: SEL, color: SEL }}>查看</button>
-                      <button onClick={() => { if (window.confirm(`删除业务流程「${it.name}」？`)) removeFlowItem(it.id) }}
+                      <button onClick={() => {
+                        if (ref.comps > 0) {
+                          if (!window.confirm(`删除业务流程「${it.name}」？\n\n⚠️ 该流程正被 ${ref.comps} 个看板组件引用（分布于 ${ref.pages} 个页面，如 ${ref.pageNames.join('、')}…），删除后这些组件的流程按钮将失效。确认删除？`)) return
+                        } else {
+                          if (!window.confirm(`删除业务流程「${it.name}」？`)) return
+                        }
+                        removeFlowItem(it.id)
+                      }}
                         style={{ ...miniBtn, borderColor: '#FCA5A5', color: '#DC2626' }}>删除</button>
                     </td>
                   </tr>
@@ -132,30 +213,62 @@ export default function MidBizFlowConfig() {
             </tbody>
           </table>
           <div style={{ marginTop: 10, fontSize: 12, color: '#6B7280', lineHeight: 1.7 }}>
-            说明：业务流程独立于报告模板存储；运行时按「关联页面地址」把流程挂到该页面的操作列（列表页操作列 / 详情页按钮共用）。
-            每条流程 = 页面操作列的一个按钮，流程名称即按钮文案；可按得分落段（A/B/C）区分按钮，不选则所有行都显示。
+            说明：业务流程独立于报告模板存储；「关联业务页面」= 流程主动控制哪些页面的操作列（仅上线审核类流程配置）；
+            「被引用」= 看板组件通过 flowKey 反选的流程（谁在用我，实时扫描计算，不落数据）。
+            删除流程时若存在引用会弹出警告。每条流程 = 页面操作列的一个按钮，流程名称即按钮文案；名称与描述在详情页标题行内直接编辑。
           </div>
         </Panel>
       ) : (
         selItem ? (
-          <Panel title={<>{selItem.name}<Cfg f="flows[].name" v={selItem.name} /></>}
-            desc={<>关联页面：{selItem.pageName ?? '—'} · {selItem.pageRoute ?? '—'} · 分段 {gradeMeta(selItem.gradeId)?.label ?? '全部'}</>}
-            actions={<Button variant="ghost" onClick={() => setView('list')}>← 返回列表</Button>}>
-            {/* 基本信息编辑 */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>
-              <span style={{ fontSize: 12, color: '#374151' }}>业务流程名称</span>
-              <input value={selItem.name} onChange={(e) => updateFlowItem(selItem.id, (f) => ({ ...f, name: e.target.value }))} style={{ ...inp, width: 200 }} />
-              <span style={{ fontSize: 12, color: '#374151' }}>关联页面</span>
-              <select value={selItem.pageRoute ?? ''} onChange={(e) => { const p = PAGES.find((x) => x.route === e.target.value); updateFlowItem(selItem.id, (f) => ({ ...f, pageRoute: p?.route, pageName: p?.name })) }} style={{ ...inp, width: 200 }}>
-                {PAGES.map((p) => <option key={p.route} value={p.route}>{p.name}</option>)}
-              </select>
-              <select value={selItem.gradeId ?? ''} onChange={(e) => updateFlowItem(selItem.id, (f) => ({ ...f, gradeId: e.target.value || undefined }))} style={{ ...inp, width: 150 }}>
-                {GRADES.map((g) => <option key={g.grade} value={g.grade}>{g.label}</option>)}
-              </select>
+          <Panel title={selItem.name}
+            desc={selItem.desc || undefined}>
+            {/* 关联业务页面（可多选，左侧分组按钮 + 右侧页面列表） */}
+            <div style={{ marginBottom: 12 }}>
+              <div style={{ fontSize: 12, color: '#374151', marginBottom: 6 }}>关联页面（可多选 · 业务流程将挂到这些页面的操作列）</div>
+              <PagePicker options={ALL_PAGES} groups={PAGE_GROUPS}
+                value={selItem.pageRoutes?.length ? selItem.pageRoutes : selItem.pageRoute ? [selItem.pageRoute] : []}
+                onChange={(v) => {
+                  const routes = v.filter(Boolean)
+                  const names = routes.map((r) => ALL_PAGES.find((x) => x.value === r)?.label ?? r)
+                  updateFlowItem(selItem.id, (f) => ({ ...f, pageRoutes: routes, pageNames: names, pageRoute: routes[0], pageName: names[0] }))
+                }} />
+              <div style={{ marginTop: 6, fontSize: 12, color: '#64748B' }}>
+                当前：{pageListOf(selItem).map((r) => `${ALL_PAGES.find((x) => x.value === r)?.label ?? r} · ${r}`).join('；') || '—'}
+              </div>
+            </div>
+            {/* 需求14：流程节点（状态机）编辑——每节点可设时限倒计时 */}
+            <div style={{ marginBottom: 14, border: '1px solid #E5E7EB', borderRadius: 8, padding: 10, background: '#FAFBFE' }}>
+              <div style={{ fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 6 }}>
+                流程节点（状态机）<Sam value="bizFlows.json.flowSteps" />
+                <span style={{ fontSize: 11, fontWeight: 400, color: '#9CA3AF', marginLeft: 8 }}>每个节点可设置「时限倒计时」（分钟，留空 = 不限制）；状态按 待→橙 / 中→蓝 / 已→绿 自动配色</span>
+              </div>
+              {flowStepsOf(selItem).length === 0 && (
+                <div style={{ fontSize: 11, color: '#9CA3AF', marginBottom: 6 }}>未配置节点，使用默认状态机（待初审/待复审/已上线/已下线）。可添加节点自定义。</div>
+              )}
+              {flowStepsOf(selItem).map((s, i) => (
+                <div key={i} style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 6, flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: 11, color: '#94A3B8', width: 14 }}>{i + 1}</span>
+                  <input value={s.state} placeholder="状态名（如 预警确认中）"
+                    onChange={(e) => patchStep(selItem, i, { state: e.target.value })}
+                    style={{ ...miniInp, width: 150 }} />
+                  <span style={{ color: '#CBD5E1' }}>→</span>
+                  <input value={s.action} placeholder="操作按钮（终态留空）"
+                    onChange={(e) => patchStep(selItem, i, { action: e.target.value })}
+                    style={{ ...miniInp, width: 120 }} />
+                  <input type="number" min={0} value={s.timeLimit ?? ''} placeholder="时限分钟（空=不限）"
+                    onChange={(e) => patchStep(selItem, i, { timeLimit: e.target.value === '' ? undefined : Math.max(0, Number(e.target.value)) })}
+                    style={{ ...miniInp, width: 130 }} />
+                  <button onClick={() => setFlowSteps(selItem, flowStepsOf(selItem).filter((_, k) => k !== i))}
+                    style={{ ...miniBtn, borderColor: '#FCA5A5', color: '#DC2626' }}>删除</button>
+                </div>
+              ))}
+              <div>
+                <button onClick={() => setFlowSteps(selItem, [...flowStepsOf(selItem), { state: '', action: '', color: '#94A3B8' }])}
+                  style={{ ...miniBtn, borderColor: SEL, color: SEL }}>＋ 添加节点</button>
+              </div>
             </div>
             {/* 流程（图）列表 = 页面操作列按钮 */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <div style={{ fontSize: 12, fontWeight: 600, color: '#374151' }}>操作按钮流程（{selItem.flowGraphs?.length ?? 0} 条 · 每条 = 操作列一个按钮）</div>
               {(selItem.flowGraphs ?? []).length === 0 && (
                 <div style={{ fontSize: 12, color: '#9CA3AF', padding: '6px 0' }}>（暂无流程，点击下方「＋ 添加流程」创建）</div>
               )}
@@ -180,24 +293,22 @@ export default function MidBizFlowConfig() {
       )}
 
       {/* 新建业务流程弹窗 */}
-      <Modal open={showNew} onClose={() => setShowNew(false)} title="新建业务流程" width="max-w-md">
+      <Modal open={showNew} onClose={() => setShowNew(false)} title="新建业务流程" width="max-w-lg">
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div>
             <div style={{ fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 4 }}>业务流程名称<span style={{ color: '#DC2626' }}>*</span></div>
             <input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="如：确认报告流程 / 转人工审核流程" style={{ ...inp }} />
           </div>
           <div>
-            <div style={{ fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 4 }}>关联业务页面<span style={{ color: '#DC2626' }}>*</span></div>
-            <select value={newPage} onChange={(e) => setNewPage(e.target.value)} style={{ ...inp }}>
-              {PAGES.map((p) => <option key={p.route} value={p.route}>{p.name}</option>)}
-            </select>
-            <div style={{ fontSize: 11, color: '#9CA3AF', marginTop: 4, fontFamily: 'monospace' }}>页面地址：{newPage}</div>
+            <div style={{ fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 4 }}>关联业务页面<span style={{ color: '#DC2626' }}>*</span>（可多选）</div>
+            <PagePicker options={ALL_PAGES} groups={PAGE_GROUPS} value={newPages} onChange={(v) => setNewPages(v as string[])} />
+            <div style={{ fontSize: 11, color: '#9CA3AF', marginTop: 4, fontFamily: 'monospace' }}>页面地址：{newPages.filter(Boolean).join('；')}</div>
           </div>
           <div>
-            <div style={{ fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 4 }}>分段（可选）</div>
-            <select value={newGrade} onChange={(e) => setNewGrade(e.target.value)} style={{ ...inp }}>
-              {GRADES.map((g) => <option key={g.grade} value={g.grade}>{g.label}</option>)}
-            </select>
+            <div style={{ fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 4 }}>审核状态（可选 · 斜线分隔：状态/动作/状态/动作/状态）</div>
+            <input value={newSteps} onChange={(e) => setNewSteps(e.target.value)}
+              placeholder="如：待初审/初审/待复审/复审/已上线/下线/已下线（留空则用默认：待初审/待复审/已上线/已下线）" style={{ ...inp }} />
+            <div style={{ fontSize: 11, color: '#9CA3AF', marginTop: 4 }}>每对「状态/动作」为一个流转节点，最后的状态为终态（无按钮）。</div>
           </div>
         </div>
         <div style={{ marginTop: 14, display: 'flex', justifyContent: 'flex-end', gap: 8 }}>

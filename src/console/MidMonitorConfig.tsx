@@ -6,6 +6,7 @@ import { useSearchParams } from 'react-router-dom';
 import { Button, Panel, DataTable, Drawer } from '../components/ui';
 import type { Column, Row } from '../components/ui';
 import { Sam } from './SourceTag';
+import FlowStateCell from './FlowStateCell';
 import { useMidStrategy, updateStrategy, useMidMetrics, midNewId } from './midStore';
 import {
   type MidTask, type MidRule, type MonitorGranularity, type AlertLevel,
@@ -18,6 +19,12 @@ import { CONFIG_CONTAINER, crumb, GRAN_LABEL } from './ConfigTemplate';
 const fi = 'h-8 px-2.5 rounded-md border border-slate-200 text-sm text-ink-900 w-full bg-white outline-none focus:border-blue-500';
 const fiWide = 'h-8 px-2.5 rounded-md border border-slate-200 text-sm text-ink-900 w-full bg-white outline-none focus:border-blue-500';
 const GROUP_VALUE_OPTS = [{ key: '总体', label: '总体' }];
+/* 业务场景（标准化枚举）：预警记录的 scene 由任务继承 */
+const SCENE_OPTS = ['贷中风控', '存量运营', '贷后催收', '反欺诈监测'];
+/* 预警类型（标准化枚举）：预警记录的 alert_type 由规则继承 */
+const ALERT_TYPE_OPTS = ['负债激增', '多头借贷', '逾期预警', '司法涉诉', '关联企业风险', '设备异常', '反欺诈命中', '行为评分下降', '还款能力不足', '回访失联', '舆情负面', '提额机会'];
+/* 业务场景配色 */
+const SCENE_COLOR: Record<string, string> = { 贷中风控: '#2563EB', 存量运营: '#059669', 贷后催收: '#D97706', 反欺诈监测: '#DC2626' };
 
 export default function MidMonitorConfig() {
   const strategy = useMidStrategy();
@@ -92,7 +99,11 @@ export default function MidMonitorConfig() {
       <Panel title="监控任务" desc="对谁、何时、算哪些指标（预警规则在任务详情中配置）"
         actions={<Button size="sm" variant="secondary" onClick={() => openDrawer()}>新建任务</Button>}>
         <DataTable columns={taskCols()} rows={strategy.tasks.map(taskRow)}
-          actions={(r) => <Button size="sm" variant="ghost" onClick={() => openDrawer(strategy.tasks.find((t) => t.id === String(r.id)))}>查看</Button>}
+          actions={(r) => (
+            <div style={{ display: 'inline-flex', gap: 8, alignItems: 'center' }}>
+              <Button size="sm" variant="ghost" onClick={() => openDrawer(strategy.tasks.find((t) => t.id === String(r.id)))}>查看</Button>
+            </div>
+          )}
           pager defaultPageSize={20} />
       </Panel>
 
@@ -103,6 +114,11 @@ export default function MidMonitorConfig() {
             <Section title="基本信息" desc="监控任务身份与调度">
               <FormRow label="任务名称" required><input className={fiWide} value={drawer.task.name} onChange={(e) => setTask({ name: e.target.value })} placeholder="如 全量客群日扫" /></FormRow>
               <FormRow label="描述" required><input className={fiWide} value={drawer.task.crowd} onChange={(e) => setTask({ crowd: e.target.value })} placeholder="如 在贷全量客户" /></FormRow>
+              <FormRow label="业务场景" required help="任务归属的业务场景，产生预警时继承到预警记录的「触发场景」">
+                <select className={fi} value={drawer.task.scene ?? '贷中风控'} onChange={(e) => setTask({ scene: e.target.value })}>
+                  {SCENE_OPTS.map((s) => <option key={s} value={s}>{s}</option>)}
+                </select>
+              </FormRow>
               <FormRow label="监控粒度" required>
                 <select className={fi} value={drawer.task.granularity} onChange={(e) => setTask({ granularity: e.target.value as MonitorGranularity })}>
                   {(Object.keys(GRAN_LABEL) as MonitorGranularity[]).map((g) => <option key={g} value={g}>{GRAN_LABEL[g]}</option>)}
@@ -167,13 +183,12 @@ export default function MidMonitorConfig() {
   );
 
   function taskRow(t: MidTask): Row {
-    const rel = relatedRules(t);
     return {
-      id: t.id, name: t.name, crowd: t.crowd,
+      id: t.id, name: t.name, scene: t.scene ?? '', crowd: t.crowd,
       freq: granText(t),
       metrics: t.metricIds.map(metricName).join('、') || '-',
-      rules: rel.map((r) => r.name).join('、') || '-',
-      enabled: t.enabled ? { v: '启用', kind: 'green' } : { v: '停用', kind: 'gray' },
+      flowKey: t.flowKey ?? '',
+      flowState: t.flowState ?? '',
     } as unknown as Row;
   }
 }
@@ -195,11 +210,16 @@ function granText(t: MidTask): string {
 function taskCols(): Column[] {
   return [
     { key: 'name', label: '任务名称', tag: { kind: 'sample', value: 'midStrategy.json.tasks.name' } },
+    { key: 'scene', label: '业务场景', tag: { kind: 'sample', value: 'midStrategy.json.tasks.scene' }, render: (r: Row) => (
+      <span style={{ color: SCENE_COLOR[r.scene as string] ?? '#475569' }}>{String(r.scene ?? '—')}</span>
+    ) },
     { key: 'crowd', label: '客群', tag: { kind: 'sample', value: 'midStrategy.json.tasks.crowd' } },
     { key: 'freq', label: '监控频率', tag: { kind: 'sample', value: 'midStrategy.json.tasks.granularity+period' } },
     { key: 'metrics', label: '关联指标', tag: { kind: 'sample', value: 'midMetrics.json' } },
-    { key: 'rules', label: '关联预警规则', tag: { kind: 'sample', value: 'midStrategy.json.rules.name' } },
-    { key: 'enabled', label: '状态', type: 'badge', tag: { kind: 'sample', value: 'midStrategy.json.tasks.enabled' } },
+    { key: 'flowState', label: '流程状态', fixed: 'right', tag: { kind: 'sample', value: 'midStrategy.json.tasks.flowState' }, render: (r: Row) => (
+      <FlowStateCell flowId={String(r.flowKey ?? '')} state={String(r.flowState ?? '')}
+        onChange={(s) => updateStrategy((st) => ({ ...st, tasks: st.tasks.map((t) => t.id === String(r.id) ? { ...t, flowState: s } : t) }))} />
+    ) },
   ];
 }
 
@@ -350,6 +370,27 @@ function RuleCard({ rule, onChange, onRemove, footer }: {
 }) {
   return (
     <div className="border border-slate-200 rounded-lg p-3 bg-slate-50 mb-3">
+      {/* 规则名称 */}
+      <div className="flex items-center gap-2 mb-2">
+        <span className="w-[88px] shrink-0 text-right pr-3 text-sm text-slate-500">规则名称</span>
+        <div className="flex-1">
+          <input className="h-7 w-full px-2 rounded border border-slate-200 text-xs" value={rule.name}
+            onChange={(e) => onChange({ ...rule, name: e.target.value })} placeholder="如 近30天新增贷款≥3笔" />
+        </div>
+      </div>
+
+      {/* 预警类型 */}
+      <div className="flex items-center gap-2 mb-2">
+        <span className="w-[88px] shrink-0 text-right pr-3 text-sm text-slate-500">预警类型</span>
+        <div className="flex-1">
+          <select className="h-7 w-full px-1.5 rounded border border-slate-200 text-xs" value={rule.alertType ?? ''}
+            onChange={(e) => onChange({ ...rule, alertType: e.target.value })}>
+            <option value="">请选择预警类型</option>
+            {ALERT_TYPE_OPTS.map((a) => <option key={a} value={a}>{a}</option>)}
+          </select>
+        </div>
+      </div>
+
       {/* 分组值 */}
       <div className="flex items-center gap-2 mb-2">
         <span className="w-[88px] shrink-0 text-right pr-3 text-sm text-slate-500">分组值</span>

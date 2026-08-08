@@ -5,6 +5,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button, Panel, DataTable, Modal } from '../components/ui';
 import type { Column, Row } from '../components/ui';
 import { Sam } from './SourceTag';
+import FlowStateCell from './FlowStateCell';
 import { useMidStrategy, updateStrategy, midNewId } from './midStore';
 import { type MidDispose, type AlertLevel, LEVEL_META } from './midData';
 import { PageShell } from './PageShell';
@@ -51,7 +52,11 @@ export default function MidDisposeConfig() {
       <Panel title="处置策略" desc="按预警等级（红灯 / 黄灯）路由处置动作"
         actions={<Button size="sm" variant="secondary" onClick={() => openEdit()}>新建策略</Button>}>
         <DataTable columns={disposeCols} rows={strategy.disposes.map(disposeRow)}
-          actions={(r) => <Button size="sm" variant="ghost" onClick={() => nav(`/console/cm/mid-strategy-detail?kind=dispose&id=${String(r.id)}`)}>查看</Button>} />
+          actions={(r) => (
+            <div style={{ display: 'inline-flex', gap: 8, alignItems: 'center' }}>
+              <Button size="sm" variant="ghost" onClick={() => nav(`/console/cm/mid-strategy-detail?kind=dispose&id=${String(r.id)}`)}>查看</Button>
+            </div>
+          )} />
       </Panel>
 
       <Modal open={open} onClose={() => setOpen(false)} title="处置策略编辑"
@@ -66,6 +71,7 @@ export default function MidDisposeConfig() {
       id: d.id, name: d.name, trigger: { v: LEVEL_META[d.triggerLevel].label, kind: LEVEL_META[d.triggerLevel].badge },
       action: d.action, system: d.targetSystem || '-', assign: d.assignTo || '-',
       approve: d.needApprove ? '需审批' : '免审批', notify: d.needNotify ? '需触达' : '-',
+      flowKey: d.flowKey ?? '', flowState: d.flowState ?? '',
     } as unknown as Row;
   }
 }
@@ -78,6 +84,10 @@ const disposeCols: Column[] = [
   { key: 'assign', label: '分派角色', tag: { kind: 'sample', value: 'midStrategy.json.disposes.assignTo' } },
   { key: 'approve', label: '审批', tag: { kind: 'sample', value: 'midStrategy.json.disposes.needApprove' } },
   { key: 'notify', label: '客户触达', tag: { kind: 'sample', value: 'midStrategy.json.disposes.needNotify' } },
+  { key: 'flowState', label: '流程状态', fixed: 'right', tag: { kind: 'sample', value: 'midStrategy.json.disposes.flowState' }, render: (r: Row) => (
+    <FlowStateCell flowId={String(r.flowKey ?? '')} state={String(r.flowState ?? '')}
+      onChange={(s) => updateStrategy((st) => ({ ...st, disposes: st.disposes.map((d) => d.id === String(r.id) ? { ...d, flowState: s } : d) }))} />
+  ) },
 ];
 
 export const DISPOSE_ACTIONS = ['关注', '预催', '降额', '冻结', '止付', '促活', '提额'];

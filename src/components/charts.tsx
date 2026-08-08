@@ -1,3 +1,5 @@
+import { useState, type MouseEvent } from 'react'
+
 interface Series {
   name: string
   color: string
@@ -35,9 +37,19 @@ export function LineChart({
   const y = (v: number) => padT + plotH - ((v - min) / (max - min || 1)) * plotH
   const grid = 4
 
+  // 需求38：鼠标移入 → 显示该数据点的数值提示（十字虚线 + 放大圆点 + 数值标注）
+  const [hover, setHover] = useState<number | null>(null)
+  const onMove = (e: MouseEvent<SVGSVGElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect()
+    const ratio = rect.width / W
+    const px = e.clientX - rect.left
+    const idx = Math.round(((px / ratio - padL) / plotW) * (labels.length - 1))
+    setHover(idx >= 0 && idx < labels.length ? idx : null)
+  }
+
   return (
     <div>
-      <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ height }}>
+      <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ height }} onMouseMove={onMove} onMouseLeave={() => setHover(null)}>
         {Array.from({ length: grid + 1 }).map((_, i) => {
           const gy = padT + (i / grid) * plotH
           const val = max - (i / grid) * (max - min)
@@ -68,7 +80,31 @@ export function LineChart({
           />
         ))}
         {series.map((s) =>
-          s.data.map((v, i) => <circle key={`${s.name}-${i}`} cx={x(i)} cy={y(v)} r={3} fill={s.color} />),
+          s.data.map((v, i) => (
+            <circle key={`${s.name}-${i}`} cx={x(i)} cy={y(v)} r={hover === i ? 5 : 3} fill={s.color}
+              stroke={hover === i ? '#fff' : 'none'} strokeWidth={2} style={{ cursor: 'crosshair', transition: 'r .12s' }}>
+              <title>{`${labels[i]} · ${s.name}: ${v}${unit}`}</title>
+            </circle>
+          )),
+        )}
+        {/* 需求38：hover 十字参考线 + 数值提示 */}
+        {hover != null && (
+          <g pointerEvents="none">
+            <line x1={x(hover)} y1={padT} x2={x(hover)} y2={padT + plotH} stroke="#CBD5E1" strokeDasharray="4 3" strokeWidth={1} />
+            {series.map((s) => {
+              const v = s.data[hover] ?? 0
+              return (
+                <g key={s.name}>
+                  <rect x={x(hover) - 34} y={Math.min(y(v) - 26, padT)} width={68} height={20} rx={6} fill="#0F172A" opacity={0.85} />
+                  <text x={x(hover)} y={Math.min(y(v) - 12, padT + 13)} textAnchor="middle" fontSize={11} fontWeight={600} fill="#fff">
+                    {v}
+                    {unit}
+                  </text>
+                </g>
+              )
+            })}
+            <text x={x(hover)} y={H - 24} textAnchor="middle" fontSize={10} fill="#64748B">{labels[hover]}</text>
+          </g>
         )}
       </svg>
       <div className="mt-2 flex flex-wrap gap-4">
@@ -109,9 +145,19 @@ export function BarChart({
   const y = (v: number) => padT + plotH - (v / max) * plotH
   const grid = 4
 
+  // 需求38：hover 高亮该组柱条 + 顶部数值提示
+  const [hover, setHover] = useState<number | null>(null)
+  const onMove = (e: MouseEvent<SVGSVGElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect()
+    const ratio = rect.width / W
+    const px = e.clientX - rect.left
+    const idx = Math.floor(((px / ratio - padL) / plotW) * labels.length)
+    setHover(idx >= 0 && idx < labels.length ? idx : null)
+  }
+
   return (
     <div>
-      <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ height }}>
+      <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ height }} onMouseMove={onMove} onMouseLeave={() => setHover(null)}>
         {Array.from({ length: grid + 1 }).map((_, i) => {
           const gy = padT + (i / grid) * plotH
           const val = max - (i / grid) * max
@@ -132,8 +178,13 @@ export function BarChart({
               {series.map((s, si) => {
                 const v = s.data[gi] ?? 0
                 const bx = gx - (series.length * barW) / 2 + si * barW
+                const on = hover === gi
                 return (
-                  <rect key={s.name} x={bx} y={y(v)} width={barW - 3} height={plotH - (y(v) - padT)} rx={3} fill={s.color} />
+                  <rect key={s.name} x={bx} y={y(v)} width={barW - 3} height={plotH - (y(v) - padT)} rx={3}
+                    fill={s.color} opacity={on ? 1 : 0.82} stroke={on ? '#0F172A' : 'none'} strokeWidth={on ? 1 : 0}
+                    style={{ cursor: 'crosshair', transition: 'opacity .12s' }}>
+                    <title>{`${lb} · ${s.name}: ${v}${unit}`}</title>
+                  </rect>
                 )
               })}
               <text x={gx} y={H - 10} textAnchor="middle" className="fill-slate-400" fontSize={11}>
@@ -142,6 +193,25 @@ export function BarChart({
             </g>
           )
         })}
+        {/* 需求38：hover 数值提示 */}
+        {hover != null && (
+          <g pointerEvents="none">
+            {series.map((s, si) => {
+              const v = s.data[hover] ?? 0
+              const gx = padL + hover * groupW + groupW / 2
+              const bx = gx - (series.length * barW) / 2 + si * barW
+              return (
+                <g key={s.name}>
+                  <rect x={bx} y={y(v) - 22} width={barW} height={18} rx={4} fill={s.color} />
+                  <text x={bx + (barW - 3) / 2} y={y(v) - 9} textAnchor="middle" fontSize={10} fontWeight={600} fill="#fff">
+                    {v}
+                    {unit}
+                  </text>
+                </g>
+              )
+            })}
+          </g>
+        )}
       </svg>
       <div className="mt-2 flex flex-wrap gap-4">
         {series.map((s) => (
@@ -187,27 +257,52 @@ export function DonutChart({
     return { d, path: `M ${x1} ${y1} A ${r} ${r} 0 ${large} 1 ${x2} ${y2}` }
   })
 
+  // 需求38：hover 分段 → 放大 + 中心切换为该分段占比
+  const [hover, setHover] = useState<number | null>(null)
+  const hov = hover != null ? segs[hover] : null
+  const hovFrac = hov ? hov.d.value / total : 0
+
   return (
     <div className="flex items-center gap-6">
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="shrink-0">
         <circle cx={cx} cy={cy} r={r} fill="none" stroke="#eef2f7" strokeWidth={stroke} />
         {segs.map((s, i) => (
-          <path key={i} d={s.path} fill="none" stroke={s.d.color} strokeWidth={stroke} strokeLinecap="butt" />
+          <path key={i} d={s.path} fill="none" stroke={s.d.color}
+            strokeWidth={hover === i ? stroke + 7 : stroke} strokeLinecap="butt"
+            style={{ cursor: 'pointer', transition: 'stroke-width .12s' }}
+            onMouseEnter={() => setHover(i)} onMouseLeave={() => setHover(null)}>
+            <title>{`${s.d.label}: ${s.d.value}（${((s.d.value / total) * 100).toFixed(1)}%）`}</title>
+          </path>
         ))}
-        {centerValue && (
-          <text x={cx} y={cy - 4} textAnchor="middle" className="fill-ink-900" fontSize={22} fontWeight={700}>
-            {centerValue}
-          </text>
-        )}
-        {centerLabel && (
-          <text x={cx} y={cy + 16} textAnchor="middle" className="fill-slate-400" fontSize={12}>
-            {centerLabel}
-          </text>
+        {hov ? (
+          <>
+            <text x={cx} y={cy - 4} textAnchor="middle" fill={hov.d.color} fontSize={22} fontWeight={700}>
+              {(hovFrac * 100).toFixed(1)}%
+            </text>
+            <text x={cx} y={cy + 16} textAnchor="middle" className="fill-slate-500" fontSize={12}>
+              {hov.d.label}
+            </text>
+          </>
+        ) : (
+          <>
+            {centerValue && (
+              <text x={cx} y={cy - 4} textAnchor="middle" className="fill-ink-900" fontSize={22} fontWeight={700}>
+                {centerValue}
+              </text>
+            )}
+            {centerLabel && (
+              <text x={cx} y={cy + 16} textAnchor="middle" className="fill-slate-400" fontSize={12}>
+                {centerLabel}
+              </text>
+            )}
+          </>
         )}
       </svg>
       <div className="space-y-2">
-        {data.map((d) => (
-          <div key={d.label} className="flex items-center gap-2 text-sm">
+        {data.map((d, i) => (
+          <div key={d.label} className="flex items-center gap-2 text-sm"
+            onMouseEnter={() => setHover(i)} onMouseLeave={() => setHover(null)}
+            style={{ cursor: 'pointer', borderRadius: 8, padding: '2px 6px', background: hover === i ? '#F1F5F9' : 'transparent' }}>
             <span className="h-2.5 w-2.5 rounded-full" style={{ background: d.color }} />
             <span className="text-slate-600">{d.label}</span>
             <span className="ml-auto font-medium tabular-nums text-ink-900">

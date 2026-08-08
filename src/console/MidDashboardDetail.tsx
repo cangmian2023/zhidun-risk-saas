@@ -3,13 +3,22 @@
 // 编辑态弹窗字段对应 record/temp/08071 文档第二点，首位移入与监控任务一致的指标选择器（多选）。
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Panel, Button, Modal } from '../components/ui';
+import { Panel, Button, Modal, DetailHeader, SearchSelect } from '../components/ui';
+import type { SearchSelectOption, SearchSelectGroup } from '../components/ui';
 import { Sam } from './SourceTag';
 import { PageShell } from './PageShell';
 import { useMidDashboards, updateDashboards, useMidMetrics, useMidDataSources, midNewId } from './midStore';
 import { type MidWidget, type WidgetType } from './midData';
 import { WidgetView } from './MidDashboardPage';
 import { MetricPicker } from './MidMonitorConfig';
+import GroupSelect from './GroupSelect';
+import FlowActionBar from './FlowActionBar';
+import { useFlows } from './flowStore';
+
+/* 业务流程按业务域分组（关联业务流程下拉） */
+const FLOW_DOMAIN_LABEL: Record<string, string> = {
+  info_verify: '信息核验', credit: '信用风控', fraud: '欺诈识别', decision: '进件审核', online_approve: '上线审核',
+};
 
 const inp: React.CSSProperties = { height: 34, border: '1px solid #CBD5E1', borderRadius: 8, padding: '0 10px', fontSize: 13, outline: 'none', background: '#fff' };
 const Field = ({ label, children }: { label: string; children: React.ReactNode }) => (
@@ -41,9 +50,9 @@ function ChartIcon({ k }: { k: string }) {
   return <svg {...common}><text x="6" y="17" fontSize="13" fill={c} stroke="none" fontFamily="monospace">123</text></svg>;
 }
 
-function WidgetEditModal({ w, metrics, isNew, onClose, onSave }: {
-  w: MidWidget; metrics: { id: string; name: string; group?: string }[]; isNew?: boolean;
-  onClose: () => void; onSave: (nw: MidWidget) => void;
+function WidgetEditModal({ w, metrics, flows, isNew, onClose, onSave }: {
+  w: MidWidget; metrics: { id: string; name: string; group?: string }[]; flows: { id: string; name: string; domain?: string }[];
+  isNew?: boolean; onClose: () => void; onSave: (nw: MidWidget) => void;
 }) {
   const [draft, setDraft] = useState<MidWidget>(JSON.parse(JSON.stringify(w)));
   const [chart, setChart] = useState<WidgetType | 'stack'>(w.type);
@@ -54,7 +63,7 @@ function WidgetEditModal({ w, metrics, isNew, onClose, onSave }: {
   });
   const save = () => {
     const finalType: WidgetType = chart === 'stack' ? 'bar' : chart;
-    const span: 1 | 2 = (draft.windowSize ?? 'md') === 'lg' ? 2 : 1;
+    const span: 1 | 2 | 3 = draft.windowSize === 'lg' ? 3 : draft.windowSize === 'sm' ? 1 : 2;
     onSave({ ...draft, type: finalType, span });
   };
   return (
@@ -99,12 +108,20 @@ function WidgetEditModal({ w, metrics, isNew, onClose, onSave }: {
             ))}
           </div>
         </Field>
+        {/* 5.5 关联业务流程（需求23：组件级关联，渲染时顶部显示流程操作行） */}
+        <Field label="关联业务流程">
+          <SearchSelect options={flows.map((f) => ({ value: f.id, label: f.name, group: f.domain ?? '' }))}
+            groups={Array.from(new Set(flows.map((f) => f.domain ?? ''))).filter(Boolean).map((d) => ({ key: d, label: FLOW_DOMAIN_LABEL[d] ?? d }))}
+            value={draft.flowKey ?? ''}
+            onChange={(v) => set({ flowKey: String(v) || undefined })}
+            placeholder="选择关联的业务流程（可留空）" width="100%" portal />
+        </Field>
         {/* 6. 窗口尺寸 */}
         <Field label="窗口尺寸">
           <select style={inp} value={draft.windowSize ?? 'md'} onChange={(e) => set({ windowSize: e.target.value as 'sm' | 'md' | 'lg' })}>
-            <option value="sm">小</option>
-            <option value="md">中</option>
-            <option value="lg">大（跨 2 列）</option>
+            <option value="sm">小（占 1 列）</option>
+            <option value="md">中（占 2 列）</option>
+            <option value="lg">大（占整行 3 列）</option>
           </select>
         </Field>
         {/* 7. 备注 */}
@@ -122,22 +139,24 @@ export default function MidDashboardDetail() {
   const dashboards = useMidDashboards();
   const metrics = useMidMetrics();
   const sources = useMidDataSources();
+  const flows = useFlows();
   const nav = useNavigate();
   const d = dashboards.find((x) => x.id === id);
 
   const [title, setTitle] = useState('');
   const [desc, setDesc] = useState('');
+  const [group, setGroup] = useState('');
   const [editW, setEditW] = useState<MidWidget | null>(null);
   const [editIsNew, setEditIsNew] = useState(false);
 
-  // 页面切换时同步标题/描述草稿
+  // 页面切换时同步标题/描述/分组草稿
   useEffect(() => {
-    if (d) { setTitle(d.name); setDesc(d.desc ?? ''); }
-  }, [d?.id, d?.name, d?.desc]);
+    if (d) { setTitle(d.name); setDesc(d.desc ?? ''); setGroup(d.group ?? ''); }
+  }, [d?.id, d?.name, d?.desc, d?.group]);
 
   const savePage = () => {
     if (!d) return;
-    updateDashboards((list) => list.map((pg) => pg.id === d.id ? { ...pg, name: title, desc } : pg));
+    updateDashboards((list) => list.map((pg) => pg.id === d.id ? { ...pg, name: title, desc, group } : pg));
   };
 
   const openAdd = () => {
@@ -161,39 +180,38 @@ export default function MidDashboardDetail() {
   if (!d) {
     return (
       <div className="mx-auto max-w-6xl px-4 py-10 lg:px-8">
-        <PageShell title="页面配置详情" crumb="零售信贷风控 / 管理中心 / 页面配置" actions={<Button size="sm" variant="secondary" onClick={() => nav(-1)}>返回</Button>} />
+        <PageShell header={<DetailHeader title="页面配置详情" crumb="零售信贷风控 / 管理中心 / 页面配置" backLabel="返回列表" onBack={() => nav('/console/cm/mid-dashboard-config')} />} />
         <div className="mt-6 rounded-xl bg-slate-50 px-4 py-10 text-center text-sm text-slate-400">未找到该页面（{id}）。</div>
       </div>
     );
   }
 
+  // 统一用 DetailHeader（返回+面包屑第一行，标题+操作第二行）；标题/分组/描述行内编辑
   const header = (
-    <div className="sticky top-14 z-30 -mx-4 border-b border-slate-100 bg-slate-50 px-4 pb-5 pt-1 lg:-mx-8 lg:px-8">
+    <DetailHeader
+      title={<input value={title} onChange={(e) => setTitle(e.target.value)} className="dash-edit-input"
+        style={{ marginTop: 2, fontSize: 20, fontWeight: 700, letterSpacing: '-0.01em', color: '#0F172A', padding: '4px 10px', width: 360 }} />}
+      subtitle={<div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 4, flexWrap: 'wrap' }}>
+        <span style={{ fontSize: 12, color: '#64748B' }}>分组</span>
+        <GroupSelect value={group} groups={dashboards.map((x) => x.group)} onChange={setGroup} width={140} />
+        <input value={desc} onChange={(e) => setDesc(e.target.value)} className="dash-edit-input" placeholder="页面说明（可选）"
+          style={{ flex: 1, minWidth: 220, maxWidth: 480, fontSize: 12, color: '#64748B', padding: '2px 10px' }} />
+      </div>}
+      crumb="零售信贷风控 / 管理中心 / 页面配置"
+      backLabel="返回列表" onBack={() => nav('/console/cm/mid-dashboard-config')}
+      flowBar={<FlowActionBar flowId={d?.flowKey} state={d?.flowState}
+        onStateChange={(s) => updateDashboards((list) => list.map((pg) => pg.id === d.id ? { ...pg, flowState: s } : pg))} onSave={savePage} />}
+      actions={<><Sam value="midMetrics.json" /><Sam value="midDashboards.json" /></>}
+    />
+  );
+
+  return (
+    <div className="mx-auto max-w-6xl space-y-5 px-4 py-6 lg:px-8">
       <style>{`
         .dash-edit-input { background: transparent; border: 1px solid transparent; border-radius: 8px; transition: border-color .15s, background .15s; }
         .dash-edit-input:hover { border-color: #E2E8F0; }
         .dash-edit-input:focus { background: #fff; border-color: #C7D2FE; outline: none; }
       `}</style>
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div className="min-w-0 flex-1">
-          <p className="text-xs font-medium text-brand-600">零售信贷风控 / 管理中心 / 页面配置</p>
-          <input value={title} onChange={(e) => setTitle(e.target.value)} className="dash-edit-input"
-            style={{ marginTop: 4, width: '100%', maxWidth: 520, fontSize: 24, fontWeight: 700, letterSpacing: '-0.01em', color: '#0F172A', padding: '4px 10px' }} />
-          <input value={desc} onChange={(e) => setDesc(e.target.value)} className="dash-edit-input"
-            style={{ marginTop: 6, width: '100%', maxWidth: 720, fontSize: 13, lineHeight: '1.5', color: '#64748B', padding: '4px 10px' }} />
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Sam value="midMetrics.json" />
-          <Sam value="midDashboards.json" />
-          <Button size="sm" variant="primary" onClick={savePage}>保存</Button>
-          <Button size="sm" variant="secondary" onClick={() => nav('/console/cm/mid-dashboard-config')}>返回列表</Button>
-        </div>
-      </div>
-    </div>
-  );
-
-  return (
-    <div className="mx-auto max-w-6xl space-y-5 px-4 py-6 lg:px-8">
       <PageShell header={header} />
       <div className="mb-1 flex items-center gap-1 text-xs text-slate-400" style={{ marginTop: -6 }}>
         数据来源：<Sam label="页面配置" value="midDashboards.json" /><Sam label="指标来源" value="midMetrics.json" />
@@ -203,13 +221,14 @@ export default function MidDashboardDetail() {
       <Panel title="可视化组件预览" desc={<>详情页默认预览态，每个组件卡片点「编辑」可调整（编辑态字段对应 record/temp/08071 文档第二点） <Sam value="midDashboards.json.widgets" /></>}
         actions={<Button size="sm" variant="primary" onClick={openAdd}>添加组件</Button>}>
         {d.widgets.length > 0 ? (
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             {d.widgets.map((w) => {
               const ds = sources.find((s) => s.id === w.datasetId);
               const metric = metrics.find((m) => m.id === w.metricId);
               const rows = (ds?.rows ?? []) as Record<string, unknown>[];
+              const cs = w.windowSize === 'lg' ? 'sm:col-span-3' : w.windowSize === 'sm' ? 'sm:col-span-1' : 'sm:col-span-2';
               return (
-                <div key={w.id} className={w.span === 2 ? 'sm:col-span-2' : ''}>
+                <div key={w.id} className={`${cs} h-full`}>
                   <WidgetView w={w} ds={ds} metric={metric} metrics={metrics} rows={rows} onDrill={() => {}} nav={nav}
                     onEdit={() => openEditW(w)} onDelete={() => delW(w.id)} />
                 </div>
@@ -223,7 +242,7 @@ export default function MidDashboardDetail() {
 
       {/* 单组件弹窗（新增 / 编辑，对应 08071 文档第二点 编辑状态） */}
       {editW && (
-        <WidgetEditModal w={editW} metrics={metrics} isNew={editIsNew}
+        <WidgetEditModal w={editW} metrics={metrics} flows={flows} isNew={editIsNew}
           onClose={() => setEditW(null)} onSave={saveWidget} />
       )}
     </div>

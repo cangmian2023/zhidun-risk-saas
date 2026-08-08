@@ -240,10 +240,11 @@ function RuleSetSection({ section, data, title, secId, totalScore, reportType }:
 function TplCopySection({ section, data, title, secId, totalScore, reportType }: { section?: SectionConfig; data: any[]; title: ReactNode; secId: string; totalScore: number; reportType: ReportType }) {
   const [open, setOpen] = useState(false)
   const copys = section?.copySections ?? []
-  // 统计口径：总数/有效 = 模板 copySections 的字段（可见即有效）；正常/异常 = 样例数据该段 items 的 valid/conclusion
-  const totalItems = copys.reduce((a, cs) => a + (cs.fields ?? []).length, 0)
-  const validItems = copys.reduce((a, cs) => a + (cs.fields ?? []).filter((f) => f.visible !== false).length, 0)
+  // 统计口径（2026-08-07 修正）：全部来自样例 JSON 该段 items（总数/有效 = items 长度；正常/异常 = items 的 valid/conclusion）。
+  // 模板 copySections 仅是展示骨架（哪些项可见），不是数据来源。
   const items = (data as any[]) ?? []
+  const totalItems = items.length
+  const validItems = items.length
   const normal = items.filter((i) => i.valid === true || i.conclusion === '通过').length
   const abnormal = items.length - normal
 
@@ -254,7 +255,7 @@ function TplCopySection({ section, data, title, secId, totalScore, reportType }:
           <span className={cn('text-2xl font-bold tabular-nums', totalScore >= 0 ? 'text-emerald-600' : 'text-rose-600')}>{totalScore >= 0 ? '+' : '−'}{Math.abs(totalScore)}</span>
           <Cal f="得分汇总" v={totalScore} />
         </div>
-        <span className="text-xs text-slate-500">共 {totalItems} 项 · 有效 {validItems} 项 · 正常 {normal} 项 · 异常 {abnormal} 项<Cal f="模板fields/样例valid" v={`${totalItems}/${validItems}/${normal}/${abnormal}`} /></span>
+        <span className="text-xs text-slate-500">共 {totalItems} 项 · 有效 {validItems} 项 · 正常 {normal} 项 · 异常 {abnormal} 项<Dat f="JSON:items" v={`${totalItems}/${validItems}/${normal}/${abnormal}`} /></span>
         <button onClick={() => setOpen((o) => !o)} className="rounded border border-slate-200 px-2 py-0.5 text-[11px] text-slate-600">{open ? '收起 ▴' : '展开 ▾'}</button>
       </div>
       {open && (
@@ -266,7 +267,7 @@ function TplCopySection({ section, data, title, secId, totalScore, reportType }:
                 <div className="mb-2 flex items-center gap-2 text-xs font-medium text-slate-600">{cs.name}<Tpl f={`copySections[${i}].name`} v={cs.name} /><span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] text-slate-500">{cs.sourceType === 'rule_set' ? '规则集' : cs.sourceType === 'data_source' ? '数据源' : '接口'}</span></div>
                 <div className="flex flex-wrap gap-1.5">
                   {fields.map((f: any, k: number) => (
-                    <span key={k} className="rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] text-slate-600">{f.name}<b className="ml-1 text-slate-400">{f.scorePoints ?? 0}分</b><Tpl f={`fields[${k}].name`} v={f.name} /></span>
+                    <span key={k} className="rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] text-slate-600">{f.name}<b className="ml-1 text-slate-400">{f.scorePoints ?? 0}分</b><Dat f="JSON:items[].name" v={f.name} /></span>
                   ))}
                   {fields.length === 0 && <span className="text-[11px] text-slate-300">（无展示项）</span>}
                 </div>

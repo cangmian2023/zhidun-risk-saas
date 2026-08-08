@@ -5,11 +5,10 @@ import { Button, Badge } from '../components/ui';
 import { Sam, Cal } from './SourceTag';
 import {
   type MidMetric, type MetricType, type AggOp, type MidDataSource, type VizSample,
-  evalMetricFormula, computeMetricValue, resolveMetricsForRows,
 } from './midData';
 import { useMidVizSamples } from './midStore';
 import { MetricViz, type MetricVizType } from './MetricChart';
-import { fmt } from './ConfigTemplate';
+import { VisualSqlEditor } from './VisualSqlEditor';
 
 const inp: React.CSSProperties = { padding: '6px 8px', borderRadius: 6, border: '1px solid #E2E8F0', fontSize: 12, width: '100%', background: '#fff' };
 const lbl: React.CSSProperties = { display: 'flex', flexDirection: 'column', gap: 4, fontSize: 12, color: '#475569', minWidth: 160 };
@@ -113,7 +112,7 @@ export function MetricEditor({ value, metrics, sources, onChange, onRemove, sour
         <div style={cardHead}>基本信息 <span style={hint}>指标的身份与展示</span> <Sam value="midMetrics.json" /></div>
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
           <label style={lbl}>指标名称 <Sam value="midMetrics.json.name" /><input style={inp} value={value.name} onChange={(e) => set({ name: e.target.value })} placeholder="如 在贷余额" /></label>
-          <label style={lbl}>分组 <Sam value="midMetrics.json.group" /><input style={inp} value={value.group ?? ''} onChange={(e) => set({ group: e.target.value })} placeholder="如 风险 / 预警" /></label>
+          <GroupSelect value={value.group ?? ''} groups={Array.from(new Set(metrics.map((m) => m.group).filter(Boolean) as string[]))} onChange={(g) => set({ group: g })} />
           <label style={lbl}>类型 <Sam value="midMetrics.json.type" />
             <select style={inp} value={value.type} onChange={(e) => set({ type: e.target.value as MetricType })}>
               <option value="base">基础指标（统计字段）</option>
@@ -174,8 +173,9 @@ export function MetricEditor({ value, metrics, sources, onChange, onRemove, sour
             const isPrimary = id === mainId;
             return (
               <div key={id} style={{ border: '1px solid #EEF2F7', borderRadius: 8, padding: '10px 12px', background: isPrimary ? '#F8FAFF' : '#FBFCFE' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                   <strong style={{ fontSize: 13, color: '#0F172A' }}>{s.name}</strong>
+                  <span style={{ fontFamily: 'monospace', fontSize: 11, color: '#94A3B8' }}>{s.conn?.database || s.name}</span>
                   <Badge kind="slate">{s.category ?? '未分类'}</Badge>
                   {isPrimary && <Badge kind="blue">主源 · FROM</Badge>}
                   <button type="button" onClick={() => toggleSource(id)} style={{ marginLeft: 'auto', border: 'none', background: 'transparent', color: '#94A3B8', cursor: 'pointer', fontSize: 14 }}>✕</button>
@@ -184,8 +184,8 @@ export function MetricEditor({ value, metrics, sources, onChange, onRemove, sour
                   库：{s.conn?.database ?? '-'}　·　主机：{s.conn?.host ?? '-'}　·　端口：{s.conn?.port ?? '-'}　·　用户：{s.conn?.username ?? '-'}
                 </div>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginTop: 6 }}>
-                  {m.map((f) => <span key={f.key} style={{ fontSize: 11, padding: '1px 7px', borderRadius: 5, background: '#EFF6FF', color: '#2563EB' }}>{f.label}<span style={{ color: '#94A3B8' }}>·度量</span></span>)}
-                  {d.map((f) => <span key={f.key} style={{ fontSize: 11, padding: '1px 7px', borderRadius: 5, background: '#F1F5F9', color: '#475569' }}>{f.label}<span style={{ color: '#94A3B8' }}>·维度</span></span>)}
+                  {m.map((f) => <span key={f.key} style={{ fontSize: 11, padding: '1px 7px', borderRadius: 5, background: '#EFF6FF', color: '#2563EB' }}>{f.label}<span style={{ color: '#94A3B8' }}>·{f.key}·度量</span></span>)}
+                  {d.map((f) => <span key={f.key} style={{ fontSize: 11, padding: '1px 7px', borderRadius: 5, background: '#F1F5F9', color: '#475569' }}>{f.label}<span style={{ color: '#94A3B8' }}>·{f.key}·维度</span></span>)}
                   {!s.fields.length && <span style={{ fontSize: 11, color: '#94A3B8' }}>该数据源暂无字段</span>}
                 </div>
               </div>
@@ -195,39 +195,49 @@ export function MetricEditor({ value, metrics, sources, onChange, onRemove, sour
         </div>
       </div>
 
-      {/* 步骤 2：SQL 编辑器（仅 SQL 语句） */}
+      {/* 步骤 2：取数配置（需求42：双选项卡——第一个「可视化 SQL 编辑器」，第二个「SQL编辑器」） */}
       <div style={card}>
-        <div style={cardHead}><span style={stepTag}>步骤 2</span> SQL编辑器 <Sam value="midMetrics.json.sql" /> <span style={hint}>直接编写 SQL 定义取数逻辑</span></div>
-        <textarea style={{ ...inp, minHeight: 160, fontFamily: 'ui-monospace, monospace', resize: 'vertical', whiteSpace: 'pre' }} value={value.sql ?? ''}
-          placeholder={generatedSql} onChange={(e) => set({ sql: e.target.value })} />
-        <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 6 }}>SELECT 结果需返回单列 <code>val</code>，作为该指标实时值；保存后由调度任务执行。</div>
+        <div style={cardHead}><span style={stepTag}>步骤 2</span> 取数配置 <Sam value="midMetrics.json.editorMode" /> <span style={hint}>可视化配置或直接编写 SQL，两者实时同步</span></div>
 
-        {/* 已选数据源字段提示（极简弱化，仅一行浅灰小字） */}
-        {selIds.length > 0 && (
-          <div style={{ marginTop: 8, fontSize: 11, color: '#9AA7B8', lineHeight: 1.8 }}>
-            <span style={{ color: '#94A3B8' }}>参考字段（来自已选数据源）：</span>
-            {selIds.flatMap((id) => {
-              const s = sources.find((x) => x.id === id); if (!s) return [];
-              const lib = s.conn?.database ?? s.name;
-              return s.fields.map((f) => ({ tok: `${lib}.${f.key}`, label: f.label }));
-            }).map((it, i) => (
-              <span key={i} style={{ marginLeft: 6, fontFamily: 'ui-monospace, monospace', color: '#AEB9C9' }}>{it.tok}<span style={{ color: '#CDD6E0', marginLeft: 2 }}>{it.label}</span></span>
-            ))}
-          </div>
+        {/* 选项卡切换 */}
+        <div style={{ display: 'flex', gap: 0, borderBottom: '1px solid #E2E8F0', marginBottom: 12 }}>
+          {([['visual', '可视化 SQL 编辑器'], ['sql', 'SQL 编辑器']] as const).map(([mode, label]) => (
+            <button key={mode} type="button" onClick={() => set({ editorMode: mode })}
+              style={{ padding: '8px 16px', fontSize: 13, cursor: 'pointer', border: 'none', borderBottom: `2px solid ${(value.editorMode ?? 'visual') === mode ? '#2563EB' : 'transparent'}`, background: 'transparent', color: (value.editorMode ?? 'visual') === mode ? '#2563EB' : '#64748B', fontWeight: (value.editorMode ?? 'visual') === mode ? 600 : 400 }}>
+              {label}
+              {(value.editorMode ?? 'visual') === mode && <span style={{ marginLeft: 4, fontSize: 11, color: '#94A3B8' }}>●</span>}
+            </button>
+          ))}
+        </div>
+
+        {(value.editorMode ?? 'visual') === 'visual' ? (
+          <VisualSqlEditor value={value} sources={sources} onChange={onChange} />
+        ) : (
+          <>
+            <textarea style={{ ...inp, minHeight: 160, fontFamily: 'ui-monospace, monospace', resize: 'vertical', whiteSpace: 'pre' }} value={value.sql ?? ''}
+              placeholder={generatedSql} onChange={(e) => set({ sql: e.target.value })} />
+            <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 6 }}>SELECT 结果需返回单列 <code>val</code>，作为该指标实时值；保存后由调度任务执行。</div>
+
+            {/* 已选数据源字段提示（极简弱化，仅一行浅灰小字） */}
+            {selIds.length > 0 && (
+              <div style={{ marginTop: 8, fontSize: 11, color: '#9AA7B8', lineHeight: 1.8 }}>
+                <span style={{ color: '#94A3B8' }}>参考字段（来自已选数据源）：</span>
+                {selIds.flatMap((id) => {
+                  const s = sources.find((x) => x.id === id); if (!s) return [];
+                  const lib = s.conn?.database ?? s.name;
+                  return s.fields.map((f) => ({ tok: `${lib}.${f.key}`, label: f.label }));
+                }).map((it, i) => (
+                  <span key={i} style={{ marginLeft: 6, fontFamily: 'ui-monospace, monospace', color: '#AEB9C9' }}>{it.tok}<span style={{ color: '#CDD6E0', marginLeft: 2 }}>{it.label}</span></span>
+                ))}
+              </div>
+            )}
+          </>
         )}
       </div>
 
-      {/* 步骤 3：可视化预览（保持现状） */}
+      {/* 步骤 3：可视化预览（08081 3.7：删样例数据集下拉组） */}
       <div style={card}>
-        <div style={cardHead}><span style={stepTag}>步骤 3</span> 可视化预览 <Sam value="midVizSamples.json" /> <span style={hint}>样例数据 · 选图表类型查看效果</span></div>
-        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 10, alignItems: 'flex-end' }}>
-          <label style={{ ...lbl, minWidth: 220 }}>
-            样例数据集 <Sam value="midVizSamples.json" />
-            <select style={inp} value={vizSample?.id ?? ''} onChange={(e) => set({ vizSampleId: e.target.value })}>
-              {vizSamples.map((s) => <option key={s.id} value={s.id}>{s.name}（{s.data.length} 项）</option>)}
-            </select>
-          </label>
-        </div>
+        <div style={cardHead}><span style={stepTag}>步骤 3</span> 可视化预览 <Cal label="实时计算" /> <span style={hint}>选图表类型查看效果</span></div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 10 }}>
           {VIZ_ORDER.map((t) => (
             <button key={t} type="button" onClick={() => set({ vizType: t })} style={vizBtn(vizType === t)}>{VIZ_LABEL[t]}</button>
@@ -236,37 +246,39 @@ export function MetricEditor({ value, metrics, sources, onChange, onRemove, sour
         <MetricViz data={vizData} type={vizType} unit={vizUnit} precision={vizPrecision} />
       </div>
 
-      {/* 实时值（基于主源样例数据计算，作为量级参考） */}
-      <RealtimeCard value={value} sources={sources} metrics={metrics} />
-
       {onRemove && value.id && <Button variant="ghost" size="sm" onClick={onRemove}>删除该指标</Button>}
     </div>
   );
 }
 
-// 实时值（基于主源样例数据计算；跨源字段不计入实时）
-function RealtimeCard({ value, sources, metrics }: { value: MidMetric; sources: MidDataSource[]; metrics: MidMetric[] }) {
-  const mainSrc = sources.find((s) => s.id === value.dataSourceId);
-  const mainKeys = new Set((mainSrc?.fields ?? []).map((f) => f.key));
-  const rtFilters = (value.filters ?? []).filter((f) => mainKeys.has(f.field));
-  let preview: number | string; let crossNote = '';
-  if (value.type === 'base') {
-    const cross = !!value.field && !mainKeys.has(value.field);
-    const v = computeMetricValue({ ...value, filters: rtFilters }, mainSrc?.rows ?? []);
-    preview = Number.isFinite(v) ? v : '—';
-    if (cross) crossNote = '度量字段来自关联源，实时值仅按主源近似';
-  } else {
-    const ctx = resolveMetricsForRows(metrics, mainSrc?.rows ?? []);
-    const v = evalMetricFormula(value.formula ?? '', ctx);
-    preview = (v == null || !Number.isFinite(v)) ? '—' : v;
+/* 分组下拉：选择已有分组或新建（选中「＋ 新建分组」后显示输入框） */
+function GroupSelect({ value, groups, onChange }: { value: string; groups: string[]; onChange: (g: string) => void }) {
+  const [creating, setCreating] = useState(false);
+  const [draft, setDraft] = useState('');
+  if (creating) {
+    return (
+      <label style={lbl}>分组 <Sam value="midMetrics.json.group" />
+        <div style={{ display: 'flex', gap: 6 }}>
+          <input style={{ ...inp, flex: 1 }} value={draft} autoFocus placeholder="新分组名称"
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter' && draft.trim()) { onChange(draft.trim()); setCreating(false); setDraft(''); } }}
+            onBlur={() => { if (draft.trim()) onChange(draft.trim()); setCreating(false); setDraft(''); }} />
+          <button type="button" onClick={() => { if (draft.trim()) onChange(draft.trim()); setCreating(false); setDraft(''); }}
+            style={{ border: '1px solid #2563EB', background: '#EFF6FF', color: '#2563EB', borderRadius: 6, padding: '0 10px', fontSize: 12, cursor: 'pointer' }}>确定</button>
+        </div>
+      </label>
+    );
   }
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', background: '#F3F4F6', borderRadius: 8 }}>
-      <Cal label="实时计算" />
-      <span style={{ fontSize: 12, color: '#6B7280' }}>当前样例值：</span>
-      <strong style={{ fontSize: 16, color: '#374151' }}>{typeof preview === 'number' ? fmt(preview, value.precision, value.unit) : preview}</strong>
-      <span style={{ fontSize: 11, color: '#94A3B8', marginLeft: 6 }}>(指标取数由 SQL 脚本执行，以下为样例数据参考值)</span>
-      {crossNote && <span style={{ fontSize: 11, color: '#B45309', marginLeft: 6 }}>· {crossNote}</span>}
-    </div>
+    <label style={lbl}>分组 <Sam value="midMetrics.json.group" />
+      <select style={inp} value={value} onChange={(e) => {
+        if (e.target.value === '__new__') { setCreating(true); }
+        else onChange(e.target.value);
+      }}>
+        {!groups.includes(value) && value && <option value={value}>{value}</option>}
+        {groups.map((g) => <option key={g} value={g}>{g}</option>)}
+        <option value="__new__">＋ 新建分组…</option>
+      </select>
+    </label>
   );
 }

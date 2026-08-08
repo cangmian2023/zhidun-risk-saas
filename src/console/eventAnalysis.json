@@ -20,6 +20,30 @@
    "event": "直播间-点击立即购买",
    "metric": "自定义指标",
    "color": "#10b981"
+  },
+  {
+   "id": "D",
+   "event": "点击注册按钮",
+   "metric": "总次数",
+   "color": "#ef4444"
+  },
+  {
+   "id": "E",
+   "event": "点击注册按钮",
+   "metric": "总次数",
+   "color": "#8b5cf6"
+  },
+  {
+   "id": "F",
+   "event": "点击注册按钮",
+   "metric": "总次数",
+   "color": "#06b6d4"
+  },
+  {
+   "id": "G",
+   "event": "屏幕宽度，例如1080",
+   "metric": "人均次数",
+   "color": "#ec4899"
   }
  ],
  "filterRel": "且",
@@ -41,7 +65,7 @@
   {
    "id": "f_ct",
    "prop": "国家",
-   "op": "包含",
+   "op": "小于",
    "values": [
     "中国",
     "美国",
@@ -61,7 +85,9 @@
    "prop": "省份"
   }
  ],
- "granularity": "day",
+ "granularity": "hour",
+ "topN": 10,
+ "chartType": "line",
  "monitorGranularity": "hour",
  "monitorDays": [
   "mon",
@@ -97,7 +123,5 @@
   "21",
   "22",
   "23"
- ],
- "topN": 10,
- "chartType": "line"
+ ]
 }

@@ -1,7 +1,7 @@
 // 数据源详情（底层模块 · 样例域）— 数据源由用户创建/连接/读取后保存到本地，全部为样例JSON 橘；连接信息来自 conn
 import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Panel, DataTable, Button, InfoCell } from '../components/ui';
+import { Panel, DataTable, Button, InfoCell, DetailHeader } from '../components/ui';
 import type { Column, Row } from '../components/ui';
 import { Sam } from './SourceTag';
 import { useMidDataSources, useMidMetrics } from './midStore';
@@ -32,7 +32,7 @@ export default function MidDataSourceDetail() {
   if (!ds) {
     return (
       <div className="mx-auto max-w-6xl px-4 py-10 lg:px-8">
-        <PageShell title="数据源详情" crumb="零售信贷风控 / 管理中心 / 数据源管理" actions={<Button size="sm" variant="secondary" onClick={() => nav('/console/cm/mid-data-source')}>返回列表</Button>} />
+        <PageShell header={<DetailHeader title="数据源详情" crumb="零售信贷风控 / 管理中心 / 数据源管理" backLabel="返回列表" onBack={() => nav('/console/cm/mid-data-source')} />} />
         <div className="mt-6 rounded-xl bg-slate-50 px-4 py-10 text-center text-sm text-slate-400">未找到该数据源（{id}）。</div>
       </div>
     );
@@ -49,9 +49,10 @@ export default function MidDataSourceDetail() {
   return (
     <ConfigDetailPage title={ds.name} crumbParts={['数据源管理']}
       subtitle={ds.desc}
+      backLabel="返回列表" onBack={() => nav('/console/cm/mid-data-source')}
       actions={<>
+        <Sam label="详情数据" value="midDataSources.json" />
         <Button size="sm" onClick={() => nav('/console/cm/mid-data-source?edit=' + ds.id)}>编辑</Button>
-        <Button size="sm" variant="secondary" onClick={() => nav('/console/cm/mid-data-source')}>返回列表</Button>
       </>}
       infoCells={
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">

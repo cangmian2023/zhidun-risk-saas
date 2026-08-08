@@ -11,6 +11,7 @@ const subsystems = [
   { key: 'sc', name: '评分产品' },
   { key: 'ep', name: '企业风控' },
   { key: 'dm', name: '数字营销' },
+  { key: 'dg', name: '数据治理' },
 ]
 
 function emptySpec(crumb: string) {

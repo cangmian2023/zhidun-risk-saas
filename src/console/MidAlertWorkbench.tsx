@@ -1,53 +1,103 @@
 // ⑥ 预警工作台（使用域）— 读 midAlerts.json 橘（样例）；关联策略样例 橘；实时统计 灰
 // 行点击跳转预警详情页（cr:mid-alert-detail），处置动作在详情页完成
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Panel, StatCard, DataTable } from '../components/ui';
+import { Panel, StatCard, DataTable, Modal } from '../components/ui';
 import type { Column, Row } from '../components/ui';
 import { Sam, Cal } from './SourceTag';
 import { PageShell } from './PageShell';
-import { useMidAlerts, useMidSaveStatus } from './midStore';
-import { LEVEL_META, type MidAlert } from './midData';
-
-type Status = MidAlert['status'];
-const STATUS_KIND: Record<Status, 'red' | 'amber' | 'blue' | 'green' | 'violet' | 'gray'> = {
-  待处置: 'red', 核实中: 'amber', 处置中: 'blue', 已解除: 'green', 已升级: 'violet', 误报: 'gray',
-};
+import { useMidAlerts, useMidSaveStatus, updateAlerts } from './midStore';
+import { LEVEL_META } from './midData';
+import { useFlows, flowStepOf } from './flowStore';
+import FlowStateCell from './FlowStateCell';
 
 export default function MidAlertWorkbench() {
   const alerts = useMidAlerts();
   const saveStatus = useMidSaveStatus();
+  const flows = useFlows();
   const nav = useNavigate();
 
+  // 需求14：时限倒计时每分钟刷新
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    const t = setInterval(() => setTick((x) => x + 1), 60000);
+    return () => clearInterval(t);
+  }, []);
+
+  // 节点时限倒计时（分钟）：无时限 / 未记录进入时间 → '—'
+  const countdownOf = (flowKey: string | undefined, flowState: string | undefined, flowStateAt: string | undefined): React.ReactNode => {
+    const f = flowKey ? flows.find((x) => x.id === flowKey) : undefined;
+    if (!f || !flowStateAt) return <span style={{ color: '#94A3B8' }}>—</span>;
+    const { step } = flowStepOf({ flowSteps: f.flowSteps, flowState });
+    const tl = step?.timeLimit;
+    if (!tl || !step?.next) return <span style={{ color: '#94A3B8' }}>—</span>;  // 无时限或终态：不限制
+    const remain = new Date(flowStateAt).getTime() + tl * 60000 - Date.now();
+    if (remain <= 0) return <span style={{ color: '#DC2626', fontWeight: 600 }}>已超时</span>;
+    const h = Math.floor(remain / 3600000);
+    const m = Math.floor((remain % 3600000) / 60000);
+    const color = remain < 30 * 60000 ? '#DC2626' : remain < 120 * 60000 ? '#D97706' : '#475569';
+    return <span style={{ color, fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>{h > 0 ? `${h}小时${m}分` : `${m}分钟`}</span>;
+  };
+
   const [lvl, setLvl] = useState<string>('');
-  const [status, setStatus] = useState<string>('');
   const [scene, setScene] = useState<string>('');
+  const [type, setType] = useState<string>('');
 
   const scenes = useMemo(() => Array.from(new Set(alerts.map((a) => a.scene))), [alerts]);
+  const types = useMemo(() => Array.from(new Set(alerts.map((a) => a.alert_type))), [alerts]);
   const filtered = alerts.filter((a) =>
-    (!lvl || a.level === lvl) && (!status || a.status === status) && (!scene || a.scene === scene),
+    (!lvl || a.level === lvl) && (!scene || a.scene === scene) && (!type || a.alert_type === type),
   );
 
-  const counts = useMemo(() => {
-    const c: Record<string, number> = { 待处置: 0, 核实中: 0, 处置中: 0, 已解除: 0, 已升级: 0, 误报: 0 };
-    alerts.forEach((a) => { c[a.status] = (c[a.status] ?? 0) + 1; });
+  // 等级统计（红/黄/机会）
+  const levelCounts = useMemo(() => {
+    const c: Record<string, number> = { RED: 0, YELLOW: 0, OPPORTUNITY: 0 };
+    alerts.forEach((a) => { c[a.level] = (c[a.level] ?? 0) + 1; });
+    return c;
+  }, [alerts]);
+
+  // 预警类型分布统计
+  const typeCounts = useMemo(() => {
+    const c: Record<string, number> = {};
+    alerts.forEach((a) => { c[a.alert_type] = (c[a.alert_type] ?? 0) + 1; });
     return c;
   }, [alerts]);
 
   const cols: Column[] = [
-    { key: 'alert_id', label: '预警ID', type: 'text', width: '140px' },
+    { key: 'alert_id', label: '预警ID', type: 'text', width: '130px' },
     { key: 'cust_name', label: '客户', type: 'text', width: '90px' },
-    { key: 'scene', label: '场景', type: 'text', width: '120px' },
+    { key: 'alert_type', label: '预警类型', type: 'badge', badgeKind: 'violet', width: '110px' },
+    { key: 'scene', label: '触发场景', type: 'text', width: '110px' },
     { key: 'level', label: '等级', type: 'badge', badgeKind: 'red', width: '80px' },
-    { key: 'status', label: '状态', type: 'badge', badgeKind: 'gray', width: '90px' },
+    { key: 'rule_name', label: '命中规则', type: 'text', width: '200px' },
+    { key: 'metric', label: '指标值/阈值', type: 'text', width: '100px' },
+    { key: 'alert_date', label: '预警时间', type: 'text', width: '100px' },
+    { key: 'countdown', label: '时限倒计时', render: (r: Row) => countdownOf(String(r.flowKey ?? ''), String(r.flowState ?? ''), String(r.flowStateAt ?? '')) },
+    { key: 'flowState', label: '流程状态', fixed: 'right', tag: { kind: 'sample', value: 'midAlerts.json.flowState' }, render: (r: Row) => (
+      <FlowStateCell flowId={String(r.flowKey ?? '')} state={String(r.flowState ?? '')}
+        onChange={(s) => updateAlerts((list) => list.map((a) => a.alert_id === String(r.id)
+          ? { ...a, flowState: s, flowStateAt: new Date().toISOString().slice(0, 19).replace('T', ' ') }
+          : a))} />
+    ) },
   ];
+  const TYPE_KIND: Record<string, 'red' | 'amber' | 'blue' | 'green' | 'violet' | 'gray'> = {
+    负债激增: 'red', 多头借贷: 'red', 逾期预警: 'red', 司法涉诉: 'red', 关联企业风险: 'red',
+    设备异常: 'amber', 反欺诈命中: 'amber', 行为评分下降: 'amber', 还款能力不足: 'blue',
+    回访失联: 'blue', 舆情负面: 'violet', 提额机会: 'green',
+  };
   const rows: Row[] = filtered.map((a) => ({
     id: a.alert_id,
     alert_id: a.alert_id,
     cust_name: a.cust_name,
+    alert_type: { v: a.alert_type, kind: TYPE_KIND[a.alert_type] ?? 'gray' },
     scene: a.scene,
     level: { v: LEVEL_META[a.level].label, kind: LEVEL_META[a.level].badge },
-    status: { v: a.status, kind: STATUS_KIND[a.status] },
+    rule_name: a.rule_name,
+    metric: `${a.metric_value} / ${a.threshold}`,
+    alert_date: a.alert_date,
+    flowKey: a.flowKey ?? '',
+    flowState: a.flowState ?? '',
+    flowStateAt: a.flowStateAt ?? '',
   }));
 
   return (
@@ -55,23 +105,28 @@ export default function MidAlertWorkbench() {
       <PageShell title="预警工作台" crumb="零售信贷风控 / 贷中监控 / 预警处置" subtitle="预警队列 · 点击任意一条查看详情并处置"
         actions={<><Sam label="策略配置" value="midStrategy.json" /><Sam label="预警样例" value={`${alerts.length} 条`} /><Cal label="实时统计" /></>} />
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, minmax(0,1fr))', gap: 12, margin: '4px 0 16px' }}>
-        {(['待处置', '核实中', '处置中', '已解除', '已升级', '误报'] as Status[]).map((s) => (
-          <StatCard key={s} label={s} value={String(counts[s])} accent={s === '待处置' ? 'rose' : s === '已解除' ? 'emerald' : 'brand'} />
-        ))}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0,1fr))', gap: 12, margin: '4px 0 16px' }}>
+        <StatCard label="预警总数" value={String(alerts.length)} accent="brand" />
+        <StatCard label="红灯预警" value={String(levelCounts.RED)} accent="rose" />
+        <StatCard label="黄灯预警" value={String(levelCounts.YELLOW)} accent="amber" />
+        <StatCard label="机会预警" value={String(levelCounts.OPPORTUNITY)} accent="emerald" />
       </div>
 
       <Panel title="预警队列" desc={<span>筛选后共 <b>{filtered.length}</b> 条 · <Cal label="实时过滤" /></span>}
         actions={
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
             <Sel value={lvl} onChange={setLvl} opts={[{ v: '', l: '全部等级' }, ...['RED', 'YELLOW', 'OPPORTUNITY'].map((x) => ({ v: x, l: LEVEL_META[x].label }))]} />
-            <Sel value={status} onChange={setStatus} opts={[{ v: '', l: '全部状态' }, ...(['待处置', '核实中', '处置中', '已解除', '已升级', '误报'] as Status[]).map((x) => ({ v: x, l: x }))]} />
+            <Sel value={type} onChange={setType} opts={[{ v: '', l: '全部类型' }, ...types.map((x) => ({ v: x, l: `${x}（${typeCounts[x] ?? 0}）` }))]} />
             <Sel value={scene} onChange={setScene} opts={[{ v: '', l: '全部场景' }, ...scenes.map((x) => ({ v: x, l: x }))]} />
           </div>
         }>
         <DataTable columns={cols} rows={rows} empty="无匹配预警"
           clickableKey="alert_id"
-          onCellClick={(r) => nav('/console/cr/mid-alert-detail?id=' + String(r.id))} />
+          onCellClick={(r) => nav('/console/cr/mid-alert-detail?id=' + String(r.id))}
+          actions={(r) => (
+            <button type="button" onClick={() => nav('/console/cr/mid-alert-detail?id=' + String(r.id))}
+              style={{ padding: '3px 12px', borderRadius: 6, border: '1px solid #C7D2FE', background: '#EFF6FF', color: '#1D4ED8', fontSize: 12, cursor: 'pointer' }}>查看</button>
+          )} />
       </Panel>
 
       <Modal open={saveStatus === 'error'} onClose={() => {}} title="保存提示">

@@ -14,6 +14,7 @@ import DecisionVerify222 from './DecisionVerify222'
 import DecisionVerify222Detail from './DecisionVerify222Detail'
 import ScoreQueryPage from './ScoreQueryPage'
 import VerifyRuleList from './VerifyRuleList'
+import RuleHub from './RuleHub'
 import VerifyRuleConfig from './VerifyRuleConfig'
 import ReportTemplate from './ReportTemplate'
 import ReportTemplatePreview from './ReportTemplatePreview'
@@ -43,8 +44,10 @@ import MetaVirtualPropConfig from './MetaVirtualPropConfig'
 import MetaVirtualEventConfig from './MetaVirtualEventConfig'
 import MetaAutoTrackConfig from './MetaAutoTrackConfig'
 import EventAnalysis from './EventAnalysis'
+import { CollectionOverview, CollectionCases, CollectionStrategy, CollectionRecords } from './CollectionPages'
+import ScoreModule from './ScoreModule'
 import { getDashboardByKey } from './dashboardData'
-import { creditRiskMenu, scoringMenu, entMenu, dmMenu, cmMenu, type MenuGroup } from './menus'
+import { creditRiskMenu, scoringMenu, entMenu, dmMenu, dataGovernanceMenu, cmMenu, collectionMenu, type MenuGroup } from './menus'
 import SidebarMenu from './SidebarMenu'
 import { MenuIcon, type IconName } from '../components/icons'
 import { moduleSpecs } from './specs'
@@ -54,16 +57,20 @@ const subName: Record<string, string> = {
   sc: '评分产品',
   ep: '企业风控',
   dm: '数字营销',
+  dg: '数据治理',
   cm: '管理中心',
+  zz: '催收管理',
 }
 
-// 5 个子系统（可在 banner 中一键切换）
+// 子系统（可在 banner 中一键切换）
 const subsystems = [
   { key: 'cr', name: '零售信贷风控', open: true },
   { key: 'sc', name: '评分产品', open: true },
   { key: 'ep', name: '企业风控', open: false },
   { key: 'dm', name: '数字营销', open: false },
+  { key: 'dg', name: '数据治理', open: true },
   { key: 'cm', name: '管理中心', open: true },
+  { key: 'zz', name: '催收管理', open: true },
 ]
 
 // 用户名下拉：SaaS 服务应用到基础用户功能
@@ -265,19 +272,20 @@ export default function Console() {
     'cm:help-service': 'bell',
     // 行为分析
     'cm:event-analysis': 'analytics',
-    // 元数据管理（对齐神策元数据管理）
-    'cm:meta-event': 'pulse',
-    'cm:meta-event-prop': 'braces',
-    'cm:meta-user-prop': 'id',
-    'cm:meta-dim-table': 'database',
-    'cm:meta-item-prop': 'cube',
-    'cm:meta-virtual-prop': 'code',
-    'cm:meta-virtual-event': 'layers',
-    'cm:meta-auto-track': 'eye',
+    // 元数据管理（数据治理子系统 · 对齐神策元数据管理）
+    'dg:meta-event': 'pulse',
+    'dg:meta-event-prop': 'braces',
+    'dg:meta-user-prop': 'id',
+    'dg:meta-dim-table': 'database',
+    'dg:meta-item-prop': 'cube',
+    'dg:meta-virtual-prop': 'code',
+    'dg:meta-virtual-event': 'layers',
+    'dg:meta-auto-track': 'eye',
     // 管理中心（原公共模块）：由零售信贷风控迁入的「公共配置」
     'cm:pre-application': 'audit',
     'cm:pre-verify-config': 'filter',
     'cm:fraud-rules': 'layers',
+    'cm:rule-hub': 'layers',
     'cm:fraud-blacklist': 'plug',
     'cm:fraud-gang': 'link',
     'cm:mid-dispose-strategy': 'work_flow',
@@ -300,6 +308,11 @@ export default function Console() {
     'cr:mid-alert-workbench': 'zoom',
     'cr:mid-dispose-workbench': 'work_flow',
     'cr:mid-cust-detail': 'monitor',
+    // 催收管理（需求41）
+    'zz:overview': 'chart',
+    'zz:cases': 'work_flow',
+    'zz:records': 'inbox',
+    'zz:strategy': 'sliders',
   }
   const menuIcon = (key: string): IconName => MENU_ICON[key] ?? 'dashboard'
 
@@ -308,7 +321,9 @@ export default function Console() {
     sub === 'sc' ? scoringMenu :
     sub === 'ep' ? entMenu :
     sub === 'dm' ? dmMenu :
-    sub === 'cm' ? cmMenu : []
+    sub === 'dg' ? dataGovernanceMenu :
+    sub === 'cm' ? cmMenu :
+    sub === 'zz' ? collectionMenu : []
   const cur = (loc.pathname.split('/')[3] as string) || 'overview'
   const key = `${sub}:${cur}`
 
@@ -319,7 +334,7 @@ export default function Console() {
       ? (prod as 'zhicha' | 'zhixin' | 'zhirong')
       : null
 
-  const supported = sub === 'cr' || sub === 'sc' || sub === 'ep' || sub === 'dm' || sub === 'cm'
+  const supported = sub === 'cr' || sub === 'sc' || sub === 'ep' || sub === 'dm' || sub === 'dg' || sub === 'cm' || sub === 'zz'
 
   function onLogout() {
     logout()
@@ -485,6 +500,8 @@ export default function Console() {
               <VerifyRuleList />
             ) : key === 'cm:pre-verify-config-detail' ? (
               <VerifyRuleConfig />
+            ) : key === 'cm:rule-hub' ? (
+              <RuleHub />
             ) : key === 'cm:report-template' ? (
               <ReportTemplate />
             ) : key === 'cm:report-template-preview' ? (
@@ -505,23 +522,31 @@ export default function Console() {
               <MidDisposeConfig />
             ) : key === 'cm:event-analysis' ? (
               <EventAnalysis />
-            ) : key === 'cm:meta-event' ? (
+            ) : key === 'dg:meta-event' ? (
               <MetaEventConfig />
-            ) : key === 'cm:meta-event-prop' ? (
+            ) : key === 'dg:meta-event-prop' ? (
               <MetaEventPropConfig />
-            ) : key === 'cm:meta-user-prop' ? (
+            ) : key === 'dg:meta-user-prop' ? (
               <MetaUserPropConfig />
-            ) : key === 'cm:meta-dim-table' ? (
+            ) : key === 'dg:meta-dim-table' ? (
               <MetaDimTableConfig />
-            ) : key === 'cm:meta-item-prop' ? (
+            ) : key === 'dg:meta-item-prop' ? (
               <MetaItemPropConfig />
-            ) : key === 'cm:meta-virtual-prop' ? (
+            ) : key === 'dg:meta-virtual-prop' ? (
               <MetaVirtualPropConfig />
-            ) : key === 'cm:meta-virtual-event' ? (
+            ) : key === 'dg:meta-virtual-event' ? (
               <MetaVirtualEventConfig />
-            ) : key === 'cm:meta-auto-track' ? (
+            ) : key === 'dg:meta-auto-track' ? (
               <MetaAutoTrackConfig />
-            ) : key === 'cr:mid-overview' || key === 'cr:mid-alert' || key === 'cr:mid-crowd' ? (
+            ) : key === 'zz:overview' ? (
+              <CollectionOverview />
+            ) : key === 'zz:cases' ? (
+              <CollectionCases />
+            ) : key === 'zz:records' ? (
+              <CollectionRecords />
+            ) : key === 'zz:strategy' ? (
+              <CollectionStrategy />
+            ) : key.startsWith('cr:mid-td') || key === 'cr:overview' || key === 'cr:mid-overview' || key === 'cr:mid-alert' || key === 'cr:mid-crowd' ? (
               <MidDashboardPage pageKey={key} />
             ) : key === 'cr:mid-alert-workbench' ? (
               <MidAlertWorkbench />
@@ -543,8 +568,9 @@ export default function Console() {
               <MidDisposeDetail />
             ) : getDashboardByKey(key) ? (
               <MidDashboardPage pageKey={key} />
-            ) : isQuery && queryProd ? (
-              <ScoreQueryPage product={queryProd} />
+            ) : key.startsWith('sc:') ? (
+              // 评分产品子系统（v2）：评分体系总览/三产品查询(下钻明细)/监控/分层/场景效果/API/批量/账单
+              <ScoreModule pageKey={key} />
             ) : (
               <ModulePage spec={moduleSpecs[key] ?? emptySpec(subName[sub] ?? '控制台')} />
             )}

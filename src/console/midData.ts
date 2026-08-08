@@ -45,10 +45,38 @@ export interface MidDataSource {
 }
 
 export type MetricType = 'base' | 'derived';
+/* 基础指标聚合（存量数据 agg 字段用此枚举，勿改） */
 export type AggOp = 'sum' | 'count' | 'avg' | 'max' | 'min' | 'distinct';
 
 export const AGG_LABEL: Record<AggOp, string> = {
   sum: '求和', count: '计数', avg: '平均', max: '最大', min: '最小', distinct: '去重计数',
+};
+
+/* ── 可视化 SQL 编辑器事件聚合（神策口径，08081 3.1）── */
+export type VisualAggOp =
+  | 'total' | 'users' | 'perCapita'
+  | 'd7total' | 'd7users' | 'd30total' | 'd30users'
+  | 'mtotal' | 'musers' | 'sumTotal' | 'sumUsers';
+export const VISUAL_AGG_LABEL: Record<VisualAggOp, string> = {
+  total: '总次数', users: '用户数', perCapita: '人均次数',
+  d7total: '过去 7 天总次数', d7users: '过去 7 天用户数',
+  d30total: '过去 30 天总次数', d30users: '过去 30 天用户数',
+  mtotal: '当月总次数', musers: '当月用户数',
+  sumTotal: '合计总次数', sumUsers: '合计用户数',
+};
+/* 事件聚合 → SQL（subject=分析主体字段，用户数/人均 去重口径） */
+export const VISUAL_AGG_TO_SQL: Record<VisualAggOp, (subject: string) => string> = {
+  total: () => 'COUNT(*)',
+  users: (s) => `COUNT(DISTINCT ${s})`,
+  perCapita: (s) => `COUNT(*) / COUNT(DISTINCT ${s})`,
+  d7total: () => 'COUNT(*) /* 过去7天 */',
+  d7users: (s) => `COUNT(DISTINCT ${s}) /* 过去7天 */`,
+  d30total: () => 'COUNT(*) /* 过去30天 */',
+  d30users: (s) => `COUNT(DISTINCT ${s}) /* 过去30天 */`,
+  mtotal: () => 'COUNT(*) /* 当月 */',
+  musers: (s) => `COUNT(DISTINCT ${s}) /* 当月 */`,
+  sumTotal: () => 'SUM(1) /* 合计 */',
+  sumUsers: (s) => `COUNT(DISTINCT ${s}) /* 合计 */`,
 };
 
 export interface MidMetric {
@@ -61,6 +89,44 @@ export interface MidMetric {
   joins?: MidMetricJoin[];       // 关联数据源（步骤2 可视化设计器：除主源外的其他已选源，按需 JOIN）
   editorMode?: 'visual' | 'sql'; // SQL编辑器步骤：可视化配置 / 直接写 SQL（默认 visual）
   sql?: string;                  // editorMode=sql 时的 SQL 语句
+  visualSql?: {                  // 需求42：可视化 SQL 编辑器（神策 BI 事件分析配置器风格）的配置快照
+    subject?: string;            // 分析主体（dim 字段 key，默认 user_id / cust_id）
+    timeZone?: string;           // 时区（如 UTC-03:00）
+    aggMode?: string;            // 汇总配置（快速总和/用户数/人均次数/最大值/最小值/平均值/去重数）
+    // 字段选择（A/B/C）：字段 + 聚合（神策口径 VisualAggOp）+ 数值格式（3.14）+ 字段级筛选（08081 3.2）
+    events?: {
+      name: string; field: string; agg: VisualAggOp;
+      format?: 'pct2' | 'pct3' | 'int';  // 数值格式（3.14）：百分比两位小数 / 百分比三位小数 / 取整
+      filters?: { logic: 'and' | 'or'; groups: { logic: 'and' | 'or'; conds: VisualCond[] }[] };
+    }[];
+    calcMode?: 'metric' | 'custom';  // 字段选择模式（3.13）：metric=指标（多列）/ custom=自定义指标（公式即指标）
+    formula?: string;            // 自定义指标公式（3.13）：引用字段字母 A/B/C，如 (A + B) * C - 100
+    // 自定义指标流式表达式（3.14，严格按神策样例）：单元序列 = 字段单元(字段.聚合) / 运算符单元 / 数字输入
+    customExpr?: Array<
+      { t: 'field'; field: string; agg: VisualAggOp; format?: 'pct2' | 'pct3' | 'int'; filters?: { logic: 'and' | 'or'; groups: { logic: 'and' | 'or'; conds: VisualCond[] }[] } }
+      | { t: 'op'; op: string }
+      | { t: 'num'; value: string }
+    >;
+    customFormat?: 'pct2' | 'pct3' | 'int';  // 自定义指标数值显示方式（3.14：百分比两位小数/三位小数/取整）
+    customMolecular?: boolean;   // 按分子属性查看（3.14 神策复选框）
+    // 全局筛选（神策嵌套结构 08081）：组间用顶层 logic 连接；每组内条件用组 logic 连接
+    globalFilters?: {
+      logic: 'and' | 'or';                                       // 组间关系（顶层）
+      groups: { logic: 'and' | 'or'; conds: VisualCond[] }[];
+    };
+    groupBy?: string[];          // 分组选择（维度字段）
+    timeGran?: string;           // 时间粒度（08081 3.5：按小时/按分钟/按天/按周/按月）
+    // 时间范围（08081 3.5）：动态 / 静态 + 对比（上一段时间 / 去年同期 / 自定义）
+    timeRange?: {
+      mode: 'dynamic' | 'static';       // 动态时间（如近7天） / 静态时间（起止日期）
+      dynamic?: string;                 // 动态预设：近7天/近30天/近90天/本月/上月
+      start?: string; end?: string;     // 静态起止（YYYY-MM-DD）
+      compare?: {
+        enabled: boolean; mode: 'prev' | 'yoy' | 'custom';  // 上一段时间/去年同期/自定义
+        start?: string; end?: string;   // 自定义对比范围
+      };
+    };
+  };
   type: MetricType;
   field?: string;             // base：字段 key
   agg?: AggOp;                // base：聚合
@@ -74,6 +140,8 @@ export interface MidMetric {
   expr?: string;                 // 多字段计算表达式（基础指标，引用源字段 key，如 loan_balance/credit_line*100）
   vizType?: 'table' | 'bar' | 'line' | 'area' | 'pie' | 'hbar' | 'burndown' | 'radar';  // 可视化预览首选类型（默认 bar）
   vizSampleId?: string;          // 可视化预览所用样例数据集 ID（对应 midVizSamples.json 中的 id；默认取第一套）
+  flowKey?: string;              // 需求28：关联业务流程 id（该指标自身的流程实例，存 midMetrics.json）
+  flowState?: string;            // 需求28：该指标当前流程状态（per-object，独立于流程定义）
 }
 
 // 可视化预览样例数据集（midVizSamples.json · 样例橘）
@@ -102,6 +170,26 @@ export const HOUR_SLOTS: string[] = Array.from({ length: 24 }, (_, i) => String(
 // 指标筛选操作符（聚合前的 WHERE 条件）
 export type MetricFilterOp = 'eq' | 'neq' | 'gt' | 'gte' | 'lt' | 'lte' | 'contains';
 export const FILTER_OP_LABEL: Record<MetricFilterOp, string> = { eq: '=', neq: '≠', gt: '>', gte: '≥', lt: '<', lte: '≤', contains: '包含' };
+
+/* ── 可视化编辑器全局筛选操作符（神策口径，08081 3.3）── */
+export type VisualFilterOp =
+  | 'eq' | 'neq'          // 等于 / 不等于 → 单输入框
+  | 'lt' | 'gt'           // 小于 / 大于 → 单输入框
+  | 'range'               // 区间 → 两个输入框
+  | 'has' | 'empty'       // 有值 / 没值 → 无输入框
+  | 'in';                 // 包含 → 下拉多选
+export const VISUAL_OP_LABEL: Record<VisualFilterOp, string> = {
+  eq: '等于', neq: '不等于', lt: '小于', gt: '大于', range: '区间', has: '有值', empty: '没值', in: '包含',
+};
+
+/* 可视化筛选条件：value=单值（eq/neq/lt/gt）；range 用 value/rangeMax；has/empty 无值；in 用 values[] */
+export interface VisualCond {
+  field: string;
+  op: VisualFilterOp;
+  value?: string;
+  rangeMax?: string;
+  values?: string[];
+}
 export interface MidMetricFilter { field: string; op: MetricFilterOp; value: string; }
 export interface MidMetricJoin { sourceId: string; key: string; } // 关联源 + 关联键（与主源同名字段，如 customer_id）
 export type OutputWay = 'api' | 'url' | 'file' | 'web';
@@ -118,6 +206,9 @@ export interface MidTask {
   output: OutputWay;          // 输出方式
   enabled: boolean;
   desc?: string;
+  scene?: string;                // 业务场景（标准化枚举：贷中风控/存量运营/贷后催收/反欺诈监测）——预警记录的 scene 由任务继承
+  flowKey?: string;              // 需求28：关联业务流程 id（该任务自身的流程实例，存 midStrategy.json）
+  flowState?: string;            // 需求28：该任务当前流程状态（per-object）
 }
 
 // 预警规则：支持多条件组合（且/或）——对齐事件分析「自定义规则」
@@ -141,6 +232,7 @@ export interface MidRule {
   compare?: RuleCompare;       // 触发规则-比较：低于 / 高于 / 等于
   baseline?: RuleBaseline;     // 触发规则-基准：昨天同期 / 上周同期 / 上月同期
   threshold?: number;          // 触发规则-阈值
+  alertType?: string;          // 预警类型（标准化枚举：负债激增/多头借贷/逾期预警/司法涉诉/设备异常/反欺诈命中/…）——预警记录的 alert_type 由规则继承
   desc?: string;
 }
 
@@ -154,6 +246,8 @@ export interface MidDispose {
   needNotify: boolean;        // 需触达客户
   assignTo: string;           // 分派角色
   desc?: string;
+  flowKey?: string;              // 需求28：关联业务流程 id（该策略自身的流程实例，存 midStrategy.json）
+  flowState?: string;            // 需求28：该策略当前流程状态（per-object）
 }
 
 export interface MidStrategy {
@@ -189,6 +283,9 @@ export function normalizeStrategy(input: unknown): MidStrategy {
           output: t.output ?? 'web',
           enabled: t.enabled ?? true,
           desc: t.desc,
+          scene: t.scene,
+          flowKey: t.flowKey,
+          flowState: t.flowState,
         };
       })
     : [];
@@ -217,6 +314,7 @@ export function normalizeStrategy(input: unknown): MidStrategy {
           compare: (['lt', 'gt', 'eq'] as RuleCompare[]).includes(r.compare) ? r.compare : 'lt',
           baseline: (['yesterday', 'lastWeek', 'lastMonth'] as RuleBaseline[]).includes(r.baseline) ? r.baseline : 'yesterday',
           threshold: typeof r.threshold === 'number' ? r.threshold : 0,
+          alertType: r.alertType,
           desc: r.desc,
         };
       })
@@ -249,13 +347,14 @@ export interface MidWidget {
   metricIds?: string[];       // 关联指标（多选，与监控任务一致）
   dimensions?: string[];      // 维度字段
   filters?: MidWidgetFilter[];
-  span?: 1 | 2;
+  span?: 1 | 2 | 3;          // 占列数（3 列网格下：1=小/2=中/3=大）
   drill?: MidWidgetDrill;
   // 可视化组件编辑态（对应 record/temp/08071 文档第二点 编辑状态）
   timeGranularity?: string;         // 时间粒度
   showExtra?: string[];             // 同时显示（复选项）
   windowSize?: 'sm' | 'md' | 'lg';  // 窗口尺寸
   remark?: string;                  // 备注
+  flowKey?: string;                 // 需求23：关联业务流程 id（组件级，渲染时顶部显示流程操作行）
 }
 
 export interface MidPageFilter {
@@ -275,6 +374,8 @@ export interface MidDashboardPage {
   desc?: string;
   filters?: MidPageFilter[];
   widgets: MidWidget[];
+  flowKey?: string;              // 需求28：关联业务流程 id（该页面自身的流程实例，存 midDashboards.json）
+  flowState?: string;            // 需求28：该页面当前流程状态（per-object）
 }
 
 // ---------------- 种子数据 ----------------
@@ -417,6 +518,192 @@ export const SEED_DATA_SOURCES: MidDataSource[] = [
     ],
     status: 'connected',
   },
+{
+  'id': 'ds_pre_apply',
+  'name': '进件申请',
+  'type': 'sql',
+  'category': '贷前域',
+  'desc': '贷前进件申请（进件审核/信息核验/信用风控/欺诈识别）',
+  'conn': {
+    'dbType': 'mysql',
+    'host': '10.20.30.33',
+    'port': 3306,
+    'database': 'pre_apply',
+    'username': 'pre_rw',
+    'password': 'Pre@2026****',
+    'connStr': 'mysql://pre_rw:***@10.20.30.33:3306/pre_apply',
+    'query': 'SELECT apply_id, apply_date, cust_name, channel, product, verify_pass, credit_score, fraud_hit, decision FROM pre_apply'
+  },
+  'fields': [
+    {
+      'key': 'apply_id',
+      'label': '进件ID',
+      'kind': 'dim',
+      'type': 'string'
+    },
+    {
+      'key': 'apply_date',
+      'label': '申请日期',
+      'kind': 'dim',
+      'type': 'string'
+    },
+    {
+      'key': 'cust_name',
+      'label': '客户姓名',
+      'kind': 'dim',
+      'type': 'string'
+    },
+    {
+      'key': 'channel',
+      'label': '进件渠道',
+      'kind': 'dim',
+      'type': 'string'
+    },
+    {
+      'key': 'product',
+      'label': '申请产品',
+      'kind': 'dim',
+      'type': 'string'
+    },
+    {
+      'key': 'verify_pass',
+      'label': '信息核验',
+      'kind': 'dim',
+      'type': 'string'
+    },
+    {
+      'key': 'credit_score',
+      'label': '预授信评分',
+      'kind': 'measure',
+      'type': 'number'
+    },
+    {
+      'key': 'fraud_hit',
+      'label': '欺诈命中',
+      'kind': 'dim',
+      'type': 'string'
+    },
+    {
+      'key': 'decision',
+      'label': '审批结论',
+      'kind': 'dim',
+      'type': 'string'
+    }
+  ],
+  'rows': [
+    {
+      'apply_id': 'AP20260808-001',
+      'apply_date': '2026-08-08',
+      'cust_name': '张*明',
+      'channel': '线上App',
+      'product': '信用贷',
+      'verify_pass': '通过',
+      'credit_score': 620,
+      'fraud_hit': '否',
+      'decision': '通过'
+    },
+    {
+      'apply_id': 'AP20260808-002',
+      'apply_date': '2026-08-08',
+      'cust_name': '李*华',
+      'channel': '合作渠道',
+      'product': '消费贷',
+      'verify_pass': '通过',
+      'credit_score': 585,
+      'fraud_hit': '否',
+      'decision': '通过'
+    },
+    {
+      'apply_id': 'AP20260808-003',
+      'apply_date': '2026-08-08',
+      'cust_name': '王*芳',
+      'channel': '线上App',
+      'product': '信用贷',
+      'verify_pass': '未通过',
+      'credit_score': 540,
+      'fraud_hit': '否',
+      'decision': '拒绝'
+    },
+    {
+      'apply_id': 'AP20260808-004',
+      'apply_date': '2026-08-08',
+      'cust_name': '赵*强',
+      'channel': '线下门店',
+      'product': '经营贷',
+      'verify_pass': '通过',
+      'credit_score': 645,
+      'fraud_hit': '否',
+      'decision': '人工复核'
+    },
+    {
+      'apply_id': 'AP20260808-005',
+      'apply_date': '2026-08-08',
+      'cust_name': '陈*敏',
+      'channel': '微信小程序',
+      'product': '消费贷',
+      'verify_pass': '通过',
+      'credit_score': 598,
+      'fraud_hit': '否',
+      'decision': '通过'
+    },
+    {
+      'apply_id': 'AP20260808-006',
+      'apply_date': '2026-08-08',
+      'cust_name': '孙*华',
+      'channel': '合作渠道',
+      'product': '信用贷',
+      'verify_pass': '通过',
+      'credit_score': 660,
+      'fraud_hit': '是',
+      'decision': '拒绝'
+    },
+    {
+      'apply_id': 'AP20260808-007',
+      'apply_date': '2026-08-08',
+      'cust_name': '周*伟',
+      'channel': '线上App',
+      'product': '抵押贷',
+      'verify_pass': '未通过',
+      'credit_score': 570,
+      'fraud_hit': '否',
+      'decision': '拒绝'
+    },
+    {
+      'apply_id': 'AP20260808-008',
+      'apply_date': '2026-08-08',
+      'cust_name': '吴*军',
+      'channel': '线下门店',
+      'product': '经营贷',
+      'verify_pass': '通过',
+      'credit_score': 615,
+      'fraud_hit': '否',
+      'decision': '通过'
+    },
+    {
+      'apply_id': 'AP20260808-009',
+      'apply_date': '2026-08-08',
+      'cust_name': '郑*丽',
+      'channel': '微信小程序',
+      'product': '消费贷',
+      'verify_pass': '通过',
+      'credit_score': 630,
+      'fraud_hit': '是',
+      'decision': '人工复核'
+    },
+    {
+      'apply_id': 'AP20260808-010',
+      'apply_date': '2026-08-08',
+      'cust_name': '冯*军',
+      'channel': '线上App',
+      'product': '信用贷',
+      'verify_pass': '通过',
+      'credit_score': 590,
+      'fraud_hit': '否',
+      'decision': '通过'
+    }
+  ],
+  'status': 'connected'
+},
 ];
 
 export const SEED_METRICS: MidMetric[] = [
@@ -625,6 +912,11 @@ export const SEED_METRICS: MidMetric[] = [
     { id: 'm_pay_intent', name: '还款意愿评分', group: '处置', desc: '客户还款意愿评分均值', dataSourceId: 'ds_alert', type: 'base', field: 'pay_intent', agg: 'avg', unit: '分', precision: 0, enabled: true },
     { id: 'm_click_rate', name: '按钮点击率', group: '事件分析', desc: '按钮点击/曝光比例', dataSourceId: 'ds_event', type: 'base', field: 'click_rate', agg: 'avg', unit: '%', precision: 2, enabled: true },
     { id: 'm_stay_dur', name: '平均停留时长', group: '事件分析', desc: '页面平均停留时长', dataSourceId: 'ds_event', type: 'base', field: 'stay_dur', agg: 'avg', unit: '秒', precision: 0, enabled: true },
+  {'id': 'm_pre_in_cnt', 'name': '今日进件量', 'group': '贷前', 'dataSourceId': 'ds_pre_apply', 'type': 'base', 'field': 'apply_id', 'agg': 'count', 'unit': '笔', 'precision': 0, 'enabled': true, 'desc': '今日进件申请总笔数'},
+  {'id': 'm_pre_pass_cnt', 'name': '进件通过数', 'group': '贷前', 'dataSourceId': 'ds_pre_apply', 'type': 'base', 'field': 'apply_id', 'agg': 'count', 'filters': [{'field': 'decision', 'op': 'eq', 'value': '通过'}], 'unit': '笔', 'precision': 0, 'enabled': true, 'desc': '审批结论=通过的进件数'},
+  {'id': 'm_pre_pass_rate', 'name': '进件通过率', 'group': '贷前', 'dataSourceId': 'ds_pre_apply', 'type': 'derived', 'formula': 'm_pre_pass_cnt / m_pre_in_cnt * 100', 'unit': '%', 'precision': 1, 'enabled': true, 'desc': '通过数/进件量'},
+  {'id': 'm_pre_fraud_cnt', 'name': '欺诈命中件数', 'group': '贷前', 'dataSourceId': 'ds_pre_apply', 'type': 'base', 'field': 'apply_id', 'agg': 'count', 'filters': [{'field': 'fraud_hit', 'op': 'eq', 'value': '是'}], 'unit': '件', 'precision': 0, 'enabled': true, 'desc': '欺诈命中=是的进件数'},
+  {'id': 'm_pre_fraud_rate', 'name': '欺诈命中率', 'group': '贷前', 'dataSourceId': 'ds_pre_apply', 'type': 'derived', 'formula': 'm_pre_fraud_cnt / m_pre_in_cnt * 100', 'unit': '%', 'precision': 1, 'enabled': true, 'desc': '欺诈命中件数/进件量'},
 ];
 
 /* ---------- 监控任务详情要原样展示的「事件分析配置」（逐字照搬 record/temp/event，常量直渲，不依赖磁盘 JSON，保证与文档一致） ---------- */
@@ -650,217 +942,217 @@ export const EVENT_ANALYSIS_CONFIG = {
 
 export const SEED_STRATEGY: MidStrategy = {
   tasks: [
-    { id: 't001', name: '信用卡逾期率日扫', crowd: '存量信用卡客户',
-      granularity: 'day', period: { hours: ['00'] },
-      metricIds: ['m_overdue_rate', 'm_alert_cnt'], output: 'web', enabled: true,
-      desc: '每日 00:00 扫描存量信用卡客群逾期率，超阈值触发预警' },
-    { id: 't002', name: '信用卡逾期率日扫·新增', crowd: '新增信用卡客户',
-      granularity: 'day', period: { hours: ['00'] },
-      metricIds: ['m_overdue_rate'], output: 'web', enabled: true,
-      desc: '关注新发卡 90 天内的逾期苗头' },
-    { id: 't003', name: '消费贷逾期率监控', crowd: '消费贷在贷客户',
-      granularity: 'day', period: { hours: ['01'] },
+    { id: 't001', name: '全量在贷客户逾期率日扫', crowd: '全量在贷客户', scene: '贷中风控',
+      granularity: 'day', period: {'hours': ['00']},
+      metricIds: ['m_overdue_rate', 'm_overdue_cnt'], output: 'web', enabled: true,
+      desc: '每日 00:00 扫描全量在贷客群逾期率与逾期客户数，超阈值触发红黄灯预警', flowKey: 'f-online-approve', flowState: '已上线' },
+    { id: 't002', name: '信用卡客群逾期抬头监控', crowd: '存量信用卡客户', scene: '贷中风控',
+      granularity: 'day', period: {'hours': ['00']},
+      metricIds: ['m_overdue_rate', 'm_m1_amt'], output: 'web', enabled: true,
+      desc: '信用卡客群 M1 逾期金额日级跟踪，抬头即预警', flowKey: 'f-online-approve', flowState: '已上线' },
+    { id: 't003', name: '消费贷资产质量日监控', crowd: '消费贷在贷客户', scene: '贷中风控',
+      granularity: 'day', period: {'hours': ['01']},
       metricIds: ['m_overdue_rate', 'm_loan_balance'], output: 'web', enabled: true,
-      desc: '消费贷资产质量日监控' },
-    { id: 't004', name: '经营贷逾期率周报', crowd: '经营贷在贷客户',
-      granularity: 'week', period: { days: ['mon', 'wed', 'fri'], hours: ['09'] },
+      desc: '消费贷资产质量与余额日监控', flowKey: 'f-online-approve', flowState: '已上线' },
+    { id: 't004', name: '经营贷逾期率周报', crowd: '经营贷在贷客户', scene: '贷中风控',
+      granularity: 'week', period: {'days': ['mon', 'wed', 'fri'], 'hours': ['09']},
       metricIds: ['m_overdue_rate'], output: 'web', enabled: true,
-      desc: '经营贷逾期率周度趋势，周五 09:00 复核' },
-    { id: 't005', name: '全量在贷余额日扫', crowd: '全量在贷客户',
-      granularity: 'day', period: { hours: ['02'] },
-      metricIds: ['m_loan_balance'], output: 'web', enabled: true,
-      desc: '每日 02:00 全量在贷余额快照' },
-    { id: 't006', name: '高额度客户额度使用率', crowd: '授信额度≥50万客户',
-      granularity: 'week', period: { days: ['mon'], hours: ['10'] },
-      metricIds: ['m_util_rate'], output: 'web', enabled: true,
-      desc: '高敞口客户额度使用率周监控，接近上限提前预警' },
-    { id: 't007', name: '行为分骤降预警', crowd: '行为分≥70的存量客户',
-      granularity: 'day', period: { hours: ['08'] },
+      desc: '经营贷逾期率周度趋势，周五 09:00 复核', flowKey: 'f-online-approve', flowState: '已上线' },
+    { id: 't005', name: 'M1 逾期金额滚动监控', crowd: '全量在贷客户', scene: '贷中风控',
+      granularity: 'day', period: {'hours': ['02']},
+      metricIds: ['m_m1_amt', 'm_overdue_cnt'], output: 'web', enabled: true,
+      desc: 'M1 逾期金额滚动监控，防首逾恶化', flowKey: 'f-online-approve', flowState: '已上线' },
+    { id: 't006', name: 'M2 逾期资产周监控', crowd: 'M1/M2 逾期客户', scene: '贷中风控',
+      granularity: 'week', period: {'days': ['tue'], 'hours': ['09']},
+      metricIds: ['m_m2_amt'], output: 'web', enabled: true,
+      desc: 'M2 逾期资产每周盘点', flowKey: 'f-online-approve', flowState: '已上线' },
+    { id: 't007', name: 'M3+ 严重逾期资产监控', crowd: 'M3+ 逾期客户', scene: '贷中风控',
+      granularity: 'week', period: {'days': ['thu'], 'hours': ['10']},
+      metricIds: ['m_m3_amt', 'm_m4p_amt'], output: 'web', enabled: true,
+      desc: 'M3+ 严重逾期资产监控，联动处置策略', flowKey: 'f-online-approve', flowState: '已上线' },
+    { id: 't008', name: '首逾率趋势监控', crowd: '新增放款客户', scene: '贷中风控',
+      granularity: 'week', period: {'days': ['mon'], 'hours': ['09']},
+      metricIds: ['m_first_overdue'], output: 'web', enabled: true,
+      desc: '新客首逾率周监控，评估进件质量', flowKey: 'f-online-approve', flowState: '已上线' },
+    { id: 't009', name: '连三累六高风险客户识别', crowd: '全量在贷客户', scene: '贷中风控',
+      granularity: 'month', period: {'hours': ['02']},
+      metricIds: ['m_three_six'], output: 'web', enabled: true,
+      desc: '连三累六（连续3期/累计6期逾期）客户月度识别', flowKey: 'f-online-approve', flowState: '已上线' },
+    { id: 't010', name: '逾期天数均值监控', crowd: '逾期客户', scene: '贷中风控',
+      granularity: 'day', period: {'hours': ['03']},
+      metricIds: ['m_overdue_days'], output: 'web', enabled: true,
+      desc: '平均逾期天数日监控，观察催收进展', flowKey: 'f-online-approve', flowState: '已上线' },
+    { id: 't011', name: '罚息滞纳金增长监控', crowd: '逾期客户', scene: '贷中风控',
+      granularity: 'month', period: {'hours': ['03']},
+      metricIds: ['m_loan_fine', 'm_loan_latefee'], output: 'web', enabled: true,
+      desc: '罚息/滞纳金月度增长监控，评估计息合规', flowKey: 'f-online-approve', flowState: '已上线' },
+    { id: 't012', name: '五级分类迁徙监控', crowd: '全量贷款资产', scene: '贷中风控',
+      granularity: 'month', period: {'hours': ['04']},
+      metricIds: ['m_loan_stage5', 'm_loan_migrate'], output: 'web', enabled: true,
+      desc: '贷款五级分类迁徙月度监控', flowKey: 'f-online-approve', flowState: '已上线' },
+    { id: 't013', name: '不良贷款新增监控', crowd: '全量在贷客户', scene: '贷中风控',
+      granularity: 'week', period: {'days': ['fri'], 'hours': ['09']},
+      metricIds: ['m_npl_amt', 'm_npl_rate'], output: 'web', enabled: true,
+      desc: '新增不良贷款周监控', flowKey: 'f-online-approve', flowState: '已上线' },
+    { id: 't014', name: '行为分骤降预警', crowd: '行为分≥70 的存量客户', scene: '贷中风控',
+      granularity: 'day', period: {'hours': ['08']},
       metricIds: ['m_score_avg'], output: 'web', enabled: true,
-      desc: '客户行为分单日骤降触发关注' },
-    { id: 't008', name: '行为分持续走低监控', crowd: '全量活跃客户',
-      granularity: 'week', period: { days: ['tue', 'thu'], hours: ['09'] },
-      metricIds: ['m_score_avg', 'm_alert_cnt'], output: 'web', enabled: false,
-      desc: '行为分连续两周走低的客户名单' },
-    { id: 't009', name: '异常登录事件监控', crowd: '全部登录用户',
-      granularity: 'hour', period: { days: ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'], hours: ['00', '01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23'] },
-      metricIds: ['m_ip', 'm_startup_dur'], output: 'web', enabled: true,
-      desc: '按小时扫描异常登录（IP/启动时长异常）' },
-    { id: 't010', name: '大额交易实时监控', crowd: '单笔≥10万交易客户',
+      desc: '客户行为分单日骤降触发关注', flowKey: 'f-online-approve', flowState: '已上线' },
+    { id: 't015', name: '低行为分客户清单', crowd: '全量活跃客户', scene: '贷中风控',
+      granularity: 'week', period: {'days': ['tue', 'thu'], 'hours': ['09']},
+      metricIds: ['m_score_low_cnt'], output: 'web', enabled: true,
+      desc: '行为分持续走低客户名单周更新', flowKey: 'f-online-approve', flowState: '已上线' },
+    { id: 't016', name: '高额度客户用信率监控', crowd: '授信额度≥50万客户', scene: '贷中风控',
+      granularity: 'week', period: {'days': ['mon'], 'hours': ['10']},
+      metricIds: ['m_util_rate'], output: 'web', enabled: true,
+      desc: '高敞口客户额度使用率周监控，接近上限提前预警', flowKey: 'f-online-approve', flowState: '已上线' },
+    { id: 't017', name: '额度使用率超90%预警', crowd: '全部授信客户', scene: '贷中风控',
+      granularity: 'day', period: {'hours': ['09']},
+      metricIds: ['m_util_high_cnt'], output: 'web', enabled: true,
+      desc: '额度使用率>90% 客户日预警，防过度用信', flowKey: 'f-online-approve', flowState: '已上线' },
+    { id: 't018', name: '授信缺口客户监控', crowd: '有授信缺口客户', scene: '贷中风控',
+      granularity: 'week', period: {'days': ['wed'], 'hours': ['10']},
+      metricIds: ['m_credit_gap'], output: 'web', enabled: true,
+      desc: '授信缺口客户周盘点，评估补充授信', flowKey: 'f-online-approve', flowState: '已上线' },
+    { id: 't019', name: '可用额度骤降监控', crowd: '全部在用客户', scene: '贷中风控',
+      granularity: 'day', period: {'hours': ['10']},
+      metricIds: ['m_avail_credit'], output: 'web', enabled: true,
+      desc: '可用额度单日骤降监控，防异常透支', flowKey: 'f-online-approve', flowState: '已上线' },
+    { id: 't020', name: '即将到期授信回收监控', crowd: '授信临期客户', scene: '贷中风控',
+      granularity: 'month', period: {'hours': ['05']},
+      metricIds: ['m_credit_expire'], output: 'web', enabled: true,
+      desc: '即将到期授信月度回收计划监控', flowKey: 'f-online-approve', flowState: '已上线' },
+    { id: 't021', name: '涉诉客户风险监控', crowd: '全量在贷客户', scene: '贷中风控',
+      granularity: 'week', period: {'days': ['mon'], 'hours': ['11']},
+      metricIds: ['m_court_cnt'], output: 'web', enabled: true,
+      desc: '新增司法涉诉客户周监控', flowKey: 'f-online-approve', flowState: '已上线' },
+    { id: 't022', name: '失信被执行人监控', crowd: '全量在贷客户', scene: '贷中风控',
+      granularity: 'week', period: {'days': ['mon'], 'hours': ['11']},
+      metricIds: ['m_lost_debt_cnt'], output: 'web', enabled: true,
+      desc: '新增失信被执行人周监控', flowKey: 'f-online-approve', flowState: '已上线' },
+    { id: 't023', name: '异常登录事件监控', crowd: '全部登录用户', scene: '反欺诈监测',
+      granularity: 'hour', period: {'days': ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'], 'hours': ['00', '01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23']},
+      metricIds: ['m_login_cnt', 'm_login_dev_cnt'], output: 'web', enabled: true,
+      desc: '按小时扫描异常登录（登录频次/设备数突变）', flowKey: 'f-online-approve', flowState: '已上线' },
+    { id: 't024', name: '异地登录与夜间消费监控', crowd: '全部在用客户', scene: '反欺诈监测',
+      granularity: 'day', period: {'hours': ['11']},
+      metricIds: ['m_geo_abnormal', 'm_offsite_txn', 'm_night_txn'], output: 'web', enabled: true,
+      desc: '异地登录+夜间/异地消费组合异常监控', flowKey: 'f-online-approve', flowState: '已上线' },
+    { id: 't025', name: '大额交易实时监控', crowd: '单笔≥10万交易客户', scene: '反欺诈监测',
       granularity: 'minute', period: {},
-      metricIds: ['m_alert_cnt'], output: 'web', enabled: true,
-      desc: '大额交易分钟级实时预警' },
-    { id: 't011', name: '高频交易实时拦截', crowd: '高频交易客户',
-      granularity: 'realtime', period: {},
-      metricIds: ['m_alert_cnt'], output: 'web', enabled: true,
-      desc: '同设备 1 分钟内多笔交易的实时拦截' },
-    { id: 't012', name: '多头借贷风险监控', crowd: '近30天申贷≥3次的客户',
-      granularity: 'day', period: { hours: ['03'] },
-      metricIds: ['m_score_avg', 'm_alert_cnt'], output: 'web', enabled: true,
-      desc: '多头借贷线索日汇总' },
-    { id: 't013', name: '反欺诈命中监控', crowd: '命中欺诈规则库客户',
-      granularity: 'hour', period: { days: ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'], hours: ['00', '04', '08', '12', '16', '20'] },
-      metricIds: ['m_ip', 'm_country'], output: 'web', enabled: true,
-      desc: '按小时统计欺诈命中，异常 IP/国家组合高亮' },
-    { id: 't014', name: '催收处置率监控', crowd: '红灯预警客户',
-      granularity: 'week', period: { days: ['mon'], hours: ['09'] },
-      metricIds: ['m_dispose_rate'], output: 'web', enabled: true,
-      desc: '催收处置率周达标率监控' },
-    { id: 't015', name: '催收回款率监控', crowd: '委外催收客户',
-      granularity: 'month', period: { hours: ['01'] },
-      metricIds: ['m_dispose_rate'], output: 'web', enabled: false,
-      desc: '月度回款率环比监控' },
-    { id: 't016', name: '新客进件通过率监控', crowd: '新客进件',
-      granularity: 'day', period: { hours: ['09'] },
-      metricIds: ['m_alert_cnt', 'm_score_avg'], output: 'web', enabled: true,
-      desc: '新客进件通过率与风险分分布日看' },
-    { id: 't017', name: '老客流失预警', crowd: '活跃30天以上客户',
-      granularity: 'week', period: { days: ['fri'], hours: ['18'] },
-      metricIds: ['m_score_avg'], output: 'web', enabled: true,
-      desc: '活跃度骤降的老客流失预警' },
-    { id: 't018', name: '授信额度回收监控', crowd: '逾期30天+客户',
-      granularity: 'month', period: { hours: ['02'] },
-      metricIds: ['m_util_rate', 'm_loan_balance'], output: 'web', enabled: true,
-      desc: '逾期客户授信额度回收执行月度核对' },
-    { id: 't_event', name: '直播间转化事件监控', crowd: '直播间访客（用户ID）',
-      granularity: 'hour', period: { days: ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'], hours: ['00', '01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23'] },
-      metricIds: ['m_web_stay_7d', 'm_live_buy_peruser', 'm_custom_idx2'], output: 'web', enabled: true,
-      desc: '直播间停留/点击购买/转化率事件监控（对齐 event/pinlv 文档）' },
-    { id: 't020', name: '提现失败率监控', crowd: '提现用户',
-      granularity: 'day', period: { hours: ['04'] },
-      metricIds: ['m_alert_cnt'], output: 'web', enabled: true,
-      desc: '提现失败率超阈值预警' },
-    { id: 't021', name: '还款渠道成功率监控', crowd: '全量还款用户',
-      granularity: 'day', period: { hours: ['20'] },
-      metricIds: ['m_alert_cnt'], output: 'web', enabled: true,
-      desc: '主流还款渠道成功率日监控' },
-    { id: 't022', name: '授信审批时长监控', crowd: '审批中进件',
-      granularity: 'day', period: { hours: ['10'] },
-      metricIds: ['m_alert_cnt'], output: 'web', enabled: true,
-      desc: '审批时效 SLA 监控' },
-    { id: 't023', name: '睡眠户激活监控', crowd: '睡眠账户（30天无交易）',
-      granularity: 'week', period: { days: ['wed'], hours: ['11'] },
-      metricIds: ['m_score_avg'], output: 'web', enabled: false,
-      desc: '睡眠户激活活动效果监控' },
-    { id: 't024', name: '分期购物风险监控', crowd: '分期购物客户',
-      granularity: 'day', period: { hours: ['00'] },
-      metricIds: ['m_loan_balance', 'm_overdue_rate'], output: 'web', enabled: true,
-      desc: '分期资产组合风险监控' },
-    { id: 't025', name: '现金贷贷后监控', crowd: '现金贷在贷客户',
-      granularity: 'day', period: { hours: ['01'] },
-      metricIds: ['m_overdue_rate', 'm_util_rate'], output: 'web', enabled: true,
-      desc: '现金贷贷后逾期与额度使用联动监控' },
-    { id: 't026', name: '抵押贷抵押物监控', crowd: '抵押贷客户',
-      granularity: 'month', period: { hours: ['03'] },
-      metricIds: ['m_loan_balance'], output: 'web', enabled: true,
-      desc: '抵押贷余额月度复核' },
-    { id: 't027', name: '车贷 GPS 脱机监控', crowd: '车贷客户',
-      granularity: 'day', period: { hours: ['06'] },
-      metricIds: ['m_alert_cnt'], output: 'web', enabled: true,
-      desc: '车辆 GPS 长时间脱机预警' },
-    { id: 't028', name: '供应链融资回款监控', crowd: '供应链融资客户',
-      granularity: 'week', period: { days: ['mon'], hours: ['08'] },
-      metricIds: ['m_loan_balance', 'm_overdue_rate'], output: 'web', enabled: true,
-      desc: '核心企业上下游回款周监控' },
-    { id: 't029', name: '小微商户经营监控', crowd: '小微经营贷客户',
-      granularity: 'week', period: { days: ['thu'], hours: ['14'] },
-      metricIds: ['m_score_avg'], output: 'web', enabled: true,
-      desc: '小微商户经营活跃度监控' },
-    { id: 't030', name: '代发工资客群监控', crowd: '代发工资客户',
-      granularity: 'day', period: { hours: ['07'] },
-      metricIds: ['m_alert_cnt', 'm_score_avg'], output: 'web', enabled: true,
-      desc: '代发客群批量行为异常监控' },
-    { id: 't031', name: '学生客群授信监控', crowd: '学生分期客户',
-      granularity: 'week', period: { days: ['sat'], hours: ['12'] },
-      metricIds: ['m_util_rate'], output: 'web', enabled: false,
-      desc: '学生客群授信额度使用周监控' },
-    { id: 't032', name: '跨境客群交易监控', crowd: '跨境交易客户',
-      granularity: 'hour', period: { days: ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'], hours: ['00', '06', '12', '18'] },
-      metricIds: ['m_country', 'm_ip'], output: 'web', enabled: true,
-      desc: '跨境大额交易按时段监控' },
-    { id: 't033', name: '黑产设备聚集监控', crowd: '风控黑名单设备',
-      granularity: 'hour', period: { days: ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'], hours: ['00', '02', '04', '06', '08', '10', '12', '14', '16', '18', '20', '22'] },
-      metricIds: ['m_ip'], output: 'web', enabled: true,
-      desc: '黑产设备/IP 聚集度按小时监控' },
-    { id: 't034', name: '睡眠卡批量激活监控', crowd: '睡眠信用卡',
-      granularity: 'day', period: { hours: ['12'] },
-      metricIds: ['m_alert_cnt'], output: 'web', enabled: true,
-      desc: '批量激活刷卡异常检测' },
-    { id: 't035', name: '额度外溢监控', crowd: '额度使用率>95%客户',
-      granularity: 'day', period: { hours: ['16'] },
-      metricIds: ['m_util_rate'], output: 'web', enabled: true,
-      desc: '额度使用率逼近上限的客户名单' },
-    { id: 't036', name: '二次授信复审监控', crowd: '提额申请客户',
-      granularity: 'day', period: { hours: ['11'] },
-      metricIds: ['m_score_avg', 'm_util_rate'], output: 'web', enabled: true,
-      desc: '提额复审通过率与风险监控' },
-    { id: 't037', name: '逾期客户还款行为', crowd: '逾期3天以内客户',
-      granularity: 'day', period: { hours: ['21'] },
-      metricIds: ['m_dispose_rate'], output: 'web', enabled: true,
-      desc: 'M1 客户还款行为跟踪' },
-    { id: 't038', name: '催收工单响应监控', crowd: '催收工单',
-      granularity: 'day', period: { hours: ['09'] },
-      metricIds: ['m_dispose_rate'], output: 'web', enabled: true,
-      desc: '催收工单 2 小时响应率监控' },
-    { id: 't039', name: '关联企业风险传导', crowd: '集团关联客户',
-      granularity: 'week', period: { days: ['tue'], hours: ['10'] },
-      metricIds: ['m_overdue_rate', 'm_loan_balance'], output: 'web', enabled: true,
-      desc: '关联企业风险传导周监控' },
-    { id: 't040', name: '担保圈风险监控', crowd: '互保客户',
-      granularity: 'month', period: { hours: ['04'] },
-      metricIds: ['m_loan_balance'], output: 'web', enabled: true,
-      desc: '担保圈集中度月度监控' },
-    { id: 't041', name: '存量授信压缩监控', crowd: '压缩授信名单客户',
-      granularity: 'week', period: { days: ['fri'], hours: ['15'] },
-      metricIds: ['m_util_rate'], output: 'web', enabled: true,
-      desc: '授信压缩执行进度监控' },
-    { id: 't042', name: '新增不良贷款监控', crowd: '新增不良客户',
-      granularity: 'day', period: { hours: ['05'] },
-      metricIds: ['m_overdue_rate'], output: 'web', enabled: true,
-      desc: '每日新增不良贷款明细监控' },
-    { id: 't043', name: '核销客户回收监控', crowd: '核销客户',
-      granularity: 'month', period: { hours: ['02'] },
-      metricIds: ['m_dispose_rate'], output: 'web', enabled: false,
-      desc: '核销客户回收率月度评估' },
-    { id: 't044', name: '反洗钱可疑交易', crowd: '可疑交易名单',
-      granularity: 'realtime', period: {},
-      metricIds: ['m_alert_cnt', 'm_country'], output: 'web', enabled: true,
-      desc: '可疑跨境资金流动实时预警' },
-    { id: 't045', name: '批量开户风险监控', crowd: '新开户客户',
-      granularity: 'day', period: { hours: ['10'] },
-      metricIds: ['m_ip'], output: 'web', enabled: true,
-      desc: '同 IP 批量开户风险检测' },
-    { id: 't046', name: '营销活动套利监控', crowd: '参与营销活动客户',
-      granularity: 'hour', period: { days: ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'], hours: ['09', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21'] },
-      metricIds: ['m_live_buy_peruser', 'm_custom_idx2'], output: 'web', enabled: true,
-      desc: '直播/活动优惠套利行为监控' },
-    { id: 't047', name: '客诉集中度监控', crowd: '投诉客户',
-      granularity: 'day', period: { hours: ['19'] },
-      metricIds: ['m_alert_cnt'], output: 'web', enabled: false,
-      desc: '投诉集中度日监控' },
-    { id: 't048', name: '客服工单滞留监控', crowd: '客服工单',
-      granularity: 'day', period: { hours: ['22'] },
-      metricIds: ['m_dispose_rate'], output: 'web', enabled: true,
-      desc: '工单滞留超 24 小时预警' },
-    { id: 't049', name: '信用卡套现风险监控', crowd: '信用卡套现嫌疑客户',
-      granularity: 'day', period: { hours: ['14'] },
-      metricIds: ['m_alert_cnt', 'm_score_avg'], output: 'web', enabled: true,
-      desc: '信用卡疑似套现交易日监控' },
-    { id: 't050', name: '节假日逾期脉冲监控', crowd: '节假日大额消费客户',
-      granularity: 'week', period: { days: ['mon'], hours: ['00'] },
-      metricIds: ['m_overdue_rate', 'm_util_rate'], output: 'web', enabled: true,
-      desc: '节假日消费脉冲后的逾期抬头监控' },
+      metricIds: ['m_txn_large_cnt'], output: 'web', enabled: true,
+      desc: '大额交易分钟级实时预警', flowKey: 'f-online-approve', flowState: '已上线' },
+    { id: 't026', name: '支付失败率监控', crowd: '全部在用客户', scene: '反欺诈监测',
+      granularity: 'day', period: {'hours': ['12']},
+      metricIds: ['m_pay_fail_cnt'], output: 'web', enabled: true,
+      desc: '支付失败笔数日监控，识别卡盗刷/账户异常', flowKey: 'f-online-approve', flowState: '已上线' },
+    { id: 't027', name: '反欺诈命中实时监控', crowd: '全部申请/在用客户', scene: '反欺诈监测',
+      granularity: 'hour', period: {'days': ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'], 'hours': ['00', '01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23']},
+      metricIds: ['m_fraud_hit', 'm_fraud_hit_cust'], output: 'web', enabled: true,
+      desc: '反欺诈规则命中实时监控（含黑名单命中）', flowKey: 'f-online-approve', flowState: '已上线' },
+    { id: 't028', name: '高危设备与模拟器监控', crowd: '全部在用客户', scene: '反欺诈监测',
+      granularity: 'day', period: {'hours': ['13']},
+      metricIds: ['m_device_risk', 'm_emu_cnt', 'm_root_cnt'], output: 'web', enabled: true,
+      desc: '高危设备/模拟器/越狱设备日监控', flowKey: 'f-online-approve', flowState: '已上线' },
+    { id: 't029', name: '风险IP交易监控', crowd: '全部在用客户', scene: '反欺诈监测',
+      granularity: 'day', period: {'hours': ['13']},
+      metricIds: ['m_ip_risk_cnt', 'm_proxy_ip'], output: 'web', enabled: true,
+      desc: '风险IP/代理IP交易日监控', flowKey: 'f-online-approve', flowState: '已上线' },
+    { id: 't030', name: '盗刷交易监控', crowd: '全部在用客户', scene: '反欺诈监测',
+      granularity: 'hour', period: {'days': ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'], 'hours': ['00', '01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23']},
+      metricIds: ['m_stolen_cnt'], output: 'web', enabled: true,
+      desc: '盗刷交易小时级实时预警', flowKey: 'f-online-approve', flowState: '已上线' },
+    { id: 't031', name: '套现交易监控', crowd: '信用卡/取现客户', scene: '反欺诈监测',
+      granularity: 'day', period: {'hours': ['14']},
+      metricIds: ['m_cashout_cnt', 'm_cashout_amt'], output: 'web', enabled: true,
+      desc: '信用卡套现交易日监控', flowKey: 'f-online-approve', flowState: '已上线' },
+    { id: 't032', name: '反洗钱可疑交易监控', crowd: '全部在用客户', scene: '反欺诈监测',
+      granularity: 'hour', period: {'days': ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'], 'hours': ['00', '01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23']},
+      metricIds: ['m_aml_cnt', 'm_aml_amt'], output: 'web', enabled: true,
+      desc: '可疑跨境资金流动小时级实时预警', flowKey: 'f-online-approve', flowState: '已上线' },
+    { id: 't033', name: '团伙关联风险监控', crowd: '全部在用客户', scene: '反欺诈监测',
+      granularity: 'week', period: {'days': ['mon'], 'hours': ['14']},
+      metricIds: ['m_sybil_cnt'], output: 'web', enabled: true,
+      desc: '欺诈团伙关联客户周监控', flowKey: 'f-online-approve', flowState: '已上线' },
+    { id: 't034', name: '批量开户与撞库监控', crowd: '开户/登录用户', scene: '反欺诈监测',
+      granularity: 'day', period: {'hours': ['15']},
+      metricIds: ['m_batch_open', 'm_cred_stuff'], output: 'web', enabled: true,
+      desc: '同IP批量开户/撞库攻击日监控', flowKey: 'f-online-approve', flowState: '已上线' },
+    { id: 't035', name: '多头借贷客户监控', crowd: '全量在贷客户', scene: '反欺诈监测',
+      granularity: 'week', period: {'days': ['mon'], 'hours': ['15']},
+      metricIds: ['m_multi_debt_cnt'], output: 'web', enabled: true,
+      desc: '多头借贷（多平台共债）客户周监控', flowKey: 'f-online-approve', flowState: '已上线' },
+    { id: 't036', name: '征信查询激增监控', crowd: '全量在贷客户', scene: '反欺诈监测',
+      granularity: 'week', period: {'days': ['mon'], 'hours': ['15']},
+      metricIds: ['m_inq_high_cnt', 'm_inq_cnt'], output: 'web', enabled: true,
+      desc: '征信查询频次激增周监控，识别共债风险', flowKey: 'f-online-approve', flowState: '已上线' },
+    { id: 't037', name: '催收工单响应监控', crowd: '催收队列客户', scene: '贷后催收',
+      granularity: 'day', period: {'hours': ['17']},
+      metricIds: ['m_workorder_cnt', 'm_workorder_overdue'], output: 'web', enabled: true,
+      desc: '催收工单 2 小时响应率日监控', flowKey: 'f-online-approve', flowState: '已上线' },
+    { id: 't038', name: '失联客户监控', crowd: '逾期客户', scene: '贷后催收',
+      granularity: 'day', period: {'hours': ['18']},
+      metricIds: ['m_lost_contact', 'm_contact_rate'], output: 'web', enabled: true,
+      desc: '失联客户数与电话接通率日监控', flowKey: 'f-online-approve', flowState: '已上线' },
+    { id: 't039', name: '承诺还款履约监控', crowd: '承诺还款客户', scene: '贷后催收',
+      granularity: 'week', period: {'days': ['mon'], 'hours': ['16']},
+      metricIds: ['m_promise_cnt', 'm_promise_keep'], output: 'web', enabled: true,
+      desc: '承诺还款履约率周监控', flowKey: 'f-online-approve', flowState: '已上线' },
+    { id: 't040', name: '催收回款率监控', crowd: '催收队列客户', scene: '贷后催收',
+      granularity: 'week', period: {'days': ['mon'], 'hours': ['16']},
+      metricIds: ['m_recover_rate', 'm_recover_amt'], output: 'web', enabled: true,
+      desc: '催收回款率与回款金额周监控', flowKey: 'f-online-approve', flowState: '已上线' },
+    { id: 't041', name: '委外催收进度监控', crowd: '委外资产客户', scene: '贷后催收',
+      granularity: 'month', period: {'hours': ['06']},
+      metricIds: ['m_outsource'], output: 'web', enabled: true,
+      desc: '委外催收金额与进度月度监控', flowKey: 'f-online-approve', flowState: '复审中' },
+    { id: 't042', name: '诉讼与核销监控', crowd: '诉讼/核销资产', scene: '贷后催收',
+      granularity: 'month', period: {'hours': ['07']},
+      metricIds: ['m_lawsuit_cnt', 'm_writeoff_amt'], output: 'web', enabled: true,
+      desc: '诉讼案件与核销金额月度监控', flowKey: 'f-online-approve', flowState: '复审中' },
+    { id: 't043', name: '核销回收评估', crowd: '核销资产', scene: '贷后催收',
+      granularity: 'month', period: {'hours': ['07']},
+      metricIds: ['m_writeoff_recover'], output: 'web', enabled: true,
+      desc: '核销客户回收率月度评估', flowKey: 'f-online-approve', flowState: '复审中' },
+    { id: 't044', name: '催收投诉合规监控', crowd: '催收队列客户', scene: '贷后催收',
+      granularity: 'week', period: {'days': ['mon'], 'hours': ['17']},
+      metricIds: ['m_collect_complaint'], output: 'web', enabled: true,
+      desc: '催收投诉集中度周监控，合规红线', flowKey: 'f-online-approve', flowState: '复审中' },
+    { id: 't045', name: '有效催收率监控', crowd: '催收队列客户', scene: '贷后催收',
+      granularity: 'day', period: {'hours': ['19']},
+      metricIds: ['m_collect_eff'], output: 'web', enabled: true,
+      desc: '有效催收率日监控', flowKey: 'f-online-approve', flowState: '复审中' },
+    { id: 't046', name: '睡眠客户唤醒监控', crowd: '睡眠客户', scene: '存量运营',
+      granularity: 'week', period: {'days': ['mon'], 'hours': ['18']},
+      metricIds: ['m_sleep_wake', 'm_sleep_cust'], output: 'web', enabled: true,
+      desc: '睡眠客户唤醒活动效果周监控', flowKey: 'f-online-approve', flowState: '初审中' },
+    { id: 't047', name: '提额机会识别', crowd: '活跃优质客户', scene: '存量运营',
+      granularity: 'week', period: {'days': ['mon'], 'hours': ['18']},
+      metricIds: ['m_invite_cnt', 'm_util_rate'], output: 'web', enabled: true,
+      desc: '提额邀请候选识别，促用信增收', flowKey: 'f-online-approve', flowState: '初审中' },
+    { id: 't048', name: '流失预警与挽回', crowd: '活跃度骤降客户', scene: '存量运营',
+      granularity: 'week', period: {'days': ['tue'], 'hours': ['18']},
+      metricIds: ['m_churn_warn', 'm_churn_save'], output: 'web', enabled: true,
+      desc: '老客流失预警与挽回周监控', flowKey: 'f-online-approve', flowState: '初审中' },
+    { id: 't049', name: '老客促活监控', crowd: '存量在贷客户', scene: '存量运营',
+      granularity: 'week', period: {'days': ['wed'], 'hours': ['18']},
+      metricIds: ['m_promo_cnt', 'm_activity_join'], output: 'web', enabled: true,
+      desc: '促活活动参与度周监控', flowKey: 'f-online-approve', flowState: '待上线' },
+    { id: 't050', name: '交叉销售机会监控', crowd: '存量优质客户', scene: '存量运营',
+      granularity: 'week', period: {'days': ['thu'], 'hours': ['18']},
+      metricIds: ['m_cross_sell', 'm_resp_rate'], output: 'web', enabled: true,
+      desc: '交叉销售机会识别与响应率周监控', flowKey: 'f-online-approve', flowState: '待上线' },
   ],
   rules: [
     { id: 'r_ip', name: 'IP 有值', logic: 'and', conds: [{ id: 'c_ip', metricId: 'm_ip', op: 'exists', value: '' }], level: 'YELLOW',
       groupValue: ['总体'], triggerMode: 'int', compare: 'lt', baseline: 'yesterday', threshold: 0,
-      desc: 'IP 字段有值（事件属性非空）' },
+      desc: 'IP 字段有值（事件属性非空）' , alertType: '反欺诈命中' },
     { id: 'r_startup', name: '$启动时长 大于阈值', logic: 'and', conds: [{ id: 'c_su', metricId: 'm_startup_dur', op: 'gt', value: 0 }], level: 'YELLOW',
       groupValue: ['总体'], triggerMode: 'int', compare: 'lt', baseline: 'yesterday', threshold: 0,
-      desc: '$启动时长 大于阈值；阈值文件未解析，暂置 0，待你确认真实值' },
+      desc: '$启动时长 大于阈值；阈值文件未解析，暂置 0，待你确认真实值' , alertType: '行为评分下降' },
     { id: 'r_country', name: '国家 包含白名单', logic: 'and', conds: [{ id: 'c_ct', metricId: 'm_country', op: 'contains', value: '中国,美国,日本,瑞士,德国,土耳其,印度,英国,奥地利' }], level: 'RED',
       groupValue: ['总体'], triggerMode: 'int', compare: 'lt', baseline: 'yesterday', threshold: 0,
-      desc: '国家 包含（中国/美国/日本/瑞士/德国/土耳其/印度/英国/奥地利）' },
+      desc: '国家 包含（中国/美国/日本/瑞士/德国/土耳其/印度/英国/奥地利）', alertType: '反欺诈命中' },
   ],
   disposes: [
     { id: 'd1', name: '红灯·自动冻结', triggerLevel: 'RED', action: '冻结', targetSystem: '核心信贷系统', needApprove: true, needNotify: true, assignTo: '风控主管',
@@ -901,22 +1193,98 @@ export interface MidAlert {
   alert_id: string;
   cust_id: string;
   cust_name: string;
-  scene: string;
+  scene: string;              // 触发场景（业务场景：贷中风控/反欺诈监测/贷后催收/营销促活等，预警在哪个场景产生）
+  alert_type: string;         // 预警类型（具体预警类别：负债激增/多头借贷/司法涉诉/设备异常/逾期预警等）
   level: 'RED' | 'YELLOW' | 'OPPORTUNITY';
   alert_date: string;
   rule_name: string;
   metric_value: number;
   threshold: number;
-  status: MidAlertStatus;
+  status?: MidAlertStatus;     // 需求7：预警处置状态已由业务流程状态（flowState）承担，status 仅保留兼容（可选）
+  flowKey?: string;            // 需求8/9：关联业务流程 id（预警处置流程，如 f-alert-freeze/f-alert-limit/...）
+  flowState?: string;          // 需求8/9：当前流程节点状态（如 预警确认中/风险研判中/冻结止付中/已结案）
+  flowStateAt?: string;        // 需求14：进入当前流程节点的时间（ISO，用于节点时限倒计时）
 }
 
 export const SEED_ALERTS: MidAlert[] = [
-  { alert_id: 'AL240804-001', cust_id: 'C0001', cust_name: '张*明', scene: '负债激增', level: 'RED', alert_date: '2026-08-04', rule_name: '近30天新增贷款≥3笔', metric_value: 5, threshold: 3, status: '待处置' },
-  { alert_id: 'AL240804-002', cust_id: 'C0004', cust_name: '赵*强', scene: '司法涉诉', level: 'RED', alert_date: '2026-08-04', rule_name: '新增被执行记录', metric_value: 1, threshold: 0, status: '待处置' },
-  { alert_id: 'AL240804-003', cust_id: 'C0002', cust_name: '李*华', scene: '设备异常', level: 'YELLOW', alert_date: '2026-08-04', rule_name: '7日内更换设备', metric_value: 2, threshold: 1, status: '待处置' },
-  { alert_id: 'AL240803-004', cust_id: 'C0005', cust_name: '陈*敏', scene: '还款能力', level: 'YELLOW', alert_date: '2026-08-03', rule_name: '临期余额不足', metric_value: 1, threshold: 0, status: '待处置' },
-  { alert_id: 'AL240803-005', cust_id: 'C0001', cust_name: '张*明', scene: '行为评分', level: 'RED', alert_date: '2026-08-03', rule_name: '行为分<40', metric_value: 33, threshold: 40, status: '待处置' },
-  { alert_id: 'AL240802-006', cust_id: 'C0003', cust_name: '王*芳', scene: '需求上升', level: 'OPPORTUNITY', alert_date: '2026-08-02', rule_name: '额度使用率>80%', metric_value: 88, threshold: 80, status: '待处置' },
+  { alert_id: 'AL0808-001', cust_id: 'C0001', cust_name: '张*明', alert_type: '负债激增', scene: '贷中风控',
+    level: 'RED', alert_date: '2026-08-08', rule_name: '近30天新增贷款≥3笔', metric_value: 5, threshold: 3,
+    flowKey: 'f-alert-limit', flowState: '风险研判中' },
+  { alert_id: 'AL0808-002', cust_id: 'C0009', cust_name: '何*杰', alert_type: '负债激增', scene: '贷中风控',
+    level: 'YELLOW', alert_date: '2026-08-08', rule_name: '月还款额/月收入>70%', metric_value: 73, threshold: 70,
+    flowKey: 'f-alert-watch', flowState: '预警确认中' },
+  { alert_id: 'AL0808-003', cust_id: 'C0010', cust_name: '罗*峰', alert_type: '多头借贷', scene: '贷中风控',
+    level: 'RED', alert_date: '2026-08-08', rule_name: '近7天征信查询≥5次', metric_value: 7, threshold: 5,
+    flowKey: 'f-alert-limit', flowState: '降额执行中' },
+  { alert_id: 'AL0808-004', cust_id: 'C0002', cust_name: '李*华', alert_type: '多头借贷', scene: '贷中风控',
+    level: 'YELLOW', alert_date: '2026-08-08', rule_name: '同时在贷平台≥4家', metric_value: 5, threshold: 4,
+    flowKey: 'f-alert-watch', flowState: '预警确认中' },
+  { alert_id: 'AL0808-005', cust_id: 'C0005', cust_name: '陈*敏', alert_type: '逾期预警', scene: '贷中风控',
+    level: 'RED', alert_date: '2026-08-08', rule_name: '还款日临近且余额不足', metric_value: 1, threshold: 0,
+    flowKey: 'f-alert-precollect', flowState: '预催执行中' },
+  { alert_id: 'AL0808-006', cust_id: 'C0011', cust_name: '许*文', alert_type: '逾期预警', scene: '贷中风控',
+    level: 'YELLOW', alert_date: '2026-08-08', rule_name: '历史还款日延迟≥2天', metric_value: 2, threshold: 1,
+    flowKey: 'f-alert-precollect', flowState: '预警确认中' },
+  { alert_id: 'AL0808-007', cust_id: 'C0004', cust_name: '赵*强', alert_type: '司法涉诉', scene: '贷中风控',
+    level: 'RED', alert_date: '2026-08-08', rule_name: '新增被执行记录', metric_value: 1, threshold: 0,
+    flowKey: 'f-alert-freeze', flowState: '冻结止付中' },
+  { alert_id: 'AL0808-008', cust_id: 'C0012', cust_name: '韩*磊', alert_type: '司法涉诉', scene: '贷中风控',
+    level: 'YELLOW', alert_date: '2026-08-08', rule_name: '新增开庭公告', metric_value: 1, threshold: 0,
+    flowKey: 'f-alert-watch', flowState: '预警确认中' },
+  { alert_id: 'AL0808-009', cust_id: 'C0008', cust_name: '吴*军', alert_type: '关联企业风险', scene: '贷中风控',
+    level: 'RED', alert_date: '2026-08-08', rule_name: '关联企业经营异常', metric_value: 1, threshold: 0,
+    flowKey: 'f-alert-limit', flowState: '降额执行中' },
+  { alert_id: 'AL0808-010', cust_id: 'C0013', cust_name: '曹*刚', alert_type: '关联企业风险', scene: '贷中风控',
+    level: 'YELLOW', alert_date: '2026-08-08', rule_name: '担保企业出现逾期', metric_value: 2, threshold: 1,
+    flowKey: 'f-alert-watch', flowState: '预警确认中' },
+  { alert_id: 'AL0808-011', cust_id: 'C0002', cust_name: '李*华', alert_type: '设备异常', scene: '反欺诈监测',
+    level: 'RED', alert_date: '2026-08-08', rule_name: '7日内更换设备≥2次', metric_value: 2, threshold: 1,
+    flowKey: 'f-alert-freeze', flowState: '冻结止付中' },
+  { alert_id: 'AL0808-012', cust_id: 'C0014', cust_name: '唐*霞', alert_type: '设备异常', scene: '反欺诈监测',
+    level: 'YELLOW', alert_date: '2026-08-08', rule_name: '新设备深夜登录', metric_value: 1, threshold: 0,
+    flowKey: 'f-alert-watch', flowState: '预警确认中' },
+  { alert_id: 'AL0808-013', cust_id: 'C0004', cust_name: '赵*强', alert_type: '反欺诈命中', scene: '反欺诈监测',
+    level: 'RED', alert_date: '2026-08-08', rule_name: '命中黑名单手机号', metric_value: 1, threshold: 0,
+    flowKey: 'f-alert-freeze', flowState: '预警确认中' },
+  { alert_id: 'AL0808-014', cust_id: 'C0015', cust_name: '冯*军', alert_type: '反欺诈命中', scene: '反欺诈监测',
+    level: 'YELLOW', alert_date: '2026-08-08', rule_name: '资料与历史申请冲突', metric_value: 1, threshold: 0,
+    flowKey: 'f-alert-watch', flowState: '人工复核中' },
+  { alert_id: 'AL0808-015', cust_id: 'C0001', cust_name: '张*明', alert_type: '行为评分下降', scene: '贷中风控',
+    level: 'RED', alert_date: '2026-08-08', rule_name: '行为分单日降幅>15%', metric_value: 18, threshold: 15,
+    flowKey: 'f-alert-limit', flowState: '风险研判中' },
+  { alert_id: 'AL0808-016', cust_id: 'C0003', cust_name: '王*芳', alert_type: '行为评分下降', scene: '贷中风控',
+    level: 'YELLOW', alert_date: '2026-08-08', rule_name: '行为分连续3日走低', metric_value: 5, threshold: 3,
+    flowKey: 'f-alert-watch', flowState: '预警确认中' },
+  { alert_id: 'AL0808-017', cust_id: 'C0005', cust_name: '陈*敏', alert_type: '还款能力不足', scene: '贷中风控',
+    level: 'RED', alert_date: '2026-08-08', rule_name: '月供/收入>65%', metric_value: 68, threshold: 65,
+    flowKey: 'f-alert-limit', flowState: '降额执行中' },
+  { alert_id: 'AL0808-018', cust_id: 'C0016', cust_name: '邓*平', alert_type: '还款能力不足', scene: '贷中风控',
+    level: 'YELLOW', alert_date: '2026-08-08', rule_name: '临期余额不足', metric_value: 1, threshold: 0,
+    flowKey: 'f-alert-precollect', flowState: '预警确认中' },
+  { alert_id: 'AL0808-019', cust_id: 'C0003', cust_name: '王*芳', alert_type: '回访失联', scene: '贷后催收',
+    level: 'RED', alert_date: '2026-08-08', rule_name: '回访失联≥2次', metric_value: 2, threshold: 1,
+    flowKey: 'f-alert-precollect', flowState: '催收介入中' },
+  { alert_id: 'AL0808-020', cust_id: 'C0017', cust_name: '曾*琳', alert_type: '回访失联', scene: '贷后催收',
+    level: 'YELLOW', alert_date: '2026-08-08', rule_name: '电话拒接≥3次', metric_value: 3, threshold: 2,
+    flowKey: 'f-alert-watch', flowState: '预警确认中' },
+  { alert_id: 'AL0808-021', cust_id: 'C0007', cust_name: '周*伟', alert_type: '舆情负面', scene: '贷中风控',
+    level: 'RED', alert_date: '2026-08-08', rule_name: '涉借贷纠纷负面舆情', metric_value: 2, threshold: 1,
+    flowKey: 'f-alert-limit', flowState: '风险研判中' },
+  { alert_id: 'AL0808-022', cust_id: 'C0018', cust_name: '袁*华', alert_type: '舆情负面', scene: '贷中风控',
+    level: 'YELLOW', alert_date: '2026-08-08', rule_name: '被投诉催收关联', metric_value: 1, threshold: 0,
+    flowKey: 'f-alert-watch', flowState: '预警确认中' },
+  { alert_id: 'AL0808-023', cust_id: 'C0003', cust_name: '王*芳', alert_type: '提额机会', scene: '存量运营',
+    level: 'OPPORTUNITY', alert_date: '2026-08-08', rule_name: '额度使用率>80%且履约良好', metric_value: 88, threshold: 80,
+    flowKey: 'f-alert-promote', flowState: '价值研判中' },
+  { alert_id: 'AL0808-024', cust_id: 'C0001', cust_name: '张*明', alert_type: '提额机会', scene: '存量运营',
+    level: 'OPPORTUNITY', alert_date: '2026-08-08', rule_name: '近90天无逾期且收入提升', metric_value: 0, threshold: 0,
+    flowKey: 'f-alert-promote', flowState: '机会确认中' },
+  { alert_id: 'AL0808-025', cust_id: 'C0019', cust_name: '蒋*梅', alert_type: '需求上升', scene: '存量运营',
+    level: 'OPPORTUNITY', alert_date: '2026-08-08', rule_name: '近期借款需求上升', metric_value: 1, threshold: 0,
+    flowKey: 'f-alert-promote', flowState: '机会确认中' },
+  { alert_id: 'AL0808-026', cust_id: 'C0006', cust_name: '孙*华', alert_type: '需求上升', scene: '存量运营',
+    level: 'OPPORTUNITY', alert_date: '2026-08-08', rule_name: '活跃度持续提升', metric_value: 1, threshold: 0,
+    flowKey: 'f-alert-promote', flowState: '机会确认中' },
 ];
 
 // 公式引擎：派生指标求值（轻量：m_ 引用 + 四则运算 + ratio/mom/yoy 占位）

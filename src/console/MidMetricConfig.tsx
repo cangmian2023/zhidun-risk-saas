@@ -2,12 +2,14 @@
 // 数据 样例JSON 橘（midMetrics.json·落本地）；实时预览 灰（实时计算）
 import { useNavigate } from 'react-router-dom';
 import type { Column, Row } from '../components/ui';
+import { Button } from '../components/ui';
 import { Sam, Cal } from './SourceTag';
-import { useMidMetrics, useMidDataSources } from './midStore';
+import { useMidMetrics, useMidDataSources, updateMetrics } from './midStore';
 import {
   type MidMetric, AGG_LABEL, evalMetricFormula, computeMetricValue, resolveMetricsForRows,
 } from './midData';
 import { ConfigListPage, METRIC_TYPE_LABEL, fmt } from './ConfigTemplate';
+import FlowStateCell from './FlowStateCell';
 
 export default function MidMetricConfig() {
   const metrics = useMidMetrics();
@@ -21,8 +23,11 @@ export default function MidMetricConfig() {
     { key: 'typeLabel', label: '类型', tag: { kind: 'sample', value: 'midMetrics.json.type' } },
     { key: 'def', label: '口径', type: 'badge', tag: { kind: 'sample', value: 'midMetrics.json.formula' } },
     { key: 'source', label: '数据源', type: 'badge', tag: { kind: 'sample', value: 'midMetrics.json.dataSourceId' } },
-    { key: 'status', label: '状态', type: 'badge', tag: { kind: 'sample', value: 'midMetrics.json.enabled' } },
     { key: 'preview', label: '实时预览', align: 'right', tag: { kind: 'calc' } },
+    { key: 'flowState', label: '流程状态', fixed: 'right', tag: { kind: 'sample', value: 'midMetrics.json.flowState' }, render: (r: Row) => (
+      <FlowStateCell flowId={String(r.flowKey ?? '')} state={String(r.flowState ?? '')}
+        onChange={(s) => updateMetrics((list) => list.map((x) => x.id === String(r.id) ? { ...x, flowState: s } : x))} />
+    ) },
   ];
 
   const allMetricVals = resolveMetricsForRows(metrics, sources.flatMap((s) => s.rows ?? []));
@@ -42,7 +47,8 @@ export default function MidMetricConfig() {
       typeLabel: METRIC_TYPE_LABEL[m.type],
       def,
       source: src?.name ?? m.dataSourceId,
-      status: m.enabled === false ? { v: '停用', kind: 'red' } : { v: '启用', kind: 'green' },
+      flowKey: m.flowKey ?? '',
+      flowState: m.flowState ?? '',
       preview: fmt(preview, m.precision, m.unit),
     } as unknown as Row;
   });
@@ -60,6 +66,11 @@ export default function MidMetricConfig() {
       columns={cols}
       rows={rows}
       onView={(r) => nav('/console/cm/mid-metric-detail?id=' + String(r.id))}
+      rowActions={(r) => (
+        <div style={{ display: 'inline-flex', gap: 8, alignItems: 'center' }}>
+          <Button size="sm" variant="ghost" onClick={() => nav('/console/cm/mid-metric-detail?id=' + String(r.id))}>查看</Button>
+        </div>
+      )}
       editOpen={false}
       editTitle=""
       onCloseEdit={() => {}}

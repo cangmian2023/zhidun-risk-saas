@@ -1,11 +1,13 @@
 // ④ 监控页面配置（管理中心）— 页面样例JSON 橘；组件关联指标库/数据源（样例） 橘；实时渲染 灰
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Button } from '../components/ui';
+import { Button, Modal } from '../components/ui';
 import type { Column, Row } from '../components/ui';
 import { Sam } from './SourceTag';
 import { useMidDashboards, updateDashboards, useMidMetrics, useMidDataSources, midNewId } from './midStore';
 import { MetricPicker } from './MidMonitorConfig';
+import GroupSelect from './GroupSelect';
+import FlowStateCell from './FlowStateCell';
 import {
   type MidDashboardPage, type MidWidget, type WidgetType, type MidDataSource,
 } from './midData';
@@ -21,6 +23,11 @@ export default function MidDashboardConfig() {
   const sources = useMidDataSources();
   const [editing, setEditing] = useState<MidDashboardPage | null>(null);
   const [open, setOpen] = useState(false);
+  // 新建页面弹窗（简化：仅 名称 / 说明 / 分组，分组下拉可新建）
+  const [showNew, setShowNew] = useState(false);
+  const [newName, setNewName] = useState('');
+  const [newDesc, setNewDesc] = useState('');
+  const [newGroup, setNewGroup] = useState('');
   const nav = useNavigate();
   const [params] = useSearchParams();
   const openedRef = useRef<string | null>(null);
@@ -32,9 +39,15 @@ export default function MidDashboardConfig() {
     }
   }, [params, dashboards]);
 
-  const openAdd = () => {
-    setEditing({ id: midNewId('db'), key: `cr:mid-${Date.now().toString(36)}`, name: '', group: '监控总览', order: dashboards.length, enabled: true, widgets: [] });
-    setOpen(true);
+  const openAdd = () => setShowNew(true);
+  const doCreate = () => {
+    if (!newName.trim()) return;
+    updateDashboards((list) => [...list, {
+      id: midNewId('db'), key: `cr:mid-${Date.now().toString(36)}`, name: newName.trim(),
+      group: newGroup.trim() || '监控总览', order: dashboards.length, enabled: true,
+      desc: newDesc.trim(), widgets: [],
+    }]);
+    setShowNew(false); setNewName(''); setNewDesc(''); setNewGroup('');
   };
   const save = () => {
     if (!editing) return;
@@ -47,40 +60,70 @@ export default function MidDashboardConfig() {
   const remove = (id: string) => updateDashboards((list) => list.filter((x) => x.id !== id));
 
   const cols: Column[] = [
-    { key: 'name', label: '页面名称', tag: { kind: 'sample', value: 'midDashboards.json.name' } },
+    { key: 'name', label: '页面名称', tag: { kind: 'sample', value: 'midDashboards.json.name' }, fixed: 'left' },
     { key: 'group', label: '分组', tag: { kind: 'sample', value: 'midDashboards.json.group' } },
-    { key: 'key', label: '路由key', tag: { kind: 'sample', value: 'midDashboards.json.key' } },
     { key: 'widgetCnt', label: '组件数', tag: { kind: 'sample', value: 'midDashboards.json.widgets' } },
-    { key: 'enabled', label: '启用', type: 'badge', tag: { kind: 'sample', value: 'midDashboards.json.enabled' } },
+    { key: 'desc', label: '说明', tag: { kind: 'sample', value: 'midDashboards.json.desc' }, render: (r: Row) => <span style={{ color: '#64748B' }}>{String(r.desc ?? '—')}</span> },
+    { key: 'flowState', label: '流程状态', tag: { kind: 'sample', value: 'midDashboards.json.flowState' }, fixed: 'right', render: (r: Row) => (
+      <FlowStateCell flowId={String(r.flowKey ?? '')} state={String(r.flowState ?? '')}
+        onChange={(s) => updateDashboards((list) => list.map((pg) => pg.id === String(r.id) ? { ...pg, flowState: s } : pg))} />
+    ) },
   ];
   const rows: Row[] = dashboards.map((d) => ({
-    id: d.id, name: d.name, group: d.group, key: d.key,
+    id: d.id, name: d.name, group: d.group, key: d.key, desc: d.desc ?? '',
     widgetCnt: String(d.widgets.length),
-    enabled: d.enabled ? { v: '启用', kind: 'green' } : { v: '停用', kind: 'gray' },
+    flowKey: d.flowKey ?? '',
+    flowState: d.flowState ?? '',
   } as unknown as Row));
 
   return (
-    <ConfigListPage
-      title="页面配置"
-      crumbPath="页面配置"
-      subtitle="配置监控看板页面与可视化组件，保存后由监控看板按配置渲染"
-      addLabel="新建页面"
-      onAdd={openAdd}
-      actions={<Sam label="读指标库" value="midMetrics.json" />}
-      panelTitle="看板页面"
-      panelDesc="页面 + 组件（指标卡 / 折线 / 柱状 / 环形 / 明细表）配置，引用指标库与数据源"
-      columns={cols}
-      rows={rows}
-      onView={(r) => nav('/console/cm/mid-dashboard-detail?id=' + String(r.id))}
-      editOpen={open}
-      editTitle={editing && dashboards.find((d) => d.id === editing.id) ? '编辑页面' : '新建页面'}
-      onCloseEdit={() => setOpen(false)}
-      onSave={save}
-      modalWidth="max-w-4xl"
-    >
-      {editing && <Editor value={editing} metrics={metrics} sources={sources}
-        onChange={setEditing} onRemove={() => { if (editing) { remove(editing.id); setOpen(false); setEditing(null); } }} />}
-    </ConfigListPage>
+    <>
+      <ConfigListPage
+        title="页面配置"
+        crumbPath="页面配置"
+        subtitle="在此配置监控看板页面与可视化组件，保存为 midDashboards.json 配置文件；贷中监测模块按该配置文件加载并渲染对应的可视化组件"
+        addLabel="新建页面"
+        onAdd={openAdd}
+        actions={<Sam label="读指标库" value="midMetrics.json" />}
+        panelTitle="看板页面"
+        panelDesc="看板页面按 midDashboards.json 配置文件加载对应的可视化组件（指标卡 / 折线 / 柱状 / 环形 / 明细表），组件引用指标库与数据源"
+        columns={cols}
+        rows={rows}
+        onView={(r) => nav('/console/cm/mid-dashboard-detail?id=' + String(r.id))}
+        rowActions={(r) => (
+          <div style={{ display: 'inline-flex', gap: 8, alignItems: 'center' }}>
+            <Button size="sm" variant="ghost" onClick={() => nav('/console/cm/mid-dashboard-detail?id=' + String(r.id))}>查看</Button>
+          </div>
+        )}
+        editOpen={open}
+        editTitle={editing && dashboards.find((d) => d.id === editing.id) ? '编辑页面' : '新建页面'}
+        onCloseEdit={() => setOpen(false)}
+        onSave={save}
+        modalWidth="max-w-4xl"
+      >
+        {editing && <Editor value={editing} metrics={metrics} sources={sources}
+          onChange={setEditing} onRemove={() => { if (editing) { remove(editing.id); setOpen(false); setEditing(null); } }} />}
+      </ConfigListPage>
+
+      {/* 新建页面弹窗（名称 / 说明 / 分组，分组下拉可新建）——必须放 ConfigListPage 外，否则被其编辑 Modal 吞掉 */}
+      <Modal open={showNew} onClose={() => setShowNew(false)} title="新建页面" width="max-w-md"
+        footer={<>
+          <Button onClick={doCreate} disabled={!newName.trim()}>创建</Button>
+          <Button variant="secondary" onClick={() => setShowNew(false)}>取消</Button>
+        </>}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <label style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: 12, color: '#475569' }}>页面名称
+            <input style={inp} value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="如：贷中监控大盘" />
+          </label>
+          <label style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: 12, color: '#475569' }}>页面说明
+            <input style={inp} value={newDesc} onChange={(e) => setNewDesc(e.target.value)} placeholder="描述该看板页面用途（可选）" />
+          </label>
+          <label style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: 12, color: '#475569' }}>分组
+            <GroupSelect value={newGroup} groups={dashboards.map((d) => d.group)} onChange={setNewGroup} />
+          </label>
+        </div>
+      </Modal>
+    </>
   );
 }
 

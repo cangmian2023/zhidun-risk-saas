@@ -32,7 +32,7 @@ export default function MidCustDetail() {
   const custTasks = cust ? tasks.filter((t) => t.custId === cust.custId) : [];
 
   if (!cust) {
-    return <div style={{ padding: 24 }}><PageShell header={<DetailHeader title="个体详情" crumb="零售信贷风控 / 贷中监控" backLabel="← 返回" onBack={() => nav(-1)} />} /></div>;
+    return <div style={{ padding: 24 }}><PageShell header={<DetailHeader title="个体详情" crumb="零售信贷风控 / 贷中监控" backLabel="← 返回" onBack={() => nav('/console/cr/mid-alert-workbench')} />} /></div>;
   }
 
   return (
@@ -42,7 +42,7 @@ export default function MidCustDetail() {
         crumb="零售信贷风控 / 贷中监控 / 个体详情"
         subtitle={`客户号 ${cust.custId} ｜ 产品 ${cust.product}`}
         backLabel="← 返回"
-        onBack={() => nav(-1)}
+        onBack={() => nav('/console/cr/mid-alert-workbench')}
         actions={<Button variant="secondary" size="sm" onClick={() => nav('/console/cr/mid-alert-workbench')}>前往预警工作台</Button>}
       />} />
 

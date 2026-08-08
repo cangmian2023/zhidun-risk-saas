@@ -7,6 +7,7 @@ export const portalSubsystems = [
   { key: 'sc', name: '评分产品', desc: '智察分、智信分、智融分三类评分模型产品。', color: 'from-violet-500 to-fuchsia-500', open: true },
   { key: 'ep', name: '企业风控', desc: '面向企业客户的贷前核验、信用评估与关联图谱。', color: 'from-sky-500 to-cyan-500', open: false },
   { key: 'dm', name: '数字营销', desc: '猎客雷达、猎客信使、RTA 服务等营销获客工具。', color: 'from-emerald-500 to-teal-500', open: false },
+  { key: 'dg', name: '数据治理', desc: '数据底座与元数据治理：元事件、属性、维度表、虚拟属性/事件与埋点定义。', color: 'from-indigo-500 to-blue-500', open: true },
   { key: 'cm', name: '管理中心', desc: '跨子系统共用的用户、配置、看板与帮助能力。', color: 'from-slate-500 to-slate-700', open: true },
 ]
 
@@ -38,9 +39,11 @@ export const creditRiskMenu: MenuGroup[] = [
     group: '监控看板',
     section: '贷中监控',
     items: [
-      { label: '监控大盘', key: 'cr:mid-overview', keep: true, desc: '全局总览：预警量、红黄灯分布、逾期率、处置效率（页面来自监控页面配置）' },
-      { label: '红黄灯预警', key: 'cr:mid-alert', keep: true, desc: '红黄灯预警明细与等级分布（页面来自监控页面配置）' },
-      { label: '客群风险', key: 'cr:mid-crowd', keep: true, desc: '在贷余额、逾期率与行为分趋势（页面来自监控页面配置）' },
+      { label: '贷中监控大盘', key: 'cr:mid-td1', desc: '同盾需求·红黄灯综合预警信号总览（预警总量/红黄灯结构/场景分布/规则还原），页面来自监控页面配置 midDashboards.json' },
+      { label: '风险监测', key: 'cr:mid-td2', desc: '同盾需求·分场景分产品监测（风险视角），支持按产品线筛选，页面来自监控页面配置' },
+      { label: '红黄灯预警中心', key: 'cr:mid-td3', desc: '同盾需求·红黄灯预警信号作业台（按等级筛选/命中规则TOP/规则明细还原），页面来自监控页面配置' },
+      { label: '持续性周期监测', key: 'cr:mid-td4', desc: '同盾需求·持续性周期监测评估（行为分/逾期/新增贷款按月趋势），页面来自监控页面配置' },
+      { label: '存量客群运营', key: 'cr:mid-td5', desc: '同盾需求·存量客群运营场景（授信/余额/逾期+产品结构+贷款台账），页面来自监控页面配置' },
     ],
   },
   {
@@ -58,47 +61,43 @@ export const creditRiskMenu: MenuGroup[] = [
  * 二、评分产品
  * ========================================================== */
 export const scoringMenu: MenuGroup[] = [
-  { group: '工作台', items: [{ label: '概览看板', key: 'sc:overview', desc: '展示评分产品的核心指标与调用概览看板', keep: true }] },
+  {
+    group: '评分体系',
+    section: '工作台',
+    items: [{ label: '评分体系总览', key: 'sc:overview', keep: true, desc: '输入一个申请人 → 智察/智信/智融三分数并排（对象评分档案）；下方三产品调用量/命中率/异常/场景使用总览' }],
+  },
   {
     group: '智察分',
+    section: '欺诈维度',
     items: [
-      { label: '评分查询', key: 'sc:zhicha-query', desc: '展示所有智察分查询记录，支持按评分区间、查询时间筛选' },
-      { label: '批量', key: 'sc:zhicha-batch', desc: '支持批量上传文件进行智察分批量查询' },
-      { label: '评分分布', key: 'sc:zhicha-dist', desc: '展示智察分的整体分布变化、异常波动预警' },
-      { label: '模型效果评估', key: 'sc:zhicha-eval', desc: '展示智察分的 KS 值、AUC 值、lift 曲线等模型效果指标' },
-      { label: '模型调优', key: 'sc:zhicha-tune', desc: '基于监控数据给出智察分模型调优建议' },
-      { label: '查询计费', key: 'sc:zhicha-bill-query', desc: '展示按查询次数的智察分计费明细' },
-      { label: '查得计费', key: 'sc:zhicha-bill-hit', desc: '展示按查得次数的智察分计费明细' },
-      { label: '账单', key: 'sc:zhicha-bill', desc: '展示智察分月度账单、充值记录、余额查询' },
+      { label: '欺诈评分查询', key: 'sc:zhicha-query', keep: true, desc: '输入标识 → 欺诈分(0~100)+欺诈概率+决策建议；结果下钻规则命中明细、黑名单与团伙' },
+      { label: '欺诈监控', key: 'sc:zhicha-monitor', keep: true, desc: '新客欺诈率、通道欺诈率、命中 TOP 规则趋势' },
     ],
   },
   {
     group: '智信分',
+    section: '违约维度',
     items: [
-      { label: '评分查询', key: 'sc:zhixin-query', desc: '展示所有智信分查询记录，支持按评分区间(300-900)、查询时间筛选' },
-      { label: '批量', key: 'sc:zhixin-batch', desc: '支持批量上传文件进行智信分批量查询' },
-      { label: '评分分布', key: 'sc:zhixin-dist', desc: '展示智信分的整体分布变化、异常波动预警' },
-      { label: '模型效果评估', key: 'sc:zhixin-eval', desc: '展示智信分的 KS 值、AUC 值、lift 曲线等模型效果指标' },
-      { label: '模型调优', key: 'sc:zhixin-tune', desc: '基于监控数据给出智信分模型调优建议' },
-      { label: '查询计费', key: 'sc:zhixin-bill-query', desc: '展示按查询次数的智信分计费明细' },
-      { label: '查得计费', key: 'sc:zhixin-bill-hit', desc: '展示按查得次数的智信分计费明细' },
-      { label: '账单', key: 'sc:zhixin-bill', desc: '展示智信分月度账单、充值记录、余额查询' },
+      { label: '违约评分查询', key: 'sc:zhixin-query', keep: true, desc: '输入标识 → 信用分(300~900)+违约概率+信用等级；结果下钻评分卡解释、额度与拒绝建议' },
+      { label: '客群分布与逾期表现', key: 'sc:zhixin-vintage', keep: true, desc: '分档通过率、Vintage 逾期曲线、评分分布' },
     ],
   },
   {
     group: '智融分',
+    section: '融合层',
     items: [
-      { label: '评分查询', key: 'sc:zhirong-query', desc: '展示所有智融分查询记录，支持按场景(违约/授信/借贷兴趣)筛选' },
-      { label: '批量', key: 'sc:zhirong-batch', desc: '支持批量上传文件进行智融分批量查询' },
-      { label: '评分分布', key: 'sc:zhirong-dist', desc: '展示智融分的整体分布变化、异常波动预警' },
-      { label: '模型效果评估', key: 'sc:zhirong-eval', desc: '展示智融分的 KS 值、AUC 值、lift 曲线等模型效果指标' },
-      { label: '模型调优', key: 'sc:zhirong-tune', desc: '基于监控数据给出智融分模型调优建议' },
-      { label: '违约风险', key: 'sc:zhirong-sc-default', desc: '配置违约风险审核场景的评分规则' },
-      { label: '授信转化', key: 'sc:zhirong-sc-credit', desc: '配置授信申请转化场景的评分规则' },
-      { label: '借贷兴趣', key: 'sc:zhirong-sc-interest', desc: '配置借贷兴趣场景的评分规则' },
-      { label: '查询计费', key: 'sc:zhirong-bill-query', desc: '展示按查询次数的智融分计费明细' },
-      { label: '查得计费', key: 'sc:zhirong-bill-hit', desc: '展示按查得次数的智融分计费明细' },
-      { label: '账单', key: 'sc:zhirong-bill', desc: '展示智融分月度账单、充值记录、余额查询' },
+      { label: '融合评分查询', key: 'sc:zhirong-query', keep: true, desc: '输入标识 → 综合分；结果下钻融合构成（双维引用+价值）、场景评分对比、360 风险×价值评估' },
+      { label: '客户分层', key: 'sc:zhirong-tier', keep: true, desc: '高价值/高风险/沉睡/活跃客群分组与占比' },
+      { label: '场景效果监控', key: 'sc:zhirong-monitor', keep: true, desc: '各场景转化率/命中率/用信情况' },
+    ],
+  },
+  {
+    group: '公共能力',
+    section: '平台公共',
+    items: [
+      { label: 'API 对接', key: 'sc:api', keep: true, desc: '一次对接三产品（单接口按需返回分数组合）、鉴权、调用日志' },
+      { label: '批量评分', key: 'sc:batch', keep: true, desc: '文件上传→任务队列→结果下载（三产品通用）' },
+      { label: '计费与账单', key: 'sc:bill', keep: true, desc: '三产品统一账本、充值、余额、月度账单' },
     ],
   },
 ]
@@ -196,46 +195,52 @@ export const dmMenu: MenuGroup[] = [
 ]
 
 /* ============================================================
- * 五、管理中心（跨子系统共用，原公共模块）
+ * 五、数据治理（数据底座与元数据定义）
  * ========================================================== */
-export const cmMenu: MenuGroup[] = [
-  {
-    group: '行为分析',
-    items: [
-      { label: '事件分析', key: 'cm:event-analysis', keep: true, desc: '按事件指标、全局筛选与分组维度查询行为数据，支持折线/柱状/堆叠/环形图与明细表导出' },
-    ],
-  },
+export const dataGovernanceMenu: MenuGroup[] = [
   {
     group: '元数据管理',
     items: [
-      { label: '元事件', key: 'cm:meta-event', keep: true, desc: '管理已采集事件的元定义：显示名、显示状态、是否接收、埋点平台与触发时机' },
-      { label: '事件属性', key: 'cm:meta-event-prop', keep: true, desc: '管理事件上报时携带的属性字段：数据类型、字典、显示状态与关联事件' },
-      { label: '用户属性', key: 'cm:meta-user-prop', keep: true, desc: '管理用户维度的属性字段：数据类型、字典、显示状态与取值说明' },
-      { label: '维度表', key: 'cm:meta-dim-table', keep: true, desc: '管理用于关联分析的维度表及其字段结构' },
-      { label: '物品属性', key: 'cm:meta-item-prop', keep: true, desc: '管理物品维度的属性字段：物品类型、数据类型与显示状态' },
-      { label: '虚拟属性', key: 'cm:meta-virtual-prop', keep: true, desc: '基于 SQL 表达式派生的属性，查询时实时计算' },
-      { label: '虚拟事件', key: 'cm:meta-virtual-event', keep: true, desc: '组合多个事件与筛选条件形成的复合事件' },
-      { label: '可视化全埋点事件', key: 'cm:meta-auto-track', keep: true, desc: '通过可视化圈选生成的埋点事件及其匹配规则' },
+      { label: '元事件', key: 'dg:meta-event', keep: true, desc: '管理已采集事件的元定义：显示名、显示状态、是否接收、埋点平台与触发时机' },
+      { label: '事件属性', key: 'dg:meta-event-prop', keep: true, desc: '管理事件上报时携带的属性字段：数据类型、字典、显示状态与关联事件' },
+      { label: '用户属性', key: 'dg:meta-user-prop', keep: true, desc: '管理用户维度的属性字段：数据类型、字典、显示状态与取值说明' },
+      { label: '维度表', key: 'dg:meta-dim-table', keep: true, desc: '管理用于关联分析的维度表及其字段结构' },
+      { label: '物品属性', key: 'dg:meta-item-prop', keep: true, desc: '管理物品维度的属性字段：物品类型、数据类型与显示状态' },
+      { label: '虚拟属性', key: 'dg:meta-virtual-prop', keep: true, desc: '基于 SQL 表达式派生的属性，查询时实时计算' },
+      { label: '虚拟事件', key: 'dg:meta-virtual-event', keep: true, desc: '组合多个事件与筛选条件形成的复合事件' },
+      { label: '可视化全埋点事件', key: 'dg:meta-auto-track', keep: true, desc: '通过可视化圈选生成的埋点事件及其匹配规则' },
     ],
   },
+]
+
+/* ============================================================
+ * 六、管理中心（跨子系统共用，原公共模块）
+ * ========================================================== */
+export const cmMenu: MenuGroup[] = [
   {
     group: '规则集合',
     items: [
-      { label: '核验规则', key: 'cm:pre-verify-config', keep: true },
-      { label: '反欺诈规则库', key: 'cm:fraud-rules', desc: '管理反欺诈规则，配置规则权重、命中条件、处置建议' },
-      { label: '黑名单管理', key: 'cm:fraud-blacklist', desc: '管理手机号、设备指纹、身份证号、银行卡黑名单' },
-      { label: '团伙库管理', key: 'cm:fraud-gang', desc: '管理已知欺诈团伙信息、团伙成员、团伙特征' },
+      { label: '规则合集', key: 'cm:rule-hub', keep: true, desc: '统一管理核验规则集、反欺诈规则库、黑名单、团伙库与评分场景规则' },
     ],
   },
   { group: '报告模板', items: [{ label: '报告模板', key: 'cm:report-template', desc: '统一管理信息核验 / 信用风控 / 欺诈识别 / 决策报告四类报告的展示模板、评分等级、结论与导出样式' }] },
   { group: '数据源管理', items: [{ label: '数据源管理', key: 'cm:mid-data-source', keep: true, desc: '对接多种数据源，为指标库提供字段与样例数据' }] },
   { group: '指标库', items: [{ label: '指标库', key: 'cm:mid-metric', keep: true, desc: '定义可复用指标（基础 + 派生公式），被监控策略、看板组件引用' }] },
-  { group: '策略配置', items: [
-    { label: '监控任务', key: 'cm:mid-strategy', keep: true, desc: '配置监控任务（对谁、何时、算哪些指标）；预警规则在任务详情中配置' },
-    { label: '处置策略', key: 'cm:mid-dispose-strategy', keep: true, desc: '配置自动处置策略（如自动降额、自动冻结），按预警等级路由' },
-  ] },
-  { group: '页面配置', items: [{ label: '页面配置', key: 'cm:mid-dashboard-config', keep: true, desc: '配置监控看板页面与可视化组件，保存后由监控看板渲染' }] },
+  { group: '监控任务', items: [{ label: '监控任务', key: 'cm:mid-strategy', keep: true, desc: '配置监控任务（对谁、何时、算哪些指标）；预警规则在任务详情中配置' }] },
+  { group: '处置策略', items: [{ label: '处置策略', key: 'cm:mid-dispose-strategy', keep: true, desc: '配置自动处置策略（如自动降额、自动冻结），按预警等级路由' }] },
+  { group: '页面配置', items: [{ label: '页面配置', key: 'cm:mid-dashboard-config', keep: true, desc: '配置监控看板页面与可视化组件，保存为 midDashboards.json 配置文件后，由贷中监测按配置加载渲染对应组件' }] },
   { group: '业务流程', items: [{ label: '业务流程配置', key: 'cm:biz-flow', keep: true, desc: '按业务域配置审核操作流程（画布编辑节点与流转），实时生效于对应审核页操作按钮' }] },
+]
+/* ============================================================
+ * 七、催收管理（需求41 新增子系统）
+ * ========================================================== */
+export const collectionMenu: MenuGroup[] = [
+  { group: '催收总览', section: '工作台', items: [{ label: '催收总览', key: 'zz:overview', desc: '逾期案件分阶段催收的实时总览：在催案件/金额、阶段分布、回款趋势', keep: true }] },
+  { group: '催收作业', section: '催收管理', items: [
+    { label: '催收案件', key: 'zz:cases', desc: '逾期案件队列：按阶段/状态/催收员筛选，查看详情并记录触达，推进承诺还款/结清/委外/核销', keep: true },
+    { label: '催收记录', key: 'zz:records', desc: '全量催收触达记录明细', keep: true },
+  ] },
+  { group: '策略配置', section: '催收管理', items: [{ label: '催收策略', key: 'zz:strategy', desc: '按逾期阶段（M0提醒/M1短信+外呼/M2外呼+函件/M3+委外+法诉）配置催收策略与触发规则', keep: true }] },
 ]
 /* ============================================================
  * 子系统元信息 & 菜单汇总
@@ -245,7 +250,9 @@ export const subNames: Record<string, string> = {
   sc: '评分产品',
   ep: '企业风控',
   dm: '数字营销',
+  dg: '数据治理',
   cm: '管理中心',
+  zz: '催收管理',
 }
 
 export const MENU_BY_SUB: Record<string, MenuGroup[]> = {
@@ -253,7 +260,9 @@ export const MENU_BY_SUB: Record<string, MenuGroup[]> = {
   sc: scoringMenu,
   ep: entMenu,
   dm: dmMenu,
+  dg: dataGovernanceMenu,
   cm: cmMenu,
+  zz: collectionMenu,
 }
 
 // 详情页（不挂左侧菜单，但需可路由到「功能规划中」占位）
