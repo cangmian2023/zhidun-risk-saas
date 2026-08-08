@@ -738,6 +738,7 @@ export interface FlowGraphNode {
   type: FlowNodeType
   label: string          // 节点标题（画布上显示的名称）
   buttonName?: string    // 按钮名称（运行时操作按钮上显示的文案；缺省回退到 label）
+  timeLimit?: number     // 需求22：节点时限倒计时（分钟，0/缺省 = 不限制；在节点属性面板配置）
   x: number              // 画布坐标（左上角）
   y: number
   role?: ReviewRole      // 经办角色（谁操作本节点）
@@ -756,8 +757,23 @@ export interface FlowGraphEdge {
   label?: string         // 连线语义（如 通过/拒绝/退回）
   result?: string        // 条件：from 节点审批结果为该值时走此边；空 = 无条件兜底（无匹配条件边时走）
 }
+/** 关联条件（需求16：一条业务流程配置下挂多条具体流程，运行时按对象字段值匹配到具体流程） */
+export interface FlowGraphMatch {
+  field: string   // 关联字段（从关联页面列表的字段中筛选，如 level / alert_type / scene）
+  value: string   // 关联值（先选字段，再选或输入状态，如 RED / 负债激增）
+}
+/** 流程节点状态（独立状态机，需求16：每节点 状态/动作/时限分钟；与 flowStore.FlowStep 结构一致） */
+export interface FlowGraphStep {
+  state: string
+  action: string
+  next?: string
+  color?: string
+  timeLimit?: number  // 时限倒计时（分钟，0/缺省 = 不限制）
+}
 export interface FlowGraph {
   name?: string          // 流程名称（运行时操作按钮的标识；如「确认通过」「转人工审核」）
+  match?: FlowGraphMatch[] // 关联条件（需求16：可空 = 不关联 = 该页面所有数据都关联本流程）
+  flowSteps?: FlowGraphStep[] // 独立状态机（需求16：每条具体流程自己的状态机；缺省回退配置级/默认）
   nodes: FlowGraphNode[]
   edges: FlowGraphEdge[]
 }

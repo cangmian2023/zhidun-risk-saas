@@ -17,7 +17,7 @@ import { Sam, Cal } from './SourceTag'
 import { MENU_BY_SUB, subNames } from './menus'
 import PagePicker from './PagePicker'
 import { useMidDashboards } from './midStore'
-import { useFlows, addFlowItem, updateFlowItem, removeFlowItem, patchFlowItemGraphs, parseFlowStepsInput, type FlowItem, type FlowStep } from './flowStore'
+import { useFlows, addFlowItem, updateFlowItem, removeFlowItem, patchFlowItemGraphs, type FlowItem } from './flowStore'
 import {
   summarizeFlowGraph, buildDefaultFlowGraph, defaultButtonName,
   type FlowGraph,
@@ -77,7 +77,6 @@ export default function MidBizFlowConfig() {
   const [showNew, setShowNew] = useState(false)
   const [newName, setNewName] = useState('')
   const [newPages, setNewPages] = useState<string[]>(['/console/cr/pre-verify']) // 默认信息核验（可多选）
-  const [newSteps, setNewSteps] = useState('') // 需求30：审核状态机（斜线分隔：状态/动作/状态/动作/状态）
   // 画布弹窗草稿
   const [flowEdit, setFlowEdit] = useState<{ itemId: string; sub: number } | null>(null)
   const [draftGraph, setDraftGraph] = useState<FlowGraph | null>(null)
@@ -101,22 +100,23 @@ export default function MidBizFlowConfig() {
       pageName: firstMeta?.label, pageRoute: first || undefined,
       pageNames: routes.map((r) => ALL_PAGES.find((x) => x.value === r)?.label ?? r),
       pageRoutes: routes,
-      flowSteps: newSteps.trim() ? parseFlowStepsInput(newSteps) : undefined, // 需求30：自定义状态机（斜线分隔）
     })
-    setShowNew(false); setNewName(''); setNewSteps('')
+    setShowNew(false); setNewName('')
     openDetail(it)
   }
 
   /* ---- 流程（图）操作 ---- */
   const openCanvas = (item: FlowItem, sub: number) => {
     const g = item.flowGraphs?.[sub]
-    setDraftGraph(g ? { nodes: g.nodes.map((n) => ({ ...n })), edges: g.edges.map((e) => ({ ...e })) } : buildDefaultFlowGraph(item as any, '转人工'))
+    setDraftGraph(g ? { nodes: g.nodes.map((n) => ({ ...n })), edges: g.edges.map((e) => ({ ...e })), name: g.name, match: g.match ? g.match.map((m) => ({ ...m })) : undefined, flowSteps: g.flowSteps ? g.flowSteps.map((s) => ({ ...s })) : undefined } : buildDefaultFlowGraph(item as any, '转人工'))
     setFlowEdit({ itemId: item.id, sub })
   }
   const addGraph = (item: FlowItem) => {
     const ng = buildDefaultFlowGraph(item as any, '转人工', defaultButtonName('转人工'))
+    // 需求16：新建具体流程默认三节点状态机（状态机下沉到每条流程）
+    ng.flowSteps = [...DEFAULT_GRAPH_STEPS]
     patchFlowItemGraphs(item.id, [...(item.flowGraphs ?? []), ng])
-    setDraftGraph({ nodes: ng.nodes.map((n) => ({ ...n })), edges: ng.edges.map((e) => ({ ...e })) })
+    setDraftGraph({ nodes: ng.nodes.map((n) => ({ ...n })), edges: ng.edges.map((e) => ({ ...e })), name: ng.name, flowSteps: ng.flowSteps.map((s) => ({ ...s })) })
     setFlowEdit({ itemId: item.id, sub: (item.flowGraphs ?? []).length })
   }
   const removeGraph = (item: FlowItem, sub: number) => {
@@ -132,16 +132,20 @@ export default function MidBizFlowConfig() {
     setFlowEdit(null); setDraftGraph(null)
   }
 
-  // 需求14：流程节点（状态机）编辑——每个节点可设时限倒计时（分钟，空=不限制）
-  const flowStepsOf = (it: FlowItem | undefined): FlowStep[] => it?.flowSteps ?? []
-  const setFlowSteps = (it: FlowItem, steps: FlowStep[]) => {
-    const norm = steps.map((s, i) => ({ ...s, next: steps[i + 1]?.state ?? '' }))
-    updateFlowItem(it.id, (f) => ({ ...f, flowSteps: norm }))
-  }
-  const patchStep = (it: FlowItem, idx: number, p: Partial<FlowStep>) => {
-    const steps = flowStepsOf(it).map((s, i) => (i === idx ? { ...s, ...p } : s))
-    setFlowSteps(it, steps)
-  }
+  // 需求16：关联字段候选（关联页面列表字段）——预警工作台/监控任务等使用域的筛选维度
+  const MATCH_FIELD_OPTS: { field: string; label: string }[] = [
+    { field: 'level', label: '等级 level' },
+    { field: 'alert_type', label: '预警类型 alert_type' },
+    { field: 'scene', label: '触发场景 scene' },
+    { field: 'rule_name', label: '命中规则 rule_name' },
+    { field: 'cust_name', label: '客户 cust_name' },
+  ]
+  // 需求16：新建具体流程默认状态机（三节点：待处理 → 处理中 → 已处理）
+  const DEFAULT_GRAPH_STEPS: { state: string; action: string; timeLimit?: number }[] = [
+    { state: '待处理', action: '处理', timeLimit: 60 },
+    { state: '处理中', action: '完成', timeLimit: 240 },
+    { state: '已处理', action: '', timeLimit: undefined },
+  ]
 
   return (
     <div className={CONFIG_CONTAINER}>
@@ -215,7 +219,9 @@ export default function MidBizFlowConfig() {
           <div style={{ marginTop: 10, fontSize: 12, color: '#6B7280', lineHeight: 1.7 }}>
             说明：业务流程独立于报告模板存储；「关联业务页面」= 流程主动控制哪些页面的操作列（仅上线审核类流程配置）；
             「被引用」= 看板组件通过 flowKey 反选的流程（谁在用我，实时扫描计算，不落数据）。
-            删除流程时若存在引用会弹出警告。每条流程 = 页面操作列的一个按钮，流程名称即按钮文案；名称与描述在详情页标题行内直接编辑。
+            删除流程时若存在引用会弹出警告。一条业务流程配置下可挂多条具体流程（「＋ 添加流程」），每条流程 = 页面操作列的一个按钮：
+            名称即按钮文案；可配「关联字段」按数据字段值分发（不关联 = 全部数据走本流程）；独立状态机（默认三节点）；
+            画布图与节点属性在编辑弹窗中配置。名称与描述在详情页标题行内直接编辑。
           </div>
         </Panel>
       ) : (
@@ -236,52 +242,31 @@ export default function MidBizFlowConfig() {
                 当前：{pageListOf(selItem).map((r) => `${ALL_PAGES.find((x) => x.value === r)?.label ?? r} · ${r}`).join('；') || '—'}
               </div>
             </div>
-            {/* 需求14：流程节点（状态机）编辑——每节点可设时限倒计时 */}
-            <div style={{ marginBottom: 14, border: '1px solid #E5E7EB', borderRadius: 8, padding: 10, background: '#FAFBFE' }}>
-              <div style={{ fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 6 }}>
-                流程节点（状态机）<Sam value="bizFlows.json.flowSteps" />
-                <span style={{ fontSize: 11, fontWeight: 400, color: '#9CA3AF', marginLeft: 8 }}>每个节点可设置「时限倒计时」（分钟，留空 = 不限制）；状态按 待→橙 / 中→蓝 / 已→绿 自动配色</span>
-              </div>
-              {flowStepsOf(selItem).length === 0 && (
-                <div style={{ fontSize: 11, color: '#9CA3AF', marginBottom: 6 }}>未配置节点，使用默认状态机（待初审/待复审/已上线/已下线）。可添加节点自定义。</div>
-              )}
-              {flowStepsOf(selItem).map((s, i) => (
-                <div key={i} style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 6, flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: 11, color: '#94A3B8', width: 14 }}>{i + 1}</span>
-                  <input value={s.state} placeholder="状态名（如 预警确认中）"
-                    onChange={(e) => patchStep(selItem, i, { state: e.target.value })}
-                    style={{ ...miniInp, width: 150 }} />
-                  <span style={{ color: '#CBD5E1' }}>→</span>
-                  <input value={s.action} placeholder="操作按钮（终态留空）"
-                    onChange={(e) => patchStep(selItem, i, { action: e.target.value })}
-                    style={{ ...miniInp, width: 120 }} />
-                  <input type="number" min={0} value={s.timeLimit ?? ''} placeholder="时限分钟（空=不限）"
-                    onChange={(e) => patchStep(selItem, i, { timeLimit: e.target.value === '' ? undefined : Math.max(0, Number(e.target.value)) })}
-                    style={{ ...miniInp, width: 130 }} />
-                  <button onClick={() => setFlowSteps(selItem, flowStepsOf(selItem).filter((_, k) => k !== i))}
-                    style={{ ...miniBtn, borderColor: '#FCA5A5', color: '#DC2626' }}>删除</button>
-                </div>
-              ))}
-              <div>
-                <button onClick={() => setFlowSteps(selItem, [...flowStepsOf(selItem), { state: '', action: '', color: '#94A3B8' }])}
-                  style={{ ...miniBtn, borderColor: SEL, color: SEL }}>＋ 添加节点</button>
-              </div>
-            </div>
-            {/* 流程（图）列表 = 页面操作列按钮 */}
+            {/* 流程（图）列表 = 页面操作列按钮（需求16：每条具体流程 = 名称 + 关联条件 + 独立状态机 + 画布图） */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {(selItem.flowGraphs ?? []).length === 0 && (
                 <div style={{ fontSize: 12, color: '#9CA3AF', padding: '6px 0' }}>（暂无流程，点击下方「＋ 添加流程」创建）</div>
               )}
-              {(selItem.flowGraphs ?? []).map((g, sub) => (
-                <div key={sub} style={{ display: 'flex', alignItems: 'center', gap: 8, border: '1px solid #E5E7EB', borderRadius: 8, padding: '6px 8px', background: '#fff' }}>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 12, fontWeight: 600, color: '#1E40AF', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{g.name ?? '未命名流程'}</div>
-                    <div style={{ fontSize: 11, color: '#6B7280', marginTop: 2, lineHeight: 1.5, wordBreak: 'break-all' }}>{summarizeFlowGraph(g)}</div>
+              {(selItem.flowGraphs ?? []).map((g, sub) => {
+                const matchTxt = (g.match ?? []).length
+                  ? g.match!.map((m) => `${m.field}=${m.value}`).join(' 且 ')
+                  : '不关联（全部数据）'
+                const stepsTxt = (g.flowSteps ?? []).length
+                  ? `${g.flowSteps!.length} 节点`
+                  : '默认状态机'
+                return (
+                  <div key={sub} style={{ display: 'flex', alignItems: 'center', gap: 8, border: '1px solid #E5E7EB', borderRadius: 8, padding: '6px 8px', background: '#fff' }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 12, fontWeight: 600, color: '#1E40AF', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{g.name ?? '未命名流程'}</div>
+                      <div style={{ fontSize: 11, color: '#6B7280', marginTop: 2, lineHeight: 1.5, wordBreak: 'break-all' }}>
+                        <span style={{ color: '#B45309' }}>关联：{matchTxt}</span> · <span style={{ color: '#1D4ED8' }}>{stepsTxt}</span> · {summarizeFlowGraph(g)}
+                      </div>
+                    </div>
+                    <button onClick={() => openCanvas(selItem, sub)} style={{ ...miniBtn, borderColor: SEL, color: SEL }}>编辑</button>
+                    <button onClick={() => removeGraph(selItem, sub)} style={{ ...miniBtn, borderColor: '#FCA5A5', color: '#DC2626' }}>删除</button>
                   </div>
-                  <button onClick={() => openCanvas(selItem, sub)} style={{ ...miniBtn, borderColor: SEL, color: SEL }}>编辑</button>
-                  <button onClick={() => removeGraph(selItem, sub)} style={{ ...miniBtn, borderColor: '#FCA5A5', color: '#DC2626' }}>删除</button>
-                </div>
-              ))}
+                )
+              })}
               <div>
                 <button onClick={() => addGraph(selItem)} style={{ ...miniBtn, borderColor: SEL, color: SEL }}>＋ 添加流程</button>
               </div>
@@ -305,10 +290,7 @@ export default function MidBizFlowConfig() {
             <div style={{ fontSize: 11, color: '#9CA3AF', marginTop: 4, fontFamily: 'monospace' }}>页面地址：{newPages.filter(Boolean).join('；')}</div>
           </div>
           <div>
-            <div style={{ fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 4 }}>审核状态（可选 · 斜线分隔：状态/动作/状态/动作/状态）</div>
-            <input value={newSteps} onChange={(e) => setNewSteps(e.target.value)}
-              placeholder="如：待初审/初审/待复审/复审/已上线/下线/已下线（留空则用默认：待初审/待复审/已上线/已下线）" style={{ ...inp }} />
-            <div style={{ fontSize: 11, color: '#9CA3AF', marginTop: 4 }}>每对「状态/动作」为一个流转节点，最后的状态为终态（无按钮）。</div>
+            <div style={{ fontSize: 11, color: '#9CA3AF', marginTop: 4 }}>创建后进入配置页：为流程添加具体流程（每条流程配名称 / 关联字段 / 独立状态机 / 画布图）。</div>
           </div>
         </div>
         <div style={{ marginTop: 14, display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
@@ -328,7 +310,8 @@ export default function MidBizFlowConfig() {
           )}
           <Button variant="primary" onClick={saveCanvas}>保存流程</Button>
         </>}>
-        {draftGraph && <FlowCanvasEditor graph={draftGraph} onChange={setDraftGraph} readOnly={false} statusEnum={undefined} />}
+        {draftGraph && <FlowCanvasEditor graph={draftGraph} onChange={setDraftGraph} readOnly={false} statusEnum={undefined}
+          matchFieldOptions={MATCH_FIELD_OPTS} defaultSteps={DEFAULT_GRAPH_STEPS} />}
       </Modal>
     </div>
   )

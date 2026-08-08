@@ -19,6 +19,9 @@ const CANVAS_H = 420
 const CONTENT_W = 1600
 
 const inp: React.CSSProperties = { border: '1px solid #E5E7EB', borderRadius: 6, padding: '4px 8px', fontSize: 12, outline: 'none', width: '100%' }
+const SEL = '#2563EB'
+const miniBtn: React.CSSProperties = { padding: '3px 10px', fontSize: 12, borderRadius: 6, cursor: 'pointer', background: '#fff', border: '1px solid #E5E7EB' }
+const miniInp: React.CSSProperties = { padding: '4px 8px', fontSize: 12, borderRadius: 6, border: '1px solid #E2E8F0', outline: 'none', background: '#fff' }
 let seq = 0
 const nid = () => `n_${Date.now().toString(36)}_${seq++}`
 const eid = () => `e_${Date.now().toString(36)}_${seq++}`
@@ -80,11 +83,14 @@ const IconFit = () => (<svg width="16" height="16" viewBox="0 0 24 24" fill="non
 const IconCenter = () => (<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3" /><line x1="12" y1="2" x2="12" y2="6" /><line x1="12" y1="18" x2="12" y2="22" /><line x1="2" y1="12" x2="6" y2="12" /><line x1="18" y1="12" x2="22" y2="12" /></svg>)
 const IconFull = () => (<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3" /><path d="M21 8V5a2 2 0 0 0-2-2h-3" /><path d="M3 16v3a2 2 0 0 0 2 2h3" /><path d="M16 21h3a2 2 0 0 0 2-2v-3" /></svg>)
 
-export default function FlowCanvasEditor({ graph, onChange, readOnly, statusEnum }: {
+export default function FlowCanvasEditor({ graph, onChange, readOnly, statusEnum, matchFieldOptions, defaultSteps }: {
   graph: FlowGraph
   onChange: (g: FlowGraph) => void
   readOnly?: boolean
   statusEnum?: string[]
+  // 需求16：流程配置区（业务流程图编辑传入；报告模板不传则不显示）
+  matchFieldOptions?: { field: string; label: string }[]  // 关联字段候选（关联页面列表字段）
+  defaultSteps?: { state: string; action: string; timeLimit?: number }[]  // 新建默认状态机（三节点）
 }) {
   const canvasRef = useRef<HTMLDivElement>(null)
   const contentRef = useRef<HTMLDivElement>(null)
@@ -210,6 +216,75 @@ export default function FlowCanvasEditor({ graph, onChange, readOnly, statusEnum
               placeholder="如 确认通过 / 转人工审核" style={{ ...inp, width: 200 }} />
           </div>
         </div>
+        {/* 需求16：流程配置区（名称 → 关联字段 → 状态机，仅在业务流程图编辑传入 matchFieldOptions 时显示） */}
+        {matchFieldOptions && !readOnly && (
+          <div style={{ border: '1px solid #E5E7EB', borderRadius: 8, padding: 10, background: '#FAFBFE', marginBottom: 8 }}>
+            <div style={{ fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 4 }}>
+              关联字段（可选 · 不关联 = 该页面所有数据都走本流程）<span style={{ fontWeight: 400, fontSize: 11, color: '#9CA3AF' }}>按「字段 = 值」匹配数据到本流程；值支持逗号分隔多选</span>
+            </div>
+            {(graph.match ?? []).length === 0 && (
+              <div style={{ fontSize: 11, color: '#9CA3AF', marginBottom: 4 }}>（未关联字段：页面所有数据都关联本流程）</div>
+            )}
+            {(graph.match ?? []).map((m, i) => (
+              <div key={i} style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 4, flexWrap: 'wrap' }}>
+                <select value={m.field} onChange={(e) => {
+                  const arr = [...(graph.match ?? [])]
+                  arr[i] = { ...arr[i], field: e.target.value }
+                  onChange({ ...graph, match: arr })
+                }} style={{ ...inp, width: 150 }}>
+                  <option value="">选择字段</option>
+                  {matchFieldOptions.map((o) => <option key={o.field} value={o.field}>{o.label}</option>)}
+                </select>
+                <input value={m.value} placeholder="值（如 RED / 负债激增）"
+                  onChange={(e) => {
+                    const arr = [...(graph.match ?? [])]
+                    arr[i] = { ...arr[i], value: e.target.value }
+                    onChange({ ...graph, match: arr })
+                  }} style={{ ...inp, width: 220 }} />
+                <button onClick={() => onChange({ ...graph, match: (graph.match ?? []).filter((_, k) => k !== i) })}
+                  style={{ ...miniBtn, borderColor: '#FCA5A5', color: '#DC2626' }}>删除</button>
+              </div>
+            ))}
+            <button onClick={() => onChange({ ...graph, match: [...(graph.match ?? []), { field: matchFieldOptions[0]?.field ?? '', value: '' }] })}
+              style={{ ...miniBtn, borderColor: SEL, color: SEL, marginTop: 2 }}>＋ 添加关联条件</button>
+
+            <div style={{ fontSize: 12, fontWeight: 600, color: '#374151', margin: '10px 0 4px' }}>
+              状态机（本流程独立 · 新建默认三个节点）<span style={{ fontWeight: 400, fontSize: 11, color: '#9CA3AF' }}>每个节点：状态名 / 操作按钮（时限在节点属性面板配置）</span>
+            </div>
+            {(graph.flowSteps ?? []).length === 0 && (
+              <div style={{ fontSize: 11, color: '#9CA3AF', marginBottom: 4 }}>
+                （未配置独立状态机，使用默认三节点：待处理 → 处理中 → 已处理）
+                {defaultSteps && (
+                  <button onClick={() => onChange({ ...graph, flowSteps: defaultSteps.map((s) => ({ ...s })) })}
+                    style={{ ...miniBtn, borderColor: SEL, color: SEL, marginLeft: 8 }}>用默认三节点</button>
+                )}
+              </div>
+            )}
+            {(graph.flowSteps ?? []).map((s, i) => (
+              <div key={i} style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 4, flexWrap: 'wrap' }}>
+                <span style={{ fontSize: 11, color: '#94A3B8', width: 14 }}>{i + 1}</span>
+                <input value={s.state ?? ''} placeholder="状态名"
+                  onChange={(e) => {
+                    const arr = [...(graph.flowSteps ?? [])]
+                    arr[i] = { ...arr[i], state: e.target.value }
+                    onChange({ ...graph, flowSteps: arr })
+                  }} style={{ ...miniInp, width: 130 }} />
+                <span style={{ color: '#CBD5E1' }}>→</span>
+                <input value={s.action ?? ''} placeholder="操作按钮（终态留空）"
+                  onChange={(e) => {
+                    const arr = [...(graph.flowSteps ?? [])]
+                    arr[i] = { ...arr[i], action: e.target.value }
+                    onChange({ ...graph, flowSteps: arr })
+                  }} style={{ ...miniInp, width: 110 }} />
+                <button onClick={() => onChange({ ...graph, flowSteps: (graph.flowSteps ?? []).filter((_, k) => k !== i) })}
+                  style={{ ...miniBtn, borderColor: '#FCA5A5', color: '#DC2626' }}>删除</button>
+              </div>
+            ))}
+            <button onClick={() => onChange({ ...graph, flowSteps: [...(graph.flowSteps ?? []), { state: '', action: '', timeLimit: undefined }] })}
+              style={{ ...miniBtn, borderColor: SEL, color: SEL }}>＋ 添加节点</button>
+            <span style={{ marginLeft: 8, fontSize: 11, color: '#9CA3AF' }}>状态按 待→橙 / 中→蓝 / 已→绿 自动配色</span>
+          </div>
+        )}
         {/* 节点添加工具栏（仅编辑态） */}
         {!readOnly && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, flexWrap: 'wrap' }}>
@@ -313,6 +388,11 @@ export default function FlowCanvasEditor({ graph, onChange, readOnly, statusEnum
               <>
                 <label style={{ fontSize: 12, color: '#6B7280' }}>按钮名称（运行时操作按钮文案）
                   <input disabled={readOnly} value={selected.buttonName ?? ''} onChange={(e) => patchNode(selected.id, { buttonName: e.target.value })} placeholder={selected.label || '缺省同节点标题'} style={{ ...inp, marginTop: 4 }} />
+                </label>
+                <label style={{ fontSize: 12, color: '#6B7280' }}>时限倒计时（分钟，空 = 不限制）
+                  <input type="number" min={0} disabled={readOnly} value={selected.timeLimit ?? ''}
+                    onChange={(e) => patchNode(selected.id, { timeLimit: e.target.value === '' ? undefined : Math.max(0, Number(e.target.value)) })}
+                    placeholder="如 30 / 120" style={{ ...inp, marginTop: 4 }} />
                 </label>
                 <label style={{ fontSize: 12, color: '#6B7280' }}>经办角色
                   <select disabled={readOnly} value={selected.role} onChange={(e) => patchNode(selected.id, { role: e.target.value as ReviewRole })} style={{ ...inp, marginTop: 4 }}>

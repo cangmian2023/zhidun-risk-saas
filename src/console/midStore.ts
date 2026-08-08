@@ -7,7 +7,7 @@ import { useSyncExternalStore } from 'react';
 import {
   SEED_DATA_SOURCES, SEED_METRICS, SEED_STRATEGY, SEED_DASHBOARDS,
   SEED_ALERTS, SEED_CUSTOMERS, SEED_DISPOSE_TASKS, SEED_VIZ_SAMPLES,
-  normalizeStrategy,
+  normalizeStrategy, withCustGraph,
 } from './midData';
 import type {
   MidDataSource, MidMetric, MidStrategy, MidDashboardPage,
@@ -49,7 +49,7 @@ let strategy: MidStrategy = {
 };
 let dashboards: MidDashboardPage[] = [...SEED_DASHBOARDS];
 let alerts: MidAlert[] = [...SEED_ALERTS];
-let customers: MidCustomer[] = [...SEED_CUSTOMERS];
+let customers: MidCustomer[] = [...SEED_CUSTOMERS].map(withCustGraph);
 let disposeTasks: MidDisposeTask[] = [...SEED_DISPOSE_TASKS];
 let vizSamples: VizSample[] = [...SEED_VIZ_SAMPLES];
 
@@ -108,7 +108,7 @@ async function bootstrap() {
   if (st && Array.isArray((st as MidStrategy).tasks)) strategy = normalizeStrategy(st); else saveOne(FILES.strategy, strategy);
   if (Array.isArray(db) && db.length) dashboards = db as MidDashboardPage[]; else saveOne(FILES.dashboards, dashboards);
   if (Array.isArray(al) && al.length) alerts = al as MidAlert[]; else saveOne(FILES.alerts, alerts);
-  if (Array.isArray(cu) && cu.length) customers = cu as MidCustomer[]; else saveOne(FILES.customers, customers);
+  if (Array.isArray(cu) && cu.length) customers = (cu as MidCustomer[]).map(withCustGraph); else saveOne(FILES.customers, customers);
   if (Array.isArray(dp) && dp.length) disposeTasks = dp as MidDisposeTask[]; else saveOne(FILES.disposeTasks, disposeTasks);
   if (Array.isArray(vz) && vz.length) vizSamples = vz as VizSample[]; else saveOne(FILES.vizSamples, vizSamples);
   notify();

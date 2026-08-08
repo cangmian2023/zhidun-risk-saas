@@ -8,7 +8,7 @@ import { Sam, Cal } from './SourceTag';
 import { PageShell } from './PageShell';
 import { useMidAlerts, useMidSaveStatus, updateAlerts } from './midStore';
 import { LEVEL_META } from './midData';
-import { useFlows, flowStepOf } from './flowStore';
+import { useFlows, flowStepOf, matchFlowGraph, nodeTimeLimitOf } from './flowStore';
 import FlowStateCell from './FlowStateCell';
 
 export default function MidAlertWorkbench() {
@@ -24,14 +24,17 @@ export default function MidAlertWorkbench() {
     return () => clearInterval(t);
   }, []);
 
-  // 节点时限倒计时（分钟）：无时限 / 未记录进入时间 → '—'
-  const countdownOf = (flowKey: string | undefined, flowState: string | undefined, flowStateAt: string | undefined): React.ReactNode => {
-    const f = flowKey ? flows.find((x) => x.id === flowKey) : undefined;
-    if (!f || !flowStateAt) return <span style={{ color: '#94A3B8' }}>—</span>;
-    const { step } = flowStepOf({ flowSteps: f.flowSteps, flowState });
-    const tl = step?.timeLimit;
-    if (!tl || !step?.next) return <span style={{ color: '#94A3B8' }}>—</span>;  // 无时限或终态：不限制
-    const remain = new Date(flowStateAt).getTime() + tl * 60000 - Date.now();
+  // 节点时限倒计时（分钟）：无时限 / 终态 / 未记录进入时间 → '—'
+  // 需求16：按对象字段（level/alert_type）匹配具体流程；需求22：时限取「节点属性」timeLimit
+  const countdownOf = (r: Row): React.ReactNode => {
+    const f = String(r.flowKey ?? '') ? flows.find((x) => x.id === String(r.flowKey)) : undefined;
+    const { graph, steps } = matchFlowGraph(f, { level: r.levelRaw ?? '', alert_type: r.alertTypeRaw ?? '' });
+    if (!f || !steps.length || !r.flowStateAt) return <span style={{ color: '#94A3B8' }}>—</span>;
+    const { step } = flowStepOf({ flowSteps: steps, flowState: String(r.flowState ?? '') });
+    if (!step?.next) return <span style={{ color: '#94A3B8' }}>—</span>; // 终态无倒计时
+    const tl = nodeTimeLimitOf(graph, String(r.flowState ?? ''));
+    if (!tl) return <span style={{ color: '#94A3B8' }}>—</span>;
+    const remain = new Date(String(r.flowStateAt)).getTime() + tl * 60000 - Date.now();
     if (remain <= 0) return <span style={{ color: '#DC2626', fontWeight: 600 }}>已超时</span>;
     const h = Math.floor(remain / 3600000);
     const m = Math.floor((remain % 3600000) / 60000);
@@ -72,9 +75,10 @@ export default function MidAlertWorkbench() {
     { key: 'rule_name', label: '命中规则', type: 'text', width: '200px' },
     { key: 'metric', label: '指标值/阈值', type: 'text', width: '100px' },
     { key: 'alert_date', label: '预警时间', type: 'text', width: '100px' },
-    { key: 'countdown', label: '时限倒计时', render: (r: Row) => countdownOf(String(r.flowKey ?? ''), String(r.flowState ?? ''), String(r.flowStateAt ?? '')) },
+    { key: 'countdown', label: '时限倒计时', render: (r: Row) => countdownOf(r) },
     { key: 'flowState', label: '流程状态', fixed: 'right', tag: { kind: 'sample', value: 'midAlerts.json.flowState' }, render: (r: Row) => (
       <FlowStateCell flowId={String(r.flowKey ?? '')} state={String(r.flowState ?? '')}
+        matchObj={{ level: r.levelRaw ?? '', alert_type: r.alertTypeRaw ?? '', scene: r.scene ?? '' }}
         onChange={(s) => updateAlerts((list) => list.map((a) => a.alert_id === String(r.id)
           ? { ...a, flowState: s, flowStateAt: new Date().toISOString().slice(0, 19).replace('T', ' ') }
           : a))} />
@@ -92,6 +96,8 @@ export default function MidAlertWorkbench() {
     alert_type: { v: a.alert_type, kind: TYPE_KIND[a.alert_type] ?? 'gray' },
     scene: a.scene,
     level: { v: LEVEL_META[a.level].label, kind: LEVEL_META[a.level].badge },
+    levelRaw: a.level,        // 需求16：原始字段值（供匹配具体流程）
+    alertTypeRaw: a.alert_type,
     rule_name: a.rule_name,
     metric: `${a.metric_value} / ${a.threshold}`,
     alert_date: a.alert_date,

@@ -1330,6 +1330,18 @@ export interface MidCustDispose {
   result: string;
   note?: string;
 }
+// 需求20：单客 360 图谱——关联实体（企业/担保/设备/联系人）与风险维度评分
+export interface CustRelationNode {
+  id: string
+  name: string             // 实体名（企业名/人/设备号）
+  rel: string              // 与客户关系：法人/担保/设备/联系人/共借人
+  type: 'company' | 'person' | 'device' | 'contact'
+  risk?: string            // 实体风险标记（可选）
+}
+export interface CustRiskDim {
+  dim: string              // 风险维度：负债/多头/欺诈/司法/行为/舆情
+  score: number            // 0-100（越高风险越大）
+}
 export interface MidCustomer {
   custId: string;
   name: string;
@@ -1342,6 +1354,8 @@ export interface MidCustomer {
   scoreHistory: MidScorePoint[];
   alerts: MidCustAlert[];
   disposes: MidCustDispose[];
+  relations?: CustRelationNode[];   // 需求20：关联图谱节点
+  riskDims?: CustRiskDim[];         // 需求20：风险维度雷达
 }
 
 export type DisposeStatus = '待处置' | '核实中' | '处置中' | '已解除' | '已升级' | '误报';
@@ -1360,6 +1374,19 @@ export interface MidDisposeTask {
   logs: { time: string; who: string; what: string }[];
 }
 
+/* 需求20：SEED 客户兜底图谱/风险维度（文件已持久化时不用） */
+function withCustGraph(c: MidCustomer): MidCustomer {
+  if (c.relations && c.riskDims) return c;
+  const base = c.riskLevel === '高风险' ? 72 : c.riskLevel === '中风险' ? 48 : 22;
+  return {
+    ...c,
+    relations: c.relations ?? [
+      { id: c.custId + '-r0', name: '华信商贸', rel: '法人', type: 'company', risk: c.riskLevel === '高风险' ? '高危' : undefined },
+      { id: c.custId + '-r1', name: 'IMEI-86' + c.custId.slice(1), rel: '设备', type: 'device' },
+    ],
+    riskDims: c.riskDims ?? ['负债','多头','欺诈','司法','行为','舆情'].map((dim, i) => ({ dim, score: Math.max(8, Math.min(96, base + i * 3)) })),
+  };
+}
 export const SEED_CUSTOMERS: MidCustomer[] = [
   {
     custId: 'C0001', name: '张*明', idCard: '3301**********1234', product: '信用贷',

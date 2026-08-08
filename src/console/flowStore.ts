@@ -49,6 +49,34 @@ export function flowStepOf(f: { flowSteps?: FlowStep[]; flowState?: string }) {
   return { steps, state, step }
 }
 
+/* ---------- 需求16：一条业务流程配置 → 多条具体流程（flowGraph），运行时按对象字段匹配 ----------
+ * 匹配规则：
+ *   1) 精确命中：flowGraph.match 非空且每个关联条件都满足（行间 AND；值支持逗号分隔多选）；
+ *   2) 兜底：无 match（不关联 = 该页面所有数据都关联本流程）的第一条 flowGraph；
+ *   3) 都没有 → 无匹配（方案 B：流程状态显示「—」）。
+ * 状态机：优先用该 flowGraph 的独立 flowSteps，缺省回退配置级 flowSteps / 默认状态机。 */
+export function matchFlowGraph(item: FlowItem | undefined, obj: Record<string, unknown>): { graph?: FlowGraph; steps: FlowStep[]; name: string } {
+  if (!item) return { graph: undefined, steps: [], name: '' }
+  const graphs = item.flowGraphs ?? []
+  const condHit = (g: FlowGraph) =>
+    (g.match ?? []).length > 0 && g.match!.every((c) => {
+      const v = String(obj[c.field] ?? '')
+      return String(c.value ?? '').split(/[,，、\s]+/).filter(Boolean).includes(v)
+    })
+  const hit = graphs.find(condHit)
+  const fallback = hit ?? graphs.find((g) => !(g.match?.length))
+  if (!fallback) return { graph: undefined, steps: [], name: '' }
+  const steps = (fallback.flowSteps?.length ? fallback.flowSteps : item.flowSteps?.length ? item.flowSteps : DEFAULT_FLOW_STEPS) as FlowStep[]
+  return { graph: fallback, steps, name: fallback.name ?? item.name }
+}
+
+/* 需求22：节点时限从「节点属性」取（不在状态机）——按当前状态匹配 flowGraph 中 label 相同的节点 */
+export function nodeTimeLimitOf(graph: FlowGraph | undefined, flowState: string | undefined): number | undefined {
+  if (!graph || !flowState) return undefined
+  const n = graph.nodes.find((x) => (x.label ?? '') === flowState || (x.buttonName ?? '') === flowState)
+  return n?.timeLimit
+}
+
 /** 需求30：把斜线分隔的状态机输入解析为 FlowStep[]。
  * 支持三种格式：
  *  - 三段式（需求14）：状态/动作/时限分钟/状态/动作/时限分钟…（如 待初审/初审/30/待复审/复审/120/已上线/下线/已上线；时限留空=不限制）

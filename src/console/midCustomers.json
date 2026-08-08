@@ -1,1 +1,2152 @@
-[{"custId":"C0001","name":"张*明","idCard":"3301**********1234","product":"信用贷","creditLine":80000,"loanBalance":42000,"loanStatus":"在贷","riskLevel":"高风险","scoreHistory":[{"month":"2026-02","score":62,"cohortAvg":74},{"month":"2026-03","score":58,"cohortAvg":74},{"month":"2026-04","score":51,"cohortAvg":73},{"month":"2026-05","score":44,"cohortAvg":72},{"month":"2026-06","score":38,"cohortAvg":72},{"month":"2026-07","score":33,"cohortAvg":71}],"alerts":[{"time":"2026-07-03","level":"YELLOW","scene":"负债上升","ruleName":"近30天新增贷款≥2笔","metricValue":2,"threshold":2,"status":"已解除"},{"time":"2026-07-18","level":"RED","scene":"行为评分","ruleName":"行为分<40","metricValue":38,"threshold":40,"status":"处置中"},{"time":"2026-08-04","level":"RED","scene":"负债激增","ruleName":"近30天新增贷款≥3笔","metricValue":5,"threshold":3,"status":"待处置"}],"disposes":[{"time":"2026-07-18","operator":"李四","action":"电话核实","result":"确认多笔网贷，收入下降","note":"建议降额并预催"},{"time":"2026-07-19","operator":"王五","action":"降额","result":"已执行：80000→40000","note":"审批通过"}]},{"custId":"C0002","name":"李*华","idCard":"3301**********5678","product":"消费贷","creditLine":50000,"loanBalance":18000,"loanStatus":"在贷","riskLevel":"中风险","scoreHistory":[{"month":"2026-02","score":55,"cohortAvg":74},{"month":"2026-03","score":54,"cohortAvg":74},{"month":"2026-04","score":56,"cohortAvg":73},{"month":"2026-05","score":53,"cohortAvg":72},{"month":"2026-06","score":52,"cohortAvg":72},{"month":"2026-07","score":52,"cohortAvg":71}],"alerts":[{"time":"2026-08-04","level":"YELLOW","scene":"设备异常","ruleName":"7日内更换设备","metricValue":2,"threshold":1,"status":"待处置"}],"disposes":[]},{"custId":"C0003","name":"王*芳","idCard":"3301**********9012","product":"信用贷","creditLine":100000,"loanBalance":35000,"loanStatus":"在贷","riskLevel":"低风险","scoreHistory":[{"month":"2026-02","score":76,"cohortAvg":74},{"month":"2026-03","score":77,"cohortAvg":74},{"month":"2026-04","score":76,"cohortAvg":73},{"month":"2026-05","score":78,"cohortAvg":72},{"month":"2026-06","score":78,"cohortAvg":72},{"month":"2026-07","score":78,"cohortAvg":71}],"alerts":[{"time":"2026-08-02","level":"OPPORTUNITY","scene":"需求上升","ruleName":"额度使用率>80%","metricValue":88,"threshold":80,"status":"待处置"}],"disposes":[]},{"custId":"C0004","name":"赵*强","idCard":"3301**********3456","product":"经营贷","creditLine":200000,"loanBalance":156000,"loanStatus":"在贷","riskLevel":"高风险","scoreHistory":[{"month":"2026-02","score":50,"cohortAvg":74},{"month":"2026-03","score":45,"cohortAvg":74},{"month":"2026-04","score":41,"cohortAvg":73},{"month":"2026-05","score":36,"cohortAvg":72},{"month":"2026-06","score":31,"cohortAvg":72},{"month":"2026-07","score":28,"cohortAvg":71}],"alerts":[{"time":"2026-07-25","level":"RED","scene":"司法涉诉","ruleName":"新增被执行记录","metricValue":1,"threshold":0,"status":"处置中"},{"time":"2026-08-04","level":"RED","scene":"司法涉诉","ruleName":"新增被执行记录","metricValue":1,"threshold":0,"status":"待处置"}],"disposes":[{"time":"2026-07-26","operator":"李四","action":"冻结额度","result":"已冻结全部可用额度","note":"待评估"}]},{"custId":"C0005","name":"陈*敏","idCard":"3301**********7890","product":"消费贷","creditLine":30000,"loanBalance":9000,"loanStatus":"在贷","riskLevel":"中风险","scoreHistory":[{"month":"2026-02","score":60,"cohortAvg":74},{"month":"2026-03","score":61,"cohortAvg":74},{"month":"2026-04","score":60,"cohortAvg":73},{"month":"2026-05","score":61,"cohortAvg":72},{"month":"2026-06","score":61,"cohortAvg":72},{"month":"2026-07","score":61,"cohortAvg":71}],"alerts":[{"time":"2026-08-03","level":"YELLOW","scene":"还款能力","ruleName":"临期余额不足","metricValue":1,"threshold":0,"status":"待处置"}],"disposes":[]}]
+[
+ {
+  "custId": "C0001",
+  "name": "张*明",
+  "idCard": "3301**********1234",
+  "product": "信用贷",
+  "creditLine": 80000,
+  "loanBalance": 42000,
+  "loanStatus": "在贷",
+  "riskLevel": "高风险",
+  "scoreHistory": [
+   {
+    "month": "2026-02",
+    "score": 62,
+    "cohortAvg": 74
+   },
+   {
+    "month": "2026-03",
+    "score": 58,
+    "cohortAvg": 74
+   },
+   {
+    "month": "2026-04",
+    "score": 51,
+    "cohortAvg": 73
+   },
+   {
+    "month": "2026-05",
+    "score": 44,
+    "cohortAvg": 72
+   },
+   {
+    "month": "2026-06",
+    "score": 38,
+    "cohortAvg": 72
+   },
+   {
+    "month": "2026-07",
+    "score": 33,
+    "cohortAvg": 71
+   }
+  ],
+  "alerts": [
+   {
+    "time": "2026-07-03",
+    "level": "YELLOW",
+    "scene": "负债上升",
+    "ruleName": "近30天新增贷款≥2笔",
+    "metricValue": 2,
+    "threshold": 2,
+    "status": "已解除"
+   },
+   {
+    "time": "2026-07-18",
+    "level": "RED",
+    "scene": "行为评分",
+    "ruleName": "行为分<40",
+    "metricValue": 38,
+    "threshold": 40,
+    "status": "处置中"
+   },
+   {
+    "time": "2026-08-04",
+    "level": "RED",
+    "scene": "负债激增",
+    "ruleName": "近30天新增贷款≥3笔",
+    "metricValue": 5,
+    "threshold": 3,
+    "status": "待处置"
+   }
+  ],
+  "disposes": [
+   {
+    "time": "2026-07-18",
+    "operator": "李四",
+    "action": "电话核实",
+    "result": "确认多笔网贷，收入下降",
+    "note": "建议降额并预催"
+   },
+   {
+    "time": "2026-07-19",
+    "operator": "王五",
+    "action": "降额",
+    "result": "已执行：80000→40000",
+    "note": "审批通过"
+   }
+  ],
+  "relations": [
+   {
+    "id": "C0001-r0",
+    "name": "华信商贸",
+    "rel": "法人",
+    "type": "company",
+    "risk": "高危"
+   },
+   {
+    "id": "C0001-r1",
+    "name": "恒达科技",
+    "rel": "法人",
+    "type": "company"
+   },
+   {
+    "id": "C0001-r2",
+    "name": "IMEI-8695000002",
+    "rel": "设备",
+    "type": "device"
+   },
+   {
+    "id": "C0001-r3",
+    "name": "陈*敏",
+    "rel": "共借人",
+    "type": "person",
+    "risk": "关注"
+   }
+  ],
+  "riskDims": [
+   {
+    "dim": "负债",
+    "score": 62
+   },
+   {
+    "dim": "多头",
+    "score": 69
+   },
+   {
+    "dim": "欺诈",
+    "score": 76
+   },
+   {
+    "dim": "司法",
+    "score": 83
+   },
+   {
+    "dim": "行为",
+    "score": 90
+   },
+   {
+    "dim": "舆情",
+    "score": 67
+   }
+  ]
+ },
+ {
+  "custId": "C0009",
+  "name": "何*杰",
+  "idCard": "3301**********5678",
+  "product": "消费贷",
+  "creditLine": 163000,
+  "loanBalance": 82445,
+  "loanStatus": "在贷",
+  "riskLevel": "中风险",
+  "scoreHistory": [
+   {
+    "month": "2026-02",
+    "score": 70,
+    "cohortAvg": 72
+   },
+   {
+    "month": "2026-03",
+    "score": 69,
+    "cohortAvg": 73
+   },
+   {
+    "month": "2026-04",
+    "score": 68,
+    "cohortAvg": 72
+   },
+   {
+    "month": "2026-05",
+    "score": 67,
+    "cohortAvg": 73
+   },
+   {
+    "month": "2026-06",
+    "score": 66,
+    "cohortAvg": 72
+   },
+   {
+    "month": "2026-07",
+    "score": 65,
+    "cohortAvg": 73
+   }
+  ],
+  "alerts": [
+   {
+    "time": "2026-08-08",
+    "level": "YELLOW",
+    "scene": "贷中风控",
+    "ruleName": "月还款额/月收入>70%",
+    "metricValue": 73,
+    "threshold": 70,
+    "status": "已解除"
+   }
+  ],
+  "disposes": [
+   {
+    "time": "2026-07",
+    "operator": "风控专员-张三",
+    "action": "关注",
+    "result": "已纳入观察",
+    "note": "按处置策略自动生成"
+   }
+  ],
+  "relations": [
+   {
+    "id": "C0009-r0",
+    "name": "恒达科技",
+    "rel": "法人",
+    "type": "company"
+   },
+   {
+    "id": "C0009-r1",
+    "name": "中联供应链",
+    "rel": "法人",
+    "type": "company"
+   },
+   {
+    "id": "C0009-r2",
+    "name": "IMEI-8695001002",
+    "rel": "设备",
+    "type": "device"
+   },
+   {
+    "id": "C0009-rc",
+    "name": "刘女士",
+    "rel": "紧急联系人",
+    "type": "contact"
+   }
+  ],
+  "riskDims": [
+   {
+    "dim": "负债",
+    "score": 39
+   },
+   {
+    "dim": "多头",
+    "score": 46
+   },
+   {
+    "dim": "欺诈",
+    "score": 53
+   },
+   {
+    "dim": "司法",
+    "score": 60
+   },
+   {
+    "dim": "行为",
+    "score": 67
+   },
+   {
+    "dim": "舆情",
+    "score": 44
+   }
+  ]
+ },
+ {
+  "custId": "C0010",
+  "name": "罗*峰",
+  "idCard": "3301**********9012",
+  "product": "信用贷",
+  "creditLine": 198000,
+  "loanBalance": 123572,
+  "loanStatus": "在贷",
+  "riskLevel": "高风险",
+  "scoreHistory": [
+   {
+    "month": "2026-02",
+    "score": 60,
+    "cohortAvg": 72
+   },
+   {
+    "month": "2026-03",
+    "score": 55,
+    "cohortAvg": 73
+   },
+   {
+    "month": "2026-04",
+    "score": 50,
+    "cohortAvg": 72
+   },
+   {
+    "month": "2026-05",
+    "score": 45,
+    "cohortAvg": 73
+   },
+   {
+    "month": "2026-06",
+    "score": 40,
+    "cohortAvg": 72
+   },
+   {
+    "month": "2026-07",
+    "score": 35,
+    "cohortAvg": 73
+   }
+  ],
+  "alerts": [
+   {
+    "time": "2026-08-08",
+    "level": "RED",
+    "scene": "贷中风控",
+    "ruleName": "近7天征信查询≥5次",
+    "metricValue": 7,
+    "threshold": 5,
+    "status": "处置中"
+   }
+  ],
+  "disposes": [
+   {
+    "time": "2026-07",
+    "operator": "风控专员-张三",
+    "action": "降额",
+    "result": "已执行降额",
+    "note": "按处置策略自动生成"
+   }
+  ],
+  "relations": [
+   {
+    "id": "C0010-r0",
+    "name": "中联供应链",
+    "rel": "法人",
+    "type": "company",
+    "risk": "高危"
+   },
+   {
+    "id": "C0010-r1",
+    "name": "鼎盛贸易",
+    "rel": "法人",
+    "type": "company"
+   },
+   {
+    "id": "C0010-r2",
+    "name": "IMEI-8695002002",
+    "rel": "设备",
+    "type": "device"
+   },
+   {
+    "id": "C0010-r3",
+    "name": "王*强",
+    "rel": "共借人",
+    "type": "person",
+    "risk": "关注"
+   }
+  ],
+  "riskDims": [
+   {
+    "dim": "负债",
+    "score": 64
+   },
+   {
+    "dim": "多头",
+    "score": 71
+   },
+   {
+    "dim": "欺诈",
+    "score": 78
+   },
+   {
+    "dim": "司法",
+    "score": 85
+   },
+   {
+    "dim": "行为",
+    "score": 92
+   },
+   {
+    "dim": "舆情",
+    "score": 69
+   }
+  ]
+ },
+ {
+  "custId": "C0002",
+  "name": "李*华",
+  "idCard": "3301**********5678",
+  "product": "消费贷",
+  "creditLine": 50000,
+  "loanBalance": 18000,
+  "loanStatus": "在贷",
+  "riskLevel": "中风险",
+  "scoreHistory": [
+   {
+    "month": "2026-02",
+    "score": 55,
+    "cohortAvg": 74
+   },
+   {
+    "month": "2026-03",
+    "score": 54,
+    "cohortAvg": 74
+   },
+   {
+    "month": "2026-04",
+    "score": 56,
+    "cohortAvg": 73
+   },
+   {
+    "month": "2026-05",
+    "score": 53,
+    "cohortAvg": 72
+   },
+   {
+    "month": "2026-06",
+    "score": 52,
+    "cohortAvg": 72
+   },
+   {
+    "month": "2026-07",
+    "score": 52,
+    "cohortAvg": 71
+   }
+  ],
+  "alerts": [
+   {
+    "time": "2026-08-04",
+    "level": "YELLOW",
+    "scene": "设备异常",
+    "ruleName": "7日内更换设备",
+    "metricValue": 2,
+    "threshold": 1,
+    "status": "待处置"
+   }
+  ],
+  "disposes": [],
+  "relations": [
+   {
+    "id": "C0002-r0",
+    "name": "鼎盛贸易",
+    "rel": "法人",
+    "type": "company"
+   },
+   {
+    "id": "C0002-r1",
+    "name": "旭日投资",
+    "rel": "法人",
+    "type": "company"
+   },
+   {
+    "id": "C0002-r2",
+    "name": "IMEI-8695003002",
+    "rel": "设备",
+    "type": "device"
+   },
+   {
+    "id": "C0002-rc",
+    "name": "张先生",
+    "rel": "紧急联系人",
+    "type": "contact"
+   }
+  ],
+  "riskDims": [
+   {
+    "dim": "负债",
+    "score": 41
+   },
+   {
+    "dim": "多头",
+    "score": 48
+   },
+   {
+    "dim": "欺诈",
+    "score": 55
+   },
+   {
+    "dim": "司法",
+    "score": 62
+   },
+   {
+    "dim": "行为",
+    "score": 69
+   },
+   {
+    "dim": "舆情",
+    "score": 46
+   }
+  ]
+ },
+ {
+  "custId": "C0005",
+  "name": "陈*敏",
+  "idCard": "3301**********7890",
+  "product": "消费贷",
+  "creditLine": 30000,
+  "loanBalance": 9000,
+  "loanStatus": "在贷",
+  "riskLevel": "中风险",
+  "scoreHistory": [
+   {
+    "month": "2026-02",
+    "score": 60,
+    "cohortAvg": 74
+   },
+   {
+    "month": "2026-03",
+    "score": 61,
+    "cohortAvg": 74
+   },
+   {
+    "month": "2026-04",
+    "score": 60,
+    "cohortAvg": 73
+   },
+   {
+    "month": "2026-05",
+    "score": 61,
+    "cohortAvg": 72
+   },
+   {
+    "month": "2026-06",
+    "score": 61,
+    "cohortAvg": 72
+   },
+   {
+    "month": "2026-07",
+    "score": 61,
+    "cohortAvg": 71
+   }
+  ],
+  "alerts": [
+   {
+    "time": "2026-08-03",
+    "level": "YELLOW",
+    "scene": "还款能力",
+    "ruleName": "临期余额不足",
+    "metricValue": 1,
+    "threshold": 0,
+    "status": "待处置"
+   }
+  ],
+  "disposes": [],
+  "relations": [
+   {
+    "id": "C0005-r0",
+    "name": "旭日投资",
+    "rel": "法人",
+    "type": "company"
+   },
+   {
+    "id": "C0005-r1",
+    "name": "华信商贸",
+    "rel": "法人",
+    "type": "company"
+   },
+   {
+    "id": "C0005-r2",
+    "name": "IMEI-8695004002",
+    "rel": "设备",
+    "type": "device"
+   },
+   {
+    "id": "C0005-rc",
+    "name": "刘女士",
+    "rel": "紧急联系人",
+    "type": "contact"
+   }
+  ],
+  "riskDims": [
+   {
+    "dim": "负债",
+    "score": 42
+   },
+   {
+    "dim": "多头",
+    "score": 49
+   },
+   {
+    "dim": "欺诈",
+    "score": 56
+   },
+   {
+    "dim": "司法",
+    "score": 63
+   },
+   {
+    "dim": "行为",
+    "score": 70
+   },
+   {
+    "dim": "舆情",
+    "score": 47
+   }
+  ]
+ },
+ {
+  "custId": "C0011",
+  "name": "许*文",
+  "idCard": "3301**********2222",
+  "product": "经营贷",
+  "creditLine": 171000,
+  "loanBalance": 71197,
+  "loanStatus": "在贷",
+  "riskLevel": "中风险",
+  "scoreHistory": [
+   {
+    "month": "2026-02",
+    "score": 70,
+    "cohortAvg": 72
+   },
+   {
+    "month": "2026-03",
+    "score": 69,
+    "cohortAvg": 73
+   },
+   {
+    "month": "2026-04",
+    "score": 68,
+    "cohortAvg": 72
+   },
+   {
+    "month": "2026-05",
+    "score": 67,
+    "cohortAvg": 73
+   },
+   {
+    "month": "2026-06",
+    "score": 66,
+    "cohortAvg": 72
+   },
+   {
+    "month": "2026-07",
+    "score": 65,
+    "cohortAvg": 73
+   }
+  ],
+  "alerts": [
+   {
+    "time": "2026-08-08",
+    "level": "YELLOW",
+    "scene": "贷中风控",
+    "ruleName": "历史还款日延迟≥2天",
+    "metricValue": 2,
+    "threshold": 1,
+    "status": "处置中"
+   }
+  ],
+  "disposes": [
+   {
+    "time": "2026-07",
+    "operator": "风控专员-张三",
+    "action": "关注",
+    "result": "已纳入观察",
+    "note": "按处置策略自动生成"
+   }
+  ],
+  "relations": [
+   {
+    "id": "C0011-r0",
+    "name": "华信商贸",
+    "rel": "法人",
+    "type": "company"
+   },
+   {
+    "id": "C0011-r1",
+    "name": "恒达科技",
+    "rel": "法人",
+    "type": "company"
+   },
+   {
+    "id": "C0011-r2",
+    "name": "IMEI-8695005002",
+    "rel": "设备",
+    "type": "device"
+   },
+   {
+    "id": "C0011-rc",
+    "name": "陈先生",
+    "rel": "紧急联系人",
+    "type": "contact"
+   }
+  ],
+  "riskDims": [
+   {
+    "dim": "负债",
+    "score": 38
+   },
+   {
+    "dim": "多头",
+    "score": 45
+   },
+   {
+    "dim": "欺诈",
+    "score": 52
+   },
+   {
+    "dim": "司法",
+    "score": 59
+   },
+   {
+    "dim": "行为",
+    "score": 66
+   },
+   {
+    "dim": "舆情",
+    "score": 43
+   }
+  ]
+ },
+ {
+  "custId": "C0004",
+  "name": "赵*强",
+  "idCard": "3301**********3456",
+  "product": "经营贷",
+  "creditLine": 200000,
+  "loanBalance": 156000,
+  "loanStatus": "在贷",
+  "riskLevel": "高风险",
+  "scoreHistory": [
+   {
+    "month": "2026-02",
+    "score": 50,
+    "cohortAvg": 74
+   },
+   {
+    "month": "2026-03",
+    "score": 45,
+    "cohortAvg": 74
+   },
+   {
+    "month": "2026-04",
+    "score": 41,
+    "cohortAvg": 73
+   },
+   {
+    "month": "2026-05",
+    "score": 36,
+    "cohortAvg": 72
+   },
+   {
+    "month": "2026-06",
+    "score": 31,
+    "cohortAvg": 72
+   },
+   {
+    "month": "2026-07",
+    "score": 28,
+    "cohortAvg": 71
+   }
+  ],
+  "alerts": [
+   {
+    "time": "2026-07-25",
+    "level": "RED",
+    "scene": "司法涉诉",
+    "ruleName": "新增被执行记录",
+    "metricValue": 1,
+    "threshold": 0,
+    "status": "处置中"
+   },
+   {
+    "time": "2026-08-04",
+    "level": "RED",
+    "scene": "司法涉诉",
+    "ruleName": "新增被执行记录",
+    "metricValue": 1,
+    "threshold": 0,
+    "status": "待处置"
+   }
+  ],
+  "disposes": [
+   {
+    "time": "2026-07-26",
+    "operator": "李四",
+    "action": "冻结额度",
+    "result": "已冻结全部可用额度",
+    "note": "待评估"
+   }
+  ],
+  "relations": [
+   {
+    "id": "C0004-r0",
+    "name": "恒达科技",
+    "rel": "法人",
+    "type": "company",
+    "risk": "高危"
+   },
+   {
+    "id": "C0004-r1",
+    "name": "中联供应链",
+    "rel": "法人",
+    "type": "company"
+   },
+   {
+    "id": "C0004-r2",
+    "name": "IMEI-8695006002",
+    "rel": "设备",
+    "type": "device"
+   },
+   {
+    "id": "C0004-r3",
+    "name": "刘*华",
+    "rel": "共借人",
+    "type": "person",
+    "risk": "关注"
+   }
+  ],
+  "riskDims": [
+   {
+    "dim": "负债",
+    "score": 63
+   },
+   {
+    "dim": "多头",
+    "score": 70
+   },
+   {
+    "dim": "欺诈",
+    "score": 77
+   },
+   {
+    "dim": "司法",
+    "score": 84
+   },
+   {
+    "dim": "行为",
+    "score": 91
+   },
+   {
+    "dim": "舆情",
+    "score": 68
+   }
+  ]
+ },
+ {
+  "custId": "C0012",
+  "name": "韩*磊",
+  "idCard": "3301**********4444",
+  "product": "分期贷",
+  "creditLine": 119000,
+  "loanBalance": 47456,
+  "loanStatus": "在贷",
+  "riskLevel": "中风险",
+  "scoreHistory": [
+   {
+    "month": "2026-02",
+    "score": 70,
+    "cohortAvg": 72
+   },
+   {
+    "month": "2026-03",
+    "score": 69,
+    "cohortAvg": 73
+   },
+   {
+    "month": "2026-04",
+    "score": 68,
+    "cohortAvg": 72
+   },
+   {
+    "month": "2026-05",
+    "score": 67,
+    "cohortAvg": 73
+   },
+   {
+    "month": "2026-06",
+    "score": 66,
+    "cohortAvg": 72
+   },
+   {
+    "month": "2026-07",
+    "score": 65,
+    "cohortAvg": 73
+   }
+  ],
+  "alerts": [
+   {
+    "time": "2026-08-08",
+    "level": "YELLOW",
+    "scene": "贷中风控",
+    "ruleName": "新增开庭公告",
+    "metricValue": 1,
+    "threshold": 0,
+    "status": "处置中"
+   }
+  ],
+  "disposes": [
+   {
+    "time": "2026-07",
+    "operator": "风控专员-张三",
+    "action": "关注",
+    "result": "已纳入观察",
+    "note": "按处置策略自动生成"
+   }
+  ],
+  "relations": [
+   {
+    "id": "C0012-r0",
+    "name": "中联供应链",
+    "rel": "法人",
+    "type": "company"
+   },
+   {
+    "id": "C0012-r1",
+    "name": "鼎盛贸易",
+    "rel": "法人",
+    "type": "company"
+   },
+   {
+    "id": "C0012-r2",
+    "name": "IMEI-8695007002",
+    "rel": "设备",
+    "type": "device"
+   },
+   {
+    "id": "C0012-rc",
+    "name": "刘女士",
+    "rel": "紧急联系人",
+    "type": "contact"
+   }
+  ],
+  "riskDims": [
+   {
+    "dim": "负债",
+    "score": 40
+   },
+   {
+    "dim": "多头",
+    "score": 47
+   },
+   {
+    "dim": "欺诈",
+    "score": 54
+   },
+   {
+    "dim": "司法",
+    "score": 61
+   },
+   {
+    "dim": "行为",
+    "score": 68
+   },
+   {
+    "dim": "舆情",
+    "score": 45
+   }
+  ]
+ },
+ {
+  "custId": "C0008",
+  "name": "吴*军",
+  "idCard": "3301**********5555",
+  "product": "消费贷",
+  "creditLine": 112000,
+  "loanBalance": 52444,
+  "loanStatus": "在贷",
+  "riskLevel": "高风险",
+  "scoreHistory": [
+   {
+    "month": "2026-02",
+    "score": 60,
+    "cohortAvg": 72
+   },
+   {
+    "month": "2026-03",
+    "score": 55,
+    "cohortAvg": 73
+   },
+   {
+    "month": "2026-04",
+    "score": 50,
+    "cohortAvg": 72
+   },
+   {
+    "month": "2026-05",
+    "score": 45,
+    "cohortAvg": 73
+   },
+   {
+    "month": "2026-06",
+    "score": 40,
+    "cohortAvg": 72
+   },
+   {
+    "month": "2026-07",
+    "score": 35,
+    "cohortAvg": 73
+   }
+  ],
+  "alerts": [
+   {
+    "time": "2026-08-08",
+    "level": "RED",
+    "scene": "贷中风控",
+    "ruleName": "关联企业经营异常",
+    "metricValue": 1,
+    "threshold": 0,
+    "status": "处置中"
+   }
+  ],
+  "disposes": [
+   {
+    "time": "2026-07",
+    "operator": "风控专员-张三",
+    "action": "降额",
+    "result": "已执行降额",
+    "note": "按处置策略自动生成"
+   }
+  ],
+  "relations": [
+   {
+    "id": "C0008-r0",
+    "name": "鼎盛贸易",
+    "rel": "法人",
+    "type": "company",
+    "risk": "高危"
+   },
+   {
+    "id": "C0008-r1",
+    "name": "旭日投资",
+    "rel": "法人",
+    "type": "company"
+   },
+   {
+    "id": "C0008-r2",
+    "name": "IMEI-8695008002",
+    "rel": "设备",
+    "type": "device"
+   },
+   {
+    "id": "C0008-r3",
+    "name": "李*丽",
+    "rel": "共借人",
+    "type": "person",
+    "risk": "关注"
+   }
+  ],
+  "riskDims": [
+   {
+    "dim": "负债",
+    "score": 65
+   },
+   {
+    "dim": "多头",
+    "score": 72
+   },
+   {
+    "dim": "欺诈",
+    "score": 79
+   },
+   {
+    "dim": "司法",
+    "score": 86
+   },
+   {
+    "dim": "行为",
+    "score": 93
+   },
+   {
+    "dim": "舆情",
+    "score": 70
+   }
+  ]
+ },
+ {
+  "custId": "C0013",
+  "name": "曹*刚",
+  "idCard": "3301**********6666",
+  "product": "信用贷",
+  "creditLine": 33000,
+  "loanBalance": 19199,
+  "loanStatus": "在贷",
+  "riskLevel": "中风险",
+  "scoreHistory": [
+   {
+    "month": "2026-02",
+    "score": 70,
+    "cohortAvg": 72
+   },
+   {
+    "month": "2026-03",
+    "score": 69,
+    "cohortAvg": 73
+   },
+   {
+    "month": "2026-04",
+    "score": 68,
+    "cohortAvg": 72
+   },
+   {
+    "month": "2026-05",
+    "score": 67,
+    "cohortAvg": 73
+   },
+   {
+    "month": "2026-06",
+    "score": 66,
+    "cohortAvg": 72
+   },
+   {
+    "month": "2026-07",
+    "score": 65,
+    "cohortAvg": 73
+   }
+  ],
+  "alerts": [
+   {
+    "time": "2026-08-08",
+    "level": "YELLOW",
+    "scene": "贷中风控",
+    "ruleName": "担保企业出现逾期",
+    "metricValue": 2,
+    "threshold": 1,
+    "status": "处置中"
+   }
+  ],
+  "disposes": [
+   {
+    "time": "2026-07",
+    "operator": "风控专员-张三",
+    "action": "关注",
+    "result": "已纳入观察",
+    "note": "按处置策略自动生成"
+   }
+  ],
+  "relations": [
+   {
+    "id": "C0013-r0",
+    "name": "旭日投资",
+    "rel": "法人",
+    "type": "company"
+   },
+   {
+    "id": "C0013-r1",
+    "name": "华信商贸",
+    "rel": "法人",
+    "type": "company"
+   },
+   {
+    "id": "C0013-r2",
+    "name": "IMEI-8695009002",
+    "rel": "设备",
+    "type": "device"
+   },
+   {
+    "id": "C0013-rc",
+    "name": "张先生",
+    "rel": "紧急联系人",
+    "type": "contact"
+   }
+  ],
+  "riskDims": [
+   {
+    "dim": "负债",
+    "score": 42
+   },
+   {
+    "dim": "多头",
+    "score": 49
+   },
+   {
+    "dim": "欺诈",
+    "score": 56
+   },
+   {
+    "dim": "司法",
+    "score": 63
+   },
+   {
+    "dim": "行为",
+    "score": 70
+   },
+   {
+    "dim": "舆情",
+    "score": 47
+   }
+  ]
+ },
+ {
+  "custId": "C0014",
+  "name": "唐*霞",
+  "idCard": "3301**********1234",
+  "product": "消费贷",
+  "creditLine": 73000,
+  "loanBalance": 48511,
+  "loanStatus": "在贷",
+  "riskLevel": "中风险",
+  "scoreHistory": [
+   {
+    "month": "2026-02",
+    "score": 70,
+    "cohortAvg": 72
+   },
+   {
+    "month": "2026-03",
+    "score": 69,
+    "cohortAvg": 73
+   },
+   {
+    "month": "2026-04",
+    "score": 68,
+    "cohortAvg": 72
+   },
+   {
+    "month": "2026-05",
+    "score": 67,
+    "cohortAvg": 73
+   },
+   {
+    "month": "2026-06",
+    "score": 66,
+    "cohortAvg": 72
+   },
+   {
+    "month": "2026-07",
+    "score": 65,
+    "cohortAvg": 73
+   }
+  ],
+  "alerts": [
+   {
+    "time": "2026-08-08",
+    "level": "YELLOW",
+    "scene": "反欺诈监测",
+    "ruleName": "新设备深夜登录",
+    "metricValue": 1,
+    "threshold": 0,
+    "status": "处置中"
+   }
+  ],
+  "disposes": [
+   {
+    "time": "2026-07",
+    "operator": "风控专员-张三",
+    "action": "关注",
+    "result": "已纳入观察",
+    "note": "按处置策略自动生成"
+   }
+  ],
+  "relations": [
+   {
+    "id": "C0014-r0",
+    "name": "华信商贸",
+    "rel": "法人",
+    "type": "company"
+   },
+   {
+    "id": "C0014-r1",
+    "name": "恒达科技",
+    "rel": "法人",
+    "type": "company"
+   },
+   {
+    "id": "C0014-r2",
+    "name": "IMEI-8695010002",
+    "rel": "设备",
+    "type": "device"
+   },
+   {
+    "id": "C0014-rc",
+    "name": "刘女士",
+    "rel": "紧急联系人",
+    "type": "contact"
+   }
+  ],
+  "riskDims": [
+   {
+    "dim": "负债",
+    "score": 38
+   },
+   {
+    "dim": "多头",
+    "score": 45
+   },
+   {
+    "dim": "欺诈",
+    "score": 52
+   },
+   {
+    "dim": "司法",
+    "score": 59
+   },
+   {
+    "dim": "行为",
+    "score": 66
+   },
+   {
+    "dim": "舆情",
+    "score": 43
+   }
+  ]
+ },
+ {
+  "custId": "C0015",
+  "name": "冯*军",
+  "idCard": "3301**********5678",
+  "product": "经营贷",
+  "creditLine": 189000,
+  "loanBalance": 127339,
+  "loanStatus": "在贷",
+  "riskLevel": "中风险",
+  "scoreHistory": [
+   {
+    "month": "2026-02",
+    "score": 70,
+    "cohortAvg": 72
+   },
+   {
+    "month": "2026-03",
+    "score": 69,
+    "cohortAvg": 73
+   },
+   {
+    "month": "2026-04",
+    "score": 68,
+    "cohortAvg": 72
+   },
+   {
+    "month": "2026-05",
+    "score": 67,
+    "cohortAvg": 73
+   },
+   {
+    "month": "2026-06",
+    "score": 66,
+    "cohortAvg": 72
+   },
+   {
+    "month": "2026-07",
+    "score": 65,
+    "cohortAvg": 73
+   }
+  ],
+  "alerts": [
+   {
+    "time": "2026-08-08",
+    "level": "YELLOW",
+    "scene": "反欺诈监测",
+    "ruleName": "资料与历史申请冲突",
+    "metricValue": 1,
+    "threshold": 0,
+    "status": "处置中"
+   }
+  ],
+  "disposes": [
+   {
+    "time": "2026-07",
+    "operator": "风控专员-张三",
+    "action": "关注",
+    "result": "已纳入观察",
+    "note": "按处置策略自动生成"
+   }
+  ],
+  "relations": [
+   {
+    "id": "C0015-r0",
+    "name": "恒达科技",
+    "rel": "法人",
+    "type": "company"
+   },
+   {
+    "id": "C0015-r1",
+    "name": "中联供应链",
+    "rel": "法人",
+    "type": "company"
+   },
+   {
+    "id": "C0015-r2",
+    "name": "IMEI-8695011002",
+    "rel": "设备",
+    "type": "device"
+   },
+   {
+    "id": "C0015-rc",
+    "name": "陈先生",
+    "rel": "紧急联系人",
+    "type": "contact"
+   }
+  ],
+  "riskDims": [
+   {
+    "dim": "负债",
+    "score": 39
+   },
+   {
+    "dim": "多头",
+    "score": 46
+   },
+   {
+    "dim": "欺诈",
+    "score": 53
+   },
+   {
+    "dim": "司法",
+    "score": 60
+   },
+   {
+    "dim": "行为",
+    "score": 67
+   },
+   {
+    "dim": "舆情",
+    "score": 44
+   }
+  ]
+ },
+ {
+  "custId": "C0003",
+  "name": "王*芳",
+  "idCard": "3301**********9012",
+  "product": "信用贷",
+  "creditLine": 100000,
+  "loanBalance": 35000,
+  "loanStatus": "在贷",
+  "riskLevel": "低风险",
+  "scoreHistory": [
+   {
+    "month": "2026-02",
+    "score": 76,
+    "cohortAvg": 74
+   },
+   {
+    "month": "2026-03",
+    "score": 77,
+    "cohortAvg": 74
+   },
+   {
+    "month": "2026-04",
+    "score": 76,
+    "cohortAvg": 73
+   },
+   {
+    "month": "2026-05",
+    "score": 78,
+    "cohortAvg": 72
+   },
+   {
+    "month": "2026-06",
+    "score": 78,
+    "cohortAvg": 72
+   },
+   {
+    "month": "2026-07",
+    "score": 78,
+    "cohortAvg": 71
+   }
+  ],
+  "alerts": [
+   {
+    "time": "2026-08-02",
+    "level": "OPPORTUNITY",
+    "scene": "需求上升",
+    "ruleName": "额度使用率>80%",
+    "metricValue": 88,
+    "threshold": 80,
+    "status": "待处置"
+   }
+  ],
+  "disposes": [],
+  "relations": [
+   {
+    "id": "C0003-r0",
+    "name": "中联供应链",
+    "rel": "法人",
+    "type": "company"
+   },
+   {
+    "id": "C0003-r1",
+    "name": "鼎盛贸易",
+    "rel": "法人",
+    "type": "company"
+   }
+  ],
+  "riskDims": [
+   {
+    "dim": "负债",
+    "score": 14
+   },
+   {
+    "dim": "多头",
+    "score": 21
+   },
+   {
+    "dim": "欺诈",
+    "score": 28
+   },
+   {
+    "dim": "司法",
+    "score": 35
+   },
+   {
+    "dim": "行为",
+    "score": 42
+   },
+   {
+    "dim": "舆情",
+    "score": 19
+   }
+  ]
+ },
+ {
+  "custId": "C0016",
+  "name": "邓*平",
+  "idCard": "3301**********3456",
+  "product": "分期贷",
+  "creditLine": 138000,
+  "loanBalance": 108299,
+  "loanStatus": "在贷",
+  "riskLevel": "中风险",
+  "scoreHistory": [
+   {
+    "month": "2026-02",
+    "score": 70,
+    "cohortAvg": 72
+   },
+   {
+    "month": "2026-03",
+    "score": 69,
+    "cohortAvg": 73
+   },
+   {
+    "month": "2026-04",
+    "score": 68,
+    "cohortAvg": 72
+   },
+   {
+    "month": "2026-05",
+    "score": 67,
+    "cohortAvg": 73
+   },
+   {
+    "month": "2026-06",
+    "score": 66,
+    "cohortAvg": 72
+   },
+   {
+    "month": "2026-07",
+    "score": 65,
+    "cohortAvg": 73
+   }
+  ],
+  "alerts": [
+   {
+    "time": "2026-08-08",
+    "level": "YELLOW",
+    "scene": "贷中风控",
+    "ruleName": "临期余额不足",
+    "metricValue": 1,
+    "threshold": 0,
+    "status": "处置中"
+   }
+  ],
+  "disposes": [
+   {
+    "time": "2026-07",
+    "operator": "风控专员-张三",
+    "action": "关注",
+    "result": "已纳入观察",
+    "note": "按处置策略自动生成"
+   }
+  ],
+  "relations": [
+   {
+    "id": "C0016-r0",
+    "name": "鼎盛贸易",
+    "rel": "法人",
+    "type": "company"
+   },
+   {
+    "id": "C0016-r1",
+    "name": "旭日投资",
+    "rel": "法人",
+    "type": "company"
+   },
+   {
+    "id": "C0016-r2",
+    "name": "IMEI-8695013002",
+    "rel": "设备",
+    "type": "device"
+   },
+   {
+    "id": "C0016-rc",
+    "name": "刘女士",
+    "rel": "紧急联系人",
+    "type": "contact"
+   }
+  ],
+  "riskDims": [
+   {
+    "dim": "负债",
+    "score": 41
+   },
+   {
+    "dim": "多头",
+    "score": 48
+   },
+   {
+    "dim": "欺诈",
+    "score": 55
+   },
+   {
+    "dim": "司法",
+    "score": 62
+   },
+   {
+    "dim": "行为",
+    "score": 69
+   },
+   {
+    "dim": "舆情",
+    "score": 46
+   }
+  ]
+ },
+ {
+  "custId": "C0017",
+  "name": "曾*琳",
+  "idCard": "3301**********7890",
+  "product": "消费贷",
+  "creditLine": 172000,
+  "loanBalance": 93742,
+  "loanStatus": "在贷",
+  "riskLevel": "中风险",
+  "scoreHistory": [
+   {
+    "month": "2026-02",
+    "score": 70,
+    "cohortAvg": 72
+   },
+   {
+    "month": "2026-03",
+    "score": 69,
+    "cohortAvg": 73
+   },
+   {
+    "month": "2026-04",
+    "score": 68,
+    "cohortAvg": 72
+   },
+   {
+    "month": "2026-05",
+    "score": 67,
+    "cohortAvg": 73
+   },
+   {
+    "month": "2026-06",
+    "score": 66,
+    "cohortAvg": 72
+   },
+   {
+    "month": "2026-07",
+    "score": 65,
+    "cohortAvg": 73
+   }
+  ],
+  "alerts": [
+   {
+    "time": "2026-08-08",
+    "level": "YELLOW",
+    "scene": "贷后催收",
+    "ruleName": "电话拒接≥3次",
+    "metricValue": 3,
+    "threshold": 2,
+    "status": "处置中"
+   }
+  ],
+  "disposes": [
+   {
+    "time": "2026-07",
+    "operator": "风控专员-张三",
+    "action": "关注",
+    "result": "已纳入观察",
+    "note": "按处置策略自动生成"
+   }
+  ],
+  "relations": [
+   {
+    "id": "C0017-r0",
+    "name": "旭日投资",
+    "rel": "法人",
+    "type": "company"
+   },
+   {
+    "id": "C0017-r1",
+    "name": "华信商贸",
+    "rel": "法人",
+    "type": "company"
+   },
+   {
+    "id": "C0017-r2",
+    "name": "IMEI-8695014002",
+    "rel": "设备",
+    "type": "device"
+   },
+   {
+    "id": "C0017-rc",
+    "name": "陈先生",
+    "rel": "紧急联系人",
+    "type": "contact"
+   }
+  ],
+  "riskDims": [
+   {
+    "dim": "负债",
+    "score": 42
+   },
+   {
+    "dim": "多头",
+    "score": 49
+   },
+   {
+    "dim": "欺诈",
+    "score": 56
+   },
+   {
+    "dim": "司法",
+    "score": 63
+   },
+   {
+    "dim": "行为",
+    "score": 70
+   },
+   {
+    "dim": "舆情",
+    "score": 47
+   }
+  ]
+ },
+ {
+  "custId": "C0007",
+  "name": "周*伟",
+  "idCard": "3301**********2222",
+  "product": "分期贷",
+  "creditLine": 129000,
+  "loanBalance": 40775,
+  "loanStatus": "在贷",
+  "riskLevel": "高风险",
+  "scoreHistory": [
+   {
+    "month": "2026-02",
+    "score": 60,
+    "cohortAvg": 72
+   },
+   {
+    "month": "2026-03",
+    "score": 55,
+    "cohortAvg": 73
+   },
+   {
+    "month": "2026-04",
+    "score": 50,
+    "cohortAvg": 72
+   },
+   {
+    "month": "2026-05",
+    "score": 45,
+    "cohortAvg": 73
+   },
+   {
+    "month": "2026-06",
+    "score": 40,
+    "cohortAvg": 72
+   },
+   {
+    "month": "2026-07",
+    "score": 35,
+    "cohortAvg": 73
+   }
+  ],
+  "alerts": [
+   {
+    "time": "2026-08-08",
+    "level": "RED",
+    "scene": "贷中风控",
+    "ruleName": "涉借贷纠纷负面舆情",
+    "metricValue": 2,
+    "threshold": 1,
+    "status": "处置中"
+   }
+  ],
+  "disposes": [
+   {
+    "time": "2026-07",
+    "operator": "风控专员-张三",
+    "action": "降额",
+    "result": "已执行降额",
+    "note": "按处置策略自动生成"
+   }
+  ],
+  "relations": [
+   {
+    "id": "C0007-r0",
+    "name": "华信商贸",
+    "rel": "法人",
+    "type": "company",
+    "risk": "高危"
+   },
+   {
+    "id": "C0007-r1",
+    "name": "恒达科技",
+    "rel": "法人",
+    "type": "company"
+   },
+   {
+    "id": "C0007-r2",
+    "name": "IMEI-8695015002",
+    "rel": "设备",
+    "type": "device"
+   },
+   {
+    "id": "C0007-r3",
+    "name": "陈*敏",
+    "rel": "共借人",
+    "type": "person",
+    "risk": "关注"
+   }
+  ],
+  "riskDims": [
+   {
+    "dim": "负债",
+    "score": 62
+   },
+   {
+    "dim": "多头",
+    "score": 69
+   },
+   {
+    "dim": "欺诈",
+    "score": 76
+   },
+   {
+    "dim": "司法",
+    "score": 83
+   },
+   {
+    "dim": "行为",
+    "score": 90
+   },
+   {
+    "dim": "舆情",
+    "score": 67
+   }
+  ]
+ },
+ {
+  "custId": "C0018",
+  "name": "袁*华",
+  "idCard": "3301**********3333",
+  "product": "分期贷",
+  "creditLine": 124000,
+  "loanBalance": 51946,
+  "loanStatus": "在贷",
+  "riskLevel": "中风险",
+  "scoreHistory": [
+   {
+    "month": "2026-02",
+    "score": 70,
+    "cohortAvg": 72
+   },
+   {
+    "month": "2026-03",
+    "score": 69,
+    "cohortAvg": 73
+   },
+   {
+    "month": "2026-04",
+    "score": 68,
+    "cohortAvg": 72
+   },
+   {
+    "month": "2026-05",
+    "score": 67,
+    "cohortAvg": 73
+   },
+   {
+    "month": "2026-06",
+    "score": 66,
+    "cohortAvg": 72
+   },
+   {
+    "month": "2026-07",
+    "score": 65,
+    "cohortAvg": 73
+   }
+  ],
+  "alerts": [
+   {
+    "time": "2026-08-08",
+    "level": "YELLOW",
+    "scene": "贷中风控",
+    "ruleName": "被投诉催收关联",
+    "metricValue": 1,
+    "threshold": 0,
+    "status": "处置中"
+   }
+  ],
+  "disposes": [
+   {
+    "time": "2026-07",
+    "operator": "风控专员-张三",
+    "action": "关注",
+    "result": "已纳入观察",
+    "note": "按处置策略自动生成"
+   }
+  ],
+  "relations": [
+   {
+    "id": "C0018-r0",
+    "name": "恒达科技",
+    "rel": "法人",
+    "type": "company"
+   },
+   {
+    "id": "C0018-r1",
+    "name": "中联供应链",
+    "rel": "法人",
+    "type": "company"
+   },
+   {
+    "id": "C0018-r2",
+    "name": "IMEI-8695016002",
+    "rel": "设备",
+    "type": "device"
+   },
+   {
+    "id": "C0018-rc",
+    "name": "刘女士",
+    "rel": "紧急联系人",
+    "type": "contact"
+   }
+  ],
+  "riskDims": [
+   {
+    "dim": "负债",
+    "score": 39
+   },
+   {
+    "dim": "多头",
+    "score": 46
+   },
+   {
+    "dim": "欺诈",
+    "score": 53
+   },
+   {
+    "dim": "司法",
+    "score": 60
+   },
+   {
+    "dim": "行为",
+    "score": 67
+   },
+   {
+    "dim": "舆情",
+    "score": 44
+   }
+  ]
+ },
+ {
+  "custId": "C0019",
+  "name": "蒋*梅",
+  "idCard": "3301**********4444",
+  "product": "信用贷",
+  "creditLine": 33000,
+  "loanBalance": 25643,
+  "loanStatus": "在贷",
+  "riskLevel": "低风险",
+  "scoreHistory": [
+   {
+    "month": "2026-02",
+    "score": 82,
+    "cohortAvg": 72
+   },
+   {
+    "month": "2026-03",
+    "score": 83,
+    "cohortAvg": 73
+   },
+   {
+    "month": "2026-04",
+    "score": 83,
+    "cohortAvg": 72
+   },
+   {
+    "month": "2026-05",
+    "score": 84,
+    "cohortAvg": 73
+   },
+   {
+    "month": "2026-06",
+    "score": 84,
+    "cohortAvg": 72
+   },
+   {
+    "month": "2026-07",
+    "score": 85,
+    "cohortAvg": 73
+   }
+  ],
+  "alerts": [
+   {
+    "time": "2026-08-08",
+    "level": "OPPORTUNITY",
+    "scene": "存量运营",
+    "ruleName": "近期借款需求上升",
+    "metricValue": 1,
+    "threshold": 0,
+    "status": "已升级"
+   }
+  ],
+  "disposes": [
+   {
+    "time": "2026-07",
+    "operator": "风控专员-张三",
+    "action": "提额评估",
+    "result": "已纳入观察",
+    "note": "按处置策略自动生成"
+   }
+  ],
+  "relations": [
+   {
+    "id": "C0019-r0",
+    "name": "中联供应链",
+    "rel": "法人",
+    "type": "company"
+   },
+   {
+    "id": "C0019-r1",
+    "name": "鼎盛贸易",
+    "rel": "法人",
+    "type": "company"
+   }
+  ],
+  "riskDims": [
+   {
+    "dim": "负债",
+    "score": 14
+   },
+   {
+    "dim": "多头",
+    "score": 21
+   },
+   {
+    "dim": "欺诈",
+    "score": 28
+   },
+   {
+    "dim": "司法",
+    "score": 35
+   },
+   {
+    "dim": "行为",
+    "score": 42
+   },
+   {
+    "dim": "舆情",
+    "score": 19
+   }
+  ]
+ },
+ {
+  "custId": "C0006",
+  "name": "孙*华",
+  "idCard": "3301**********5555",
+  "product": "抵押贷",
+  "creditLine": 121000,
+  "loanBalance": 72006,
+  "loanStatus": "在贷",
+  "riskLevel": "低风险",
+  "scoreHistory": [
+   {
+    "month": "2026-02",
+    "score": 82,
+    "cohortAvg": 72
+   },
+   {
+    "month": "2026-03",
+    "score": 83,
+    "cohortAvg": 73
+   },
+   {
+    "month": "2026-04",
+    "score": 83,
+    "cohortAvg": 72
+   },
+   {
+    "month": "2026-05",
+    "score": 84,
+    "cohortAvg": 73
+   },
+   {
+    "month": "2026-06",
+    "score": 84,
+    "cohortAvg": 72
+   },
+   {
+    "month": "2026-07",
+    "score": 85,
+    "cohortAvg": 73
+   }
+  ],
+  "alerts": [
+   {
+    "time": "2026-08-08",
+    "level": "OPPORTUNITY",
+    "scene": "存量运营",
+    "ruleName": "活跃度持续提升",
+    "metricValue": 1,
+    "threshold": 0,
+    "status": "已升级"
+   }
+  ],
+  "disposes": [
+   {
+    "time": "2026-07",
+    "operator": "风控专员-张三",
+    "action": "提额评估",
+    "result": "已纳入观察",
+    "note": "按处置策略自动生成"
+   }
+  ],
+  "relations": [
+   {
+    "id": "C0006-r0",
+    "name": "鼎盛贸易",
+    "rel": "法人",
+    "type": "company"
+   },
+   {
+    "id": "C0006-r1",
+    "name": "旭日投资",
+    "rel": "法人",
+    "type": "company"
+   }
+  ],
+  "riskDims": [
+   {
+    "dim": "负债",
+    "score": 15
+   },
+   {
+    "dim": "多头",
+    "score": 22
+   },
+   {
+    "dim": "欺诈",
+    "score": 29
+   },
+   {
+    "dim": "司法",
+    "score": 36
+   },
+   {
+    "dim": "行为",
+    "score": 43
+   },
+   {
+    "dim": "舆情",
+    "score": 20
+   }
+  ]
+ }
+]
