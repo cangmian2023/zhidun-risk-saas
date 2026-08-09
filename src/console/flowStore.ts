@@ -7,6 +7,12 @@
  * ========================================================================== */
 import { useSyncExternalStore } from 'react'
 import type { BusinessFlowConfig, FlowGraph } from './reportTemplateData'
+import seedBizFlows from './bizFlows.json'
+
+/* 兜底 SEED：兼容两种持久化格式（裸数组 = 当前 / { flows: [...] } = 旧 save 格式） */
+const SEED_FLOWS: FlowItem[] = Array.isArray(seedBizFlows)
+  ? (seedBizFlows as unknown as FlowItem[])
+  : ((seedBizFlows as { flows?: FlowItem[] }).flows ?? [])
 
 export interface FlowItem extends BusinessFlowConfig {
   id: string
@@ -122,7 +128,7 @@ export function parseFlowStepsInput(input: string): FlowStep[] {
 const newId = (p: string) => `${p}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`
 
 /* ---------- 本地文件持久化（vite 插件 /api/load-bizflows /api/save-bizflows） ---------- */
-let flows: FlowItem[] = []
+let flows: FlowItem[] = [...SEED_FLOWS]
 let version = 0
 let saveTimer: ReturnType<typeof setTimeout> | null = null
 
@@ -132,17 +138,20 @@ function scheduleSave() {
     fetch('/api/save-bizflows', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ flows }),
+      body: JSON.stringify(flows),  // 统一存裸数组（与 src/console 其他样例 JSON 一致）
     }).then((r) => { if (!r.ok) console.error('[flowStore] 保存失败:', r.status) })
       .catch((e) => console.error('[flowStore] 保存异常:', e))
   }, 300)
 }
 
-// 启动时加载已保存的文件
+// 启动时加载已保存的文件：兼容裸数组（当前格式）与 { flows: [...] }（旧格式）两种返回
 try {
   const saved = await fetch('/api/load-bizflows').then((r) => (r.ok ? r.json() : null)).catch(() => null)
-  if (saved && Array.isArray(saved.flows)) flows = saved.flows
-} catch { /* 首次启动无文件时用代码默认 */ }
+  if (saved) {
+    const list = Array.isArray(saved) ? saved : (saved as { flows?: unknown }).flows
+    if (Array.isArray(list) && list.length) flows = list as FlowItem[]
+  }
+} catch { /* 加载失败时保持 SEED 兜底（bizFlows.json 静态 import） */ }
 
 /* ---------- 订阅 ---------- */
 const listeners = new Set<() => void>()

@@ -1375,7 +1375,7 @@ export interface MidDisposeTask {
 }
 
 /* 需求20：SEED 客户兜底图谱/风险维度（文件已持久化时不用） */
-function withCustGraph(c: MidCustomer): MidCustomer {
+export function withCustGraph(c: MidCustomer): MidCustomer {
   if (c.relations && c.riskDims) return c;
   const base = c.riskLevel === '高风险' ? 72 : c.riskLevel === '中风险' ? 48 : 22;
   return {
