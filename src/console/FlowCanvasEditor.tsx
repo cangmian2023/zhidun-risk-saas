@@ -27,50 +27,6 @@ const nid = () => `n_${Date.now().toString(36)}_${seq++}`
 const eid = () => `e_${Date.now().toString(36)}_${seq++}`
 const clamp = (v: number, min: number, max: number) => Math.max(min, Math.min(max, v))
 
-// 审批意见预设编辑器：按审批结果分组，每组可增删选项（运行时另允许手输）
-function OpinionPresetsEditor({ node, patchNode, readOnly }: {
-  node: FlowGraphNode
-  patchNode: (id: string, p: Partial<FlowGraphNode>) => void
-  readOnly?: boolean
-}) {
-  const base = node.opinionPresets ?? defaultOpinionPresets()
-  // 用户节点可能只配了部分结果的预设 → 缺键兜底为空数组，避免 presets[r].length 崩溃
-  const presets: Record<ReviewResult, string[]> = {
-    '通过': base['通过'] ?? [],
-    '转人工': base['转人工'] ?? [],
-    '拒绝': base['拒绝'] ?? [],
-  }
-  const [draft, setDraft] = useState<Record<ReviewResult, string>>({ '通过': '', '转人工': '', '拒绝': '' })
-  const setGroup = (r: ReviewResult, next: string[]) => patchNode(node.id, { opinionPresets: { ...presets, [r]: next } })
-  return (
-    <div style={{ marginTop: 4, border: '1px solid #E5E7EB', borderRadius: 6, padding: 8, display: 'flex', flexDirection: 'column', gap: 8 }}>
-      {REVIEW_RESULTS.map((r) => (
-        <div key={r}>
-          <div style={{ fontSize: 11, fontWeight: 600, color: '#6B7280', marginBottom: 3 }}>{r}时的审批意见</div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-            {presets[r].length === 0 ? (
-              <span style={{ fontSize: 11, color: '#9CA3AF' }}>（默认无预设，添加后生成标签）</span>
-            ) : (
-              presets[r].map((o) => (
-                <span key={o} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 12, background: '#F1F5F9', borderRadius: 12, padding: '2px 8px', color: '#374151' }}>
-                  {o}
-                  {!readOnly && <button onClick={() => setGroup(r, presets[r].filter((x) => x !== o))} style={{ border: 'none', background: 'transparent', color: '#DC2626', cursor: 'pointer', fontSize: 12, lineHeight: 1, padding: 0 }}>×</button>}
-                </span>
-              ))
-            )}
-          </div>
-          {!readOnly && (
-            <div style={{ display: 'flex', gap: 4, marginTop: 4 }}>
-              <input value={draft[r]} onChange={(e) => setDraft((d) => ({ ...d, [r]: e.target.value }))} placeholder={`自定义（${r}）`} style={{ ...inp, flex: 1 }} />
-              <button onClick={() => { const v = draft[r].trim(); if (v && !presets[r].includes(v)) setGroup(r, [...presets[r], v]); setDraft((d) => ({ ...d, [r]: '' })) }} style={{ border: '1px solid #E5E7EB', borderRadius: 6, padding: '4px 10px', fontSize: 12, background: '#fff', cursor: 'pointer' }}>添加</button>
-            </div>
-          )}
-        </div>
-      ))}
-    </div>
-  )
-}
-
 /* 视图工具栏：图标按钮 + tooltip（浮于画布右上角） */
 const IconBtn = ({ title, onClick, children }: { title: string; onClick: () => void; children: React.ReactNode }) => (
   <button title={title} onClick={(e) => { e.stopPropagation(); onClick() }}
@@ -113,6 +69,7 @@ export default function FlowCanvasEditor({ graph, onChange, readOnly, statusEnum
 
   const patchNode = (id: string, p: Partial<FlowGraphNode>) =>
     onChange({ ...graph, nodes: graph.nodes.map((n) => (n.id === id ? { ...n, ...p } : n)) })
+  const [draft, setDraft] = useState<Record<ReviewResult, string>>({ '通过': '', '转人工': '', '拒绝': '' })
   const patchEdge = (id: string, p: Partial<FlowGraphEdge>) =>
     onChange({ ...graph, edges: graph.edges.map((e) => (e.id === id ? { ...e, ...p } : e)) })
 
@@ -391,16 +348,13 @@ export default function FlowCanvasEditor({ graph, onChange, readOnly, statusEnum
             <IconBtn title="居中" onClick={centerView}><IconCenter /></IconBtn>
             <IconBtn title="全屏" onClick={toggleFull}><IconFull /></IconBtn>
           </div>
-          {/* 需求8.2：节点属性弹层（点击图上节点后在图上弹出；节点已置中） */}
+          {/* 需求8.2/8.3：节点属性面板（点击节点弹出，固定画板左侧、高度=画板高-5px；节点已置中） */}
           {selected && (() => {
             const n = selected
-            const cx = n.x + NODE_W / 2, cy = n.y + NODE_H / 2
-            const sx = offset.x + cx * scale, sy = offset.y + cy * scale
-            const cw = canvasRef.current?.clientWidth ?? 800, ch = CANVAS_H, W = 282
-            const px = clamp(sx + (NODE_W * scale) / 2 + 14, 8, Math.max(8, cw - W - 8))
-            const py = clamp(sy - 90, 8, Math.max(8, ch - 340))
+            const W = 282
+            const ch = canvasRef.current?.clientHeight ?? CANVAS_H
             return (
-              <div onClick={(e) => e.stopPropagation()} style={{ position: 'absolute', left: px, top: py, width: W, zIndex: 20, background: '#fff', border: '1px solid #E5E7EB', borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,.12)', padding: 12, maxHeight: ch - 16, overflowY: 'auto' }}>
+              <div onClick={(e) => e.stopPropagation()} style={{ position: 'absolute', left: 8, top: 0, height: ch - 5, width: W, zIndex: 20, background: '#fff', border: '1px solid #E5E7EB', borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,.12)', padding: 12, overflowY: 'auto' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
                   <div>
                     <div style={{ fontSize: 13, fontWeight: 600, color: FLOW_NODE_TYPE_COLOR[n.type].text }}>节点属性</div>
@@ -471,21 +425,44 @@ export default function FlowCanvasEditor({ graph, onChange, readOnly, statusEnum
                           </div>
                         )}
                       </div>
-                      {/* 审批结果 → 状态映射（与「弹出内容·审批结果」合并，复选框即是否可选该结果） */}
+                      {/* 审批结果 → 状态与默认意见（需求8.4：意见与结果合并；8.5：移除「从预设选择」） */}
                       <div style={{ border: '1px solid #E5E7EB', borderRadius: 8, padding: 10, background: '#F9FAFB' }}>
-                        <div style={{ fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 6 }}>审批结果 → 状态映射（驱动运行时工单状态）</div>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                        <div style={{ fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 6 }}>审批结果 → 状态映射与默认意见（驱动运行时工单状态；意见可在运行时修改）</div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                           {REVIEW_RESULTS.map((r) => {
                             const on = (n.results ?? REVIEW_RESULTS).includes(r)
+                            const presets = n.opinionPresets ?? defaultOpinionPresets()
+                            const list = presets[r] ?? []
                             return (
-                              <div key={r} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                                <input type="checkbox" disabled={readOnly} checked={on}
-                                  onChange={(e) => { const cur = n.results ?? REVIEW_RESULTS; patchNode(n.id, { results: e.target.checked ? [...cur, r] : cur.filter((x) => x !== r) }) }} />
-                                <span style={{ width: 42, fontSize: 12, color: '#374151' }}>{r}</span>
-                                <span style={{ color: '#9CA3AF' }}>→</span>
-                                <input disabled={readOnly} value={n.resultStates?.[r] ?? ''}
-                                  onChange={(e) => patchNode(n.id, { resultStates: { ...(n.resultStates ?? {}), [r]: e.target.value } })}
-                                  placeholder="操作后状态" list="statusEnumList" style={{ ...inp, flex: 1 }} />
+                              <div key={r} style={{ borderTop: '1px dashed #E5E7EB', paddingTop: 8 }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                  <input type="checkbox" disabled={readOnly} checked={on}
+                                    onChange={(e) => { const cur = n.results ?? REVIEW_RESULTS; patchNode(n.id, { results: e.target.checked ? [...cur, r] : cur.filter((x) => x !== r) }) }} />
+                                  <span style={{ width: 42, fontSize: 12, color: '#374151', fontWeight: 600 }}>{r}</span>
+                                  <span style={{ color: '#9CA3AF' }}>→</span>
+                                  <input disabled={readOnly} value={n.resultStates?.[r] ?? ''}
+                                    onChange={(e) => patchNode(n.id, { resultStates: { ...(n.resultStates ?? {}), [r]: e.target.value } })}
+                                    placeholder="操作后状态" list="statusEnumList" style={{ ...inp, flex: 1 }} />
+                                </div>
+                                <div style={{ marginTop: 6 }}>
+                                  <div style={{ fontSize: 11, color: '#6B7280', marginBottom: 3 }}>默认审批意见（运行时可修改）</div>
+                                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                                    {list.length === 0 ? (
+                                      <span style={{ fontSize: 11, color: '#9CA3AF' }}>（默认无，运行时再填写）</span>
+                                    ) : list.map((o: string) => (
+                                      <span key={o} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 12, background: '#F1F5F9', borderRadius: 12, padding: '2px 8px', color: '#374151' }}>
+                                        {o}
+                                        {!readOnly && <button onClick={() => { const next = list.filter((x) => x !== o); patchNode(n.id, { opinionPresets: { ...presets, [r]: next } }) }} style={{ border: 'none', background: 'transparent', color: '#DC2626', cursor: 'pointer', fontSize: 12, lineHeight: 1, padding: 0 }}>×</button>}
+                                      </span>
+                                    ))}
+                                  </div>
+                                  {!readOnly && (
+                                    <div style={{ display: 'flex', gap: 4, marginTop: 4 }}>
+                                      <input value={draft[r] ?? ''} onChange={(e) => setDraft((d) => ({ ...d, [r]: e.target.value }))} placeholder={`添加「${r}」默认意见`} style={{ ...inp, flex: 1 }} />
+                                      <button onClick={() => { const v = (draft[r] ?? '').trim(); if (v && !list.includes(v)) patchNode(n.id, { opinionPresets: { ...presets, [r]: [...list, v] } }); setDraft((d) => ({ ...d, [r]: '' })) }} style={{ border: '1px solid #E5E7EB', borderRadius: 6, padding: '4px 10px', fontSize: 12, background: '#fff', cursor: 'pointer' }}>添加</button>
+                                    </div>
+                                  )}
+                                </div>
                               </div>
                             )
                           })}
@@ -497,10 +474,7 @@ export default function FlowCanvasEditor({ graph, onChange, readOnly, statusEnum
                             </label>
                           </div>
                         )}
-                        <div style={{ marginTop: 4, fontSize: 11, color: '#9CA3AF' }}>勾选即该结果可选；取值来自本分段「状态枚举类」；运行时按所选审批结果落地对应状态。</div>
-                      </div>
-                      <div style={{ fontSize: 12, color: '#6B7280' }}>弹出内容 · 审批意见（按结果分组，可自定义）
-                        <OpinionPresetsEditor node={n} patchNode={patchNode} readOnly={readOnly} />
+                        <div style={{ marginTop: 4, fontSize: 11, color: '#9CA3AF' }}>勾选即该结果可选；取值来自本分段「状态枚举类」；运行时按所选审批结果落地对应状态，并可在审批时修改默认意见。</div>
                       </div>
                       <label style={{ fontSize: 12, color: '#6B7280' }}>附注
                         <input disabled={readOnly} value={n.note ?? ''} onChange={(e) => patchNode(n.id, { note: e.target.value })} placeholder="选填" style={{ ...inp, marginTop: 4 }} />

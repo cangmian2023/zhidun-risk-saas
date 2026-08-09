@@ -1345,6 +1345,9 @@ export interface CustRelationNode {
   regCapital?: string             // 注册资本（企业）
   legalPerson?: string            // 法定代表人（企业）
   note?: string                   // 备注
+  ringId?: number                 // 团伙编号（1=主体关联团伙 / 2=介质关联群体）
+  ringName?: string               // 团伙名称
+  ringRisk?: '高' | '中' | '低'   // 团伙风险
 }
 export interface CustCreditInfo {
   term: number; rate: number; repayMethod: string; branch: string;
@@ -1378,7 +1381,75 @@ export interface MidCustomer {
   credit?: CustCreditInfo;          // 信贷信息（补全）
   env?: CustEnvInfo;                // 环境信息（补全）
   behavior?: CustBehaviorInfo;      // 行为信息（补全）
+  photos?: { user?: string; idCard?: string; latest?: string };  // 影像资料（用户/身份证/最新，补全占位）
+  creditReport?: CustCreditReport;  // 需求11：征信主题
+  income?: CustIncomeInfo;          // 需求11：收入负债主题
+  collaterals?: CustCollateral[];   // 需求11：担保抵押（经营贷）
+  guarantors?: CustGuarantor[];     // 需求11：担保人
+  business?: CustBusinessInfo;      // 需求11：企业经营（经营贷）
+  fundFlow?: CustFundFlow;          // 需求11：资金流向（贷后）
+  blacklist?: CustBlacklist;        // 需求11：黑名单反欺诈
+  scores?: CustModelScore;          // 需求11审核：模型评分快照（智察/智信/智融 + 额度建议）
+  externalChecks?: CustExternalCheck[]; // 需求11审核：外部数据核验（工商/司法/税务/社保）
+  approvalRecords?: CustApprovalRecord[]; // 需求11审核：审批决策历史
 }
+
+/* 模型评分快照（智察/智信/智融 三评分卡 + 额度建议） */
+export interface ModelScoreFactor { name: string; level: '高' | '中' | '低'; contribution: number }
+export interface ModelScoreItem {
+  score: number; range: [number, number]; unit: string; hint: string;
+  factors: ModelScoreFactor[];
+}
+export interface CustModelScore {
+  zhicha: ModelScoreItem;   // 智察分（欺诈，越高越危险）
+  zhixin: ModelScoreItem;   // 智信分（信用，越高越好）
+  zhirong: ModelScoreItem;  // 智融分（综合，越高越好）
+  limitSuggest: string;     // 额度建议
+  limit: number;
+}
+export interface CustExternalCheck {
+  category: '工商' | '司法' | '税务' | '社保';
+  item: string;            // 核验项
+  result: string;          // 核验结果
+  status: '正常' | '关注' | '异常';
+}
+export interface CustApprovalRecord {
+  time: string;
+  kind: string;             // 准入 / 授信 / 预警处置 等
+  result: '通过' | '拒绝' | '转人工';
+  opinion: string;          // 审批意见
+  operator: string;
+}
+
+/* ---------- 需求11：单客详情新增主题数据结构 ---------- */
+export interface CreditQueryRec { month: string; count: number; institutions: string[] }      // 征信查询记录（近6月）
+export interface CreditAccount { institution: string; type: string; limit: number; balance: number; status: string; openDate: string }  // 信贷账户明细
+export interface CreditOverdue { date: string; institution: string; days: number; amount: number }  // 逾期记录
+export interface CreditGuaranty { org: string; amount: number; remain: number }               // 对外担保
+export interface CustCreditReport {
+  queries: CreditQueryRec[];        // 近6月征信查询
+  accounts: CreditAccount[];        // 信贷账户明细（含本行）
+  overdues: CreditOverdue[];        // 逾期记录
+  guaranties: CreditGuaranty[];     // 对外担保
+}
+export interface CustIncomeInfo {
+  monthIncome: number;              // 月收入（元）
+  monthRepay: number;               // 月供（元）
+  dti: number;                      // 收入负债比 %（月供/月收入）
+  debtTotal: number;                // 总负债（元）
+  assetTotal: number;               // 总资产（元）
+  liabilityRatio: number;           // 资产负债率 %
+}
+export interface CustCollateral { type: string; name: string; valuation: number; loanAmount: number; ratio: number; status: string }  // 抵押物
+export interface CustGuarantor { name: string; relation: string; credit: string }             // 担保人
+export interface CustBusinessInfo {
+  companyName: string; industry: string; monthRevenue: number; taxMonthly: number;
+  invoiceYear: number; employees: number; operateYears: number; accountBalance: number;
+}
+export interface FundFlowRec { date: string; amount: number; to: string; note: string; risk: '正常' | '关注' | '疑似回流' }
+export interface CustFundFlow { purpose: string; riskFlag: string; flows: FundFlowRec[] }
+export interface BlacklistHit { list: string; matched: string; date: string; score: number }
+export interface CustBlacklist { hits: BlacklistHit[]; fraudTags: string[]; riskScore: number }
 
 export type DisposeStatus = '待处置' | '核实中' | '处置中' | '已解除' | '已升级' | '误报';
 export interface MidDisposeTask {
@@ -1403,12 +1474,24 @@ function hashStr(s: string): number {
   return h >>> 0;
 }
 
+/* 影像占位图（离线 SVG data URI，无网络依赖）；accent 不带 # */
+function photoPlaceholder(text: string, accent: string): string {
+  const svg =
+    `<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'>` +
+    `<rect width='120' height='120' rx='8' fill='#F1F5F9'/>` +
+    `<circle cx='60' cy='44' r='19' fill='#${accent}'/>` +
+    `<rect x='36' y='72' width='48' height='26' rx='6' fill='#${accent}'/>` +
+    `<text x='60' y='113' text-anchor='middle' font-size='11' fill='#64748B'>${text}</text>` +
+    `</svg>`;
+  return 'data:image/svg+xml,' + encodeURIComponent(svg);
+}
+
 /* 需求20/补全：为客户兜底图谱/风险维度，并补全关系人详情、信贷、环境、行为字段
    （文件已持久化时也会再次补全，确保组件始终能读到这些字段） */
 export function withCustGraph(c: MidCustomer): MidCustomer {
   const base = c.riskLevel === '高风险' ? 72 : c.riskLevel === '中风险' ? 48 : 22;
   const h = hashStr(c.custId);
-  const relations = (c.relations ?? [
+  const baseRels = (c.relations ?? [
     { id: c.custId + '-r0', name: '华信商贸', rel: '法人', type: 'company' as const },
     { id: c.custId + '-r1', name: 'IMEI-86' + c.custId.slice(1), rel: '设备', type: 'device' as const },
   ]).map((r, i) => {
@@ -1425,6 +1508,20 @@ export function withCustGraph(c: MidCustomer): MidCustomer {
       regCapital: r.type === 'company' ? (300 + (h % 7) * 150) + '万' : undefined,
       legalPerson: r.type === 'company' ? c.name : undefined,
       note: riskLevel === '高' ? '关联实体命中风险，已纳入联合监控' : '正常关联实体',
+    } as CustRelationNode;
+  });
+  // 团伙识别：主体类（企业/个人/担保/共借）归为「主体关联团伙」，介质类（设备/联系人）归为「介质关联群体」
+  const ringKey = (r: CustRelationNode) =>
+    (r.type === 'company' || r.type === 'person' || (r.rel ?? '').includes('担保') || (r.rel ?? '').includes('共借')) ? 1 : 2;
+  const ringHi: Record<number, boolean> = {};
+  baseRels.forEach((r) => { const k = ringKey(r); if (r.riskLevel === '高') ringHi[k] = true; });
+  const relations = baseRels.map((r) => {
+    const k = ringKey(r);
+    return {
+      ...r,
+      ringId: k,
+      ringName: k === 1 ? '主体关联团伙' : '介质关联群体',
+      ringRisk: ringHi[k] ? '高' : '中',
     } as CustRelationNode;
   });
   const riskDims = c.riskDims ?? ['负债', '多头', '欺诈', '司法', '行为', '舆情'].map((dim, i) => ({ dim, score: Math.max(8, Math.min(96, base + i * 3)) }));
@@ -1457,7 +1554,124 @@ export function withCustGraph(c: MidCustomer): MidCustomer {
       { time: '2026-07-' + String((h % 27) + 1).padStart(2, '0') + ' 10:05', type: '还款', detail: '按期归还当期 ¥' + credit.curDue },
     ],
   };
-  return { ...c, relations, riskDims, credit, env, behavior };
+  const photos = c.photos ?? {
+    user: photoPlaceholder(c.name?.[0] ?? '客', '用户照片', '2563EB'),
+    idCard: photoPlaceholder('身份证', '身份证照片', '475569'),
+    latest: photoPlaceholder('最新采集', '最新照片', '0891B2'),
+  };
+  /* ---------- 需求11：新增主题兜底（征信/收入负债/担保抵押/企业经营/资金流向/黑名单） ---------- */
+  const risk = c.riskLevel, hi = risk === '高风险', mid = risk === '中风险';
+  const income = c.income ?? (() => {
+    const monthIncome = 8000 + (h % 30) * 500;
+    const monthRepay = hi ? Math.round(c.loanBalance / 12) : Math.round(c.loanBalance / 24);
+    const debtTotal = c.loanBalance + (h % 8) * 20000;
+    const assetTotal = Math.max(1, c.creditLine * (2 + (h % 4)));
+    return {
+      monthIncome, monthRepay,
+      dti: Math.round(monthRepay / monthIncome * 100),
+      debtTotal, assetTotal,
+      liabilityRatio: Math.min(95, Math.round(debtTotal / assetTotal * 100)),
+    } as CustIncomeInfo;
+  })();
+  const INSTS = ['A银行', 'B消费金融', 'C小贷', 'D平台贷', 'E银行', 'F消金'];
+  const creditReport = c.creditReport ?? (() => {
+    const qBase = hi ? 5 : mid ? 3 : 1;
+    const months = ['2026-03', '2026-04', '2026-05', '2026-06', '2026-07', '2026-08'];
+    const queries: CreditQueryRec[] = months.map((m, i) => {
+      const cnt = Math.max(0, qBase + ((h >> i) % 3) - 1);
+      return { month: m, count: cnt, institutions: cnt ? [INSTS[(h + i) % 6], INSTS[(h + i + 2) % 6]].slice(0, cnt > 1 ? 2 : 1) : [] };
+    });
+    const accounts: CreditAccount[] = [
+      { institution: '本行', type: c.product, limit: c.creditLine, balance: c.loanBalance, status: '正常', openDate: '2025-' + String((h % 12) + 1).padStart(2, '0') + '-' + String((h % 27) + 1).padStart(2, '0') },
+      { institution: INSTS[(h + 1) % 6], type: '消费贷', limit: 50000 + (h % 5) * 10000, balance: 12000 + (h % 9) * 5000, status: hi ? '逾期' : '正常', openDate: '2025-' + String(((h + 3) % 12) + 1).padStart(2, '0') + '-' + String((h % 27) + 1).padStart(2, '0') },
+      { institution: INSTS[(h + 3) % 6], type: '信用卡', limit: 20000 + (h % 4) * 10000, balance: 6000 + (h % 8) * 2000, status: '正常', openDate: '2024-' + String(((h + 6) % 12) + 1).padStart(2, '0') + '-' + String((h % 27) + 1).padStart(2, '0') },
+    ];
+    const overdues: CreditOverdue[] = hi
+      ? [{ date: '2026-06-12', institution: INSTS[(h + 1) % 6], days: 8, amount: 3200 + (h % 5) * 1000 }, { date: '2026-04-03', institution: INSTS[(h + 3) % 6], days: 3, amount: 1500 + (h % 4) * 500 }]
+      : mid ? [{ date: '2026-05-20', institution: INSTS[(h + 3) % 6], days: 2, amount: 800 + (h % 4) * 300 }] : [];
+    const guaranties: CreditGuaranty[] = (hi || mid)
+      ? [{ org: '杭州' + c.name.slice(1) + '商贸', amount: 500000 + (h % 5) * 100000, remain: 200000 + (h % 4) * 50000 }] : [];
+    return { queries, accounts, overdues, guaranties } as CustCreditReport;
+  })();
+  const hasBiz = c.product === '经营贷' || c.product === '抵押贷';
+  const collaterals = c.collaterals ?? (hasBiz ? [
+    { type: '房产', name: '住宅抵押（' + ['城西', '滨江', '拱墅'][h % 3] + '）', valuation: 1800000 + (h % 9) * 100000, loanAmount: c.creditLine, ratio: Math.round(c.creditLine / (1800000 + (h % 9) * 100000) * 100), status: '足值' },
+    ...(hi ? [{ type: '车辆', name: '浙A·' + (1000 + h % 9000) + ' 轿车', valuation: 180000, loanAmount: 120000, ratio: 67, status: '足值' } as CustCollateral] : []),
+  ] : []);
+  const PERS = ['王*强', '李*丽', '赵*军', '陈*敏', '刘*华'];
+  const guarantors = c.guarantors ?? (hasBiz ? [
+    { name: PERS[h % 5], relation: '配偶', credit: '征信正常' },
+    ...(hi ? [{ name: PERS[(h + 2) % 5], relation: '股东', credit: '征信有 1 笔逾期' }] : []),
+  ] : []);
+  const business = c.business ?? (hasBiz ? {
+    companyName: ['杭州', '宁波', '绍兴'][h % 3] + c.name.slice(1) + '商贸有限公司',
+    industry: ['批发零售', '电商', '餐饮', '建材'][h % 4],
+    monthRevenue: 300000 + (h % 60) * 10000,
+    taxMonthly: 6000 + (h % 30) * 1000,
+    invoiceYear: 4000000 + (h % 80) * 50000,
+    employees: 8 + (h % 25),
+    operateYears: 2 + (h % 8),
+    accountBalance: 80000 + (h % 20) * 10000,
+  } as CustBusinessInfo : undefined);
+  const fundFlow = c.fundFlow ?? {
+    purpose: '经营周转',
+    riskFlag: hi ? '疑似回流' : '正常',
+    flows: [
+      { date: '2026-07-15', amount: Math.round(c.loanBalance * 0.4), to: '供应商 A（对公）', note: '货款结算', risk: '正常' },
+      { date: '2026-07-16', amount: Math.round(c.loanBalance * 0.3), to: '供应商 B（对公）', note: '货款结算', risk: '正常' },
+      ...(hi ? [{ date: '2026-07-18', amount: Math.round(c.loanBalance * 0.2), to: '个人账户 王**', note: '大额转个人', risk: '疑似回流' as const }] : []),
+      { date: '2026-07-22', amount: Math.round(c.loanBalance * 0.1), to: '经营场所租金', note: '租金支付', risk: '正常' },
+    ],
+  } as CustFundFlow;
+  const blacklist = c.blacklist ?? {
+    hits: hi
+      ? [{ list: '网贷黑名单', matched: '手机号命中', date: '2026-06-20', score: 86 }, { list: '反欺诈名单', matched: '设备关联欺诈用户', date: '2026-07-02', score: 78 }]
+      : mid ? [{ list: '观察名单', matched: 'IP 段聚集', date: '2026-07-10', score: 52 }] : [],
+    fraudTags: hi ? ['设备聚集', '深夜申请'] : mid ? ['资料频繁修改'] : [],
+    riskScore: hi ? 82 : mid ? 45 : 12,
+  } as CustBlacklist;
+  /* 需求11审核：模型评分快照 / 外部数据核验 / 审批决策历史 */
+  const lvlBad: ModelScoreFactor['level'] = hi ? '高' : mid ? '中' : '低';
+  const lvlGood: ModelScoreFactor['level'] = hi ? '低' : mid ? '中' : '高';
+  const lvlMid: ModelScoreFactor['level'] = '中';
+  const scores = c.scores ?? (() => {
+    const zc = hi ? 82 : mid ? 55 : 28;     // 智察分 0-100 欺诈
+    const zx = hi ? 560 : mid ? 650 : 782;  // 智信分 300-900 信用
+    const zr = hi ? 520 : mid ? 640 : 760;  // 智融分 300-900 综合
+    const mk = (score: number, range: [number, number], unit: string, hint: string, f: ModelScoreFactor[]): ModelScoreItem => ({ score, range, unit, hint, factors: f });
+    const limit = hi ? Math.round(c.creditLine * 0.5) : mid ? Math.round(c.creditLine * 0.85) : c.creditLine;
+    return {
+      zhicha: mk(zc, [0, 100], '欺诈分', '越高欺诈风险越高', [
+        { name: '设备聚集', level: lvlBad, contribution: 30 },
+        { name: '申请频次', level: lvlBad, contribution: 26 },
+        { name: '黑产特征', level: lvlMid, contribution: 18 },
+      ]),
+      zhixin: mk(zx, [300, 900], '信用分', '越高违约概率越低', [
+        { name: '历史还款', level: lvlGood, contribution: 28 },
+        { name: '负债结构', level: lvlMid, contribution: 22 },
+        { name: '收入稳定', level: lvlGood, contribution: 20 },
+      ]),
+      zhirong: mk(zr, [300, 900], '综合分', '综合风险与价值', [
+        { name: '信用表现', level: lvlGood, contribution: 26 },
+        { name: '价值贡献', level: lvlGood, contribution: 24 },
+        { name: '稳定性', level: lvlMid, contribution: 19 },
+      ]),
+      limitSuggest: hi ? '建议拒贷 / 降额' : mid ? '建议审慎授信并加强监测' : '建议正常授信',
+      limit,
+    } as CustModelScore;
+  })();
+  const externalChecks = c.externalChecks ?? ([
+    { category: '工商', item: '经营状态 / 注册资本', result: '存续正常', status: '正常' },
+    { category: '司法', item: '涉诉 / 被执行', result: hi ? '存在 1 条民间借贷纠纷' : '无重大涉诉记录', status: hi ? '异常' : '正常' },
+    { category: '税务', item: '纳税信用', result: '近 12 月纳税正常', status: '正常' },
+    { category: '社保', item: '社保 / 公积金', result: hasBiz ? '单位正常缴纳' : '个人灵活就业参保', status: '正常' },
+  ] as CustExternalCheck[]);
+  const approvalRecords = c.approvalRecords ?? ([
+    { time: credit.loanDate, kind: '授信准入', result: hi ? '转人工' : '通过', opinion: hi ? '风险偏高，转人工复核后准入' : '资质符合要求，正常准入', operator: '准入初审岗' },
+    { time: credit.loanDate, kind: '授信审批', result: hi ? '转人工' : '通过', opinion: `核定授信额度 ¥${hi ? Math.round(c.creditLine * 0.5).toLocaleString() : c.creditLine.toLocaleString()}`, operator: '授信审批岗' },
+    ...(hi ? [{ time: '2026-08-04', kind: '预警处置', result: '转人工' as const, opinion: '高危预警，转人工核查并启动预催', operator: '贷中监控' }] : []),
+  ] as CustApprovalRecord[]);
+  return { ...c, relations, riskDims, credit, env, behavior, photos, creditReport, income, collaterals, guarantors, business, fundFlow, blacklist, scores, externalChecks, approvalRecords };
 }
 export const SEED_CUSTOMERS: MidCustomer[] = [
   {
