@@ -25,6 +25,7 @@ import MidDisposeConfig from './MidDisposeConfig'
 import MidDashboardConfig from './MidDashboardConfig'
 import MidAlertWorkbench from './MidAlertWorkbench'
 import MidCustDetail from './MidCustDetail'
+import CustScoreDetail from './CustScoreDetail'
 import MidDisposeWorkbench from './MidDisposeWorkbench'
 import MidDataSourceDetail from './MidDataSourceDetail'
 import MidMetricDetail from './MidMetricDetail'
@@ -595,6 +596,8 @@ export default function Console() {
               <MidDisposeWorkbench />
             ) : key === 'cr:mid-cust-detail' ? (
               <MidCustDetail />
+            ) : key === 'cr:mid-cust-score' ? (
+              <CustScoreDetail />
             ) : key === 'cm:mid-data-source-detail' ? (
               <MidDataSourceDetail />
             ) : key === 'cm:mid-metric-detail' ? (

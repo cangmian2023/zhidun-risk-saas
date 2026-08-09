@@ -273,7 +273,7 @@ export default function MidCustDetail() {
         desc={<span>准入/授信模型三评分卡 <Sam label="样例" /> 智察(反欺诈) / 智信(信用) / 智融(综合) 与额度建议</span>}
         className="mb-4"
       >
-        {cust.scores ? <ModelScorePanel s={cust.scores} /> : <div style={{ fontSize: 13, color: '#94A3B8' }}>暂无模型评分数据</div>}
+        {cust.scores ? <ModelScorePanel s={cust.scores} custId={cust.custId} fromAlertId={fromAlertId} /> : <div style={{ fontSize: 13, color: '#94A3B8' }}>暂无模型评分数据</div>}
       </Panel>
 
       {/* 需求11：收入负债（还款能力核心，基本信息后立即展示） */}
@@ -1145,7 +1145,8 @@ function RiskPanel({ c }: { c: MidCustomer }) {
 }
 
 /* 需求11审核：模型评分快照（智察/智信/智融 三评分卡 + 额度建议） */
-function ModelScorePanel({ s }: { s: CustModelScore }) {
+function ModelScorePanel({ s, custId, fromAlertId }: { s: CustModelScore; custId: string; fromAlertId?: string }) {
+  const nav = useNavigate();
   const cards = [
     { key: 'zhicha', label: '智察分', sub: '反欺诈', item: s.zhicha, danger: true },
     { key: 'zhixin', label: '智信分', sub: '信用', item: s.zhixin, danger: false },
@@ -1164,7 +1165,11 @@ function ModelScorePanel({ s }: { s: CustModelScore }) {
           const it = c.item;
           const col = scoreColor(it.score, it.range, c.danger);
           return (
-            <div key={c.key} style={{ border: '1px solid #F1F5F9', borderRadius: 12, padding: '14px 16px' }}>
+            <div key={c.key}
+              onClick={() => nav('/console/cr/mid-cust-score?cust=' + custId + '&prod=' + c.key + (fromAlertId ? '&id=' + fromAlertId : ''))}
+              title={'查看' + c.label + '详情'}
+              className="cursor-pointer transition-shadow hover:shadow-md"
+              style={{ border: '1px solid #F1F5F9', borderRadius: 12, padding: '14px 16px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
                 <span style={{ fontSize: 13, fontWeight: 600, color: '#1E293B' }}>{c.label}</span>
                 <span style={{ fontSize: 11, color: '#94A3B8' }}>{c.sub}</span>
@@ -1188,6 +1193,7 @@ function ModelScorePanel({ s }: { s: CustModelScore }) {
                   );
                 })}
               </div>
+              <div style={{ marginTop: 10, fontSize: 11, fontWeight: 600, color: '#2563EB' }}>查看得分详情 →</div>
             </div>
           );
         })}

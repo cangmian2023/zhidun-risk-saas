@@ -1396,9 +1396,24 @@ export interface MidCustomer {
 
 /* 模型评分快照（智察/智信/智融 三评分卡 + 额度建议） */
 export interface ModelScoreFactor { name: string; level: '高' | '中' | '低'; contribution: number }
+/* 得分证据明细（可解释性：规则命中 / 评分卡项 / 融合构成） */
+export interface ScoreEvidenceItem {
+  name: string;     // 证据名（规则 / 评分项 / 融合来源）
+  value: string;    // 证据明细值（为什么 / 具体命中内容）
+  weight: number;   // 贡献权重 %
+  tag?: string;     // 徽标：命中 / 关注 / 评分项 / 融合来源
+}
 export interface ModelScoreItem {
   score: number; range: [number, number]; unit: string; hint: string;
   factors: ModelScoreFactor[];
+  /* 可解释性（监管/审核）：概率、等级、决策建议、模型版本、评分时间、证据明细 */
+  probability?: string;
+  grade?: string;
+  gradeLabel?: string;
+  suggestion?: string;
+  modelVersion?: string;
+  calcedAt?: string;
+  evidence?: ScoreEvidenceItem[];
 }
 export interface CustModelScore {
   zhicha: ModelScoreItem;   // 智察分（欺诈，越高越危险）
