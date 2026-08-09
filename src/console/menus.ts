@@ -6,7 +6,6 @@ export const portalSubsystems = [
   { key: 'cr', name: '零售信贷风控', desc: '覆盖消费金融、现金贷、小微经营贷等业务的贷前审核与贷中监控。', color: 'from-rose-500 to-orange-500', open: true },
   { key: 'sc', name: '评分产品', desc: '智察分、智信分、智融分三类评分模型产品。', color: 'from-violet-500 to-fuchsia-500', open: true },
   { key: 'ep', name: '企业风控', desc: '面向企业客户的贷前核验、信用评估与关联图谱。', color: 'from-sky-500 to-cyan-500', open: false },
-  { key: 'qy', name: '企业档案', desc: '企查查式企业工商档案：工商信息、股东与主要人员、对外投资与分支、司法与经营风险、经营信息、企业发展与知识产权全维度画像。', color: 'from-teal-500 to-emerald-500', open: true },
   { key: 'dm', name: '数字营销', desc: '猎客雷达、猎客信使、RTA 服务等营销获客工具。', color: 'from-emerald-500 to-teal-500', open: false },
   { key: 'dg', name: '数据治理', desc: '数据底座与元数据治理：元事件、属性、维度表、虚拟属性/事件与埋点定义。', color: 'from-indigo-500 to-blue-500', open: true },
   { key: 'zz', name: '催贷管理', desc: '智能催收（催贷）子系统：案件资产全生命周期、合规触达、委外监管、AI 质检、协商回款与催收 BI 看板。', color: 'from-amber-500 to-red-500', open: true },
@@ -123,6 +122,13 @@ export const entMenu: MenuGroup[] = [
       { label: '企业监控任务', key: 'ep:ent-mid-task', desc: '展示企业客户的监控任务' },
       { label: '企业预警', key: 'ep:ent-mid-alert', desc: '展示企业经营异常、司法风险、舆情风险等预警' },
       { label: '企业风险', key: 'ep:ent-mid-board', desc: '展示企业客群的实时风险分布' },
+    ],
+  },
+  {
+    group: '企业档案',
+    items: [
+      { label: '企业档案检索', key: 'ep:qiye-search', desc: '按企业名称 / 行业 / 法定代表人 / 唯一标识检索企业工商档案，查看全维度画像', keep: true },
+      { label: '企业档案', key: 'ep:qiye-profile', desc: '工商信息 / 股东与主要人员 / 对外投资与分支 / 司法与经营风险 / 经营信息 / 企业发展 / 知识产权 全维度档案', keep: true },
     ],
   },
 ]
@@ -245,20 +251,12 @@ export const collectionMenu: MenuGroup[] = [
 ]
 
 /* ============================================================
- * 企业档案子系统（参考企查查企业档案页）
- * ========================================================== */
-export const qiyeMenu: MenuGroup[] = [
-  { group: '企业档案', section: '工作台', items: [{ label: '企业档案检索', key: 'qy:search', desc: '按企业名称 / 行业 / 法定代表人 / 唯一标识检索企业工商档案，查看全维度画像', keep: true }] },
-  { group: '档案详情', section: '企业画像', items: [{ label: '企业档案', key: 'qy:profile', desc: '工商信息 / 股东与主要人员 / 对外投资与分支 / 司法与经营风险 / 经营信息 / 企业发展 / 知识产权 全维度档案', keep: true }] },
-]
-/* ============================================================
  * 子系统元信息 & 菜单汇总
  * ========================================================== */
 export const subNames: Record<string, string> = {
   cr: '零售信贷风控',
   sc: '评分产品',
   ep: '企业风控',
-  qy: '企业档案',
   dm: '数字营销',
   dg: '数据治理',
   cm: '管理中心',
@@ -269,7 +267,6 @@ export const MENU_BY_SUB: Record<string, MenuGroup[]> = {
   cr: creditRiskMenu,
   sc: scoringMenu,
   ep: entMenu,
-  qy: qiyeMenu,
   dm: dmMenu,
   dg: dataGovernanceMenu,
   cm: cmMenu,

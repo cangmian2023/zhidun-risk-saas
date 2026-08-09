@@ -1,5 +1,5 @@
-/* 企业档案子系统 · 页面
- * 模块：①企业档案检索(qy:search) ②企业档案详情(qy:profile)
+/* 企业档案 · 页面（挂在「企业风控 ep」子系统下）
+ * 模块：①企业档案检索(ep:qiye-search) ②企业档案详情(ep:qiye-profile)
  * 模型参考：企查查（Qichacha）企业档案页 —— 工商信息 / 股东 / 主要人员 / 对外投资 /
  *           变更记录 / 分支机构 / 司法案件 / 裁判文书 / 商标 / 专利 / 经营风险 / 经营信息 等。
  * 数据：qiyeData.ts（qiyeData.json 样例橘 Sam；实时统计 灰 Cal）
@@ -12,7 +12,7 @@ import { Sam, Cal } from './SourceTag';
 import { PageShell } from './PageShell';
 import { useQiyeData, toggleFollow, type QiyeProfile, type QiyeCountItem } from './qiyeData';
 
-const CRUMB = '企业档案';
+const CRUMB = '企业风控 / 企业档案';
 
 // 跨页面预选企业（从检索页跳转时带入）
 export let qiyeSelectedKeyNo = '';
@@ -34,7 +34,7 @@ export function QiyeSearch() {
     );
   }, [kw, d.enterprises]);
 
-  const open = (e: QiyeProfile) => { qiyeSelectedKeyNo = e.keyNo; nav('/console/qy/profile'); };
+  const open = (e: QiyeProfile) => { qiyeSelectedKeyNo = e.keyNo; nav('/console/ep/qiye-profile'); };
 
   return (
     <div style={{ padding: 24, maxWidth: 1360 }}>

@@ -49,7 +49,7 @@ import { DunAssignment, DunImport, DunChannels, DunAgencies, DunQa, DunRepayment
 import { QiyeSearch, QiyeProfile } from './QiyePages'
 import ScoreModule from './ScoreModule'
 import { getDashboardByKey } from './dashboardData'
-import { creditRiskMenu, scoringMenu, entMenu, dmMenu, dataGovernanceMenu, cmMenu, collectionMenu, qiyeMenu, type MenuGroup } from './menus'
+import { creditRiskMenu, scoringMenu, entMenu, dmMenu, dataGovernanceMenu, cmMenu, collectionMenu, type MenuGroup } from './menus'
 import SidebarMenu from './SidebarMenu'
 import { MenuIcon, type IconName } from '../components/icons'
 import { moduleSpecs } from './specs'
@@ -58,7 +58,6 @@ const subName: Record<string, string> = {
   cr: '零售信贷风控',
   sc: '评分产品',
   ep: '企业风控',
-  qy: '企业档案',
   dm: '数字营销',
   dg: '数据治理',
   cm: '管理中心',
@@ -70,7 +69,6 @@ const subsystems = [
   { key: 'cr', name: '零售信贷风控', open: true },
   { key: 'sc', name: '评分产品', open: true },
   { key: 'ep', name: '企业风控', open: false },
-  { key: 'qy', name: '企业档案', open: true },
   { key: 'dm', name: '数字营销', open: false },
   { key: 'dg', name: '数据治理', open: true },
   { key: 'zz', name: '催贷管理', open: true },
@@ -242,6 +240,8 @@ export default function Console() {
     'ep:ent-verify-detail': 'eye',
     'ep:ent-credit-detail': 'cloud',
     'ep:ent-graph-detail': 'link',
+    'ep:qiye-search': 'search',
+    'ep:qiye-profile': 'id',
     // 数字营销
     'dm:overview': 'dashboard',
     'dm:radar-query': 'search',
@@ -344,9 +344,6 @@ export default function Console() {
     'zz:agencies': 'users',
     'zz:qa': 'shield',
     'zz:repayment': 'check',
-    // 企业档案
-    'qy:search': 'search',
-    'qy:profile': 'id',
   }
   const menuIcon = (key: string): IconName => MENU_ICON[key] ?? 'dashboard'
 
@@ -357,8 +354,7 @@ export default function Console() {
     sub === 'dm' ? dmMenu :
     sub === 'dg' ? dataGovernanceMenu :
     sub === 'cm' ? cmMenu :
-    sub === 'zz' ? collectionMenu :
-    sub === 'qy' ? qiyeMenu : []
+    sub === 'zz' ? collectionMenu : []
   const cur = (loc.pathname.split('/')[3] as string) || 'overview'
   const key = `${sub}:${cur}`
 
@@ -369,7 +365,7 @@ export default function Console() {
       ? (prod as 'zhicha' | 'zhixin' | 'zhirong')
       : null
 
-  const supported = sub === 'cr' || sub === 'sc' || sub === 'ep' || sub === 'qy' || sub === 'dm' || sub === 'dg' || sub === 'cm' || sub === 'zz'
+  const supported = sub === 'cr' || sub === 'sc' || sub === 'ep' || sub === 'dm' || sub === 'dg' || sub === 'cm' || sub === 'zz'
 
   function onLogout() {
     logout()
@@ -380,13 +376,10 @@ export default function Console() {
     nav(`/console/${key}/${key === 'cm' ? 'pre-verify-config' : 'overview'}`)
   }
 
-  // 管理中心 / 企业档案：访问 /console/X/overview（旧入口/书签）时重定向到第一个有效菜单
+  // 管理中心：访问 /console/cm/overview（旧入口/书签）时重定向到第一个有效菜单
   useEffect(() => {
     if (sub === 'cm' && cur === 'overview') {
       nav('/console/cm/pre-verify-config', { replace: true })
-    }
-    if (sub === 'qy' && cur === 'overview') {
-      nav('/console/qy/search', { replace: true })
     }
   }, [sub, cur, nav])
 
@@ -596,9 +589,9 @@ export default function Console() {
               <DunQa />
             ) : key === 'zz:repayment' ? (
               <DunRepayment />
-            ) : key === 'qy:search' ? (
+            ) : key === 'ep:qiye-search' ? (
               <QiyeSearch />
-            ) : key === 'qy:profile' ? (
+            ) : key === 'ep:qiye-profile' ? (
               <QiyeProfile />
             ) : key === 'cr:overview' ? (
               <RetailCreditHome />
