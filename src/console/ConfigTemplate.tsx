@@ -74,6 +74,7 @@ export interface ConfigListPageProps {
   onAdd?: () => void;
   actions?: ReactNode;
   panelActions?: ReactNode; // 列表面板头部的自定义按钮（如分表「新建」）
+  stats?: ReactNode; // 列表面板上方的统计卡区（可选，如规则合集的命中统计）
   panelTitle: string;
   panelDesc?: string;
   // 单表模式
@@ -112,6 +113,8 @@ export function ConfigListPage(p: ConfigListPageProps) {
           ))}
         </div>
       )}
+
+      {p.stats && <div className="mb-4">{p.stats}</div>}
 
       <Panel title={p.panelTitle} desc={p.panelDesc}
         actions={<>{p.panelActions}</>}>

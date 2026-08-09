@@ -12,9 +12,9 @@ import FraudVerify222 from './FraudVerify222'
 import FraudVerify222Detail from './FraudVerify222Detail'
 import DecisionVerify222 from './DecisionVerify222'
 import DecisionVerify222Detail from './DecisionVerify222Detail'
-import VerifyRuleList from './VerifyRuleList'
 import RuleHub from './RuleHub'
-import VerifyRuleConfig from './VerifyRuleConfig'
+import VerifyCatalogPage from './VerifyCatalogPage'
+import ActionLibPage from './ActionLibPage'
 import ReportTemplate from './ReportTemplate'
 import ReportTemplatePreview from './ReportTemplatePreview'
 import MidDashboardPage from './MidDashboardPage'
@@ -151,7 +151,6 @@ export default function Console() {
     // 零售信贷风控
     'cr:pre-application': 'audit',
     'cr:pre-verify': 'verify',
-    'cr:pre-verify-config': 'filter',
     'cr:credit-kimi': 'shield',
     'cr:credit-kimi-config': 'sliders',
     'cr:pre-fraud': 'alert',
@@ -308,9 +307,10 @@ export default function Console() {
     'dg:meta-auto-track': 'eye',
     // 管理中心（原公共模块）：由零售信贷风控迁入的「公共配置」
     'cm:pre-application': 'audit',
-    'cm:pre-verify-config': 'filter',
     'cm:fraud-rules': 'layers',
     'cm:rule-hub': 'layers',
+    'cm:rule-hub-items': 'plug',
+    'cm:rule-hub-actions': 'work_flow',
     'cm:fraud-blacklist': 'plug',
     'cm:fraud-gang': 'link',
     'cm:mid-dispose-strategy': 'work_flow',
@@ -372,14 +372,14 @@ export default function Console() {
     nav('/login')
   }
   function switchSub(key: string) {
-    // 管理中心默认落到「核验规则」（原 overview 入口已随菜单下架）
-    nav(`/console/${key}/${key === 'cm' ? 'pre-verify-config' : 'overview'}`)
+    // 管理中心默认落到「规则合集」（原 pre-verify-config 旧规则配置页已删除）
+    nav(`/console/${key}/${key === 'cm' ? 'rule-hub' : 'overview'}`)
   }
 
-  // 管理中心：访问 /console/cm/overview（旧入口/书签）时重定向到第一个有效菜单
+  // 管理中心：访问 /console/cm/overview（旧入口/书签）时重定向到规则合集
   useEffect(() => {
     if (sub === 'cm' && cur === 'overview') {
-      nav('/console/cm/pre-verify-config', { replace: true })
+      nav('/console/cm/rule-hub', { replace: true })
     }
   }, [sub, cur, nav])
 
@@ -523,16 +523,12 @@ export default function Console() {
               <DecisionVerify222 />
             ) : key === 'cr:pre-report-detail' ? (
               <DecisionVerify222Detail />
-            ) : key === 'cr:pre-verify-config' ? (
-              <VerifyRuleList />
-            ) : key === 'cr:pre-verify-config-detail' ? (
-              <VerifyRuleConfig />
-            ) : key === 'cm:pre-verify-config' ? (
-              <VerifyRuleList />
-            ) : key === 'cm:pre-verify-config-detail' ? (
-              <VerifyRuleConfig />
             ) : key === 'cm:rule-hub' ? (
               <RuleHub />
+            ) : key === 'cm:rule-hub-items' ? (
+              <VerifyCatalogPage />
+            ) : key === 'cm:rule-hub-actions' ? (
+              <ActionLibPage />
             ) : key === 'cm:report-template' ? (
               <ReportTemplate />
             ) : key === 'cm:report-template-preview' ? (

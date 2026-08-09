@@ -38,7 +38,7 @@ export default function FlowStateCell({ flowId, state, onChange, buttonOnly = fa
           open={confirm != null}
           flowName={name || f.name}
           action={confirm?.step.action ?? ''}
-          from={confirm ? flowStepOf({ flowSteps, flowState: state }).state : ''}
+          from={confirm ? flowStepOf({ flowSteps: steps, flowState: state }).state : ''}
           to={confirm?.step.next ?? ''}
           onClose={() => setConfirm(null)}
           onConfirm={() => { if (confirm) onChange(confirm.step.next!); setConfirm(null) }}
@@ -62,7 +62,7 @@ export default function FlowStateCell({ flowId, state, onChange, buttonOnly = fa
         open={confirm != null}
         flowName={name || f.name}
         action={confirm?.step.action ?? ''}
-        from={confirm ? flowStepOf({ flowSteps, flowState: state }).state : ''}
+        from={confirm ? flowStepOf({ flowSteps: steps, flowState: state }).state : ''}
         to={confirm?.step.next ?? ''}
         onClose={() => setConfirm(null)}
         onConfirm={() => { if (confirm) onChange(confirm.step.next!); setConfirm(null) }}

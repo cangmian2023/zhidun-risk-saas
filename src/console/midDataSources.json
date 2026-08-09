@@ -929,5 +929,548 @@
    }
   ],
   "status": "connected"
+ },
+ {
+  "id": "ds_codebt_top",
+  "name": "共债网络 TOP",
+  "type": "sql",
+  "category": "共债域",
+  "desc": "近 30 天跨机构申请与在贷共债排行（样例）",
+  "conn": {
+   "dbType": "mysql",
+   "host": "10.20.30.11",
+   "port": 3306,
+   "database": "risk",
+   "username": "risk_rw",
+   "password": "Risk@2026****",
+   "connStr": "mysql://risk_rw:***@10.20.30.11:3306/risk",
+   "query": "SELECT cust_id, cust_name, level, org_cnt, total_balance FROM co_debt_top"
+  },
+  "fields": [
+   {
+    "key": "cust_id",
+    "label": "客户ID",
+    "kind": "dim",
+    "type": "string"
+   },
+   {
+    "key": "cust_name",
+    "label": "客户姓名",
+    "kind": "dim",
+    "type": "string"
+   },
+   {
+    "key": "level",
+    "label": "风险等级",
+    "kind": "dim",
+    "type": "string"
+   },
+   {
+    "key": "org_cnt",
+    "label": "申请机构数",
+    "kind": "dim",
+    "type": "string"
+   },
+   {
+    "key": "total_balance",
+    "label": "共债余额",
+    "kind": "dim",
+    "type": "number"
+   }
+  ],
+  "rows": [
+   {
+    "cust_id": "C0001",
+    "cust_name": "张*明",
+    "level": "高",
+    "org_cnt": "6",
+    "total_balance": 386000
+   },
+   {
+    "cust_id": "C0002",
+    "cust_name": "李*华",
+    "level": "中",
+    "org_cnt": "4",
+    "total_balance": 152000
+   },
+   {
+    "cust_id": "C0003",
+    "cust_name": "王*芳",
+    "level": "低",
+    "org_cnt": "2",
+    "total_balance": 46000
+   },
+   {
+    "cust_id": "C0004",
+    "cust_name": "赵*强",
+    "level": "高",
+    "org_cnt": "7",
+    "total_balance": 620000
+   },
+   {
+    "cust_id": "C0005",
+    "cust_name": "陈*敏",
+    "level": "中",
+    "org_cnt": "3",
+    "total_balance": 98000
+   }
+  ]
+ },
+ {
+  "id": "ds_risky_device",
+  "name": "高危设备看板",
+  "type": "sql",
+  "category": "设备域",
+  "desc": "高危/模拟器/群控设备实时识别（样例）",
+  "conn": {
+   "dbType": "mysql",
+   "host": "10.20.30.11",
+   "port": 3306,
+   "database": "risk",
+   "username": "risk_rw",
+   "password": "Risk@2026****",
+   "connStr": "mysql://risk_rw:***@10.20.30.11:3306/risk",
+   "query": "SELECT device_id,model,env_score,risk,account_cnt FROM risky_device"
+  },
+  "fields": [
+   {
+    "key": "device_id",
+    "label": "设备号",
+    "kind": "dim",
+    "type": "string"
+   },
+   {
+    "key": "model",
+    "label": "机型",
+    "kind": "dim",
+    "type": "string"
+   },
+   {
+    "key": "env_score",
+    "label": "环境风险分",
+    "kind": "dim",
+    "type": "number"
+   },
+   {
+    "key": "risk",
+    "label": "风险等级",
+    "kind": "dim",
+    "type": "string"
+   },
+   {
+    "key": "account_cnt",
+    "label": "同设备账号数",
+    "kind": "dim",
+    "type": "number"
+   }
+  ],
+  "rows": [
+   {
+    "device_id": "IMEI-8604567",
+    "model": "小米 14（疑似模拟器）",
+    "env_score": 91,
+    "risk": "高",
+    "account_cnt": 4
+   },
+   {
+    "device_id": "IMEI-8601234",
+    "model": "iPhone 14",
+    "env_score": 72,
+    "risk": "高",
+    "account_cnt": 3
+   },
+   {
+    "device_id": "IMEI-8601234",
+    "model": "iPhone 14",
+    "env_score": 68,
+    "risk": "中",
+    "account_cnt": 2
+   },
+   {
+    "device_id": "IMEI-8607890",
+    "model": "OPPO Reno",
+    "env_score": 44,
+    "risk": "中",
+    "account_cnt": 2
+   },
+   {
+    "device_id": "IMEI-8609012",
+    "model": "华为 Mate60",
+    "env_score": 18,
+    "risk": "低",
+    "account_cnt": 1
+   }
+  ]
+ },
+ {
+  "id": "ds_engine_task",
+  "name": "引擎运行态势",
+  "type": "sql",
+  "category": "监测引擎域",
+  "desc": "周期性监测引擎任务运行状态（样例）",
+  "conn": {
+   "dbType": "mysql",
+   "host": "10.20.30.11",
+   "port": 3306,
+   "database": "risk",
+   "username": "risk_rw",
+   "password": "Risk@2026****",
+   "connStr": "mysql://risk_rw:***@10.20.30.11:3306/risk",
+   "query": "SELECT name,cron,status,scanned,hits,success_rate FROM engine_task"
+  },
+  "fields": [
+   {
+    "key": "name",
+    "label": "任务",
+    "kind": "dim",
+    "type": "string"
+   },
+   {
+    "key": "cron",
+    "label": "周期",
+    "kind": "dim",
+    "type": "string"
+   },
+   {
+    "key": "status",
+    "label": "状态",
+    "kind": "dim",
+    "type": "string"
+   },
+   {
+    "key": "scanned",
+    "label": "扫描客户",
+    "kind": "dim",
+    "type": "number"
+   },
+   {
+    "key": "hits",
+    "label": "命中",
+    "kind": "dim",
+    "type": "number"
+   },
+   {
+    "key": "success_rate",
+    "label": "成功率",
+    "kind": "dim",
+    "type": "number"
+   }
+  ],
+  "rows": [
+   {
+    "name": "多头借贷周度监测",
+    "cron": "每周一 03:00",
+    "status": "运行中",
+    "scanned": 8620,
+    "hits": 214,
+    "success_rate": 98.7
+   },
+   {
+    "name": "司法涉诉每日扫描",
+    "cron": "每日 02:30",
+    "status": "运行中",
+    "scanned": 3210,
+    "hits": 47,
+    "success_rate": 99.8
+   },
+   {
+    "name": "设备风险日扫",
+    "cron": "每日 04:00",
+    "status": "运行中",
+    "scanned": 15630,
+    "hits": 132,
+    "success_rate": 97.4
+   },
+   {
+    "name": "存量客户征信复扫",
+    "cron": "每月 1 日 02:00",
+    "status": "待运行",
+    "scanned": 12840,
+    "hits": 326,
+    "success_rate": 99.2
+   },
+   {
+    "name": "负债激增监测",
+    "cron": "每日 05:00",
+    "status": "异常",
+    "scanned": 12840,
+    "hits": 88,
+    "success_rate": 92.1
+   },
+   {
+    "name": "存量客群提额复评",
+    "cron": "每季度首日 06:00",
+    "status": "已暂停",
+    "scanned": 4260,
+    "hits": 512,
+    "success_rate": 99.5
+   }
+  ]
+ },
+ {
+  "id": "ds_ops_track",
+  "name": "运营名单跟踪",
+  "type": "sql",
+  "category": "运营域",
+  "desc": "存量客群运营名单与复评节奏（样例）",
+  "conn": {
+   "dbType": "mysql",
+   "host": "10.20.30.11",
+   "port": 3306,
+   "database": "risk",
+   "username": "risk_rw",
+   "password": "Risk@2026****",
+   "connStr": "mysql://risk_rw:***@10.20.30.11:3306/risk",
+   "query": "SELECT cust_id,cust_name,tier,action,eval_status,amount,owner,next_eval,cycle FROM ops_track"
+  },
+  "fields": [
+   {
+    "key": "cust_id",
+    "label": "客户ID",
+    "kind": "dim",
+    "type": "string"
+   },
+   {
+    "key": "cust_name",
+    "label": "客户",
+    "kind": "dim",
+    "type": "string"
+   },
+   {
+    "key": "tier",
+    "label": "分层",
+    "kind": "dim",
+    "type": "string"
+   },
+   {
+    "key": "action",
+    "label": "动作",
+    "kind": "dim",
+    "type": "string"
+   },
+   {
+    "key": "eval_status",
+    "label": "评估状态",
+    "kind": "dim",
+    "type": "string"
+   },
+   {
+    "key": "amount",
+    "label": "金额",
+    "kind": "dim",
+    "type": "number"
+   },
+   {
+    "key": "owner",
+    "label": "负责人",
+    "kind": "dim",
+    "type": "string"
+   },
+   {
+    "key": "next_eval",
+    "label": "下次评估",
+    "kind": "dim",
+    "type": "string"
+   },
+   {
+    "key": "cycle",
+    "label": "复评周期",
+    "kind": "dim",
+    "type": "string"
+   }
+  ],
+  "rows": [
+   {
+    "cust_id": "C0003",
+    "cust_name": "王*芳",
+    "tier": "核心优质",
+    "action": "提额",
+    "eval_status": "已提额",
+    "amount": 50000,
+    "owner": "运营一组",
+    "next_eval": "2026-08-27",
+    "cycle": "月度"
+   },
+   {
+    "cust_id": "C0002",
+    "cust_name": "李*华",
+    "tier": "成长潜力",
+    "action": "提额",
+    "eval_status": "评估中",
+    "amount": 20000,
+    "owner": "运营一组",
+    "next_eval": "2026-09-03",
+    "cycle": "月度"
+   },
+   {
+    "cust_id": "C0005",
+    "cust_name": "陈*敏",
+    "tier": "沉睡唤醒",
+    "action": "促活",
+    "eval_status": "已促活",
+    "amount": 8000,
+    "owner": "运营二组",
+    "next_eval": "2026-08-30",
+    "cycle": "月度"
+   },
+   {
+    "cust_id": "C0001",
+    "cust_name": "张*明",
+    "tier": "风险观察",
+    "action": "降额观察",
+    "eval_status": "已放弃",
+    "amount": 0,
+    "owner": "风险运营岗",
+    "next_eval": "2026-11-04",
+    "cycle": "季度"
+   },
+   {
+    "cust_id": "C0004",
+    "cust_name": "赵*强",
+    "tier": "风险观察",
+    "action": "二次营销",
+    "eval_status": "已放弃",
+    "amount": 0,
+    "owner": "风险运营岗",
+    "next_eval": "2026-11-05",
+    "cycle": "季度"
+   },
+   {
+    "cust_id": "C0006",
+    "cust_name": "刘*梅",
+    "tier": "成长潜力",
+    "action": "促活",
+    "eval_status": "候选",
+    "amount": 5000,
+    "owner": "运营二组",
+    "next_eval": "2026-09-07",
+    "cycle": "月度"
+   },
+   {
+    "cust_id": "C0007",
+    "cust_name": "孙*磊",
+    "tier": "核心优质",
+    "action": "提额",
+    "eval_status": "候选",
+    "amount": 30000,
+    "owner": "运营一组",
+    "next_eval": "2026-09-07",
+    "cycle": "月度"
+   },
+   {
+    "cust_id": "C0008",
+    "cust_name": "吴*静",
+    "tier": "沉睡唤醒",
+    "action": "二次营销",
+    "eval_status": "评估中",
+    "amount": 12000,
+    "owner": "运营二组",
+    "next_eval": "2026-09-02",
+    "cycle": "月度"
+   },
+   {
+    "cust_id": "C0009",
+    "cust_name": "钱*华",
+    "tier": "风险观察",
+    "action": "降额观察",
+    "eval_status": "已放弃",
+    "amount": 0,
+    "owner": "风险运营岗",
+    "next_eval": "2026-10-23",
+    "cycle": "季度"
+   },
+   {
+    "cust_id": "C0010",
+    "cust_name": "冯*军",
+    "tier": "成长潜力",
+    "action": "提额",
+    "eval_status": "候选",
+    "amount": 15000,
+    "owner": "运营一组",
+    "next_eval": "2026-09-04",
+    "cycle": "月度"
+   }
+  ]
+ },
+ {
+  "id": "ds_ops_effect",
+  "name": "促活/提额效果看板",
+  "type": "sql",
+  "category": "运营域",
+  "desc": "运营名单转化效果KPI（样例）",
+  "conn": {
+   "dbType": "mysql",
+   "host": "10.20.30.11",
+   "port": 3306,
+   "database": "risk",
+   "username": "risk_rw",
+   "password": "Risk@2026****",
+   "connStr": "mysql://risk_rw:***@10.20.30.11:3306/risk",
+   "query": "SELECT label,value,desc,seq FROM ops_effect"
+  },
+  "fields": [
+   {
+    "key": "label",
+    "label": "指标",
+    "kind": "dim",
+    "type": "string"
+   },
+   {
+    "key": "value",
+    "label": "数值",
+    "kind": "dim",
+    "type": "string"
+   },
+   {
+    "key": "desc",
+    "label": "说明",
+    "kind": "dim",
+    "type": "string"
+   },
+   {
+    "key": "seq",
+    "label": "序号",
+    "kind": "measure",
+    "type": "number"
+   }
+  ],
+  "rows": [
+   {
+    "label": "名单总数",
+    "value": "10",
+    "desc": "运营名单总量",
+    "seq": 1
+   },
+   {
+    "label": "候选",
+    "value": "3",
+    "desc": "待评估",
+    "seq": 2
+   },
+   {
+    "label": "评估中",
+    "value": "2",
+    "desc": "评估进行中",
+    "seq": 3
+   },
+   {
+    "label": "已转化(提额/促活)",
+    "value": "2",
+    "desc": "已提额 / 已促活",
+    "seq": 4
+   },
+   {
+    "label": "转化金额",
+    "value": "¥5.8万",
+    "desc": "已转化金额合计",
+    "seq": 5
+   },
+   {
+    "label": "转化率",
+    "value": "20%",
+    "desc": "已转化 / 总数",
+    "seq": 6
+   }
+  ]
  }
 ]

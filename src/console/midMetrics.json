@@ -3095,5 +3095,70 @@
   "precision": 1,
   "enabled": true,
   "desc": "欺诈命中件数/进件量"
+ },
+ {
+  "id": "m_codebt_balance",
+  "name": "共债余额",
+  "group": "共债",
+  "dataSourceId": "ds_codebt_top",
+  "type": "base",
+  "field": "total_balance",
+  "agg": "sum",
+  "precision": 0,
+  "enabled": true,
+  "flowKey": "f-online-approve",
+  "flowState": "待上线"
+ },
+ {
+  "id": "m_device_acct",
+  "name": "同设备账号数",
+  "group": "设备",
+  "dataSourceId": "ds_risky_device",
+  "type": "base",
+  "field": "account_cnt",
+  "agg": "sum",
+  "precision": 0,
+  "enabled": true,
+  "flowKey": "f-online-approve",
+  "flowState": "待上线"
+ },
+ {
+  "id": "m_engine_hit",
+  "name": "命中数",
+  "group": "监测引擎",
+  "dataSourceId": "ds_engine_task",
+  "type": "base",
+  "field": "hits",
+  "agg": "sum",
+  "precision": 0,
+  "enabled": true,
+  "flowKey": "f-online-approve",
+  "flowState": "待上线"
+ },
+ {
+  "id": "m_ops_amount",
+  "name": "转化金额",
+  "group": "运营",
+  "dataSourceId": "ds_ops_track",
+  "type": "base",
+  "field": "amount",
+  "agg": "sum",
+  "precision": 0,
+  "enabled": true,
+  "flowKey": "f-online-approve",
+  "flowState": "待上线"
+ },
+ {
+  "id": "m_ops_effect",
+  "name": "效果指标数",
+  "group": "运营",
+  "dataSourceId": "ds_ops_effect",
+  "type": "base",
+  "field": "seq",
+  "agg": "count",
+  "precision": 0,
+  "enabled": true,
+  "flowKey": "f-online-approve",
+  "flowState": "待上线"
  }
 ]

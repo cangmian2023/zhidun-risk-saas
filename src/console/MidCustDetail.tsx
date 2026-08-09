@@ -19,6 +19,11 @@ import {
   type MidCustomer, type CustRelationNode,
   type CustModelScore, type CustExternalCheck,
 } from './midData';
+// 需求17-缺口1/2/6：多头共债、设备与欺诈维度、运营动作跟踪
+import {
+  useGap, coDebtOf, deviceOf, GAP_LEVEL_KIND,
+  type CoDebtProfile, type DeviceProfile,
+} from './gapData';
 
 const STATUS_KIND: Record<string, 'red' | 'amber' | 'blue' | 'green' | 'violet' | 'gray'> = {
   待处置: 'red', 核实中: 'amber', 处置中: 'blue', 已解除: 'green', 已升级: 'violet', 误报: 'gray',
@@ -37,7 +42,7 @@ const REL_LABEL: Record<CustRelationNode['type'], string> = {
 };
 const RISK_COLOR: Record<'高' | '中' | '低', string> = { 高: '#DC2626', 中: '#D97706', 低: '#059669' };
 const RING_PALETTE = ['#DC2626', '#0891B2', '#7C3AED', '#D97706', '#0D9488'];
-const THEME_LABEL: Record<'type' | 'risk' | 'ring', string> = { type: '关系网络', risk: '风险分布', ring: '团伙识别' };
+const THEME_LABEL: Record<'type' | 'risk' | 'ring' | 'list', string> = { type: '关系网络', risk: '风险分布', ring: '团伙识别', list: '名单网络' };
 
 // 右侧导航窗条条目（复用报告详情页的「页面导航」模式：状态色点 + 滚动锚点）
 const NAV_ITEMS: { id: string; label: string }[] = [
@@ -48,9 +53,11 @@ const NAV_ITEMS: { id: string; label: string }[] = [
   { id: 'sec-income', label: '收入负债' },
   { id: 'sec-credit', label: '征信' },
   { id: 'sec-behavior', label: '行为' },
+  { id: 'sec-device', label: '设备与欺诈' },
   { id: 'sec-external', label: '外部数据核验' },
   { id: 'sec-collateral', label: '担保与经营' },
   { id: 'sec-relation', label: '关系图谱' },
+  { id: 'sec-codebt', label: '多头共债' },
   { id: 'sec-collection', label: '催收案件' },
   { id: 'sec-postrisk', label: '贷后风险' },
   { id: 'sec-log', label: '处置与操作日志' },
@@ -74,7 +81,12 @@ export default function MidCustDetail() {
   const [, setTick] = useState(0);
   useEffect(() => { const t = setInterval(() => setTick((x) => x + 1), 60000); return () => clearInterval(t); }, []);
   const [selRel, setSelRel] = useState<CustRelationNode | null>(null);
-  const [graphTheme, setGraphTheme] = useState<'type' | 'risk' | 'ring'>('type');
+  const [graphTheme, setGraphTheme] = useState<'type' | 'risk' | 'ring' | 'list'>('type');
+  // 需求17-缺口1/2/6：多头共债 / 设备档案 / 运营动作（样例 midGap.json，未命中样例按客户号确定性派生）
+  const gap = useGap();
+  const coDebt: CoDebtProfile | null = cust ? coDebtOf(gap, cust.custId, cust.name) : null;
+  const devProfile: DeviceProfile | null = cust ? deviceOf(gap, cust.custId, cust.name) : null;
+  const env = cust?.env;
   // 右侧导航高亮跟随（scrollspy）：滚动时高亮当前所处板块
   const [activeNav, setActiveNav] = useState<string>(NAV_ITEMS[0]?.id ?? '');
   useEffect(() => {
@@ -248,10 +260,10 @@ export default function MidCustDetail() {
       <Panel
         id="sec-base"
         title="基本信息"
-        desc={<span>客户身份与授信档案 <Sam label="样例字段" /> 含信贷信息与环境信息</span>}
+        desc={<span>客户身份档案与影像资料 <Sam label="样例" /></span>}
         className="mb-4"
       >
-        <ProfileCard c={cust} usage={usage} />
+        <ProfileCard c={cust} />
       </Panel>
 
       {/* 需求11审核：模型评分快照（智察/智信/智融 + 额度建议） */}
@@ -292,6 +304,31 @@ export default function MidCustDetail() {
         className="mb-4"
       >
         <BehaviorBlock b={cust.behavior} />
+      </Panel>
+
+      {/* 需求17-缺口2：设备与欺诈维度（设备号/机型/系统/环境风险分/模拟器 + 同设备多账号） */}
+      <Panel
+        id="sec-device"
+        title="设备与欺诈维度"
+        desc={<span>设备指纹与运行环境 <Sam label="样例" value="midGap.json" /> 环境风险分越高越危险；同设备多账号是团伙欺诈的关键信号</span>}
+        className="mb-4"
+      >
+        {devProfile ? (
+          <DevicePanel d={devProfile} env={env} onOpenCust={(cid) => nav('/console/cr/mid-cust-detail?cust=' + cid)} />
+        ) : env ? (
+          <div style={{ fontSize: 13, color: '#475569' }}>
+            <div style={{ fontWeight: 600, marginBottom: 8 }}>登录与环境</div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0,1fr))', gap: 8 }}>
+              <div>常用设备：{env.device || '—'}</div>
+              <div>登录地区：{env.region || '—'}</div>
+              <div>网络环境：{env.network || '—'}</div>
+              <div>最近登录：{env.lastLogin || '—'}</div>
+              <div>定位城市：{env.city || '—'}</div>
+            </div>
+          </div>
+        ) : (
+          <div style={{ fontSize: 13, color: '#94A3B8' }}>暂无设备数据</div>
+        )}
       </Panel>
 
       {/* 需求11审核：外部数据核验（工商/司法/税务/社保） */}
@@ -367,7 +404,7 @@ export default function MidCustDetail() {
                   </div>
                 ) : <span />}
                 <div style={{ display: 'inline-flex', border: '1px solid #E2E8F0', borderRadius: 8, overflow: 'hidden', flexShrink: 0 }}>
-                  {(['type', 'risk', 'ring'] as const).map((t) => (
+                  {(['type', 'risk', 'ring', 'list'] as const).map((t) => (
                     <span
                       key={t}
                       onClick={() => setGraphTheme(t)}
@@ -379,10 +416,22 @@ export default function MidCustDetail() {
                   ))}
                 </div>
               </div>
-              <RelationGraph cust={cust} colorBy={graphTheme} rings={ringsSummary} />
+              {graphTheme === 'list'
+                ? <ListNetworkGraph cust={cust} co={coDebt} dev={devProfile} />
+                : <RelationGraph cust={cust} colorBy={graphTheme} rings={ringsSummary} />}
             </div>
           </div>
         ) : <div style={{ fontSize: 13, color: '#94A3B8' }}>暂无关联实体</div>}
+      </Panel>
+
+      {/* 需求17-缺口1：多头共债（近 30 天在几家机构申请 / 跟谁共债 / 同设备申请几次） */}
+      <Panel
+        id="sec-codebt"
+        title="多头共债"
+        desc={<span>跨机构联防联控视角 <Sam label="样例" value="midGap.json" /> 近 30 天多头申请、共债机构清单与共债链条</span>}
+        className="mb-4"
+      >
+        {coDebt ? <CoDebtPanel c={coDebt} /> : <div style={{ fontSize: 13, color: '#94A3B8' }}>暂无多头共债数据</div>}
       </Panel>
 
       {/* 需求11审核：催收案件（继承催收子系统，按 custId 关联） */}
@@ -591,94 +640,32 @@ function PhotoRow({ c }: { c: MidCustomer }) {
   );
 }
 
-function ProfileCard({ c, usage }: { c: MidCustomer; usage: number }) {
+function ProfileCard({ c }: { c: MidCustomer }) {
   const initial = c.name?.[0] ?? '客';
   const riskBadge: 'red' | 'amber' | 'green' =
     c.riskLevel === '高风险' ? 'red' : c.riskLevel === '中风险' ? 'amber' : 'green';
-  const cr = c.credit, ev = c.env;
-  const groups: { title: string; items: { label: string; value: React.ReactNode }[] }[] = [
-    {
-      title: '身份标识',
-      items: [
-        { label: '姓名', value: c.name },
-        { label: '客户号', value: c.custId },
-        { label: '证件号', value: c.idCard },
-      ],
-    },
-    {
-      title: '授信与风险',
-      items: [
-        { label: '产品', value: c.product },
-        { label: '授信额度', value: `¥${c.creditLine.toLocaleString()}` },
-        { label: '在贷余额', value: `¥${c.loanBalance.toLocaleString()}` },
-        { label: '额度使用率', value: <span>{usage.toFixed(1)}% <Cal label="实时" /></span> },
-        { label: '贷款状态', value: <StatusTag kind={c.loanStatus === '在贷' ? 'blue' : 'gray'}>{c.loanStatus}</StatusTag> },
-        { label: '风险等级', value: <Badge kind={riskBadge}>{c.riskLevel}</Badge> },
-      ],
-    },
-    {
-      title: '信贷信息',
-      items: cr ? [
-        { label: '贷款期限', value: `${cr.term} 期` },
-        { label: '年利率', value: `${cr.rate}%` },
-        { label: '还款方式', value: cr.repayMethod },
-        { label: '开户机构', value: cr.branch },
-        { label: '放款日期', value: cr.loanDate },
-        { label: '最近还款日', value: cr.lastRepay },
-        { label: '历史逾期', value: <span>{cr.overdue} 次</span> },
-        { label: '当期应还', value: <span>¥{cr.curDue.toLocaleString()}</span> },
-      ] : [{ label: '信贷信息', value: '—' }],
-    },
-    {
-      title: '环境信息',
-      items: ev ? [
-        { label: '常用设备', value: ev.device },
-        { label: '登录地区', value: ev.region },
-        { label: '网络环境', value: ev.network },
-        { label: '最近登录', value: ev.lastLogin },
-        { label: '定位城市', value: ev.city },
-      ] : [{ label: '环境信息', value: '—' }],
-    },
-  ];
   return (
     <div>
-      {/* 档案头部 */}
+      {/* 档案头部：身份标识 + 风险/贷款状态（授信/信贷/环境明细见下方专项板块，避免重复展示） */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 14, paddingBottom: 16, borderBottom: '1px solid #F1F5F9', marginBottom: 16 }}>
         <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'linear-gradient(135deg,#2563EB,#7C3AED)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, fontWeight: 700 }}>
           {initial}
         </div>
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
             <span style={{ fontSize: 18, fontWeight: 700, color: '#1E293B' }}>{c.name}</span>
             <Badge kind={riskBadge}>{c.riskLevel}</Badge>
             <StatusTag kind={c.loanStatus === '在贷' ? 'blue' : 'gray'}>{c.loanStatus}</StatusTag>
           </div>
-          <div style={{ fontSize: 12, color: '#94A3B8', marginTop: 4 }}>
-            客户号 {c.custId} ｜ {c.product} <Sam label="客户样例" />
+          <div style={{ fontSize: 12, color: '#94A3B8', marginTop: 6, display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+            <span>客户号 <b style={{ color: '#475569', fontWeight: 600 }}>{c.custId}</b></span>
+            <span>证件号 <b style={{ color: '#475569', fontWeight: 600 }}>{c.idCard}</b></span>
+            <span>产品 <b style={{ color: '#475569', fontWeight: 600 }}>{c.product}</b> <Sam label="客户样例" /></span>
           </div>
         </div>
       </div>
       {/* 影像资料（用户/身份证/最新，内联展示，无需点击预览） */}
       <PhotoRow c={c} />
-      {/* 字段分组 */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0,1fr))', gap: 20 }}>
-        {groups.map((g) => (
-          <div key={g.title}>
-            <div style={{ fontSize: 12, fontWeight: 600, color: '#64748B', letterSpacing: '0.04em', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span style={{ width: 3, height: 12, borderRadius: 2, background: '#2563EB', display: 'inline-block' }} />
-              {g.title}
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
-              {g.items.map((it) => (
-                <div key={it.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '7px 0', borderBottom: '1px dashed #F1F5F9' }}>
-                  <span style={{ fontSize: 13, color: '#94A3B8' }}>{it.label}</span>
-                  <span style={{ fontSize: 13, color: '#334155', fontWeight: 600 }}>{it.value}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
     </div>
   );
 }
@@ -1238,5 +1225,199 @@ function ExternalCheckPanel({ rows }: { rows: CustExternalCheck[] }) {
         ))}
       </tbody>
     </table>
+  );
+}
+
+/* ============ 需求17-缺口2：设备与欺诈维度 ============ */
+function DevicePanel({ d, env, onOpenCust }: { d: DeviceProfile; env?: { device?: string; region?: string; network?: string; lastLogin?: string; city?: string }; onOpenCust: (custId: string) => void }) {
+  const cell = (label: string, value: React.ReactNode, danger = false) => (
+    <div style={{ background: '#F8FAFC', borderRadius: 8, padding: '8px 10px' }}>
+      <div style={{ fontSize: 11, color: '#94A3B8' }}>{label}</div>
+      <div style={{ fontSize: 14, fontWeight: 700, color: danger ? '#DC2626' : '#1E293B', marginTop: 2 }}>{value}</div>
+    </div>
+  );
+  const flag = (on: boolean, yes: string, no: string) => (on ? <span style={{ color: '#DC2626' }}>{yes}</span> : <span style={{ color: '#059669' }}>{no}</span>);
+  const others = d.accounts.filter((a) => a.custId !== d.custId);
+  return (
+    <div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+        <span style={{ fontSize: 14, fontWeight: 700, color: '#1E293B' }}>{d.deviceId}</span>
+        <Badge kind={GAP_LEVEL_KIND[d.risk]}>{d.risk}风险设备</Badge>
+        <span style={{ fontSize: 12, color: '#64748B' }}>{d.model} ｜ {d.os}</span>
+      </div>
+      {env && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0,1fr))', gap: 10, marginBottom: 10 }}>
+          {cell('常用设备', env.device || '—')}
+          {cell('登录地区', env.region || '—')}
+          {cell('网络环境', env.network || '—')}
+          {cell('最近登录', env.lastLogin || '—')}
+          {cell('定位城市', env.city || '—')}
+        </div>
+      )}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0,1fr))', gap: 10, marginBottom: 10 }}>
+        {cell('环境风险分', `${d.envScore} / 100`, d.envScore >= 70)}
+        {cell('指纹一致性', `${d.fingerprintMatch}%`, d.fingerprintMatch < 80)}
+        {cell('模拟器', flag(d.emulator, '是（高危）', '否'))}
+        {cell('越狱 / root', flag(d.rooted, '是（高危）', '否'))}
+        {cell('群控识别', flag(d.groupControl, '命中群控', '未命中'))}
+        {cell('IP 归属地', d.ipCity)}
+        {cell('GPS 定位', d.gpsCity, d.ipCity !== d.gpsCity)}
+        {cell('同设备账号', `${d.accounts.length} 个`, d.accounts.length > 1)}
+      </div>
+      {d.ipCity !== d.gpsCity && (
+        <div style={{ fontSize: 12, color: '#B45309', background: '#FFFBEB', border: '1px solid #FDE68A', borderRadius: 8, padding: '8px 10px', marginBottom: 10 }}>
+          ⚠ IP 归属（{d.ipCity}）与 GPS 定位（{d.gpsCity}）不一致，存在代操作 / 位置伪造嫌疑。
+        </div>
+      )}
+      <div style={{ fontSize: 12, fontWeight: 600, color: '#475569', marginBottom: 6 }}>同设备多账号（{d.accounts.length}）</div>
+      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+        <thead>
+          <tr style={{ textAlign: 'left', color: '#94A3B8', borderBottom: '1px solid #E2E8F0' }}>
+            <th style={{ padding: '6px 8px', fontWeight: 500 }}>客户号</th>
+            <th style={{ padding: '6px 8px', fontWeight: 500 }}>姓名</th>
+            <th style={{ padding: '6px 8px', fontWeight: 500 }}>最近使用</th>
+            <th style={{ padding: '6px 8px', fontWeight: 500 }}>账户状态</th>
+          </tr>
+        </thead>
+        <tbody>
+          {d.accounts.map((a) => (
+            <tr key={a.custId} style={{ borderBottom: '1px solid #F1F5F9', background: a.custId === d.custId ? '#EFF6FF' : undefined }}>
+              <td style={{ padding: '7px 8px', color: '#1D4ED8', cursor: 'pointer' }} onClick={() => onOpenCust(a.custId)}>{a.custId}</td>
+              <td style={{ padding: '7px 8px', color: '#334155' }}>{a.name}{a.custId === d.custId ? '（本人）' : ''}</td>
+              <td style={{ padding: '7px 8px', color: '#64748B' }}>{a.lastUse}</td>
+              <td style={{ padding: '7px 8px' }}>
+                <StatusTag kind={a.status === '逾期' || a.status === '核销' ? 'red' : a.status === '已拒绝' ? 'gray' : 'green'}>{a.status}</StatusTag>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      {others.length > 0 && (
+        <div style={{ marginTop: 8, fontSize: 12, color: '#B91C1C' }}>
+          该设备除本人外还关联 <b>{others.length}</b> 个账号，建议核实是否为代办 / 团伙申请。
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ============ 需求17-缺口1：多头共债 ============ */
+function CoDebtPanel({ c }: { c: CoDebtProfile }) {
+  const cell = (label: string, value: React.ReactNode, danger = false) => (
+    <div style={{ background: '#F8FAFC', borderRadius: 8, padding: '8px 10px' }}>
+      <div style={{ fontSize: 11, color: '#94A3B8' }}>{label}</div>
+      <div style={{ fontSize: 18, fontWeight: 700, color: danger ? '#DC2626' : '#1E293B', marginTop: 2 }}>{value}</div>
+    </div>
+  );
+  return (
+    <div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+        <Badge kind={GAP_LEVEL_KIND[c.level]}>{c.level}共债风险</Badge>
+        <span style={{ fontSize: 12, color: '#64748B' }}>数据口径：近 30 天跨机构申请与在贷</span>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0,1fr))', gap: 10, marginBottom: 12 }}>
+        {cell('申请机构数', `${c.orgCnt30d} 家`, c.orgCnt30d >= 5)}
+        {cell('申请次数', `${c.applyCnt30d} 次`, c.applyCnt30d >= 8)}
+        {cell('多头在贷余额', `¥${c.totalBalance.toLocaleString()}`, c.totalBalance >= 300000)}
+        {cell('同设备申请', `${c.sameDeviceApply} 次`, c.sameDeviceApply > 0)}
+      </div>
+
+      <div style={{ fontSize: 12, fontWeight: 600, color: '#475569', marginBottom: 6 }}>共债链条</div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 6, marginBottom: 12 }}>
+        {c.chain.map((n, i) => (
+          <span key={i} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ fontSize: 12, padding: '4px 10px', borderRadius: 8, background: i === 0 ? '#2563EB' : '#EEF2FF', color: i === 0 ? '#fff' : '#3730A3', fontWeight: 600 }}>{n}</span>
+            {i < c.chain.length - 1 && <span style={{ color: '#CBD5E1' }}>→</span>}
+          </span>
+        ))}
+      </div>
+
+      <div style={{ fontSize: 12, fontWeight: 600, color: '#475569', marginBottom: 6 }}>共债机构清单（{c.orgs.length}）</div>
+      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+        <thead>
+          <tr style={{ textAlign: 'left', color: '#94A3B8', borderBottom: '1px solid #E2E8F0' }}>
+            <th style={{ padding: '6px 8px', fontWeight: 500 }}>机构</th>
+            <th style={{ padding: '6px 8px', fontWeight: 500 }}>类型</th>
+            <th style={{ padding: '6px 8px', fontWeight: 500, textAlign: 'right' }}>在贷余额</th>
+            <th style={{ padding: '6px 8px', fontWeight: 500, textAlign: 'right' }}>近30天申请</th>
+            <th style={{ padding: '6px 8px', fontWeight: 500 }}>同设备</th>
+            <th style={{ padding: '6px 8px', fontWeight: 500 }}>名单命中</th>
+            <th style={{ padding: '6px 8px', fontWeight: 500 }}>状态</th>
+          </tr>
+        </thead>
+        <tbody>
+          {c.orgs.map((o) => (
+            <tr key={o.org} style={{ borderBottom: '1px solid #F1F5F9' }}>
+              <td style={{ padding: '7px 8px', fontWeight: 600, color: '#334155' }}>{o.org}</td>
+              <td style={{ padding: '7px 8px', color: '#64748B' }}>{o.orgType}</td>
+              <td style={{ padding: '7px 8px', textAlign: 'right', color: '#334155', fontVariantNumeric: 'tabular-nums' }}>¥{o.balance.toLocaleString()}</td>
+              <td style={{ padding: '7px 8px', textAlign: 'right', color: '#334155' }}>{o.applyCnt30d}</td>
+              <td style={{ padding: '7px 8px', color: o.sameDevice ? '#DC2626' : '#94A3B8' }}>{o.sameDevice ? '是' : '—'}</td>
+              <td style={{ padding: '7px 8px' }}>{o.listHit ? <Badge kind={o.listHit === '黑名单' ? 'red' : o.listHit === '灰名单' ? 'amber' : 'blue'}>{o.listHit}</Badge> : <span style={{ color: '#94A3B8' }}>—</span>}</td>
+              <td style={{ padding: '7px 8px' }}><StatusTag kind={o.status === '逾期' ? 'red' : o.status === '关注' ? 'amber' : 'green'}>{o.status}</StatusTag></td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+/* ============ 需求17-缺口1：名单网络视图（客户 · 借款机构 · 名单库 连成网） ============ */
+function ListNetworkGraph({ cust, co, dev }: { cust: MidCustomer; co: CoDebtProfile | null; dev: DeviceProfile | null }) {
+  if (!co) return <div style={{ fontSize: 13, color: '#94A3B8' }}>暂无跨机构名单数据</div>;
+  const W = 560, H = 300, CX = W / 2, CY = H / 2, R = 105;
+  const orgs = co.orgs.slice(0, 8);
+  const pts = orgs.map((o, i) => {
+    const ang = (Math.PI * 2 * i) / orgs.length - Math.PI / 2;
+    return { o, x: CX + R * Math.cos(ang), y: CY + R * Math.sin(ang) };
+  });
+  // 常一起出现的机构（同设备申请 or 命中同一名单库）自动高亮
+  const hi = new Set(orgs.filter((o) => o.sameDevice || o.listHit).map((o) => o.org));
+  const listColor = (t?: string) => (t === '黑名单' ? '#DC2626' : t === '灰名单' ? '#D97706' : t === '关注名单' ? '#2563EB' : '#94A3B8');
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+      <svg width="100%" viewBox={`0 0 ${W} ${H}`} style={{ maxWidth: W }}>
+        {pts.map(({ o, x, y }) => (
+          <line key={'l' + o.org} x1={CX} y1={CY} x2={x} y2={y}
+            stroke={hi.has(o.org) ? listColor(o.listHit) : '#CBD5E1'}
+            strokeWidth={hi.has(o.org) ? 2 : 1}
+            strokeDasharray={o.sameDevice ? '5 3' : undefined} />
+        ))}
+        <circle cx={CX} cy={CY} r={36} fill="#2563EB" />
+        <text x={CX} y={CY - 3} textAnchor="middle" fontSize="13" fontWeight="700" fill="#fff">{cust.name}</text>
+        <text x={CX} y={CY + 13} textAnchor="middle" fontSize="10" fill="#DBEAFE">{co.orgCnt30d} 家机构</text>
+        {pts.map(({ o, x, y }) => {
+          const c = listColor(o.listHit);
+          const on = hi.has(o.org);
+          return (
+            <g key={o.org}>
+              <circle cx={x} cy={y} r={26} fill={c} fillOpacity={on ? 0.14 : 0.06} stroke={on ? c : '#CBD5E1'} strokeWidth={on ? 2 : 1.2} />
+              <text x={x} y={y - 1} textAnchor="middle" fontSize="10" fontWeight="600" fill={on ? c : '#64748B'}>
+                {o.org.replace('××', '').slice(0, 5)}
+              </text>
+              <text x={x} y={y + 12} textAnchor="middle" fontSize="9" fill="#94A3B8">{o.orgType}</text>
+              {o.listHit && (
+                <g>
+                  <circle cx={x + 22} cy={y - 22} r={9} fill={c} stroke="#fff" strokeWidth={1.5} />
+                  <text x={x + 22} y={y - 18.5} textAnchor="middle" fontSize="9" fontWeight="700" fill="#fff">名</text>
+                </g>
+              )}
+            </g>
+          );
+        })}
+      </svg>
+      <div style={{ display: 'flex', gap: 12, fontSize: 11, color: '#64748B', marginTop: 4, flexWrap: 'wrap', justifyContent: 'center' }}>
+        {['黑名单', '灰名单', '关注名单'].map((t) => (
+          <span key={t} style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+            <span style={{ width: 8, height: 8, borderRadius: '50%', background: listColor(t), display: 'inline-block' }} />{t}命中
+          </span>
+        ))}
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+          <span style={{ width: 16, height: 0, borderTop: '2px dashed #94A3B8', display: 'inline-block' }} />同设备申请
+        </span>
+        {dev && <span>设备 {dev.deviceId} ｜ 同设备账号 {dev.accounts.length} 个</span>}
+      </div>
+    </div>
   );
 }

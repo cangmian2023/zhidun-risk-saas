@@ -19,6 +19,7 @@ import {
   type DecisionGroup,
   type ReviewEntry,
 } from './preApp'
+import { useGap, coDebtOf, deviceOf, GAP_LEVEL_KIND } from './gapData'
 
 type Kind = 'red' | 'orange' | 'amber' | 'green' | 'blue' | 'cyan' | 'violet' | 'gray'
 const VALID_KINDS = new Set<string>(['red', 'orange', 'amber', 'green', 'blue', 'cyan', 'violet', 'gray'])
@@ -742,6 +743,10 @@ function DetailView({
     })
   const [deviceRiskOpen, setDeviceRiskOpen] = useState<string | null>(null)
   const deviceApps = getDeviceApps(row)
+  // 六大缺口补齐：跨行业联防联控（多头共债）+ 设备风险画像
+  const gap = useGap()
+  const coDebt = useMemo(() => coDebtOf(gap, row.id, row.name), [gap, row.id, row.name])
+  const devProfile = useMemo(() => deviceOf(gap, row.id, row.name), [gap, row.id, row.name])
 
   type MaterialFile = { name: string; type: 'image' | 'pdf' | 'word' | 'excel' | 'video' }
   const materials: { name: string; status: 'pass' | 'fail' | 'missing'; submitted: string; result: string; files: MaterialFile[] }[] = [
@@ -805,7 +810,8 @@ function DetailView({
     { id: 'score', label: '风险评分', alert: detail.scores.some((s) => s.kind === 'red') },
     { id: 'rule', label: '命中规则与模型', alert: detail.rules.some((r) => r.level === 'red') },
     { id: 'material', label: '证件与材料', alert: materials.some((m) => m.status === 'fail') },
-    { id: 'device', label: '设备与环境', alert: detail.deviceRisk.some((t) => !t.includes('未见明显异常')) },
+    { id: 'codebt', label: '跨机构联防联控', alert: coDebt.level === '高' },
+    { id: 'device', label: '设备与环境', alert: devProfile.risk === '高' || devProfile.emulator || devProfile.groupControl || detail.deviceRisk.some((t) => !t.includes('未见明显异常')) },
   ]
 
   return (
@@ -1253,7 +1259,44 @@ function DetailView({
 
       {/* ===== 设备与环境 ===== */}
       <Panel id="device" title="设备与环境">
-        <dl className="space-y-2 text-sm">
+        {/* 设备风险画像（缺口2 · 设备维度） */}
+        <div className="rounded-xl border border-slate-100 bg-slate-50/60 p-3">
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-semibold text-slate-600">设备风险画像</p>
+            <Badge kind={GAP_LEVEL_KIND[devProfile.risk]}>{devProfile.risk}风险</Badge>
+          </div>
+          <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs md:grid-cols-3">
+            <div><span className="text-slate-400">设备号</span><p className="font-mono text-slate-700">{devProfile.deviceId}</p></div>
+            <div><span className="text-slate-400">机型 / 系统</span><p className="text-slate-700">{devProfile.model} · {devProfile.os}</p></div>
+            <div>
+              <span className="text-slate-400">环境风险分</span>
+              <div className="mt-0.5 flex items-center gap-2">
+                <ProgressBar value={devProfile.envScore} kind={GAP_LEVEL_KIND[devProfile.risk]} className="w-24" />
+                <span className="font-semibold text-slate-700">{devProfile.envScore}</span>
+              </div>
+            </div>
+            <div><span className="text-slate-400">指纹一致性</span><p className="text-slate-700">{devProfile.fingerprintMatch}%</p></div>
+            <div><span className="text-slate-400">IP 归属 / GPS</span><p className="text-slate-700">{devProfile.ipCity} / {devProfile.gpsCity}</p></div>
+            <div className="flex flex-wrap items-center gap-1">
+              {devProfile.emulator && <Badge kind="red">模拟器</Badge>}
+              {devProfile.rooted && <Badge kind="red">越狱/Root</Badge>}
+              {devProfile.groupControl && <Badge kind="red">群控</Badge>}
+              {!devProfile.emulator && !devProfile.rooted && !devProfile.groupControl && <Badge kind="green">环境正常</Badge>}
+              {devProfile.ipCity !== devProfile.gpsCity && <Badge kind="amber">定位不一致</Badge>}
+            </div>
+          </div>
+          {/* 同设备多账号 */}
+          <p className="mt-2 text-xs font-medium text-slate-500">同设备多账号（{devProfile.accounts.length}）</p>
+          <div className="mt-1 flex flex-wrap gap-1.5">
+            {devProfile.accounts.map((a) => (
+              <span key={a.custId} className="inline-flex items-center gap-1 rounded-md bg-white px-2 py-0.5 text-xs text-slate-600 ring-1 ring-slate-200">
+                {a.name} <span className="text-slate-400">· {a.status}</span>
+              </span>
+            ))}
+          </div>
+        </div>
+
+        <dl className="mt-3 space-y-2 text-sm">
           {detail.device.map((d) => (
             <div key={d.label} className="flex justify-between">
               <dt className="text-slate-400">{d.label}</dt>
@@ -1307,6 +1350,65 @@ function DetailView({
             .map((t, i) => (
               <p key={i} className={`text-xs ${t.includes('未见') ? 'text-emerald-600' : 'text-rose-600'}`}>● {t}</p>
             ))}
+        </div>
+      </Panel>
+
+      {/* ===== 跨行业联防联控（缺口1 · 多头共债） ===== */}
+      <Panel id="codebt" title="跨行业联防联控 · 多头共债">
+        {/* 共债链条 */}
+        <div className="mb-3 flex flex-wrap items-center gap-2">
+          {coDebt.chain.map((node, i) => (
+            <Fragment key={i}>
+              {i > 0 && <span className="text-slate-300">→</span>}
+              <span className={`rounded-md px-2 py-0.5 text-xs ${i === 0 ? 'bg-brand-50 text-brand-700' : i === coDebt.chain.length - 1 ? 'bg-amber-50 text-amber-700' : 'bg-slate-100 text-slate-600'}`}>{node}</span>
+            </Fragment>
+          ))}
+        </div>
+        {/* 概览指标 */}
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+          {[
+            { l: '近30天申请机构', v: `${coDebt.orgCnt30d} 家`, kind: GAP_LEVEL_KIND[coDebt.level] },
+            { l: '近30天申请次数', v: `${coDebt.applyCnt30d} 次`, kind: 'gray' },
+            { l: '多头在贷总余额', v: `¥${(coDebt.totalBalance / 10000).toFixed(1)}万`, kind: 'gray' },
+            { l: '同设备申请', v: `${coDebt.sameDeviceApply} 次`, kind: coDebt.sameDeviceApply > 0 ? 'red' : 'green' },
+          ].map((s) => (
+            <div key={s.l} className="rounded-xl bg-slate-50 px-3 py-2">
+              <p className="text-xs text-slate-400">{s.l}</p>
+              <p className={`mt-0.5 font-semibold ${s.kind === 'red' ? 'text-rose-600' : s.kind === 'amber' ? 'text-amber-600' : 'text-slate-700'}`}>{s.v}</p>
+            </div>
+          ))}
+        </div>
+        {/* 命中机构清单 */}
+        <p className="mb-2 mt-3 text-xs font-medium text-slate-500">命中机构清单（{coDebt.orgs.length}）</p>
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs">
+            <thead>
+              <tr className="text-left text-slate-400">
+                <th className="py-1.5">机构</th>
+                <th className="py-1.5">类型</th>
+                <th className="py-1.5">在贷余额</th>
+                <th className="py-1.5">近30天申请</th>
+                <th className="py-1.5">状态</th>
+                <th className="py-1.5">同设备</th>
+                <th className="py-1.5">名单命中</th>
+              </tr>
+            </thead>
+            <tbody>
+              {coDebt.orgs.map((o, i) => (
+                <tr key={i} className="border-t border-slate-100">
+                  <td className="py-1.5 text-slate-700">{o.org}</td>
+                  <td className="py-1.5 text-slate-500">{o.orgType}</td>
+                  <td className="py-1.5 font-mono text-slate-600">¥{o.balance.toLocaleString()}</td>
+                  <td className="py-1.5 text-slate-600">{o.applyCnt30d} 次</td>
+                  <td className="py-1.5">
+                    <StatusTag kind={o.status === '逾期' ? 'red' : o.status === '关注' ? 'amber' : 'green'}>{o.status}</StatusTag>
+                  </td>
+                  <td className="py-1.5">{o.sameDevice ? <Badge kind="red">同设备</Badge> : <span className="text-slate-300">—</span>}</td>
+                  <td className="py-1.5">{o.listHit ? <Badge kind="amber">{o.listHit}</Badge> : <span className="text-slate-300">—</span>}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </Panel>
 

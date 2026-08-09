@@ -216,6 +216,8 @@ export const cmMenu: MenuGroup[] = [
     group: '规则集合',
     items: [
       { label: '规则合集', key: 'cm:rule-hub', keep: true, desc: '统一管理核验规则集、反欺诈规则库、黑名单、团伙库与评分场景规则' },
+      { label: '核验项库', key: 'cm:rule-hub-items', keep: true, desc: '管理核验项来源：渠道/数据源/供应商/计费/可用状态；规则编辑的「信息核验项」下拉从此选择' },
+      { label: '动作库', key: 'cm:rule-hub-actions', keep: true, desc: '维护处置动作模板（目标系统/通知人/是否审批）；规则编辑的「处置动作」从此选择' },
     ],
   },
   { group: '报告模板', items: [{ label: '报告模板', key: 'cm:report-template', desc: '统一管理信息核验 / 信用风控 / 欺诈识别 / 决策报告四类报告的展示模板、评分等级、结论与导出样式' }] },

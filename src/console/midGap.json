@@ -1,0 +1,897 @@
+{
+  "coDebts": [
+    {
+      "custId": "C0001",
+      "custName": "张*明",
+      "orgCnt30d": 6,
+      "applyCnt30d": 11,
+      "totalBalance": 386000,
+      "sameDeviceApply": 3,
+      "level": "高",
+      "chain": [
+        "张*明",
+        "同设备 IMEI-8601234",
+        "李*华（共债人）",
+        "××消费金融"
+      ],
+      "orgs": [
+        {
+          "org": "××消费金融",
+          "orgType": "消金",
+          "balance": 128000,
+          "applyCnt30d": 3,
+          "status": "关注",
+          "sameDevice": true,
+          "listHit": "灰名单"
+        },
+        {
+          "org": "××网络小贷",
+          "orgType": "小贷",
+          "balance": 96000,
+          "applyCnt30d": 2,
+          "status": "正常",
+          "sameDevice": true
+        },
+        {
+          "org": "××城商行",
+          "orgType": "银行",
+          "balance": 82000,
+          "applyCnt30d": 1,
+          "status": "正常",
+          "sameDevice": false
+        },
+        {
+          "org": "××助贷平台",
+          "orgType": "网贷",
+          "balance": 45000,
+          "applyCnt30d": 3,
+          "status": "逾期",
+          "sameDevice": true,
+          "listHit": "黑名单"
+        },
+        {
+          "org": "××融资担保",
+          "orgType": "担保",
+          "balance": 25000,
+          "applyCnt30d": 1,
+          "status": "正常",
+          "sameDevice": false
+        },
+        {
+          "org": "××股份行信用卡",
+          "orgType": "银行",
+          "balance": 10000,
+          "applyCnt30d": 1,
+          "status": "正常",
+          "sameDevice": false
+        }
+      ]
+    },
+    {
+      "custId": "C0002",
+      "custName": "李*华",
+      "orgCnt30d": 4,
+      "applyCnt30d": 6,
+      "totalBalance": 152000,
+      "sameDeviceApply": 2,
+      "level": "中",
+      "chain": [
+        "李*华",
+        "同设备 IMEI-8601234",
+        "张*明（共债人）"
+      ],
+      "orgs": [
+        {
+          "org": "××消费金融",
+          "orgType": "消金",
+          "balance": 62000,
+          "applyCnt30d": 2,
+          "status": "正常",
+          "sameDevice": true,
+          "listHit": "关注名单"
+        },
+        {
+          "org": "××网络小贷",
+          "orgType": "小贷",
+          "balance": 48000,
+          "applyCnt30d": 1,
+          "status": "正常",
+          "sameDevice": true
+        },
+        {
+          "org": "××城商行",
+          "orgType": "银行",
+          "balance": 30000,
+          "applyCnt30d": 2,
+          "status": "正常",
+          "sameDevice": false
+        },
+        {
+          "org": "××助贷平台",
+          "orgType": "网贷",
+          "balance": 12000,
+          "applyCnt30d": 1,
+          "status": "关注",
+          "sameDevice": false
+        }
+      ]
+    },
+    {
+      "custId": "C0003",
+      "custName": "王*芳",
+      "orgCnt30d": 2,
+      "applyCnt30d": 2,
+      "totalBalance": 46000,
+      "sameDeviceApply": 0,
+      "level": "低",
+      "chain": [
+        "王*芳",
+        "××城商行"
+      ],
+      "orgs": [
+        {
+          "org": "××城商行",
+          "orgType": "银行",
+          "balance": 36000,
+          "applyCnt30d": 1,
+          "status": "正常",
+          "sameDevice": false
+        },
+        {
+          "org": "××消费金融",
+          "orgType": "消金",
+          "balance": 10000,
+          "applyCnt30d": 1,
+          "status": "正常",
+          "sameDevice": false
+        }
+      ]
+    },
+    {
+      "custId": "C0004",
+      "custName": "赵*强",
+      "orgCnt30d": 7,
+      "applyCnt30d": 14,
+      "totalBalance": 620000,
+      "sameDeviceApply": 5,
+      "level": "高",
+      "chain": [
+        "赵*强",
+        "××实业有限公司（关联企业）",
+        "同设备 IMEI-8604567",
+        "钱*华（老赖名单）"
+      ],
+      "orgs": [
+        {
+          "org": "××股份行",
+          "orgType": "银行",
+          "balance": 260000,
+          "applyCnt30d": 2,
+          "status": "逾期",
+          "sameDevice": false,
+          "listHit": "黑名单"
+        },
+        {
+          "org": "××融资担保",
+          "orgType": "担保",
+          "balance": 150000,
+          "applyCnt30d": 3,
+          "status": "关注",
+          "sameDevice": true,
+          "listHit": "灰名单"
+        },
+        {
+          "org": "××网络小贷",
+          "orgType": "小贷",
+          "balance": 88000,
+          "applyCnt30d": 4,
+          "status": "关注",
+          "sameDevice": true
+        },
+        {
+          "org": "××助贷平台",
+          "orgType": "网贷",
+          "balance": 62000,
+          "applyCnt30d": 3,
+          "status": "逾期",
+          "sameDevice": true,
+          "listHit": "黑名单"
+        },
+        {
+          "org": "××消费金融",
+          "orgType": "消金",
+          "balance": 40000,
+          "applyCnt30d": 1,
+          "status": "正常",
+          "sameDevice": false
+        },
+        {
+          "org": "××典当行",
+          "orgType": "小贷",
+          "balance": 15000,
+          "applyCnt30d": 1,
+          "status": "正常",
+          "sameDevice": true
+        },
+        {
+          "org": "××汽车金融",
+          "orgType": "消金",
+          "balance": 5000,
+          "applyCnt30d": 0,
+          "status": "正常",
+          "sameDevice": false
+        }
+      ]
+    },
+    {
+      "custId": "C0005",
+      "custName": "陈*敏",
+      "orgCnt30d": 3,
+      "applyCnt30d": 4,
+      "totalBalance": 98000,
+      "sameDeviceApply": 1,
+      "level": "中",
+      "chain": [
+        "陈*敏",
+        "××助贷平台",
+        "同设备 IMEI-8607890"
+      ],
+      "orgs": [
+        {
+          "org": "××助贷平台",
+          "orgType": "网贷",
+          "balance": 52000,
+          "applyCnt30d": 2,
+          "status": "关注",
+          "sameDevice": true,
+          "listHit": "关注名单"
+        },
+        {
+          "org": "××消费金融",
+          "orgType": "消金",
+          "balance": 32000,
+          "applyCnt30d": 1,
+          "status": "正常",
+          "sameDevice": false
+        },
+        {
+          "org": "××城商行",
+          "orgType": "银行",
+          "balance": 14000,
+          "applyCnt30d": 1,
+          "status": "正常",
+          "sameDevice": false
+        }
+      ]
+    }
+  ],
+  "crossOrg": [
+    {
+      "org": "××消费金融",
+      "listType": "黑名单",
+      "hit": 38,
+      "scan": 820
+    },
+    {
+      "org": "××消费金融",
+      "listType": "灰名单",
+      "hit": 22,
+      "scan": 820
+    },
+    {
+      "org": "××消费金融",
+      "listType": "关注名单",
+      "hit": 45,
+      "scan": 820
+    },
+    {
+      "org": "××消费金融",
+      "listType": "老赖名单",
+      "hit": 12,
+      "scan": 820
+    },
+    {
+      "org": "××消费金融",
+      "listType": "欺诈团伙名单",
+      "hit": 8,
+      "scan": 820
+    },
+    {
+      "org": "××网络小贷",
+      "listType": "黑名单",
+      "hit": 51,
+      "scan": 760
+    },
+    {
+      "org": "××网络小贷",
+      "listType": "灰名单",
+      "hit": 30,
+      "scan": 760
+    },
+    {
+      "org": "××网络小贷",
+      "listType": "关注名单",
+      "hit": 40,
+      "scan": 760
+    },
+    {
+      "org": "××网络小贷",
+      "listType": "老赖名单",
+      "hit": 18,
+      "scan": 760
+    },
+    {
+      "org": "××网络小贷",
+      "listType": "欺诈团伙名单",
+      "hit": 14,
+      "scan": 760
+    },
+    {
+      "org": "××城商行",
+      "listType": "黑名单",
+      "hit": 12,
+      "scan": 1240
+    },
+    {
+      "org": "××城商行",
+      "listType": "灰名单",
+      "hit": 9,
+      "scan": 1240
+    },
+    {
+      "org": "××城商行",
+      "listType": "关注名单",
+      "hit": 26,
+      "scan": 1240
+    },
+    {
+      "org": "××城商行",
+      "listType": "老赖名单",
+      "hit": 4,
+      "scan": 1240
+    },
+    {
+      "org": "××城商行",
+      "listType": "欺诈团伙名单",
+      "hit": 2,
+      "scan": 1240
+    },
+    {
+      "org": "××助贷平台",
+      "listType": "黑名单",
+      "hit": 64,
+      "scan": 690
+    },
+    {
+      "org": "××助贷平台",
+      "listType": "灰名单",
+      "hit": 41,
+      "scan": 690
+    },
+    {
+      "org": "××助贷平台",
+      "listType": "关注名单",
+      "hit": 52,
+      "scan": 690
+    },
+    {
+      "org": "××助贷平台",
+      "listType": "老赖名单",
+      "hit": 26,
+      "scan": 690
+    },
+    {
+      "org": "××助贷平台",
+      "listType": "欺诈团伙名单",
+      "hit": 22,
+      "scan": 690
+    },
+    {
+      "org": "××股份行",
+      "listType": "黑名单",
+      "hit": 18,
+      "scan": 1030
+    },
+    {
+      "org": "××股份行",
+      "listType": "灰名单",
+      "hit": 11,
+      "scan": 1030
+    },
+    {
+      "org": "××股份行",
+      "listType": "关注名单",
+      "hit": 30,
+      "scan": 1030
+    },
+    {
+      "org": "××股份行",
+      "listType": "老赖名单",
+      "hit": 6,
+      "scan": 1030
+    },
+    {
+      "org": "××股份行",
+      "listType": "欺诈团伙名单",
+      "hit": 3,
+      "scan": 1030
+    },
+    {
+      "org": "××融资担保",
+      "listType": "黑名单",
+      "hit": 27,
+      "scan": 540
+    },
+    {
+      "org": "××融资担保",
+      "listType": "灰名单",
+      "hit": 16,
+      "scan": 540
+    },
+    {
+      "org": "××融资担保",
+      "listType": "关注名单",
+      "hit": 24,
+      "scan": 540
+    },
+    {
+      "org": "××融资担保",
+      "listType": "老赖名单",
+      "hit": 9,
+      "scan": 540
+    },
+    {
+      "org": "××融资担保",
+      "listType": "欺诈团伙名单",
+      "hit": 7,
+      "scan": 540
+    }
+  ],
+  "devices": [
+    {
+      "custId": "C0001",
+      "deviceId": "IMEI-8601234",
+      "model": "iPhone 14",
+      "os": "iOS 17.4",
+      "envScore": 72,
+      "fingerprintMatch": 63,
+      "emulator": false,
+      "rooted": false,
+      "groupControl": true,
+      "ipCity": "杭州",
+      "gpsCity": "温州",
+      "risk": "高",
+      "accounts": [
+        {
+          "custId": "C0001",
+          "name": "张*明",
+          "lastUse": "2026-08-08",
+          "status": "在贷"
+        },
+        {
+          "custId": "C0002",
+          "name": "李*华",
+          "lastUse": "2026-08-06",
+          "status": "在贷"
+        },
+        {
+          "custId": "C9001",
+          "name": "孙*磊",
+          "lastUse": "2026-07-28",
+          "status": "已拒绝"
+        }
+      ]
+    },
+    {
+      "custId": "C0002",
+      "deviceId": "IMEI-8601234",
+      "model": "iPhone 14",
+      "os": "iOS 17.4",
+      "envScore": 68,
+      "fingerprintMatch": 71,
+      "emulator": false,
+      "rooted": false,
+      "groupControl": true,
+      "ipCity": "杭州",
+      "gpsCity": "杭州",
+      "risk": "中",
+      "accounts": [
+        {
+          "custId": "C0002",
+          "name": "李*华",
+          "lastUse": "2026-08-06",
+          "status": "在贷"
+        },
+        {
+          "custId": "C0001",
+          "name": "张*明",
+          "lastUse": "2026-08-08",
+          "status": "在贷"
+        }
+      ]
+    },
+    {
+      "custId": "C0003",
+      "deviceId": "IMEI-8609012",
+      "model": "华为 Mate60",
+      "os": "HarmonyOS 4",
+      "envScore": 18,
+      "fingerprintMatch": 97,
+      "emulator": false,
+      "rooted": false,
+      "groupControl": false,
+      "ipCity": "宁波",
+      "gpsCity": "宁波",
+      "risk": "低",
+      "accounts": [
+        {
+          "custId": "C0003",
+          "name": "王*芳",
+          "lastUse": "2026-08-07",
+          "status": "在贷"
+        }
+      ]
+    },
+    {
+      "custId": "C0004",
+      "deviceId": "IMEI-8604567",
+      "model": "小米 14（疑似模拟器）",
+      "os": "Android 14",
+      "envScore": 91,
+      "fingerprintMatch": 42,
+      "emulator": true,
+      "rooted": true,
+      "groupControl": true,
+      "ipCity": "深圳",
+      "gpsCity": "杭州",
+      "risk": "高",
+      "accounts": [
+        {
+          "custId": "C0004",
+          "name": "赵*强",
+          "lastUse": "2026-08-09",
+          "status": "逾期"
+        },
+        {
+          "custId": "C9002",
+          "name": "钱*华",
+          "lastUse": "2026-08-04",
+          "status": "核销"
+        },
+        {
+          "custId": "C9003",
+          "name": "冯*军",
+          "lastUse": "2026-07-31",
+          "status": "逾期"
+        },
+        {
+          "custId": "C9004",
+          "name": "吴*静",
+          "lastUse": "2026-07-25",
+          "status": "已拒绝"
+        }
+      ]
+    },
+    {
+      "custId": "C0005",
+      "deviceId": "IMEI-8607890",
+      "model": "OPPO Reno",
+      "os": "Android 13",
+      "envScore": 44,
+      "fingerprintMatch": 88,
+      "emulator": false,
+      "rooted": false,
+      "groupControl": false,
+      "ipCity": "绍兴",
+      "gpsCity": "绍兴",
+      "risk": "中",
+      "accounts": [
+        {
+          "custId": "C0005",
+          "name": "陈*敏",
+          "lastUse": "2026-08-08",
+          "status": "在贷"
+        },
+        {
+          "custId": "C9005",
+          "name": "周*涛",
+          "lastUse": "2026-07-20",
+          "status": "结清"
+        }
+      ]
+    }
+  ],
+  "deviceHits": [
+    {
+      "id": "DH-001",
+      "ruleName": "设备命中群控集群",
+      "deviceId": "IMEI-8604567",
+      "custName": "赵*强",
+      "feature": "同设备 4 个账号 / 24h 内 3 次申请",
+      "hitAt": "2026-08-09 09:12",
+      "level": "高"
+    },
+    {
+      "id": "DH-002",
+      "ruleName": "模拟器环境识别",
+      "deviceId": "IMEI-8604567",
+      "custName": "赵*强",
+      "feature": "虚拟机特征 + 传感器缺失",
+      "hitAt": "2026-08-09 09:12",
+      "level": "高"
+    },
+    {
+      "id": "DH-003",
+      "ruleName": "设备指纹一致性异常",
+      "deviceId": "IMEI-8601234",
+      "custName": "张*明",
+      "feature": "指纹一致性 63% < 80% 阈值",
+      "hitAt": "2026-08-08 20:41",
+      "level": "中"
+    },
+    {
+      "id": "DH-004",
+      "ruleName": "IP 与 GPS 归属不一致",
+      "deviceId": "IMEI-8601234",
+      "custName": "张*明",
+      "feature": "IP 杭州 / GPS 温州",
+      "hitAt": "2026-08-08 20:41",
+      "level": "中"
+    },
+    {
+      "id": "DH-005",
+      "ruleName": "同设备多账号申请",
+      "deviceId": "IMEI-8601234",
+      "custName": "李*华",
+      "feature": "同设备 3 个账号 30 天内申请",
+      "hitAt": "2026-08-06 11:05",
+      "level": "中"
+    },
+    {
+      "id": "DH-006",
+      "ruleName": "root / 越狱设备",
+      "deviceId": "IMEI-8604567",
+      "custName": "赵*强",
+      "feature": "su 权限检测命中",
+      "hitAt": "2026-08-07 15:33",
+      "level": "高"
+    },
+    {
+      "id": "DH-007",
+      "ruleName": "设备频繁更换",
+      "deviceId": "IMEI-8607890",
+      "custName": "陈*敏",
+      "feature": "30 天内更换设备 2 次",
+      "hitAt": "2026-08-05 08:20",
+      "level": "低"
+    }
+  ],
+  "engineTasks": [
+    {
+      "id": "ET-01",
+      "name": "存量客户征信复扫",
+      "cron": "每月 1 日 02:00",
+      "scope": "全量在贷客户",
+      "lastRun": "2026-08-01 02:00",
+      "nextRun": "2026-09-01 02:00",
+      "scanned": 12840,
+      "hits": 326,
+      "successRate": 99.2,
+      "costSec": 1860,
+      "status": "待运行",
+      "alertOnHit": true
+    },
+    {
+      "id": "ET-02",
+      "name": "多头借贷周度监测",
+      "cron": "每周一 03:00",
+      "scope": "信用贷 + 消费贷",
+      "lastRun": "2026-08-07 03:00",
+      "nextRun": "2026-08-14 03:00",
+      "scanned": 8620,
+      "hits": 214,
+      "successRate": 98.7,
+      "costSec": 940,
+      "status": "运行中",
+      "alertOnHit": true
+    },
+    {
+      "id": "ET-03",
+      "name": "司法涉诉每日扫描",
+      "cron": "每日 02:30",
+      "scope": "经营贷客户 + 担保人",
+      "lastRun": "2026-08-09 02:30",
+      "nextRun": "2026-08-10 02:30",
+      "scanned": 3210,
+      "hits": 47,
+      "successRate": 99.8,
+      "costSec": 420,
+      "status": "运行中",
+      "alertOnHit": true
+    },
+    {
+      "id": "ET-04",
+      "name": "设备风险日扫",
+      "cron": "每日 04:00",
+      "scope": "近 90 天活跃设备",
+      "lastRun": "2026-08-09 04:00",
+      "nextRun": "2026-08-10 04:00",
+      "scanned": 15630,
+      "hits": 132,
+      "successRate": 97.4,
+      "costSec": 660,
+      "status": "运行中",
+      "alertOnHit": false
+    },
+    {
+      "id": "ET-05",
+      "name": "负债激增监测",
+      "cron": "每日 05:00",
+      "scope": "全量在贷客户",
+      "lastRun": "2026-08-08 05:00",
+      "nextRun": "2026-08-10 05:00",
+      "scanned": 12840,
+      "hits": 88,
+      "successRate": 92.1,
+      "costSec": 1120,
+      "status": "异常",
+      "alertOnHit": true
+    },
+    {
+      "id": "ET-06",
+      "name": "存量客群提额复评",
+      "cron": "每季度首日 06:00",
+      "scope": "优质客群名单",
+      "lastRun": "2026-06-30 06:00",
+      "nextRun": "2026-09-30 06:00",
+      "scanned": 4260,
+      "hits": 512,
+      "successRate": 99.5,
+      "costSec": 520,
+      "status": "已暂停",
+      "alertOnHit": false
+    }
+  ],
+  "opsList": [
+    {
+      "id": "OP-001",
+      "custId": "C0003",
+      "custName": "王*芳",
+      "tier": "核心优质",
+      "action": "提额",
+      "evalStatus": "已提额",
+      "lastEval": "2026-07-28",
+      "nextEval": "2026-08-27",
+      "cycle": "月度",
+      "amount": 50000,
+      "converted": true,
+      "owner": "运营一组"
+    },
+    {
+      "id": "OP-002",
+      "custId": "C0002",
+      "custName": "李*华",
+      "tier": "成长潜力",
+      "action": "提额",
+      "evalStatus": "评估中",
+      "lastEval": "2026-08-04",
+      "nextEval": "2026-09-03",
+      "cycle": "月度",
+      "amount": 20000,
+      "converted": false,
+      "owner": "运营一组"
+    },
+    {
+      "id": "OP-003",
+      "custId": "C0005",
+      "custName": "陈*敏",
+      "tier": "沉睡唤醒",
+      "action": "促活",
+      "evalStatus": "已促活",
+      "lastEval": "2026-07-31",
+      "nextEval": "2026-08-30",
+      "cycle": "月度",
+      "amount": 8000,
+      "converted": true,
+      "owner": "运营二组"
+    },
+    {
+      "id": "OP-004",
+      "custId": "C0001",
+      "custName": "张*明",
+      "tier": "风险观察",
+      "action": "降额观察",
+      "evalStatus": "已放弃",
+      "lastEval": "2026-08-06",
+      "nextEval": "2026-11-04",
+      "cycle": "季度",
+      "amount": 0,
+      "converted": false,
+      "owner": "风险运营岗"
+    },
+    {
+      "id": "OP-005",
+      "custId": "C0004",
+      "custName": "赵*强",
+      "tier": "风险观察",
+      "action": "二次营销",
+      "evalStatus": "已放弃",
+      "lastEval": "2026-08-07",
+      "nextEval": "2026-11-05",
+      "cycle": "季度",
+      "amount": 0,
+      "converted": false,
+      "owner": "风险运营岗"
+    },
+    {
+      "id": "OP-006",
+      "custId": "C0006",
+      "custName": "刘*梅",
+      "tier": "成长潜力",
+      "action": "促活",
+      "evalStatus": "候选",
+      "lastEval": "2026-08-08",
+      "nextEval": "2026-09-07",
+      "cycle": "月度",
+      "amount": 5000,
+      "converted": false,
+      "owner": "运营二组"
+    },
+    {
+      "id": "OP-007",
+      "custId": "C0007",
+      "custName": "孙*磊",
+      "tier": "核心优质",
+      "action": "提额",
+      "evalStatus": "候选",
+      "lastEval": "2026-08-08",
+      "nextEval": "2026-09-07",
+      "cycle": "月度",
+      "amount": 30000,
+      "converted": false,
+      "owner": "运营一组"
+    },
+    {
+      "id": "OP-008",
+      "custId": "C0008",
+      "custName": "吴*静",
+      "tier": "沉睡唤醒",
+      "action": "二次营销",
+      "evalStatus": "评估中",
+      "lastEval": "2026-08-03",
+      "nextEval": "2026-09-02",
+      "cycle": "月度",
+      "amount": 12000,
+      "converted": false,
+      "owner": "运营二组"
+    },
+    {
+      "id": "OP-009",
+      "custId": "C0009",
+      "custName": "钱*华",
+      "tier": "风险观察",
+      "action": "降额观察",
+      "evalStatus": "已放弃",
+      "lastEval": "2026-07-25",
+      "nextEval": "2026-10-23",
+      "cycle": "季度",
+      "amount": 0,
+      "converted": false,
+      "owner": "风险运营岗"
+    },
+    {
+      "id": "OP-010",
+      "custId": "C0010",
+      "custName": "冯*军",
+      "tier": "成长潜力",
+      "action": "提额",
+      "evalStatus": "候选",
+      "lastEval": "2026-08-05",
+      "nextEval": "2026-09-04",
+      "cycle": "月度",
+      "amount": 15000,
+      "converted": false,
+      "owner": "运营一组"
+    }
+  ]
+}
