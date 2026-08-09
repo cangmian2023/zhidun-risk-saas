@@ -9,7 +9,7 @@
  *        sc:api API 对接 · sc:batch 批量评分 · sc:bill 计费与账单
  * 数据：scoringData.json 样例橘 Sam；实时统计 灰 Cal。
  */
-import { useState } from 'react';
+import { useState, Fragment } from 'react';
 import { Panel, StatCard, DataTable, Button, Badge, PageHeader } from '../components/ui';
 import type { Column, Row } from '../components/ui';
 import { BarChart, LineChart, DonutChart } from '../components/charts';
@@ -75,16 +75,87 @@ const KIND_DESC: Record<string, string> = {
   bill: '三产品统一账本、充值、余额、月度账单（样例数据）。',
 };
 
+/* 产品定位 / 用户拆解 / 业务闭环 常量（需求2：让系统“看得懂能干嘛”） */
+const PROD_INFO: Record<ScoreProd, { position: string; functions: string[]; audience: string }> = {
+  zhicha: { position: '贷前反欺诈评分（欺诈类）', functions: ['欺诈预测', '自动化监控'], audience: '银行 / 保险 / 消费金融 / 互联网金融等全行业（除小额短期现金贷客群）' },
+  zhixin: { position: '申请违约风险标准评分', functions: ['违约预测', '自动化监控'], audience: '信贷审批、贷中管理全场景' },
+  zhirong: { position: '多源融合的综合评分', functions: ['违约预测', '风险评估', '自动化监控'], audience: '授信转化、客群经营与精准营销场景' },
+};
+const USER_NEEDS = [
+  { role: '银行 / 消费金融 · 风控审批', need: '贷前识别欺诈申请，降低欺诈坏账', competitor: '银行自建反欺诈规则、第三方征信核验', func: '智察分查询 + 欺诈监控' },
+  { role: '信贷机构 · 授信决策', need: '评估申请人违约概率，确定额度/利率/拒绝', competitor: '通用信用评分、人行征信衍生变量', func: '智信分查询 + 评分卡解释 + 额度与拒绝建议' },
+  { role: '金融机构 · 客群经营/营销', need: '在风险可控前提下提升转化与客群价值', competitor: '通用营销评分、机构内部标签体系', func: '智融分查询 + 客户分层 + 场景效果监控' },
+  { role: '风控 / 模型团队', need: '持续监控模型漂移，及时调优', competitor: '自研模型监控平台', func: '三产品自动化监控 + 模型调优建议' },
+  { role: '科技 / 风控服务商 · 商业化', need: '按需调用、按量计费快速接入', competitor: 'API 评分服务、按次/查得计费', func: 'API 对接 + 批量评分 + 计费与账单' },
+];
+const CLOSURE = [
+  { step: '单次查询', desc: '贷前决策：输入标识即得三产品分数与决策建议', page: '各产品评分查询' },
+  { step: '批量评分', desc: '全量客群打分，支撑策略与分层经营', page: '批量评分' },
+  { step: 'API 对接', desc: '嵌入业务系统，一次对接三产品', page: 'API 对接' },
+  { step: '自动化监控', desc: '高频监控 KS/AUC/PSI，发现漂移即调优', page: '各产品监控' },
+  { step: '计费与账单', desc: '按调用/查得计费，统一账本对账', page: '计费与账单' },
+];
+const PROD_COMPARE_COLS: Column[] = [
+  { key: 'name', label: '产品', width: '120px' },
+  { key: 'range', label: '分数空间', type: 'text', width: '110px' },
+  { key: 'functions', label: '核心功能', type: 'text', width: '160px' },
+  { key: 'audience', label: '适用客群', type: 'text', width: '360px' },
+  { key: 'hint', label: '评分语义', type: 'text', width: '160px' },
+];
+const USER_COLS: Column[] = [
+  { key: 'role', label: '用户角色', width: '200px' },
+  { key: 'need', label: '核心需求', type: 'text', width: '260px' },
+  { key: 'competitor', label: '同业常见满足方式', type: 'text', width: '240px' },
+  { key: 'func', label: '本产品功能 / 页面', type: 'text', width: '260px' },
+];
+
 /* ============ 评分体系总览（对象档案 + 产品总览融合） ============ */
 function OverviewPage({ d }: { d: ReturnType<typeof useScoring> }) {
+  const prods: ScoreProd[] = ['zhicha', 'zhixin', 'zhirong'];
   const [id, setId] = useState('3201**********1234');
   const [phone, setPhone] = useState('138****5678');
   const [queried, setQueried] = useState(false);
-  const prods: ScoreProd[] = ['zhicha', 'zhixin', 'zhirong'];
   const callTotal = 1642 + 1480 + 720;
+
+  const compareRows: Row[] = prods.map((p) => {
+    const m = d.meta[p]; const info = PROD_INFO[p];
+    return { id: p, name: m.name, range: `${m.range[0]}~${m.range[1]}`, functions: info.functions.join('、'), audience: info.audience, hint: m.hint };
+  });
+  const userRows: Row[] = USER_NEEDS.map((u, i) => ({ id: String(i), ...u }));
 
   return (
     <>
+      {/* 子系统定位 + 三产品卡片 */}
+      <Panel title="评分产品 · 模型即服务" desc="面向银行、保险、消费金融、互联网金融等机构的标准化评分产品，覆盖贷前反欺诈、贷前违约评估与客群经营三大场景">
+        <div className="grid gap-4 lg:grid-cols-3">
+          {prods.map((p) => {
+            const m = d.meta[p]; const info = PROD_INFO[p];
+            return (
+              <div key={p} className="flex flex-col rounded-xl border border-slate-200 p-4">
+                <div className="flex items-center justify-between">
+                  <div className="text-base font-semibold text-slate-800">{m.name}</div>
+                  <Badge kind="violet">{m.range[0]}~{m.range[1]}</Badge>
+                </div>
+                <div className="mt-1 text-xs text-slate-500">{info.position}</div>
+                <div className="mt-3 flex flex-wrap gap-1.5">
+                  {info.functions.map((f) => <Badge key={f} kind="blue">{f}</Badge>)}
+                </div>
+                <div className="mt-3 text-xs leading-relaxed text-slate-500"><span className="font-medium text-slate-600">适用客群：</span>{info.audience}</div>
+                <div className="mt-2 text-xs leading-relaxed text-slate-500"><span className="font-medium text-slate-600">评分语义：</span>{m.hint}</div>
+              </div>
+            );
+          })}
+        </div>
+        <div className="mt-5">
+          <DataTable columns={PROD_COMPARE_COLS} rows={compareRows} empty="—" pager={false} />
+        </div>
+      </Panel>
+
+      {/* 目标用户与需求拆解 */}
+      <Panel title="目标用户与需求拆解" desc="谁在用、解决什么、同业如何满足、本产品用什么功能满足（样例视角）">
+        <DataTable columns={USER_COLS} rows={userRows} empty="—" pager={false} />
+      </Panel>
+
       {/* 对象评分档案：一个申请人 → 三分数并排 */}
       <Panel title="对象评分档案" desc={<span>输入一个申请人，同时查看三份评分 <Sam value="scoringData.json.meta" /></span>}>
         <div className="mb-4 flex flex-wrap items-end gap-3">
@@ -124,7 +195,6 @@ function OverviewPage({ d }: { d: ReturnType<typeof useScoring> }) {
         <StatCard label="智信分拒绝占比" value="12.4%" delta="-0.5pp" deltaType="up" accent="emerald" hint={<Sam label="样例" />} />
         <StatCard label="监控异常" value="1 项" delta="智融分PSI偏移" deltaType="flat" accent="amber" hint={<Sam label="样例" />} />
       </div>
-
       <div className="grid gap-6 lg:grid-cols-2">
         <Panel title="三产品今日调用量（万）" desc={<span><Cal label="实时统计" /></span>}>
           <BarChart labels={['智察分', '智信分', '智融分']} series={[{ name: '调用量', color: '#3366ff', data: [1642, 1480, 720] }]} unit="万" height={220} />
@@ -137,6 +207,22 @@ function OverviewPage({ d }: { d: ReturnType<typeof useScoring> }) {
           ]} centerLabel="调用占比" centerValue="100%" height={210} />
         </Panel>
       </div>
+
+      {/* 业务闭环 */}
+      <Panel title="业务闭环 · 从单次决策到持续经营" desc="单次查询 → 批量评分 → API 对接 → 自动化监控 → 计费账单，形成完整产品闭环">
+        <div className="flex flex-wrap items-stretch gap-2">
+          {CLOSURE.map((c, i) => (
+            <Fragment key={c.step}>
+              <div className="flex-1 min-w-[160px] rounded-xl border border-slate-200 p-3">
+                <div className="text-sm font-medium text-slate-700">{c.step}</div>
+                <div className="mt-1 text-xs leading-relaxed text-slate-500">{c.desc}</div>
+                <div className="mt-2"><Badge kind="gray">{c.page}</Badge></div>
+              </div>
+              {i < CLOSURE.length - 1 && <div className="grid place-items-center px-1 text-lg text-slate-300">→</div>}
+            </Fragment>
+          ))}
+        </div>
+      </Panel>
     </>
   );
 }

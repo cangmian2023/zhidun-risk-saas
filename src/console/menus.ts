@@ -65,11 +65,11 @@ export const scoringMenu: MenuGroup[] = [
   {
     group: '评分体系',
     section: '工作台',
-    items: [{ label: '评分体系总览', key: 'sc:overview', keep: true, desc: '输入一个申请人 → 智察/智信/智融三分数并排（对象评分档案）；下方三产品调用量/命中率/异常/场景使用总览' }],
+    items: [{ label: '评分体系总览', key: 'sc:overview', keep: true, desc: '子系统定位与三产品能力对比、目标用户拆解、业务闭环；输入申请人并排三分数（对象评分档案）与体系总览' }],
   },
   {
     group: '智察分',
-    section: '欺诈维度',
+    section: '智能察分 · 欺诈评分 0~100，分越高欺诈风险越高',
     items: [
       { label: '欺诈评分查询', key: 'sc:zhicha-query', keep: true, desc: '输入标识 → 欺诈分(0~100)+欺诈概率+决策建议；结果下钻规则命中明细、黑名单与团伙' },
       { label: '欺诈监控', key: 'sc:zhicha-monitor', keep: true, desc: '新客欺诈率、通道欺诈率、命中 TOP 规则趋势' },
@@ -77,7 +77,7 @@ export const scoringMenu: MenuGroup[] = [
   },
   {
     group: '智信分',
-    section: '违约维度',
+    section: '智能信分 · 违约评分 300~900，分越高违约概率越低',
     items: [
       { label: '违约评分查询', key: 'sc:zhixin-query', keep: true, desc: '输入标识 → 信用分(300~900)+违约概率+信用等级；结果下钻评分卡解释、额度与拒绝建议' },
       { label: '客群分布与逾期表现', key: 'sc:zhixin-vintage', keep: true, desc: '分档通过率、Vintage 逾期曲线、评分分布' },
@@ -85,7 +85,7 @@ export const scoringMenu: MenuGroup[] = [
   },
   {
     group: '智融分',
-    section: '融合层',
+    section: '智能融分 · 风险 + 价值融合评分',
     items: [
       { label: '融合评分查询', key: 'sc:zhirong-query', keep: true, desc: '输入标识 → 综合分；结果下钻融合构成（双维引用+价值）、场景评分对比、360 风险×价值评估' },
       { label: '客户分层', key: 'sc:zhirong-tier', keep: true, desc: '高价值/高风险/沉睡/活跃客群分组与占比' },
@@ -94,7 +94,7 @@ export const scoringMenu: MenuGroup[] = [
   },
   {
     group: '公共能力',
-    section: '平台公共',
+    section: '公共能力 · 三产品通用服务',
     items: [
       { label: 'API 对接', key: 'sc:api', keep: true, desc: '一次对接三产品（单接口按需返回分数组合）、鉴权、调用日志' },
       { label: '批量评分', key: 'sc:batch', keep: true, desc: '文件上传→任务队列→结果下载（三产品通用）' },
