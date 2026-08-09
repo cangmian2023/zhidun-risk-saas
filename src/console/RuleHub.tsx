@@ -13,7 +13,7 @@ import { Sam, Cal } from './SourceTag';
 import { ConfigListPage, ConfigDetailPage } from './ConfigTemplate';
 import {
   useRuleHub, updateRuleHub, RULE_TYPES,
-  type RuleItem, type RuleType, type RiskLevel, type RuleCondGroup, type RuleCondRow, type VerifyItemDef,
+  type RuleItem, type RuleType, type RiskLevel, type RuleCondGroup, type RuleCondRow,
   COND_FIELD_OPTIONS, COND_OP_OPTIONS, COND_WINDOW_OPTIONS, summarizeCond,
   deriveStats, pushVersion,
 } from './ruleHubData';
@@ -345,11 +345,6 @@ function RuleForm({ initial, isNew, onBack, onSaved }: {
 
           </div>
         )}
-      </Panel>
-
-      {/* 需求32：数据契约——本规则执行时需要用到的申请数据 / 渠道 / 接口（从核验项入参自动汇总） */}
-      <Panel title="数据契约" desc={<span>执行本规则需要的数据 <Cal label="自动汇总" /> 由下方核验项入参 / 结构化条件自动汇总，回答「用什么数据碰撞本规则」</span>}>
-        <DataContract rule={form} catalog={hub.verifyCatalog ?? []} />
       </Panel>
 
       <TypeSpecificForm rule={form} set={set} />
@@ -690,144 +685,6 @@ function CondGroupEditor({ groups, onChange }: { groups: RuleCondGroup[]; onChan
       <button type="button" onClick={addGroup} className="rounded-lg border border-brand-300 bg-white px-3 py-1.5 text-xs font-medium text-brand-600 hover:bg-brand-50">
         ＋ 添加条件组
       </button>
-    </div>
-  );
-}
-
-/* ---------- 需求32：数据契约（本规则执行时需要用哪些申请数据/渠道/接口） ---------- */
-function DataContract({ rule, catalog }: { rule: RuleItem; catalog: VerifyItemDef[] }) {
-  const vItems = rule.verifyItems ?? [];
-  // 核验项 → 核验项库定义：精确匹配优先，其次按公共汉字≥2 模糊匹配（兼容旧规则自定义核验项名），未匹配则降级
-  const findDef = (item: string): VerifyItemDef | undefined => {
-    const exact = catalog.find((v) => v.name === item);
-    if (exact) return exact;
-    let best: VerifyItemDef | undefined; let bestN = 0;
-    catalog.forEach((v) => {
-      const n = [...v.name].filter((c) => item.includes(c) && /[\u4e00-\u9fa5]/.test(c)).length;
-      if (n > bestN) { bestN = n; best = v; }
-    });
-    return bestN >= 2 ? best : undefined;
-  };
-  // 汇总核验项入参来源（申请字段）与渠道
-  const fieldCnt = new Map<string, number>();
-  const chanMap = new Map<string, string[]>();   // 渠道 → 核验项名
-  const apiRows: { item: string; matched: boolean; api: string; auth: string; fields: string[] }[] = [];
-  vItems.forEach((it) => {
-    const def = findDef(it.item);
-    if (def) {
-      (def.requestParams ?? []).forEach((p) => {
-        if (p.source) fieldCnt.set(p.source, (fieldCnt.get(p.source) ?? 0) + 1);
-      });
-      const ch = chanMap.get(def.cat) ?? [];
-      if (!ch.includes(def.name)) ch.push(def.name);
-      chanMap.set(def.cat, ch);
-      apiRows.push({
-        item: def.name,
-        matched: true,
-        api: def.api ?? '—',
-        auth: def.auth ?? '—',
-        fields: (def.requestParams ?? []).map((p) => (p.required ? p.source : `${p.source}(选)`)).filter(Boolean),
-      });
-    } else {
-      // 未匹配核验项库：降级展示原始核验项名（可能是历史自定义核验项）
-      apiRows.push({ item: it.item, matched: false, api: '—', auth: '—', fields: ['未在核验项库匹配，可能是历史自定义核验项'] });
-    }
-  });
-  // 结构化条件字段（指标，由数据平台计算，非申请原始字段）
-  const condFields = (rule.conditions ?? []).flatMap((g) => g.rows.map((r) => r.field)).filter(Boolean);
-  const fields = [...fieldCnt.keys()];
-  const empty = !vItems.length && !condFields.length;
-
-  return (
-    <div>
-      {empty ? (
-        <div style={{ fontSize: 12, color: '#D97706', background: '#FEF3C7', border: '1px solid #FDE68A', borderRadius: 8, padding: '8px 12px' }}>
-          该规则未配置核验项或结构化条件，暂无数据依赖。
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {/* 所需申请数据字段 */}
-          <div>
-            <div style={{ fontSize: 12, fontWeight: 600, color: '#64748B', marginBottom: 6 }}>
-              需要的申请数据字段（{fields.length}）
-            </div>
-            {fields.length ? (
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                {fields.map((f) => (
-                  <span key={f} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, background: '#EFF6FF', border: '1px solid #BFDBFE', color: '#1D4ED8', borderRadius: 999, padding: '3px 10px' }}>
-                    {f}
-                    {fieldCnt.get(f)! > 1 && <span style={{ fontSize: 10, color: '#93C5FD' }}>×{fieldCnt.get(f)}</span>}
-                  </span>
-                ))}
-              </div>
-            ) : <span style={{ fontSize: 12, color: '#94A3B8' }}>无外部数据依赖（仅结构化指标条件）</span>}
-            {fields.length > 0 && (
-              <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 6 }}>
-                申请人在进件时需提供以上字段，用于碰撞本规则下方的核验项；字段右上角 ×N = 被 N 个核验项同时使用。
-              </div>
-            )}
-          </div>
-
-          {/* 涉及渠道 */}
-          {chanMap.size > 0 && (
-            <div>
-              <div style={{ fontSize: 12, fontWeight: 600, color: '#64748B', marginBottom: 6 }}>
-                涉及数据渠道（{chanMap.size}）
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                {[...chanMap.entries()].map(([cat, items]) => (
-                  <div key={cat} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12 }}>
-                    <span style={{ fontSize: 11, color: '#fff', background: '#64748B', borderRadius: 6, padding: '2px 8px', flexShrink: 0 }}>{cat}</span>
-                    <span style={{ color: '#334155' }}>{items.join('、')}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* 接口明细 */}
-          {apiRows.length > 0 && (
-            <div>
-              <div style={{ fontSize: 12, fontWeight: 600, color: '#64748B', marginBottom: 6 }}>核验项调用明细（接口 × 入参）</div>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
-                <thead>
-                  <tr style={{ textAlign: 'left', color: '#94A3B8', borderBottom: '1px solid #E2E8F0' }}>
-                    <th style={{ padding: '6px 8px', fontWeight: 500 }}>核验项</th>
-                    <th style={{ padding: '6px 8px', fontWeight: 500 }}>接口</th>
-                    <th style={{ padding: '6px 8px', fontWeight: 500 }}>认证</th>
-                    <th style={{ padding: '6px 8px', fontWeight: 500 }}>入参（数据来源）</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {apiRows.map((r, i) => (
-                    <tr key={i} style={{ borderBottom: '1px solid #F1F5F9' }}>
-                      <td style={{ padding: '7px 8px', color: r.matched ? '#334155' : '#B45309', fontWeight: 600 }}>
-                        {r.item}
-                        {!r.matched && <span style={{ fontSize: 10, color: '#D97706', background: '#FEF3C7', borderRadius: 4, padding: '1px 5px', marginLeft: 6 }}>未匹配</span>}
-                      </td>
-                      <td style={{ padding: '7px 8px', color: '#1D4ED8', fontFamily: 'monospace' }}>{r.api}</td>
-                      <td style={{ padding: '7px 8px', color: '#475569' }}>{r.auth}</td>
-                      <td style={{ padding: '7px 8px', color: r.matched ? '#475569' : '#D97706' }}>{r.fields.join('、') || '—'}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-
-          {/* 结构化条件（指标） */}
-          {condFields.length > 0 && (
-            <div>
-              <div style={{ fontSize: 12, fontWeight: 600, color: '#64748B', marginBottom: 6 }}>结构化条件字段（指标，由数据平台计算，非申请原始数据）</div>
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                {condFields.map((f) => (
-                  <span key={f} style={{ fontSize: 12, background: '#F8FAFC', border: '1px solid #E2E8F0', color: '#475569', borderRadius: 999, padding: '3px 10px' }}>{f}</span>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      )}
     </div>
   );
 }

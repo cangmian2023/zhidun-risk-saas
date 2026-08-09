@@ -113,6 +113,25 @@ export interface VerifyItemDef {
   auth?: string;        // 认证方式（Token / AK-SK / 无）
   requestParams?: { name: string; label: string; required: boolean; source: string }[];  // 入参：参数名 / 含义 / 是否必填 / 数据来源（从申请人字段取）
   responseParams?: { name: string; label: string; desc: string }[];                     // 出参：参数名 / 含义 / 说明
+  // 返回值归一化映射：第三方原始值 → 标准触发条件（让各家的"方言"翻译成统一"普通话"）；op 支持等于/不等于/包含/≥/≤/其它兜底，可对任意返回字段配置
+  normalizers?: VerifyNormalizer[];
+}
+
+/* ---------- 返回值归一化映射：第三方原始返回值 → 标准触发条件 ---------- */
+export type NormOp = 'eq' | 'neq' | 'contains' | 'gte' | 'lte' | 'default';
+export const NORM_OP_OPTIONS: { value: NormOp; label: string }[] = [
+  { value: 'eq', label: '等于' },
+  { value: 'neq', label: '不等于' },
+  { value: 'contains', label: '包含' },
+  { value: 'gte', label: '≥' },
+  { value: 'lte', label: '≤' },
+  { value: 'default', label: '其它(兜底)' },
+];
+export interface VerifyNormalizer {
+  field: string;     // 对应哪个返回出参（responseParams 中的字段名）
+  op?: NormOp;       // 匹配方式，默认 'eq'（等于）
+  raw: string;       // 第三方原始返回值，如 PASS / FAIL / ERROR / HIT（op='default' 时忽略）
+  cond: string;      // 映射到的触发条件（condLib 中的名称）；空字符串表示"通过 / 不触发"
 }
 
 /* ---------- 需求32 基础：申请进件数据字段字典（核验项入参的数据来源） ---------- */
@@ -153,7 +172,7 @@ export interface RuleHub {
 }
 
 /* ---------- 需求35：核验触发条件库（信息核验项「触发条件」下拉来源，可维护） ---------- */
-export interface CondLibItem { id: string; name: string; desc?: string }
+export interface CondLibItem { id: string; name: string; cat?: string; desc?: string }
 
 /* ---------- P2 规则集 SEED ---------- */
 export const SEED_RULE_SETS: RuleSetDef[] = [
@@ -179,46 +198,60 @@ export const RULE_TYPES: RuleType[] = [
 export const SEED_VERIFY_CATALOG: VerifyItemDef[] = [
   { id: 'V1', name: '公安实名核验', cat: '身份核验', source: '公安部 NCIIC', vendor: '公安三所', price: 0.5, status: '启用', desc: '姓名+证件号与公安库比对', api: 'nciic.realname.v1', timeout: 1000, qps: 100, doc: '/docs/verify/realname', protocol: 'HTTP POST JSON', auth: 'Token',
     requestParams: [{ name: 'name', label: '姓名', required: true, source: '客户姓名' }, { name: 'idCard', label: '证件号', required: true, source: '证件号' }],
-    responseParams: [{ name: 'result', label: '核验结果', desc: 'PASS/FAIL/ERROR' }, { name: 'match', label: '是否一致', desc: '姓名与证件号是否匹配' }] },
+    responseParams: [{ name: 'result', label: '核验结果', desc: 'PASS/FAIL/ERROR' }, { name: 'match', label: '是否一致', desc: '姓名与证件号是否匹配' }],
+    normalizers: [{ field: 'result', op: 'eq', raw: 'PASS', cond: '' }, { field: 'result', op: 'eq', raw: 'FAIL', cond: '核验不通过' }, { field: 'result', op: 'eq', raw: 'ERROR', cond: '核验结果异常' }, { field: 'match', op: 'neq', raw: 'true', cond: '与录入信息不一致' }] },
   { id: 'V2', name: '身份证二要素', cat: '身份核验', source: '公安部 NCIIC', vendor: '银联数据', price: 0.3, status: '启用', desc: '姓名+证件号一致性校验', api: 'nciic.id2.v1', timeout: 800, qps: 200, doc: '/docs/verify/id2', protocol: 'HTTP POST JSON', auth: 'Token',
     requestParams: [{ name: 'name', label: '姓名', required: true, source: '客户姓名' }, { name: 'idCard', label: '证件号', required: true, source: '证件号' }],
-    responseParams: [{ name: 'result', label: '核验结果', desc: 'PASS/FAIL/ERROR' }, { name: 'match', label: '是否一致', desc: '二要素是否匹配' }] },
+    responseParams: [{ name: 'result', label: '核验结果', desc: 'PASS/FAIL/ERROR' }, { name: 'match', label: '是否一致', desc: '二要素是否匹配' }],
+    normalizers: [{ field: 'result', op: 'eq', raw: 'PASS', cond: '' }, { field: 'result', op: 'eq', raw: 'FAIL', cond: '核验不通过' }, { field: 'result', op: 'eq', raw: 'ERROR', cond: '核验结果异常' }, { field: 'match', op: 'neq', raw: 'true', cond: '与录入信息不一致' }] },
   { id: 'V3', name: '身份证三要素', cat: '身份核验', source: '公安部 NCIIC', vendor: '同盾', price: 0.4, status: '启用', desc: '姓名+证件号+人像校验', api: 'nciic.id3.v1', timeout: 1000, qps: 150, doc: '/docs/verify/id3', protocol: 'HTTP POST JSON', auth: 'Token',
     requestParams: [{ name: 'name', label: '姓名', required: true, source: '客户姓名' }, { name: 'idCard', label: '证件号', required: true, source: '证件号' }, { name: 'photo', label: '人像照', required: true, source: '身份证人像' }],
-    responseParams: [{ name: 'result', label: '核验结果', desc: 'PASS/FAIL/ERROR' }, { name: 'match', label: '是否一致', desc: '人像与证件照比对' }, { name: 'similarity', label: '相似度', desc: '0-100' }] },
+    responseParams: [{ name: 'result', label: '核验结果', desc: 'PASS/FAIL/ERROR' }, { name: 'match', label: '是否一致', desc: '人像与证件照比对' }, { name: 'similarity', label: '相似度', desc: '0-100' }],
+    normalizers: [{ field: 'result', op: 'eq', raw: 'PASS', cond: '' }, { field: 'result', op: 'eq', raw: 'FAIL', cond: '核验不通过' }, { field: 'result', op: 'eq', raw: 'ERROR', cond: '核验结果异常' }, { field: 'match', op: 'neq', raw: 'true', cond: '与录入信息不一致' }, { field: 'similarity', op: 'gte', raw: '80', cond: '' }] },
   { id: 'V4', name: '银行卡三要素', cat: '银行卡核验', source: '银联', vendor: '银联数据', price: 0.6, status: '启用', desc: '姓名+卡号+证件号校验', api: 'unionpay.bank3.v1', timeout: 1200, qps: 100, doc: '/docs/verify/bank3', protocol: 'HTTP POST JSON', auth: 'AK-SK',
     requestParams: [{ name: 'name', label: '姓名', required: true, source: '客户姓名' }, { name: 'bankCard', label: '银行卡号', required: true, source: '银行卡号' }, { name: 'idCard', label: '证件号', required: true, source: '证件号' }],
-    responseParams: [{ name: 'result', label: '核验结果', desc: 'PASS/FAIL/ERROR' }, { name: 'bankName', label: '发卡行', desc: '卡归属银行' }] },
+    responseParams: [{ name: 'result', label: '核验结果', desc: 'PASS/FAIL/ERROR' }, { name: 'bankName', label: '发卡行', desc: '卡归属银行' }],
+    normalizers: [{ field: 'result', raw: 'PASS', cond: '' }, { field: 'result', raw: 'FAIL', cond: '核验不通过' }, { field: 'result', raw: 'ERROR', cond: '核验结果异常' }] },
   { id: 'V5', name: '银行卡四要素', cat: '银行卡核验', source: '银联', vendor: '银联数据', price: 0.8, status: '启用', desc: '姓名+卡号+证件号+手机号校验', api: 'unionpay.bank4.v1', timeout: 1200, qps: 100, doc: '/docs/verify/bank4', protocol: 'HTTP POST JSON', auth: 'AK-SK',
     requestParams: [{ name: 'name', label: '姓名', required: true, source: '客户姓名' }, { name: 'bankCard', label: '银行卡号', required: true, source: '银行卡号' }, { name: 'idCard', label: '证件号', required: true, source: '证件号' }, { name: 'phone', label: '手机号', required: true, source: '手机号' }],
-    responseParams: [{ name: 'result', label: '核验结果', desc: 'PASS/FAIL/ERROR' }, { name: 'bankName', label: '发卡行', desc: '卡归属银行' }] },
+    responseParams: [{ name: 'result', label: '核验结果', desc: 'PASS/FAIL/ERROR' }, { name: 'bankName', label: '发卡行', desc: '卡归属银行' }],
+    normalizers: [{ field: 'result', raw: 'PASS', cond: '' }, { field: 'result', raw: 'FAIL', cond: '核验不通过' }, { field: 'result', raw: 'ERROR', cond: '核验结果异常' }] },
   { id: 'V6', name: '银行卡鉴权', cat: '银行卡核验', source: '银联', vendor: '通联支付', price: 1.0, status: '启用', desc: '小额打款/协议支付鉴权', api: 'unionpay.auth.v1', timeout: 3000, qps: 50, doc: '/docs/verify/bank-auth', protocol: 'HTTP POST JSON', auth: 'AK-SK',
     requestParams: [{ name: 'bankCard', label: '银行卡号', required: true, source: '银行卡号' }, { name: 'amount', label: '打款金额', required: true, source: '系统生成' }],
-    responseParams: [{ name: 'result', label: '鉴权结果', desc: 'SUCCESS/FAIL' }, { name: 'trace', label: '交易流水号', desc: '对账用' }] },
+    responseParams: [{ name: 'result', label: '鉴权结果', desc: 'SUCCESS/FAIL' }, { name: 'trace', label: '交易流水号', desc: '对账用' }],
+    normalizers: [{ field: 'result', raw: 'SUCCESS', cond: '' }, { field: 'result', raw: 'FAIL', cond: '核验不通过' }] },
   { id: 'V7', name: '运营商实名核验', cat: '运营商核验', source: '三大运营商', vendor: '聚信立', price: 0.5, status: '启用', desc: '手机号实名一致性', api: 'op.realname.v1', timeout: 1500, qps: 80, doc: '/docs/verify/op-realname', protocol: 'HTTP POST JSON', auth: 'Token',
     requestParams: [{ name: 'phone', label: '手机号', required: true, source: '手机号' }, { name: 'name', label: '姓名', required: true, source: '客户姓名' }, { name: 'idCard', label: '证件号', required: true, source: '证件号' }],
-    responseParams: [{ name: 'result', label: '核验结果', desc: 'PASS/FAIL' }, { name: 'operator', label: '运营商', desc: '移动/联通/电信' }] },
+    responseParams: [{ name: 'result', label: '核验结果', desc: 'PASS/FAIL' }, { name: 'operator', label: '运营商', desc: '移动/联通/电信' }],
+    normalizers: [{ field: 'result', raw: 'PASS', cond: '' }, { field: 'result', raw: 'FAIL', cond: '核验不通过' }] },
   { id: 'V8', name: '在网状态核验', cat: '运营商核验', source: '三大运营商', vendor: '聚信立', price: 0.4, status: '启用', desc: '号码当前在网/停机/销户', api: 'op.status.v1', timeout: 1500, qps: 80, doc: '/docs/verify/op-status', protocol: 'HTTP POST JSON', auth: 'Token',
     requestParams: [{ name: 'phone', label: '手机号', required: true, source: '手机号' }],
-    responseParams: [{ name: 'result', label: '核验结果', desc: 'NORMAL/STOPPED/CANCELED' }, { name: 'status', label: '在网状态', desc: '在网/停机/销户' }] },
+    responseParams: [{ name: 'result', label: '核验结果', desc: 'NORMAL/STOPPED/CANCELED' }, { name: 'status', label: '在网状态', desc: '在网/停机/销户' }],
+    normalizers: [{ field: 'result', raw: 'NORMAL', cond: '' }, { field: 'result', raw: 'STOPPED', cond: '核验不通过' }, { field: 'result', raw: 'CANCELED', cond: '核验不通过' }, { field: 'status', op: 'neq', raw: '在网', cond: '在网状态异常' }] },
   { id: 'V9', name: '在网时长核验', cat: '运营商核验', source: '三大运营商', vendor: '聚信立', price: 0.4, status: '启用', desc: '号码入网时长（≥3个月为佳）', api: 'op.tenure.v1', timeout: 1500, qps: 80, doc: '/docs/verify/op-tenure', protocol: 'HTTP POST JSON', auth: 'Token',
     requestParams: [{ name: 'phone', label: '手机号', required: true, source: '手机号' }],
-    responseParams: [{ name: 'result', label: '核验结果', desc: 'PASS/FAIL' }, { name: 'tenure', label: '入网时长', desc: '月数' }] },
+    responseParams: [{ name: 'result', label: '核验结果', desc: 'PASS/FAIL' }, { name: 'tenure', label: '入网时长', desc: '月数' }],
+    normalizers: [{ field: 'result', raw: 'PASS', cond: '' }, { field: 'result', raw: 'FAIL', cond: '核验不通过' }, { field: 'tenure', op: 'lte', raw: '2', cond: '入网时长不足' }] },
   { id: 'V10', name: '活体检测', cat: '生物识别', source: '自建（SDK）', vendor: '旷视', price: 0.2, status: '启用', desc: '眨眼/张嘴/转头等活体动作', api: 'bio.liveness.sdk', timeout: 5000, qps: 200, doc: '/docs/verify/liveness', protocol: 'SDK', auth: '无',
     requestParams: [{ name: 'video', label: '活体视频', required: true, source: '申请人照片' }],
-    responseParams: [{ name: 'result', label: '活体结果', desc: 'PASS/FAIL' }, { name: 'liveness', label: '活体分', desc: '0-100' }] },
+    responseParams: [{ name: 'result', label: '活体结果', desc: 'PASS/FAIL' }, { name: 'liveness', label: '活体分', desc: '0-100' }],
+    normalizers: [{ field: 'result', raw: 'PASS', cond: '' }, { field: 'result', raw: 'FAIL', cond: '核验不通过' }, { field: 'liveness', op: 'lte', raw: '80', cond: '身份比对不通过' }] },
   { id: 'V11', name: '人脸识别比对', cat: '生物识别', source: '自建（SDK）', vendor: '旷视', price: 0.2, status: '启用', desc: '自拍照与证件照 1:N 比对', api: 'bio.face-match.v1', timeout: 3000, qps: 120, doc: '/docs/verify/face-match', protocol: 'HTTP POST JSON', auth: 'Token',
     requestParams: [{ name: 'photo', label: '自拍照', required: true, source: '申请人照片' }, { name: 'idCardPhoto', label: '证件照', required: true, source: '身份证人像' }],
-    responseParams: [{ name: 'result', label: '比对结果', desc: 'PASS/FAIL' }, { name: 'similarity', label: '相似度', desc: '0-100' }] },
+    responseParams: [{ name: 'result', label: '比对结果', desc: 'PASS/FAIL' }, { name: 'similarity', label: '相似度', desc: '0-100' }],
+    normalizers: [{ field: 'result', op: 'eq', raw: 'PASS', cond: '' }, { field: 'result', op: 'eq', raw: 'FAIL', cond: '核验不通过' }, { field: 'similarity', op: 'gte', raw: '80', cond: '' }] },
   { id: 'V12', name: '设备指纹核验', cat: '设备核验', source: '自建设备指纹库', vendor: '自研', price: 0, status: '启用', desc: '设备唯一标识与历史设备比对', api: 'dev.fp-query.v1', timeout: 500, qps: 500, doc: '/docs/verify/device-fp', protocol: 'HTTP POST JSON', auth: '无',
     requestParams: [{ name: 'deviceId', label: '设备号', required: true, source: '设备号' }, { name: 'ip', label: 'IP地址', required: false, source: 'IP地址' }],
-    responseParams: [{ name: 'result', label: '核验结果', desc: 'KNOWN/NEW' }, { name: 'isKnown', label: '是否历史设备', desc: 'true/false' }, { name: 'deviceRisk', label: '设备风险', desc: '高/中/低' }] },
+    responseParams: [{ name: 'result', label: '核验结果', desc: 'KNOWN/NEW' }, { name: 'isKnown', label: '是否历史设备', desc: 'true/false' }, { name: 'deviceRisk', label: '设备风险', desc: '高/中/低' }],
+    normalizers: [{ field: 'result', op: 'eq', raw: 'KNOWN', cond: '' }, { field: 'result', op: 'eq', raw: 'NEW', cond: '核验不通过' }, { field: 'deviceRisk', op: 'eq', raw: '高', cond: '命中风险名单' }, { field: 'deviceRisk', op: 'default', raw: '', cond: '' }, { field: 'isKnown', op: 'eq', raw: 'false', cond: '设备风险' }] },
   { id: 'V13', name: '黑名单查询', cat: '风险名单', source: '内部名单库', vendor: '自研', price: 0, status: '启用', desc: '身份证/手机号/设备命中黑名单', api: 'risk.blk-query.v1', timeout: 500, qps: 500, doc: '/docs/verify/blacklist', protocol: 'HTTP POST JSON', auth: '无',
     requestParams: [{ name: 'idCard', label: '证件号', required: false, source: '证件号' }, { name: 'phone', label: '手机号', required: false, source: '手机号' }, { name: 'deviceId', label: '设备号', required: false, source: '设备号' }],
-    responseParams: [{ name: 'result', label: '查询结果', desc: 'HIT/MISS' }, { name: 'hitList', label: '命中名单', desc: '名单名称列表' }, { name: 'level', label: '风险等级', desc: '高/中/低' }] },
+    responseParams: [{ name: 'result', label: '查询结果', desc: 'HIT/MISS' }, { name: 'hitList', label: '命中名单', desc: '名单名称列表' }, { name: 'level', label: '风险等级', desc: '高/中/低' }],
+    normalizers: [{ field: 'result', op: 'eq', raw: 'HIT', cond: '命中风险名单' }, { field: 'result', op: 'eq', raw: 'MISS', cond: '' }, { field: 'level', op: 'eq', raw: '高', cond: '命中风险名单' }] },
   { id: 'V14', name: '多头借贷查询', cat: '风险名单', source: '征信/联盟数据', vendor: '百行征信', price: 0.8, status: '启用', desc: '近期在贷平台数与查询次数', api: 'credit.multi-loan.v1', timeout: 2000, qps: 60, doc: '/docs/verify/multi-loan', protocol: 'HTTP POST JSON', auth: 'Token',
     requestParams: [{ name: 'idCard', label: '证件号', required: true, source: '证件号' }],
-    responseParams: [{ name: 'result', label: '查询结果', desc: 'PASS/FAIL' }, { name: 'loanCount', label: '在贷平台数', desc: '数字' }, { name: 'queryCount', label: '近7天查询次数', desc: '数字' }] },
+    responseParams: [{ name: 'result', label: '查询结果', desc: 'PASS/FAIL' }, { name: 'loanCount', label: '在贷平台数', desc: '数字' }, { name: 'queryCount', label: '近7天查询次数', desc: '数字' }],
+    normalizers: [{ field: 'result', raw: 'PASS', cond: '' }, { field: 'result', raw: 'FAIL', cond: '核验不通过' }, { field: 'loanCount', op: 'gte', raw: '5', cond: '多头借贷风险' }, { field: 'queryCount', op: 'gte', raw: '10', cond: '多头借贷风险' }] },
 ];
 /* 兼容导出：仅名称+渠道（旧代码用） */
 export const VERIFY_ITEM_CATALOG: { name: string; cat: string }[] = SEED_VERIFY_CATALOG.map((v) => ({ name: v.name, cat: v.cat }));
@@ -237,12 +270,29 @@ export const SEED_ACTION_LIB: ActionItem[] = [
 
 /* 触发条件 / 处置动作 均为可选，留空即「不限制 / 不设置」 */
 /* 需求35：触发条件下拉来源 = 可维护的「核验条件库」（condLib），VERIFY_COND_OPTIONS 仅为兼容导出 */
+// 触发条件分类（标准枚举的「枚举类」；核验项归一化映射把第三方方言翻译到这些类，规则据此启用处置动作）
+export const COND_CATS = ['通用', '异常', '信息校验', '账户状态', '风险名单'];
+export const COND_CAT_KIND: Record<string, 'blue' | 'violet' | 'cyan' | 'green' | 'orange' | 'red' | 'gray'> = {
+  通用: 'gray', 异常: 'red', 信息校验: 'blue', 账户状态: 'cyan', 风险名单: 'orange',
+};
 export const SEED_COND_LIB: CondLibItem[] = [
-  { id: 'C1', name: '核验不通过', desc: '核验结果明确不通过（如二要素不一致）' },
-  { id: 'C2', name: '核验结果异常', desc: '返回异常或数据缺失（如公安库无记录）' },
-  { id: 'C3', name: '核验超时', desc: '调用超时或供应商无响应' },
-  { id: 'C4', name: '与录入信息不一致', desc: '核验结果与客户录入信息存在差异' },
-  { id: 'C5', name: '命中风险名单', desc: '核验对象命中黑名单/灰名单/观察名单' },
+  // 通用
+  { id: 'C1', name: '核验不通过', cat: '通用', desc: '核验结果明确不通过（兜底通用态，如二要素不一致）' },
+  { id: 'C3', name: '核验超时', cat: '通用', desc: '调用超时或供应商无响应' },
+  // 异常
+  { id: 'C2', name: '核验结果异常', cat: '异常', desc: '返回异常或数据缺失（如公安库无记录、接口报错）' },
+  // 信息校验
+  { id: 'C4', name: '与录入信息不一致', cat: '信息校验', desc: '核验结果与客户录入信息存在差异（姓名/证件号对不上）' },
+  { id: 'C6', name: '身份比对不通过', cat: '信息校验', desc: '人像/活体比对相似度不足、活体检测失败' },
+  { id: 'C7', name: '手机号未实名', cat: '信息校验', desc: '运营商实名核验不通过或号码未实名' },
+  // 账户状态
+  { id: 'C8', name: '在网状态异常', cat: '账户状态', desc: '号码停机/销户/空号（非在网状态）' },
+  { id: 'C9', name: '入网时长不足', cat: '账户状态', desc: '号码入网时长低于阈值（如 <3 个月）' },
+  // 风险名单
+  { id: 'C5', name: '命中风险名单', cat: '风险名单', desc: '核验对象命中黑名单/灰名单/观察名单' },
+  { id: 'C10', name: '命中欺诈名单', cat: '风险名单', desc: '命中欺诈/团伙名单' },
+  { id: 'C11', name: '设备风险', cat: '风险名单', desc: '新设备/模拟器/高危设备' },
+  { id: 'C12', name: '多头借贷风险', cat: '风险名单', desc: '在贷平台数或近7天查询次数超阈值（资金饥渴）' },
 ];
 export const VERIFY_COND_OPTIONS = SEED_COND_LIB.map((c) => c.name);
 export const VERIFY_ACTION_OPTIONS = SEED_ACTION_LIB.map((a) => a.name);
@@ -320,9 +370,24 @@ async function bootstrap() {
     // P0-01/03：merge 核验项库/动作库（用户已维护的保留，缺失时用 SEED 兜底）；需求35：merge 条件库；P2：merge 规则集
     data = {
       rules: s.rules as RuleItem[],
-      verifyCatalog: Array.isArray(s.verifyCatalog) && s.verifyCatalog.length ? s.verifyCatalog as VerifyItemDef[] : [...SEED_VERIFY_CATALOG],
+      verifyCatalog: Array.isArray(s.verifyCatalog) && s.verifyCatalog.length
+        ? (s.verifyCatalog as VerifyItemDef[]).map((v) => {
+            const seedN = SEED_VERIFY_CATALOG.find((s2) => s2.id === v.id)?.normalizers ?? [];
+            const savedN = v.normalizers ?? [];
+            // 加法合并：把 SEED 中有、但本地缺失的映射行补上（按 field|op|raw 去重），不删用户已有/手改的行
+            const sig = (n: VerifyNormalizer) => `${n.field}|${n.op ?? 'eq'}|${n.raw}`;
+            const merged = [...savedN];
+            for (const sn of seedN) if (!merged.some((m) => sig(m) === sig(sn))) merged.push(sn);
+            return { ...v, normalizers: merged };
+          })
+        : [...SEED_VERIFY_CATALOG],
       actionLib: Array.isArray(s.actionLib) && s.actionLib.length ? s.actionLib as ActionItem[] : [...SEED_ACTION_LIB],
-      condLib: Array.isArray(s.condLib) && s.condLib.length ? s.condLib as CondLibItem[] : [...SEED_COND_LIB],
+      condLib: (() => {
+        const savedCond = Array.isArray(s.condLib) ? (s.condLib as CondLibItem[]) : [];
+        if (!savedCond.length) return [...SEED_COND_LIB];
+        const ids = new Set(savedCond.map((c) => c.id));
+        return [...savedCond, ...SEED_COND_LIB.filter((c) => !ids.has(c.id))]; // 加法合并：补入 SEED 新增、本地缺失的条件，不删用户已有
+      })(),
       ruleSets: Array.isArray(s.ruleSets) && s.ruleSets.length ? s.ruleSets as RuleSetDef[] : [...SEED_RULE_SETS],
     };
   } else {

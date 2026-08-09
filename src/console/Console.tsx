@@ -14,7 +14,6 @@ import DecisionVerify222 from './DecisionVerify222'
 import DecisionVerify222Detail from './DecisionVerify222Detail'
 import RuleHub from './RuleHub'
 import VerifyCatalogPage from './VerifyCatalogPage'
-import ActionLibPage from './ActionLibPage'
 import ReportTemplate from './ReportTemplate'
 import ReportTemplatePreview from './ReportTemplatePreview'
 import MidDashboardPage from './MidDashboardPage'
@@ -310,7 +309,6 @@ export default function Console() {
     'cm:fraud-rules': 'layers',
     'cm:rule-hub': 'layers',
     'cm:rule-hub-items': 'plug',
-    'cm:rule-hub-actions': 'work_flow',
     'cm:fraud-blacklist': 'plug',
     'cm:fraud-gang': 'link',
     'cm:mid-dispose-strategy': 'work_flow',
@@ -527,8 +525,6 @@ export default function Console() {
               <RuleHub />
             ) : key === 'cm:rule-hub-items' ? (
               <VerifyCatalogPage />
-            ) : key === 'cm:rule-hub-actions' ? (
-              <ActionLibPage />
             ) : key === 'cm:report-template' ? (
               <ReportTemplate />
             ) : key === 'cm:report-template-preview' ? (
