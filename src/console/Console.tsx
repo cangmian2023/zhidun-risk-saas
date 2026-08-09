@@ -45,6 +45,7 @@ import MetaVirtualEventConfig from './MetaVirtualEventConfig'
 import MetaAutoTrackConfig from './MetaAutoTrackConfig'
 import EventAnalysis from './EventAnalysis'
 import { CollectionOverview, CollectionCases, CollectionStrategy, CollectionRecords } from './CollectionPages'
+import { DunAssignment, DunImport, DunChannels, DunAgencies, DunQa, DunRepayment } from './DunPages'
 import ScoreModule from './ScoreModule'
 import { getDashboardByKey } from './dashboardData'
 import { creditRiskMenu, scoringMenu, entMenu, dmMenu, dataGovernanceMenu, cmMenu, collectionMenu, type MenuGroup } from './menus'
@@ -69,8 +70,8 @@ const subsystems = [
   { key: 'ep', name: '企业风控', open: false },
   { key: 'dm', name: '数字营销', open: false },
   { key: 'dg', name: '数据治理', open: true },
+  { key: 'zz', name: '催贷管理', open: true },
   { key: 'cm', name: '管理中心', open: true },
-  { key: 'zz', name: '催收管理', open: true },
 ]
 
 // 用户名下拉：SaaS 服务应用到基础用户功能
@@ -308,11 +309,17 @@ export default function Console() {
     'cr:mid-alert-workbench': 'zoom',
     'cr:mid-dispose-workbench': 'work_flow',
     'cr:mid-cust-detail': 'monitor',
-    // 催收管理（需求41）
+    // 催贷管理（6 大模块重新规划）
     'zz:overview': 'chart',
     'zz:cases': 'work_flow',
     'zz:records': 'inbox',
     'zz:strategy': 'sliders',
+    'zz:assignment': 'share',
+    'zz:import': 'cloud',
+    'zz:channels': 'plug',
+    'zz:agencies': 'users',
+    'zz:qa': 'shield',
+    'zz:repayment': 'check',
   }
   const menuIcon = (key: string): IconName => MENU_ICON[key] ?? 'dashboard'
 
@@ -546,6 +553,18 @@ export default function Console() {
               <CollectionRecords />
             ) : key === 'zz:strategy' ? (
               <CollectionStrategy />
+            ) : key === 'zz:assignment' ? (
+              <DunAssignment />
+            ) : key === 'zz:import' ? (
+              <DunImport />
+            ) : key === 'zz:channels' ? (
+              <DunChannels />
+            ) : key === 'zz:agencies' ? (
+              <DunAgencies />
+            ) : key === 'zz:qa' ? (
+              <DunQa />
+            ) : key === 'zz:repayment' ? (
+              <DunRepayment />
             ) : key.startsWith('cr:mid-td') || key === 'cr:overview' || key === 'cr:mid-overview' || key === 'cr:mid-alert' || key === 'cr:mid-crowd' ? (
               <MidDashboardPage pageKey={key} />
             ) : key === 'cr:mid-alert-workbench' ? (

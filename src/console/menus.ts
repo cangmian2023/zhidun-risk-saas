@@ -8,6 +8,7 @@ export const portalSubsystems = [
   { key: 'ep', name: '企业风控', desc: '面向企业客户的贷前核验、信用评估与关联图谱。', color: 'from-sky-500 to-cyan-500', open: false },
   { key: 'dm', name: '数字营销', desc: '猎客雷达、猎客信使、RTA 服务等营销获客工具。', color: 'from-emerald-500 to-teal-500', open: false },
   { key: 'dg', name: '数据治理', desc: '数据底座与元数据治理：元事件、属性、维度表、虚拟属性/事件与埋点定义。', color: 'from-indigo-500 to-blue-500', open: true },
+  { key: 'zz', name: '催贷管理', desc: '智能催收（催贷）子系统：案件资产全生命周期、合规触达、委外监管、AI 质检、协商回款与催收 BI 看板。', color: 'from-amber-500 to-red-500', open: true },
   { key: 'cm', name: '管理中心', desc: '跨子系统共用的用户、配置、看板与帮助能力。', color: 'from-slate-500 to-slate-700', open: true },
 ]
 
@@ -232,15 +233,27 @@ export const cmMenu: MenuGroup[] = [
   { group: '业务流程', items: [{ label: '业务流程配置', key: 'cm:biz-flow', keep: true, desc: '按业务域配置审核操作流程（画布编辑节点与流转），实时生效于对应审核页操作按钮' }] },
 ]
 /* ============================================================
- * 七、催收管理（需求41 新增子系统）
+ * 七、催贷管理（智能催收子系统 · 6 大模块重新规划）
  * ========================================================== */
 export const collectionMenu: MenuGroup[] = [
-  { group: '催收总览', section: '工作台', items: [{ label: '催收总览', key: 'zz:overview', desc: '逾期案件分阶段催收的实时总览：在催案件/金额、阶段分布、回款趋势', keep: true }] },
-  { group: '催收作业', section: '催收管理', items: [
-    { label: '催收案件', key: 'zz:cases', desc: '逾期案件队列：按阶段/状态/催收员筛选，查看详情并记录触达，推进承诺还款/结清/委外/核销', keep: true },
-    { label: '催收记录', key: 'zz:records', desc: '全量催收触达记录明细', keep: true },
-  ] },
-  { group: '策略配置', section: '催收管理', items: [{ label: '催收策略', key: 'zz:strategy', desc: '按逾期阶段（M0提醒/M1短信+外呼/M2外呼+函件/M3+委外+法诉）配置催收策略与触发规则', keep: true }] },
+  { group: '催收总览', section: '工作台', items: [{ label: '催收总览', key: 'zz:overview', desc: '逾期案件分阶段催收 + 委外绩效 + 质检违规 + 投诉统计的实时 BI 总览；报表支持定时导出、API 推送', keep: true }] },
+  {
+    group: '案件管理', section: '案件资产全生命周期', items: [
+      { label: '催收案件', key: 'zz:cases', desc: '逾期案件队列：按账龄/状态/催收员筛选，查看详情与处置闭环生命周期，推进承诺还款/结清/委外/核销/债权转让', keep: true },
+      { label: '智能分案', key: 'zz:assignment', desc: '智能分案引擎：内催/委外/调解/诉讼规则自定义分配，按债务人画像与催员产能动态调案，任务循环/超时回收/二次分配' },
+      { label: '案件导入', key: 'zz:import', desc: '案件导入：API 自动对接信贷核心 / Excel 手动导案，支持批量与增量同步' },
+    ],
+  },
+  {
+    group: '合规触达', section: '多渠道合规触达', items: [
+      { label: '触达渠道', key: 'zz:channels', desc: '多渠道合规触达组件：云呼叫中心 / AI 协催机器人 / 合规短信 / 安米外勤 App / 催收工作手机，内置合规硬限制（呼叫时段、每日最大频次、禁止骚扰第三方）' },
+      { label: '触达记录', key: 'zz:records', desc: '全量催收触达记录明细', keep: true },
+    ],
+  },
+  { group: '委外监管', section: '委外机构监管', items: [{ label: '委外机构', key: 'zz:agencies', desc: '委外机构监管（金融机构版最大特色）：多租户数据隔离、任务下发、进度实时监控、产能/接通率/回款率/投诉统计、佣金自动结算与违规预警' }] },
+  { group: 'AI 质检', section: '智能 AI 质检', items: [{ label: '智能质检', key: 'zz:qa', desc: '智能 AI 质检平台：ASR 转写 + NLP 语义识别、自定义违规词库、实时通话预警、录音存证、自动质检报告与违规工单' }] },
+  { group: '协商回款', section: '协商、减免与回款', items: [{ label: '协商减免与回款', key: 'zz:repayment', desc: '协商分期方案登记、减免审批流（多级）、还款流水录入自动匹配、逾期复催跟踪、回款台账与佣金计算' }] },
+  { group: '策略配置', section: '策略配置', items: [{ label: '催收策略', key: 'zz:strategy', desc: '按逾期阶段（M0 提醒/M1 短信+外呼/M2 外呼+函件/M3+ 委外+法诉）配置催收策略与触发规则', keep: true }] },
 ]
 /* ============================================================
  * 子系统元信息 & 菜单汇总
@@ -252,7 +265,7 @@ export const subNames: Record<string, string> = {
   dm: '数字营销',
   dg: '数据治理',
   cm: '管理中心',
-  zz: '催收管理',
+  zz: '催贷管理',
 }
 
 export const MENU_BY_SUB: Record<string, MenuGroup[]> = {
