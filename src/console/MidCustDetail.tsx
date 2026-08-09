@@ -66,6 +66,10 @@ export default function MidCustDetail() {
   const nav = useNavigate();
   const collection = useCollection();
   const flows = useFlows();
+  const cust: MidCustomer | undefined = useMemo(
+    () => customers.find((c) => c.custId === custId) ?? customers[0],
+    [customers, custId],
+  );
   // 需求15：预警明细列表沿用预警工作台结构（同款 DataTable 列）；时限倒计时每分钟刷新
   const [, setTick] = useState(0);
   useEffect(() => { const t = setInterval(() => setTick((x) => x + 1), 60000); return () => clearInterval(t); }, []);
@@ -88,10 +92,6 @@ export default function MidCustDetail() {
     return () => window.removeEventListener('scroll', onScroll);
   }, [cust]);
 
-  const cust: MidCustomer | undefined = useMemo(
-    () => customers.find((c) => c.custId === custId) ?? customers[0],
-    [customers, custId],
-  );
   const custCases = cust ? (collection.cases ?? []).filter((x) => x.custId === cust.custId) : [];
 
   // 团伙汇总（关系图谱·团伙识别主题用）
@@ -469,7 +469,7 @@ export default function MidCustDetail() {
       </Panel>
         </div>{/* /左列 */}
         {/* 右侧导航窗条（复用报告详情页「页面导航」样式：sticky 上移到 nav 才能整页粘住 + 滚动高亮跟随） */}
-        <nav className="hidden self-start lg:sticky lg:top-32 lg:block lg:w-44 lg:shrink-0">
+        <nav className="hidden self-start lg:block" style={{ position: 'sticky', top: 128, width: 116, flexShrink: 0 }}>
           <div className="flex flex-col gap-1">
             <p className="px-2 pb-1 text-[11px] font-medium uppercase tracking-wide text-slate-400">页面导航</p>
             {NAV_ITEMS.map((it) => {
@@ -479,7 +479,7 @@ export default function MidCustDetail() {
                   key={it.id}
                   type="button"
                   onClick={() => document.getElementById(it.id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-                  className={`rounded-lg px-2.5 py-1.5 text-left text-xs transition ${on ? 'bg-blue-50 font-semibold text-brand-700' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700'}`}
+                  className={`whitespace-nowrap rounded-lg px-2.5 py-1.5 text-left text-xs transition ${on ? 'bg-blue-50 font-semibold text-brand-700' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700'}`}
                   style={on ? { borderLeft: '2px solid #2563EB', paddingLeft: 7 } : undefined}
                 >
                   {it.label}
