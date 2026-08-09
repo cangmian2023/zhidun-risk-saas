@@ -1337,6 +1337,25 @@ export interface CustRelationNode {
   rel: string              // 与客户关系：法人/担保/设备/联系人/共借人
   type: 'company' | 'person' | 'device' | 'contact'
   risk?: string            // 实体风险标记（可选）
+  riskLevel?: '高' | '中' | '低'   // 关系人风险等级（补全）
+  idCard?: string                  // 证件号（个人/联系人）
+  phone?: string                  // 手机号（个人/联系人）
+  openAlerts?: number             // 关联预警数（补全）
+  channel?: string                // 接入渠道
+  regCapital?: string             // 注册资本（企业）
+  legalPerson?: string            // 法定代表人（企业）
+  note?: string                   // 备注
+}
+export interface CustCreditInfo {
+  term: number; rate: number; repayMethod: string; branch: string;
+  loanDate: string; lastRepay: string; overdue: number; curDue: number;
+}
+export interface CustEnvInfo {
+  device: string; region: string; network: string; lastLogin: string; city: string;
+}
+export interface CustBehaviorInfo {
+  login30d: number; deviceChange: number; activeDays: number; repayOnTime: number; nightTxnRatio: number;
+  recentEvents: { time: string; type: string; detail: string }[];
 }
 export interface CustRiskDim {
   dim: string              // 风险维度：负债/多头/欺诈/司法/行为/舆情
@@ -1356,6 +1375,9 @@ export interface MidCustomer {
   disposes: MidCustDispose[];
   relations?: CustRelationNode[];   // 需求20：关联图谱节点
   riskDims?: CustRiskDim[];         // 需求20：风险维度雷达
+  credit?: CustCreditInfo;          // 信贷信息（补全）
+  env?: CustEnvInfo;                // 环境信息（补全）
+  behavior?: CustBehaviorInfo;      // 行为信息（补全）
 }
 
 export type DisposeStatus = '待处置' | '核实中' | '处置中' | '已解除' | '已升级' | '误报';
@@ -1374,18 +1396,68 @@ export interface MidDisposeTask {
   logs: { time: string; who: string; what: string }[];
 }
 
-/* 需求20：SEED 客户兜底图谱/风险维度（文件已持久化时不用） */
+/* 确定性 hash——用客户号派生稳定的演示字段 */
+function hashStr(s: string): number {
+  let h = 2166136261 >>> 0;
+  for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; }
+  return h >>> 0;
+}
+
+/* 需求20/补全：为客户兜底图谱/风险维度，并补全关系人详情、信贷、环境、行为字段
+   （文件已持久化时也会再次补全，确保组件始终能读到这些字段） */
 export function withCustGraph(c: MidCustomer): MidCustomer {
-  if (c.relations && c.riskDims) return c;
   const base = c.riskLevel === '高风险' ? 72 : c.riskLevel === '中风险' ? 48 : 22;
-  return {
-    ...c,
-    relations: c.relations ?? [
-      { id: c.custId + '-r0', name: '华信商贸', rel: '法人', type: 'company', risk: c.riskLevel === '高风险' ? '高危' : undefined },
-      { id: c.custId + '-r1', name: 'IMEI-86' + c.custId.slice(1), rel: '设备', type: 'device' },
-    ],
-    riskDims: c.riskDims ?? ['负债','多头','欺诈','司法','行为','舆情'].map((dim, i) => ({ dim, score: Math.max(8, Math.min(96, base + i * 3)) })),
+  const h = hashStr(c.custId);
+  const relations = (c.relations ?? [
+    { id: c.custId + '-r0', name: '华信商贸', rel: '法人', type: 'company' as const },
+    { id: c.custId + '-r1', name: 'IMEI-86' + c.custId.slice(1), rel: '设备', type: 'device' as const },
+  ]).map((r, i) => {
+    const openAlerts = i === 0 ? 2 : (i % 3);
+    const riskLevel: '高' | '中' | '低' = openAlerts >= 2 ? '高' : openAlerts === 1 ? '中' : '低';
+    return {
+      ...r,
+      risk: r.risk ?? (riskLevel === '高' ? '高危' : undefined),
+      idCard: r.type === 'person' ? '3301**********' + String(1000 + i * 137).slice(-4) : undefined,
+      phone: (r.type === 'person' || r.type === 'contact') ? '138****' + String(1000 + (h % 6000 + i * 311) % 9000).slice(-4) : undefined,
+      riskLevel,
+      openAlerts,
+      channel: r.type === 'company' ? '工商登记' : r.type === 'device' ? '设备指纹库' : r.type === 'contact' ? '紧急联系人' : '关系网络',
+      regCapital: r.type === 'company' ? (300 + (h % 7) * 150) + '万' : undefined,
+      legalPerson: r.type === 'company' ? c.name : undefined,
+      note: riskLevel === '高' ? '关联实体命中风险，已纳入联合监控' : '正常关联实体',
+    } as CustRelationNode;
+  });
+  const riskDims = c.riskDims ?? ['负债', '多头', '欺诈', '司法', '行为', '舆情'].map((dim, i) => ({ dim, score: Math.max(8, Math.min(96, base + i * 3)) }));
+  const credit = c.credit ?? {
+    term: [6, 12, 24, 36][h % 4],
+    rate: Number((7.2 + (h % 50) / 10).toFixed(2)),
+    repayMethod: (h % 2) ? '等额本息' : '按月付息到期还本',
+    branch: ['城东支行', '高新支行', '滨江支行', '总行营业部'][h % 4],
+    loanDate: '2025-' + String((h % 12) + 1).padStart(2, '0') + '-' + String((h % 27) + 1).padStart(2, '0'),
+    lastRepay: '2026-0' + ((h % 8) + 1) + '-' + String((h % 27) + 1).padStart(2, '0'),
+    overdue: (h % 3),
+    curDue: Math.round(c.loanBalance * (0.03 + (h % 5) / 100)),
   };
+  const env = c.env ?? {
+    device: ['iPhone 14', '华为 Mate60', '小米 14', 'OPPO Reno'][h % 4],
+    region: ['浙江杭州', '浙江宁波', '江苏苏州', '上海'][h % 4],
+    network: (h % 2) ? 'WiFi' : '4G/5G',
+    lastLogin: '2026-08-0' + ((h % 8) + 1) + ' 09:' + String(h % 60).padStart(2, '0'),
+    city: ['杭州', '宁波', '苏州', '上海'][h % 4],
+  };
+  const behavior = c.behavior ?? {
+    login30d: 8 + (h % 20),
+    deviceChange: (h % 3),
+    activeDays: 10 + (h % 18),
+    repayOnTime: 70 + (h % 30),
+    nightTxnRatio: (h % 25),
+    recentEvents: [
+      { time: '2026-08-0' + ((h % 8) + 1) + ' 09:12', type: '登录', detail: 'APP 登录（' + env.network + '·' + env.region + '）' },
+      { time: '2026-08-0' + (((h % 8) || 8)) + ' 21:40', type: '交易', detail: '消费分期 ¥' + (500 + (h % 30) * 100) },
+      { time: '2026-07-' + String((h % 27) + 1).padStart(2, '0') + ' 10:05', type: '还款', detail: '按期归还当期 ¥' + credit.curDue },
+    ],
+  };
+  return { ...c, relations, riskDims, credit, env, behavior };
 }
 export const SEED_CUSTOMERS: MidCustomer[] = [
   {

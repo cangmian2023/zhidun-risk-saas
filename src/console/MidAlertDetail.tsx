@@ -66,11 +66,10 @@ export default function MidAlertDetail() {
     setLogTick((x) => x + 1);
   };
 
-  // 需求16/22：匹配到的具体流程（展示流程名 + 当前状态节点时限）
-  const { name: flowName, graph: flowGraph } = matchFlowGraph(
+  // 需求16：匹配到的具体流程名（展示用；节点时限标签已下沉到 FlowActionBar 流程卡片末尾）
+  const { name: flowName } = matchFlowGraph(
     flows.find((x) => x.id === a.flowKey), { level: a.level, alert_type: a.alert_type ?? '', scene: a.scene ?? '' },
   );
-  const curNode = flowGraph?.nodes.find((n) => (n.label ?? '') === a.flowState || (n.buttonName ?? '') === a.flowState);
 
   return (
     <div style={{ padding: 24, maxWidth: 1120 }}>
@@ -83,44 +82,17 @@ export default function MidAlertDetail() {
         </>} />} />
 
       {/* 业务流程操作条（需求9/16：按类型+等级匹配具体流程；需求18：点击写操作日志） */}
-      <FlowActionBar
-        flowId={a.flowKey}
-        state={a.flowState}
-        matchObj={{ level: a.level, alert_type: a.alert_type ?? '', scene: a.scene ?? '' }}
-        onStateChange={(s) => recordLog(a.flowState ?? '', s)}
-      />
+      <div style={{ marginBottom: 16 }}>
+        <FlowActionBar
+          flowId={a.flowKey}
+          state={a.flowState}
+          matchObj={{ level: a.level, alert_type: a.alert_type ?? '', scene: a.scene ?? '' }}
+          onStateChange={(s) => recordLog(a.flowState ?? '', s)}
+        />
+      </div>
 
-      {/* 预警信息（需求23：仅基本信息，原始数据/规则详情在下方独立区块） */}
-      <Panel title="预警信息" desc={<>触发场景：<b>{a.scene}</b> · <Cal label="实时" /> 指标值 {a.metric_value} / 阈值 {a.threshold}</>}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0,1fr))', gap: '6px 16px', fontSize: 13 }}>
-          {([
-            ['预警ID', a.alert_id],
-            ['客户', a.cust_name],
-            ['预警类型', a.alert_type ?? '—'],
-            ['等级', LEVEL_META[a.level].label],
-            ['预警时间', a.alert_date],
-            ['命中规则', a.rule_name],
-            ['指标值 / 阈值', `${a.metric_value} / ${a.threshold}`],
-            ['流程状态', a.flowState ?? '—'],
-            ['匹配流程', flowName || '—'],
-          ] as [string, string][]).map(([k, v]) => (
-            <div key={k} style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px dashed #F1F5F9', paddingBottom: 4 }}>
-              <span style={{ color: '#94A3B8' }}>{k}</span>
-              <span style={{ color: '#334155', fontWeight: 500 }}>{v}</span>
-            </div>
-          ))}
-        </div>
-        <div style={{ marginTop: 10, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          <Badge kind={LEVEL_META[a.level].badge}>{LEVEL_META[a.level].label}</Badge>
-          {curNode?.timeLimit && <Badge kind="amber">节点时限 {curNode.timeLimit} 分钟</Badge>}
-        </div>
-      </Panel>
-
-      {/* 需求23：原始数据与规则详情（导致预警的原始数据 + 命中规则详情） */}
-      <RawDataPanel a={a} />
-
-      {/* 需求17：客户摘要（按 custId 匹配；「查看单客视图」按钮移入本区块） */}
-      <Panel title="客户摘要" desc={cust ? <span>以客户为中心看全局 · <Sam label="样例" /> 客户号 {cust.custId}</span> : '该客户暂无档案（midCustomers.json）'}
+      {/* 需求17：客户摘要（按 custId 匹配；「查看单客视图」按钮移入本区块）——第一位 */}
+      <Panel className="mb-4" title="客户摘要" desc={cust ? <span>以客户为中心看全局 · <Sam label="样例" /> 客户号 {cust.custId}</span> : '该客户暂无档案（midCustomers.json）'}
         actions={cust ? <Button size="sm" variant="ghost" onClick={() => nav(`/console/cr/mid-cust-detail?cust=${cust.custId}&id=${a.alert_id}`)}>查看单客视图 →</Button> : undefined}>
         {cust ? (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0,1fr))', gap: '6px 16px', fontSize: 13 }}>
@@ -145,8 +117,36 @@ export default function MidAlertDetail() {
         )}
       </Panel>
 
+      {/* 预警信息（需求23：仅基本信息，原始数据/规则详情在下方独立区块） */}
+      <Panel className="mb-4" title="预警信息" desc={<>触发场景：<b>{a.scene}</b> · <Cal label="实时" /> 指标值 {a.metric_value} / 阈值 {a.threshold}</>}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0,1fr))', gap: '6px 16px', fontSize: 13 }}>
+          {([
+            ['预警ID', a.alert_id],
+            ['客户', a.cust_name],
+            ['预警类型', a.alert_type ?? '—'],
+            ['等级', LEVEL_META[a.level].label],
+            ['预警时间', a.alert_date],
+            ['命中规则', a.rule_name],
+            ['指标值 / 阈值', `${a.metric_value} / ${a.threshold}`],
+            ['流程状态', a.flowState ?? '—'],
+            ['匹配流程', flowName || '—'],
+          ] as [string, string][]).map(([k, v]) => (
+            <div key={k} style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px dashed #F1F5F9', paddingBottom: 4 }}>
+              <span style={{ color: '#94A3B8' }}>{k}</span>
+              <span style={{ color: '#334155', fontWeight: 500 }}>{v}</span>
+            </div>
+          ))}
+        </div>
+        <div style={{ marginTop: 10, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <Badge kind={LEVEL_META[a.level].badge}>{LEVEL_META[a.level].label}</Badge>
+        </div>
+      </Panel>
+
+      {/* 需求23：原始数据与规则详情（导致预警的原始数据 + 命中规则详情） */}
+      <RawDataPanel a={a} />
+
       {/* 需求18：处置记录（原「处置工单」改名；含流程操作日志） */}
-      <Panel title="处置记录" desc={<span><Sam label="读取" value="midDisposeTasks.json" /> 流程按钮操作 + 关联处置工单</span>}>
+      <Panel className="mb-4" title="处置记录" desc={<span><Sam label="读取" value="midDisposeTasks.json" /> 流程按钮操作 + 关联处置工单</span>}>
         {alertLogs.length || linkedTasks.length ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {/* 操作日志时间线 */}
@@ -184,7 +184,7 @@ function RawDataPanel({ a }: { a: MidAlert }) {
   // 原始数据明细（根据规则构造触发的原始记录样例）
   const rawRows = rawRowsOf(a);
   return (
-    <Panel title="原始数据与规则详情" desc={<span><Cal label="派生展示" /> 导致本次预警的原始数据与命中规则</span>}>
+    <Panel className="mb-4" title="原始数据与规则详情" desc={<span><Cal label="派生展示" /> 导致本次预警的原始数据与命中规则</span>}>
       {/* 规则详情 */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0,1fr))', gap: '6px 16px', fontSize: 13, marginBottom: 12 }}>
         {([

@@ -1,12 +1,12 @@
 /* ============================================================================
  * 自由画布流程编辑器（审核操作 · 每个评分分段一张图）
- * - 节点可拖拽；「＋节点」从顶部工具栏添加；点节点出属性面板（标题/角色/签核方式/动作/附注/删除）
+ * - 节点可拖拽；「＋节点」从顶部工具栏添加；点节点出属性弹层（画布内弹出，节点置中）
  * - 连线：点起点节点右侧圆点进入连线模式，再点目标节点完成；点连线可改标签/删除
  * - 顶部「流程名称」输入框给当前业务流程取名（运行时即操作按钮标识）
  * - 视图工具栏：放大 / 缩小 / 全画幅（适应）/ 居中 / 全屏
  * - 纯前端实现，无第三方依赖；数据结构见 reportTemplateData.ts 的 FlowGraph
  * ========================================================================= */
-import { useRef, useState } from 'react'
+import { useRef, useState, useEffect } from 'react'
 import {
   FlowGraph, FlowGraphNode, FlowGraphEdge, FlowNodeType, ReviewResult,
   FLOW_NODE_TYPE_LABEL, FLOW_NODE_TYPE_COLOR, ReviewRole, REVIEW_ROLES,
@@ -25,6 +25,7 @@ const miniInp: React.CSSProperties = { padding: '4px 8px', fontSize: 12, borderR
 let seq = 0
 const nid = () => `n_${Date.now().toString(36)}_${seq++}`
 const eid = () => `e_${Date.now().toString(36)}_${seq++}`
+const clamp = (v: number, min: number, max: number) => Math.max(min, Math.min(max, v))
 
 // 审批意见预设编辑器：按审批结果分组，每组可增删选项（运行时另允许手输）
 function OpinionPresetsEditor({ node, patchNode, readOnly }: {
@@ -100,6 +101,8 @@ export default function FlowCanvasEditor({ graph, onChange, readOnly, statusEnum
   const dragRef = useRef<{ id: string; dx: number; dy: number } | null>(null)
   const [customCheck, setCustomCheck] = useState('')
   const [showCheckPresets, setShowCheckPresets] = useState(false)
+  // 关联字段与状态机：默认收起，点击展开编辑（需求8.1）
+  const [matchOpen, setMatchOpen] = useState(false)
   // 视口变换：缩放 + 平移（用于 放大/缩小/全画幅/居中/全屏）
   const [scale, setScale] = useState(1)
   const [offset, setOffset] = useState({ x: 0, y: 0 })
@@ -195,6 +198,22 @@ export default function FlowCanvasEditor({ graph, onChange, readOnly, statusEnum
     const cw = el.clientWidth, ch = CANVAS_H
     setOffset({ x: Math.max(0, (cw - w * scale) / 2), y: Math.max(0, (ch - h * scale) / 2) })
   }
+  // 需求8.2：点击节点 → 把该节点移到画布中心（弹层随节点定位）
+  const centerOnNode = (n: FlowGraphNode) => {
+    const el = canvasRef.current
+    if (!el) return
+    const cw = el.clientWidth, ch = CANVAS_H
+    const cx = n.x + NODE_W / 2, cy = n.y + NODE_H / 2
+    setOffset({ x: cw / 2 - cx * scale, y: ch / 2 - cy * scale })
+  }
+  useEffect(() => {
+    if (selNode) {
+      const n = graph.nodes.find((x) => x.id === selNode)
+      if (n) centerOnNode(n)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selNode])
+
   const toggleFull = () => {
     const el = canvasRef.current
     if (!el) return
@@ -203,7 +222,7 @@ export default function FlowCanvasEditor({ graph, onChange, readOnly, statusEnum
   }
 
   return (
-    <div style={{ display: 'flex', gap: 12 }}>
+    <div style={{ position: 'relative' }}>
       <datalist id="statusEnumList">
         {(statusEnum ?? []).map((s) => <option key={s} value={s} />)}
       </datalist>
@@ -216,73 +235,84 @@ export default function FlowCanvasEditor({ graph, onChange, readOnly, statusEnum
               placeholder="如 确认通过 / 转人工审核" style={{ ...inp, width: 200 }} />
           </div>
         </div>
-        {/* 需求16：流程配置区（名称 → 关联字段 → 状态机，仅在业务流程图编辑传入 matchFieldOptions 时显示） */}
+        {/* 需求16 + 8.1：关联字段与状态机（可折叠，默认收起；点击展开编辑） */}
         {matchFieldOptions && !readOnly && (
-          <div style={{ border: '1px solid #E5E7EB', borderRadius: 8, padding: 10, background: '#FAFBFE', marginBottom: 8 }}>
-            <div style={{ fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 4 }}>
-              关联字段（可选 · 不关联 = 该页面所有数据都走本流程）<span style={{ fontWeight: 400, fontSize: 11, color: '#9CA3AF' }}>按「字段 = 值」匹配数据到本流程；值支持逗号分隔多选</span>
+          <div style={{ border: '1px solid #E5E7EB', borderRadius: 8, background: '#FAFBFE', marginBottom: 8, overflow: 'hidden' }}>
+            <div onClick={() => setMatchOpen((v) => !v)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', cursor: 'pointer', userSelect: 'none' }}>
+              <span style={{ transform: matchOpen ? 'rotate(90deg)' : 'none', transition: 'transform .15s', fontSize: 10, color: '#9CA3AF' }}>▶</span>
+              <span style={{ fontSize: 12, fontWeight: 600, color: '#374151' }}>关联字段与状态机</span>
+              <span style={{ fontSize: 11, color: '#9CA3AF' }}>
+                可选 · 不关联 = 该页面所有数据都走本流程 · 已配 {(graph.match ?? []).length} 条关联 / {(graph.flowSteps ?? []).length} 个状态节点
+              </span>
             </div>
-            {(graph.match ?? []).length === 0 && (
-              <div style={{ fontSize: 11, color: '#9CA3AF', marginBottom: 4 }}>（未关联字段：页面所有数据都关联本流程）</div>
-            )}
-            {(graph.match ?? []).map((m, i) => (
-              <div key={i} style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 4, flexWrap: 'wrap' }}>
-                <select value={m.field} onChange={(e) => {
-                  const arr = [...(graph.match ?? [])]
-                  arr[i] = { ...arr[i], field: e.target.value }
-                  onChange({ ...graph, match: arr })
-                }} style={{ ...inp, width: 150 }}>
-                  <option value="">选择字段</option>
-                  {matchFieldOptions.map((o) => <option key={o.field} value={o.field}>{o.label}</option>)}
-                </select>
-                <input value={m.value} placeholder="值（如 RED / 负债激增）"
-                  onChange={(e) => {
-                    const arr = [...(graph.match ?? [])]
-                    arr[i] = { ...arr[i], value: e.target.value }
-                    onChange({ ...graph, match: arr })
-                  }} style={{ ...inp, width: 220 }} />
-                <button onClick={() => onChange({ ...graph, match: (graph.match ?? []).filter((_, k) => k !== i) })}
-                  style={{ ...miniBtn, borderColor: '#FCA5A5', color: '#DC2626' }}>删除</button>
-              </div>
-            ))}
-            <button onClick={() => onChange({ ...graph, match: [...(graph.match ?? []), { field: matchFieldOptions[0]?.field ?? '', value: '' }] })}
-              style={{ ...miniBtn, borderColor: SEL, color: SEL, marginTop: 2 }}>＋ 添加关联条件</button>
-
-            <div style={{ fontSize: 12, fontWeight: 600, color: '#374151', margin: '10px 0 4px' }}>
-              状态机（本流程独立 · 新建默认三个节点）<span style={{ fontWeight: 400, fontSize: 11, color: '#9CA3AF' }}>每个节点：状态名 / 操作按钮（时限在节点属性面板配置）</span>
-            </div>
-            {(graph.flowSteps ?? []).length === 0 && (
-              <div style={{ fontSize: 11, color: '#9CA3AF', marginBottom: 4 }}>
-                （未配置独立状态机，使用默认三节点：待处理 → 处理中 → 已处理）
-                {defaultSteps && (
-                  <button onClick={() => onChange({ ...graph, flowSteps: defaultSteps.map((s) => ({ ...s })) })}
-                    style={{ ...miniBtn, borderColor: SEL, color: SEL, marginLeft: 8 }}>用默认三节点</button>
+            {matchOpen && (
+              <div style={{ padding: '0 10px 10px', borderTop: '1px solid #EEF2F7' }}>
+                <div style={{ fontSize: 12, fontWeight: 600, color: '#374151', margin: '10px 0 4px' }}>
+                  关联字段<span style={{ fontWeight: 400, fontSize: 11, color: '#9CA3AF' }}>按「字段 = 值」匹配数据到本流程；值支持逗号分隔多选</span>
+                </div>
+                {(graph.match ?? []).length === 0 && (
+                  <div style={{ fontSize: 11, color: '#9CA3AF', marginBottom: 4 }}>（未关联字段：页面所有数据都关联本流程）</div>
                 )}
+                {(graph.match ?? []).map((m, i) => (
+                  <div key={i} style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 4, flexWrap: 'wrap' }}>
+                    <select value={m.field} onChange={(e) => {
+                      const arr = [...(graph.match ?? [])]
+                      arr[i] = { ...arr[i], field: e.target.value }
+                      onChange({ ...graph, match: arr })
+                    }} style={{ ...inp, width: 150 }}>
+                      <option value="">选择字段</option>
+                      {matchFieldOptions.map((o) => <option key={o.field} value={o.field}>{o.label}</option>)}
+                    </select>
+                    <input value={m.value} placeholder="值（如 RED / 负债激增，逗号分隔多选）"
+                      onChange={(e) => {
+                        const arr = [...(graph.match ?? [])]
+                        arr[i] = { ...arr[i], value: e.target.value }
+                        onChange({ ...graph, match: arr })
+                      }} style={{ ...inp, width: 240 }} />
+                    <button onClick={() => onChange({ ...graph, match: (graph.match ?? []).filter((_, k) => k !== i) })}
+                      style={{ ...miniBtn, borderColor: '#FCA5A5', color: '#DC2626' }}>删除</button>
+                  </div>
+                ))}
+                <button onClick={() => onChange({ ...graph, match: [...(graph.match ?? []), { field: matchFieldOptions[0]?.field ?? '', value: '' }] })}
+                  style={{ ...miniBtn, borderColor: SEL, color: SEL, marginTop: 2 }}>＋ 添加关联条件</button>
+
+                <div style={{ fontSize: 12, fontWeight: 600, color: '#374151', margin: '12px 0 4px' }}>
+                  状态机（本流程独立 · 新建默认三个节点）<span style={{ fontWeight: 400, fontSize: 11, color: '#9CA3AF' }}>每个节点：状态名 / 操作按钮（时限在节点属性面板配置）</span>
+                </div>
+                {(graph.flowSteps ?? []).length === 0 && (
+                  <div style={{ fontSize: 11, color: '#9CA3AF', marginBottom: 4 }}>
+                    （未配置独立状态机，使用默认三节点：待处理 → 处理中 → 已处理）
+                    {defaultSteps && (
+                      <button onClick={() => onChange({ ...graph, flowSteps: defaultSteps.map((s) => ({ ...s })) })}
+                        style={{ ...miniBtn, borderColor: SEL, color: SEL, marginLeft: 8 }}>用默认三节点</button>
+                    )}
+                  </div>
+                )}
+                {(graph.flowSteps ?? []).map((s, i) => (
+                  <div key={i} style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 4, flexWrap: 'wrap' }}>
+                    <span style={{ fontSize: 11, color: '#94A3B8', width: 14 }}>{i + 1}</span>
+                    <input value={s.state ?? ''} placeholder="状态名"
+                      onChange={(e) => {
+                        const arr = [...(graph.flowSteps ?? [])]
+                        arr[i] = { ...arr[i], state: e.target.value }
+                        onChange({ ...graph, flowSteps: arr })
+                      }} style={{ ...miniInp, width: 130 }} />
+                    <span style={{ color: '#CBD5E1' }}>→</span>
+                    <input value={s.action ?? ''} placeholder="操作按钮（终态留空）"
+                      onChange={(e) => {
+                        const arr = [...(graph.flowSteps ?? [])]
+                        arr[i] = { ...arr[i], action: e.target.value }
+                        onChange({ ...graph, flowSteps: arr })
+                      }} style={{ ...miniInp, width: 110 }} />
+                    <button onClick={() => onChange({ ...graph, flowSteps: (graph.flowSteps ?? []).filter((_, k) => k !== i) })}
+                      style={{ ...miniBtn, borderColor: '#FCA5A5', color: '#DC2626' }}>删除</button>
+                  </div>
+                ))}
+                <button onClick={() => onChange({ ...graph, flowSteps: [...(graph.flowSteps ?? []), { state: '', action: '', timeLimit: undefined }] })}
+                  style={{ ...miniBtn, borderColor: SEL, color: SEL }}>＋ 添加节点</button>
+                <span style={{ marginLeft: 8, fontSize: 11, color: '#9CA3AF' }}>状态按 待→橙 / 中→蓝 / 已→绿 自动配色</span>
               </div>
             )}
-            {(graph.flowSteps ?? []).map((s, i) => (
-              <div key={i} style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 4, flexWrap: 'wrap' }}>
-                <span style={{ fontSize: 11, color: '#94A3B8', width: 14 }}>{i + 1}</span>
-                <input value={s.state ?? ''} placeholder="状态名"
-                  onChange={(e) => {
-                    const arr = [...(graph.flowSteps ?? [])]
-                    arr[i] = { ...arr[i], state: e.target.value }
-                    onChange({ ...graph, flowSteps: arr })
-                  }} style={{ ...miniInp, width: 130 }} />
-                <span style={{ color: '#CBD5E1' }}>→</span>
-                <input value={s.action ?? ''} placeholder="操作按钮（终态留空）"
-                  onChange={(e) => {
-                    const arr = [...(graph.flowSteps ?? [])]
-                    arr[i] = { ...arr[i], action: e.target.value }
-                    onChange({ ...graph, flowSteps: arr })
-                  }} style={{ ...miniInp, width: 110 }} />
-                <button onClick={() => onChange({ ...graph, flowSteps: (graph.flowSteps ?? []).filter((_, k) => k !== i) })}
-                  style={{ ...miniBtn, borderColor: '#FCA5A5', color: '#DC2626' }}>删除</button>
-              </div>
-            ))}
-            <button onClick={() => onChange({ ...graph, flowSteps: [...(graph.flowSteps ?? []), { state: '', action: '', timeLimit: undefined }] })}
-              style={{ ...miniBtn, borderColor: SEL, color: SEL }}>＋ 添加节点</button>
-            <span style={{ marginLeft: 8, fontSize: 11, color: '#9CA3AF' }}>状态按 待→橙 / 中→蓝 / 已→绿 自动配色</span>
           </div>
         )}
         {/* 节点添加工具栏（仅编辑态） */}
@@ -361,147 +391,173 @@ export default function FlowCanvasEditor({ graph, onChange, readOnly, statusEnum
             <IconBtn title="居中" onClick={centerView}><IconCenter /></IconBtn>
             <IconBtn title="全屏" onClick={toggleFull}><IconFull /></IconBtn>
           </div>
-        </div>
-      </div>
-
-      {/* 属性面板 */}
-      <div style={{ width: 260, flexShrink: 0, border: '1px solid #E5E7EB', borderRadius: 10, padding: 12, alignSelf: 'flex-start', minHeight: 200, maxHeight: CANVAS_H + 120, overflowY: 'auto' }}>
-        {selected ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <div style={{ fontSize: 13, fontWeight: 600, color: FLOW_NODE_TYPE_COLOR[selected.type].text }}>{FLOW_NODE_TYPE_LABEL[selected.type]}节点</div>
-            <label style={{ fontSize: 12, color: '#6B7280' }}>节点标题（画布显示）
-              <input disabled={readOnly} value={selected.label} onChange={(e) => patchNode(selected.id, { label: e.target.value })} style={{ ...inp, marginTop: 4 }} />
-            </label>
-            {selected.type === 'end' ? (
-              <>
-                <div style={{ fontSize: 12, color: '#6B7280', lineHeight: 1.7, background: '#F8FAFC', border: '1px solid #E5E7EB', borderRadius: 6, padding: '8px 10px' }}>
-                  结束节点的状态<span style={{ color: '#DC2626' }}>无需在此配置</span>。<br />
-                  最终状态由<span style={{ color: '#1D4ED8', fontWeight: 600 }}>上一决策节点</span>的「审批结果 → 状态」映射（resultStates）派生，流程走到此处即落地该状态。
+          {/* 需求8.2：节点属性弹层（点击图上节点后在图上弹出；节点已置中） */}
+          {selected && (() => {
+            const n = selected
+            const cx = n.x + NODE_W / 2, cy = n.y + NODE_H / 2
+            const sx = offset.x + cx * scale, sy = offset.y + cy * scale
+            const cw = canvasRef.current?.clientWidth ?? 800, ch = CANVAS_H, W = 282
+            const px = clamp(sx + (NODE_W * scale) / 2 + 14, 8, Math.max(8, cw - W - 8))
+            const py = clamp(sy - 90, 8, Math.max(8, ch - 340))
+            return (
+              <div onClick={(e) => e.stopPropagation()} style={{ position: 'absolute', left: px, top: py, width: W, zIndex: 20, background: '#fff', border: '1px solid #E5E7EB', borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,.12)', padding: 12, maxHeight: ch - 16, overflowY: 'auto' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: FLOW_NODE_TYPE_COLOR[n.type].text }}>节点属性</div>
+                    <div style={{ fontSize: 11, color: '#9CA3AF' }}>{FLOW_NODE_TYPE_LABEL[n.type]} · {n.label}{n.role ? ` · ${n.role}` : ''}</div>
+                  </div>
+                  <button onClick={(e) => { e.stopPropagation(); setSelNode(null); setSelEdge(null) }} style={{ border: 'none', background: 'transparent', color: '#94A3B8', cursor: 'pointer', fontSize: 16, lineHeight: 1 }}>×</button>
                 </div>
-                <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#374151', cursor: readOnly ? 'default' : 'pointer' }}>
-                  <input type="checkbox" disabled={readOnly} checked={selected.showButton ?? false}
-                    onChange={(e) => patchNode(selected.id, { showButton: e.target.checked })} />
-                  继续显示按钮（在结束状态展示操作按钮）
-                </label>
-              </>
-            ) : (
-              <>
-                <label style={{ fontSize: 12, color: '#6B7280' }}>按钮名称（运行时操作按钮文案）
-                  <input disabled={readOnly} value={selected.buttonName ?? ''} onChange={(e) => patchNode(selected.id, { buttonName: e.target.value })} placeholder={selected.label || '缺省同节点标题'} style={{ ...inp, marginTop: 4 }} />
-                </label>
-                <label style={{ fontSize: 12, color: '#6B7280' }}>时限倒计时（分钟，空 = 不限制）
-                  <input type="number" min={0} disabled={readOnly} value={selected.timeLimit ?? ''}
-                    onChange={(e) => patchNode(selected.id, { timeLimit: e.target.value === '' ? undefined : Math.max(0, Number(e.target.value)) })}
-                    placeholder="如 30 / 120" style={{ ...inp, marginTop: 4 }} />
-                </label>
-                <label style={{ fontSize: 12, color: '#6B7280' }}>经办角色
-                  <select disabled={readOnly} value={selected.role} onChange={(e) => patchNode(selected.id, { role: e.target.value as ReviewRole })} style={{ ...inp, marginTop: 4 }}>
-                    {REVIEW_ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
-                  </select>
-                </label>
-                <div style={{ fontSize: 12, color: '#6B7280' }}>弹出内容 · 审核事项
-                  <div style={{ marginTop: 4, border: '1px solid #E5E7EB', borderRadius: 6, padding: '6px 8px', display: 'flex', flexDirection: 'column', gap: 4, maxHeight: 132, overflowY: 'auto' }}>
-                    {(selected.checkItems ?? []).length === 0 ? (
-                      <span style={{ fontSize: 11, color: '#9CA3AF' }}>（默认无审核事项，添加后生成标签）</span>
-                    ) : (
-                      (selected.checkItems ?? []).map((it) => (
-                        <div key={it} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6, fontSize: 12, color: '#374151', background: '#F1F5F9', borderRadius: 4, padding: '2px 6px' }}>
-                          <span>{it}</span>
-                          {!readOnly && <button onClick={() => patchNode(selected.id, { checkItems: (selected.checkItems ?? []).filter((x) => x !== it) })} style={{ border: 'none', background: 'transparent', color: '#DC2626', cursor: 'pointer', fontSize: 13, lineHeight: 1, padding: 0 }}>×</button>}
-                        </div>
-                      ))
-                    )}
-                    {showCheckPresets && (
-                      <div style={{ borderTop: '1px dashed #E5E7EB', marginTop: 2, paddingTop: 4, display: 'flex', flexDirection: 'column', gap: 2 }}>
-                        {REVIEW_CHECK_ITEMS.map((it) => (
-                          <label key={it} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#374151', cursor: readOnly ? 'default' : 'pointer' }}>
-                            <input type="checkbox" disabled={readOnly} checked={(selected.checkItems ?? []).includes(it)}
-                              onChange={(e) => patchNode(selected.id, { checkItems: e.target.checked ? [...(selected.checkItems ?? []), it] : (selected.checkItems ?? []).filter((x) => x !== it) })} />
-                            {it}
-                          </label>
-                        ))}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {n.type === 'end' ? (
+                    <>
+                      <div style={{ fontSize: 12, color: '#6B7280', lineHeight: 1.7, background: '#F8FAFC', border: '1px solid #E5E7EB', borderRadius: 6, padding: '8px 10px' }}>
+                        结束节点的状态<span style={{ color: '#DC2626' }}>无需在此配置</span>。<br />
+                        最终状态由<span style={{ color: '#1D4ED8', fontWeight: 600 }}>上一决策节点</span>的「审批结果 → 状态」映射（resultStates）派生，流程走到此处即落地该状态。
                       </div>
-                    )}
-                  </div>
-                  {!readOnly && (
-                    <div style={{ display: 'flex', gap: 6, marginTop: 4 }}>
-                      <input value={customCheck} onChange={(e) => setCustomCheck(e.target.value)} placeholder="自定义审核事项" style={{ ...inp, flex: 1 }} />
-                      <button onClick={() => { const v = customCheck.trim(); if (v && !(selected.checkItems ?? []).includes(v)) patchNode(selected.id, { checkItems: [...(selected.checkItems ?? []), v] }); setCustomCheck('') }} style={{ border: '1px solid #E5E7EB', borderRadius: 6, padding: '4px 10px', fontSize: 12, background: '#fff', cursor: 'pointer' }}>添加</button>
-                      <button onClick={() => setShowCheckPresets((v) => !v)} style={{ border: '1px solid #E5E7EB', borderRadius: 6, padding: '4px 10px', fontSize: 12, background: '#fff', cursor: 'pointer', whiteSpace: 'nowrap' }}>{showCheckPresets ? '收起预设' : '从预设选择'}</button>
-                    </div>
-                  )}
-                </div>
-                {/* 审批结果 → 状态映射（3.8：与「弹出内容·审批结果」合并，复选框即是否可选该结果） */}
-                <div style={{ border: '1px solid #E5E7EB', borderRadius: 8, padding: 10, background: '#F9FAFB' }}>
-                  <div style={{ fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 6 }}>审批结果 → 状态映射（驱动运行时工单状态）</div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                    {REVIEW_RESULTS.map((r) => {
-                      const on = (selected.results ?? REVIEW_RESULTS).includes(r)
-                      return (
-                        <div key={r} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                          <input type="checkbox" disabled={readOnly} checked={on}
-                            onChange={(e) => { const cur = selected.results ?? REVIEW_RESULTS; patchNode(selected.id, { results: e.target.checked ? [...cur, r] : cur.filter((x) => x !== r) }) }} />
-                          <span style={{ width: 42, fontSize: 12, color: '#374151' }}>{r}</span>
-                          <span style={{ color: '#9CA3AF' }}>→</span>
-                          <input disabled={readOnly} value={selected.resultStates?.[r] ?? ''}
-                            onChange={(e) => patchNode(selected.id, { resultStates: { ...(selected.resultStates ?? {}), [r]: e.target.value } })}
-                            placeholder="操作后状态" list="statusEnumList" style={{ ...inp, flex: 1 }} />
-                        </div>
-                      )
-                    })}
-                  </div>
-                  {!((selected.results ?? REVIEW_RESULTS).length) && (
-                    <div style={{ marginTop: 8 }}>
-                      <label style={{ fontSize: 12, color: '#6B7280' }}>操作后的状态（未勾选任何审批结果，取自状态枚举类）
-                        <input disabled={readOnly} value={selected.postState ?? ''} onChange={(e) => patchNode(selected.id, { postState: e.target.value })} placeholder="如 通过 / 已确认 / 待人工" list="statusEnumList" style={{ ...inp, marginTop: 4 }} />
+                      <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#374151', cursor: readOnly ? 'default' : 'pointer' }}>
+                        <input type="checkbox" disabled={readOnly} checked={n.showButton ?? false}
+                          onChange={(e) => patchNode(n.id, { showButton: e.target.checked })} />
+                        继续显示按钮（在结束状态展示操作按钮）
                       </label>
-                    </div>
+                    </>
+                  ) : (
+                    <>
+                      <label style={{ fontSize: 12, color: '#6B7280' }}>节点标题（画布显示）
+                        <input disabled={readOnly} value={n.label} onChange={(e) => patchNode(n.id, { label: e.target.value })} style={{ ...inp, marginTop: 4 }} />
+                      </label>
+                      <label style={{ fontSize: 12, color: '#6B7280' }}>按钮名称（运行时操作按钮文案）
+                        <input disabled={readOnly} value={n.buttonName ?? ''} onChange={(e) => patchNode(n.id, { buttonName: e.target.value })} placeholder={n.label || '缺省同节点标题'} style={{ ...inp, marginTop: 4 }} />
+                      </label>
+                      <label style={{ fontSize: 12, color: '#6B7280' }}>时限倒计时（分钟，空 = 不限制）
+                        <input type="number" min={0} disabled={readOnly} value={n.timeLimit ?? ''}
+                          onChange={(e) => patchNode(n.id, { timeLimit: e.target.value === '' ? undefined : Math.max(0, Number(e.target.value)) })}
+                          placeholder="如 30 / 120" style={{ ...inp, marginTop: 4 }} />
+                      </label>
+                      <label style={{ fontSize: 12, color: '#6B7280' }}>经办角色
+                        <select disabled={readOnly} value={n.role} onChange={(e) => patchNode(n.id, { role: e.target.value as ReviewRole })} style={{ ...inp, marginTop: 4 }}>
+                          {REVIEW_ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
+                        </select>
+                      </label>
+                      <div style={{ fontSize: 12, color: '#6B7280' }}>弹出内容 · 审核事项
+                        <div style={{ marginTop: 4, border: '1px solid #E5E7EB', borderRadius: 6, padding: '6px 8px', display: 'flex', flexDirection: 'column', gap: 4, maxHeight: 132, overflowY: 'auto' }}>
+                          {(n.checkItems ?? []).length === 0 ? (
+                            <span style={{ fontSize: 11, color: '#9CA3AF' }}>（默认无审核事项，添加后生成标签）</span>
+                          ) : (
+                            (n.checkItems ?? []).map((it) => (
+                              <div key={it} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6, fontSize: 12, color: '#374151', background: '#F1F5F9', borderRadius: 4, padding: '2px 6px' }}>
+                                <span>{it}</span>
+                                {!readOnly && <button onClick={() => patchNode(n.id, { checkItems: (n.checkItems ?? []).filter((x) => x !== it) })} style={{ border: 'none', background: 'transparent', color: '#DC2626', cursor: 'pointer', fontSize: 13, lineHeight: 1, padding: 0 }}>×</button>}
+                              </div>
+                            ))
+                          )}
+                          {showCheckPresets && (
+                            <div style={{ borderTop: '1px dashed #E5E7EB', marginTop: 2, paddingTop: 4, display: 'flex', flexDirection: 'column', gap: 2 }}>
+                              {REVIEW_CHECK_ITEMS.map((it) => (
+                                <label key={it} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#374151', cursor: readOnly ? 'default' : 'pointer' }}>
+                                  <input type="checkbox" disabled={readOnly} checked={(n.checkItems ?? []).includes(it)}
+                                    onChange={(e) => patchNode(n.id, { checkItems: e.target.checked ? [...(n.checkItems ?? []), it] : (n.checkItems ?? []).filter((x) => x !== it) })} />
+                                  {it}
+                                </label>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        {!readOnly && (
+                          <div style={{ display: 'flex', gap: 6, marginTop: 4 }}>
+                            <input value={customCheck} onChange={(e) => setCustomCheck(e.target.value)} placeholder="自定义审核事项" style={{ ...inp, flex: 1 }} />
+                            <button onClick={() => { const v = customCheck.trim(); if (v && !(n.checkItems ?? []).includes(v)) patchNode(n.id, { checkItems: [...(n.checkItems ?? []), v] }); setCustomCheck('') }} style={{ border: '1px solid #E5E7EB', borderRadius: 6, padding: '4px', fontSize: 12, background: '#fff', cursor: 'pointer' }}>添加</button>
+                            <button onClick={() => setShowCheckPresets((v) => !v)} style={{ border: '1px solid #E5E7EB', borderRadius: 6, padding: '4px 10px', fontSize: 12, background: '#fff', cursor: 'pointer', whiteSpace: 'nowrap' }}>{showCheckPresets ? '收起预设' : '从预设选择'}</button>
+                          </div>
+                        )}
+                      </div>
+                      {/* 审批结果 → 状态映射（与「弹出内容·审批结果」合并，复选框即是否可选该结果） */}
+                      <div style={{ border: '1px solid #E5E7EB', borderRadius: 8, padding: 10, background: '#F9FAFB' }}>
+                        <div style={{ fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 6 }}>审批结果 → 状态映射（驱动运行时工单状态）</div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                          {REVIEW_RESULTS.map((r) => {
+                            const on = (n.results ?? REVIEW_RESULTS).includes(r)
+                            return (
+                              <div key={r} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                <input type="checkbox" disabled={readOnly} checked={on}
+                                  onChange={(e) => { const cur = n.results ?? REVIEW_RESULTS; patchNode(n.id, { results: e.target.checked ? [...cur, r] : cur.filter((x) => x !== r) }) }} />
+                                <span style={{ width: 42, fontSize: 12, color: '#374151' }}>{r}</span>
+                                <span style={{ color: '#9CA3AF' }}>→</span>
+                                <input disabled={readOnly} value={n.resultStates?.[r] ?? ''}
+                                  onChange={(e) => patchNode(n.id, { resultStates: { ...(n.resultStates ?? {}), [r]: e.target.value } })}
+                                  placeholder="操作后状态" list="statusEnumList" style={{ ...inp, flex: 1 }} />
+                              </div>
+                            )
+                          })}
+                        </div>
+                        {!((n.results ?? REVIEW_RESULTS).length) && (
+                          <div style={{ marginTop: 8 }}>
+                            <label style={{ fontSize: 12, color: '#6B7280' }}>操作后的状态（未勾选任何审批结果，取自状态枚举类）
+                              <input disabled={readOnly} value={n.postState ?? ''} onChange={(e) => patchNode(n.id, { postState: e.target.value })} placeholder="如 通过 / 已确认 / 待人工" list="statusEnumList" style={{ ...inp, marginTop: 4 }} />
+                            </label>
+                          </div>
+                        )}
+                        <div style={{ marginTop: 4, fontSize: 11, color: '#9CA3AF' }}>勾选即该结果可选；取值来自本分段「状态枚举类」；运行时按所选审批结果落地对应状态。</div>
+                      </div>
+                      <div style={{ fontSize: 12, color: '#6B7280' }}>弹出内容 · 审批意见（按结果分组，可自定义）
+                        <OpinionPresetsEditor node={n} patchNode={patchNode} readOnly={readOnly} />
+                      </div>
+                      <label style={{ fontSize: 12, color: '#6B7280' }}>附注
+                        <input disabled={readOnly} value={n.note ?? ''} onChange={(e) => patchNode(n.id, { note: e.target.value })} placeholder="选填" style={{ ...inp, marginTop: 4 }} />
+                      </label>
+                    </>
                   )}
-                  <div style={{ marginTop: 4, fontSize: 11, color: '#9CA3AF' }}>勾选即该结果可选；取值来自本分段「状态枚举类」；运行时按所选审批结果落地对应状态。</div>
+                  {!readOnly && n.type !== 'start' && (
+                    <button onClick={() => removeNode(n.id)} style={{ padding: '5px 0', fontSize: 12, borderRadius: 6, cursor: 'pointer', background: '#FEF2F2', border: '1px solid #FCA5A5', color: '#DC2626' }}>删除节点（含关联连线）</button>
+                  )}
                 </div>
-                <div style={{ fontSize: 12, color: '#6B7280' }}>弹出内容 · 审批意见（按结果分组，可自定义）
-                  <OpinionPresetsEditor node={selected} patchNode={patchNode} readOnly={readOnly} />
+              </div>
+            )
+          })()}
+          {/* 连线属性弹层（点击图上连线后在图上弹出） */}
+          {selectedEdge && (() => {
+            const a = nodeMap.get(selectedEdge.from), b = nodeMap.get(selectedEdge.to)
+            const mx = a && b ? (a.x + NODE_W / 2 + b.x + NODE_W / 2) / 2 : 400
+            const my = a && b ? (a.y + NODE_H / 2 + b.y + NODE_H / 2) / 2 : 200
+            const sx = offset.x + mx * scale, sy = offset.y + my * scale
+            const cw = canvasRef.current?.clientWidth ?? 800, ch = CANVAS_H, W = 282
+            const px = clamp(sx + 14, 8, Math.max(8, cw - W - 8))
+            const py = clamp(sy - 60, 8, Math.max(8, ch - 300))
+            return (
+              <div onClick={(e) => e.stopPropagation()} style={{ position: 'absolute', left: px, top: py, width: W, zIndex: 20, background: '#fff', border: '1px solid #E5E7EB', borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,.12)', padding: 12, maxHeight: ch - 16, overflowY: 'auto' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: '#1D4ED8' }}>连线属性</div>
+                  <button onClick={(e) => { e.stopPropagation(); setSelEdge(null); setSelNode(null) }} style={{ border: 'none', background: 'transparent', color: '#94A3B8', cursor: 'pointer', fontSize: 16, lineHeight: 1 }}>×</button>
                 </div>
-                <label style={{ fontSize: 12, color: '#6B7280' }}>附注
-                  <input disabled={readOnly} value={selected.note ?? ''} onChange={(e) => patchNode(selected.id, { note: e.target.value })} placeholder="选填" style={{ ...inp, marginTop: 4 }} />
-                </label>
-              </>
-            )}
-            {!readOnly && selected.type !== 'start' && (
-              <button onClick={() => removeNode(selected.id)} style={{ padding: '5px 0', fontSize: 12, borderRadius: 6, cursor: 'pointer', background: '#FEF2F2', border: '1px solid #FCA5A5', color: '#DC2626' }}>删除节点（含关联连线）</button>
-            )}
-          </div>
-        ) : selectedEdge ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <div style={{ fontSize: 13, fontWeight: 600, color: '#1D4ED8' }}>连线</div>
-            <div style={{ fontSize: 12, color: '#6B7280' }}>
-              {nodeMap.get(selectedEdge.from)?.label ?? '?'} → {nodeMap.get(selectedEdge.to)?.label ?? '?'}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <div style={{ fontSize: 12, color: '#6B7280' }}>
+                    {nodeMap.get(selectedEdge.from)?.label ?? '?'} → {nodeMap.get(selectedEdge.to)?.label ?? '?'}
+                  </div>
+                  <label style={{ fontSize: 12, color: '#6B7280' }}>连线标签
+                    <input disabled={readOnly} value={selectedEdge.label ?? ''} onChange={(e) => patchEdge(selectedEdge.id, { label: e.target.value })} placeholder="如：通过 / 拒绝 / 退回" style={{ ...inp, marginTop: 4 }} />
+                  </label>
+                  <label style={{ fontSize: 12, color: '#6B7280' }}>流转条件（if）—— 起点审批结果等于此值时走该线；无条件则作为兜底
+                    <select disabled={readOnly} value={selectedEdge.result ?? ''} onChange={(e) => patchEdge(selectedEdge.id, { result: e.target.value || undefined })} style={{ ...inp, marginTop: 4 }}>
+                      <option value="">无条件（兜底）</option>
+                      {REVIEW_RESULTS.map((r) => (
+                        <option key={r} value={r}>审批结果 = {r}</option>
+                      ))}
+                    </select>
+                    <span style={{ display: 'block', fontSize: 11, color: '#9CA3AF', marginTop: 3 }}>例：复审节点出两条线 —— 「通过」条件线 → 下一审核节点；「拒绝」条件线 → 结束（拒绝）。运行时按审批结果选线。</span>
+                  </label>
+                  {!readOnly && (
+                    <button onClick={() => removeEdge(selectedEdge.id)} style={{ padding: '5px 0', fontSize: 12, borderRadius: 6, cursor: 'pointer', background: '#FEF2F2', border: '1px solid #FCA5A5', color: '#DC2626' }}>删除连线</button>
+                  )}
+                </div>
+              </div>
+            )
+          })()}
+          {!selected && !selectedEdge && !readOnly && (
+            <div style={{ position: 'absolute', left: 12, bottom: 12, fontSize: 12, color: '#9CA3AF', background: 'rgba(255,255,255,.82)', padding: '4px 8px', borderRadius: 6, pointerEvents: 'none' }}>
+              点击节点 / 连线查看与编辑属性
             </div>
-            <label style={{ fontSize: 12, color: '#6B7280' }}>连线标签
-              <input disabled={readOnly} value={selectedEdge.label ?? ''} onChange={(e) => patchEdge(selectedEdge.id, { label: e.target.value })} placeholder="如：通过 / 拒绝 / 退回" style={{ ...inp, marginTop: 4 }} />
-            </label>
-            <label style={{ fontSize: 12, color: '#6B7280' }}>流转条件（if）—— 起点审批结果等于此值时走该线；无条件则作为兜底
-              <select disabled={readOnly} value={selectedEdge.result ?? ''} onChange={(e) => patchEdge(selectedEdge.id, { result: e.target.value || undefined })} style={{ ...inp, marginTop: 4 }}>
-                <option value="">无条件（兜底）</option>
-                {REVIEW_RESULTS.map((r) => (
-                  <option key={r} value={r}>审批结果 = {r}</option>
-                ))}
-              </select>
-              <span style={{ display: 'block', fontSize: 11, color: '#9CA3AF', marginTop: 3 }}>例：复审节点出两条线 —— 「通过」条件线 → 下一审核节点；「拒绝」条件线 → 结束（拒绝）。运行时按审批结果选线。</span>
-            </label>
-            {!readOnly && (
-              <button onClick={() => removeEdge(selectedEdge.id)} style={{ padding: '5px 0', fontSize: 12, borderRadius: 6, cursor: 'pointer', background: '#FEF2F2', border: '1px solid #FCA5A5', color: '#DC2626' }}>删除连线</button>
-            )}
-          </div>
-        ) : (
-          <div style={{ fontSize: 12, color: '#9CA3AF', lineHeight: 1.8 }}>
-            点击节点或连线查看属性。<br />
-            · 顶部按钮添加节点<br />
-            · 拖动节点调整布局<br />
-            · 点节点右侧 ● 再点目标节点即连线<br />
-            · 画布右上角图标按钮可调整视图（放大 / 缩小 / 全画幅 / 居中 / 全屏）
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   )

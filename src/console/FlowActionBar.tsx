@@ -8,7 +8,7 @@
 //    点按钮 → 弹确认弹窗 → onStateChange(next) 更新该对象状态（不再改全局 flowState）
 //  - 无关联流程且无保存按钮 → 整个控件隐藏（如纯数据看板）
 import { useState } from 'react'
-import { useFlows, flowStepOf, matchFlowGraph, stepColorOf, type FlowStep, type FlowItem } from './flowStore'
+import { useFlows, flowStepOf, matchFlowGraph, nodeTimeLimitOf, stepColorOf, type FlowStep, type FlowItem } from './flowStore'
 import { FlowConfirmModal } from './FlowConfirmModal'
 
 export default function FlowActionBar({ flowId, state, onStateChange, onSave, saveLabel = '保存', matchObj }: {
@@ -22,7 +22,7 @@ export default function FlowActionBar({ flowId, state, onStateChange, onSave, sa
   const flows = useFlows()
   const f = flowId ? flows.find((x) => x.id === flowId) : undefined
   // 需求16：按对象字段匹配具体流程；匹配不到 → steps 空 → 无流程可流转（隐藏流程块，仅保留保存按钮）
-  const { steps, name } = matchFlowGraph(f, matchObj ?? {})
+  const { graph, steps, name } = matchFlowGraph(f, matchObj ?? {})
   const [confirm, setConfirm] = useState<{ f: FlowItem; step: FlowStep } | null>(null)
   const hasFlow = !!(f && steps.length)
   if (!hasFlow && !onSave) return null // 无匹配流程且无编辑 → 整行隐藏
@@ -38,6 +38,8 @@ export default function FlowActionBar({ flowId, state, onStateChange, onSave, sa
       {f && steps.length > 0 && (() => {
         const { state: st, step } = flowStepOf({ flowSteps: steps, flowState: state })
         const sc = step?.color ?? stepColorOf(st)
+        // 需求3：节点时限标签（读 FlowGraphNode.timeLimit，节点属性配置）——放本行最末尾
+        const tl = nodeTimeLimitOf(graph, state)
         return (
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: '#fff', border: '1px solid #E2E8F0', borderRadius: 8, padding: '3px 8px' }}>
             <span style={{ fontSize: 12, color: '#64748B' }}>{name || f.name}</span>
@@ -50,6 +52,11 @@ export default function FlowActionBar({ flowId, state, onStateChange, onSave, sa
                 style={{ height: 22, padding: '0 12px', fontSize: 12, borderRadius: 6, border: 'none', cursor: 'pointer', background: '#2563EB', color: '#fff', fontWeight: 500 }}>
                 {step.action}
               </button>
+            )}
+            {tl != null && (
+              <span style={{ fontSize: 12, fontWeight: 600, color: '#B45309', background: '#FEF3C7', border: '1px solid #FDE68A', borderRadius: 10, padding: '1px 9px', whiteSpace: 'nowrap' }}>
+                节点时限 {tl} 分钟
+              </span>
             )}
           </span>
         )
