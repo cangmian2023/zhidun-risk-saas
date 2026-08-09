@@ -1,194 +1,129 @@
-/* 评分产品子系统 · v2 页面（需求 1.3 定稿版，不含模型管理）
- * 11 页：sc:overview 评分体系总览（对象档案+总览融合）
- *        sc:zhicha-query 欺诈评分查询（下钻：规则命中明细/黑名单与团伙）
- *        sc:zhicha-monitor 欺诈监控
- *        sc:zhixin-query 违约评分查询（下钻：评分卡解释/额度与拒绝建议）
- *        sc:zhixin-vintage 客群分布与逾期表现
- *        sc:zhirong-query 融合评分查询（下钻：融合构成/场景评分对比/360 评估）
- *        sc:zhirong-tier 客户分层 · sc:zhirong-monitor 场景效果监控
- *        sc:api API 对接 · sc:batch 批量评分 · sc:bill 计费与账单
- * 数据：scoringData.json 样例橘 Sam；实时统计 灰 Cal。
+/* 评分产品子系统 · v3 重整版
+ * 三个产品：智察分 / 智信分 / 智融分
+ * 页面：overview / query / monitor / vintage / tier / api / batch / bill
  */
-import { useState, Fragment } from 'react';
-import { Panel, StatCard, DataTable, Button, Badge, PageHeader } from '../components/ui';
-import type { Column, Row } from '../components/ui';
-import { BarChart, LineChart, DonutChart } from '../components/charts';
-import ScoreGauge from '../components/ScoreGauge';
-import { Sam, Cal } from './SourceTag';
-import { maskId, maskPhone } from './data';
-import { useScoring, SCORE_PROD_LABEL, type ScoreProd } from './scoringData';
+import { useState, Fragment } from 'react'
+import { PageHeader, Panel, StatCard, DataTable, Badge, Button } from '../components/ui'
+import type { Column, Row } from '../components/ui'
+import { BarChart, LineChart, DonutChart } from '../components/charts'
+import ScoreGauge from '../components/ScoreGauge'
+import { Sam, Cal } from './SourceTag'
+import { maskId, maskPhone } from './data'
+import { useScoring, SCORE_PROD_LABEL, type ScoreProd, type ScoringData } from './scoringData'
 
-const P: Record<string, ScoreProd> = { zhicha: 'zhicha', zhixin: 'zhixin', zhirong: 'zhirong' };
-// key 形如 'sc:zhicha-query' / 'sc:zhirong-monitor' / 'sc:api'：
-// prod = ':' 后第一个 '-' 前的部分；kind = 剩余部分（无 '-' 时整个为 kind，如 api/batch/bill）
-const prodOf = (key: string): ScoreProd => P[key.split(':')[1]?.split('-')[0] ?? ''] ?? 'zhicha';
+const P: Record<string, ScoreProd> = { zhicha: 'zhicha', zhixin: 'zhixin', zhirong: 'zhirong' }
+const prodOf = (key: string): ScoreProd => P[key.split(':')[1]?.split('-')[0] ?? ''] ?? 'zhicha'
 const pageKind = (key: string): string => {
-  const rest = key.split(':')[1] ?? '';
-  const i = rest.indexOf('-');
-  return i < 0 ? rest : rest.slice(i + 1);
-};
+  const rest = key.split(':')[1] ?? ''
+  const i = rest.indexOf('-')
+  return i < 0 ? rest : rest.slice(i + 1)
+}
 
 const statusKind: Record<string, 'gray' | 'blue' | 'amber' | 'green' | 'violet' | 'red'> = {
   正常: 'green', 偏移: 'red', 临界: 'amber', 完成: 'green', 计算中: 'amber',
   已出账: 'green', 成功: 'green', PSI偏移: 'red',
-};
+}
 
 export default function ScoreModule({ pageKey }: { pageKey: string }) {
-  const d = useScoring();
-  const prod = prodOf(pageKey);
-  const kind = pageKind(pageKey);
-  // monitor 需按产品区分：zhicha=欺诈监控，zhirong=场景效果监控
-  const title = kind === 'monitor' ? (prod === 'zhicha' ? '欺诈监控' : '场景效果监控') : (KIND_TITLE[kind] ?? '评分体系');
-  const desc = kind === 'monitor' ? (prod === 'zhicha' ? KIND_DESC['monitor'] : '各场景转化率/命中率/用信情况（样例数据）') : (KIND_DESC[kind] ?? '');
+  const d = useScoring()
+  const prod = prodOf(pageKey)
+  const kind = pageKind(pageKey)
+
+  const title = (() => {
+    if (kind === '') return '评分体系总览'
+    if (kind === 'monitor') return prod === 'zhicha' ? '欺诈监控' : '场景效果监控'
+    const map: Record<string, string> = {
+      query: '评分查询', vintage: '客群分布与逾期表现', tier: '客户分层',
+      api: 'API 对接', batch: '批量评分', bill: '计费与账单',
+    }
+    return map[kind] ?? '评分体系'
+  })()
+  const desc = (() => {
+    const map: Record<string, string> = {
+      '': '三产品能力对比、目标用户拆解、对象评分档案与体系总览',
+      query: '输入个人标识查询评分，结果页展示分数、等级、概率、决策建议与因子解释',
+      monitor: prod === 'zhicha' ? '新客欺诈率、通道欺诈率、命中 TOP 规则趋势与模型监控指标' : '各场景转化率/命中率/用信情况',
+      vintage: '分档通过率、Vintage 逾期曲线、评分分布',
+      tier: '高价值/高风险/沉睡/活跃客群分组与占比',
+      api: '一次对接三产品：接口文档、鉴权、调用日志',
+      batch: '文件上传 → 任务队列 → 结果下载',
+      bill: '三产品统一账本、充值、余额、月度账单',
+    }
+    return map[kind] ?? ''
+  })()
 
   return (
     <div className="space-y-6">
       <PageHeader title={title} crumb="评分产品" subtitle={desc}
         actions={<><Sam label="样例数据" value="scoringData.json" /><Cal label="实时统计" /></>} />
-
       {(kind === '' || kind === 'overview') && <OverviewPage d={d} />}
       {kind === 'query' && <QueryPage d={d} prod={prod} />}
       {kind === 'monitor' && prod === 'zhicha' && <ZhichaMonitor d={d} />}
+      {kind === 'monitor' && prod === 'zhirong' && <SceneEffectPage d={d} />}
       {kind === 'vintage' && <VintagePage d={d} prod={prod} />}
       {kind === 'tier' && <TierPage d={d} />}
-      {kind === 'monitor' && prod === 'zhirong' && <SceneEffectPage d={d} />}
       {kind === 'api' && <ApiPage d={d} />}
       {kind === 'batch' && <BatchPage d={d} prod={prod} />}
       {kind === 'bill' && <BillPage d={d} prod={prod} />}
     </div>
-  );
+  )
 }
 
-const KIND_TITLE: Record<string, string> = {
-  '': '评分体系总览', query: '评分查询', monitor: '欺诈监控',
-  vintage: '客群分布与逾期表现', tier: '客户分层',
-  api: 'API 对接', batch: '批量评分', bill: '计费与账单',
-};
-const KIND_DESC: Record<string, string> = {
-  '': '输入一个申请人，智察/智信/智融三分数并排；下方体系总览（调用量/命中率/异常/场景使用）',
-  query: '输入个人标识查询评分，结果页下钻规则命中、名单、评分卡、融合构成等明细（样例数据）。',
-  monitor: '新客欺诈率、通道欺诈率、命中 TOP 规则趋势（样例数据）。',
-  vintage: '分档通过率、Vintage 逾期曲线、评分分布（样例数据）。',
-  tier: '高价值/高风险/沉睡/活跃客群分组与占比（样例数据）。',
-  api: '一次对接三产品：接口文档、鉴权、QPS/SLA、调用日志（样例数据）。',
-  batch: '文件上传→任务队列→结果下载（样例数据）。',
-  bill: '三产品统一账本、充值、余额、月度账单（样例数据）。',
-};
-
-/* 产品定位 / 用户拆解 / 业务闭环 常量（需求2：让系统“看得懂能干嘛”） */
-const PROD_INFO: Record<ScoreProd, { position: string; functions: string[]; audience: string }> = {
-  zhicha: { position: '贷前反欺诈评分（欺诈类）', functions: ['欺诈预测', '自动化监控'], audience: '银行 / 保险 / 消费金融 / 互联网金融等全行业（除小额短期现金贷客群）' },
-  zhixin: { position: '申请违约风险标准评分', functions: ['违约预测', '自动化监控'], audience: '信贷审批、贷中管理全场景' },
-  zhirong: { position: '多源融合的综合评分', functions: ['违约预测', '风险评估', '自动化监控'], audience: '授信转化、客群经营与精准营销场景' },
-};
-const USER_NEEDS = [
-  { role: '银行 / 消费金融 · 风控审批', need: '贷前识别欺诈申请，降低欺诈坏账', competitor: '银行自建反欺诈规则、第三方征信核验', func: '智察分查询 + 欺诈监控' },
-  { role: '信贷机构 · 授信决策', need: '评估申请人违约概率，确定额度/利率/拒绝', competitor: '通用信用评分、人行征信衍生变量', func: '智信分查询 + 评分卡解释 + 额度与拒绝建议' },
-  { role: '金融机构 · 客群经营/营销', need: '在风险可控前提下提升转化与客群价值', competitor: '通用营销评分、机构内部标签体系', func: '智融分查询 + 客户分层 + 场景效果监控' },
-  { role: '风控 / 模型团队', need: '持续监控模型漂移，及时调优', competitor: '自研模型监控平台', func: '三产品自动化监控 + 模型调优建议' },
-  { role: '科技 / 风控服务商 · 商业化', need: '按需调用、按量计费快速接入', competitor: 'API 评分服务、按次/查得计费', func: 'API 对接 + 批量评分 + 计费与账单' },
-];
-const CLOSURE = [
-  { step: '单次查询', desc: '贷前决策：输入标识即得三产品分数与决策建议', page: '各产品评分查询' },
-  { step: '批量评分', desc: '全量客群打分，支撑策略与分层经营', page: '批量评分' },
-  { step: 'API 对接', desc: '嵌入业务系统，一次对接三产品', page: 'API 对接' },
-  { step: '自动化监控', desc: '高频监控 KS/AUC/PSI，发现漂移即调优', page: '各产品监控' },
-  { step: '计费与账单', desc: '按调用/查得计费，统一账本对账', page: '计费与账单' },
-];
-const PROD_COMPARE_COLS: Column[] = [
-  { key: 'name', label: '产品', width: '120px' },
-  { key: 'range', label: '分数空间', type: 'text', width: '110px' },
-  { key: 'functions', label: '核心功能', type: 'text', width: '160px' },
-  { key: 'audience', label: '适用客群', type: 'text', width: '360px' },
-  { key: 'hint', label: '评分语义', type: 'text', width: '160px' },
-];
-const USER_COLS: Column[] = [
-  { key: 'role', label: '用户角色', width: '200px' },
-  { key: 'need', label: '核心需求', type: 'text', width: '260px' },
-  { key: 'competitor', label: '同业常见满足方式', type: 'text', width: '240px' },
-  { key: 'func', label: '本产品功能 / 页面', type: 'text', width: '260px' },
-];
-
-/* ============ 评分体系总览（对象档案 + 产品总览融合） ============ */
-function OverviewPage({ d }: { d: ReturnType<typeof useScoring> }) {
-  const prods: ScoreProd[] = ['zhicha', 'zhixin', 'zhirong'];
-  const [id, setId] = useState('3201**********1234');
-  const [phone, setPhone] = useState('138****5678');
-  const [queried, setQueried] = useState(false);
-  const callTotal = 1642 + 1480 + 720;
-
-  const compareRows: Row[] = prods.map((p) => {
-    const m = d.meta[p]; const info = PROD_INFO[p];
-    return { id: p, name: m.name, range: `${m.range[0]}~${m.range[1]}`, functions: info.functions.join('、'), audience: info.audience, hint: m.hint };
-  });
-  const userRows: Row[] = USER_NEEDS.map((u, i) => ({ id: String(i), ...u }));
+/* ============ 评分体系总览 ============ */
+function OverviewPage({ d }: { d: ScoringData }) {
+  const prods: ScoreProd[] = ['zhicha', 'zhixin', 'zhirong']
+  const [id, setId] = useState('3201**********1234')
+  const [phone, setPhone] = useState('138****5678')
+  const [queried, setQueried] = useState(false)
+  const callTotal = 1642 + 1480 + 720
 
   return (
     <>
-      {/* 子系统定位 + 三产品卡片 */}
       <Panel title="评分产品 · 模型即服务" desc="面向银行、保险、消费金融、互联网金融等机构的标准化评分产品，覆盖贷前反欺诈、贷前违约评估与客群经营三大场景">
         <div className="grid gap-4 lg:grid-cols-3">
           {prods.map((p) => {
-            const m = d.meta[p]; const info = PROD_INFO[p];
+            const m = d.meta[p]
             return (
               <div key={p} className="flex flex-col rounded-xl border border-slate-200 p-4">
                 <div className="flex items-center justify-between">
                   <div className="text-base font-semibold text-slate-800">{m.name}</div>
                   <Badge kind="violet">{m.range[0]}~{m.range[1]}</Badge>
                 </div>
-                <div className="mt-1 text-xs text-slate-500">{info.position}</div>
-                <div className="mt-3 flex flex-wrap gap-1.5">
-                  {info.functions.map((f) => <Badge key={f} kind="blue">{f}</Badge>)}
-                </div>
-                <div className="mt-3 text-xs leading-relaxed text-slate-500"><span className="font-medium text-slate-600">适用客群：</span>{info.audience}</div>
-                <div className="mt-2 text-xs leading-relaxed text-slate-500"><span className="font-medium text-slate-600">评分语义：</span>{m.hint}</div>
+                <div className="mt-1 text-xs text-slate-500">{m.hint}</div>
+                <div className="mt-3 text-xs leading-relaxed text-slate-500"><span className="font-medium text-slate-600">分数空间：</span>{m.range[0]}~{m.range[1]} · {m.hint}</div>
               </div>
-            );
+            )
           })}
         </div>
-        <div className="mt-5">
-          <DataTable columns={PROD_COMPARE_COLS} rows={compareRows} empty="—" pager={false} />
-        </div>
       </Panel>
 
-      {/* 目标用户与需求拆解 */}
-      <Panel title="目标用户与需求拆解" desc="谁在用、解决什么、同业如何满足、本产品用什么功能满足（样例视角）">
-        <DataTable columns={USER_COLS} rows={userRows} empty="—" pager={false} />
-      </Panel>
-
-      {/* 对象评分档案：一个申请人 → 三分数并排 */}
-      <Panel title="对象评分档案" desc={<span>输入一个申请人，同时查看三份评分 <Sam value="scoringData.json.meta" /></span>}>
+      <Panel title="对象评分档案" desc="输入一个申请人，同时查看三份评分">
         <div className="mb-4 flex flex-wrap items-end gap-3">
           <label className="block">
             <span className="text-sm text-slate-500">身份证号</span>
-            <input value={id} onChange={(e) => setId(e.target.value)}
-              className="mt-1 w-64 rounded-lg border border-slate-200 px-3 py-2 font-mono text-sm outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100" />
+            <input value={id} onChange={(e) => setId(e.target.value)} className="mt-1 w-64 rounded-lg border border-slate-200 px-3 py-2 font-mono text-sm outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100" />
           </label>
           <label className="block">
             <span className="text-sm text-slate-500">手机号</span>
-            <input value={phone} onChange={(e) => setPhone(e.target.value)}
-              className="mt-1 w-48 rounded-lg border border-slate-200 px-3 py-2 font-mono text-sm outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100" />
+            <input value={phone} onChange={(e) => setPhone(e.target.value)} className="mt-1 w-48 rounded-lg border border-slate-200 px-3 py-2 font-mono text-sm outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100" />
           </label>
           <button className="rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-700" onClick={() => setQueried(true)}>查看评分档案</button>
         </div>
-        {queried && (
-          <div className="mb-3 text-xs text-slate-400">查询对象：{maskId(id)} · {maskPhone(phone)}　查询时间：2026-08-08 10:30</div>
-        )}
+        {queried && <div className="mb-3 text-xs text-slate-400">查询对象：{maskId(id)} · {maskPhone(phone)}　查询时间：2026-08-08 10:30</div>}
         <div className="grid gap-4 md:grid-cols-3">
           {prods.map((p) => {
-            const m = d.meta[p];
+            const m = d.meta[p]
             return (
               <div key={p} className="flex flex-col items-center rounded-xl border border-slate-200 p-4">
                 <div className="mb-2 text-sm font-medium text-slate-600">{m.name}</div>
                 <ScoreGauge value={m.score} min={m.range[0]} max={m.range[1]} label={`${m.unit}`} color={m.color} hint={m.hint} />
                 <Badge kind={m.suggestion.kind as 'red'}>{m.suggestion.v}</Badge>
               </div>
-            );
+            )
           })}
         </div>
       </Panel>
 
-      {/* 体系总览：三产品调用/命中/异常/场景使用 */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard label="今日调用总量" value={`${callTotal.toLocaleString()}万`} delta="+4.7%" deltaType="up" accent="brand" hint={<Cal label="实时统计" />} />
         <StatCard label="智察分命中高风险" value="8.1%" delta="+0.6pp" deltaType="down" accent="rose" hint={<Sam label="样例" />} />
@@ -199,7 +134,7 @@ function OverviewPage({ d }: { d: ReturnType<typeof useScoring> }) {
         <Panel title="三产品今日调用量（万）" desc={<span><Cal label="实时统计" /></span>}>
           <BarChart labels={['智察分', '智信分', '智融分']} series={[{ name: '调用量', color: '#3366ff', data: [1642, 1480, 720] }]} unit="万" height={220} />
         </Panel>
-        <Panel title="场景使用分布" desc={<span>智融分三场景调用占比 <Sam value="scoringData.json.sceneEffects" /></span>}>
+        <Panel title="场景使用分布" desc="智融分三场景调用占比">
           <DonutChart data={[
             { label: '违约风险审核', value: 45, color: '#D4537E' },
             { label: '授信申请转化', value: 32, color: '#378ADD' },
@@ -208,33 +143,36 @@ function OverviewPage({ d }: { d: ReturnType<typeof useScoring> }) {
         </Panel>
       </div>
 
-      {/* 业务闭环 */}
       <Panel title="业务闭环 · 从单次决策到持续经营" desc="单次查询 → 批量评分 → API 对接 → 自动化监控 → 计费账单，形成完整产品闭环">
         <div className="flex flex-wrap items-stretch gap-2">
-          {CLOSURE.map((c, i) => (
+          {[{ step: '单次查询', desc: '贷前决策：输入标识即得三产品分数与决策建议', page: '各产品评分查询' },
+            { step: '批量评分', desc: '全量客群打分，支撑策略与分层经营', page: '批量评分' },
+            { step: 'API 对接', desc: '嵌入业务系统，一次对接三产品', page: 'API 对接' },
+            { step: '自动化监控', desc: '高频监控 KS/AUC/PSI，发现漂移即调优', page: '各产品监控' },
+            { step: '计费与账单', desc: '按调用/查得计费，统一账本对账', page: '计费与账单' }].map((c, i, arr) => (
             <Fragment key={c.step}>
               <div className="flex-1 min-w-[160px] rounded-xl border border-slate-200 p-3">
                 <div className="text-sm font-medium text-slate-700">{c.step}</div>
                 <div className="mt-1 text-xs leading-relaxed text-slate-500">{c.desc}</div>
                 <div className="mt-2"><Badge kind="gray">{c.page}</Badge></div>
               </div>
-              {i < CLOSURE.length - 1 && <div className="grid place-items-center px-1 text-lg text-slate-300">→</div>}
+              {i < arr.length - 1 && <div className="grid place-items-center px-1 text-lg text-slate-300">→</div>}
             </Fragment>
           ))}
         </div>
       </Panel>
     </>
-  );
+  )
 }
 
-/* ============ 评分查询（按产品下钻不同区块） ============ */
-function QueryPage({ d, prod }: { d: ReturnType<typeof useScoring>; prod: ScoreProd }) {
-  const m = d.meta[prod];
-  const [id, setId] = useState('3201**********1234');
-  const [phone, setPhone] = useState('138****5678');
-  const [queried, setQueried] = useState(false);
-  const levelColor: Record<string, string> = { 高: '#DC2626', 中: '#D97706', 低: '#16A34A' };
-  const levelKind: Record<string, 'red' | 'amber' | 'green'> = { 高: 'red', 中: 'amber', 低: 'green' };
+/* ============ 评分查询（按产品下钻） ============ */
+function QueryPage({ d, prod }: { d: ScoringData; prod: ScoreProd }) {
+  const m = d.meta[prod]
+  const [id, setId] = useState('3201**********1234')
+  const [phone, setPhone] = useState('138****5678')
+  const [queried, setQueried] = useState(false)
+  const levelColor: Record<string, string> = { 高: '#DC2626', 中: '#D97706', 低: '#16A34A' }
+  const levelKind: Record<string, 'red' | 'amber' | 'green'> = { 高: 'red', 中: 'amber', 低: 'green' }
 
   return (
     <>
@@ -243,13 +181,11 @@ function QueryPage({ d, prod }: { d: ReturnType<typeof useScoring>; prod: ScoreP
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="block">
               <span className="text-sm text-slate-500">身份证号</span>
-              <input value={id} onChange={(e) => setId(e.target.value)}
-                className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 font-mono text-sm outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100" />
+              <input value={id} onChange={(e) => setId(e.target.value)} className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 font-mono text-sm outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100" />
             </label>
             <label className="block">
               <span className="text-sm text-slate-500">手机号</span>
-              <input value={phone} onChange={(e) => setPhone(e.target.value)}
-                className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 font-mono text-sm outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100" />
+              <input value={phone} onChange={(e) => setPhone(e.target.value)} className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 font-mono text-sm outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100" />
             </label>
           </div>
           <div className="mt-4 flex flex-wrap items-center gap-3">
@@ -274,8 +210,7 @@ function QueryPage({ d, prod }: { d: ReturnType<typeof useScoring>; prod: ScoreP
         </Panel>
       </div>
 
-      {/* 因子明细（通用） */}
-      <Panel title="风险因子明细" desc="各因子对评分的贡献度（样例数据）">
+      <Panel title="风险因子明细" desc="各因子对评分的贡献度">
         <div className="space-y-4">
           {m.factors.map((f) => (
             <div key={f.name}>
@@ -297,26 +232,23 @@ function QueryPage({ d, prod }: { d: ReturnType<typeof useScoring>; prod: ScoreP
         </div>
       </Panel>
 
-      {prod === 'zhicha' && queried && <ZhichaDrill d={d} />}
-      {prod === 'zhixin' && queried && <ZhixinDrill d={d} />}
+      {prod === 'zhicha' && queried && <ZhichaDrill />}
+      {prod === 'zhixin' && queried && <ZhixinDrill />}
       {prod === 'zhirong' && queried && <ZhirongDrill d={d} />}
     </>
-  );
+  )
 }
 
-/* 智察分下钻：规则命中明细 + 黑名单与团伙 */
-function ZhichaDrill({ d }: { d: ReturnType<typeof useScoring> }) {
+function ZhichaDrill() {
   const rules = [
     { name: '多头借贷强度', value: '近30天申贷 7 家（阈值≥5）', weight: 28, hit: true },
     { name: '设备环境风险', value: '模拟器特征命中', weight: 22, hit: true },
     { name: '命中灰名单', value: '外部灰名单 ID#88231', weight: 20, hit: true },
     { name: '同设备关联账号', value: '3 个关联账号', weight: 18, hit: false },
-  ];
-  const bl = d.apis; // 复用列表做黑名单示例展示
-  void bl;
+  ]
   return (
     <div className="grid gap-6 lg:grid-cols-2">
-      <Panel title="规则命中明细" desc="还原每条命中规则，解释为什么判可疑（样例数据）">
+      <Panel title="规则命中明细" desc="还原每条命中规则，解释为什么判可疑">
         <div className="space-y-3">
           {rules.map((r) => (
             <div key={r.name} className="flex items-center gap-3 rounded-lg border border-slate-200 p-3">
@@ -330,7 +262,7 @@ function ZhichaDrill({ d }: { d: ReturnType<typeof useScoring> }) {
           ))}
         </div>
       </Panel>
-      <Panel title="黑名单与团伙" desc="命中名单与关联团伙（样例数据）">
+      <Panel title="黑名单与团伙" desc="命中名单与关联团伙">
         <div className="space-y-3">
           <div className="flex items-center gap-3 rounded-lg border border-rose-200 bg-rose-50 p-3">
             <Badge kind="red">黑名单</Badge>
@@ -344,21 +276,20 @@ function ZhichaDrill({ d }: { d: ReturnType<typeof useScoring> }) {
         </div>
       </Panel>
     </div>
-  );
+  )
 }
 
-/* 智信分下钻：评分卡解释 + 额度与拒绝建议 */
-function ZhixinDrill(_d: ReturnType<typeof useScoring>) {
+function ZhixinDrill() {
   const scorecard = [
     { name: '历史逾期记录', value: '近2年 M3+ 1 次', score: 26 },
     { name: '负债收入比', value: '58%（阈值 70%）', score: 22 },
     { name: '征信查询频次', value: '近6月 8 次', score: 18 },
     { name: '收入稳定性', value: '连续 14 月稳定', score: 20 },
     { name: '授信使用率', value: '43%', score: 14 },
-  ];
+  ]
   return (
     <div className="grid gap-6 lg:grid-cols-2">
-      <Panel title="评分卡解释" desc="拆解各评分项对分数的贡献（样例数据）">
+      <Panel title="评分卡解释" desc="拆解各评分项对分数的贡献">
         <div className="space-y-3">
           {scorecard.map((s) => (
             <div key={s.name} className="flex items-center gap-3">
@@ -372,7 +303,7 @@ function ZhixinDrill(_d: ReturnType<typeof useScoring>) {
           ))}
         </div>
       </Panel>
-      <Panel title="额度与拒绝建议" desc="准入决策出口（样例数据）">
+      <Panel title="额度与拒绝建议" desc="准入决策出口">
         <div className="space-y-3">
           <div className="flex items-center justify-between rounded-lg border border-emerald-200 bg-emerald-50 p-3">
             <span className="text-sm">建议额度档</span><b className="text-emerald-700">标准额度（最高 20 万）</b>
@@ -387,16 +318,15 @@ function ZhixinDrill(_d: ReturnType<typeof useScoring>) {
         </div>
       </Panel>
     </div>
-  );
+  )
 }
 
-/* 智融分下钻：融合构成 + 场景评分对比 + 360 评估 */
-function ZhirongDrill({ d }: { d: ReturnType<typeof useScoring> }) {
-  const parts = d.fusion.zhirong;
-  const scenes = d.sceneScores.zhirong;
+function ZhirongDrill({ d }: { d: ScoringData }) {
+  const parts = d.fusion.zhirong
+  const scenes = d.sceneScores.zhirong
   return (
     <>
-      <Panel title="融合构成" desc={<span>智融分由什么融合而来（双维引用 + 自有价值）<Sam value="scoringData.json.fusion" /></span>}>
+      <Panel title="融合构成" desc="智融分由什么融合而来">
         <div className="space-y-3">
           {parts.map((p) => (
             <div key={p.name} className="flex items-center gap-3">
@@ -412,7 +342,7 @@ function ZhirongDrill({ d }: { d: ReturnType<typeof useScoring> }) {
         </div>
       </Panel>
       <div className="grid gap-6 lg:grid-cols-2">
-        <Panel title="场景评分对比" desc="同一申请人 · 三个场景分（同一模型 × 不同场景规则）">
+        <Panel title="场景评分对比" desc="同一申请人 · 三个场景分">
           <div className="space-y-3">
             {scenes.map((s) => (
               <div key={s.scene} className="flex items-center justify-between rounded-lg border border-slate-200 p-3">
@@ -425,7 +355,7 @@ function ZhirongDrill({ d }: { d: ReturnType<typeof useScoring> }) {
             ))}
           </div>
         </Panel>
-        <Panel title="360 风险评估" desc="风险 × 价值 四象限（经营视角）">
+        <Panel title="360 风险评估" desc="风险 × 价值 四象限">
           <div className="grid grid-cols-2 gap-3">
             {d.matrix.map((c) => (
               <div key={c.name} className={`rounded-lg border p-3 ${c.risk === '高' ? 'border-rose-200 bg-rose-50' : 'border-emerald-200 bg-emerald-50'}`}>
@@ -441,11 +371,21 @@ function ZhirongDrill({ d }: { d: ReturnType<typeof useScoring> }) {
         </Panel>
       </div>
     </>
-  );
+  )
 }
 
 /* ============ 欺诈监控 ============ */
-function ZhichaMonitor(_d: ReturnType<typeof useScoring>) {
+function ZhichaMonitor({ d }: { d: ScoringData }) {
+  const metricCols: Column[] = [
+    { key: 'label', label: '指标', width: '120px' },
+    { key: 'value', label: '数值', width: '100px' },
+    { key: 'trend', label: '趋势', width: '120px' },
+    { key: 'status', label: '状态', type: 'badge', badgeKind: 'gray', width: '100px' },
+  ]
+  const metricRows: Row[] = d.monitor.zhicha.map((m) => ({
+    id: m.label, label: m.label, value: m.value, trend: m.trend,
+    status: { v: m.ok ? '正常' : '异常', kind: m.ok ? 'green' : 'red' },
+  }))
   return (
     <div className="space-y-6">
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -454,52 +394,55 @@ function ZhichaMonitor(_d: ReturnType<typeof useScoring>) {
         <StatCard label="命中规则拦截" value="8,412 笔" delta="+2.1%" deltaType="down" accent="amber" hint={<Sam label="样例" />} />
         <StatCard label="规则命中 TOP" value="多头借贷" delta="28% 权重" deltaType="flat" accent="brand" hint={<Sam label="样例" />} />
       </div>
-      <Panel title="近 7 日新客欺诈率（%）" desc={<span><Cal label="实时统计" /></span>}>
-        <LineChart labels={['08-02', '08-03', '08-04', '08-05', '08-06', '08-07', '08-08']}
-          series={[{ name: '新客欺诈率', color: '#ef4444', data: [6.2, 6.5, 6.9, 6.6, 7.0, 7.3, 6.8] }]} unit="%" height={220} />
-      </Panel>
-      <Panel title="命中 TOP 规则" desc={<span><Sam value="scoringData.json" /></span>}>
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Panel title="模型监控指标" desc="KS / AUC / Lift / PSI">
+          <DataTable columns={metricCols} rows={metricRows} empty="暂无数据" pager={false} />
+        </Panel>
+        <Panel title="近 7 日新客欺诈率（%）" desc={<span><Cal label="实时统计" /></span>}>
+          <LineChart labels={['08-02', '08-03', '08-04', '08-05', '08-06', '08-07', '08-08']}
+            series={[{ name: '新客欺诈率', color: '#ef4444', data: [6.2, 6.5, 6.9, 6.6, 7.0, 7.3, 6.8] }]} unit="%" height={220} />
+        </Panel>
+      </div>
+      <Panel title="命中 TOP 规则" desc="规则命中次数排行">
         <BarChart labels={['多头借贷', '设备风险', '灰名单', '同设备关联']}
           series={[{ name: '命中次数(万)', color: '#ff8800', data: [3.2, 2.4, 1.8, 1.1] }]} unit="万" height={200} />
       </Panel>
     </div>
-  );
+  )
 }
 
 /* ============ 客群分布与逾期表现 ============ */
-function VintagePage({ d, prod }: { d: ReturnType<typeof useScoring>; prod: ScoreProd }) {
-  const dist = d.dist[prod];
+function VintagePage({ d, prod }: { d: ScoringData; prod: ScoreProd }) {
+  const dist = d.dist[prod]
   return (
     <div className="space-y-6">
-      <Panel title={`${SCORE_PROD_LABEL[prod]} · 评分分布`} desc={<span>分档占比 <Sam value="scoringData.json.dist" /></span>}>
+      <Panel title={`${SCORE_PROD_LABEL[prod]} · 评分分布`} desc="分档占比">
         <BarChart labels={dist.labels} series={[{ name: '占比', color: '#3366ff', data: dist.data }]} unit="%" height={230} />
       </Panel>
       <div className="grid gap-6 lg:grid-cols-2">
-        <Panel title="分档通过率" desc="按信用等级 A-E 的通过率（样例数据）">
+        <Panel title="分档通过率" desc="按信用等级 A-E 的通过率">
           <BarChart labels={['A', 'B', 'C', 'D', 'E']} series={[{ name: '通过率', color: '#16a34a', data: [96, 88, 72, 45, 18] }]} unit="%" height={200} />
         </Panel>
-        <Panel title="Vintage 逾期曲线" desc="放款后各月 M3+ 逾期率（样例数据）">
+        <Panel title="Vintage 逾期曲线" desc="放款后各月 M3+ 逾期率">
           <LineChart labels={['M1', 'M2', 'M3', 'M4', 'M5', 'M6']}
             series={[{ name: '2026Q1 放款', color: '#3366ff', data: [0.4, 0.9, 1.6, 2.1, 2.4, 2.6] }, { name: '2025Q4 放款', color: '#888780', data: [0.6, 1.2, 2.0, 2.6, 2.9, 3.1] }]} unit="%" height={200} />
         </Panel>
       </div>
     </div>
-  );
+  )
 }
 
 /* ============ 客户分层 ============ */
-function TierPage({ d }: { d: ReturnType<typeof useScoring> }) {
-  const tiers = d.tiers;
-  const total = tiers.reduce((a, t) => a + t.count, 0);
+function TierPage({ d }: { d: ScoringData }) {
+  const tiers = d.tiers
+  const total = tiers.reduce((a, t) => a + t.count, 0)
   const cols: Column[] = [
     { key: 'name', label: '客群', width: '140px' },
     { key: 'count', label: '客户数', type: 'text', width: '120px' },
     { key: 'pct', label: '占比', type: 'text', width: '100px' },
     { key: 'action', label: '经营动作', width: '200px' },
-  ];
-  const rows: Row[] = tiers.map((t) => ({
-    id: t.name, name: t.name, count: t.count.toLocaleString(), pct: `${t.pct}%`, action: t.action,
-  }));
+  ]
+  const rows: Row[] = tiers.map((t) => ({ id: t.name, name: t.name, count: t.count.toLocaleString(), pct: `${t.pct}%`, action: t.action }))
   return (
     <div className="space-y-6">
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -508,51 +451,66 @@ function TierPage({ d }: { d: ReturnType<typeof useScoring> }) {
         <StatCard label="沉睡客户" value={tiers[2].count.toLocaleString()} delta={`${tiers[2].pct}%`} deltaType="flat" accent="amber" hint={<Sam label="样例" />} />
         <StatCard label="高风险客户" value={tiers[3].count.toLocaleString()} delta={`${tiers[3].pct}%`} deltaType="down" accent="rose" hint={<Sam label="样例" />} />
       </div>
-      <Panel title="客群分层" desc={<span>智融分经营视角客群分组 <Sam value="scoringData.json.tiers" /></span>}>
+      <Panel title="客群分层" desc="智融分经营视角客群分组">
         <DataTable columns={cols} rows={rows} empty="暂无分层" pager defaultPageSize={10} />
       </Panel>
     </div>
-  );
+  )
 }
 
 /* ============ 场景效果监控 ============ */
-function SceneEffectPage({ d }: { d: ReturnType<typeof useScoring> }) {
+function SceneEffectPage({ d }: { d: ScoringData }) {
   const cols: Column[] = [
     { key: 'scene', label: '场景', width: '150px' },
     { key: 'conv', label: '转化率', type: 'text', width: '100px' },
     { key: 'hit', label: '命中率', type: 'text', width: '100px' },
     { key: 'usage', label: '调用占比', type: 'text', width: '100px' },
     { key: 'trend', label: '趋势', type: 'badge', badgeKind: 'green', width: '100px' },
-  ];
+  ]
   const rows: Row[] = d.sceneEffects.map((s, i) => ({
     id: String(i), scene: s.scene, conv: `${s.conv}%`, hit: `${s.hit}%`, usage: `${s.usage}%`,
     trend: { v: s.trend, kind: s.trend.startsWith('↓') ? 'red' : 'green' },
-  }));
+  }))
   return (
-    <Panel title="场景效果监控" desc={<span>智融分三场景转化/命中/用信 <Sam value="scoringData.json.sceneEffects" /></span>}>
-      <DataTable columns={cols} rows={rows} empty="暂无数据" pager defaultPageSize={10} />
-    </Panel>
-  );
+    <div className="space-y-6">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {d.sceneEffects.map((s, i) => (
+          <Panel key={i} title={s.scene}>
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between"><span className="text-slate-500">转化率</span><span>{s.conv}%</span></div>
+              <div className="flex justify-between"><span className="text-slate-500">命中率</span><span>{s.hit}%</span></div>
+              <div className="flex justify-between"><span className="text-slate-500">调用占比</span><span>{s.usage}%</span></div>
+              <div className="flex justify-between"><span className="text-slate-500">趋势</span><Badge kind={s.trend.startsWith('↓') ? 'red' : 'green'}>{s.trend}</Badge></div>
+            </div>
+          </Panel>
+        ))}
+      </div>
+      <Panel title="场景效果监控" desc="智融分三场景转化/命中/用信">
+        <DataTable columns={cols} rows={rows} empty="暂无数据" pager defaultPageSize={10} />
+      </Panel>
+    </div>
+  )
 }
 
 /* ============ API 对接 ============ */
-function ApiPage({ d }: { d: ReturnType<typeof useScoring> }) {
+function ApiPage({ d }: { d: ScoringData }) {
   const cols: Column[] = [
     { key: 'ep', label: '接口', width: '220px' },
     { key: 'method', label: '方法', width: '90px' },
     { key: 'qps', label: '峰值 QPS', type: 'text', width: '110px' },
     { key: 'sla', label: 'SLA', width: '100px' },
     { key: 'status', label: '状态', type: 'badge', badgeKind: 'gray', width: '90px' },
-  ];
+  ]
   const rows: Row[] = d.apis.map((a) => ({
-    id: a.id, ep: a.ep, method: a.method, qps: a.qps.toLocaleString(), sla: a.sla, status: { v: a.status, kind: statusKind[a.status] ?? 'gray' },
-  }));
+    id: a.id, ep: a.ep, method: a.method, qps: a.qps.toLocaleString(), sla: a.sla,
+    status: { v: a.status, kind: statusKind[a.status] ?? 'gray' },
+  }))
   return (
     <div className="space-y-6">
       <Panel title="接口列表" desc="一次对接三产品（单接口按需返回分数组合）">
         <DataTable columns={cols} rows={rows} empty="暂无接口" pager defaultPageSize={10} />
       </Panel>
-      <Panel title="请求示例" desc="返回三产品分数组合（样例）">
+      <Panel title="请求示例" desc="返回三产品分数组合">
         <pre className="overflow-x-auto rounded-lg bg-slate-900 p-4 text-xs leading-relaxed text-emerald-300">{`POST /v3/score
 { "id_no": "3201**********1234", "mobile": "138****5678", "products": ["zhicha","zhixin","zhirong"] }
 
@@ -563,11 +521,11 @@ function ApiPage({ d }: { d: ReturnType<typeof useScoring> }) {
 }`}</pre>
       </Panel>
     </div>
-  );
+  )
 }
 
 /* ============ 批量评分 ============ */
-function BatchPage({ d, prod }: { d: ReturnType<typeof useScoring>; prod: ScoreProd }) {
+function BatchPage({ d, prod }: { d: ScoringData; prod: ScoreProd }) {
   const cols: Column[] = [
     { key: 'id', label: '任务号', width: '130px' },
     { key: 'name', label: '文件名', width: '200px' },
@@ -575,25 +533,25 @@ function BatchPage({ d, prod }: { d: ReturnType<typeof useScoring>; prod: ScoreP
     { key: 'avg', label: '平均分', type: 'text', width: '90px' },
     { key: 'high', label: '高风险数', type: 'text', width: '110px' },
     { key: 'status', label: '状态', type: 'badge', badgeKind: 'gray', width: '100px' },
-  ];
+  ]
   const rows: Row[] = d.batch[prod].map((r) => ({
     id: r.id, name: r.name, cnt: r.cnt.toLocaleString(), avg: String(r.avg),
     high: r.high.toLocaleString(), status: { v: r.status, kind: statusKind[r.status] ?? 'gray' },
-  }));
+  }))
   return (
-    <Panel title={`${SCORE_PROD_LABEL[prod]} · 批量任务`} desc={<span>文件批量评分 <Sam value="scoringData.json.batch" /></span>}
+    <Panel title={`${SCORE_PROD_LABEL[prod]} · 批量任务`} desc="文件批量评分"
       actions={<Button size="sm">＋ 上传文件</Button>}>
       <DataTable columns={cols} rows={rows} empty="暂无任务" pager defaultPageSize={10} />
     </Panel>
-  );
+  )
 }
 
 /* ============ 计费与账单 ============ */
-function BillPage({ d, prod }: { d: ReturnType<typeof useScoring>; prod: ScoreProd }) {
-  const bill = d.bill[prod];
-  const qrows = d.billQuery[prod];
-  const hrows = d.billHit[prod];
-  const all = [...qrows.map((r) => ({ ...r, kind: '查询' })), ...hrows.map((r) => ({ ...r, kind: '查得' })), ...bill.rows.map((r) => ({ ...r, kind: r.type }))];
+function BillPage({ d, prod }: { d: ScoringData; prod: ScoreProd }) {
+  const bill = d.bill[prod]
+  const qrows = d.billQuery[prod]
+  const hrows = d.billHit[prod]
+  const all = [...qrows.map((r) => ({ ...r, kind: '查询' })), ...hrows.map((r) => ({ ...r, kind: '查得' })), ...bill.rows.map((r) => ({ ...r, kind: r.type }))]
   const cols: Column[] = [
     { key: 'id', label: '单号', width: '120px' },
     { key: 'date', label: '日期', width: '120px' },
@@ -601,11 +559,11 @@ function BillPage({ d, prod }: { d: ReturnType<typeof useScoring>; prod: ScorePr
     { key: 'cnt', label: '数量', type: 'text', width: '90px' },
     { key: 'amt', label: '金额(元)', type: 'text', width: '110px' },
     { key: 'status', label: '状态', type: 'badge', badgeKind: 'gray', width: '90px' },
-  ];
+  ]
   const rows: Row[] = all.map((r, i) => ({
     id: String(i), date: r.date, kind: r.kind, cnt: r.cnt.toLocaleString(), amt: r.amt.toLocaleString(),
     status: { v: r.status, kind: statusKind[r.status] ?? 'gray' },
-  }));
+  }))
   return (
     <div className="space-y-6">
       <div className="grid gap-4 sm:grid-cols-3">
@@ -613,9 +571,9 @@ function BillPage({ d, prod }: { d: ReturnType<typeof useScoring>; prod: ScorePr
         <StatCard label="本月消费" value={`¥${all.filter((r) => r.kind === '消费').reduce((a, r) => a + r.amt, 0).toLocaleString()}`} accent="rose" hint={<Cal label="实时计算" />} />
         <StatCard label="充值记录" value={bill.recharge.map((r) => `¥${r.toLocaleString()}`).join(' / ')} accent="emerald" hint="样例" />
       </div>
-      <Panel title={`${SCORE_PROD_LABEL[prod]} · 账单流水`} desc={<span><Sam value="scoringData.json.bill" /></span>}>
+      <Panel title={`${SCORE_PROD_LABEL[prod]} · 账单流水`} desc="查询 / 查得 / 充值 / 消费 统一流水">
         <DataTable columns={cols} rows={rows} empty="暂无流水" pager defaultPageSize={10} />
       </Panel>
     </div>
-  );
+  )
 }
