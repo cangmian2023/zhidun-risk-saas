@@ -35,6 +35,7 @@ import MidDashboardDetail from './MidDashboardDetail'
 import MidBizFlowConfig from './MidBizFlowConfig'
 import MidAlertDetail from './MidAlertDetail'
 import MidDisposeDetail from './MidDisposeDetail'
+import RetailCreditHome from './RetailCreditHome'
 import MetaEventConfig from './MetaEventConfig'
 import MetaEventPropConfig from './MetaEventPropConfig'
 import MetaUserPropConfig from './MetaUserPropConfig'
@@ -565,7 +566,9 @@ export default function Console() {
               <DunQa />
             ) : key === 'zz:repayment' ? (
               <DunRepayment />
-            ) : key.startsWith('cr:mid-td') || key === 'cr:overview' || key === 'cr:mid-overview' || key === 'cr:mid-alert' || key === 'cr:mid-crowd' ? (
+            ) : key === 'cr:overview' ? (
+              <RetailCreditHome />
+            ) : key.startsWith('cr:mid-td') || key === 'cr:mid-overview' || key === 'cr:mid-alert' || key === 'cr:mid-crowd' ? (
               <MidDashboardPage pageKey={key} />
             ) : key === 'cr:mid-alert-workbench' ? (
               <MidAlertWorkbench />

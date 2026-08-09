@@ -35,27 +35,14 @@ export const creditRiskMenu: MenuGroup[] = [
   { group: '信息核验', section: '贷前审核', items: [{ label: '信息核验', key: 'cr:pre-verify', desc: '模板驱动的信息核验报告（数据从本地 JSON 读取）' }] },
   { group: '信用风控', section: '贷前审核', items: [{ label: '信用风控', key: 'cr:credit-kimi', desc: '模板驱动的信用风控报告（数据从本地 JSON 读取）' }] },
   { group: '欺诈识别', section: '贷前审核', items: [{ label: '欺诈识别', key: 'cr:pre-fraud', desc: '模板驱动的欺诈识别报告（数据从本地 JSON 读取）' }] },
-  // 贷中监控（业务作业 · 对外）—— v3 规划：看板由监控页面配置驱动，工作台/工单/单客视图为作业页
-  {
-    group: '监控看板',
-    section: '贷中监控',
-    items: [
-      { label: '贷中监控大盘', key: 'cr:mid-td1', desc: '同盾需求·红黄灯综合预警信号总览（预警总量/红黄灯结构/场景分布/规则还原），页面来自监控页面配置 midDashboards.json' },
-      { label: '风险监测', key: 'cr:mid-td2', desc: '同盾需求·分场景分产品监测（风险视角），支持按产品线筛选，页面来自监控页面配置' },
-      { label: '红黄灯预警中心', key: 'cr:mid-td3', desc: '同盾需求·红黄灯预警信号作业台（按等级筛选/命中规则TOP/规则明细还原），页面来自监控页面配置' },
-      { label: '持续性周期监测', key: 'cr:mid-td4', desc: '同盾需求·持续性周期监测评估（行为分/逾期/新增贷款按月趋势），页面来自监控页面配置' },
-      { label: '存量客群运营', key: 'cr:mid-td5', desc: '同盾需求·存量客群运营场景（授信/余额/逾期+产品结构+贷款台账），页面来自监控页面配置' },
-    ],
-  },
-  {
-    group: '预警处置',
-    section: '贷中监控',
-    items: [
-      { label: '预警工作台', key: 'cr:mid-alert-workbench', keep: true, desc: '红黄灯预警任务队列：逐条查看、核实、发起处置' },
-      { label: '处置工单', key: 'cr:mid-dispose-workbench', keep: true, desc: '工单跟进、处置回填、审批流转' },
-      { label: '单客视图', key: 'cr:mid-cust-detail', keep: true, desc: '个体详情：规则还原、画像、评分历史、处置' },
-    ],
-  },
+  // 贷中监控（业务作业 · 对外）—— v3 升级：取消「监控看板 / 预警处置」两个子分组，6 个页面扁平直列；
+  // 处置工单、单客视图下线（能力并入预警工作台 / 客户360；单客视图改由首页搜索与预警详情直达）
+  { group: '预警工作台', section: '贷中监控', items: [{ label: '预警工作台', key: 'cr:mid-alert-workbench', keep: true, desc: '红黄灯预警任务队列：逐条查看、核实、发起处置（升级版）' }] },
+  { group: '贷中监控大盘', section: '贷中监控', items: [{ label: '贷中监控大盘', key: 'cr:mid-td1', desc: '红黄灯综合预警信号总览：预警总量 / 红黄灯结构 / 场景分布 / 规则还原' }] },
+  { group: '风险监测', section: '贷中监控', items: [{ label: '风险监测', key: 'cr:mid-td2', desc: '分场景分产品监测（风险视角），支持按产品线筛选' }] },
+  { group: '红黄灯预警中心', section: '贷中监控', items: [{ label: '红黄灯预警中心', key: 'cr:mid-td3', desc: '红黄灯预警信号作业台：按等级筛选 / 命中规则 TOP / 规则明细还原' }] },
+  { group: '持续性周期监测', section: '贷中监控', items: [{ label: '持续性周期监测', key: 'cr:mid-td4', desc: '持续性周期监测评估：行为分 / 逾期 / 新增贷款按月趋势' }] },
+  { group: '存量客群运营', section: '贷中监控', items: [{ label: '存量客群运营', key: 'cr:mid-td5', desc: '存量客群运营场景：授信 / 余额 / 逾期 + 产品结构 + 贷款台账' }] },
 ]
 
 /* ============================================================
@@ -300,7 +287,7 @@ export const plannedExtras: PlannedExtra[] = [
   { key: 'cm:mid-metric-detail', sub: 'cm', group: '指标库', label: '指标详情页', desc: '查看指标口径、实时计算预览与引用关系' },
   { key: 'cm:mid-strategy-detail', sub: 'cm', group: '策略配置', label: '策略详情页', desc: '查看监控任务/预警规则/处置策略配置与联动预警' },
   { key: 'cm:mid-dashboard-detail', sub: 'cm', group: '页面配置', label: '页面配置详情页', desc: '查看看板页面组件配置与实时渲染入口' },
-  { key: 'cr:mid-alert-detail', sub: 'cr', group: '预警处置', label: '预警详情页', desc: '查看预警信息、建议处置策略并推进状态流转' },
+  { key: 'cr:mid-alert-detail', sub: 'cr', group: '贷中监控', label: '预警详情页', desc: '查看预警信息、建议处置策略并推进状态流转' },
   { key: 'cr:mid-dispose-detail', sub: 'cr', group: '处置闭环', label: '处置工单详情页', desc: '查看工单信息、回填处置与操作日志' },
 ]
 

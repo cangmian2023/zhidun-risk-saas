@@ -57,6 +57,7 @@ export default function FlowCanvasEditor({ graph, onChange, readOnly, statusEnum
   const dragRef = useRef<{ id: string; dx: number; dy: number } | null>(null)
   const [customCheck, setCustomCheck] = useState('')
   const [showCheckPresets, setShowCheckPresets] = useState(false)
+  const [propTab, setPropTab] = useState<'basic' | 'check' | 'review'>('basic')
   // 关联字段与状态机：默认收起，点击展开编辑（需求8.1）
   const [matchOpen, setMatchOpen] = useState(false)
   // 视口变换：缩放 + 平移（用于 放大/缩小/全画幅/居中/全屏）
@@ -101,7 +102,7 @@ export default function FlowCanvasEditor({ graph, onChange, readOnly, statusEnum
       setLinkFrom(null)
       return
     }
-    setSelNode(id); setSelEdge(null)
+    setSelNode(id); setSelEdge(null); setPropTab('basic')
   }
 
   const onPointerDown = (ev: React.PointerEvent, n: FlowGraphNode) => {
@@ -348,143 +349,166 @@ export default function FlowCanvasEditor({ graph, onChange, readOnly, statusEnum
             <IconBtn title="居中" onClick={centerView}><IconCenter /></IconBtn>
             <IconBtn title="全屏" onClick={toggleFull}><IconFull /></IconBtn>
           </div>
-          {/* 需求8.2/8.3：节点属性面板（点击节点弹出，固定画板左侧、高度=画板高-5px；节点已置中） */}
+          {/* 需求8.2/8.3/8.6/8.7：节点属性面板（点击节点弹出；固定画板左侧、相对画布垂直居中、更宽；内容分 tab 显示） */}
           {selected && (() => {
             const n = selected
-            const W = 282
+            const W = 360
             const ch = canvasRef.current?.clientHeight ?? CANVAS_H
+            const tabs = n.type === 'end'
+              ? [{ key: 'basic' as const, label: '基础' }]
+              : [
+                { key: 'basic' as const, label: '基础' },
+                { key: 'check' as const, label: '审核事项' },
+                { key: 'review' as const, label: '审批结果' },
+              ]
             return (
-              <div onClick={(e) => e.stopPropagation()} style={{ position: 'absolute', left: 8, top: 0, height: ch - 5, width: W, zIndex: 20, background: '#fff', border: '1px solid #E5E7EB', borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,.12)', padding: 12, overflowY: 'auto' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+              <div onClick={(e) => e.stopPropagation()} style={{ position: 'absolute', left: 8, top: '50%', transform: 'translateY(-50%)', width: W, maxHeight: ch - 24, zIndex: 20, background: '#fff', border: '1px solid #E5E7EB', borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,.12)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 12, borderBottom: '1px solid #E5E7EB', flexShrink: 0 }}>
                   <div>
                     <div style={{ fontSize: 13, fontWeight: 600, color: FLOW_NODE_TYPE_COLOR[n.type].text }}>节点属性</div>
                     <div style={{ fontSize: 11, color: '#9CA3AF' }}>{FLOW_NODE_TYPE_LABEL[n.type]} · {n.label}{n.role ? ` · ${n.role}` : ''}</div>
                   </div>
                   <button onClick={(e) => { e.stopPropagation(); setSelNode(null); setSelEdge(null) }} style={{ border: 'none', background: 'transparent', color: '#94A3B8', cursor: 'pointer', fontSize: 16, lineHeight: 1 }}>×</button>
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  {n.type === 'end' ? (
-                    <>
-                      <div style={{ fontSize: 12, color: '#6B7280', lineHeight: 1.7, background: '#F8FAFC', border: '1px solid #E5E7EB', borderRadius: 6, padding: '8px 10px' }}>
-                        结束节点的状态<span style={{ color: '#DC2626' }}>无需在此配置</span>。<br />
-                        最终状态由<span style={{ color: '#1D4ED8', fontWeight: 600 }}>上一决策节点</span>的「审批结果 → 状态」映射（resultStates）派生，流程走到此处即落地该状态。
-                      </div>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#374151', cursor: readOnly ? 'default' : 'pointer' }}>
-                        <input type="checkbox" disabled={readOnly} checked={n.showButton ?? false}
-                          onChange={(e) => patchNode(n.id, { showButton: e.target.checked })} />
-                        继续显示按钮（在结束状态展示操作按钮）
-                      </label>
-                    </>
-                  ) : (
-                    <>
-                      <label style={{ fontSize: 12, color: '#6B7280' }}>节点标题（画布显示）
-                        <input disabled={readOnly} value={n.label} onChange={(e) => patchNode(n.id, { label: e.target.value })} style={{ ...inp, marginTop: 4 }} />
-                      </label>
-                      <label style={{ fontSize: 12, color: '#6B7280' }}>按钮名称（运行时操作按钮文案）
-                        <input disabled={readOnly} value={n.buttonName ?? ''} onChange={(e) => patchNode(n.id, { buttonName: e.target.value })} placeholder={n.label || '缺省同节点标题'} style={{ ...inp, marginTop: 4 }} />
-                      </label>
-                      <label style={{ fontSize: 12, color: '#6B7280' }}>时限倒计时（分钟，空 = 不限制）
-                        <input type="number" min={0} disabled={readOnly} value={n.timeLimit ?? ''}
-                          onChange={(e) => patchNode(n.id, { timeLimit: e.target.value === '' ? undefined : Math.max(0, Number(e.target.value)) })}
-                          placeholder="如 30 / 120" style={{ ...inp, marginTop: 4 }} />
-                      </label>
-                      <label style={{ fontSize: 12, color: '#6B7280' }}>经办角色
-                        <select disabled={readOnly} value={n.role} onChange={(e) => patchNode(n.id, { role: e.target.value as ReviewRole })} style={{ ...inp, marginTop: 4 }}>
-                          {REVIEW_ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
-                        </select>
-                      </label>
-                      <div style={{ fontSize: 12, color: '#6B7280' }}>弹出内容 · 审核事项
-                        <div style={{ marginTop: 4, border: '1px solid #E5E7EB', borderRadius: 6, padding: '6px 8px', display: 'flex', flexDirection: 'column', gap: 4, maxHeight: 132, overflowY: 'auto' }}>
-                          {(n.checkItems ?? []).length === 0 ? (
-                            <span style={{ fontSize: 11, color: '#9CA3AF' }}>（默认无审核事项，添加后生成标签）</span>
-                          ) : (
-                            (n.checkItems ?? []).map((it) => (
-                              <div key={it} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6, fontSize: 12, color: '#374151', background: '#F1F5F9', borderRadius: 4, padding: '2px 6px' }}>
-                                <span>{it}</span>
-                                {!readOnly && <button onClick={() => patchNode(n.id, { checkItems: (n.checkItems ?? []).filter((x) => x !== it) })} style={{ border: 'none', background: 'transparent', color: '#DC2626', cursor: 'pointer', fontSize: 13, lineHeight: 1, padding: 0 }}>×</button>}
-                              </div>
-                            ))
-                          )}
-                          {showCheckPresets && (
-                            <div style={{ borderTop: '1px dashed #E5E7EB', marginTop: 2, paddingTop: 4, display: 'flex', flexDirection: 'column', gap: 2 }}>
-                              {REVIEW_CHECK_ITEMS.map((it) => (
-                                <label key={it} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#374151', cursor: readOnly ? 'default' : 'pointer' }}>
-                                  <input type="checkbox" disabled={readOnly} checked={(n.checkItems ?? []).includes(it)}
-                                    onChange={(e) => patchNode(n.id, { checkItems: e.target.checked ? [...(n.checkItems ?? []), it] : (n.checkItems ?? []).filter((x) => x !== it) })} />
-                                  {it}
-                                </label>
-                              ))}
-                            </div>
-                          )}
+                {tabs.length > 1 && (
+                  <div style={{ display: 'flex', gap: 2, padding: '0 8px', borderBottom: '1px solid #E5E7EB', flexShrink: 0 }}>
+                    {tabs.map((t) => (
+                      <button key={t.key} type="button" onClick={() => setPropTab(t.key)} style={{ border: 'none', background: 'transparent', padding: '9px 10px', fontSize: 12, cursor: 'pointer', color: propTab === t.key ? '#2563EB' : '#64748B', borderBottom: propTab === t.key ? '2px solid #2563EB' : '2px solid transparent', marginBottom: -1, fontWeight: propTab === t.key ? 600 : 400 }}>
+                        {t.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                <div style={{ flex: 1, overflowY: 'auto', padding: 12, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {propTab === 'basic' && (
+                    n.type === 'end' ? (
+                      <>
+                        <div style={{ fontSize: 12, color: '#6B7280', lineHeight: 1.7, background: '#F8FAFC', border: '1px solid #E5E7EB', borderRadius: 6, padding: '8px 10px' }}>
+                          结束节点的状态<span style={{ color: '#DC2626' }}>无需在此配置</span>。<br />
+                          最终状态由<span style={{ color: '#1D4ED8', fontWeight: 600 }}>上一决策节点</span>的「审批结果 → 状态」映射（resultStates）派生，流程走到此处即落地该状态。
                         </div>
-                        {!readOnly && (
-                          <div style={{ display: 'flex', gap: 6, marginTop: 4 }}>
-                            <input value={customCheck} onChange={(e) => setCustomCheck(e.target.value)} placeholder="自定义审核事项" style={{ ...inp, flex: 1 }} />
-                            <button onClick={() => { const v = customCheck.trim(); if (v && !(n.checkItems ?? []).includes(v)) patchNode(n.id, { checkItems: [...(n.checkItems ?? []), v] }); setCustomCheck('') }} style={{ border: '1px solid #E5E7EB', borderRadius: 6, padding: '4px', fontSize: 12, background: '#fff', cursor: 'pointer' }}>添加</button>
-                            <button onClick={() => setShowCheckPresets((v) => !v)} style={{ border: '1px solid #E5E7EB', borderRadius: 6, padding: '4px 10px', fontSize: 12, background: '#fff', cursor: 'pointer', whiteSpace: 'nowrap' }}>{showCheckPresets ? '收起预设' : '从预设选择'}</button>
-                          </div>
-                        )}
-                      </div>
-                      {/* 审批结果 → 状态与默认意见（需求8.4：意见与结果合并；8.5：移除「从预设选择」） */}
-                      <div style={{ border: '1px solid #E5E7EB', borderRadius: 8, padding: 10, background: '#F9FAFB' }}>
-                        <div style={{ fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 6 }}>审批结果 → 状态映射与默认意见（驱动运行时工单状态；意见可在运行时修改）</div>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                          {REVIEW_RESULTS.map((r) => {
-                            const on = (n.results ?? REVIEW_RESULTS).includes(r)
-                            const presets = n.opinionPresets ?? defaultOpinionPresets()
-                            const list = presets[r] ?? []
-                            return (
-                              <div key={r} style={{ borderTop: '1px dashed #E5E7EB', paddingTop: 8 }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                                  <input type="checkbox" disabled={readOnly} checked={on}
-                                    onChange={(e) => { const cur = n.results ?? REVIEW_RESULTS; patchNode(n.id, { results: e.target.checked ? [...cur, r] : cur.filter((x) => x !== r) }) }} />
-                                  <span style={{ width: 42, fontSize: 12, color: '#374151', fontWeight: 600 }}>{r}</span>
-                                  <span style={{ color: '#9CA3AF' }}>→</span>
-                                  <input disabled={readOnly} value={n.resultStates?.[r] ?? ''}
-                                    onChange={(e) => patchNode(n.id, { resultStates: { ...(n.resultStates ?? {}), [r]: e.target.value } })}
-                                    placeholder="操作后状态" list="statusEnumList" style={{ ...inp, flex: 1 }} />
-                                </div>
-                                <div style={{ marginTop: 6 }}>
-                                  <div style={{ fontSize: 11, color: '#6B7280', marginBottom: 3 }}>默认审批意见（运行时可修改）</div>
-                                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-                                    {list.length === 0 ? (
-                                      <span style={{ fontSize: 11, color: '#9CA3AF' }}>（默认无，运行时再填写）</span>
-                                    ) : list.map((o: string) => (
-                                      <span key={o} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 12, background: '#F1F5F9', borderRadius: 12, padding: '2px 8px', color: '#374151' }}>
-                                        {o}
-                                        {!readOnly && <button onClick={() => { const next = list.filter((x) => x !== o); patchNode(n.id, { opinionPresets: { ...presets, [r]: next } }) }} style={{ border: 'none', background: 'transparent', color: '#DC2626', cursor: 'pointer', fontSize: 12, lineHeight: 1, padding: 0 }}>×</button>}
-                                      </span>
-                                    ))}
-                                  </div>
-                                  {!readOnly && (
-                                    <div style={{ display: 'flex', gap: 4, marginTop: 4 }}>
-                                      <input value={draft[r] ?? ''} onChange={(e) => setDraft((d) => ({ ...d, [r]: e.target.value }))} placeholder={`添加「${r}」默认意见`} style={{ ...inp, flex: 1 }} />
-                                      <button onClick={() => { const v = (draft[r] ?? '').trim(); if (v && !list.includes(v)) patchNode(n.id, { opinionPresets: { ...presets, [r]: [...list, v] } }); setDraft((d) => ({ ...d, [r]: '' })) }} style={{ border: '1px solid #E5E7EB', borderRadius: 6, padding: '4px 10px', fontSize: 12, background: '#fff', cursor: 'pointer' }}>添加</button>
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                            )
-                          })}
-                        </div>
-                        {!((n.results ?? REVIEW_RESULTS).length) && (
-                          <div style={{ marginTop: 8 }}>
-                            <label style={{ fontSize: 12, color: '#6B7280' }}>操作后的状态（未勾选任何审批结果，取自状态枚举类）
-                              <input disabled={readOnly} value={n.postState ?? ''} onChange={(e) => patchNode(n.id, { postState: e.target.value })} placeholder="如 通过 / 已确认 / 待人工" list="statusEnumList" style={{ ...inp, marginTop: 4 }} />
-                            </label>
-                          </div>
-                        )}
-                        <div style={{ marginTop: 4, fontSize: 11, color: '#9CA3AF' }}>勾选即该结果可选；取值来自本分段「状态枚举类」；运行时按所选审批结果落地对应状态，并可在审批时修改默认意见。</div>
-                      </div>
-                      <label style={{ fontSize: 12, color: '#6B7280' }}>附注
-                        <input disabled={readOnly} value={n.note ?? ''} onChange={(e) => patchNode(n.id, { note: e.target.value })} placeholder="选填" style={{ ...inp, marginTop: 4 }} />
-                      </label>
-                    </>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#374151', cursor: readOnly ? 'default' : 'pointer' }}>
+                          <input type="checkbox" disabled={readOnly} checked={n.showButton ?? false}
+                            onChange={(e) => patchNode(n.id, { showButton: e.target.checked })} />
+                          继续显示按钮（在结束状态展示操作按钮）
+                        </label>
+                      </>
+                    ) : (
+                      <>
+                        <label style={{ fontSize: 12, color: '#6B7280' }}>节点标题（画布显示）
+                          <input disabled={readOnly} value={n.label} onChange={(e) => patchNode(n.id, { label: e.target.value })} style={{ ...inp, marginTop: 4 }} />
+                        </label>
+                        <label style={{ fontSize: 12, color: '#6B7280' }}>按钮名称（运行时操作按钮文案）
+                          <input disabled={readOnly} value={n.buttonName ?? ''} onChange={(e) => patchNode(n.id, { buttonName: e.target.value })} placeholder={n.label || '缺省同节点标题'} style={{ ...inp, marginTop: 4 }} />
+                        </label>
+                        <label style={{ fontSize: 12, color: '#6B7280' }}>时限倒计时（分钟，空 = 不限制）
+                          <input type="number" min={0} disabled={readOnly} value={n.timeLimit ?? ''}
+                            onChange={(e) => patchNode(n.id, { timeLimit: e.target.value === '' ? undefined : Math.max(0, Number(e.target.value)) })}
+                            placeholder="如 30 / 120" style={{ ...inp, marginTop: 4 }} />
+                        </label>
+                        <label style={{ fontSize: 12, color: '#6B7280' }}>经办角色
+                          <select disabled={readOnly} value={n.role} onChange={(e) => patchNode(n.id, { role: e.target.value as ReviewRole })} style={{ ...inp, marginTop: 4 }}>
+                            {REVIEW_ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
+                          </select>
+                        </label>
+                        <label style={{ fontSize: 12, color: '#6B7280' }}>附注
+                          <input disabled={readOnly} value={n.note ?? ''} onChange={(e) => patchNode(n.id, { note: e.target.value })} placeholder="选填" style={{ ...inp, marginTop: 4 }} />
+                        </label>
+                      </>
+                    )
                   )}
-                  {!readOnly && n.type !== 'start' && (
-                    <button onClick={() => removeNode(n.id)} style={{ padding: '5px 0', fontSize: 12, borderRadius: 6, cursor: 'pointer', background: '#FEF2F2', border: '1px solid #FCA5A5', color: '#DC2626' }}>删除节点（含关联连线）</button>
+                  {propTab === 'check' && (
+                    <div style={{ fontSize: 12, color: '#6B7280' }}>弹出内容 · 审核事项
+                      <div style={{ marginTop: 4, border: '1px solid #E5E7EB', borderRadius: 6, padding: '6px 8px', display: 'flex', flexDirection: 'column', gap: 4, maxHeight: 260, overflowY: 'auto' }}>
+                        {(n.checkItems ?? []).length === 0 ? (
+                          <span style={{ fontSize: 11, color: '#9CA3AF' }}>（默认无审核事项，添加后生成标签）</span>
+                        ) : (
+                          (n.checkItems ?? []).map((it) => (
+                            <div key={it} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6, fontSize: 12, color: '#374151', background: '#F1F5F9', borderRadius: 4, padding: '2px 6px' }}>
+                              <span>{it}</span>
+                              {!readOnly && <button onClick={() => patchNode(n.id, { checkItems: (n.checkItems ?? []).filter((x) => x !== it) })} style={{ border: 'none', background: 'transparent', color: '#DC2626', cursor: 'pointer', fontSize: 13, lineHeight: 1, padding: 0 }}>×</button>}
+                            </div>
+                          ))
+                        )}
+                        {showCheckPresets && (
+                          <div style={{ borderTop: '1px dashed #E5E7EB', marginTop: 2, paddingTop: 4, display: 'flex', flexDirection: 'column', gap: 2 }}>
+                            {REVIEW_CHECK_ITEMS.map((it) => (
+                              <label key={it} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#374151', cursor: readOnly ? 'default' : 'pointer' }}>
+                                <input type="checkbox" disabled={readOnly} checked={(n.checkItems ?? []).includes(it)}
+                                  onChange={(e) => patchNode(n.id, { checkItems: e.target.checked ? [...(n.checkItems ?? []), it] : (n.checkItems ?? []).filter((x) => x !== it) })} />
+                                {it}
+                              </label>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                      {!readOnly && (
+                        <div style={{ display: 'flex', gap: 6, marginTop: 4 }}>
+                          <input value={customCheck} onChange={(e) => setCustomCheck(e.target.value)} placeholder="自定义审核事项" style={{ ...inp, flex: 1 }} />
+                          <button onClick={() => { const v = customCheck.trim(); if (v && !(n.checkItems ?? []).includes(v)) patchNode(n.id, { checkItems: [...(n.checkItems ?? []), v] }); setCustomCheck('') }} style={{ border: '1px solid #E5E7EB', borderRadius: 6, padding: '4px', fontSize: 12, background: '#fff', cursor: 'pointer' }}>添加</button>
+                          <button onClick={() => setShowCheckPresets((v) => !v)} style={{ border: '1px solid #E5E7EB', borderRadius: 6, padding: '4px 10px', fontSize: 12, background: '#fff', cursor: 'pointer', whiteSpace: 'nowrap' }}>{showCheckPresets ? '收起预设' : '从预设选择'}</button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  {propTab === 'review' && (
+                    <div style={{ border: '1px solid #E5E7EB', borderRadius: 8, padding: 10, background: '#F9FAFB' }}>
+                      <div style={{ fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 6 }}>审批结果 → 状态映射与默认意见（驱动运行时工单状态；意见可在运行时修改）</div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                        {REVIEW_RESULTS.map((r) => {
+                          const on = (n.results ?? REVIEW_RESULTS).includes(r)
+                          const presets = n.opinionPresets ?? defaultOpinionPresets()
+                          const list = presets[r] ?? []
+                          return (
+                            <div key={r} style={{ borderTop: '1px dashed #E5E7EB', paddingTop: 8 }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                <input type="checkbox" disabled={readOnly} checked={on}
+                                  onChange={(e) => { const cur = n.results ?? REVIEW_RESULTS; patchNode(n.id, { results: e.target.checked ? [...cur, r] : cur.filter((x) => x !== r) }) }} />
+                                <span style={{ width: 42, fontSize: 12, color: '#374151', fontWeight: 600 }}>{r}</span>
+                                <span style={{ color: '#9CA3AF' }}>→</span>
+                                <input disabled={readOnly} value={n.resultStates?.[r] ?? ''}
+                                  onChange={(e) => patchNode(n.id, { resultStates: { ...(n.resultStates ?? {}), [r]: e.target.value } })}
+                                  placeholder="操作后状态" list="statusEnumList" style={{ ...inp, flex: 1 }} />
+                              </div>
+                              <div style={{ marginTop: 6 }}>
+                                <div style={{ fontSize: 11, color: '#6B7280', marginBottom: 3 }}>默认审批意见（运行时可修改）</div>
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                                  {list.length === 0 ? (
+                                    <span style={{ fontSize: 11, color: '#9CA3AF' }}>（默认无，运行时再填写）</span>
+                                  ) : list.map((o: string) => (
+                                    <span key={o} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 12, background: '#F1F5F9', borderRadius: 12, padding: '2px 8px', color: '#374151' }}>
+                                      {o}
+                                      {!readOnly && <button onClick={() => { const next = list.filter((x) => x !== o); patchNode(n.id, { opinionPresets: { ...presets, [r]: next } }) }} style={{ border: 'none', background: 'transparent', color: '#DC2626', cursor: 'pointer', fontSize: 12, lineHeight: 1, padding: 0 }}>×</button>}
+                                    </span>
+                                  ))}
+                                </div>
+                                {!readOnly && (
+                                  <div style={{ display: 'flex', gap: 4, marginTop: 4 }}>
+                                    <input value={draft[r] ?? ''} onChange={(e) => setDraft((d) => ({ ...d, [r]: e.target.value }))} placeholder={`添加「${r}」默认意见`} style={{ ...inp, flex: 1 }} />
+                                    <button onClick={() => { const v = (draft[r] ?? '').trim(); if (v && !list.includes(v)) patchNode(n.id, { opinionPresets: { ...presets, [r]: [...list, v] } }); setDraft((d) => ({ ...d, [r]: '' })) }} style={{ border: '1px solid #E5E7EB', borderRadius: 6, padding: '4px 10px', fontSize: 12, background: '#fff', cursor: 'pointer' }}>添加</button>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                      {!((n.results ?? REVIEW_RESULTS).length) && (
+                        <div style={{ marginTop: 8 }}>
+                          <label style={{ fontSize: 12, color: '#6B7280' }}>操作后的状态（未勾选任何审批结果，取自状态枚举类）
+                            <input disabled={readOnly} value={n.postState ?? ''} onChange={(e) => patchNode(n.id, { postState: e.target.value })} placeholder="如 通过 / 已确认 / 待人工" list="statusEnumList" style={{ ...inp, marginTop: 4 }} />
+                          </label>
+                        </div>
+                      )}
+                      <div style={{ marginTop: 4, fontSize: 11, color: '#9CA3AF' }}>勾选即该结果可选；取值来自本分段「状态枚举类」；运行时按所选审批结果落地对应状态，并可在审批时修改默认意见。</div>
+                    </div>
                   )}
                 </div>
+                {!readOnly && n.type !== 'start' && (
+                  <div style={{ padding: 12, borderTop: '1px solid #E5E7EB', flexShrink: 0 }}>
+                    <button onClick={() => removeNode(n.id)} style={{ width: '100%', padding: '6px 0', fontSize: 12, borderRadius: 6, cursor: 'pointer', background: '#FEF2F2', border: '1px solid #FCA5A5', color: '#DC2626' }}>删除节点（含关联连线）</button>
+                  </div>
+                )}
               </div>
             )
           })()}
