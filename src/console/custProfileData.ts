@@ -73,19 +73,35 @@ export interface CustCreditQuery {
   type: string
 }
 export interface CustCreditAccount {
-  type: string
-  bank: string
-  balance: number
-  status: string
+  type: string // 账户类型：住房贷款 / 信用卡 / 消费贷 / 现金贷 ...
+  bank: string // 管理机构
+  openDate: string // 开立日期
+  dueDate: string // 到期日（信用卡 / 随借随还可为 '--'）
+  creditLimit: number // 授信额度 / 合同金额
+  balance: number // 余额 / 已用额度
+  currency: string // 币种
+  guarantee: string // 担保方式：信用 / 抵押 / 质押 / 保证
+  overdueMonths: number // 当前逾期期数
+  overdueAmt: number // 当前逾期金额
+  status: string // 账户状态：正常 / 关注 / 逾期 / 呆账 / 冻结 / 止付 / 销户 / 未激活
 }
 export interface CustGuarantee {
   name: string
   amount: number
   status: string
 }
+export interface CustCreditSummary {
+  creditCards: number // 信用卡账户数
+  loans: number // 贷款笔数（非循环 + 循环）
+  overdueAccounts: number // 发生过逾期的账户数
+  overdue90Plus: number // 90 天以上逾期账户数
+  guaranteeCount: number // 对外担保笔数
+  relatedRepay: number // 相关还款责任账户数（共同借款）
+}
 export interface CustCredit {
   recentQueries: CustCreditQuery[] // 近 6 月查询
   accounts: CustCreditAccount[] // 信贷账户明细
+  summary: CustCreditSummary // 信息概要（账户数汇总）
   overdue: { count: number; amount: number }
   guarantee: CustGuarantee[] // 对外担保
 }
@@ -108,6 +124,7 @@ export interface CustExternalCheck {
   item: string
   result: string
   status: '一致' | '异常' | '待核'
+  field?: string // 对应的基本信息字段 key（用于字段后打核验标记；缺省则归入「其他外部核验」列表）
 }
 
 /* ---- 担保与经营 ---- */
@@ -128,22 +145,29 @@ export interface CustCollateralBiz {
 }
 
 /* ---- 关系图谱 ---- */
+export type GraphNodeType = 'self' | 'person' | 'company' | 'account' | 'device' | 'product' | 'org'
+export type GraphTheme = '综合' | '家族' | '社交' | '资金' | '共债' | '担保' | '经营' | '设备'
 export interface CustGraphNode {
   id: string
   name: string
-  type: 'person' | 'company'
-  rel: string
-  risk?: '高危'
-  openAlerts?: number
+  type: GraphNodeType
+  rel: string // 关系标签
+  risk?: '高危' | '关注' | '正常'
+  openAlerts?: number // 关联预警数（高危角标）
+  phone?: string // 脱敏联系方式
+  detail?: string // 抽屉/清单附加描述
 }
 export interface CustGraphEdge {
   source: string
   target: string
   rel: string
+  theme: GraphTheme // 所属主题，用于主题切换
+  danger?: boolean // 红色高亮（共债 / 共享设备等）
 }
 export interface CustRelationGraph {
   nodes: CustGraphNode[]
   edges: CustGraphEdge[]
+  themes: GraphTheme[] // 可切换的主题
 }
 
 /* ---- 多头共债 ---- */
@@ -226,6 +250,9 @@ export interface CustProfile {
   education: string // 学历
   marital: string // 婚姻状况
   phone: string // 脱敏手机号
+  phones: { number: string; verified: boolean }[] // 多个手机号（脱敏）+ 各自核验状态
+  email: string // 邮箱
+  addresses: { type: string; value: string }[] // 户籍 / 居住 / 公司地址
   // 授信与额度
   creditLimit: number // 授信额度（元）
   usedLimit: number // 已用额度（元）
@@ -291,6 +318,16 @@ export const SEED_CUST: CustData = {
       education: '本科',
       marital: '已婚',
       phone: '138****6621',
+      phones: [
+        { number: '138****6621', verified: true },
+        { number: '139****8800', verified: true },
+      ],
+      email: 'mingyuan.z@cloudcalc.com',
+      addresses: [
+        { type: '户籍地址', value: '浙江省杭州市西湖区文三路 100 号' },
+        { type: '居住地址', value: '浙江省杭州市余杭区未来科技城 8 栋 1502' },
+        { type: '公司地址', value: '浙江省杭州市滨江区网商路 599 号' },
+      ],
       creditLimit: 200000,
       usedLimit: 86000,
       availLimit: 114000,
@@ -362,10 +399,11 @@ export const SEED_CUST: CustData = {
           { org: '蚂蚁消金', date: '2026-05-20', type: '贷款审批' },
         ],
         accounts: [
-          { type: '住房贷款', bank: '工商银行', balance: 1200000, status: '正常' },
-          { type: '信用卡', bank: '招商银行', balance: 18000, status: '正常' },
-          { type: '消费贷', bank: '本行', balance: 86000, status: '正常' },
+          { type: '住房贷款', bank: '工商银行', openDate: '2019-03-12', dueDate: '2049-03-11', creditLimit: 1800000, balance: 1200000, currency: '人民币', guarantee: '抵押', overdueMonths: 0, overdueAmt: 0, status: '正常' },
+          { type: '信用卡', bank: '招商银行', openDate: '2021-06-01', dueDate: '--', creditLimit: 50000, balance: 18000, currency: '人民币', guarantee: '信用', overdueMonths: 0, overdueAmt: 0, status: '正常' },
+          { type: '消费贷', bank: '本行', openDate: '2024-11-08', dueDate: '2027-11-07', creditLimit: 200000, balance: 86000, currency: '人民币', guarantee: '信用', overdueMonths: 0, overdueAmt: 0, status: '正常' },
         ],
+        summary: { creditCards: 1, loans: 2, overdueAccounts: 0, overdue90Plus: 0, guaranteeCount: 0, relatedRepay: 0 },
         overdue: { count: 0, amount: 0 },
         guarantee: [],
       },
@@ -380,24 +418,96 @@ export const SEED_CUST: CustData = {
         lastLogin: '2026-08-09 21:34',
       },
       externalChecks: [
+        { source: '公安', item: '证件核验', result: '证件号与姓名一致', status: '一致', field: 'maskedId' },
+        { source: '运营商', item: '手机号实名', result: '实名认证一致', status: '一致', field: 'phone' },
+        { source: '邮箱服务', item: '邮箱有效性', result: '可送达、无退信', status: '一致', field: 'email' },
         { source: '工商', item: '名下企业', result: '无关联企业', status: '一致' },
         { source: '司法', item: '涉诉查询', result: '无未结案件', status: '一致' },
-        { source: '税务', item: '个税缴纳', result: '连续缴纳 36 个月', status: '一致' },
-        { source: '社保公积金', item: '社保状态', result: '在缴、基数正常', status: '一致' },
+        { source: '税务', item: '个税缴纳', result: '连续缴纳 36 个月', status: '一致', field: 'income' },
+        { source: '社保公积金', item: '社保状态', result: '在缴、基数正常', status: '一致', field: 'income' },
       ],
       collateralBiz: { collateral: [], business: [] },
       relationGraph: {
         nodes: [
-          { id: 'self', name: '张明远', type: 'person', rel: '本人' },
-          { id: 'spouse', name: '李芸', type: 'person', rel: '配偶', openAlerts: 0 },
-          { id: 'ec', name: '张建国', type: 'person', rel: '紧急联系人' },
-          { id: 'emp', name: '杭州云算科技', type: 'company', rel: '任职单位' },
+          { id: 'self', name: '张明远', type: 'self', rel: '本人' },
+          // 家族
+          { id: 'spouse', name: '李芸', type: 'person', rel: '配偶', risk: '正常', phone: '139****2048', detail: '共同居住 · 紧急联系人 · 连带担保' },
+          { id: 'father', name: '张建国', type: 'person', rel: '父亲', phone: '137****7711', detail: '退休 · 紧急联系人' },
+          { id: 'mother', name: '王秀英', type: 'person', rel: '母亲', detail: '退休' },
+          { id: 'brother', name: '张明杰', type: 'person', rel: '弟弟', risk: '关注', detail: '自由职业 · 近期查询偏多' },
+          { id: 'father_in_law', name: '李国强', type: 'person', rel: '岳父', detail: '异地' },
+          // 社交
+          { id: 'colleague', name: '赵磊', type: 'person', rel: '同事', detail: '同部门' },
+          { id: 'friend1', name: '王涛', type: 'person', rel: '朋友', risk: '关注', detail: '有共债交集' },
+          { id: 'friend2', name: '陈静', type: 'person', rel: '同学', detail: '异地' },
+          { id: 'ec', name: '刘梅', type: 'person', rel: '紧急联系人', phone: '135****6620', detail: '亲属之外备用联系人' },
+          // 账户
+          { id: 'acc_bank', name: '本行储蓄卡', type: 'account', rel: '结算账户', detail: '6217****8821' },
+          { id: 'acc_wx', name: '微信支付', type: 'account', rel: '关联账户', detail: 'wxid_****m9k2' },
+          { id: 'acc_zfb', name: '支付宝', type: 'account', rel: '关联账户', detail: '2088****3391' },
+          { id: 'acc_other', name: '招行借记卡', type: 'account', rel: '他行账户', detail: '6225****1109' },
+          // 经营 / 企业
+          { id: 'emp', name: '杭州云算科技', type: 'company', rel: '任职单位', detail: '软件工程师 · 工资发放方' },
+          { id: 'biz', name: '明远网络工作室', type: 'company', rel: '经营主体', detail: '个体工商户 · 本人经营' },
+          { id: 'supplier', name: '晟达供应链', type: 'company', rel: '合作方', risk: '关注', detail: '经营往来' },
+          // 共债
+          { id: 'co1', name: '周敏', type: 'person', rel: '共债关联', risk: '高危', openAlerts: 2, detail: '同共债圈' },
+          { id: 'co2', name: '刘洋', type: 'person', rel: '共债关联', risk: '高危', openAlerts: 1, detail: '同共债圈' },
+          { id: 'co3', name: '林晓', type: 'person', rel: '同设备账号', risk: '高危', openAlerts: 1, detail: '共享设备' },
+          { id: 'org_a', name: '花呗', type: 'org', rel: '共债机构', detail: '消费信贷' },
+          { id: 'org_b', name: '借呗', type: 'org', rel: '共债机构', detail: '消费信贷' },
+          { id: 'org_c', name: '某消费金融', type: 'org', rel: '共债机构', risk: '关注', detail: '持牌机构' },
+          // 担保
+          { id: 'guar_biz', name: '明远工作室担保', type: 'company', rel: '担保主体', detail: '经营实体担保' },
+          // 设备
+          { id: 'dev1', name: 'iPhone 14', type: 'device', rel: '常用设备', detail: '常用登录' },
+          { id: 'dev2', name: '共享设备·OPPO', type: 'device', rel: '共享设备', risk: '高危', detail: '多人共用' },
         ],
         edges: [
-          { source: 'self', target: 'spouse', rel: '配偶' },
-          { source: 'self', target: 'ec', rel: '紧急联系人' },
-          { source: 'self', target: 'emp', rel: '任职' },
+          // 家族
+          { source: 'self', target: 'spouse', rel: '配偶', theme: '家族' },
+          { source: 'self', target: 'father', rel: '父子', theme: '家族' },
+          { source: 'self', target: 'mother', rel: '母子', theme: '家族' },
+          { source: 'self', target: 'brother', rel: '兄弟', theme: '家族' },
+          { source: 'spouse', target: 'father_in_law', rel: '翁婿', theme: '家族' },
+          // 社交
+          { source: 'self', target: 'colleague', rel: '同事', theme: '社交' },
+          { source: 'self', target: 'friend1', rel: '朋友', theme: '社交' },
+          { source: 'self', target: 'friend2', rel: '同学', theme: '社交' },
+          { source: 'self', target: 'ec', rel: '紧急联系人', theme: '社交' },
+          { source: 'friend1', target: 'co2', rel: '社交交集', theme: '社交' },
+          // 资金
+          { source: 'self', target: 'acc_bank', rel: '本行账户', theme: '资金' },
+          { source: 'self', target: 'acc_wx', rel: '微信', theme: '资金' },
+          { source: 'self', target: 'acc_zfb', rel: '支付宝', theme: '资金' },
+          { source: 'self', target: 'acc_other', rel: '他行账户', theme: '资金' },
+          { source: 'emp', target: 'self', rel: '工资入账', theme: '资金' },
+          { source: 'self', target: 'biz', rel: '经营收款', theme: '资金' },
+          // 经营
+          { source: 'self', target: 'emp', rel: '任职', theme: '经营' },
+          { source: 'self', target: 'biz', rel: '经营', theme: '经营' },
+          { source: 'biz', target: 'supplier', rel: '供应链', theme: '经营' },
+          { source: 'emp', target: 'biz', rel: '关联', theme: '经营' },
+          // 共债
+          { source: 'self', target: 'co1', rel: '共债', theme: '共债', danger: true },
+          { source: 'self', target: 'co2', rel: '共债', theme: '共债', danger: true },
+          { source: 'self', target: 'co3', rel: '共债/同设备', theme: '共债', danger: true },
+          { source: 'self', target: 'org_a', rel: '共债机构', theme: '共债', danger: true },
+          { source: 'self', target: 'org_b', rel: '共债机构', theme: '共债', danger: true },
+          { source: 'self', target: 'org_c', rel: '共债机构', theme: '共债', danger: true },
+          { source: 'co1', target: 'co2', rel: '共债链条', theme: '共债', danger: true },
+          { source: 'co1', target: 'co3', rel: '同设备', theme: '共债', danger: true },
+          { source: 'org_a', target: 'org_b', rel: '多头', theme: '共债', danger: true },
+          // 担保
+          { source: 'self', target: 'spouse', rel: '担保（配偶）', theme: '担保' },
+          { source: 'self', target: 'guar_biz', rel: '担保（经营实体）', theme: '担保' },
+          { source: 'guar_biz', target: 'org_a', rel: '担保代偿', theme: '担保' },
+          // 设备
+          { source: 'self', target: 'dev1', rel: '常用设备', theme: '设备' },
+          { source: 'self', target: 'dev2', rel: '共享设备', theme: '设备', danger: true },
+          { source: 'co3', target: 'dev2', rel: '同设备', theme: '设备', danger: true },
         ],
+        themes: ['综合', '家族', '社交', '资金', '经营', '共债', '担保', '设备'],
       },
       coDebt: {
         applications30d: 1,
@@ -436,6 +546,16 @@ export const SEED_CUST: CustData = {
       education: '大专',
       marital: '未婚',
       phone: '159****3380',
+      phones: [
+        { number: '159****3380', verified: true },
+        { number: '158****7712', verified: false },
+      ],
+      email: 'chen.xn@shop.com',
+      addresses: [
+        { type: '户籍地址', value: '广东省深圳市福田区华强北路 12 号' },
+        { type: '居住地址', value: '广东省深圳市龙华区民治街道 33 栋' },
+        { type: '公司地址', value: '广东省深圳市龙岗区华南城电商大厦 5F' },
+      ],
       creditLimit: 120000,
       usedLimit: 118000,
       availLimit: 2000,
@@ -511,11 +631,12 @@ export const SEED_CUST: CustData = {
           { org: '微粒贷', date: '2026-06-21', type: '贷款审批' },
         ],
         accounts: [
-          { type: '消费贷', bank: '本行', balance: 118000, status: '逾期' },
-          { type: '消费贷', bank: '马上消金', balance: 42000, status: '逾期' },
-          { type: '现金贷', bank: '360 借条', balance: 28000, status: '正常' },
-          { type: '信用卡', bank: '广发银行', balance: 35000, status: '关注' },
+          { type: '消费贷', bank: '本行', openDate: '2025-02-20', dueDate: '2027-02-19', creditLimit: 200000, balance: 118000, currency: '人民币', guarantee: '信用', overdueMonths: 2, overdueAmt: 3900, status: '逾期' },
+          { type: '消费贷', bank: '马上消金', openDate: '2025-05-11', dueDate: '2026-05-10', creditLimit: 60000, balance: 42000, currency: '人民币', guarantee: '信用', overdueMonths: 1, overdueAmt: 2220, status: '逾期' },
+          { type: '现金贷', bank: '360 借条', openDate: '2025-09-03', dueDate: '2026-09-02', creditLimit: 30000, balance: 28000, currency: '人民币', guarantee: '信用', overdueMonths: 0, overdueAmt: 0, status: '正常' },
+          { type: '信用卡', bank: '广发银行', openDate: '2023-08-15', dueDate: '--', creditLimit: 40000, balance: 35000, currency: '人民币', guarantee: '信用', overdueMonths: 0, overdueAmt: 0, status: '关注' },
         ],
+        summary: { creditCards: 1, loans: 3, overdueAccounts: 2, overdue90Plus: 0, guaranteeCount: 1, relatedRepay: 0 },
         overdue: { count: 2, amount: 6120 },
         guarantee: [{ name: '为周敏担保', amount: 50000, status: '关注' }],
       },
@@ -534,10 +655,13 @@ export const SEED_CUST: CustData = {
         lastLogin: '2026-08-09 02:11',
       },
       externalChecks: [
+        { source: '公安', item: '证件核验', result: '证件号与姓名一致', status: '一致', field: 'maskedId' },
+        { source: '运营商', item: '手机号实名', result: '实名认证一致', status: '一致', field: 'phone' },
+        { source: '邮箱服务', item: '邮箱有效性', result: '退信、疑似失效', status: '异常', field: 'email' },
         { source: '工商', item: '名下企业', result: '个体户·电商（存续）', status: '一致' },
         { source: '司法', item: '涉诉查询', result: '民间借贷纠纷 1 起', status: '异常' },
-        { source: '税务', item: '个税缴纳', result: '近 6 月无申报', status: '异常' },
-        { source: '社保公积金', item: '社保状态', result: '断缴超 12 个月', status: '异常' },
+        { source: '税务', item: '个税缴纳', result: '近 6 月无申报', status: '异常', field: 'income' },
+        { source: '社保公积金', item: '社保状态', result: '断缴超 12 个月', status: '异常', field: 'income' },
       ],
       collateralBiz: {
         collateral: [{ name: '电商店铺经营权', type: '经营权质押', value: 60000, status: '评估中' }],
@@ -545,19 +669,38 @@ export const SEED_CUST: CustData = {
       },
       relationGraph: {
         nodes: [
-          { id: 'self', name: '陈晓楠', type: 'person', rel: '本人', risk: '高危', openAlerts: 3 },
+          { id: 'self', name: '陈晓楠', type: 'self', rel: '本人', risk: '高危', openAlerts: 3 },
           { id: 'zhou', name: '周敏', type: 'person', rel: '共债关联', risk: '高危', openAlerts: 2 },
           { id: 'liu', name: '刘洋', type: 'person', rel: '共债关联', risk: '高危', openAlerts: 1 },
           { id: 'lin', name: '林晓', type: 'person', rel: '同设备账号', risk: '高危', openAlerts: 1 },
-          { id: 'shop', name: '深圳某电商商行', type: 'company', rel: '经营主体' },
+          { id: 'wang', name: '王芳', type: 'person', rel: '亲属' },
+          { id: 'shop', name: '深圳某电商商行', type: 'company', rel: '经营主体', detail: '经营者' },
+          { id: 'acc_wx', name: '微信支付', type: 'account', rel: '关联账户', detail: 'wxid_****x3k' },
+          { id: 'acc_zfb', name: '支付宝', type: 'account', rel: '关联账户', detail: '2088****7712' },
+          { id: 'org_a', name: '花呗', type: 'org', rel: '共债机构' },
+          { id: 'org_b', name: '借呗', type: 'org', rel: '共债机构' },
+          { id: 'org_c', name: '某消费金融', type: 'org', rel: '共债机构' },
+          { id: 'dev1', name: '常用设备·华为', type: 'device', rel: '常用设备' },
+          { id: 'dev2', name: '共享设备·OPPO', type: 'device', rel: '共享设备', risk: '高危' },
         ],
         edges: [
-          { source: 'self', target: 'zhou', rel: '共债' },
-          { source: 'self', target: 'liu', rel: '共债' },
-          { source: 'self', target: 'lin', rel: '同设备' },
-          { source: 'self', target: 'shop', rel: '经营' },
-          { source: 'zhou', target: 'liu', rel: '共债链条' },
+          { source: 'self', target: 'zhou', rel: '共债', theme: '共债', danger: true },
+          { source: 'self', target: 'liu', rel: '共债', theme: '共债', danger: true },
+          { source: 'self', target: 'lin', rel: '同设备', theme: '共债', danger: true },
+          { source: 'self', target: 'org_a', rel: '共债机构', theme: '共债', danger: true },
+          { source: 'self', target: 'org_b', rel: '共债机构', theme: '共债', danger: true },
+          { source: 'self', target: 'org_c', rel: '共债机构', theme: '共债', danger: true },
+          { source: 'zhou', target: 'liu', rel: '共债链条', theme: '共债', danger: true },
+          { source: 'zhou', target: 'lin', rel: '同设备', theme: '共债', danger: true },
+          { source: 'self', target: 'shop', rel: '经营', theme: '经营' },
+          { source: 'self', target: 'wang', rel: '亲属', theme: '家族' },
+          { source: 'self', target: 'acc_wx', rel: '微信', theme: '资金' },
+          { source: 'self', target: 'acc_zfb', rel: '支付宝', theme: '资金' },
+          { source: 'self', target: 'dev1', rel: '常用设备', theme: '设备' },
+          { source: 'self', target: 'dev2', rel: '共享设备', theme: '设备', danger: true },
+          { source: 'lin', target: 'dev2', rel: '同设备', theme: '设备', danger: true },
         ],
+        themes: ['综合', '家族', '社交', '资金', '经营', '共债', '担保', '设备'],
       },
       coDebt: {
         applications30d: 6,
