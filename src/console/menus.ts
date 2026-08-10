@@ -43,6 +43,8 @@ export const creditRiskMenu: MenuGroup[] = [
   { group: '红黄灯预警中心', section: '贷中监控', items: [{ label: '红黄灯预警中心', key: 'cr:mid-td3', desc: '红黄灯预警信号作业台：按等级筛选 / 命中规则 TOP / 规则明细还原' }] },
   { group: '持续性周期监测', section: '贷中监控', items: [{ label: '持续性周期监测', key: 'cr:mid-td4', desc: '持续性周期监测评估：行为分 / 逾期 / 新增贷款按月趋势' }] },
   { group: '存量客群运营', section: '贷中监控', items: [{ label: '存量客群运营', key: 'cr:mid-td5', desc: '存量客群运营场景：授信 / 余额 / 逾期 + 产品结构 + 贷款台账' }] },
+  // 单客 360° 画像（v3 新增）：企业档案（ep:qiye-profile）的单客版本，功能数据分离独立实现
+  { group: '单客视图', section: '贷中监控', items: [{ label: '单客详情', key: 'cr:mid-single-cust', keep: true, desc: '零售信贷单客 360° 画像：身份与职业收入、授信额度、负债逾期、行为画像、风险预警与联系人关系' }] },
 ]
 
 /* ============================================================

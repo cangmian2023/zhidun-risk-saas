@@ -50,6 +50,7 @@ const NAV_ITEMS: { id: string; label: string }[] = [
   { id: 'sec-alert', label: '预警信息' },
   { id: 'sec-base', label: '基本信息' },
   { id: 'sec-score', label: '模型评分' },
+  { id: 'sec-decision', label: '审核决策' },
   { id: 'sec-income', label: '收入负债' },
   { id: 'sec-credit', label: '征信' },
   { id: 'sec-behavior', label: '行为' },
@@ -266,14 +267,32 @@ export default function MidCustDetail() {
         <ProfileCard c={cust} />
       </Panel>
 
-      {/* 需求11审核：模型评分快照（智察/智信/智融 + 额度建议） */}
+      {/* 需求11审核：模型评分快照（极轻提示，详细评分见下方决策建议与详情页） */}
+      <div id="sec-score" style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 12, color: '#94A3B8', marginBottom: 4 }}>
+        <span>模型评分快照</span>
+        {cust.scores ? (
+          <>
+            <span style={{ color: '#64748B' }}>
+              智察 <b style={{ color: '#334155', fontVariantNumeric: 'tabular-nums' }}>{cust.scores.zhicha.score}</b>
+              {' · '}智信 <b style={{ color: '#334155', fontVariantNumeric: 'tabular-nums' }}>{cust.scores.zhixin.score}</b>
+              {' · '}智融 <b style={{ color: '#334155', fontVariantNumeric: 'tabular-nums' }}>{cust.scores.zhirong.score}</b>
+            </span>
+            <span style={{ color: '#2563EB', cursor: 'pointer', marginLeft: 'auto' }}
+              onClick={() => nav('/console/cr/mid-cust-score?cust=' + cust.custId + '&prod=zhicha' + (fromAlertId ? '&id=' + fromAlertId : ''))}>
+              查看模型评分详情 →
+            </span>
+          </>
+        ) : <span>暂无模型评分数据</span>}
+      </div>
+
+      {/* 综合审核决策建议（跨三模型+预警+收入负债+征信，给建议与需核实红旗，并做同客群对标） */}
       <Panel
-        id="sec-score"
-        title="模型评分"
-        desc={<span>准入/授信模型三评分卡 <Sam label="样例" /> 智察(反欺诈) / 智信(信用) / 智融(综合) 与额度建议</span>}
+        id="sec-decision"
+        title="综合审核决策建议"
+        desc={<span>跨三模型评分 + 预警 + 收入负债 + 征信的合成决策视图 <Sam label="样例" /></span>}
         className="mb-4"
       >
-        {cust.scores ? <ModelScorePanel s={cust.scores} custId={cust.custId} fromAlertId={fromAlertId} /> : <div style={{ fontSize: 13, color: '#94A3B8' }}>暂无模型评分数据</div>}
+        {cust.scores ? <DecisionPanel cust={cust} custAlerts={custAlerts} /> : <div style={{ fontSize: 13, color: '#94A3B8' }}>暂无评分数据，无法合成决策</div>}
       </Panel>
 
       {/* 需求11：收入负债（还款能力核心，基本信息后立即展示） */}
@@ -1144,64 +1163,89 @@ function RiskPanel({ c }: { c: MidCustomer }) {
   );
 }
 
-/* 需求11审核：模型评分快照（智察/智信/智融 三评分卡 + 额度建议） */
-function ModelScorePanel({ s, custId, fromAlertId }: { s: CustModelScore; custId: string; fromAlertId?: string }) {
-  const nav = useNavigate();
-  const cards = [
-    { key: 'zhicha', label: '智察分', sub: '反欺诈', item: s.zhicha, danger: true },
-    { key: 'zhixin', label: '智信分', sub: '信用', item: s.zhixin, danger: false },
-    { key: 'zhirong', label: '智融分', sub: '综合', item: s.zhirong, danger: false },
-  ];
-  const scoreColor = (score: number, range: [number, number], danger: boolean) => {
-    const ratio = danger ? score / range[1] : (score - range[0]) / (range[1] - range[0]);
-    return danger
-      ? (ratio >= 0.6 ? '#DC2626' : ratio >= 0.4 ? '#D97706' : '#059669')
-      : (ratio >= 0.6 ? '#059669' : ratio >= 0.4 ? '#D97706' : '#DC2626');
+/* 综合审核决策建议：跨三模型 + 预警 + 收入负债 + 征信，合成建议 + 需核实红旗 + 同客群对标 */
+function DecisionChip({ label, v, c }: { label: string; v: string; c: string }) {
+  return (
+    <div style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: 10, padding: '8px 12px', minWidth: 120 }}>
+      <div style={{ fontSize: 11, color: '#94A3B8' }}>{label}</div>
+      <div style={{ fontSize: 14, fontWeight: 700, color: c, marginTop: 2 }}>{v}</div>
+    </div>
+  );
+}
+function DecisionBasis({ label, v, danger }: { label: string; v: string; danger?: boolean }) {
+  return (
+    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #F1F5F9', padding: '8px 0', fontSize: 13 }}>
+      <span style={{ color: '#64748B' }}>{label}</span>
+      <b style={{ color: danger ? '#DC2626' : '#1E293B' }}>{v}</b>
+    </div>
+  );
+}
+function DecisionPanel({ cust, custAlerts }: { cust: MidCustomer; custAlerts: Row[] }) {
+  const s = cust.scores!;
+  const zc = s.zhicha.score, zx = s.zhixin.score, zr = s.zhirong.score;
+  const band = (sc: number, danger: boolean) => {
+    if (danger) return sc >= 70 ? '高' : sc >= 40 ? '中' : '低';
+    if (sc >= 780) return 'A'; if (sc >= 660) return 'B'; if (sc >= 580) return 'C'; return 'D';
   };
+  const fraudBand = band(zc, true), creditBand = band(zx, false), compBand = band(zr, false);
+  const storeRed = custAlerts.filter((r) => (r as any).levelRaw === 'RED' && !['已解除', '误报'].includes(String((r as any).status))).length;
+  const storeYellow = custAlerts.filter((r) => (r as any).levelRaw === 'YELLOW' && !['已解除', '误报'].includes(String((r as any).status))).length;
+  const custRed = cust.alerts.filter((a) => a.level === 'RED' && !['已解除', '误报'].includes(a.status)).length;
+  const custYellow = cust.alerts.filter((a) => a.level === 'YELLOW' && !['已解除', '误报'].includes(a.status)).length;
+  const openRed = storeRed + custRed, openYellow = storeYellow + custYellow;
+  const dti = cust.income?.dti ?? 0;
+  const overdues = cust.creditReport?.overdues?.length ?? 0;
+  const fraudHigh = fraudBand === '高', creditD = creditBand === 'D', compC = compBand === 'C';
+  let advice: { t: string; c: string };
+  if (fraudHigh || creditD || openRed > 0) advice = { t: '建议拒绝 / 转人工核查（高危）', c: '#DC2626' };
+  else if (compC || openYellow > 0 || dti > 50) advice = { t: '建议审慎授信并加强监测', c: '#D97706' };
+  else advice = { t: '建议正常准入', c: '#16A34A' };
+  const flags: { t: string; on: boolean }[] = [
+    { t: `欺诈分高危：智察分 ${zc}（≥70）`, on: fraudHigh },
+    { t: `信用分落入 D 档：智信分 ${zx}`, on: creditD },
+    { t: `未解除 RED 预警 ${openRed} 条`, on: openRed > 0 },
+    { t: `收入负债比 DTI ${dti}%（>50 偏高）`, on: dti > 50 },
+    { t: `征信逾期 ${overdues} 次`, on: overdues > 0 },
+  ];
+  const last = cust.scoreHistory[cust.scoreHistory.length - 1];
   return (
     <div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0,1fr))', gap: 14 }}>
-        {cards.map((c) => {
-          const it = c.item;
-          const col = scoreColor(it.score, it.range, c.danger);
-          return (
-            <div key={c.key}
-              onClick={() => nav('/console/cr/mid-cust-score?cust=' + custId + '&prod=' + c.key + (fromAlertId ? '&id=' + fromAlertId : ''))}
-              title={'查看' + c.label + '详情'}
-              className="cursor-pointer transition-shadow hover:shadow-md"
-              style={{ border: '1px solid #F1F5F9', borderRadius: 12, padding: '14px 16px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                <span style={{ fontSize: 13, fontWeight: 600, color: '#1E293B' }}>{c.label}</span>
-                <span style={{ fontSize: 11, color: '#94A3B8' }}>{c.sub}</span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, margin: '6px 0' }}>
-                <span style={{ fontSize: 30, fontWeight: 800, color: col, fontVariantNumeric: 'tabular-nums' }}>{it.score}</span>
-                <span style={{ fontSize: 11, color: '#94A3B8' }}>{it.unit}（{it.range[0]}-{it.range[1]}）</span>
-              </div>
-              <div style={{ fontSize: 11, color: '#64748B', marginBottom: 8 }}>{it.hint}</div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-                {it.factors.map((f, i) => {
-                  const fcol = f.level === '高' ? '#DC2626' : f.level === '中' ? '#D97706' : '#059669';
-                  return (
-                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <span style={{ fontSize: 11, color: '#64748B', width: 56, flexShrink: 0 }}>{f.name}</span>
-                      <div style={{ flex: 1, height: 6, background: '#F1F5F9', borderRadius: 999, overflow: 'hidden' }}>
-                        <div style={{ width: `${f.contribution * 2.4}%`, height: '100%', background: fcol, borderRadius: 999 }} />
-                      </div>
-                      <span style={{ fontSize: 10, color: fcol, width: 16, textAlign: 'right' }}>{f.level}</span>
-                    </div>
-                  );
-                })}
-              </div>
-              <div style={{ marginTop: 10, fontSize: 11, fontWeight: 600, color: '#2563EB' }}>查看得分详情 →</div>
-            </div>
-          );
-        })}
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, alignItems: 'center', background: advice.c + '14', border: '1px solid ' + advice.c + '44', borderRadius: 12, padding: '14px 18px', marginBottom: 16 }}>
+        <div>
+          <div style={{ fontSize: 12, color: '#64748B', marginBottom: 4 }}>综合审核建议</div>
+          <div style={{ fontSize: 18, fontWeight: 800, color: advice.c }}>{advice.t}</div>
+        </div>
+        <div style={{ marginLeft: 'auto', display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+          <DecisionChip label="智察分" v={`${zc}（${fraudBand}）`} c={fraudHigh ? '#DC2626' : '#059669'} />
+          <DecisionChip label="智信分" v={`${zx}（${creditBand}）`} c={creditD ? '#DC2626' : creditBand === 'C' ? '#D97706' : '#16A34A'} />
+          <DecisionChip label="智融分" v={`${zr}（${compBand}）`} c={creditD ? '#DC2626' : compC ? '#D97706' : '#16A34A'} />
+        </div>
       </div>
-      <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', gap: 10, background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 8, padding: '10px 14px' }}>
-        <span style={{ fontSize: 12, fontWeight: 600, color: '#475569' }}>额度建议</span>
-        <span style={{ fontSize: 13, color: '#334155' }}>{s.limitSuggest}</span>
-        <span style={{ fontSize: 13, fontWeight: 700, color: '#1E293B', marginLeft: 'auto' }}>建议额度 ¥{s.limit.toLocaleString()}</span>
+      <div className="grid gap-6 lg:grid-cols-2">
+        <div>
+          <div style={{ fontSize: 13, fontWeight: 600, color: '#475569', marginBottom: 8 }}>决策依据</div>
+          <div className="space-y-0">
+            <DecisionBasis label="三模型评级" v={`欺诈 ${fraudBand} · 信用 ${creditBand} · 综合 ${compBand}`} />
+            <DecisionBasis label="预警情况" v={`未解除 RED ${openRed} 条 / YELLOW ${openYellow} 条`} danger={openRed > 0} />
+            <DecisionBasis label="收入负债比 DTI" v={`${dti}%`} danger={dti > 50} />
+            <DecisionBasis label="征信逾期" v={`${overdues} 次`} danger={overdues > 0} />
+            <DecisionBasis label="建议额度" v={`¥${(s.limit ?? 0).toLocaleString()}`} />
+          </div>
+        </div>
+        <div>
+          <div style={{ fontSize: 13, fontWeight: 600, color: '#475569', marginBottom: 8 }}>需重点核实（红旗）</div>
+          <div className="space-y-2">
+            {flags.map((f, i) => (
+              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13 }}>
+                <span style={{ width: 8, height: 8, borderRadius: 999, background: f.on ? '#DC2626' : '#CBD5E1', flexShrink: 0 }} />
+                <span style={{ color: f.on ? '#DC2626' : '#64748B' }}>{f.on ? f.t : f.t + '（未触发）'}</span>
+              </div>
+            ))}
+          </div>
+          <div style={{ fontSize: 12, color: '#94A3B8', marginTop: 10, lineHeight: 1.7 }}>
+            同客群对标：本客智融分 {zr}，同客群近 6 月均值约 720；行为分 {last?.score ?? '—'} vs 客群 {last?.cohortAvg ?? '—'}。
+          </div>
+        </div>
       </div>
     </div>
   );

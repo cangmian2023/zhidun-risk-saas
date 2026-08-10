@@ -8,10 +8,12 @@ import { useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { DetailHeader, Panel, Badge, DataTable, type Column, type Row } from '../components/ui';
 import ScoreGauge from '../components/ScoreGauge';
+import { LineChart } from '../components/charts';
 import { Sam } from './SourceTag';
 import { PageShell } from './PageShell';
 import { useMidCustomers } from './midStore';
-import type { MidCustomer, ModelScoreItem, ScoreEvidenceItem } from './midData';
+import { models } from './data';
+import type { MidCustomer, ModelScoreItem, ScoreEvidenceItem, ModelIntervention } from './midData';
 
 type ProdKey = 'zhicha' | 'zhixin' | 'zhirong';
 const PROD_KEYS: ProdKey[] = ['zhicha', 'zhixin', 'zhirong'];
@@ -97,6 +99,68 @@ const THRESHOLDS: Record<ProdKey, { range: string; grade: string; label: string;
   ],
 };
 
+/* 模型能力卡：对接 data.ts 模型注册表（AUC/KS/训练时点/状态），补充方法/稳定性/适用客群/负责人/血缘/全局特征重要 */
+const PROD_TO_MODEL: Record<ProdKey, string> = { zhicha: 'M-智察分', zhixin: 'M-智信分', zhirong: 'M-智融分' };
+const MODEL_CAPA: Record<ProdKey, {
+  method: string; owner: string; applicable: string; psi: number; monitor: string;
+  lineage: { stage: string; detail: string }[];
+  global: { name: string; importance: number }[];
+}> = {
+  zhicha: {
+    method: 'XGBoost + 规则引擎融合：基于 2019–2025 年历史欺诈样本训练，叠加反欺诈专家规则与人工复核干预',
+    owner: '反欺诈模型组 · 周明', applicable: '全产品贷前/贷中反欺诈筛查', psi: 0.08,
+    monitor: '日级 PSI 监控，阈值 0.25 触发告警复核',
+    lineage: [
+      { stage: '数据接入', detail: '设备指纹 / 多头借贷 / 黑灰名单 / 申请行为（输入数据版本 2026Q2）' },
+      { stage: '特征工程', detail: '36 个反欺诈特征（聚集度、申请频次、环境风险…）' },
+      { stage: '模型计算', detail: '智察分 V3.2（XGBoost）输出 0–100 欺诈分' },
+      { stage: '专家规则+人工干预', detail: '叠加专家规则与人工复核，形成最终欺诈分' },
+    ],
+    global: [{ name: '设备聚集', importance: 24 }, { name: '申请频次', importance: 21 }, { name: '黑产特征', importance: 16 }, { name: '同设备关联', importance: 12 }, { name: 'IP/定位异常', importance: 10 }],
+  },
+  zhixin: {
+    method: 'LightGBM 评分卡：基于近 5 年信贷表现样本训练，叠加信用专家规则与人工复核干预',
+    owner: '信用模型组 · 李航', applicable: '信用贷/消费贷授信与定价', psi: 0.06,
+    monitor: '周级 PSI 监控，阈值 0.20 触发告警复核',
+    lineage: [
+      { stage: '数据接入', detail: '人行征信 / 负债结构 / 收入流水 / 历史还款（输入数据版本 2026Q2）' },
+      { stage: '特征工程', detail: '42 个信用特征（逾期历史、负债比、稳定性…）' },
+      { stage: '模型计算', detail: '智信分 V4.0（LightGBM）输出 300–900 信用分' },
+      { stage: '专家规则+人工干预', detail: '叠加专家规则与人工复核，形成最终信用分' },
+    ],
+    global: [{ name: '历史还款', importance: 28 }, { name: '负债结构', importance: 22 }, { name: '收入稳定', importance: 20 }, { name: '征信查询', importance: 14 }, { name: '职业属性', importance: 9 }],
+  },
+  zhirong: {
+    method: '融合模型：引用智信分(信用) + 智察分(欺诈) + 价值/资产自有特征，逻辑回归融合，叠加人工干预',
+    owner: '综合模型组 · 陈璐', applicable: '综合授信与额度核定', psi: 0.10,
+    monitor: '日级 PSI 监控，阈值 0.25 触发告警复核',
+    lineage: [
+      { stage: '数据接入', detail: '智信分 / 智察分 / 价值与资产特征（输入数据版本 2026Q2）' },
+      { stage: '特征工程', detail: '违约维度 + 欺诈维度 + 价值维度 + 资产维度' },
+      { stage: '模型计算', detail: '智融分 V2.1（融合逻辑回归）输出 300–900 综合分' },
+      { stage: '专家规则+人工干预', detail: '叠加专家规则与人工复核，形成最终综合分' },
+    ],
+    global: [{ name: '违约维度', importance: 34 }, { name: '欺诈维度', importance: 28 }, { name: '价值维度', importance: 24 }, { name: '资产维度', importance: 14 }],
+  },
+};
+
+function CapCell({ label, value, danger }: { label: string; value: string; danger?: boolean }) {
+  return (
+    <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 8, padding: '8px 10px' }}>
+      <div style={{ fontSize: 11, color: '#94A3B8' }}>{label}</div>
+      <div style={{ fontSize: 13, fontWeight: 600, color: danger ? '#DC2626' : '#1E293B', marginTop: 2 }}>{value}</div>
+    </div>
+  );
+}
+function Perf({ label, value, color }: { label: string; value?: string; color: string }) {
+  return (
+    <div style={{ flex: 1, textAlign: 'center' }}>
+      <div style={{ fontSize: 18, fontWeight: 800, color }}>{value ?? '—'}</div>
+      <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 2 }}>{label}</div>
+    </div>
+  );
+}
+
 export default function CustScoreDetail() {
   const [params] = useSearchParams();
   const custId = params.get('cust') ?? '';
@@ -112,6 +176,20 @@ export default function CustScoreDetail() {
   const meta = PROD_META[prod];
   const item = useMemo<ModelScoreItem | null>(() => (cust?.scores?.[prod] ? enrich(cust.scores[prod], prod) : null), [cust, prod]);
   const backTo = () => nav('/console/cr/mid-cust-detail?cust=' + custId + (fromAlertId ? '&id=' + fromAlertId : ''));
+
+  const reg: any = models.find((m) => m.id === PROD_TO_MODEL[prod]) ?? {};
+  const capa = MODEL_CAPA[prod];
+  const history = cust.modelScoreHistory ?? [];
+  const isFraud = prod === 'zhicha';
+  const cohortRef = isFraud ? 70 : 720;
+  const topFactor = item.factors[0]?.name ?? '—';
+  const interventions: ModelIntervention[] = cust.manualInterventions ?? [];
+  // 因子方向：欺诈模型"高=拉高风险"；信用/综合模型"高=提升评分(压低风险)"
+  const dirOf = (lvl: string, danger: boolean) => {
+    if (lvl === '中') return { t: '中性影响', c: '#D97706' };
+    if (danger) return lvl === '高' ? { t: '拉高风险', c: '#DC2626' } : { t: '压低风险', c: '#059669' };
+    return lvl === '高' ? { t: '提升评分', c: '#059669' } : { t: '压低评分', c: '#DC2626' };
+  };
 
   if (!cust || !item) {
     return (
@@ -220,6 +298,76 @@ export default function CustScoreDetail() {
             </Panel>
           </div>
 
+          {/* 模型能力卡（体现模型能力：方法/性能/稳定性/适用客群/负责人/全局特征重要，对接 data.ts 模型注册表） */}
+          <Panel title="模型能力" desc="模型构建方法 · 性能 · 稳定性 · 适用客群（对接模型注册表）">
+            <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
+              <div>
+                <div style={{ fontSize: 13, color: '#334155', lineHeight: 1.9, marginBottom: 12 }}>
+                  <b>{meta.label}（{meta.sub}）</b> 由「{capa.method}」。
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0,1fr))', gap: 10 }}>
+                  <CapCell label="适用客群" value={capa.applicable} />
+                  <CapCell label="模型负责人" value={capa.owner} />
+                  <CapCell label="稳定性 PSI" value={capa.psi.toFixed(2)} danger={capa.psi > 0.25} />
+                  <CapCell label="监控机制" value={capa.monitor} />
+                </div>
+                <div style={{ fontSize: 12, color: '#94A3B8', marginTop: 10, lineHeight: 1.7 }}>
+                  输入数据版本 2026Q2；模型输出经专家规则与人工复核干预后形成最终分，详见下方「模型血缘」与「人工干预留痕」。
+                </div>
+              </div>
+              <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 12, padding: '12px 14px' }}>
+                <div style={{ fontSize: 12, fontWeight: 600, color: '#64748B', marginBottom: 8 }}>模型性能（注册表）</div>
+                <div style={{ display: 'flex', gap: 10 }}>
+                  <Perf label="AUC" value={reg.auc?.toFixed(2)} color="#2563EB" />
+                  <Perf label="KS" value={reg.ks?.toFixed(2)} color="#7C3AED" />
+                  <Perf label="状态" value={reg.status?.v} color="#16A34A" />
+                </div>
+                <div style={{ fontSize: 12, color: '#64748B', marginTop: 8 }}>最近训练 {reg.lastTrain}</div>
+              </div>
+            </div>
+            <div style={{ marginTop: 16 }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: '#475569', marginBottom: 8 }}>全局特征重要性（模型级，区别于本客局部因子）</div>
+              <div className="space-y-2">
+                {capa.global.map((g, i) => (
+                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <span style={{ fontSize: 12, color: '#334155', width: 90, flexShrink: 0 }}>{g.name}</span>
+                    <div style={{ flex: 1, height: 7, background: '#F1F5F9', borderRadius: 999, overflow: 'hidden' }}>
+                      <div style={{ width: `${Math.min(g.importance * 2.4, 100)}%`, height: '100%', background: meta.color, borderRadius: 999 }} />
+                    </div>
+                    <span style={{ fontSize: 12, color: '#64748B', width: 36, textAlign: 'right' }}>{g.importance}%</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </Panel>
+
+          {/* 三模型分历史轨迹（用户历史与现状：逐月轨迹 + 同客群均值 + 评分变化归因） */}
+          <Panel title="模型分历史轨迹" desc={`${meta.label} 近 6 个月逐月轨迹 vs 同客群均值（切换上方产品查看另外两模型）`}>
+            {history.length ? (
+              <LineChart
+                labels={history.map((p) => p.month)}
+                series={[
+                  { name: meta.label, color: meta.color, data: history.map((p) => (p as any)[prod]) },
+                  { name: '同客群均值', color: '#94A3B8', data: history.map(() => cohortRef) },
+                ]}
+                unit="分"
+                height={240}
+              />
+            ) : <div style={{ fontSize: 13, color: '#94A3B8' }}>暂无历史轨迹数据</div>}
+            <div style={{ marginTop: 14 }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: '#475569', marginBottom: 8 }}>评分变化归因（影响事件）</div>
+              <div className="space-y-2">
+                {cust.alerts.filter((a) => a.level !== 'OPPORTUNITY').slice(0, 4).map((a, i) => (
+                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, borderBottom: '1px dashed #F1F5F9', padding: '6px 0' }}>
+                    <span style={{ fontSize: 11, color: '#fff', background: a.level === 'RED' ? '#DC2626' : '#D97706', borderRadius: 6, padding: '2px 8px' }}>{a.level === 'RED' ? '红' : '黄'}</span>
+                    <span style={{ color: '#94A3B8', width: 90, flexShrink: 0 }}>{a.time}</span>
+                    <span style={{ color: '#334155' }}>{a.scene}（{a.ruleName}）触发，影响{isFraud ? '欺诈' : '信用/综合'}分走势</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </Panel>
+
           {/* 评分依据与模型说明（监管可解释） */}
           <Panel title="评分依据与模型说明" desc="分数含义 · 等级阈值 · 合规说明">
             <div className="grid gap-6 lg:grid-cols-2">
@@ -231,6 +379,10 @@ export default function CustScoreDetail() {
                 <div style={{ fontSize: 12, color: '#64748B', lineHeight: 1.9, background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 10, padding: '12px 14px' }}>
                   <b style={{ color: '#475569' }}>合规说明：</b>本评分由系统模型自动计算，评分结果及因子明细完整留痕，可回溯、可复核；
                   模型输出仅作辅助决策，不替代人工审核；对评分结果有异议可发起复核并记录审批意见。
+                </div>
+                <div style={{ fontSize: 12, color: '#64748B', lineHeight: 1.9, background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 10, padding: '12px 14px', marginTop: 10 }}>
+                  <b style={{ color: '#475569' }}>概率推导：</b>{item.probability} 由模型概率校准（Platt Scaling）输出，表示本客户{isFraud ? '欺诈' : '违约'}可能性。
+                  <br /><b style={{ color: '#475569' }}>反事实示例（what-if）：</b>若将最高风险因子「{topFactor}」由当前风险降至中风险，{meta.label}预计变化约 ±{Math.max(5, Math.round((item.factors[0]?.contribution ?? 0) * 0.4))} 分（演示值，实际以模型重算为准）。
                 </div>
               </div>
               <div>
@@ -267,6 +419,7 @@ export default function CustScoreDetail() {
                     <span style={{ color: '#334155' }}>{f.name}</span>
                     <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                       <Badge kind={f.level === '高' ? 'red' : f.level === '中' ? 'amber' : 'green'}>{f.level}风险</Badge>
+                      <span style={{ fontSize: 11, color: dirOf(f.level, meta.danger).c }}>{dirOf(f.level, meta.danger).t}</span>
                       <b style={{ fontVariantNumeric: 'tabular-nums' }}>{f.contribution}%</b>
                     </span>
                   </div>
@@ -299,6 +452,53 @@ export default function CustScoreDetail() {
                 </div>
               ))}
             </div>
+          </Panel>
+
+          {/* 模型血缘（监管溯源：输入数据→特征→模型→分数，证据挂源记录ID） */}
+          <Panel title="模型血缘" desc="输入数据 → 特征 → 模型 → 分数 的全链路溯源">
+            <div style={{ display: 'flex', alignItems: 'stretch', gap: 0, flexWrap: 'wrap' }}>
+              {capa.lineage.map((s, i) => (
+                <div key={i} style={{ flex: '1 1 200px', minWidth: 180, position: 'relative', padding: '0 8px' }}>
+                  <div style={{ border: '1px solid #E2E8F0', borderRadius: 10, padding: '10px 12px', height: '100%', background: '#fff' }}>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: meta.color }}>{s.stage}</div>
+                    <div style={{ fontSize: 12, color: '#64748B', marginTop: 6, lineHeight: 1.6 }}>{s.detail}</div>
+                  </div>
+                  {i < capa.lineage.length - 1 && <div style={{ position: 'absolute', right: -6, top: '50%', transform: 'translateY(-50%)', color: '#94A3B8', fontSize: 16 }}>→</div>}
+                </div>
+              ))}
+            </div>
+            <div style={{ fontSize: 12, color: '#64748B', lineHeight: 1.8, marginTop: 12, background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 10, padding: '10px 14px' }}>
+              <b style={{ color: '#475569' }}>溯源说明：</b>模型版本 {item.modelVersion}（最近训练 {reg.lastTrain}），输入数据版本 2026Q2；
+              上方「证据明细」中每条证据均关联源系统记录（如 征信查询 #Q… / 规则引擎命中 R2003 / 设备指纹 D…），监管可凭记录 ID 回溯原始数据。
+            </div>
+          </Panel>
+
+          {/* 人工干预留痕（监管溯源核心："机器学习+人工干预"中的人工干预） */}
+          <Panel title="人工干预留痕" desc="专家规则 / 人工调分调额 / 偏离模型建议（含理由+操作人+时间，强制留痕）">
+            {interventions.length ? (
+              <div className="space-y-3">
+                {interventions.map((it, i) => (
+                  <div key={i} style={{ border: '1px solid #F1F5F9', borderRadius: 12, padding: '12px 14px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                      <Badge kind={it.type === '偏离模型建议' ? 'red' : (it.type === '人工调额' || it.type === '人工调分') ? 'amber' : 'violet'}>{it.type}</Badge>
+                      <span style={{ fontSize: 13, fontWeight: 600, color: '#1E293B' }}>{it.target}</span>
+                      <span style={{ fontSize: 12, color: '#94A3B8', marginLeft: 'auto' }}>{it.time} · {it.operator}</span>
+                    </div>
+                    <div style={{ fontSize: 13, color: '#334155', marginTop: 8, lineHeight: 1.7 }}>{it.detail}</div>
+                    {it.before && it.after && (
+                      <div style={{ fontSize: 12, color: '#64748B', marginTop: 6 }}>
+                        {it.before} <span style={{ color: '#DC2626', fontWeight: 600 }}>→</span> {it.after}
+                      </div>
+                    )}
+                    <div style={{ fontSize: 12, color: '#475569', marginTop: 6, background: '#FFF7ED', border: '1px solid #FED7AA', borderRadius: 8, padding: '6px 10px', lineHeight: 1.6 }}>
+                      <b>干预理由：</b>{it.reason}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div style={{ fontSize: 13, color: '#94A3B8' }}>该客户暂无人工干预记录（模型建议直接采用）。</div>
+            )}
           </Panel>
 
           {/* 审批历史（审核留痕） */}
