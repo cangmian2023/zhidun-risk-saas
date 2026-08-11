@@ -4,7 +4,7 @@
  *   Tab1 模型分     —— 模型分概览（含维度拆解，三模型各自维度）+ 模型分趋势（环比/趋势）
  *   Tab2 关联因子图谱 —— 按当前模型高亮「影响本模型的关联因子」，其余淡化（主题切换 关系网络/风险分布/团伙识别 + 节点详情抽屉 + 团伙汇总）
  *   Tab3 预警与处置 —— 分值阈值预警 + 处置流程（动态读 bizFlows.json f-alert-dispose，一行节点 + 状态行 + 处置按钮）+ 规则命中预警（只显示与当前模型相关的，三页面各看各的；其余预警归对应模型页）+ 操作日志（统一时间线，由 Tab1 迁入）
- *   Tab4 用户数据   —— 数据明细（原始数据 · 点击行展开逐笔表格 · 标注供哪个特征使用）+ 数据来源（按来源系统归集输入数据清单）
+ *   Tab4 用户数据   —— 数据明细（原始数据 · 点击行展开逐笔表格 · 标注供哪个特征使用）+ 数据来源
  *   Tab5 模型信息   —— 基本信息（含版本历史）/ 结果含义 / 运营效果 / 算法解释
  * 原则：不堆装饰性提示；处置动作跳真实页面（预警/处置工作台）；旧数据按 riskDims+alerts 运行时兜底派生。
  */
@@ -18,7 +18,7 @@ import { PageShell } from './PageShell';
 import { useMidCustomers, useMidAlerts } from './midStore';
 import { useFlows, matchFlowGraph } from './flowStore';
 import { models } from './data';
-import type { MidCustomer, ModelScoreItem, ScoreEvidenceItem, CustRiskDim, CustRelationNode } from './midData';
+import type { MidCustomer, ModelScoreItem, CustRiskDim, CustRelationNode } from './midData';
 
 type ProdKey = 'zhicha' | 'zhixin' | 'zhirong';
 const PROD_KEYS: ProdKey[] = ['zhicha', 'zhixin', 'zhirong'];
@@ -33,9 +33,6 @@ const TAG_KIND: Record<string, 'red' | 'amber' | 'blue' | 'violet' | 'gray'> = {
 };
 
 /* ---- 旧数据兜底：缺 scores 时按 riskDims + alerts 派生（运行时，不落盘） ---- */
-const DIM_LABEL: Record<string, string> = {
-  负债: '负债水平', 多头: '多头借贷', 欺诈: '欺诈风险', 司法: '司法涉诉', 行为: '行为评分', 舆情: '舆情风险',
-};
 const DIM_WEIGHT: Record<string, number> = { 欺诈: 0.3, 多头: 0.25, 行为: 0.2, 司法: 0.15, 负债: 0.1, 舆情: 0.05 };
 
 function deriveFallback(cust: MidCustomer, prod: ProdKey): ModelScoreItem | null {
@@ -56,21 +53,7 @@ function deriveFallback(cust: MidCustomer, prod: ProdKey): ModelScoreItem | null
     hint = '综合风险与价值评分，分数越高综合表现越好';
   }
   score = Math.max(range[0], Math.min(range[1], score));
-  const total = used.reduce((s, d) => s + d.score, 0) || 1;
-  const factors = used
-    .map((d) => ({
-      name: DIM_LABEL[d.dim] ?? d.dim,
-      level: (d.score >= 75 ? '高' : d.score >= 55 ? '中' : '低') as '高' | '中' | '低',
-      contribution: Math.round((d.score / total) * 100),
-    }))
-    .sort((a, b) => b.contribution - a.contribution);
-  const evidence: ScoreEvidenceItem[] = (cust.alerts ?? []).slice(0, 6).map((a) => ({
-    name: a.ruleName,
-    value: `${a.scene} · 触发值 ${a.metricValue}（阈值 ${a.threshold}）· 当前${a.status}`,
-    weight: a.level === 'RED' ? 24 : a.level === 'YELLOW' ? 16 : 10,
-    tag: a.level === 'RED' ? '命中' : a.level === 'YELLOW' ? '关注' : '评分项',
-  }));
-  return { score, range, unit, hint, factors, evidence: evidence.length ? evidence : undefined };
+  return { score, range, unit, hint };
 }
 
 /* ---- 旧数据兜底：缺可解释字段时按分数 + 产品派生 ---- */
@@ -91,37 +74,15 @@ const GRADE_LABEL: Record<string, string> = { A: '优质', B: '良好', C: '一�
 
 function enrich(item: ModelScoreItem, prod: ProdKey): ModelScoreItem {
   const band = bandOf(item);
-  const score = item.score;
   const isFraud = prod === 'zhicha';
   const probability = item.probability ?? (isFraud
-    ? (score >= 70 ? '72.5%' : score >= 40 ? '38.2%' : '9.6%')
+    ? (item.score >= 70 ? '72.5%' : item.score >= 40 ? '38.2%' : '9.6%')
     : (band === 'A' ? '3.1%' : band === 'B' ? '6.8%' : band === 'C' ? '14.2%' : '26.5%'));
   const grade = item.grade ?? band;
   const gradeLabel = item.gradeLabel ?? GRADE_LABEL[band] ?? '';
-  const suggestion = item.suggestion ?? (isFraud
-    ? (score >= 70 ? '建议拒绝 / 转人工复核' : score >= 40 ? '建议人工复核' : '通过（继续准入评估）')
-    : (band === 'A' ? '建议准入（标准额度）' : band === 'B' ? '建议准入（审慎授信）' : band === 'C' ? '建议降额 / 加强监测' : '建议拒绝'));
   const modelVersion = item.modelVersion ?? (prod === 'zhicha' ? '智察V3.2' : prod === 'zhixin' ? '智信V4.0' : '智融V2.1');
   const calcedAt = item.calcedAt ?? '2026-08-08 10:30:12';
-  const evidence: ScoreEvidenceItem[] = item.evidence && item.evidence.length ? item.evidence : (
-    prod === 'zhicha' ? [
-      { name: '多头借贷强度', value: '近30天申贷 7 家（阈值≥5）', weight: 28, tag: '命中' },
-      { name: '设备环境风险', value: '模拟器特征命中', weight: 22, tag: '命中' },
-      { name: '命中灰名单', value: '外部灰名单 ID#88231', weight: 20, tag: '命中' },
-      { name: '同设备关联账号', value: '3 个关联账号', weight: 18, tag: '关注' },
-    ] : prod === 'zhixin' ? [
-      { name: '历史逾期记录', value: '近2年 M3+ 1 次', weight: 26, tag: '评分项' },
-      { name: '负债收入比', value: '58%（阈值 70%）', weight: 22, tag: '评分项' },
-      { name: '征信查询频次', value: '近6月 8 次', weight: 18, tag: '评分项' },
-      { name: '收入稳定性', value: '连续 14 月稳定', weight: 20, tag: '评分项' },
-    ] : [
-      { name: '违约维度', value: '引用 · 智信分（信用分 712）', weight: 34, tag: '融合来源' },
-      { name: '欺诈维度', value: '引用 · 智察分（欺诈分 78）', weight: 28, tag: '融合来源' },
-      { name: '价值维度', value: '自有 · 借贷兴趣（近30天活跃 18 天）', weight: 24, tag: '融合来源' },
-      { name: '资产维度', value: '自有 · 资产画像（房产 + 理财持仓）', weight: 14, tag: '融合来源' },
-    ]
-  );
-  return { ...item, probability, grade, gradeLabel, suggestion, modelVersion, calcedAt, evidence };
+  return { ...item, probability, grade, gradeLabel, modelVersion, calcedAt };
 }
 
 /* 等级阈值表（含每档建议动作：分值碰撞区间 → 定级 → 处置方向） */
@@ -1321,33 +1282,15 @@ export default function CustScoreDetail() {
               <div style={{ fontSize: 12, color: '#94A3B8', marginTop: 8 }}>「触发」= 踩线并命中规则预警；「关注」= 接近阈值待观察；「正常」= 正常参与评分。原始数据经数据治理后提炼为模型特征，再参与评分（见模型信息 Tab）。</div>
             </Panel>
 
-            <Panel title="数据来源" desc="模型评分输入数据清单 · 按来源系统归集（血缘/特征加工见「模型信息 · 算法解释」）">
-              {(() => {
-                const groups: Record<string, any[]> = {};
-                INPUT_DETAILS[prod].forEach((d: any) => { (groups[d.source] = groups[d.source] ?? []).push(d); });
-                return (
-                  <div className="space-y-3">
-                    {Object.entries(groups).map(([src, items]) => (
-                      <div key={src} style={{ border: '1px solid #E2E8F0', borderRadius: 10, overflow: 'hidden' }}>
-                        <div style={{ background: '#F8FAFC', padding: '8px 12px', fontSize: 12.5, fontWeight: 700, color: '#1E293B', borderBottom: '1px solid #E2E8F0' }}>{src}</div>
-                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12.5 }}>
-                          <tbody>
-                            {items.map((d: any, j: number) => (
-                              <tr key={j} style={{ borderBottom: j < items.length - 1 ? '1px dashed #F1F5F9' : 'none' }}>
-                                <td style={{ padding: '7px 12px', color: '#334155', fontWeight: 500, width: 170 }}>{d.name}</td>
-                                <td style={{ padding: '7px 12px', color: '#64748B' }}>{d.window}</td>
-                                <td style={{ padding: '7px 12px', textAlign: 'right' }}>
-                                  <Badge kind={d.status === '触发' ? 'red' : d.status === '关注' ? 'amber' : 'green'}>{d.status}</Badge>
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    ))}
+            <Panel title="数据来源" desc="模型评分依赖的输入数据">
+              <div style={{ fontSize: 13, color: '#334155', lineHeight: 1.9 }}>
+                {capa.lineage.map((s, i) => (
+                  <div key={i} style={{ display: 'flex', gap: 10, padding: '6px 0', borderBottom: i < capa.lineage.length - 1 ? '1px dashed #F1F5F9' : 'none' }}>
+                    <span style={{ flexShrink: 0, fontSize: 12, fontWeight: 600, color: meta.color, width: 110 }}>{s.stage}</span>
+                    <span style={{ fontSize: 12.5, color: '#64748B' }}>{s.detail}</span>
                   </div>
-                );
-              })()}
+                ))}
+              </div>
               <div style={{ fontSize: 12, color: '#94A3B8', marginTop: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
                 <button
                   type="button"

@@ -1392,50 +1392,26 @@ export interface MidCustomer {
   scores?: CustModelScore;          // 需求11审核：模型评分快照（智察/智信/智融 + 额度建议）
   externalChecks?: CustExternalCheck[]; // 需求11审核：外部数据核验（工商/司法/税务/社保）
   approvalRecords?: CustApprovalRecord[]; // 需求11审核：审批决策历史
-  modelScoreHistory?: ModelScoreHistoryPoint[]; // 模型能力/历史：智察/智信/智融 逐月轨迹（含同客群均值）
-  manualInterventions?: ModelIntervention[];    // 人工干预/专家规则留痕（"机器学习+人工干预"中的人工干预，监管溯源核心）
+  modelScoreHistory?: ModelScoreHistoryPoint[]; // 模型能力/历史：智察/智信/智融 逐月轨迹
 }
 
-/* 三模型分历史轨迹点（智察/智信/智融 逐月 + 同客群均值参考） */
+/* 三模型分历史轨迹点（智察/智信/智融 逐月轨迹） */
 export interface ModelScoreHistoryPoint {
   month: string;
   zhicha: number;   // 欺诈分 0-100
   zhixin: number;   // 信用分 300-900
   zhirong: number;  // 综合分 300-900
-  cohortAvg: number;
-}
-/* 人工干预 / 专家规则留痕（"机器学习历史数据 + 人工干预"中的人工干预部分，监管溯源核心） */
-export interface ModelIntervention {
-  time: string;
-  type: '专家规则' | '人工调分' | '人工调额' | '偏离模型建议' | '复核修正';
-  target: string;       // 作用对象：智察分 / 智信分 / 智融分 / 授信额度 / 综合决策
-  detail: string;       // 干预内容
-  before?: string;      // 干预前
-  after?: string;       // 干预后
-  operator: string;     // 操作人（强制留痕）
-  reason: string;       // 干预理由（强制留痕）
 }
 
 /* 模型评分快照（智察/智信/智融 三评分卡 + 额度建议） */
-export interface ModelScoreFactor { name: string; level: '高' | '中' | '低'; contribution: number }
-/* 得分证据明细（可解释性：规则命中 / 评分卡项 / 融合构成） */
-export interface ScoreEvidenceItem {
-  name: string;     // 证据名（规则 / 评分项 / 融合来源）
-  value: string;    // 证据明细值（为什么 / 具体命中内容）
-  weight: number;   // 贡献权重 %
-  tag?: string;     // 徽标：命中 / 关注 / 评分项 / 融合来源
-}
 export interface ModelScoreItem {
   score: number; range: [number, number]; unit: string; hint: string;
-  factors: ModelScoreFactor[];
-  /* 可解释性（监管/审核）：概率、等级、决策建议、模型版本、评分时间、证据明细 */
+  /* 可解释性（监管/审核）：概率、等级、模型版本、评分时间 */
   probability?: string;
   grade?: string;
   gradeLabel?: string;
-  suggestion?: string;
   modelVersion?: string;
   calcedAt?: string;
-  evidence?: ScoreEvidenceItem[];
 }
 export interface CustModelScore {
   zhicha: ModelScoreItem;   // 智察分（欺诈，越高越危险）
@@ -1668,32 +1644,17 @@ export function withCustGraph(c: MidCustomer): MidCustomer {
     riskScore: hi ? 82 : mid ? 45 : 12,
   } as CustBlacklist;
   /* 需求11审核：模型评分快照 / 外部数据核验 / 审批决策历史 */
-  const lvlBad: ModelScoreFactor['level'] = hi ? '高' : mid ? '中' : '低';
-  const lvlGood: ModelScoreFactor['level'] = hi ? '低' : mid ? '中' : '高';
-  const lvlMid: ModelScoreFactor['level'] = '中';
   // 三模型分基础值（提升到函数作用域，供下方 scores / modelScoreHistory 共用）
   const zc = hi ? 82 : mid ? 55 : 28;     // 智察分 0-100 欺诈
   const zx = hi ? 560 : mid ? 650 : 782;  // 智信分 300-900 信用
   const zr = hi ? 520 : mid ? 640 : 760;  // 智融分 300-900 综合
   const scores = c.scores ?? (() => {
-    const mk = (score: number, range: [number, number], unit: string, hint: string, f: ModelScoreFactor[]): ModelScoreItem => ({ score, range, unit, hint, factors: f });
+    const mk = (score: number, range: [number, number], unit: string, hint: string): ModelScoreItem => ({ score, range, unit, hint });
     const limit = hi ? Math.round(c.creditLine * 0.5) : mid ? Math.round(c.creditLine * 0.85) : c.creditLine;
     return {
-      zhicha: mk(zc, [0, 100], '欺诈分', '越高欺诈风险越高', [
-        { name: '设备聚集', level: lvlBad, contribution: 30 },
-        { name: '申请频次', level: lvlBad, contribution: 26 },
-        { name: '黑产特征', level: lvlMid, contribution: 18 },
-      ]),
-      zhixin: mk(zx, [300, 900], '信用分', '越高违约概率越低', [
-        { name: '历史还款', level: lvlGood, contribution: 28 },
-        { name: '负债结构', level: lvlMid, contribution: 22 },
-        { name: '收入稳定', level: lvlGood, contribution: 20 },
-      ]),
-      zhirong: mk(zr, [300, 900], '综合分', '综合风险与价值', [
-        { name: '信用表现', level: lvlGood, contribution: 26 },
-        { name: '价值贡献', level: lvlGood, contribution: 24 },
-        { name: '稳定性', level: lvlMid, contribution: 19 },
-      ]),
+      zhicha: mk(zc, [0, 100], '欺诈分', '越高欺诈风险越高'),
+      zhixin: mk(zx, [300, 900], '信用分', '越高违约概率越低'),
+      zhirong: mk(zr, [300, 900], '综合分', '综合风险与价值'),
       limitSuggest: hi ? '建议拒贷 / 降额' : mid ? '建议审慎授信并加强监测' : '建议正常授信',
       limit,
     } as CustModelScore;
@@ -1718,24 +1679,9 @@ export function withCustGraph(c: MidCustomer): MidCustomer {
     const zcS = walkDown(zc, 5).map((v) => clamp(v, 5, 98));       // 欺诈分：历史更低
     const zxS = walkUp(zx, 26).map((v) => clamp(v, 320, 880));     // 信用分：历史更高
     const zrS = walkUp(zr, 26).map((v) => clamp(v, 320, 880));     // 综合分：历史更高
-    const coh = (p: 'zhicha' | 'zhixin' | 'zhirong') => (p === 'zhicha' ? 70 : 720);
-    return months.map((m, i) => ({ month: m, zhicha: zcS[i], zhixin: zxS[i], zhirong: zrS[i], cohortAvg: coh('zhixin') }));
+    return months.map((m, i) => ({ month: m, zhicha: zcS[i], zhixin: zxS[i], zhirong: zrS[i] }));
   })();
-  /* 人工干预 / 专家规则留痕（"机器学习历史数据 + 人工干预"中的人工干预部分） */
-  const manualInterventions = c.manualInterventions ?? (() => {
-    const base: ModelIntervention[] = [
-      { time: '2026-06-15', type: '专家规则', target: '综合决策', detail: '命中「共债机构数≥4」专家规则，强制提升欺诈关注等级', operator: '风控策略岗', reason: '策略委员会 2026Q2 决议：共债≥4 机构一律提级核查' },
-    ];
-    if (hi) base.push(
-      { time: '2026-07-19', type: '人工调额', target: '授信额度', detail: '模型建议额度 ¥40000，人工复核后执行并启动预催', before: '模型建议 ¥40000', after: '人工核定 ¥40000（维持）', operator: '王五', reason: '电话核实确认多笔网贷、收入下降，按模型建议执行' },
-      { time: '2026-08-04', type: '偏离模型建议', target: '综合决策', detail: '模型建议「转人工」，人工升级为「预催 + 降额」', before: '模型建议：转人工复核', after: '人工决策：启动预催并降额', operator: '贷中监控', reason: '高危 RED 预警待处置，需立即干预止损' },
-    );
-    else if (mid) base.push(
-      { time: '2026-08-01', type: '人工调分', target: '智信分', detail: '复核后上调信用分（收入稳定性被低估）', before: '智信分 650', after: '智信分 670', operator: '信用审批岗', reason: '补充收入流水佐证，模型未充分捕捉稳定性' },
-    );
-    return base;
-  })();
-  return { ...c, relations, riskDims, credit, env, behavior, photos, creditReport, income, collaterals, guarantors, business, fundFlow, blacklist, scores, externalChecks, approvalRecords, modelScoreHistory, manualInterventions };
+  return { ...c, relations, riskDims, credit, env, behavior, photos, creditReport, income, collaterals, guarantors, business, fundFlow, blacklist, scores, externalChecks, approvalRecords, modelScoreHistory };
 }
 export const SEED_CUSTOMERS: MidCustomer[] = [
   {
