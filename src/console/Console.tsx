@@ -49,7 +49,6 @@ import { CollectionOverview, CollectionCases, CollectionStrategy, CollectionReco
 import { DunAssignment, DunImport, DunChannels, DunAgencies, DunQa, DunRepayment } from './DunPages'
 import { QiyeSearch, QiyeProfile } from './QiyePages'
 import ScoreModule from './ScoreModule'
-import ScDisposeFlow from './ScDisposeFlow'
 import { getDashboardByKey } from './dashboardData'
 import { creditRiskMenu, scoringMenu, entMenu, dmMenu, dataGovernanceMenu, cmMenu, collectionMenu, type MenuGroup } from './menus'
 import SidebarMenu from './SidebarMenu'
@@ -187,13 +186,10 @@ export default function Console() {
     'sc:score-records': 'list',
     'sc:crowd-groups': 'users',
     'sc:customer-list': 'id',
-    'sc:customer-detail': 'eye',
     'sc:score-dist': 'pie',
     'sc:hit-analysis': 'filter',
     'sc:model-manage': 'model',
-    'sc:model-monitor': 'monitor',
     'sc:model-effect': 'analytics',
-    'sc:model-version': 'stack',
     'sc:score-threshold': 'sliders',
     'sc:alert-rule': 'alert',
     'sc:dispose-flow': 'work_flow',
@@ -596,16 +592,8 @@ export default function Console() {
               <MidDisposeDetail />
             ) : getDashboardByKey(key) ? (
               <MidDashboardPage pageKey={key} />
-            ) : key === 'sc:overview' ? (
-              <ScoreModule pageKey={key} />
-            ) : key === 'sc:alert-workbench' ? (
-              <MidAlertWorkbench />
-            ) : key === 'sc:customer-detail' ? (
-              <CustProfile custId={new URLSearchParams(loc.search).get('cust') ?? undefined} />
-            ) : key === 'sc:dispose-flow' ? (
-              <ScDisposeFlow />
             ) : key.startsWith('sc:') ? (
-              <ModulePage spec={moduleSpecs[key] ?? emptySpec(subName[sub] ?? '控制台')} />
+              <ScoreModule pageKey={key} search={loc.search} />
             ) : (
               <ModulePage spec={moduleSpecs[key] ?? emptySpec(subName[sub] ?? '控制台')} />
             )}

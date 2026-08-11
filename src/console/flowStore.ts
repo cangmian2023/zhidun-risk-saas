@@ -145,13 +145,16 @@ function scheduleSave() {
 }
 
 // 启动时加载已保存的文件：兼容裸数组（当前格式）与 { flows: [...] }（旧格式）两种返回
-try {
-  const saved = await fetch('/api/load-bizflows').then((r) => (r.ok ? r.json() : null)).catch(() => null)
-  if (saved) {
-    const list = Array.isArray(saved) ? saved : (saved as { flows?: unknown }).flows
-    if (Array.isArray(list) && list.length) flows = list as FlowItem[]
-  }
-} catch { /* 加载失败时保持 SEED 兜底（bizFlows.json 静态 import） */ }
+// 包在 async IIFE 中，避免顶层 await（es2020 目标不支持顶层 await）
+void (async () => {
+  try {
+    const saved = await fetch('/api/load-bizflows').then((r) => (r.ok ? r.json() : null)).catch(() => null)
+    if (saved) {
+      const list = Array.isArray(saved) ? saved : (saved as { flows?: unknown }).flows
+      if (Array.isArray(list) && list.length) flows = list as FlowItem[]
+    }
+  } catch { /* 加载失败时保持 SEED 兜底（bizFlows.json 静态 import） */ }
+})()
 
 /* ---------- 订阅 ---------- */
 const listeners = new Set<() => void>()

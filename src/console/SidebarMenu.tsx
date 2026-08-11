@@ -4,18 +4,26 @@ import { MenuIcon, type IconName } from '../components/icons'
 
 type AntdItem = NonNullable<MenuProps['items']>[number]
 
-/** 把扁平的 MenuGroup[]（section → group → items）转成 antd 树形 items */
+/** 把扁平的 MenuGroup[]（section → group → items）转成 antd 二级菜单：
+ *  - section 仅作为视觉分区标题（type:'group'，不可点击、不占层级）
+ *  - 页面 item 直接平铺为叶子，不再因 group 嵌套出额外层级
+ */
 function buildItems(menu: MenuGroup[], sub: string, menuIcon: (k: string) => IconName): MenuProps['items'] {
-  // 按 section 归并；无 section 的 group 直接作为顶层
-  const sections: { name: string | null; groups: MenuGroup[] }[] = []
-  let curSec: { name: string | null; groups: MenuGroup[] } | null = null
+  // 按 section 归并分组；多 item 的 group 直接把 items 平铺到所属分区下
+  const sections: { name: string | null; items: { key: string; label: string }[] }[] = []
+  let curSec: { name: string | null; items: { key: string; label: string }[] } | null = null
   for (const g of menu) {
     const sec = g.section ?? null
     if (!curSec || curSec.name !== sec) {
-      curSec = { name: sec, groups: [] }
+      curSec = { name: sec, items: [] }
       sections.push(curSec)
     }
-    curSec.groups.push(g)
+    // 单 item 的 group：用「页面真实名」做展示（与多 item 平铺一致）；多 item 直接平铺各自 label
+    if (g.items.length === 1) {
+      curSec.items.push({ key: g.items[0].key, label: g.items[0].label })
+    } else {
+      for (const it of g.items) curSec.items.push(it)
+    }
   }
 
   const leaf = (it: { key: string; label: string }): AntdItem => ({
@@ -24,31 +32,13 @@ function buildItems(menu: MenuGroup[], sub: string, menuIcon: (k: string) => Ico
     label: it.label,
   })
 
-  const groupToNode = (g: MenuGroup): AntdItem => {
-    if (g.items.length === 1) {
-      const it = g.items[0]
-      // 单条 group：直接作为叶子，用 group 名做展示，避免「标题与项重复」
-      return {
-        key: it.key.split(':')[1],
-        icon: <MenuIcon name={menuIcon(it.key)} className="h-4 w-4" />,
-        label: g.group,
-      }
-    }
-    return {
-      key: `grp:${sub}:${g.group}`,
-      label: g.group,
-      className: 'side-group',
-      children: g.items.map(leaf),
-    }
-  }
-
   const items: MenuProps['items'] = []
   for (const s of sections) {
-    const children = s.groups.map(groupToNode)
+    if (!s.items.length) continue
     if (s.name) {
-      items.push({ key: `sec:${sub}:${s.name}`, label: s.name, className: 'side-sec', children })
+      items.push({ type: 'group', label: s.name, children: s.items.map(leaf) })
     } else {
-      items.push(...children)
+      items.push(...s.items.map(leaf))
     }
   }
   return items

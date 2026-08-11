@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>模型可验证推演 · 从 1+1=2 到智信分</title>
+<style>
+  :root{
+    --bg:#f7f8fa; --panel:#ffffff; --ink:#1f2937; --muted:#6b7280;
+    --line:#e5e7eb; --blue:#2563eb; --green:#16a34a; --red:#dc2626;
+    --amber:#d97706; --soft:#eef2ff;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+    line-height:1.6;font-size:14px}
+  .wrap{max-width:960px;margin:0 auto;padding:28px 20px 80px}
+  header h1{font-size:22px;margin:0 0 4px}
+  header p{color:var(--muted);margin:0 0 8px}
+  .tag{display:inline-block;font-size:12px;color:var(--blue);background:var(--soft);
+    border:1px solid #dbeafe;padding:2px 10px;border-radius:999px}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:12px;
+    padding:20px 22px;margin-top:18px}
+  h2{font-size:17px;margin:0 0 12px;display:flex;align-items:center;gap:8px}
+  h2 .n{background:var(--blue);color:#fff;width:24px;height:24px;border-radius:6px;
+    display:inline-flex;align-items:center;justify-content:center;font-size:13px}
+  h3{font-size:14px;margin:18px 0 8px;color:var(--ink)}
+  table{border-collapse:collapse;width:100%;font-size:13px;margin:8px 0}
+  th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+  th{background:#f9fafb;color:var(--muted);font-weight:600}
+  .num{text-align:right;font-variant-numeric:tabular-nums;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+  .pos{color:var(--green);font-weight:600}
+  .neg{color:var(--red);font-weight:600}
+  .code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;background:#0f172a;color:#e2e8f0;
+    padding:12px 14px;border-radius:8px;font-size:12.5px;overflow:auto;white-space:pre}
+  .ledger td:first-child{color:var(--muted);width:34%}
+  .pill{display:inline-block;padding:1px 8px;border-radius:6px;font-size:12px;font-weight:600}
+  .pill.blue{background:#dbeafe;color:#1d4ed8}
+  .pill.green{background:#dcfce7;color:#15803d}
+  .pill.red{background:#fee2e2;color:#b91c1c}
+  .pill.amber{background:#fef3c7;color:#b45309}
+  .formula{background:var(--soft);border:1px solid #dbeafe;border-radius:8px;
+    padding:10px 12px;font-family:ui-monospace,Menlo,monospace;font-size:13px;margin:6px 0}
+  label{display:flex;align-items:center;justify-content:space-between;gap:10px;
+    padding:6px 0;border-bottom:1px dashed var(--line)}
+  label:last-child{border-bottom:none}
+  label .lbl{flex:1}
+  label input{width:96px;padding:6px 8px;border:1px solid var(--line);border-radius:6px;
+    font-size:14px;text-align:right;font-variant-numeric:tabular-nums}
+  .result{margin-top:12px;font-size:15px;background:#f0fdf4;border:1px solid #bbf7d0;
+    border-radius:8px;padding:12px 14px}
+  .result b{font-size:20px}
+  .note{color:var(--muted);font-size:12.5px;margin-top:8px}
+  .finding{border-left:3px solid var(--amber);background:#fffbeb;padding:12px 14px;
+    border-radius:0 8px 8px 0;margin-top:10px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:640px){.grid2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>模型可验证推演 · 从 1+1=2 到智信分</h1>
+    <p>把「原始数据 → 算法 → 输出」每一步都摊开，你可以用计算器或 Excel 独立复核。</p>
+    <span class="tag">智信分打底 · 智融/智察同套路推演（见第 5 / 6 节）</span>
+  </header>
+
+  <!-- ============ 1. 原语 ============ -->
+  <section>
+    <h2><span class="n">1</span>先确立模式：1 + 1 = 2</h2>
+    <p>任何模型都遵守同一个账本：<b>原始数据 + 算法 = 输出</b>。先把最简单的摆清楚，后面只是把「1」换成真实字段、「加」换成真实查表。</p>
+    <table class="ledger">
+      <tr><th>这一步的数据（Data）</th><th>这一步的算法（Algorithm）</th><th class="num">输出（Output）</th></tr>
+      <tr><td>原始数据 A = <b>1</b></td><td>取数</td><td class="num">1</td></tr>
+      <tr><td>原始数据 B = <b>1</b></td><td>取数</td><td class="num">1</td></tr>
+      <tr><td>A、B 两个值</td><td><b>加（ADD）：A + B</b></td><td class="num"><b>2</b></td></tr>
+    </table>
+    <p class="note">记住这个账本格式：下面每一个因子都长这样——「原始数据 → 算法(查哪一行) → 加几分」。</p>
+  </section>
+
+  <!-- ============ 2. 智信分全链路 ============ -->
+  <section>
+    <h2><span class="n">2</span>智信分（信用评分卡）全链路推演</h2>
+    <p>智信分 = 基础分 600 + 五个因子各自查表得到的「加分」。和 1+1=2 的区别只在于：这里的「加」不是 A+B，而是「每个因子按它的值去分箱表查一行，取出对应分数，再加起来」。</p>
+
+    <h3>2.1 五个原始数据（样例客户，取自模型默认画像）</h3>
+    <table>
+      <tr><th>原始数据字段</th><th class="num">样例值</th><th>说明</th></tr>
+      <tr><td>历史逾期记录（近2年 M3+ 次数）</td><td class="num">1</td><td>逾期 1 次</td></tr>
+      <tr><td>负债收入比（%）</td><td class="num">58</td><td>负债占收入 58%</td></tr>
+      <tr><td>收入稳定性（连续按时还款月数）</td><td class="num">14</td><td>连续 14 个月</td></tr>
+      <tr><td>征信查询频次（近6月次数）</td><td class="num">8</td><td>半年查了 8 次</td></tr>
+      <tr><td>授信使用率（%）</td><td class="num">43</td><td>用了 43% 额度</td></tr>
+    </table>
+    <p class="note">这 5 个字段来自 4 个底层数据源：央行征信报告（历史逾期）、信贷查询记录（征信查询频次）、收入与负债材料（负债收入比 / 收入稳定性）、信用卡授信账户（授信使用率）。决策图已按 <b>5 个输入节点</b>画出，和这张表一一对应（之前图只画了 3 个、还漏了「授信使用率」，已修正）。</p>
+
+    <h3>2.2 分箱 → 计分表（这些加分是「算出来」的，不是随手给的）</h3>
+    <div class="finding" style="border-left-color:var(--blue);background:#eff6ff">
+      <b>先说清楚（很重要，别漏看）：</b>下面表里「逾期 1 次 → +30」「≥3 次 → −48」这些数，<b>不是固定拍脑袋给的</b>。
+      它们是模型按「这个箱里好人多还是坏人多」算出来的——算法就是下面 2.2.1 / 2.2.2 要讲的分箱 + WOE。
+      真实系统里模型<b>算一次</b>、把结果存成这张表；打分时直接查表（查表只是为了快，数本身还是算出来的）。
+    </div>
+    <div class="formula">某箱加分 = 缩放系数(本卡 12) × β(因子系数·训练得到) × WOE(箱的坏好证据·示意)</div>
+    <p class="note">这是之前模型里缺的东西。下面把「算法本体」直接写进表：每一行原本是「某原始值 → 加几分」的硬规则；现在补上它背后怎么算的——<b>WOE（这个箱好人多还是坏人多）和 β（模型系数）相乘再乘缩放，得到这一行的加分</b>。β 和 WOE 是模型在带标签历史样本上训练拟合的，不是人给的；<b>缩放系数（本卡 12）不是训练的</b>——它是设计师按「基准分 600 + PDO（好客户概率翻倍所需点数）」定的业务校准常数，见 2.2.2。</p>
+    <table>
+      <tr><th>因子</th><th>分箱区间</th><th class="num">WOE(证据权重·示意)</th><th class="num">β(系数·训练得到)</th><th class="num">加分 = 12 × β × WOE</th></tr>
+      <tr><td rowspan="4">历史逾期记录（次数）</td><td>0 次</td><td class="num pos">+4.0</td><td class="num">1.0</td><td class="num pos">+48</td></tr>
+      <tr><td>1 次</td><td class="num pos">+2.5</td><td class="num">1.0</td><td class="num pos">+30</td></tr>
+      <tr><td>2 次</td><td class="num">0.0</td><td class="num">1.0</td><td class="num">0</td></tr>
+      <tr><td>≥3 次</td><td class="num neg">−4.0</td><td class="num">1.0</td><td class="num neg">−48</td></tr>
+      <tr><td rowspan="4">负债收入比（%）</td><td>≤40%</td><td class="num pos">+3.67</td><td class="num">1.0</td><td class="num pos">+44</td></tr>
+      <tr><td>41–60%</td><td class="num pos">+2.17</td><td class="num">1.0</td><td class="num pos">+26</td></tr>
+      <tr><td>61–70%</td><td class="num neg">−0.83</td><td class="num">1.0</td><td class="num neg">−10</td></tr>
+      <tr><td>&gt;70%</td><td class="num neg">−3.67</td><td class="num">1.0</td><td class="num neg">−44</td></tr>
+      <tr><td rowspan="4">收入稳定性（月）</td><td>≥24 月</td><td class="num pos">+3.33</td><td class="num">1.0</td><td class="num pos">+40</td></tr>
+      <tr><td>12–23 月</td><td class="num pos">+2.33</td><td class="num">1.0</td><td class="num pos">+28</td></tr>
+      <tr><td>6–11 月</td><td class="num neg">−0.42</td><td class="num">1.0</td><td class="num neg">−5</td></tr>
+      <tr><td>&lt;6 月</td><td class="num neg">−3.33</td><td class="num">1.0</td><td class="num neg">−40</td></tr>
+      <tr><td rowspan="4">征信查询频次（次/6月）</td><td>≤4 次</td><td class="num pos">+3.33</td><td class="num">1.0</td><td class="num pos">+40</td></tr>
+      <tr><td>5–9 次</td><td class="num pos">+1.33</td><td class="num">1.0</td><td class="num pos">+16</td></tr>
+      <tr><td>10–15 次</td><td class="num neg">−1.83</td><td class="num">1.0</td><td class="num neg">−22</td></tr>
+      <tr><td>&gt;15 次</td><td class="num neg">−3.33</td><td class="num">1.0</td><td class="num neg">−40</td></tr>
+      <tr><td rowspan="4">授信使用率（%）</td><td>≤30%</td><td class="num pos">+3.0</td><td class="num">1.0</td><td class="num pos">+36</td></tr>
+      <tr><td>31–50%</td><td class="num pos">+1.0</td><td class="num">1.0</td><td class="num pos">+12</td></tr>
+      <tr><td>51–70%</td><td class="num neg">−1.17</td><td class="num">1.0</td><td class="num neg">−14</td></tr>
+      <tr><td>&gt;70%</td><td class="num neg">−3.0</td><td class="num">1.0</td><td class="num neg">−36</td></tr>
+    </table>
+    <p class="note">表里 WOE 是<b>示意值</b>（真实系统由历史样本训练得到，详见 2.2.2）；β 本卡统一设为 1.0（真实评分卡每个因子有独立 β，由逻辑回归在带标签样本上拟合——见 2.2.1）。加分 = 12 × β × WOE，照算能验证：逾期 1 次 → 12 × 1.0 × 2.5 = <b>+30</b>，和 2.3 账本一致。</p>
+
+    <h3>2.2.1 那 +30 / −48 到底是怎么「算」出来的？（大白话）</h3>
+    <p>模型看不懂「逾期 1 次」这种话，它只认数字。所以把一个原始值变成「加几分」，分三小步：</p>
+    <ul>
+      <li><b>第一步 · 分箱</b>：把「逾期 1 次」归到「1 次」这个箱里（和 2.2 左边区间一致）。</li>
+      <li><b>第二步 · 算这个箱的「好坏分」(WOE)</b>：看这个箱里历史上有多少人按时还钱（好人）、多少人赖账（坏人），压成一个数字：
+        <br/><code>WOE = ln( 好人的比例 ÷ 坏人的比例 )</code>。
+        好人越多 → 数字越大（越该加分）；坏人越多 → 数字越小甚至变负（越该减分）。</li>
+      <li><b>第三步 · ×系数变成「分」</b>：模型对每个因子，在带标签的历史样本上<b>训练拟合</b>出一个系数 β（智信用逻辑回归、智察用 XGBoost 叶子权重；本质都是「从数据算出来的」，不是人拍的）。最终这个箱贡献的「分」= <code>缩放系数 × β × WOE</code>。
+        2.2 表里那些 +30 / −48，就是这一步算出来的结果——你也能在 2.2 的表里看到每一行都写了 <code>12 × β × WOE</code>。</li>
+    </ul>
+    <p>一句话：模型把「逾期 1 次的人大多是好人」这个直觉，量化成了一个数字（+30）。不是谁拍的。</p>
+
+    <h3>2.2.2 用「逾期」这一个因子，把每一步算给你看（含 β × WOE 公式）</h3>
+    <p class="note">下面 WOE 是<b>示意值</b>（真实系统由历史样本训练得到）；β 本卡归一为 1.0（真实每因子独立 β）。但「<b>分 = 缩放 × β × WOE</b>」这条链是自洽的，你照算能验证。</p>
+    <table>
+      <tr><th>分箱</th><th>这个箱里的人（为什么正/负）</th><th class="num">WOE（好坏分·示意）</th><th class="num">β（系数·训练得到）</th><th class="num">加分 = 12 × β × WOE</th></tr>
+      <tr><td>0 次</td><td>几乎都是好人（按时还）</td><td class="num pos">+4.0</td><td class="num">1.0</td><td class="num pos">+48</td></tr>
+      <tr><td>1 次</td><td>大多还好，略偏好</td><td class="num pos">+2.5</td><td class="num">1.0</td><td class="num pos">+30</td></tr>
+      <tr><td>2 次</td><td>好坏参半</td><td class="num">0.0</td><td class="num">1.0</td><td class="num">0</td></tr>
+      <tr><td>≥3 次</td><td>大多赖账（坏人）</td><td class="num neg">−4.0</td><td class="num">1.0</td><td class="num neg">−48</td></tr>
+    </table>
+    <div class="formula">逾期 1 次：这个箱「大多还好」→ WOE = +2.5，β = 1.0 → 12 × 1.0 × 2.5 = <b>+30</b>（和 2.2 表一致 ✓）</div>
+    <p class="note">β（系数）是「算的」：智信分用逻辑回归在带标签历史样本上拟合出每个因子的 β；智察分（XGBoost）则是每棵树的<b>叶子权重</b>在扮演 β 的角色——两者都是模型从数据学出来的，不是谁拍脑袋给的。本卡把 β 归一成 1.0、缩放=12 已包含系数效果，所以 2.2 表里直接写 12 × WOE 也对得上。<br/><b>缩放系数 12 也不是训练的</b>：它由评分卡的两个业务参数推出——基准分（本卡把 600 锚在某个好坏比上）+ PDO（Points to Double the Odds，好客户概率翻倍要加几分），公式 <code>缩放 = PDO / ln 2</code>。本卡取 12 只为让示例加分凑成 48/30/0/−48 这种一眼能算的数；真实系统 PDO 通常取 20–50，由业务定。其它 4 个因子同理：每个箱都有自己的 WOE，乘同一个缩放系数，得到 2.2 表里那一行。五个因子加起来 + 基础分 600 = 712。</p>
+
+    <h3>2.3 逐步推算（每一步：数据 → 算法 → 加分）</h3>
+    <table class="ledger" id="ledger-static">
+      <tr><th>原始数据</th><th>算法（查表命中哪一行）</th><th class="num">加分</th></tr>
+    </table>
+    <div class="formula" id="formula-static"></div>
+
+    <h3>2.4 规则碰撞（模型配置阶段的冲突裁决）—— 同一个人可以「碰撞两次」</h3>
+    <p>样例客户（逾期仅 1 次、负债比 58%）：信用分 712 落在 661–780 标准额度，<b>没有碰撞规则被触发</b>。但换一个冲突客户，<b>两条碰撞规则可以同时命中 = 碰撞了两次</b>：</p>
+    <table>
+      <tr><th>冲突客户（同一人）</th><th>算分</th><th>碰撞 1</th><th>碰撞 2</th><th>裁决</th></tr>
+      <tr>
+        <td>申请提额 + 历史 M3+ 逾期 = <b>2</b> 次 + 负债收入比 <b>75%</b> + 其余中等（收入稳定 14 月 / 查询 8 次 / 使用率 43%）</td>
+        <td class="num">600 + 0 −44 +28 +16 +12 = <b>612</b><br/>等级 C（审慎）</td>
+        <td><span class="pill red">zx-1 触发</span><br/>提额意图 ∩ 逾期≥2 硬规则 → 拒绝优先·转人工</td>
+        <td><span class="pill amber">zx-2 触发</span><br/>负债≥70% ∩ 标准额度 → 降审慎授信</td>
+        <td>zx-1「拦截优先」权重最高 → 最终<b>拒绝/转人工</b>；zx-2 的审慎被覆盖</td>
+      </tr>
+    </table>
+    <div class="finding" style="border-left-color:var(--red);background:#fef2f2">
+      <b>「碰撞了两次」在图上怎么表现？</b> 决策图里「规则碰撞 · 冲突裁决」节点（c1）不是只碰一次——它<b>装着 zx-1 / zx-2 两条规则</b>，每条是一个<b>独立碰撞</b>。节点逐条评估这些规则：本例两条都命中，所以<b>碰撞了两次</b>；命中几条就碰撞几次。在系统里点开这个节点，抽屉里就是这两条规则各自一行，能看、能改（优先级：拦截优先 &gt; 分数优先 &gt; 转人工）。
+    </div>
+
+    <h3>2.5 阈值决策（分数 → 动作）</h3>
+    <table>
+      <tr><th>分数段</th><th>等级</th><th>动作</th></tr>
+      <tr><td>712</td><td><span class="pill green">B</span></td><td>违约概率可控 → 标准额度</td></tr>
+    </table>
+    <p class="note">完整阈值：300–540 拒绝 / 541–660 审慎授信 / 661–780 标准额度 / 781–900 提额+优先经营。</p>
+  </section>
+
+  <!-- ============ 3. 交互推演 ============ -->
+  <section>
+    <h2><span class="n">3</span>交互推演：改输入，实时重算（你来验）</h2>
+    <p>把任意原始数据改掉，下面的账本和分数会立刻重算。你可以用计算器对照每一步的查表加分，确认没问题。</p>
+    <div class="grid2">
+      <div>
+        <label><span class="lbl">历史逾期（M3+ 次数）</span><input id="i-m3" type="number" value="1" /></label>
+        <label><span class="lbl">负债收入比（%）</span><input id="i-dir" type="number" value="58" /></label>
+        <label><span class="lbl">收入稳定性（月）</span><input id="i-inc" type="number" value="14" /></label>
+        <label><span class="lbl">征信查询（次/6月）</span><input id="i-q6" type="number" value="8" /></label>
+        <label><span class="lbl">授信使用率（%）</span><input id="i-util" type="number" value="43" /></label>
+      </div>
+      <div>
+        <table class="ledger" id="ledger-live">
+          <tr><th>算法（查表）</th><th class="num">加分</th></tr>
+        </table>
+        <div class="result" id="result-live"></div>
+      </div>
+    </div>
+    <p class="note">算法：基础分 600 + 五个因子加分，裁剪到 [300, 900]。碰撞/阈值规则同样适用（见 2.4 / 2.5）。</p>
+  </section>
+
+  <!-- ============ 4. 同类映射 + 真问题 ============ -->
+  <section>
+    <h2><span class="n">4</span>另外两个模型怎么套这个模式 + 当前模型真问题</h2>
+    <h3>4.1 三模型都遵守「数据+算法=输出」，只是算法不同</h3>
+    <table>
+      <tr><th>模型</th><th>算法（这一步怎么算）</th><th>可验证性</th></tr>
+      <tr>
+        <td>智信分（本例）</td>
+        <td>基础分 600 + 各因子查表加分（加法）</td>
+        <td><span class="pill green">完全可验证</span> 已补齐分箱表</td>
+      </tr>
+      <tr>
+        <td>智融分（加权融合）</td>
+        <td>0.34×信用归一 + 0.24×兴趣 + 0.18×转化 + 0.24×资产，再 ×600+300</td>
+        <td><span class="pill green">完全可验证</span> 已补归一化表（见第 5 节）</td>
+      </tr>
+      <tr>
+        <td>智察分（XGBoost）</td>
+        <td>xgb.predict_proba(特征)×100，命中黑灰名单封顶 95</td>
+        <td><span class="pill blue">结构可验证</span> 用示意叶子权重走通链路（见第 6 节），真实权重待接模型服务</td>
+      </tr>
+    </table>
+
+    <div class="finding">
+      <b>⚠️ 当前生产模型的真问题（你担心的根源）：</b><br/>
+      现在 <code>scoreData.ts</code> 里每个模型的 <code>factors</code> 只有「特征重要性权重」（0.26/0.22…），没有「某个原始值对应加几分」的分箱表；<code>algoCode</code> 是给人看的伪代码，不是能跑的计算。<br/>
+      后果：<code>score: 712</code> 只是写死存着的一个数，<b>从原始数据倒推不出它</b>——你自然不敢信。<br/>
+      <b>本次已修一半</b>：我在数据层补了智信分的「分箱→计分表」和一个真正能算的函数 <code>computeZhixin()</code>，本页样例客户算出来正好 = 712（与生产默认值一致），证明这条路走得通。<br/>
+      <b>现已补齐</b>：第 5 节（智融分）、第 6 节（智察分）已按同样「每一步数据+算法+常数来源」的套路推演完，三个模型都能手算验证。还差一步（要不要我做）：把智融/智察的分箱与叶子权重也补进生产代码（computeZhirong / 示意 computeZhicha），并把「模型推演」面板接到模型详情页，让你在系统里点一下就能看到分怎么来。
+    </div>
+  </section>
+
+  <!-- ============ 5. 智融分（加权融合） ============ -->
+  <section>
+    <h2><span class="n">5</span>智融分（加权融合）全链路推演</h2>
+    <p>智融分 = 把四个维度（信用 / 兴趣 / 转化 / 资产）各自<b>归一化</b>到 [0,1]，按权重加起来，再映射到 300–900。它不像智信分那样"加分"，而是"加权平均"。但每一步「原始数据 → 归一化值 → 加权」照样能手算，每一个常数也都有交代。</p>
+
+    <h3>5.1 四个原始输入（样例客户，取自决策图 zhirong 节点）</h3>
+    <table>
+      <tr><th>维度</th><th>原始数据</th><th class="num">样例值</th><th>说明</th></tr>
+      <tr><td>信用（智信分）</td><td>信用评分卡输出</td><td class="num">712</td><td>就是第 2 节算出来的那个分</td></tr>
+      <tr><td>兴趣（App 活跃）</td><td>近 30 天活跃天数</td><td class="num">18</td><td>借贷兴趣强度</td></tr>
+      <tr><td>转化（活动响应）</td><td>营销活动响应次数</td><td class="num">2</td><td>转化意愿</td></tr>
+      <tr><td>资产（资产状况）</td><td>房产 + 理财持仓</td><td class="num">有</td><td>房产且理财 → 最高档</td></tr>
+    </table>
+    <p class="note">注意：智察分（欺诈分）是<b>跨模型输入</b>，只参与下面的「规则碰撞」，不进加权公式。权重加起来 0.34+0.24+0.18+0.24 = 1.0，所以融合结果落在 [0,1]，再 ×600+300 映射到 300–900。</p>
+
+    <h3>5.2 归一化表（每个维度的原始值 → 归一化值 [0,1]，可查表）</h3>
+    <table>
+      <tr><th>维度</th><th>分箱</th><th class="num">归一化值</th><th>来源</th></tr>
+      <tr><td rowspan="4">信用（由智信分推）</td><td>智信分 300</td><td class="num">0.00</td><td rowspan="4">算出来的：<br/>(智信分−300)/600</td></tr>
+      <tr><td>智信分 540</td><td class="num">0.40</td></tr>
+      <tr><td>智信分 712（样例）</td><td class="num">0.687</td></tr>
+      <tr><td>智信分 900</td><td class="num">1.00</td></tr>
+      <tr><td rowspan="4">兴趣（活跃天数）</td><td>≤5 天</td><td class="num">0.10</td><td rowspan="4">业务校准阈值<br/>（非训练）</td></tr>
+      <tr><td>6–10 天</td><td class="num">0.30</td></tr>
+      <tr><td>11–20 天（样例 18）</td><td class="num">0.60</td></tr>
+      <tr><td>21–30 天</td><td class="num">0.85</td></tr>
+      <tr><td rowspan="4">转化（响应次数）</td><td>0 次</td><td class="num">0.10</td><td rowspan="4">业务校准阈值<br/>（非训练）</td></tr>
+      <tr><td>1 次</td><td class="num">0.30</td></tr>
+      <tr><td>2 次（样例）</td><td class="num">0.50</td></tr>
+      <tr><td>≥3 次</td><td class="num">0.70</td></tr>
+      <tr><td rowspan="4">资产（状况）</td><td>无</td><td class="num">0.10</td><td rowspan="4">业务校准档位<br/>（非训练）</td></tr>
+      <tr><td>仅理财</td><td class="num">0.40</td></tr>
+      <tr><td>房产</td><td class="num">0.70</td></tr>
+      <tr><td>房产 + 理财（样例）</td><td class="num">1.00</td></tr>
+    </table>
+    <p class="note">只有<b>信用归一</b>是「算出来的」（因为它来自智信分，而智信分是算出来的）。兴趣 / 转化 / 资产的归一<b>阈值和智信的缩放系数 12 一样，是业务校准设定的，不是训练</b>——它们决定"多活跃算 0.6 分"这种分界，是人按业务经验定的。</p>
+
+    <h3>5.3 加权融合（公式 + 逐步算，你能照算）</h3>
+    <div class="formula">智融分 = ( 0.34×信用 + 0.24×兴趣 + 0.18×转化 + 0.24×资产 ) × 600 + 300</div>
+    <p class="note">权重（0.34/0.24/0.18/0.24）是融合时定的——可训练可设定；本卡为<b>设定值</b>（标注）。它们和归一化值相乘再求和，最后 ×600+300 映射到 300–900。</p>
+    <table class="ledger">
+      <tr><th>这一步的数据</th><th>这一步的算法</th><th class="num">输出</th></tr>
+      <tr><td>信用归一 0.687</td><td>× 权重 0.34</td><td class="num">0.2336</td></tr>
+      <tr><td>兴趣归一 0.60</td><td>× 权重 0.24</td><td class="num">0.1440</td></tr>
+      <tr><td>转化归一 0.50</td><td>× 权重 0.18</td><td class="num">0.0900</td></tr>
+      <tr><td>资产归一 1.00</td><td>× 权重 0.24</td><td class="num">0.2400</td></tr>
+      <tr><td>四项之和 0.7076</td><td>× 600 + 300</td><td class="num"><b>724.6 ≈ 725</b></td></tr>
+    </table>
+    <div class="formula">智融分 = (0.2336+0.1440+0.0900+0.2400) × 600 + 300 = 0.7076 × 600 + 300 = 424.6 + 300 = <b>724.6 ≈ 725</b></div>
+    <p class="note">等级：725 落在 661–780「常规经营」→ B。决策图 zhirong 的「当前样本」已同步为 725（图 = 推演）。</p>
+
+    <h3>5.4 规则碰撞（智融的碰撞是「跨模型」的）</h3>
+    <p>样例客户（信用 712 / 兴趣 18 天 / 转化 2 次 / 资产房产+理财）：智融分 725 高价值，但没触发碰撞。换一个冲突客户，<b>两条碰撞规则可以同时命中 = 碰撞了两次</b>：</p>
+    <table>
+      <tr><th>冲突客户（同一人）</th><th>算分</th><th>碰撞 1</th><th>碰撞 2</th><th>裁决</th></tr>
+      <tr>
+        <td>资产高价值（房产+理财，归一 1.0）+ 智察分判定<b>欺诈高风险</b>（黑/灰名单或 XGB 高风险）</td>
+        <td class="num">加权得高价值档<br/>（例如 ≈ 800）</td>
+        <td><span class="pill red">zr-1 触发</span><br/>智察(欺诈高风险) ∩ 智融(高价值) → 欺诈优先拒绝</td>
+        <td><span class="pill amber">zr-2 触发</span><br/>兴趣(低) ∩ 资产(高) 冲突 → 取保守策略</td>
+        <td>zr-1「拦截优先」→ 最终<b>欺诈覆盖高价值，拒绝</b>；zr-2 保守被覆盖</td>
+      </tr>
+    </table>
+    <div class="finding" style="border-left-color:var(--red);background:#fef2f2">
+      <b>「碰撞了两次」在图上怎么表现？</b> 决策图 zhirong 的「规则碰撞 · 冲突裁决」节点（c1）装着 <b>zr-1 / zr-2 两条规则</b>，每条是独立碰撞；节点逐条评估，本例两条都命中 = 碰撞了两次。点开节点抽屉可看/改这两条规则（优先级：拦截 &gt; 分数 &gt; 转人工）。
+    </div>
+  </section>
+
+  <!-- ============ 6. 智察分（XGBoost） ============ -->
+  <section>
+    <h2><span class="n">6</span>智察分（XGBoost 反欺诈）全链路推演</h2>
+    <p>智察分 = XGBoost 把特征变成「好客户概率 p」、<b>×100</b> 得 0–100 分（分越高越可信）；命中黑灰名单直接<b>封顶 95（拒绝）</b>。它和智信/智融最不一样：没有"加分表"，而是「一堆决策树，每棵树叶子给一个权重，加起来过 sigmoid」。但每一步仍能手算。</p>
+
+    <h3>6.1 五个原始特征（样例客户，取自决策图 zhicha 节点）</h3>
+    <table>
+      <tr><th>特征</th><th class="num">样例值</th><th>说明</th></tr>
+      <tr><td>近 30 天申贷平台数</td><td class="num">3</td><td>多头借贷强度</td></tr>
+      <tr><td>设备环境风险</td><td class="num">低</td><td>模拟器 / root 等</td></tr>
+      <tr><td>同设备关联账号数</td><td class="num">2</td><td>设备聚集度</td></tr>
+      <tr><td>负债收入比</td><td class="num">58%</td><td>越低越好</td></tr>
+      <tr><td>命中黑灰名单</td><td class="num">否</td><td>硬拦截源</td></tr>
+    </table>
+
+    <h3>6.2 XGBoost 怎么算（用示意树带你走一遍）</h3>
+    <p>XGBoost = 很多棵决策树<b>加起来</b>。每棵树：特征走分叉到某个叶子，叶子有个「权重」（leaf weight）。<b>所有树的叶子权重求和 = logit</b>，再过 <code>sigmoid</code> 变成好客户概率 p，<code>智察分 = p × 100</code>。</p>
+    <div class="finding" style="border-left-color:var(--blue);background:#eff6ff">
+      <b>叶子权重 = 智信里的 β×WOE</b>：在 XGBoost 里，每个叶子的权重扮演的正是「系数×证据」的角色——而且它是模型从带标签历史样本上<b>梯度提升训练出来的，真算出来的</b>（不是业务拍的）。只是 demo 没有真实训好的树，下面用<b>示意权重</b>让你看清整条链路、能照算验证。
+    </div>
+    <p class="note">下面用 4 棵示意树走样例客户（3 / 低 / 2 / 58% / 未命中黑灰）：</p>
+    <table class="ledger">
+      <tr><th>树</th><th>分裂条件 / 客户走哪边</th><th class="num">叶子权重</th></tr>
+      <tr><td>T1</td><td>申贷平台数 ≤ 3？是（3）→ 左叶</td><td class="num pos">+0.6</td></tr>
+      <tr><td>T2</td><td>设备风险 = 低？是 → 左叶</td><td class="num pos">+0.4</td></tr>
+      <tr><td>T3</td><td>负债比 ≤ 60%？是（58）→ 左叶</td><td class="num pos">+0.3</td></tr>
+      <tr><td>T4</td><td>关联账号 ≤ 2？是（2）→ 左叶</td><td class="num pos">+0.2</td></tr>
+      <tr><td colspan="2">叶子权重求和 = logit</td><td class="num"><b>+1.5</b></td></tr>
+    </table>
+    <div class="formula">p = sigmoid(1.5) = 1 / (1 + e^(−1.5)) = 1 / (1 + 0.2231) = <b>0.8176</b><br/>智察分 = 0.8176 × 100 = <b>81.8 ≈ 82</b>（与决策图 zhicha「当前样本 82」一致 ✓）</div>
+    <p class="note">若命中黑灰名单：不管树算多少，直接<b>封顶 95（拒绝）</b>——这是硬拦截，覆盖模型分。所以「黑灰名单命中」本身是一条碰撞/覆盖规则（见 6.3 的 za-1）。</p>
+
+    <h3>6.3 规则碰撞（智察的碰撞含硬拦截）</h3>
+    <p>样例客户（智察分 82，落在 70–100「拒绝/强化核验」）：未命中黑灰名单、无设备模拟器，<b>没有碰撞被触发</b>。换一个冲突客户，<b>两条碰撞规则同时命中 = 碰撞了两次</b>：</p>
+    <table>
+      <tr><th>冲突客户（同一人）</th><th>算分</th><th>碰撞 1</th><th>碰撞 2</th><th>裁决</th></tr>
+      <tr>
+        <td>XGB = 55（中风险 40–69）+ 设备<b>模拟器</b>特征命中（真）+ 近30天申贷平台数 ≥ 5（应拒绝）</td>
+        <td class="num">模型给 55（转人工档）</td>
+        <td><span class="pill red">za-2 触发</span><br/>XGB中风险 ∩ 设备模拟器命中 → 升级高风险预警</td>
+        <td><span class="pill amber">za-3 触发</span><br/>结果冲突（模型转人工 ∩ 规则集拒绝）→ 生成「欺诈覆盖」预警</td>
+        <td>欺诈优先 → 最终<b>拒绝 / 强化核验</b></td>
+      </tr>
+    </table>
+    <div class="finding" style="border-left-color:var(--red);background:#fef2f2">
+      <b>「碰撞了两次」在图上怎么表现？</b> 决策图 zhicha 的「规则碰撞 · 冲突裁决」节点（c1）装着 <b>za-1（黑灰名单覆盖）/ za-2（中风险∩模拟器升级）/ za-3（结果冲突预警）三条规则</b>；本例 za-2、za-3 同时命中 = 碰撞了两次（若再命中黑灰名单就是三次）。点开节点抽屉可看/改这些规则。
+    </div>
+    <p class="note">总结三模型：智信/智融的「系数或缩放」多为业务校准 + 训练混合，智察的「叶子权重」是纯训练出来的——但 demo 里智察的真实树权重我们没有，上面是<b>示意权重</b>，只为让你看清链路并能手算。要真验证，需接入训好的 XGBoost 模型服务（这步按你之前定的，先不擅自改生产代码）。</p>
+  </section>
+</div>
+
+<script>
+  // ===== 算法本体：分箱 → 计分表（与页面 2.2 一致）=====
+  const BINS = [
+    { key:'m3', name:'历史逾期（M3+ 次数）', rows:[
+      {label:'0 次', points:48, test:v=>v===0},
+      {label:'1 次', points:30, test:v=>v===1},
+      {label:'2 次', points:0,  test:v=>v===2},
+      {label:'≥3 次', points:-48, test:v=>v>=3},
+    ]},
+    { key:'dir', name:'负债收入比（%）', rows:[
+      {label:'≤40%', points:44, test:v=>v<=40},
+      {label:'41–60%', points:26, test:v=>v<=60},
+      {label:'61–70%', points:-10, test:v=>v<=70},
+      {label:'>70%', points:-44, test:v=>v>70},
+    ]},
+    { key:'inc', name:'收入稳定性（月）', rows:[
+      {label:'≥24 月', points:40, test:v=>v>=24},
+      {label:'12–23 月', points:28, test:v=>v>=12},
+      {label:'6–11 月', points:-5, test:v=>v>=6},
+      {label:'<6 月', points:-40, test:v=>v<6},
+    ]},
+    { key:'q6', name:'征信查询（次/6月）', rows:[
+      {label:'≤4 次', points:40, test:v=>v<=4},
+      {label:'5–9 次', points:16, test:v=>v<=9},
+      {label:'10–15 次', points:-22, test:v=>v<=15},
+      {label:'>15 次', points:-40, test:v=>v>15},
+    ]},
+    { key:'util', name:'授信使用率（%）', rows:[
+      {label:'≤30%', points:36, test:v=>v<=30},
+      {label:'31–50%', points:12, test:v=>v<=50},
+      {label:'51–70%', points:-14, test:v=>v<=70},
+      {label:'>70%', points:-36, test:v=>v>70},
+    ]},
+  ]
+  const BASE = 600
+
+  // 算法：原始数据 → 查表 → 加分；汇总 = 基础分 + 各项
+  function computeZhixin(raw){
+    let total = 0
+    const steps = []
+    for(const f of BINS){
+      const v = raw[f.key]
+      const hit = f.rows.find(r=>r.test(v)) || f.rows[f.rows.length-1]
+      total += hit.points
+      steps.push({ factor:f.name, input:v, bin:hit.label, points:hit.points })
+    }
+    const score = Math.max(300, Math.min(900, BASE + total))
+    return { score, total, steps }
+  }
+
+  function grade(s){
+    if(s<=540) return ['D','red','拒绝']
+    if(s<=660) return ['C','amber','审慎授信']
+    if(s<=780) return ['B','green','标准额度']
+    return ['A','blue','提额 + 优先经营']
+  }
+
+  // ---- 静态账本（样例客户）----
+  const sample = { m3:1, dir:58, inc:14, q6:8, util:43 }
+  const r0 = computeZhixin(sample)
+  const ls = document.getElementById('ledger-static')
+  r0.steps.forEach(s=>{
+    const tr = document.createElement('tr')
+    const pts = s.points>=0 ? `<span class="pos">+${s.points}</span>` : `<span class="neg">${s.points}</span>`
+    tr.innerHTML = `<td>${s.factor} = <b>${s.input}</b></td><td>查表命中「${s.bin}」</td><td class="num">${pts}</td>`
+    ls.appendChild(tr)
+  })
+  const fsum = r0.steps.map(s=>`${s.points>=0?'+'+s.points:s.points}`).join('  ')
+  document.getElementById('formula-static').textContent =
+    `智信分 = 600 ${fsum} = ${r0.score}`
+
+  // ---- 交互 ----
+  const ids = { m3:'i-m3', dir:'i-dir', inc:'i-inc', q6:'i-q6', util:'i-util' }
+  function live(){
+    const raw = {}
+    for(const k in ids) raw[k] = Number(document.getElementById(ids[k]).value)
+    const r = computeZhixin(raw)
+    const ll = document.getElementById('ledger-live')
+    ll.innerHTML = '<tr><th>算法（查表）</th><th class="num">加分</th></tr>'
+    r.steps.forEach(s=>{
+      const tr = document.createElement('tr')
+      const pts = s.points>=0 ? `<span class="pos">+${s.points}</span>` : `<span class="neg">${s.points}</span>`
+      tr.innerHTML = `<td>${s.factor} = <b>${s.input}</b><br><span class="note">命中「${s.bin}」</span></td><td class="num">${pts}</td>`
+      ll.appendChild(tr)
+    })
+    const [g, gc, act] = grade(r.score)
+    document.getElementById('result-live').innerHTML =
+      `基础分 600 + 各项 ${r.total>=0?'+'+r.total:r.total} = <b>${r.score}</b><br>`+
+      `等级 <span class="pill ${gc}">${g}</span> 动作：${act}`
+  }
+  for(const k in ids) document.getElementById(ids[k]).addEventListener('input', live)
+  live()
+</script>
+</body>
+</html>

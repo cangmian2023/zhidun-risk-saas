@@ -79,9 +79,7 @@ export const scoringMenu: MenuGroup[] = [
     group: '客户洞察',
     section: '客户洞察',
     items: [
-      { label: '客群分组', key: 'sc:crowd-groups', desc: '按风险/价值/行为等维度定义客群分组，支撑分层经营' },
-      { label: '客户列表', key: 'sc:customer-list', desc: '客群分组下的客户清单，点击进入客户详情' },
-      { label: '客户详情', key: 'sc:customer-detail', keep: true, desc: '单客 360° 画像（复用零售信贷单客视图）：身份、授信、负债、行为、风险预警与关系' },
+      { label: '客户分组', key: 'sc:crowd-groups', desc: '按风险/价值/行为等维度定义客群分组；点击分组进入客户列表（新页面）' },
     ],
   },
   {
@@ -96,10 +94,8 @@ export const scoringMenu: MenuGroup[] = [
     group: '模型管理',
     section: '模型管理',
     items: [
-      { label: '模型管理', key: 'sc:model-manage', desc: '智察分/智信分/智融分及其版本的管理：状态、训练信息、发布' },
-      { label: '模型监控', key: 'sc:model-monitor', desc: '模型稳定性与区分力监控：PSI / CSI / KS / AUC 漂移预警' },
-      { label: '模型效果', key: 'sc:model-effect', desc: '模型效果评估：区分力、lift 曲线、各客群表现与坏账回溯' },
-      { label: '版本管理', key: 'sc:model-version', desc: '模型版本迭代记录、回滚与灰度发布管理' },
+      { label: '模型管理', key: 'sc:model-manage', desc: '智察分/智信分/智融分管理：点击卡片进入模型详情（基本信息、算法编辑、版本管理）' },
+      { label: '模型效果', key: 'sc:model-effect', desc: '模型效果评估：覆盖率、准确率、及时率、调用量与趋势（三模型铺开对比）' },
     ],
   },
   {

@@ -6,7 +6,6 @@ import Console from './console/Console'
 import Platform from './platform/Platform'
 import Home from './pages/Home'
 import CreditRisk from './pages/CreditRisk'
-import Scoring from './pages/Scoring'
 import BackupReportDetail from './console/BackupReportDetail'
 import BackupReportDetail222 from './console/BackupReportDetail222'
 
@@ -32,7 +31,6 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/credit-risk" element={<CreditRisk />} />
-        <Route path="/scoring" element={<Scoring />} />
         <Route path="/login" element={<Login />} />
         <Route path="/console" element={<Navigate to="/console/cr/overview" replace />} />
         <Route
