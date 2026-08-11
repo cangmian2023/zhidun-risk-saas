@@ -1,5016 +1,5104 @@
 [
- {
-  "custId": "C0001",
-  "name": "张*明",
-  "idCard": "3301**********1234",
-  "product": "信用贷",
-  "creditLine": 80000,
-  "loanBalance": 42000,
-  "loanStatus": "在贷",
-  "riskLevel": "高风险",
-  "scoreHistory": [
-   {
-    "month": "2026-02",
-    "score": 62,
-    "cohortAvg": 74
-   },
-   {
-    "month": "2026-03",
-    "score": 58,
-    "cohortAvg": 74
-   },
-   {
-    "month": "2026-04",
-    "score": 51,
-    "cohortAvg": 73
-   },
-   {
-    "month": "2026-05",
-    "score": 44,
-    "cohortAvg": 72
-   },
-   {
-    "month": "2026-06",
-    "score": 38,
-    "cohortAvg": 72
-   },
-   {
-    "month": "2026-07",
-    "score": 33,
-    "cohortAvg": 71
-   }
-  ],
-  "alerts": [
-   {
-    "time": "2026-07-03",
-    "level": "YELLOW",
-    "scene": "负债上升",
-    "ruleName": "近30天新增贷款≥2笔",
-    "metricValue": 2,
-    "threshold": 2,
-    "status": "已解除"
-   },
-   {
-    "time": "2026-07-18",
-    "level": "RED",
-    "scene": "行为评分",
-    "ruleName": "行为分<40",
-    "metricValue": 38,
-    "threshold": 40,
-    "status": "处置中"
-   },
-   {
-    "time": "2026-08-04",
-    "level": "RED",
-    "scene": "负债激增",
-    "ruleName": "近30天新增贷款≥3笔",
-    "metricValue": 5,
-    "threshold": 3,
-    "status": "待处置"
-   }
-  ],
-  "disposes": [
-   {
-    "time": "2026-07-18",
-    "operator": "李四",
-    "action": "电话核实",
-    "result": "确认多笔网贷，收入下降",
-    "note": "建议降额并预催"
-   },
-   {
-    "time": "2026-07-19",
-    "operator": "王五",
-    "action": "降额",
-    "result": "已执行：80000→40000",
-    "note": "审批通过"
-   }
-  ],
-  "relations": [
-   {
-    "id": "C0001-r0",
-    "name": "华信商贸",
-    "rel": "法人",
-    "type": "company",
-    "risk": "高危"
-   },
-   {
-    "id": "C0001-r1",
-    "name": "恒达科技",
-    "rel": "法人",
-    "type": "company"
-   },
-   {
-    "id": "C0001-r2",
-    "name": "IMEI-8695000002",
-    "rel": "设备",
-    "type": "device"
-   },
-   {
-    "id": "C0001-r3",
+  {
+    "custId": "C0001",
+    "name": "张*明",
+    "idCard": "3301**********1234",
+    "product": "信用贷",
+    "creditLine": 80000,
+    "loanBalance": 42000,
+    "loanStatus": "在贷",
+    "riskLevel": "高风险",
+    "scoreHistory": [
+      {
+        "month": "2026-02",
+        "score": 62,
+        "cohortAvg": 74
+      },
+      {
+        "month": "2026-03",
+        "score": 58,
+        "cohortAvg": 74
+      },
+      {
+        "month": "2026-04",
+        "score": 51,
+        "cohortAvg": 73
+      },
+      {
+        "month": "2026-05",
+        "score": 44,
+        "cohortAvg": 72
+      },
+      {
+        "month": "2026-06",
+        "score": 38,
+        "cohortAvg": 72
+      },
+      {
+        "month": "2026-07",
+        "score": 33,
+        "cohortAvg": 71
+      }
+    ],
+    "alerts": [
+      {
+        "time": "2026-07-03",
+        "level": "YELLOW",
+        "scene": "负债上升",
+        "ruleName": "近30天新增贷款≥2笔",
+        "metricValue": 2,
+        "threshold": 2,
+        "status": "已解除"
+      },
+      {
+        "time": "2026-07-18",
+        "level": "RED",
+        "scene": "行为评分",
+        "ruleName": "行为分<40",
+        "metricValue": 38,
+        "threshold": 40,
+        "status": "处置中"
+      },
+      {
+        "time": "2026-08-04",
+        "level": "RED",
+        "scene": "负债激增",
+        "ruleName": "近30天新增贷款≥3笔",
+        "metricValue": 5,
+        "threshold": 3,
+        "status": "待处置"
+      }
+    ],
+    "disposes": [
+      {
+        "time": "2026-07-18",
+        "operator": "李四",
+        "action": "电话核实",
+        "result": "确认多笔网贷，收入下降",
+        "note": "建议降额并预催"
+      },
+      {
+        "time": "2026-07-19",
+        "operator": "王五",
+        "action": "降额",
+        "result": "已执行：80000→40000",
+        "note": "审批通过"
+      }
+    ],
+    "relations": [
+      {
+        "id": "C0001-r0",
+        "name": "华信商贸",
+        "rel": "法人",
+        "type": "company",
+        "risk": "高危"
+      },
+      {
+        "id": "C0001-r1",
+        "name": "恒达科技",
+        "rel": "法人",
+        "type": "company"
+      },
+      {
+        "id": "C0001-r2",
+        "name": "IMEI-8695000002",
+        "rel": "设备",
+        "type": "device"
+      },
+      {
+        "id": "C0001-r3",
+        "name": "陈*敏",
+        "rel": "共借人",
+        "type": "person",
+        "risk": "关注"
+      }
+    ],
+    "riskDims": [
+      {
+        "dim": "负债",
+        "score": 62
+      },
+      {
+        "dim": "多头",
+        "score": 69
+      },
+      {
+        "dim": "欺诈",
+        "score": 76
+      },
+      {
+        "dim": "司法",
+        "score": 83
+      },
+      {
+        "dim": "行为",
+        "score": 90
+      },
+      {
+        "dim": "舆情",
+        "score": 67
+      }
+    ],
+    "creditReport": {
+      "queries": [
+        {
+          "month": "2026-03",
+          "count": 4,
+          "institutions": [
+            "D平台贷",
+            "F消金"
+          ]
+        },
+        {
+          "month": "2026-04",
+          "count": 5,
+          "institutions": [
+            "E银行",
+            "A银行"
+          ]
+        },
+        {
+          "month": "2026-05",
+          "count": 6,
+          "institutions": [
+            "F消金",
+            "B消费金融"
+          ]
+        },
+        {
+          "month": "2026-06",
+          "count": 6,
+          "institutions": [
+            "A银行",
+            "C小贷"
+          ]
+        },
+        {
+          "month": "2026-07",
+          "count": 5,
+          "institutions": [
+            "B消费金融",
+            "D平台贷"
+          ]
+        },
+        {
+          "month": "2026-08",
+          "count": 6,
+          "institutions": [
+            "C小贷",
+            "E银行"
+          ]
+        }
+      ],
+      "accounts": [
+        {
+          "institution": "本行",
+          "type": "信用贷",
+          "limit": 80000,
+          "balance": 42000,
+          "status": "正常",
+          "openDate": "2025-10-07"
+        },
+        {
+          "institution": "E银行",
+          "type": "消费贷",
+          "limit": 50000,
+          "balance": 42000,
+          "status": "逾期",
+          "openDate": "2025-01-07"
+        },
+        {
+          "institution": "A银行",
+          "type": "信用卡",
+          "limit": 30000,
+          "balance": 16000,
+          "status": "正常",
+          "openDate": "2024-04-07"
+        }
+      ],
+      "overdues": [
+        {
+          "date": "2026-06-12",
+          "institution": "E银行",
+          "days": 8,
+          "amount": 3200
+        },
+        {
+          "date": "2026-04-03",
+          "institution": "A银行",
+          "days": 3,
+          "amount": 2000
+        }
+      ],
+      "guaranties": [
+        {
+          "org": "杭州*明商贸",
+          "amount": 500000,
+          "remain": 250000
+        }
+      ]
+    },
+    "income": {
+      "monthIncome": 15500,
+      "monthRepay": 3500,
+      "dti": 23,
+      "debtTotal": 142000,
+      "assetTotal": 240000,
+      "liabilityRatio": 59
+    },
+    "collaterals": [],
+    "guarantors": [],
+    "fundFlow": {
+      "purpose": "经营周转",
+      "riskFlag": "疑似回流",
+      "flows": [
+        {
+          "date": "2026-07-15",
+          "amount": 16800,
+          "to": "供应商 A（对公）",
+          "note": "货款结算",
+          "risk": "正常"
+        },
+        {
+          "date": "2026-07-16",
+          "amount": 12600,
+          "to": "供应商 B（对公）",
+          "note": "货款结算",
+          "risk": "正常"
+        },
+        {
+          "date": "2026-07-18",
+          "amount": 8400,
+          "to": "个人账户 王**",
+          "note": "大额转个人",
+          "risk": "疑似回流"
+        },
+        {
+          "date": "2026-07-22",
+          "amount": 4200,
+          "to": "经营场所租金",
+          "note": "租金支付",
+          "risk": "正常"
+        }
+      ]
+    },
+    "blacklist": {
+      "hits": [
+        {
+          "list": "网贷黑名单",
+          "matched": "手机号命中",
+          "date": "2026-06-20",
+          "score": 86
+        },
+        {
+          "list": "反欺诈名单",
+          "matched": "设备关联欺诈用户",
+          "date": "2026-07-02",
+          "score": 78
+        }
+      ],
+      "fraudTags": [
+        "设备聚集",
+        "深夜申请"
+      ],
+      "riskScore": 82
+    },
+    "modelScoreHistory": [
+      {
+        "month": "2026-03",
+        "zhicha": 62,
+        "zhixin": 715,
+        "zhirong": 698,
+        "cohortAvg": 685
+      },
+      {
+        "month": "2026-04",
+        "zhicha": 64,
+        "zhixin": 712,
+        "zhirong": 692,
+        "cohortAvg": 685
+      },
+      {
+        "month": "2026-05",
+        "zhicha": 66,
+        "zhixin": 708,
+        "zhirong": 686,
+        "cohortAvg": 686
+      },
+      {
+        "month": "2026-06",
+        "zhicha": 69,
+        "zhixin": 702,
+        "zhirong": 678,
+        "cohortAvg": 686
+      },
+      {
+        "month": "2026-07",
+        "zhicha": 74,
+        "zhixin": 694,
+        "zhirong": 666,
+        "cohortAvg": 687
+      },
+      {
+        "month": "2026-08",
+        "zhicha": 78,
+        "zhixin": 688,
+        "zhirong": 660,
+        "cohortAvg": 687
+      }
+    ]
+  },
+  {
+    "custId": "C0009",
+    "name": "何*杰",
+    "idCard": "3301**********5678",
+    "product": "消费贷",
+    "creditLine": 163000,
+    "loanBalance": 82445,
+    "loanStatus": "在贷",
+    "riskLevel": "中风险",
+    "scoreHistory": [
+      {
+        "month": "2026-02",
+        "score": 70,
+        "cohortAvg": 72
+      },
+      {
+        "month": "2026-03",
+        "score": 69,
+        "cohortAvg": 73
+      },
+      {
+        "month": "2026-04",
+        "score": 68,
+        "cohortAvg": 72
+      },
+      {
+        "month": "2026-05",
+        "score": 67,
+        "cohortAvg": 73
+      },
+      {
+        "month": "2026-06",
+        "score": 66,
+        "cohortAvg": 72
+      },
+      {
+        "month": "2026-07",
+        "score": 65,
+        "cohortAvg": 73
+      }
+    ],
+    "alerts": [
+      {
+        "time": "2026-08-08",
+        "level": "YELLOW",
+        "scene": "贷中风控",
+        "ruleName": "月还款额/月收入>70%",
+        "metricValue": 73,
+        "threshold": 70,
+        "status": "已解除"
+      }
+    ],
+    "disposes": [
+      {
+        "time": "2026-07",
+        "operator": "风控专员-张三",
+        "action": "关注",
+        "result": "已纳入观察",
+        "note": "按处置策略自动生成"
+      }
+    ],
+    "relations": [
+      {
+        "id": "C0009-r0",
+        "name": "恒达科技",
+        "rel": "法人",
+        "type": "company"
+      },
+      {
+        "id": "C0009-r1",
+        "name": "中联供应链",
+        "rel": "法人",
+        "type": "company"
+      },
+      {
+        "id": "C0009-r2",
+        "name": "IMEI-8695001002",
+        "rel": "设备",
+        "type": "device"
+      },
+      {
+        "id": "C0009-rc",
+        "name": "刘女士",
+        "rel": "紧急联系人",
+        "type": "contact"
+      }
+    ],
+    "riskDims": [
+      {
+        "dim": "负债",
+        "score": 39
+      },
+      {
+        "dim": "多头",
+        "score": 46
+      },
+      {
+        "dim": "欺诈",
+        "score": 53
+      },
+      {
+        "dim": "司法",
+        "score": 60
+      },
+      {
+        "dim": "行为",
+        "score": 67
+      },
+      {
+        "dim": "舆情",
+        "score": 44
+      }
+    ],
+    "creditReport": {
+      "queries": [
+        {
+          "month": "2026-03",
+          "count": 3,
+          "institutions": [
+            "B消费金融",
+            "D平台贷"
+          ]
+        },
+        {
+          "month": "2026-04",
+          "count": 2,
+          "institutions": [
+            "C小贷",
+            "E银行"
+          ]
+        },
+        {
+          "month": "2026-05",
+          "count": 2,
+          "institutions": [
+            "D平台贷",
+            "F消金"
+          ]
+        },
+        {
+          "month": "2026-06",
+          "count": 3,
+          "institutions": [
+            "E银行",
+            "A银行"
+          ]
+        },
+        {
+          "month": "2026-07",
+          "count": 2,
+          "institutions": [
+            "F消金",
+            "B消费金融"
+          ]
+        },
+        {
+          "month": "2026-08",
+          "count": 3,
+          "institutions": [
+            "A银行",
+            "C小贷"
+          ]
+        }
+      ],
+      "accounts": [
+        {
+          "institution": "本行",
+          "type": "消费贷",
+          "limit": 163000,
+          "balance": 82445,
+          "status": "正常",
+          "openDate": "2025-02-17"
+        },
+        {
+          "institution": "C小贷",
+          "type": "消费贷",
+          "limit": 70000,
+          "balance": 47000,
+          "status": "正常",
+          "openDate": "2025-05-17"
+        },
+        {
+          "institution": "E银行",
+          "type": "信用卡",
+          "limit": 30000,
+          "balance": 16000,
+          "status": "正常",
+          "openDate": "2024-08-17"
+        }
+      ],
+      "overdues": [
+        {
+          "date": "2026-05-20",
+          "institution": "E银行",
+          "days": 2,
+          "amount": 1100
+        }
+      ],
+      "guaranties": [
+        {
+          "org": "杭州*杰商贸",
+          "amount": 700000,
+          "remain": 250000
+        }
+      ]
+    },
+    "income": {
+      "monthIncome": 11500,
+      "monthRepay": 3435,
+      "dti": 30,
+      "debtTotal": 182445,
+      "assetTotal": 489000,
+      "liabilityRatio": 37
+    },
+    "collaterals": [],
+    "guarantors": [],
+    "fundFlow": {
+      "purpose": "经营周转",
+      "riskFlag": "正常",
+      "flows": [
+        {
+          "date": "2026-07-15",
+          "amount": 32978,
+          "to": "供应商 A（对公）",
+          "note": "货款结算",
+          "risk": "正常"
+        },
+        {
+          "date": "2026-07-16",
+          "amount": 24734,
+          "to": "供应商 B（对公）",
+          "note": "货款结算",
+          "risk": "正常"
+        },
+        {
+          "date": "2026-07-22",
+          "amount": 8245,
+          "to": "经营场所租金",
+          "note": "租金支付",
+          "risk": "正常"
+        }
+      ]
+    },
+    "blacklist": {
+      "hits": [
+        {
+          "list": "观察名单",
+          "matched": "IP 段聚集",
+          "date": "2026-07-10",
+          "score": 52
+        }
+      ],
+      "fraudTags": [
+        "资料频繁修改"
+      ],
+      "riskScore": 45
+    },
+    "modelScoreHistory": [
+      {
+        "month": "2026-03",
+        "zhicha": 34,
+        "zhixin": 742,
+        "zhirong": 718,
+        "cohortAvg": 685
+      },
+      {
+        "month": "2026-04",
+        "zhicha": 36,
+        "zhixin": 738,
+        "zhirong": 712,
+        "cohortAvg": 685
+      },
+      {
+        "month": "2026-05",
+        "zhicha": 38,
+        "zhixin": 730,
+        "zhirong": 705,
+        "cohortAvg": 686
+      },
+      {
+        "month": "2026-06",
+        "zhicha": 42,
+        "zhixin": 720,
+        "zhirong": 695,
+        "cohortAvg": 686
+      },
+      {
+        "month": "2026-07",
+        "zhicha": 46,
+        "zhixin": 706,
+        "zhirong": 680,
+        "cohortAvg": 687
+      },
+      {
+        "month": "2026-08",
+        "zhicha": 49,
+        "zhixin": 695,
+        "zhirong": 668,
+        "cohortAvg": 687
+      }
+    ]
+  },
+  {
+    "custId": "C0010",
+    "name": "罗*峰",
+    "idCard": "3301**********9012",
+    "product": "信用贷",
+    "creditLine": 198000,
+    "loanBalance": 123572,
+    "loanStatus": "在贷",
+    "riskLevel": "高风险",
+    "scoreHistory": [
+      {
+        "month": "2026-02",
+        "score": 60,
+        "cohortAvg": 72
+      },
+      {
+        "month": "2026-03",
+        "score": 55,
+        "cohortAvg": 73
+      },
+      {
+        "month": "2026-04",
+        "score": 50,
+        "cohortAvg": 72
+      },
+      {
+        "month": "2026-05",
+        "score": 45,
+        "cohortAvg": 73
+      },
+      {
+        "month": "2026-06",
+        "score": 40,
+        "cohortAvg": 72
+      },
+      {
+        "month": "2026-07",
+        "score": 35,
+        "cohortAvg": 73
+      }
+    ],
+    "alerts": [
+      {
+        "time": "2026-08-08",
+        "level": "RED",
+        "scene": "贷中风控",
+        "ruleName": "近7天征信查询≥5次",
+        "metricValue": 7,
+        "threshold": 5,
+        "status": "处置中"
+      }
+    ],
+    "disposes": [
+      {
+        "time": "2026-07",
+        "operator": "风控专员-张三",
+        "action": "降额",
+        "result": "已执行降额",
+        "note": "按处置策略自动生成"
+      }
+    ],
+    "relations": [
+      {
+        "id": "C0010-r0",
+        "name": "中联供应链",
+        "rel": "法人",
+        "type": "company",
+        "risk": "高危"
+      },
+      {
+        "id": "C0010-r1",
+        "name": "鼎盛贸易",
+        "rel": "法人",
+        "type": "company"
+      },
+      {
+        "id": "C0010-r2",
+        "name": "IMEI-8695002002",
+        "rel": "设备",
+        "type": "device"
+      },
+      {
+        "id": "C0010-r3",
+        "name": "王*强",
+        "rel": "共借人",
+        "type": "person",
+        "risk": "关注"
+      }
+    ],
+    "riskDims": [
+      {
+        "dim": "负债",
+        "score": 64
+      },
+      {
+        "dim": "多头",
+        "score": 71
+      },
+      {
+        "dim": "欺诈",
+        "score": 78
+      },
+      {
+        "dim": "司法",
+        "score": 85
+      },
+      {
+        "dim": "行为",
+        "score": 92
+      },
+      {
+        "dim": "舆情",
+        "score": 69
+      }
+    ],
+    "creditReport": {
+      "queries": [
+        {
+          "month": "2026-03",
+          "count": 4,
+          "institutions": [
+            "D平台贷",
+            "F消金"
+          ]
+        },
+        {
+          "month": "2026-04",
+          "count": 5,
+          "institutions": [
+            "E银行",
+            "A银行"
+          ]
+        },
+        {
+          "month": "2026-05",
+          "count": 4,
+          "institutions": [
+            "F消金",
+            "B消费金融"
+          ]
+        },
+        {
+          "month": "2026-06",
+          "count": 4,
+          "institutions": [
+            "A银行",
+            "C小贷"
+          ]
+        },
+        {
+          "month": "2026-07",
+          "count": 5,
+          "institutions": [
+            "B消费金融",
+            "D平台贷"
+          ]
+        },
+        {
+          "month": "2026-08",
+          "count": 4,
+          "institutions": [
+            "C小贷",
+            "E银行"
+          ]
+        }
+      ],
+      "accounts": [
+        {
+          "institution": "本行",
+          "type": "信用贷",
+          "limit": 198000,
+          "balance": 123572,
+          "status": "正常",
+          "openDate": "2025-04-19"
+        },
+        {
+          "institution": "E银行",
+          "type": "消费贷",
+          "limit": 50000,
+          "balance": 12000,
+          "status": "逾期",
+          "openDate": "2025-07-19"
+        },
+        {
+          "institution": "A银行",
+          "type": "信用卡",
+          "limit": 50000,
+          "balance": 12000,
+          "status": "正常",
+          "openDate": "2024-10-19"
+        }
+      ],
+      "overdues": [
+        {
+          "date": "2026-06-12",
+          "institution": "E银行",
+          "days": 8,
+          "amount": 3200
+        },
+        {
+          "date": "2026-04-03",
+          "institution": "A银行",
+          "days": 3,
+          "amount": 3000
+        }
+      ],
+      "guaranties": [
+        {
+          "org": "杭州*峰商贸",
+          "amount": 500000,
+          "remain": 350000
+        }
+      ]
+    },
+    "income": {
+      "monthIncome": 15500,
+      "monthRepay": 10298,
+      "dti": 66,
+      "debtTotal": 183572,
+      "assetTotal": 990000,
+      "liabilityRatio": 19
+    },
+    "collaterals": [],
+    "guarantors": [],
+    "fundFlow": {
+      "purpose": "经营周转",
+      "riskFlag": "疑似回流",
+      "flows": [
+        {
+          "date": "2026-07-15",
+          "amount": 49429,
+          "to": "供应商 A（对公）",
+          "note": "货款结算",
+          "risk": "正常"
+        },
+        {
+          "date": "2026-07-16",
+          "amount": 37072,
+          "to": "供应商 B（对公）",
+          "note": "货款结算",
+          "risk": "正常"
+        },
+        {
+          "date": "2026-07-18",
+          "amount": 24714,
+          "to": "个人账户 王**",
+          "note": "大额转个人",
+          "risk": "疑似回流"
+        },
+        {
+          "date": "2026-07-22",
+          "amount": 12357,
+          "to": "经营场所租金",
+          "note": "租金支付",
+          "risk": "正常"
+        }
+      ]
+    },
+    "blacklist": {
+      "hits": [
+        {
+          "list": "网贷黑名单",
+          "matched": "手机号命中",
+          "date": "2026-06-20",
+          "score": 86
+        },
+        {
+          "list": "反欺诈名单",
+          "matched": "设备关联欺诈用户",
+          "date": "2026-07-02",
+          "score": 78
+        }
+      ],
+      "fraudTags": [
+        "设备聚集",
+        "深夜申请"
+      ],
+      "riskScore": 82
+    }
+  },
+  {
+    "custId": "C0002",
+    "name": "李*华",
+    "idCard": "3301**********5678",
+    "product": "消费贷",
+    "creditLine": 50000,
+    "loanBalance": 18000,
+    "loanStatus": "在贷",
+    "riskLevel": "中风险",
+    "scoreHistory": [
+      {
+        "month": "2026-02",
+        "score": 55,
+        "cohortAvg": 74
+      },
+      {
+        "month": "2026-03",
+        "score": 54,
+        "cohortAvg": 74
+      },
+      {
+        "month": "2026-04",
+        "score": 56,
+        "cohortAvg": 73
+      },
+      {
+        "month": "2026-05",
+        "score": 53,
+        "cohortAvg": 72
+      },
+      {
+        "month": "2026-06",
+        "score": 52,
+        "cohortAvg": 72
+      },
+      {
+        "month": "2026-07",
+        "score": 52,
+        "cohortAvg": 71
+      }
+    ],
+    "alerts": [
+      {
+        "time": "2026-08-04",
+        "level": "YELLOW",
+        "scene": "设备异常",
+        "ruleName": "7日内更换设备",
+        "metricValue": 2,
+        "threshold": 1,
+        "status": "待处置"
+      }
+    ],
+    "disposes": [],
+    "relations": [
+      {
+        "id": "C0002-r0",
+        "name": "鼎盛贸易",
+        "rel": "法人",
+        "type": "company"
+      },
+      {
+        "id": "C0002-r1",
+        "name": "旭日投资",
+        "rel": "法人",
+        "type": "company"
+      },
+      {
+        "id": "C0002-r2",
+        "name": "IMEI-8695003002",
+        "rel": "设备",
+        "type": "device"
+      },
+      {
+        "id": "C0002-rc",
+        "name": "张先生",
+        "rel": "紧急联系人",
+        "type": "contact"
+      }
+    ],
+    "riskDims": [
+      {
+        "dim": "负债",
+        "score": 41
+      },
+      {
+        "dim": "多头",
+        "score": 48
+      },
+      {
+        "dim": "欺诈",
+        "score": 55
+      },
+      {
+        "dim": "司法",
+        "score": 62
+      },
+      {
+        "dim": "行为",
+        "score": 69
+      },
+      {
+        "dim": "舆情",
+        "score": 46
+      }
+    ],
+    "creditReport": {
+      "queries": [
+        {
+          "month": "2026-03",
+          "count": 2,
+          "institutions": [
+            "A银行",
+            "C小贷"
+          ]
+        },
+        {
+          "month": "2026-04",
+          "count": 2,
+          "institutions": [
+            "B消费金融",
+            "D平台贷"
+          ]
+        },
+        {
+          "month": "2026-05",
+          "count": 2,
+          "institutions": [
+            "C小贷",
+            "E银行"
+          ]
+        },
+        {
+          "month": "2026-06",
+          "count": 3,
+          "institutions": [
+            "D平台贷",
+            "F消金"
+          ]
+        },
+        {
+          "month": "2026-07",
+          "count": 2,
+          "institutions": [
+            "E银行",
+            "A银行"
+          ]
+        },
+        {
+          "month": "2026-08",
+          "count": 2,
+          "institutions": [
+            "F消金",
+            "B消费金融"
+          ]
+        }
+      ],
+      "accounts": [
+        {
+          "institution": "本行",
+          "type": "消费贷",
+          "limit": 50000,
+          "balance": 18000,
+          "status": "正常",
+          "openDate": "2025-01-10"
+        },
+        {
+          "institution": "B消费金融",
+          "type": "消费贷",
+          "limit": 80000,
+          "balance": 12000,
+          "status": "正常",
+          "openDate": "2025-04-10"
+        },
+        {
+          "institution": "D平台贷",
+          "type": "信用卡",
+          "limit": 20000,
+          "balance": 14000,
+          "status": "正常",
+          "openDate": "2024-07-10"
+        }
+      ],
+      "overdues": [
+        {
+          "date": "2026-05-20",
+          "institution": "D平台贷",
+          "days": 2,
+          "amount": 800
+        }
+      ],
+      "guaranties": [
+        {
+          "org": "杭州*华商贸",
+          "amount": 800000,
+          "remain": 200000
+        }
+      ]
+    },
+    "income": {
+      "monthIncome": 17000,
+      "monthRepay": 750,
+      "dti": 4,
+      "debtTotal": 98000,
+      "assetTotal": 100000,
+      "liabilityRatio": 95
+    },
+    "collaterals": [],
+    "guarantors": [],
+    "fundFlow": {
+      "purpose": "经营周转",
+      "riskFlag": "正常",
+      "flows": [
+        {
+          "date": "2026-07-15",
+          "amount": 7200,
+          "to": "供应商 A（对公）",
+          "note": "货款结算",
+          "risk": "正常"
+        },
+        {
+          "date": "2026-07-16",
+          "amount": 5400,
+          "to": "供应商 B（对公）",
+          "note": "货款结算",
+          "risk": "正常"
+        },
+        {
+          "date": "2026-07-22",
+          "amount": 1800,
+          "to": "经营场所租金",
+          "note": "租金支付",
+          "risk": "正常"
+        }
+      ]
+    },
+    "blacklist": {
+      "hits": [
+        {
+          "list": "观察名单",
+          "matched": "IP 段聚集",
+          "date": "2026-07-10",
+          "score": 52
+        }
+      ],
+      "fraudTags": [
+        "资料频繁修改"
+      ],
+      "riskScore": 45
+    }
+  },
+  {
+    "custId": "C0005",
     "name": "陈*敏",
-    "rel": "共借人",
-    "type": "person",
-    "risk": "关注"
-   }
-  ],
-  "riskDims": [
-   {
-    "dim": "负债",
-    "score": 62
-   },
-   {
-    "dim": "多头",
-    "score": 69
-   },
-   {
-    "dim": "欺诈",
-    "score": 76
-   },
-   {
-    "dim": "司法",
-    "score": 83
-   },
-   {
-    "dim": "行为",
-    "score": 90
-   },
-   {
-    "dim": "舆情",
-    "score": 67
-   }
-  ],
-  "creditReport": {
-   "queries": [
-    {
-     "month": "2026-03",
-     "count": 4,
-     "institutions": [
-      "D平台贷",
-      "F消金"
-     ]
+    "idCard": "3301**********7890",
+    "product": "消费贷",
+    "creditLine": 30000,
+    "loanBalance": 9000,
+    "loanStatus": "在贷",
+    "riskLevel": "中风险",
+    "scoreHistory": [
+      {
+        "month": "2026-02",
+        "score": 60,
+        "cohortAvg": 74
+      },
+      {
+        "month": "2026-03",
+        "score": 61,
+        "cohortAvg": 74
+      },
+      {
+        "month": "2026-04",
+        "score": 60,
+        "cohortAvg": 73
+      },
+      {
+        "month": "2026-05",
+        "score": 61,
+        "cohortAvg": 72
+      },
+      {
+        "month": "2026-06",
+        "score": 61,
+        "cohortAvg": 72
+      },
+      {
+        "month": "2026-07",
+        "score": 61,
+        "cohortAvg": 71
+      }
+    ],
+    "alerts": [
+      {
+        "time": "2026-08-03",
+        "level": "YELLOW",
+        "scene": "还款能力",
+        "ruleName": "临期余额不足",
+        "metricValue": 1,
+        "threshold": 0,
+        "status": "待处置"
+      }
+    ],
+    "disposes": [],
+    "relations": [
+      {
+        "id": "C0005-r0",
+        "name": "旭日投资",
+        "rel": "法人",
+        "type": "company"
+      },
+      {
+        "id": "C0005-r1",
+        "name": "华信商贸",
+        "rel": "法人",
+        "type": "company"
+      },
+      {
+        "id": "C0005-r2",
+        "name": "IMEI-8695004002",
+        "rel": "设备",
+        "type": "device"
+      },
+      {
+        "id": "C0005-rc",
+        "name": "刘女士",
+        "rel": "紧急联系人",
+        "type": "contact"
+      }
+    ],
+    "riskDims": [
+      {
+        "dim": "负债",
+        "score": 42
+      },
+      {
+        "dim": "多头",
+        "score": 49
+      },
+      {
+        "dim": "欺诈",
+        "score": 56
+      },
+      {
+        "dim": "司法",
+        "score": 63
+      },
+      {
+        "dim": "行为",
+        "score": 70
+      },
+      {
+        "dim": "舆情",
+        "score": 47
+      }
+    ],
+    "creditReport": {
+      "queries": [
+        {
+          "month": "2026-03",
+          "count": 3,
+          "institutions": [
+            "B消费金融",
+            "D平台贷"
+          ]
+        },
+        {
+          "month": "2026-04",
+          "count": 2,
+          "institutions": [
+            "C小贷",
+            "E银行"
+          ]
+        },
+        {
+          "month": "2026-05",
+          "count": 2,
+          "institutions": [
+            "D平台贷",
+            "F消金"
+          ]
+        },
+        {
+          "month": "2026-06",
+          "count": 2,
+          "institutions": [
+            "E银行",
+            "A银行"
+          ]
+        },
+        {
+          "month": "2026-07",
+          "count": 3,
+          "institutions": [
+            "F消金",
+            "B消费金融"
+          ]
+        },
+        {
+          "month": "2026-08",
+          "count": 2,
+          "institutions": [
+            "A银行",
+            "C小贷"
+          ]
+        }
+      ],
+      "accounts": [
+        {
+          "institution": "本行",
+          "type": "消费贷",
+          "limit": 30000,
+          "balance": 9000,
+          "status": "正常",
+          "openDate": "2025-02-02"
+        },
+        {
+          "institution": "C小贷",
+          "type": "消费贷",
+          "limit": 90000,
+          "balance": 17000,
+          "status": "正常",
+          "openDate": "2025-05-02"
+        },
+        {
+          "institution": "E银行",
+          "type": "信用卡",
+          "limit": 30000,
+          "balance": 8000,
+          "status": "正常",
+          "openDate": "2024-08-02"
+        }
+      ],
+      "overdues": [
+        {
+          "date": "2026-05-20",
+          "institution": "E银行",
+          "days": 2,
+          "amount": 1100
+        }
+      ],
+      "guaranties": [
+        {
+          "org": "杭州*敏商贸",
+          "amount": 900000,
+          "remain": 250000
+        }
+      ]
     },
-    {
-     "month": "2026-04",
-     "count": 5,
-     "institutions": [
-      "E银行",
-      "A银行"
-     ]
+    "income": {
+      "monthIncome": 17500,
+      "monthRepay": 375,
+      "dti": 2,
+      "debtTotal": 29000,
+      "assetTotal": 90000,
+      "liabilityRatio": 32
     },
-    {
-     "month": "2026-05",
-     "count": 6,
-     "institutions": [
-      "F消金",
-      "B消费金融"
-     ]
+    "collaterals": [],
+    "guarantors": [],
+    "fundFlow": {
+      "purpose": "经营周转",
+      "riskFlag": "正常",
+      "flows": [
+        {
+          "date": "2026-07-15",
+          "amount": 3600,
+          "to": "供应商 A（对公）",
+          "note": "货款结算",
+          "risk": "正常"
+        },
+        {
+          "date": "2026-07-16",
+          "amount": 2700,
+          "to": "供应商 B（对公）",
+          "note": "货款结算",
+          "risk": "正常"
+        },
+        {
+          "date": "2026-07-22",
+          "amount": 900,
+          "to": "经营场所租金",
+          "note": "租金支付",
+          "risk": "正常"
+        }
+      ]
     },
-    {
-     "month": "2026-06",
-     "count": 6,
-     "institutions": [
-      "A银行",
-      "C小贷"
-     ]
-    },
-    {
-     "month": "2026-07",
-     "count": 5,
-     "institutions": [
-      "B消费金融",
-      "D平台贷"
-     ]
-    },
-    {
-     "month": "2026-08",
-     "count": 6,
-     "institutions": [
-      "C小贷",
-      "E银行"
-     ]
+    "blacklist": {
+      "hits": [
+        {
+          "list": "观察名单",
+          "matched": "IP 段聚集",
+          "date": "2026-07-10",
+          "score": 52
+        }
+      ],
+      "fraudTags": [
+        "资料频繁修改"
+      ],
+      "riskScore": 45
     }
-   ],
-   "accounts": [
-    {
-     "institution": "本行",
-     "type": "信用贷",
-     "limit": 80000,
-     "balance": 42000,
-     "status": "正常",
-     "openDate": "2025-10-07"
-    },
-    {
-     "institution": "E银行",
-     "type": "消费贷",
-     "limit": 50000,
-     "balance": 42000,
-     "status": "逾期",
-     "openDate": "2025-01-07"
-    },
-    {
-     "institution": "A银行",
-     "type": "信用卡",
-     "limit": 30000,
-     "balance": 16000,
-     "status": "正常",
-     "openDate": "2024-04-07"
-    }
-   ],
-   "overdues": [
-    {
-     "date": "2026-06-12",
-     "institution": "E银行",
-     "days": 8,
-     "amount": 3200
-    },
-    {
-     "date": "2026-04-03",
-     "institution": "A银行",
-     "days": 3,
-     "amount": 2000
-    }
-   ],
-   "guaranties": [
-    {
-     "org": "杭州*明商贸",
-     "amount": 500000,
-     "remain": 250000
-    }
-   ]
   },
-  "income": {
-   "monthIncome": 15500,
-   "monthRepay": 3500,
-   "dti": 23,
-   "debtTotal": 142000,
-   "assetTotal": 240000,
-   "liabilityRatio": 59
-  },
-  "collaterals": [],
-  "guarantors": [],
-  "fundFlow": {
-   "purpose": "经营周转",
-   "riskFlag": "疑似回流",
-   "flows": [
-    {
-     "date": "2026-07-15",
-     "amount": 16800,
-     "to": "供应商 A（对公）",
-     "note": "货款结算",
-     "risk": "正常"
+  {
+    "custId": "C0011",
+    "name": "许*文",
+    "idCard": "3301**********2222",
+    "product": "经营贷",
+    "creditLine": 171000,
+    "loanBalance": 71197,
+    "loanStatus": "在贷",
+    "riskLevel": "中风险",
+    "scoreHistory": [
+      {
+        "month": "2026-02",
+        "score": 70,
+        "cohortAvg": 72
+      },
+      {
+        "month": "2026-03",
+        "score": 69,
+        "cohortAvg": 73
+      },
+      {
+        "month": "2026-04",
+        "score": 68,
+        "cohortAvg": 72
+      },
+      {
+        "month": "2026-05",
+        "score": 67,
+        "cohortAvg": 73
+      },
+      {
+        "month": "2026-06",
+        "score": 66,
+        "cohortAvg": 72
+      },
+      {
+        "month": "2026-07",
+        "score": 65,
+        "cohortAvg": 73
+      }
+    ],
+    "alerts": [
+      {
+        "time": "2026-08-08",
+        "level": "YELLOW",
+        "scene": "贷中风控",
+        "ruleName": "历史还款日延迟≥2天",
+        "metricValue": 2,
+        "threshold": 1,
+        "status": "处置中"
+      }
+    ],
+    "disposes": [
+      {
+        "time": "2026-07",
+        "operator": "风控专员-张三",
+        "action": "关注",
+        "result": "已纳入观察",
+        "note": "按处置策略自动生成"
+      }
+    ],
+    "relations": [
+      {
+        "id": "C0011-r0",
+        "name": "华信商贸",
+        "rel": "法人",
+        "type": "company"
+      },
+      {
+        "id": "C0011-r1",
+        "name": "恒达科技",
+        "rel": "法人",
+        "type": "company"
+      },
+      {
+        "id": "C0011-r2",
+        "name": "IMEI-8695005002",
+        "rel": "设备",
+        "type": "device"
+      },
+      {
+        "id": "C0011-rc",
+        "name": "陈先生",
+        "rel": "紧急联系人",
+        "type": "contact"
+      }
+    ],
+    "riskDims": [
+      {
+        "dim": "负债",
+        "score": 38
+      },
+      {
+        "dim": "多头",
+        "score": 45
+      },
+      {
+        "dim": "欺诈",
+        "score": 52
+      },
+      {
+        "dim": "司法",
+        "score": 59
+      },
+      {
+        "dim": "行为",
+        "score": 66
+      },
+      {
+        "dim": "舆情",
+        "score": 43
+      }
+    ],
+    "creditReport": {
+      "queries": [
+        {
+          "month": "2026-03",
+          "count": 3,
+          "institutions": [
+            "E银行",
+            "A银行"
+          ]
+        },
+        {
+          "month": "2026-04",
+          "count": 4,
+          "institutions": [
+            "F消金",
+            "B消费金融"
+          ]
+        },
+        {
+          "month": "2026-05",
+          "count": 3,
+          "institutions": [
+            "A银行",
+            "C小贷"
+          ]
+        },
+        {
+          "month": "2026-06",
+          "count": 4,
+          "institutions": [
+            "B消费金融",
+            "D平台贷"
+          ]
+        },
+        {
+          "month": "2026-07",
+          "count": 4,
+          "institutions": [
+            "C小贷",
+            "E银行"
+          ]
+        },
+        {
+          "month": "2026-08",
+          "count": 3,
+          "institutions": [
+            "D平台贷",
+            "F消金"
+          ]
+        }
+      ],
+      "accounts": [
+        {
+          "institution": "本行",
+          "type": "经营贷",
+          "limit": 171000,
+          "balance": 71197,
+          "status": "正常",
+          "openDate": "2025-05-11"
+        },
+        {
+          "institution": "F消金",
+          "type": "消费贷",
+          "limit": 60000,
+          "balance": 17000,
+          "status": "正常",
+          "openDate": "2025-08-11"
+        },
+        {
+          "institution": "B消费金融",
+          "type": "信用卡",
+          "limit": 20000,
+          "balance": 6000,
+          "status": "正常",
+          "openDate": "2024-11-11"
+        }
+      ],
+      "overdues": [
+        {
+          "date": "2026-05-20",
+          "institution": "B消费金融",
+          "days": 2,
+          "amount": 800
+        }
+      ],
+      "guaranties": [
+        {
+          "org": "杭州*文商贸",
+          "amount": 600000,
+          "remain": 200000
+        }
+      ]
     },
-    {
-     "date": "2026-07-16",
-     "amount": 12600,
-     "to": "供应商 B（对公）",
-     "note": "货款结算",
-     "risk": "正常"
+    "income": {
+      "monthIncome": 16000,
+      "monthRepay": 2967,
+      "dti": 19,
+      "debtTotal": 71197,
+      "assetTotal": 342000,
+      "liabilityRatio": 21
     },
-    {
-     "date": "2026-07-18",
-     "amount": 8400,
-     "to": "个人账户 王**",
-     "note": "大额转个人",
-     "risk": "疑似回流"
+    "collaterals": [
+      {
+        "type": "房产",
+        "name": "住宅抵押（滨江）",
+        "valuation": 1900000,
+        "loanAmount": 171000,
+        "ratio": 9,
+        "status": "足值"
+      }
+    ],
+    "guarantors": [
+      {
+        "name": "李*丽",
+        "relation": "配偶",
+        "credit": "征信正常"
+      }
+    ],
+    "business": {
+      "companyName": "宁波*文商贸有限公司",
+      "industry": "批发零售",
+      "monthRevenue": 460000,
+      "taxMonthly": 22000,
+      "invoiceYear": 6800000,
+      "employees": 19,
+      "operateYears": 2,
+      "accountBalance": 240000
     },
-    {
-     "date": "2026-07-22",
-     "amount": 4200,
-     "to": "经营场所租金",
-     "note": "租金支付",
-     "risk": "正常"
+    "fundFlow": {
+      "purpose": "经营周转",
+      "riskFlag": "正常",
+      "flows": [
+        {
+          "date": "2026-07-15",
+          "amount": 28479,
+          "to": "供应商 A（对公）",
+          "note": "货款结算",
+          "risk": "正常"
+        },
+        {
+          "date": "2026-07-16",
+          "amount": 21359,
+          "to": "供应商 B（对公）",
+          "note": "货款结算",
+          "risk": "正常"
+        },
+        {
+          "date": "2026-07-22",
+          "amount": 7120,
+          "to": "经营场所租金",
+          "note": "租金支付",
+          "risk": "正常"
+        }
+      ]
+    },
+    "blacklist": {
+      "hits": [
+        {
+          "list": "观察名单",
+          "matched": "IP 段聚集",
+          "date": "2026-07-10",
+          "score": 52
+        }
+      ],
+      "fraudTags": [
+        "资料频繁修改"
+      ],
+      "riskScore": 45
     }
-   ]
   },
-  "blacklist": {
-   "hits": [
-    {
-     "list": "网贷黑名单",
-     "matched": "手机号命中",
-     "date": "2026-06-20",
-     "score": 86
+  {
+    "custId": "C0004",
+    "name": "赵*强",
+    "idCard": "3301**********3456",
+    "product": "经营贷",
+    "creditLine": 200000,
+    "loanBalance": 156000,
+    "loanStatus": "在贷",
+    "riskLevel": "高风险",
+    "scoreHistory": [
+      {
+        "month": "2026-02",
+        "score": 50,
+        "cohortAvg": 74
+      },
+      {
+        "month": "2026-03",
+        "score": 45,
+        "cohortAvg": 74
+      },
+      {
+        "month": "2026-04",
+        "score": 41,
+        "cohortAvg": 73
+      },
+      {
+        "month": "2026-05",
+        "score": 36,
+        "cohortAvg": 72
+      },
+      {
+        "month": "2026-06",
+        "score": 31,
+        "cohortAvg": 72
+      },
+      {
+        "month": "2026-07",
+        "score": 28,
+        "cohortAvg": 71
+      }
+    ],
+    "alerts": [
+      {
+        "time": "2026-07-25",
+        "level": "RED",
+        "scene": "司法涉诉",
+        "ruleName": "新增被执行记录",
+        "metricValue": 1,
+        "threshold": 0,
+        "status": "处置中"
+      },
+      {
+        "time": "2026-08-04",
+        "level": "RED",
+        "scene": "司法涉诉",
+        "ruleName": "新增被执行记录",
+        "metricValue": 1,
+        "threshold": 0,
+        "status": "待处置"
+      }
+    ],
+    "disposes": [
+      {
+        "time": "2026-07-26",
+        "operator": "李四",
+        "action": "冻结额度",
+        "result": "已冻结全部可用额度",
+        "note": "待评估"
+      }
+    ],
+    "relations": [
+      {
+        "id": "C0004-r0",
+        "name": "恒达科技",
+        "rel": "法人",
+        "type": "company",
+        "risk": "高危"
+      },
+      {
+        "id": "C0004-r1",
+        "name": "中联供应链",
+        "rel": "法人",
+        "type": "company"
+      },
+      {
+        "id": "C0004-r2",
+        "name": "IMEI-8695006002",
+        "rel": "设备",
+        "type": "device"
+      },
+      {
+        "id": "C0004-r3",
+        "name": "刘*华",
+        "rel": "共借人",
+        "type": "person",
+        "risk": "关注"
+      }
+    ],
+    "riskDims": [
+      {
+        "dim": "负债",
+        "score": 63
+      },
+      {
+        "dim": "多头",
+        "score": 70
+      },
+      {
+        "dim": "欺诈",
+        "score": 77
+      },
+      {
+        "dim": "司法",
+        "score": 84
+      },
+      {
+        "dim": "行为",
+        "score": 91
+      },
+      {
+        "dim": "舆情",
+        "score": 68
+      }
+    ],
+    "creditReport": {
+      "queries": [
+        {
+          "month": "2026-03",
+          "count": 6,
+          "institutions": [
+            "C小贷",
+            "E银行"
+          ]
+        },
+        {
+          "month": "2026-04",
+          "count": 5,
+          "institutions": [
+            "D平台贷",
+            "F消金"
+          ]
+        },
+        {
+          "month": "2026-05",
+          "count": 4,
+          "institutions": [
+            "E银行",
+            "A银行"
+          ]
+        },
+        {
+          "month": "2026-06",
+          "count": 5,
+          "institutions": [
+            "F消金",
+            "B消费金融"
+          ]
+        },
+        {
+          "month": "2026-07",
+          "count": 6,
+          "institutions": [
+            "A银行",
+            "C小贷"
+          ]
+        },
+        {
+          "month": "2026-08",
+          "count": 5,
+          "institutions": [
+            "B消费金融",
+            "D平台贷"
+          ]
+        }
+      ],
+      "accounts": [
+        {
+          "institution": "本行",
+          "type": "经营贷",
+          "limit": 200000,
+          "balance": 156000,
+          "status": "正常",
+          "openDate": "2025-03-21"
+        },
+        {
+          "institution": "D平台贷",
+          "type": "消费贷",
+          "limit": 50000,
+          "balance": 22000,
+          "status": "逾期",
+          "openDate": "2025-06-21"
+        },
+        {
+          "institution": "F消金",
+          "type": "信用卡",
+          "limit": 40000,
+          "balance": 18000,
+          "status": "正常",
+          "openDate": "2024-09-21"
+        }
+      ],
+      "overdues": [
+        {
+          "date": "2026-06-12",
+          "institution": "D平台贷",
+          "days": 8,
+          "amount": 3200
+        },
+        {
+          "date": "2026-04-03",
+          "institution": "F消金",
+          "days": 3,
+          "amount": 2500
+        }
+      ],
+      "guaranties": [
+        {
+          "org": "杭州*强商贸",
+          "amount": 500000,
+          "remain": 300000
+        }
+      ]
     },
-    {
-     "list": "反欺诈名单",
-     "matched": "设备关联欺诈用户",
-     "date": "2026-07-02",
-     "score": 78
+    "income": {
+      "monthIncome": 18000,
+      "monthRepay": 13000,
+      "dti": 72,
+      "debtTotal": 276000,
+      "assetTotal": 800000,
+      "liabilityRatio": 35
+    },
+    "collaterals": [
+      {
+        "type": "房产",
+        "name": "住宅抵押（拱墅）",
+        "valuation": 2000000,
+        "loanAmount": 200000,
+        "ratio": 10,
+        "status": "足值"
+      },
+      {
+        "type": "车辆",
+        "name": "浙A·5070 轿车",
+        "valuation": 180000,
+        "loanAmount": 120000,
+        "ratio": 67,
+        "status": "足值"
+      }
+    ],
+    "guarantors": [
+      {
+        "name": "王*强",
+        "relation": "配偶",
+        "credit": "征信正常"
+      },
+      {
+        "name": "赵*军",
+        "relation": "股东",
+        "credit": "征信有 1 笔逾期"
+      }
+    ],
+    "business": {
+      "companyName": "绍兴*强商贸有限公司",
+      "industry": "餐饮",
+      "monthRevenue": 800000,
+      "taxMonthly": 26000,
+      "invoiceYear": 7500000,
+      "employees": 28,
+      "operateYears": 8,
+      "accountBalance": 180000
+    },
+    "fundFlow": {
+      "purpose": "经营周转",
+      "riskFlag": "疑似回流",
+      "flows": [
+        {
+          "date": "2026-07-15",
+          "amount": 62400,
+          "to": "供应商 A（对公）",
+          "note": "货款结算",
+          "risk": "正常"
+        },
+        {
+          "date": "2026-07-16",
+          "amount": 46800,
+          "to": "供应商 B（对公）",
+          "note": "货款结算",
+          "risk": "正常"
+        },
+        {
+          "date": "2026-07-18",
+          "amount": 31200,
+          "to": "个人账户 王**",
+          "note": "大额转个人",
+          "risk": "疑似回流"
+        },
+        {
+          "date": "2026-07-22",
+          "amount": 15600,
+          "to": "经营场所租金",
+          "note": "租金支付",
+          "risk": "正常"
+        }
+      ]
+    },
+    "blacklist": {
+      "hits": [
+        {
+          "list": "网贷黑名单",
+          "matched": "手机号命中",
+          "date": "2026-06-20",
+          "score": 86
+        },
+        {
+          "list": "反欺诈名单",
+          "matched": "设备关联欺诈用户",
+          "date": "2026-07-02",
+          "score": 78
+        }
+      ],
+      "fraudTags": [
+        "设备聚集",
+        "深夜申请"
+      ],
+      "riskScore": 82
     }
-   ],
-   "fraudTags": [
-    "设备聚集",
-    "深夜申请"
-   ],
-   "riskScore": 82
+  },
+  {
+    "custId": "C0012",
+    "name": "韩*磊",
+    "idCard": "3301**********4444",
+    "product": "分期贷",
+    "creditLine": 119000,
+    "loanBalance": 47456,
+    "loanStatus": "在贷",
+    "riskLevel": "中风险",
+    "scoreHistory": [
+      {
+        "month": "2026-02",
+        "score": 70,
+        "cohortAvg": 72
+      },
+      {
+        "month": "2026-03",
+        "score": 69,
+        "cohortAvg": 73
+      },
+      {
+        "month": "2026-04",
+        "score": 68,
+        "cohortAvg": 72
+      },
+      {
+        "month": "2026-05",
+        "score": 67,
+        "cohortAvg": 73
+      },
+      {
+        "month": "2026-06",
+        "score": 66,
+        "cohortAvg": 72
+      },
+      {
+        "month": "2026-07",
+        "score": 65,
+        "cohortAvg": 73
+      }
+    ],
+    "alerts": [
+      {
+        "time": "2026-08-08",
+        "level": "YELLOW",
+        "scene": "贷中风控",
+        "ruleName": "新增开庭公告",
+        "metricValue": 1,
+        "threshold": 0,
+        "status": "处置中"
+      }
+    ],
+    "disposes": [
+      {
+        "time": "2026-07",
+        "operator": "风控专员-张三",
+        "action": "关注",
+        "result": "已纳入观察",
+        "note": "按处置策略自动生成"
+      }
+    ],
+    "relations": [
+      {
+        "id": "C0012-r0",
+        "name": "中联供应链",
+        "rel": "法人",
+        "type": "company"
+      },
+      {
+        "id": "C0012-r1",
+        "name": "鼎盛贸易",
+        "rel": "法人",
+        "type": "company"
+      },
+      {
+        "id": "C0012-r2",
+        "name": "IMEI-8695007002",
+        "rel": "设备",
+        "type": "device"
+      },
+      {
+        "id": "C0012-rc",
+        "name": "刘女士",
+        "rel": "紧急联系人",
+        "type": "contact"
+      }
+    ],
+    "riskDims": [
+      {
+        "dim": "负债",
+        "score": 40
+      },
+      {
+        "dim": "多头",
+        "score": 47
+      },
+      {
+        "dim": "欺诈",
+        "score": 54
+      },
+      {
+        "dim": "司法",
+        "score": 61
+      },
+      {
+        "dim": "行为",
+        "score": 68
+      },
+      {
+        "dim": "舆情",
+        "score": 45
+      }
+    ],
+    "creditReport": {
+      "queries": [
+        {
+          "month": "2026-03",
+          "count": 3,
+          "institutions": [
+            "B消费金融",
+            "D平台贷"
+          ]
+        },
+        {
+          "month": "2026-04",
+          "count": 2,
+          "institutions": [
+            "C小贷",
+            "E银行"
+          ]
+        },
+        {
+          "month": "2026-05",
+          "count": 2,
+          "institutions": [
+            "D平台贷",
+            "F消金"
+          ]
+        },
+        {
+          "month": "2026-06",
+          "count": 2,
+          "institutions": [
+            "E银行",
+            "A银行"
+          ]
+        },
+        {
+          "month": "2026-07",
+          "count": 2,
+          "institutions": [
+            "F消金",
+            "B消费金融"
+          ]
+        },
+        {
+          "month": "2026-08",
+          "count": 2,
+          "institutions": [
+            "A银行",
+            "C小贷"
+          ]
+        }
+      ],
+      "accounts": [
+        {
+          "institution": "本行",
+          "type": "分期贷",
+          "limit": 119000,
+          "balance": 47456,
+          "status": "正常",
+          "openDate": "2025-02-08"
+        },
+        {
+          "institution": "C小贷",
+          "type": "消费贷",
+          "limit": 80000,
+          "balance": 47000,
+          "status": "正常",
+          "openDate": "2025-05-08"
+        },
+        {
+          "institution": "E银行",
+          "type": "信用卡",
+          "limit": 30000,
+          "balance": 8000,
+          "status": "正常",
+          "openDate": "2024-08-08"
+        }
+      ],
+      "overdues": [
+        {
+          "date": "2026-05-20",
+          "institution": "E银行",
+          "days": 2,
+          "amount": 1100
+        }
+      ],
+      "guaranties": [
+        {
+          "org": "杭州*磊商贸",
+          "amount": 800000,
+          "remain": 250000
+        }
+      ]
+    },
+    "income": {
+      "monthIncome": 14500,
+      "monthRepay": 1977,
+      "dti": 14,
+      "debtTotal": 67456,
+      "assetTotal": 357000,
+      "liabilityRatio": 19
+    },
+    "collaterals": [],
+    "guarantors": [],
+    "fundFlow": {
+      "purpose": "经营周转",
+      "riskFlag": "正常",
+      "flows": [
+        {
+          "date": "2026-07-15",
+          "amount": 18982,
+          "to": "供应商 A（对公）",
+          "note": "货款结算",
+          "risk": "正常"
+        },
+        {
+          "date": "2026-07-16",
+          "amount": 14237,
+          "to": "供应商 B（对公）",
+          "note": "货款结算",
+          "risk": "正常"
+        },
+        {
+          "date": "2026-07-22",
+          "amount": 4746,
+          "to": "经营场所租金",
+          "note": "租金支付",
+          "risk": "正常"
+        }
+      ]
+    },
+    "blacklist": {
+      "hits": [
+        {
+          "list": "观察名单",
+          "matched": "IP 段聚集",
+          "date": "2026-07-10",
+          "score": 52
+        }
+      ],
+      "fraudTags": [
+        "资料频繁修改"
+      ],
+      "riskScore": 45
+    }
+  },
+  {
+    "custId": "C0008",
+    "name": "吴*军",
+    "idCard": "3301**********5555",
+    "product": "消费贷",
+    "creditLine": 112000,
+    "loanBalance": 52444,
+    "loanStatus": "在贷",
+    "riskLevel": "高风险",
+    "scoreHistory": [
+      {
+        "month": "2026-02",
+        "score": 60,
+        "cohortAvg": 72
+      },
+      {
+        "month": "2026-03",
+        "score": 55,
+        "cohortAvg": 73
+      },
+      {
+        "month": "2026-04",
+        "score": 50,
+        "cohortAvg": 72
+      },
+      {
+        "month": "2026-05",
+        "score": 45,
+        "cohortAvg": 73
+      },
+      {
+        "month": "2026-06",
+        "score": 40,
+        "cohortAvg": 72
+      },
+      {
+        "month": "2026-07",
+        "score": 35,
+        "cohortAvg": 73
+      }
+    ],
+    "alerts": [
+      {
+        "time": "2026-08-08",
+        "level": "RED",
+        "scene": "贷中风控",
+        "ruleName": "关联企业经营异常",
+        "metricValue": 1,
+        "threshold": 0,
+        "status": "处置中"
+      }
+    ],
+    "disposes": [
+      {
+        "time": "2026-07",
+        "operator": "风控专员-张三",
+        "action": "降额",
+        "result": "已执行降额",
+        "note": "按处置策略自动生成"
+      }
+    ],
+    "relations": [
+      {
+        "id": "C0008-r0",
+        "name": "鼎盛贸易",
+        "rel": "法人",
+        "type": "company",
+        "risk": "高危"
+      },
+      {
+        "id": "C0008-r1",
+        "name": "旭日投资",
+        "rel": "法人",
+        "type": "company"
+      },
+      {
+        "id": "C0008-r2",
+        "name": "IMEI-8695008002",
+        "rel": "设备",
+        "type": "device"
+      },
+      {
+        "id": "C0008-r3",
+        "name": "李*丽",
+        "rel": "共借人",
+        "type": "person",
+        "risk": "关注"
+      }
+    ],
+    "riskDims": [
+      {
+        "dim": "负债",
+        "score": 65
+      },
+      {
+        "dim": "多头",
+        "score": 72
+      },
+      {
+        "dim": "欺诈",
+        "score": 79
+      },
+      {
+        "dim": "司法",
+        "score": 86
+      },
+      {
+        "dim": "行为",
+        "score": 93
+      },
+      {
+        "dim": "舆情",
+        "score": 70
+      }
+    ],
+    "creditReport": {
+      "queries": [
+        {
+          "month": "2026-03",
+          "count": 6,
+          "institutions": [
+            "C小贷",
+            "E银行"
+          ]
+        },
+        {
+          "month": "2026-04",
+          "count": 5,
+          "institutions": [
+            "D平台贷",
+            "F消金"
+          ]
+        },
+        {
+          "month": "2026-05",
+          "count": 4,
+          "institutions": [
+            "E银行",
+            "A银行"
+          ]
+        },
+        {
+          "month": "2026-06",
+          "count": 4,
+          "institutions": [
+            "F消金",
+            "B消费金融"
+          ]
+        },
+        {
+          "month": "2026-07",
+          "count": 5,
+          "institutions": [
+            "A银行",
+            "C小贷"
+          ]
+        },
+        {
+          "month": "2026-08",
+          "count": 6,
+          "institutions": [
+            "B消费金融",
+            "D平台贷"
+          ]
+        }
+      ],
+      "accounts": [
+        {
+          "institution": "本行",
+          "type": "消费贷",
+          "limit": 112000,
+          "balance": 52444,
+          "status": "正常",
+          "openDate": "2025-03-09"
+        },
+        {
+          "institution": "D平台贷",
+          "type": "消费贷",
+          "limit": 80000,
+          "balance": 52000,
+          "status": "逾期",
+          "openDate": "2025-06-09"
+        },
+        {
+          "institution": "F消金",
+          "type": "信用卡",
+          "limit": 40000,
+          "balance": 10000,
+          "status": "正常",
+          "openDate": "2024-09-09"
+        }
+      ],
+      "overdues": [
+        {
+          "date": "2026-06-12",
+          "institution": "D平台贷",
+          "days": 8,
+          "amount": 6200
+        },
+        {
+          "date": "2026-04-03",
+          "institution": "F消金",
+          "days": 3,
+          "amount": 2500
+        }
+      ],
+      "guaranties": [
+        {
+          "org": "杭州*军商贸",
+          "amount": 800000,
+          "remain": 300000
+        }
+      ]
+    },
+    "income": {
+      "monthIncome": 12000,
+      "monthRepay": 4370,
+      "dti": 36,
+      "debtTotal": 92444,
+      "assetTotal": 448000,
+      "liabilityRatio": 21
+    },
+    "collaterals": [],
+    "guarantors": [],
+    "fundFlow": {
+      "purpose": "经营周转",
+      "riskFlag": "疑似回流",
+      "flows": [
+        {
+          "date": "2026-07-15",
+          "amount": 20978,
+          "to": "供应商 A（对公）",
+          "note": "货款结算",
+          "risk": "正常"
+        },
+        {
+          "date": "2026-07-16",
+          "amount": 15733,
+          "to": "供应商 B（对公）",
+          "note": "货款结算",
+          "risk": "正常"
+        },
+        {
+          "date": "2026-07-18",
+          "amount": 10489,
+          "to": "个人账户 王**",
+          "note": "大额转个人",
+          "risk": "疑似回流"
+        },
+        {
+          "date": "2026-07-22",
+          "amount": 5244,
+          "to": "经营场所租金",
+          "note": "租金支付",
+          "risk": "正常"
+        }
+      ]
+    },
+    "blacklist": {
+      "hits": [
+        {
+          "list": "网贷黑名单",
+          "matched": "手机号命中",
+          "date": "2026-06-20",
+          "score": 86
+        },
+        {
+          "list": "反欺诈名单",
+          "matched": "设备关联欺诈用户",
+          "date": "2026-07-02",
+          "score": 78
+        }
+      ],
+      "fraudTags": [
+        "设备聚集",
+        "深夜申请"
+      ],
+      "riskScore": 82
+    }
+  },
+  {
+    "custId": "C0013",
+    "name": "曹*刚",
+    "idCard": "3301**********6666",
+    "product": "信用贷",
+    "creditLine": 33000,
+    "loanBalance": 19199,
+    "loanStatus": "在贷",
+    "riskLevel": "中风险",
+    "scoreHistory": [
+      {
+        "month": "2026-02",
+        "score": 70,
+        "cohortAvg": 72
+      },
+      {
+        "month": "2026-03",
+        "score": 69,
+        "cohortAvg": 73
+      },
+      {
+        "month": "2026-04",
+        "score": 68,
+        "cohortAvg": 72
+      },
+      {
+        "month": "2026-05",
+        "score": 67,
+        "cohortAvg": 73
+      },
+      {
+        "month": "2026-06",
+        "score": 66,
+        "cohortAvg": 72
+      },
+      {
+        "month": "2026-07",
+        "score": 65,
+        "cohortAvg": 73
+      }
+    ],
+    "alerts": [
+      {
+        "time": "2026-08-08",
+        "level": "YELLOW",
+        "scene": "贷中风控",
+        "ruleName": "担保企业出现逾期",
+        "metricValue": 2,
+        "threshold": 1,
+        "status": "处置中"
+      }
+    ],
+    "disposes": [
+      {
+        "time": "2026-07",
+        "operator": "风控专员-张三",
+        "action": "关注",
+        "result": "已纳入观察",
+        "note": "按处置策略自动生成"
+      }
+    ],
+    "relations": [
+      {
+        "id": "C0013-r0",
+        "name": "旭日投资",
+        "rel": "法人",
+        "type": "company"
+      },
+      {
+        "id": "C0013-r1",
+        "name": "华信商贸",
+        "rel": "法人",
+        "type": "company"
+      },
+      {
+        "id": "C0013-r2",
+        "name": "IMEI-8695009002",
+        "rel": "设备",
+        "type": "device"
+      },
+      {
+        "id": "C0013-rc",
+        "name": "张先生",
+        "rel": "紧急联系人",
+        "type": "contact"
+      }
+    ],
+    "riskDims": [
+      {
+        "dim": "负债",
+        "score": 42
+      },
+      {
+        "dim": "多头",
+        "score": 49
+      },
+      {
+        "dim": "欺诈",
+        "score": 56
+      },
+      {
+        "dim": "司法",
+        "score": 63
+      },
+      {
+        "dim": "行为",
+        "score": 70
+      },
+      {
+        "dim": "舆情",
+        "score": 47
+      }
+    ],
+    "creditReport": {
+      "queries": [
+        {
+          "month": "2026-03",
+          "count": 4,
+          "institutions": [
+            "C小贷",
+            "E银行"
+          ]
+        },
+        {
+          "month": "2026-04",
+          "count": 3,
+          "institutions": [
+            "D平台贷",
+            "F消金"
+          ]
+        },
+        {
+          "month": "2026-05",
+          "count": 2,
+          "institutions": [
+            "E银行",
+            "A银行"
+          ]
+        },
+        {
+          "month": "2026-06",
+          "count": 3,
+          "institutions": [
+            "F消金",
+            "B消费金融"
+          ]
+        },
+        {
+          "month": "2026-07",
+          "count": 2,
+          "institutions": [
+            "A银行",
+            "C小贷"
+          ]
+        },
+        {
+          "month": "2026-08",
+          "count": 2,
+          "institutions": [
+            "B消费金融",
+            "D平台贷"
+          ]
+        }
+      ],
+      "accounts": [
+        {
+          "institution": "本行",
+          "type": "信用贷",
+          "limit": 33000,
+          "balance": 19199,
+          "status": "正常",
+          "openDate": "2025-03-27"
+        },
+        {
+          "institution": "D平台贷",
+          "type": "消费贷",
+          "limit": 90000,
+          "balance": 52000,
+          "status": "正常",
+          "openDate": "2025-06-27"
+        },
+        {
+          "institution": "F消金",
+          "type": "信用卡",
+          "limit": 40000,
+          "balance": 18000,
+          "status": "正常",
+          "openDate": "2024-09-27"
+        }
+      ],
+      "overdues": [
+        {
+          "date": "2026-05-20",
+          "institution": "F消金",
+          "days": 2,
+          "amount": 1400
+        }
+      ],
+      "guaranties": [
+        {
+          "org": "杭州*刚商贸",
+          "amount": 900000,
+          "remain": 300000
+        }
+      ]
+    },
+    "income": {
+      "monthIncome": 15000,
+      "monthRepay": 800,
+      "dti": 5,
+      "debtTotal": 139199,
+      "assetTotal": 132000,
+      "liabilityRatio": 95
+    },
+    "collaterals": [],
+    "guarantors": [],
+    "fundFlow": {
+      "purpose": "经营周转",
+      "riskFlag": "正常",
+      "flows": [
+        {
+          "date": "2026-07-15",
+          "amount": 7680,
+          "to": "供应商 A（对公）",
+          "note": "货款结算",
+          "risk": "正常"
+        },
+        {
+          "date": "2026-07-16",
+          "amount": 5760,
+          "to": "供应商 B（对公）",
+          "note": "货款结算",
+          "risk": "正常"
+        },
+        {
+          "date": "2026-07-22",
+          "amount": 1920,
+          "to": "经营场所租金",
+          "note": "租金支付",
+          "risk": "正常"
+        }
+      ]
+    },
+    "blacklist": {
+      "hits": [
+        {
+          "list": "观察名单",
+          "matched": "IP 段聚集",
+          "date": "2026-07-10",
+          "score": 52
+        }
+      ],
+      "fraudTags": [
+        "资料频繁修改"
+      ],
+      "riskScore": 45
+    }
+  },
+  {
+    "custId": "C0014",
+    "name": "唐*霞",
+    "idCard": "3301**********1234",
+    "product": "消费贷",
+    "creditLine": 73000,
+    "loanBalance": 48511,
+    "loanStatus": "在贷",
+    "riskLevel": "中风险",
+    "scoreHistory": [
+      {
+        "month": "2026-02",
+        "score": 70,
+        "cohortAvg": 72
+      },
+      {
+        "month": "2026-03",
+        "score": 69,
+        "cohortAvg": 73
+      },
+      {
+        "month": "2026-04",
+        "score": 68,
+        "cohortAvg": 72
+      },
+      {
+        "month": "2026-05",
+        "score": 67,
+        "cohortAvg": 73
+      },
+      {
+        "month": "2026-06",
+        "score": 66,
+        "cohortAvg": 72
+      },
+      {
+        "month": "2026-07",
+        "score": 65,
+        "cohortAvg": 73
+      }
+    ],
+    "alerts": [
+      {
+        "time": "2026-08-08",
+        "level": "YELLOW",
+        "scene": "反欺诈监测",
+        "ruleName": "新设备深夜登录",
+        "metricValue": 1,
+        "threshold": 0,
+        "status": "处置中"
+      }
+    ],
+    "disposes": [
+      {
+        "time": "2026-07",
+        "operator": "风控专员-张三",
+        "action": "关注",
+        "result": "已纳入观察",
+        "note": "按处置策略自动生成"
+      }
+    ],
+    "relations": [
+      {
+        "id": "C0014-r0",
+        "name": "华信商贸",
+        "rel": "法人",
+        "type": "company"
+      },
+      {
+        "id": "C0014-r1",
+        "name": "恒达科技",
+        "rel": "法人",
+        "type": "company"
+      },
+      {
+        "id": "C0014-r2",
+        "name": "IMEI-8695010002",
+        "rel": "设备",
+        "type": "device"
+      },
+      {
+        "id": "C0014-rc",
+        "name": "刘女士",
+        "rel": "紧急联系人",
+        "type": "contact"
+      }
+    ],
+    "riskDims": [
+      {
+        "dim": "负债",
+        "score": 38
+      },
+      {
+        "dim": "多头",
+        "score": 45
+      },
+      {
+        "dim": "欺诈",
+        "score": 52
+      },
+      {
+        "dim": "司法",
+        "score": 59
+      },
+      {
+        "dim": "行为",
+        "score": 66
+      },
+      {
+        "dim": "舆情",
+        "score": 43
+      }
+    ],
+    "creditReport": {
+      "queries": [
+        {
+          "month": "2026-03",
+          "count": 4,
+          "institutions": [
+            "F消金",
+            "B消费金融"
+          ]
+        },
+        {
+          "month": "2026-04",
+          "count": 4,
+          "institutions": [
+            "A银行",
+            "C小贷"
+          ]
+        },
+        {
+          "month": "2026-05",
+          "count": 4,
+          "institutions": [
+            "B消费金融",
+            "D平台贷"
+          ]
+        },
+        {
+          "month": "2026-06",
+          "count": 4,
+          "institutions": [
+            "C小贷",
+            "E银行"
+          ]
+        },
+        {
+          "month": "2026-07",
+          "count": 3,
+          "institutions": [
+            "D平台贷",
+            "F消金"
+          ]
+        },
+        {
+          "month": "2026-08",
+          "count": 4,
+          "institutions": [
+            "E银行",
+            "A银行"
+          ]
+        }
+      ],
+      "accounts": [
+        {
+          "institution": "本行",
+          "type": "消费贷",
+          "limit": 73000,
+          "balance": 48511,
+          "status": "正常",
+          "openDate": "2025-12-24"
+        },
+        {
+          "institution": "A银行",
+          "type": "消费贷",
+          "limit": 60000,
+          "balance": 37000,
+          "status": "正常",
+          "openDate": "2025-03-24"
+        },
+        {
+          "institution": "C小贷",
+          "type": "信用卡",
+          "limit": 50000,
+          "balance": 20000,
+          "status": "正常",
+          "openDate": "2024-06-24"
+        }
+      ],
+      "overdues": [
+        {
+          "date": "2026-05-20",
+          "institution": "C小贷",
+          "days": 2,
+          "amount": 1700
+        }
+      ],
+      "guaranties": [
+        {
+          "org": "杭州*霞商贸",
+          "amount": 600000,
+          "remain": 350000
+        }
+      ]
+    },
+    "income": {
+      "monthIncome": 13500,
+      "monthRepay": 2021,
+      "dti": 15,
+      "debtTotal": 188511,
+      "assetTotal": 365000,
+      "liabilityRatio": 52
+    },
+    "collaterals": [],
+    "guarantors": [],
+    "fundFlow": {
+      "purpose": "经营周转",
+      "riskFlag": "正常",
+      "flows": [
+        {
+          "date": "2026-07-15",
+          "amount": 19404,
+          "to": "供应商 A（对公）",
+          "note": "货款结算",
+          "risk": "正常"
+        },
+        {
+          "date": "2026-07-16",
+          "amount": 14553,
+          "to": "供应商 B（对公）",
+          "note": "货款结算",
+          "risk": "正常"
+        },
+        {
+          "date": "2026-07-22",
+          "amount": 4851,
+          "to": "经营场所租金",
+          "note": "租金支付",
+          "risk": "正常"
+        }
+      ]
+    },
+    "blacklist": {
+      "hits": [
+        {
+          "list": "观察名单",
+          "matched": "IP 段聚集",
+          "date": "2026-07-10",
+          "score": 52
+        }
+      ],
+      "fraudTags": [
+        "资料频繁修改"
+      ],
+      "riskScore": 45
+    }
+  },
+  {
+    "custId": "C0015",
+    "name": "冯*军",
+    "idCard": "3301**********5678",
+    "product": "经营贷",
+    "creditLine": 189000,
+    "loanBalance": 127339,
+    "loanStatus": "在贷",
+    "riskLevel": "中风险",
+    "scoreHistory": [
+      {
+        "month": "2026-02",
+        "score": 70,
+        "cohortAvg": 72
+      },
+      {
+        "month": "2026-03",
+        "score": 69,
+        "cohortAvg": 73
+      },
+      {
+        "month": "2026-04",
+        "score": 68,
+        "cohortAvg": 72
+      },
+      {
+        "month": "2026-05",
+        "score": 67,
+        "cohortAvg": 73
+      },
+      {
+        "month": "2026-06",
+        "score": 66,
+        "cohortAvg": 72
+      },
+      {
+        "month": "2026-07",
+        "score": 65,
+        "cohortAvg": 73
+      }
+    ],
+    "alerts": [
+      {
+        "time": "2026-08-08",
+        "level": "YELLOW",
+        "scene": "反欺诈监测",
+        "ruleName": "资料与历史申请冲突",
+        "metricValue": 1,
+        "threshold": 0,
+        "status": "处置中"
+      }
+    ],
+    "disposes": [
+      {
+        "time": "2026-07",
+        "operator": "风控专员-张三",
+        "action": "关注",
+        "result": "已纳入观察",
+        "note": "按处置策略自动生成"
+      }
+    ],
+    "relations": [
+      {
+        "id": "C0015-r0",
+        "name": "恒达科技",
+        "rel": "法人",
+        "type": "company"
+      },
+      {
+        "id": "C0015-r1",
+        "name": "中联供应链",
+        "rel": "法人",
+        "type": "company"
+      },
+      {
+        "id": "C0015-r2",
+        "name": "IMEI-8695011002",
+        "rel": "设备",
+        "type": "device"
+      },
+      {
+        "id": "C0015-rc",
+        "name": "陈先生",
+        "rel": "紧急联系人",
+        "type": "contact"
+      }
+    ],
+    "riskDims": [
+      {
+        "dim": "负债",
+        "score": 39
+      },
+      {
+        "dim": "多头",
+        "score": 46
+      },
+      {
+        "dim": "欺诈",
+        "score": 53
+      },
+      {
+        "dim": "司法",
+        "score": 60
+      },
+      {
+        "dim": "行为",
+        "score": 67
+      },
+      {
+        "dim": "舆情",
+        "score": 44
+      }
+    ],
+    "creditReport": {
+      "queries": [
+        {
+          "month": "2026-03",
+          "count": 2,
+          "institutions": [
+            "A银行",
+            "C小贷"
+          ]
+        },
+        {
+          "month": "2026-04",
+          "count": 2,
+          "institutions": [
+            "B消费金融",
+            "D平台贷"
+          ]
+        },
+        {
+          "month": "2026-05",
+          "count": 2,
+          "institutions": [
+            "C小贷",
+            "E银行"
+          ]
+        },
+        {
+          "month": "2026-06",
+          "count": 3,
+          "institutions": [
+            "D平台贷",
+            "F消金"
+          ]
+        },
+        {
+          "month": "2026-07",
+          "count": 4,
+          "institutions": [
+            "E银行",
+            "A银行"
+          ]
+        },
+        {
+          "month": "2026-08",
+          "count": 4,
+          "institutions": [
+            "F消金",
+            "B消费金融"
+          ]
+        }
+      ],
+      "accounts": [
+        {
+          "institution": "本行",
+          "type": "经营贷",
+          "limit": 189000,
+          "balance": 127339,
+          "status": "正常",
+          "openDate": "2025-01-16"
+        },
+        {
+          "institution": "B消费金融",
+          "type": "消费贷",
+          "limit": 70000,
+          "balance": 42000,
+          "status": "正常",
+          "openDate": "2025-04-16"
+        },
+        {
+          "institution": "D平台贷",
+          "type": "信用卡",
+          "limit": 20000,
+          "balance": 14000,
+          "status": "正常",
+          "openDate": "2024-07-16"
+        }
+      ],
+      "overdues": [
+        {
+          "date": "2026-05-20",
+          "institution": "D平台贷",
+          "days": 2,
+          "amount": 800
+        }
+      ],
+      "guaranties": [
+        {
+          "org": "杭州*军商贸",
+          "amount": 700000,
+          "remain": 200000
+        }
+      ]
+    },
+    "income": {
+      "monthIncome": 14000,
+      "monthRepay": 5306,
+      "dti": 38,
+      "debtTotal": 207339,
+      "assetTotal": 378000,
+      "liabilityRatio": 55
+    },
+    "collaterals": [
+      {
+        "type": "房产",
+        "name": "住宅抵押（城西）",
+        "valuation": 2400000,
+        "loanAmount": 189000,
+        "ratio": 8,
+        "status": "足值"
+      }
+    ],
+    "guarantors": [
+      {
+        "name": "赵*军",
+        "relation": "配偶",
+        "credit": "征信正常"
+      }
+    ],
+    "business": {
+      "companyName": "杭州*军商贸有限公司",
+      "industry": "批发零售",
+      "monthRevenue": 420000,
+      "taxMonthly": 18000,
+      "invoiceYear": 6600000,
+      "employees": 20,
+      "operateYears": 6,
+      "accountBalance": 200000
+    },
+    "fundFlow": {
+      "purpose": "经营周转",
+      "riskFlag": "正常",
+      "flows": [
+        {
+          "date": "2026-07-15",
+          "amount": 50936,
+          "to": "供应商 A（对公）",
+          "note": "货款结算",
+          "risk": "正常"
+        },
+        {
+          "date": "2026-07-16",
+          "amount": 38202,
+          "to": "供应商 B（对公）",
+          "note": "货款结算",
+          "risk": "正常"
+        },
+        {
+          "date": "2026-07-22",
+          "amount": 12734,
+          "to": "经营场所租金",
+          "note": "租金支付",
+          "risk": "正常"
+        }
+      ]
+    },
+    "blacklist": {
+      "hits": [
+        {
+          "list": "观察名单",
+          "matched": "IP 段聚集",
+          "date": "2026-07-10",
+          "score": 52
+        }
+      ],
+      "fraudTags": [
+        "资料频繁修改"
+      ],
+      "riskScore": 45
+    }
+  },
+  {
+    "custId": "C0003",
+    "name": "王*芳",
+    "idCard": "3301**********9012",
+    "product": "信用贷",
+    "creditLine": 100000,
+    "loanBalance": 35000,
+    "loanStatus": "在贷",
+    "riskLevel": "低风险",
+    "scoreHistory": [
+      {
+        "month": "2026-02",
+        "score": 76,
+        "cohortAvg": 74
+      },
+      {
+        "month": "2026-03",
+        "score": 77,
+        "cohortAvg": 74
+      },
+      {
+        "month": "2026-04",
+        "score": 76,
+        "cohortAvg": 73
+      },
+      {
+        "month": "2026-05",
+        "score": 78,
+        "cohortAvg": 72
+      },
+      {
+        "month": "2026-06",
+        "score": 78,
+        "cohortAvg": 72
+      },
+      {
+        "month": "2026-07",
+        "score": 78,
+        "cohortAvg": 71
+      }
+    ],
+    "alerts": [
+      {
+        "time": "2026-08-02",
+        "level": "OPPORTUNITY",
+        "scene": "需求上升",
+        "ruleName": "额度使用率>80%",
+        "metricValue": 88,
+        "threshold": 80,
+        "status": "待处置"
+      }
+    ],
+    "disposes": [],
+    "relations": [
+      {
+        "id": "C0003-r0",
+        "name": "中联供应链",
+        "rel": "法人",
+        "type": "company"
+      },
+      {
+        "id": "C0003-r1",
+        "name": "鼎盛贸易",
+        "rel": "法人",
+        "type": "company"
+      }
+    ],
+    "riskDims": [
+      {
+        "dim": "负债",
+        "score": 14
+      },
+      {
+        "dim": "多头",
+        "score": 21
+      },
+      {
+        "dim": "欺诈",
+        "score": 28
+      },
+      {
+        "dim": "司法",
+        "score": 35
+      },
+      {
+        "dim": "行为",
+        "score": 42
+      },
+      {
+        "dim": "舆情",
+        "score": 19
+      }
+    ],
+    "creditReport": {
+      "queries": [
+        {
+          "month": "2026-03",
+          "count": 2,
+          "institutions": [
+            "F消金",
+            "B消费金融"
+          ]
+        },
+        {
+          "month": "2026-04",
+          "count": 2,
+          "institutions": [
+            "A银行",
+            "C小贷"
+          ]
+        },
+        {
+          "month": "2026-05",
+          "count": 2,
+          "institutions": [
+            "B消费金融",
+            "D平台贷"
+          ]
+        },
+        {
+          "month": "2026-06",
+          "count": 2,
+          "institutions": [
+            "C小贷",
+            "E银行"
+          ]
+        },
+        {
+          "month": "2026-07",
+          "count": 2,
+          "institutions": [
+            "D平台贷",
+            "F消金"
+          ]
+        },
+        {
+          "month": "2026-08",
+          "count": 2,
+          "institutions": [
+            "E银行",
+            "A银行"
+          ]
+        }
+      ],
+      "accounts": [
+        {
+          "institution": "本行",
+          "type": "信用贷",
+          "limit": 100000,
+          "balance": 35000,
+          "status": "正常",
+          "openDate": "2025-12-18"
+        },
+        {
+          "institution": "A银行",
+          "type": "消费贷",
+          "limit": 70000,
+          "balance": 52000,
+          "status": "正常",
+          "openDate": "2025-03-18"
+        },
+        {
+          "institution": "C小贷",
+          "type": "信用卡",
+          "limit": 50000,
+          "balance": 20000,
+          "status": "正常",
+          "openDate": "2024-06-18"
+        }
+      ],
+      "overdues": [],
+      "guaranties": []
+    },
+    "income": {
+      "monthIncome": 16500,
+      "monthRepay": 1458,
+      "dti": 9,
+      "debtTotal": 175000,
+      "assetTotal": 500000,
+      "liabilityRatio": 35
+    },
+    "collaterals": [],
+    "guarantors": [],
+    "fundFlow": {
+      "purpose": "经营周转",
+      "riskFlag": "正常",
+      "flows": [
+        {
+          "date": "2026-07-15",
+          "amount": 14000,
+          "to": "供应商 A（对公）",
+          "note": "货款结算",
+          "risk": "正常"
+        },
+        {
+          "date": "2026-07-16",
+          "amount": 10500,
+          "to": "供应商 B（对公）",
+          "note": "货款结算",
+          "risk": "正常"
+        },
+        {
+          "date": "2026-07-22",
+          "amount": 3500,
+          "to": "经营场所租金",
+          "note": "租金支付",
+          "risk": "正常"
+        }
+      ]
+    },
+    "blacklist": {
+      "hits": [],
+      "fraudTags": [],
+      "riskScore": 12
+    }
+  },
+  {
+    "custId": "C0016",
+    "name": "邓*平",
+    "idCard": "3301**********3456",
+    "product": "分期贷",
+    "creditLine": 138000,
+    "loanBalance": 108299,
+    "loanStatus": "在贷",
+    "riskLevel": "中风险",
+    "scoreHistory": [
+      {
+        "month": "2026-02",
+        "score": 70,
+        "cohortAvg": 72
+      },
+      {
+        "month": "2026-03",
+        "score": 69,
+        "cohortAvg": 73
+      },
+      {
+        "month": "2026-04",
+        "score": 68,
+        "cohortAvg": 72
+      },
+      {
+        "month": "2026-05",
+        "score": 67,
+        "cohortAvg": 73
+      },
+      {
+        "month": "2026-06",
+        "score": 66,
+        "cohortAvg": 72
+      },
+      {
+        "month": "2026-07",
+        "score": 65,
+        "cohortAvg": 73
+      }
+    ],
+    "alerts": [
+      {
+        "time": "2026-08-08",
+        "level": "YELLOW",
+        "scene": "贷中风控",
+        "ruleName": "临期余额不足",
+        "metricValue": 1,
+        "threshold": 0,
+        "status": "处置中"
+      }
+    ],
+    "disposes": [
+      {
+        "time": "2026-07",
+        "operator": "风控专员-张三",
+        "action": "关注",
+        "result": "已纳入观察",
+        "note": "按处置策略自动生成"
+      }
+    ],
+    "relations": [
+      {
+        "id": "C0016-r0",
+        "name": "鼎盛贸易",
+        "rel": "法人",
+        "type": "company"
+      },
+      {
+        "id": "C0016-r1",
+        "name": "旭日投资",
+        "rel": "法人",
+        "type": "company"
+      },
+      {
+        "id": "C0016-r2",
+        "name": "IMEI-8695013002",
+        "rel": "设备",
+        "type": "device"
+      },
+      {
+        "id": "C0016-rc",
+        "name": "刘女士",
+        "rel": "紧急联系人",
+        "type": "contact"
+      }
+    ],
+    "riskDims": [
+      {
+        "dim": "负债",
+        "score": 41
+      },
+      {
+        "dim": "多头",
+        "score": 48
+      },
+      {
+        "dim": "欺诈",
+        "score": 55
+      },
+      {
+        "dim": "司法",
+        "score": 62
+      },
+      {
+        "dim": "行为",
+        "score": 69
+      },
+      {
+        "dim": "舆情",
+        "score": 46
+      }
+    ],
+    "creditReport": {
+      "queries": [
+        {
+          "month": "2026-03",
+          "count": 2,
+          "institutions": [
+            "D平台贷",
+            "F消金"
+          ]
+        },
+        {
+          "month": "2026-04",
+          "count": 3,
+          "institutions": [
+            "E银行",
+            "A银行"
+          ]
+        },
+        {
+          "month": "2026-05",
+          "count": 4,
+          "institutions": [
+            "F消金",
+            "B消费金融"
+          ]
+        },
+        {
+          "month": "2026-06",
+          "count": 4,
+          "institutions": [
+            "A银行",
+            "C小贷"
+          ]
+        },
+        {
+          "month": "2026-07",
+          "count": 4,
+          "institutions": [
+            "B消费金融",
+            "D平台贷"
+          ]
+        },
+        {
+          "month": "2026-08",
+          "count": 3,
+          "institutions": [
+            "C小贷",
+            "E银行"
+          ]
+        }
+      ],
+      "accounts": [
+        {
+          "institution": "本行",
+          "type": "分期贷",
+          "limit": 138000,
+          "balance": 108299,
+          "status": "正常",
+          "openDate": "2025-10-13"
+        },
+        {
+          "institution": "E银行",
+          "type": "消费贷",
+          "limit": 90000,
+          "balance": 27000,
+          "status": "正常",
+          "openDate": "2025-01-13"
+        },
+        {
+          "institution": "A银行",
+          "type": "信用卡",
+          "limit": 30000,
+          "balance": 16000,
+          "status": "正常",
+          "openDate": "2024-04-13"
+        }
+      ],
+      "overdues": [
+        {
+          "date": "2026-05-20",
+          "institution": "A银行",
+          "days": 2,
+          "amount": 1100
+        }
+      ],
+      "guaranties": [
+        {
+          "org": "杭州*平商贸",
+          "amount": 900000,
+          "remain": 250000
+        }
+      ]
+    },
+    "income": {
+      "monthIncome": 12500,
+      "monthRepay": 4512,
+      "dti": 36,
+      "debtTotal": 208299,
+      "assetTotal": 414000,
+      "liabilityRatio": 50
+    },
+    "collaterals": [],
+    "guarantors": [],
+    "fundFlow": {
+      "purpose": "经营周转",
+      "riskFlag": "正常",
+      "flows": [
+        {
+          "date": "2026-07-15",
+          "amount": 43320,
+          "to": "供应商 A（对公）",
+          "note": "货款结算",
+          "risk": "正常"
+        },
+        {
+          "date": "2026-07-16",
+          "amount": 32490,
+          "to": "供应商 B（对公）",
+          "note": "货款结算",
+          "risk": "正常"
+        },
+        {
+          "date": "2026-07-22",
+          "amount": 10830,
+          "to": "经营场所租金",
+          "note": "租金支付",
+          "risk": "正常"
+        }
+      ]
+    },
+    "blacklist": {
+      "hits": [
+        {
+          "list": "观察名单",
+          "matched": "IP 段聚集",
+          "date": "2026-07-10",
+          "score": 52
+        }
+      ],
+      "fraudTags": [
+        "资料频繁修改"
+      ],
+      "riskScore": 45
+    }
+  },
+  {
+    "custId": "C0017",
+    "name": "曾*琳",
+    "idCard": "3301**********7890",
+    "product": "消费贷",
+    "creditLine": 172000,
+    "loanBalance": 93742,
+    "loanStatus": "在贷",
+    "riskLevel": "中风险",
+    "scoreHistory": [
+      {
+        "month": "2026-02",
+        "score": 70,
+        "cohortAvg": 72
+      },
+      {
+        "month": "2026-03",
+        "score": 69,
+        "cohortAvg": 73
+      },
+      {
+        "month": "2026-04",
+        "score": 68,
+        "cohortAvg": 72
+      },
+      {
+        "month": "2026-05",
+        "score": 67,
+        "cohortAvg": 73
+      },
+      {
+        "month": "2026-06",
+        "score": 66,
+        "cohortAvg": 72
+      },
+      {
+        "month": "2026-07",
+        "score": 65,
+        "cohortAvg": 73
+      }
+    ],
+    "alerts": [
+      {
+        "time": "2026-08-08",
+        "level": "YELLOW",
+        "scene": "贷后催收",
+        "ruleName": "电话拒接≥3次",
+        "metricValue": 3,
+        "threshold": 2,
+        "status": "处置中"
+      }
+    ],
+    "disposes": [
+      {
+        "time": "2026-07",
+        "operator": "风控专员-张三",
+        "action": "关注",
+        "result": "已纳入观察",
+        "note": "按处置策略自动生成"
+      }
+    ],
+    "relations": [
+      {
+        "id": "C0017-r0",
+        "name": "旭日投资",
+        "rel": "法人",
+        "type": "company"
+      },
+      {
+        "id": "C0017-r1",
+        "name": "华信商贸",
+        "rel": "法人",
+        "type": "company"
+      },
+      {
+        "id": "C0017-r2",
+        "name": "IMEI-8695014002",
+        "rel": "设备",
+        "type": "device"
+      },
+      {
+        "id": "C0017-rc",
+        "name": "陈先生",
+        "rel": "紧急联系人",
+        "type": "contact"
+      }
+    ],
+    "riskDims": [
+      {
+        "dim": "负债",
+        "score": 42
+      },
+      {
+        "dim": "多头",
+        "score": 49
+      },
+      {
+        "dim": "欺诈",
+        "score": 56
+      },
+      {
+        "dim": "司法",
+        "score": 63
+      },
+      {
+        "dim": "行为",
+        "score": 70
+      },
+      {
+        "dim": "舆情",
+        "score": 47
+      }
+    ],
+    "creditReport": {
+      "queries": [
+        {
+          "month": "2026-03",
+          "count": 3,
+          "institutions": [
+            "E银行",
+            "A银行"
+          ]
+        },
+        {
+          "month": "2026-04",
+          "count": 4,
+          "institutions": [
+            "F消金",
+            "B消费金融"
+          ]
+        },
+        {
+          "month": "2026-05",
+          "count": 4,
+          "institutions": [
+            "A银行",
+            "C小贷"
+          ]
+        },
+        {
+          "month": "2026-06",
+          "count": 3,
+          "institutions": [
+            "B消费金融",
+            "D平台贷"
+          ]
+        },
+        {
+          "month": "2026-07",
+          "count": 2,
+          "institutions": [
+            "C小贷",
+            "E银行"
+          ]
+        },
+        {
+          "month": "2026-08",
+          "count": 3,
+          "institutions": [
+            "D平台贷",
+            "F消金"
+          ]
+        }
+      ],
+      "accounts": [
+        {
+          "institution": "本行",
+          "type": "消费贷",
+          "limit": 172000,
+          "balance": 93742,
+          "status": "正常",
+          "openDate": "2025-11-05"
+        },
+        {
+          "institution": "F消金",
+          "type": "消费贷",
+          "limit": 50000,
+          "balance": 32000,
+          "status": "正常",
+          "openDate": "2025-02-05"
+        },
+        {
+          "institution": "B消费金融",
+          "type": "信用卡",
+          "limit": 40000,
+          "balance": 10000,
+          "status": "正常",
+          "openDate": "2024-05-05"
+        }
+      ],
+      "overdues": [
+        {
+          "date": "2026-05-20",
+          "institution": "B消费金融",
+          "days": 2,
+          "amount": 1400
+        }
+      ],
+      "guaranties": [
+        {
+          "org": "杭州*琳商贸",
+          "amount": 500000,
+          "remain": 300000
+        }
+      ]
+    },
+    "income": {
+      "monthIncome": 13000,
+      "monthRepay": 3906,
+      "dti": 30,
+      "debtTotal": 133742,
+      "assetTotal": 688000,
+      "liabilityRatio": 19
+    },
+    "collaterals": [],
+    "guarantors": [],
+    "fundFlow": {
+      "purpose": "经营周转",
+      "riskFlag": "正常",
+      "flows": [
+        {
+          "date": "2026-07-15",
+          "amount": 37497,
+          "to": "供应商 A（对公）",
+          "note": "货款结算",
+          "risk": "正常"
+        },
+        {
+          "date": "2026-07-16",
+          "amount": 28123,
+          "to": "供应商 B（对公）",
+          "note": "货款结算",
+          "risk": "正常"
+        },
+        {
+          "date": "2026-07-22",
+          "amount": 9374,
+          "to": "经营场所租金",
+          "note": "租金支付",
+          "risk": "正常"
+        }
+      ]
+    },
+    "blacklist": {
+      "hits": [
+        {
+          "list": "观察名单",
+          "matched": "IP 段聚集",
+          "date": "2026-07-10",
+          "score": 52
+        }
+      ],
+      "fraudTags": [
+        "资料频繁修改"
+      ],
+      "riskScore": 45
+    }
+  },
+  {
+    "custId": "C0007",
+    "name": "周*伟",
+    "idCard": "3301**********2222",
+    "product": "分期贷",
+    "creditLine": 129000,
+    "loanBalance": 40775,
+    "loanStatus": "在贷",
+    "riskLevel": "高风险",
+    "scoreHistory": [
+      {
+        "month": "2026-02",
+        "score": 60,
+        "cohortAvg": 72
+      },
+      {
+        "month": "2026-03",
+        "score": 55,
+        "cohortAvg": 73
+      },
+      {
+        "month": "2026-04",
+        "score": 50,
+        "cohortAvg": 72
+      },
+      {
+        "month": "2026-05",
+        "score": 45,
+        "cohortAvg": 73
+      },
+      {
+        "month": "2026-06",
+        "score": 40,
+        "cohortAvg": 72
+      },
+      {
+        "month": "2026-07",
+        "score": 35,
+        "cohortAvg": 73
+      }
+    ],
+    "alerts": [
+      {
+        "time": "2026-08-08",
+        "level": "RED",
+        "scene": "贷中风控",
+        "ruleName": "涉借贷纠纷负面舆情",
+        "metricValue": 2,
+        "threshold": 1,
+        "status": "处置中"
+      }
+    ],
+    "disposes": [
+      {
+        "time": "2026-07",
+        "operator": "风控专员-张三",
+        "action": "降额",
+        "result": "已执行降额",
+        "note": "按处置策略自动生成"
+      }
+    ],
+    "relations": [
+      {
+        "id": "C0007-r0",
+        "name": "华信商贸",
+        "rel": "法人",
+        "type": "company",
+        "risk": "高危"
+      },
+      {
+        "id": "C0007-r1",
+        "name": "恒达科技",
+        "rel": "法人",
+        "type": "company"
+      },
+      {
+        "id": "C0007-r2",
+        "name": "IMEI-8695015002",
+        "rel": "设备",
+        "type": "device"
+      },
+      {
+        "id": "C0007-r3",
+        "name": "陈*敏",
+        "rel": "共借人",
+        "type": "person",
+        "risk": "关注"
+      }
+    ],
+    "riskDims": [
+      {
+        "dim": "负债",
+        "score": 62
+      },
+      {
+        "dim": "多头",
+        "score": 69
+      },
+      {
+        "dim": "欺诈",
+        "score": 76
+      },
+      {
+        "dim": "司法",
+        "score": 83
+      },
+      {
+        "dim": "行为",
+        "score": 90
+      },
+      {
+        "dim": "舆情",
+        "score": 67
+      }
+    ],
+    "creditReport": {
+      "queries": [
+        {
+          "month": "2026-03",
+          "count": 4,
+          "institutions": [
+            "D平台贷",
+            "F消金"
+          ]
+        },
+        {
+          "month": "2026-04",
+          "count": 5,
+          "institutions": [
+            "E银行",
+            "A银行"
+          ]
+        },
+        {
+          "month": "2026-05",
+          "count": 4,
+          "institutions": [
+            "F消金",
+            "B消费金融"
+          ]
+        },
+        {
+          "month": "2026-06",
+          "count": 4,
+          "institutions": [
+            "A银行",
+            "C小贷"
+          ]
+        },
+        {
+          "month": "2026-07",
+          "count": 4,
+          "institutions": [
+            "B消费金融",
+            "D平台贷"
+          ]
+        },
+        {
+          "month": "2026-08",
+          "count": 5,
+          "institutions": [
+            "C小贷",
+            "E银行"
+          ]
+        }
+      ],
+      "accounts": [
+        {
+          "institution": "本行",
+          "type": "分期贷",
+          "limit": 129000,
+          "balance": 40775,
+          "status": "正常",
+          "openDate": "2025-04-13"
+        },
+        {
+          "institution": "E银行",
+          "type": "消费贷",
+          "limit": 60000,
+          "balance": 27000,
+          "status": "逾期",
+          "openDate": "2025-07-13"
+        },
+        {
+          "institution": "A银行",
+          "type": "信用卡",
+          "limit": 50000,
+          "balance": 12000,
+          "status": "正常",
+          "openDate": "2024-10-13"
+        }
+      ],
+      "overdues": [
+        {
+          "date": "2026-06-12",
+          "institution": "E银行",
+          "days": 8,
+          "amount": 4200
+        },
+        {
+          "date": "2026-04-03",
+          "institution": "A银行",
+          "days": 3,
+          "amount": 3000
+        }
+      ],
+      "guaranties": [
+        {
+          "org": "杭州*伟商贸",
+          "amount": 600000,
+          "remain": 350000
+        }
+      ]
+    },
+    "income": {
+      "monthIncome": 18500,
+      "monthRepay": 3398,
+      "dti": 18,
+      "debtTotal": 100775,
+      "assetTotal": 645000,
+      "liabilityRatio": 16
+    },
+    "collaterals": [],
+    "guarantors": [],
+    "fundFlow": {
+      "purpose": "经营周转",
+      "riskFlag": "疑似回流",
+      "flows": [
+        {
+          "date": "2026-07-15",
+          "amount": 16310,
+          "to": "供应商 A（对公）",
+          "note": "货款结算",
+          "risk": "正常"
+        },
+        {
+          "date": "2026-07-16",
+          "amount": 12233,
+          "to": "供应商 B（对公）",
+          "note": "货款结算",
+          "risk": "正常"
+        },
+        {
+          "date": "2026-07-18",
+          "amount": 8155,
+          "to": "个人账户 王**",
+          "note": "大额转个人",
+          "risk": "疑似回流"
+        },
+        {
+          "date": "2026-07-22",
+          "amount": 4078,
+          "to": "经营场所租金",
+          "note": "租金支付",
+          "risk": "正常"
+        }
+      ]
+    },
+    "blacklist": {
+      "hits": [
+        {
+          "list": "网贷黑名单",
+          "matched": "手机号命中",
+          "date": "2026-06-20",
+          "score": 86
+        },
+        {
+          "list": "反欺诈名单",
+          "matched": "设备关联欺诈用户",
+          "date": "2026-07-02",
+          "score": 78
+        }
+      ],
+      "fraudTags": [
+        "设备聚集",
+        "深夜申请"
+      ],
+      "riskScore": 82
+    }
+  },
+  {
+    "custId": "C0018",
+    "name": "袁*华",
+    "idCard": "3301**********3333",
+    "product": "分期贷",
+    "creditLine": 124000,
+    "loanBalance": 51946,
+    "loanStatus": "在贷",
+    "riskLevel": "中风险",
+    "scoreHistory": [
+      {
+        "month": "2026-02",
+        "score": 70,
+        "cohortAvg": 72
+      },
+      {
+        "month": "2026-03",
+        "score": 69,
+        "cohortAvg": 73
+      },
+      {
+        "month": "2026-04",
+        "score": 68,
+        "cohortAvg": 72
+      },
+      {
+        "month": "2026-05",
+        "score": 67,
+        "cohortAvg": 73
+      },
+      {
+        "month": "2026-06",
+        "score": 66,
+        "cohortAvg": 72
+      },
+      {
+        "month": "2026-07",
+        "score": 65,
+        "cohortAvg": 73
+      }
+    ],
+    "alerts": [
+      {
+        "time": "2026-08-08",
+        "level": "YELLOW",
+        "scene": "贷中风控",
+        "ruleName": "被投诉催收关联",
+        "metricValue": 1,
+        "threshold": 0,
+        "status": "处置中"
+      }
+    ],
+    "disposes": [
+      {
+        "time": "2026-07",
+        "operator": "风控专员-张三",
+        "action": "关注",
+        "result": "已纳入观察",
+        "note": "按处置策略自动生成"
+      }
+    ],
+    "relations": [
+      {
+        "id": "C0018-r0",
+        "name": "恒达科技",
+        "rel": "法人",
+        "type": "company"
+      },
+      {
+        "id": "C0018-r1",
+        "name": "中联供应链",
+        "rel": "法人",
+        "type": "company"
+      },
+      {
+        "id": "C0018-r2",
+        "name": "IMEI-8695016002",
+        "rel": "设备",
+        "type": "device"
+      },
+      {
+        "id": "C0018-rc",
+        "name": "刘女士",
+        "rel": "紧急联系人",
+        "type": "contact"
+      }
+    ],
+    "riskDims": [
+      {
+        "dim": "负债",
+        "score": 39
+      },
+      {
+        "dim": "多头",
+        "score": 46
+      },
+      {
+        "dim": "欺诈",
+        "score": 53
+      },
+      {
+        "dim": "司法",
+        "score": 60
+      },
+      {
+        "dim": "行为",
+        "score": 67
+      },
+      {
+        "dim": "舆情",
+        "score": 44
+      }
+    ],
+    "creditReport": {
+      "queries": [
+        {
+          "month": "2026-03",
+          "count": 4,
+          "institutions": [
+            "F消金",
+            "B消费金融"
+          ]
+        },
+        {
+          "month": "2026-04",
+          "count": 4,
+          "institutions": [
+            "A银行",
+            "C小贷"
+          ]
+        },
+        {
+          "month": "2026-05",
+          "count": 4,
+          "institutions": [
+            "B消费金融",
+            "D平台贷"
+          ]
+        },
+        {
+          "month": "2026-06",
+          "count": 3,
+          "institutions": [
+            "C小贷",
+            "E银行"
+          ]
+        },
+        {
+          "month": "2026-07",
+          "count": 4,
+          "institutions": [
+            "D平台贷",
+            "F消金"
+          ]
+        },
+        {
+          "month": "2026-08",
+          "count": 3,
+          "institutions": [
+            "E银行",
+            "A银行"
+          ]
+        }
+      ],
+      "accounts": [
+        {
+          "institution": "本行",
+          "type": "分期贷",
+          "limit": 124000,
+          "balance": 51946,
+          "status": "正常",
+          "openDate": "2025-12-09"
+        },
+        {
+          "institution": "A银行",
+          "type": "消费贷",
+          "limit": 80000,
+          "balance": 52000,
+          "status": "正常",
+          "openDate": "2025-03-09"
+        },
+        {
+          "institution": "C小贷",
+          "type": "信用卡",
+          "limit": 50000,
+          "balance": 12000,
+          "status": "正常",
+          "openDate": "2024-06-09"
+        }
+      ],
+      "overdues": [
+        {
+          "date": "2026-05-20",
+          "institution": "C小贷",
+          "days": 2,
+          "amount": 1700
+        }
+      ],
+      "guaranties": [
+        {
+          "org": "杭州*华商贸",
+          "amount": 800000,
+          "remain": 350000
+        }
+      ]
+    },
+    "income": {
+      "monthIncome": 19500,
+      "monthRepay": 2164,
+      "dti": 11,
+      "debtTotal": 111946,
+      "assetTotal": 620000,
+      "liabilityRatio": 18
+    },
+    "collaterals": [],
+    "guarantors": [],
+    "fundFlow": {
+      "purpose": "经营周转",
+      "riskFlag": "正常",
+      "flows": [
+        {
+          "date": "2026-07-15",
+          "amount": 20778,
+          "to": "供应商 A（对公）",
+          "note": "货款结算",
+          "risk": "正常"
+        },
+        {
+          "date": "2026-07-16",
+          "amount": 15584,
+          "to": "供应商 B（对公）",
+          "note": "货款结算",
+          "risk": "正常"
+        },
+        {
+          "date": "2026-07-22",
+          "amount": 5195,
+          "to": "经营场所租金",
+          "note": "租金支付",
+          "risk": "正常"
+        }
+      ]
+    },
+    "blacklist": {
+      "hits": [
+        {
+          "list": "观察名单",
+          "matched": "IP 段聚集",
+          "date": "2026-07-10",
+          "score": 52
+        }
+      ],
+      "fraudTags": [
+        "资料频繁修改"
+      ],
+      "riskScore": 45
+    }
+  },
+  {
+    "custId": "C0019",
+    "name": "蒋*梅",
+    "idCard": "3301**********4444",
+    "product": "信用贷",
+    "creditLine": 33000,
+    "loanBalance": 25643,
+    "loanStatus": "在贷",
+    "riskLevel": "低风险",
+    "scoreHistory": [
+      {
+        "month": "2026-02",
+        "score": 82,
+        "cohortAvg": 72
+      },
+      {
+        "month": "2026-03",
+        "score": 83,
+        "cohortAvg": 73
+      },
+      {
+        "month": "2026-04",
+        "score": 83,
+        "cohortAvg": 72
+      },
+      {
+        "month": "2026-05",
+        "score": 84,
+        "cohortAvg": 73
+      },
+      {
+        "month": "2026-06",
+        "score": 84,
+        "cohortAvg": 72
+      },
+      {
+        "month": "2026-07",
+        "score": 85,
+        "cohortAvg": 73
+      }
+    ],
+    "alerts": [
+      {
+        "time": "2026-08-08",
+        "level": "OPPORTUNITY",
+        "scene": "存量运营",
+        "ruleName": "近期借款需求上升",
+        "metricValue": 1,
+        "threshold": 0,
+        "status": "已升级"
+      }
+    ],
+    "disposes": [
+      {
+        "time": "2026-07",
+        "operator": "风控专员-张三",
+        "action": "提额评估",
+        "result": "已纳入观察",
+        "note": "按处置策略自动生成"
+      }
+    ],
+    "relations": [
+      {
+        "id": "C0019-r0",
+        "name": "中联供应链",
+        "rel": "法人",
+        "type": "company"
+      },
+      {
+        "id": "C0019-r1",
+        "name": "鼎盛贸易",
+        "rel": "法人",
+        "type": "company"
+      }
+    ],
+    "riskDims": [
+      {
+        "dim": "负债",
+        "score": 14
+      },
+      {
+        "dim": "多头",
+        "score": 21
+      },
+      {
+        "dim": "欺诈",
+        "score": 28
+      },
+      {
+        "dim": "司法",
+        "score": 35
+      },
+      {
+        "dim": "行为",
+        "score": 42
+      },
+      {
+        "dim": "舆情",
+        "score": 19
+      }
+    ],
+    "creditReport": {
+      "queries": [
+        {
+          "month": "2026-03",
+          "count": 0,
+          "institutions": []
+        },
+        {
+          "month": "2026-04",
+          "count": 0,
+          "institutions": []
+        },
+        {
+          "month": "2026-05",
+          "count": 0,
+          "institutions": []
+        },
+        {
+          "month": "2026-06",
+          "count": 0,
+          "institutions": []
+        },
+        {
+          "month": "2026-07",
+          "count": 0,
+          "institutions": []
+        },
+        {
+          "month": "2026-08",
+          "count": 1,
+          "institutions": [
+            "F消金"
+          ]
+        }
+      ],
+      "accounts": [
+        {
+          "institution": "本行",
+          "type": "信用贷",
+          "limit": 33000,
+          "balance": 25643,
+          "status": "正常",
+          "openDate": "2025-01-01"
+        },
+        {
+          "institution": "B消费金融",
+          "type": "消费贷",
+          "limit": 90000,
+          "balance": 12000,
+          "status": "正常",
+          "openDate": "2025-04-01"
+        },
+        {
+          "institution": "D平台贷",
+          "type": "信用卡",
+          "limit": 20000,
+          "balance": 6000,
+          "status": "正常",
+          "openDate": "2024-07-01"
+        }
+      ],
+      "overdues": [],
+      "guaranties": []
+    },
+    "income": {
+      "monthIncome": 20000,
+      "monthRepay": 1068,
+      "dti": 5,
+      "debtTotal": 25643,
+      "assetTotal": 66000,
+      "liabilityRatio": 39
+    },
+    "collaterals": [],
+    "guarantors": [],
+    "fundFlow": {
+      "purpose": "经营周转",
+      "riskFlag": "正常",
+      "flows": [
+        {
+          "date": "2026-07-15",
+          "amount": 10257,
+          "to": "供应商 A（对公）",
+          "note": "货款结算",
+          "risk": "正常"
+        },
+        {
+          "date": "2026-07-16",
+          "amount": 7693,
+          "to": "供应商 B（对公）",
+          "note": "货款结算",
+          "risk": "正常"
+        },
+        {
+          "date": "2026-07-22",
+          "amount": 2564,
+          "to": "经营场所租金",
+          "note": "租金支付",
+          "risk": "正常"
+        }
+      ]
+    },
+    "blacklist": {
+      "hits": [],
+      "fraudTags": [],
+      "riskScore": 12
+    }
+  },
+  {
+    "custId": "C0006",
+    "name": "孙*华",
+    "idCard": "3301**********5555",
+    "product": "抵押贷",
+    "creditLine": 121000,
+    "loanBalance": 72006,
+    "loanStatus": "在贷",
+    "riskLevel": "低风险",
+    "scoreHistory": [
+      {
+        "month": "2026-02",
+        "score": 82,
+        "cohortAvg": 72
+      },
+      {
+        "month": "2026-03",
+        "score": 83,
+        "cohortAvg": 73
+      },
+      {
+        "month": "2026-04",
+        "score": 83,
+        "cohortAvg": 72
+      },
+      {
+        "month": "2026-05",
+        "score": 84,
+        "cohortAvg": 73
+      },
+      {
+        "month": "2026-06",
+        "score": 84,
+        "cohortAvg": 72
+      },
+      {
+        "month": "2026-07",
+        "score": 85,
+        "cohortAvg": 73
+      }
+    ],
+    "alerts": [
+      {
+        "time": "2026-08-08",
+        "level": "OPPORTUNITY",
+        "scene": "存量运营",
+        "ruleName": "活跃度持续提升",
+        "metricValue": 1,
+        "threshold": 0,
+        "status": "已升级"
+      }
+    ],
+    "disposes": [
+      {
+        "time": "2026-07",
+        "operator": "风控专员-张三",
+        "action": "提额评估",
+        "result": "已纳入观察",
+        "note": "按处置策略自动生成"
+      }
+    ],
+    "relations": [
+      {
+        "id": "C0006-r0",
+        "name": "鼎盛贸易",
+        "rel": "法人",
+        "type": "company"
+      },
+      {
+        "id": "C0006-r1",
+        "name": "旭日投资",
+        "rel": "法人",
+        "type": "company"
+      }
+    ],
+    "riskDims": [
+      {
+        "dim": "负债",
+        "score": 15
+      },
+      {
+        "dim": "多头",
+        "score": 22
+      },
+      {
+        "dim": "欺诈",
+        "score": 29
+      },
+      {
+        "dim": "司法",
+        "score": 36
+      },
+      {
+        "dim": "行为",
+        "score": 43
+      },
+      {
+        "dim": "舆情",
+        "score": 20
+      }
+    ],
+    "creditReport": {
+      "queries": [
+        {
+          "month": "2026-03",
+          "count": 1,
+          "institutions": [
+            "E银行"
+          ]
+        },
+        {
+          "month": "2026-04",
+          "count": 2,
+          "institutions": [
+            "F消金",
+            "B消费金融"
+          ]
+        },
+        {
+          "month": "2026-05",
+          "count": 1,
+          "institutions": [
+            "A银行"
+          ]
+        },
+        {
+          "month": "2026-06",
+          "count": 2,
+          "institutions": [
+            "B消费金融",
+            "D平台贷"
+          ]
+        },
+        {
+          "month": "2026-07",
+          "count": 1,
+          "institutions": [
+            "C小贷"
+          ]
+        },
+        {
+          "month": "2026-08",
+          "count": 2,
+          "institutions": [
+            "D平台贷",
+            "F消金"
+          ]
+        }
+      ],
+      "accounts": [
+        {
+          "institution": "本行",
+          "type": "抵押贷",
+          "limit": 121000,
+          "balance": 72006,
+          "status": "正常",
+          "openDate": "2025-05-05"
+        },
+        {
+          "institution": "F消金",
+          "type": "消费贷",
+          "limit": 70000,
+          "balance": 32000,
+          "status": "正常",
+          "openDate": "2025-08-05"
+        },
+        {
+          "institution": "B消费金融",
+          "type": "信用卡",
+          "limit": 20000,
+          "balance": 6000,
+          "status": "正常",
+          "openDate": "2024-11-05"
+        }
+      ],
+      "overdues": [],
+      "guaranties": []
+    },
+    "income": {
+      "monthIncome": 19000,
+      "monthRepay": 3000,
+      "dti": 16,
+      "debtTotal": 72006,
+      "assetTotal": 242000,
+      "liabilityRatio": 30
+    },
+    "collaterals": [
+      {
+        "type": "房产",
+        "name": "住宅抵押（滨江）",
+        "valuation": 2200000,
+        "loanAmount": 121000,
+        "ratio": 6,
+        "status": "足值"
+      }
+    ],
+    "guarantors": [
+      {
+        "name": "赵*军",
+        "relation": "配偶",
+        "credit": "征信正常"
+      }
+    ],
+    "business": {
+      "companyName": "宁波*华商贸有限公司",
+      "industry": "批发零售",
+      "monthRevenue": 820000,
+      "taxMonthly": 28000,
+      "invoiceYear": 5600000,
+      "employees": 15,
+      "operateYears": 2,
+      "accountBalance": 200000
+    },
+    "fundFlow": {
+      "purpose": "经营周转",
+      "riskFlag": "正常",
+      "flows": [
+        {
+          "date": "2026-07-15",
+          "amount": 28802,
+          "to": "供应商 A（对公）",
+          "note": "货款结算",
+          "risk": "正常"
+        },
+        {
+          "date": "2026-07-16",
+          "amount": 21602,
+          "to": "供应商 B（对公）",
+          "note": "货款结算",
+          "risk": "正常"
+        },
+        {
+          "date": "2026-07-22",
+          "amount": 7201,
+          "to": "经营场所租金",
+          "note": "租金支付",
+          "risk": "正常"
+        }
+      ]
+    },
+    "blacklist": {
+      "hits": [],
+      "fraudTags": [],
+      "riskScore": 12
+    }
   }
- },
- {
-  "custId": "C0009",
-  "name": "何*杰",
-  "idCard": "3301**********5678",
-  "product": "消费贷",
-  "creditLine": 163000,
-  "loanBalance": 82445,
-  "loanStatus": "在贷",
-  "riskLevel": "中风险",
-  "scoreHistory": [
-   {
-    "month": "2026-02",
-    "score": 70,
-    "cohortAvg": 72
-   },
-   {
-    "month": "2026-03",
-    "score": 69,
-    "cohortAvg": 73
-   },
-   {
-    "month": "2026-04",
-    "score": 68,
-    "cohortAvg": 72
-   },
-   {
-    "month": "2026-05",
-    "score": 67,
-    "cohortAvg": 73
-   },
-   {
-    "month": "2026-06",
-    "score": 66,
-    "cohortAvg": 72
-   },
-   {
-    "month": "2026-07",
-    "score": 65,
-    "cohortAvg": 73
-   }
-  ],
-  "alerts": [
-   {
-    "time": "2026-08-08",
-    "level": "YELLOW",
-    "scene": "贷中风控",
-    "ruleName": "月还款额/月收入>70%",
-    "metricValue": 73,
-    "threshold": 70,
-    "status": "已解除"
-   }
-  ],
-  "disposes": [
-   {
-    "time": "2026-07",
-    "operator": "风控专员-张三",
-    "action": "关注",
-    "result": "已纳入观察",
-    "note": "按处置策略自动生成"
-   }
-  ],
-  "relations": [
-   {
-    "id": "C0009-r0",
-    "name": "恒达科技",
-    "rel": "法人",
-    "type": "company"
-   },
-   {
-    "id": "C0009-r1",
-    "name": "中联供应链",
-    "rel": "法人",
-    "type": "company"
-   },
-   {
-    "id": "C0009-r2",
-    "name": "IMEI-8695001002",
-    "rel": "设备",
-    "type": "device"
-   },
-   {
-    "id": "C0009-rc",
-    "name": "刘女士",
-    "rel": "紧急联系人",
-    "type": "contact"
-   }
-  ],
-  "riskDims": [
-   {
-    "dim": "负债",
-    "score": 39
-   },
-   {
-    "dim": "多头",
-    "score": 46
-   },
-   {
-    "dim": "欺诈",
-    "score": 53
-   },
-   {
-    "dim": "司法",
-    "score": 60
-   },
-   {
-    "dim": "行为",
-    "score": 67
-   },
-   {
-    "dim": "舆情",
-    "score": 44
-   }
-  ],
-  "creditReport": {
-   "queries": [
-    {
-     "month": "2026-03",
-     "count": 3,
-     "institutions": [
-      "B消费金融",
-      "D平台贷"
-     ]
-    },
-    {
-     "month": "2026-04",
-     "count": 2,
-     "institutions": [
-      "C小贷",
-      "E银行"
-     ]
-    },
-    {
-     "month": "2026-05",
-     "count": 2,
-     "institutions": [
-      "D平台贷",
-      "F消金"
-     ]
-    },
-    {
-     "month": "2026-06",
-     "count": 3,
-     "institutions": [
-      "E银行",
-      "A银行"
-     ]
-    },
-    {
-     "month": "2026-07",
-     "count": 2,
-     "institutions": [
-      "F消金",
-      "B消费金融"
-     ]
-    },
-    {
-     "month": "2026-08",
-     "count": 3,
-     "institutions": [
-      "A银行",
-      "C小贷"
-     ]
-    }
-   ],
-   "accounts": [
-    {
-     "institution": "本行",
-     "type": "消费贷",
-     "limit": 163000,
-     "balance": 82445,
-     "status": "正常",
-     "openDate": "2025-02-17"
-    },
-    {
-     "institution": "C小贷",
-     "type": "消费贷",
-     "limit": 70000,
-     "balance": 47000,
-     "status": "正常",
-     "openDate": "2025-05-17"
-    },
-    {
-     "institution": "E银行",
-     "type": "信用卡",
-     "limit": 30000,
-     "balance": 16000,
-     "status": "正常",
-     "openDate": "2024-08-17"
-    }
-   ],
-   "overdues": [
-    {
-     "date": "2026-05-20",
-     "institution": "E银行",
-     "days": 2,
-     "amount": 1100
-    }
-   ],
-   "guaranties": [
-    {
-     "org": "杭州*杰商贸",
-     "amount": 700000,
-     "remain": 250000
-    }
-   ]
-  },
-  "income": {
-   "monthIncome": 11500,
-   "monthRepay": 3435,
-   "dti": 30,
-   "debtTotal": 182445,
-   "assetTotal": 489000,
-   "liabilityRatio": 37
-  },
-  "collaterals": [],
-  "guarantors": [],
-  "fundFlow": {
-   "purpose": "经营周转",
-   "riskFlag": "正常",
-   "flows": [
-    {
-     "date": "2026-07-15",
-     "amount": 32978,
-     "to": "供应商 A（对公）",
-     "note": "货款结算",
-     "risk": "正常"
-    },
-    {
-     "date": "2026-07-16",
-     "amount": 24734,
-     "to": "供应商 B（对公）",
-     "note": "货款结算",
-     "risk": "正常"
-    },
-    {
-     "date": "2026-07-22",
-     "amount": 8245,
-     "to": "经营场所租金",
-     "note": "租金支付",
-     "risk": "正常"
-    }
-   ]
-  },
-  "blacklist": {
-   "hits": [
-    {
-     "list": "观察名单",
-     "matched": "IP 段聚集",
-     "date": "2026-07-10",
-     "score": 52
-    }
-   ],
-   "fraudTags": [
-    "资料频繁修改"
-   ],
-   "riskScore": 45
-  }
- },
- {
-  "custId": "C0010",
-  "name": "罗*峰",
-  "idCard": "3301**********9012",
-  "product": "信用贷",
-  "creditLine": 198000,
-  "loanBalance": 123572,
-  "loanStatus": "在贷",
-  "riskLevel": "高风险",
-  "scoreHistory": [
-   {
-    "month": "2026-02",
-    "score": 60,
-    "cohortAvg": 72
-   },
-   {
-    "month": "2026-03",
-    "score": 55,
-    "cohortAvg": 73
-   },
-   {
-    "month": "2026-04",
-    "score": 50,
-    "cohortAvg": 72
-   },
-   {
-    "month": "2026-05",
-    "score": 45,
-    "cohortAvg": 73
-   },
-   {
-    "month": "2026-06",
-    "score": 40,
-    "cohortAvg": 72
-   },
-   {
-    "month": "2026-07",
-    "score": 35,
-    "cohortAvg": 73
-   }
-  ],
-  "alerts": [
-   {
-    "time": "2026-08-08",
-    "level": "RED",
-    "scene": "贷中风控",
-    "ruleName": "近7天征信查询≥5次",
-    "metricValue": 7,
-    "threshold": 5,
-    "status": "处置中"
-   }
-  ],
-  "disposes": [
-   {
-    "time": "2026-07",
-    "operator": "风控专员-张三",
-    "action": "降额",
-    "result": "已执行降额",
-    "note": "按处置策略自动生成"
-   }
-  ],
-  "relations": [
-   {
-    "id": "C0010-r0",
-    "name": "中联供应链",
-    "rel": "法人",
-    "type": "company",
-    "risk": "高危"
-   },
-   {
-    "id": "C0010-r1",
-    "name": "鼎盛贸易",
-    "rel": "法人",
-    "type": "company"
-   },
-   {
-    "id": "C0010-r2",
-    "name": "IMEI-8695002002",
-    "rel": "设备",
-    "type": "device"
-   },
-   {
-    "id": "C0010-r3",
-    "name": "王*强",
-    "rel": "共借人",
-    "type": "person",
-    "risk": "关注"
-   }
-  ],
-  "riskDims": [
-   {
-    "dim": "负债",
-    "score": 64
-   },
-   {
-    "dim": "多头",
-    "score": 71
-   },
-   {
-    "dim": "欺诈",
-    "score": 78
-   },
-   {
-    "dim": "司法",
-    "score": 85
-   },
-   {
-    "dim": "行为",
-    "score": 92
-   },
-   {
-    "dim": "舆情",
-    "score": 69
-   }
-  ],
-  "creditReport": {
-   "queries": [
-    {
-     "month": "2026-03",
-     "count": 4,
-     "institutions": [
-      "D平台贷",
-      "F消金"
-     ]
-    },
-    {
-     "month": "2026-04",
-     "count": 5,
-     "institutions": [
-      "E银行",
-      "A银行"
-     ]
-    },
-    {
-     "month": "2026-05",
-     "count": 4,
-     "institutions": [
-      "F消金",
-      "B消费金融"
-     ]
-    },
-    {
-     "month": "2026-06",
-     "count": 4,
-     "institutions": [
-      "A银行",
-      "C小贷"
-     ]
-    },
-    {
-     "month": "2026-07",
-     "count": 5,
-     "institutions": [
-      "B消费金融",
-      "D平台贷"
-     ]
-    },
-    {
-     "month": "2026-08",
-     "count": 4,
-     "institutions": [
-      "C小贷",
-      "E银行"
-     ]
-    }
-   ],
-   "accounts": [
-    {
-     "institution": "本行",
-     "type": "信用贷",
-     "limit": 198000,
-     "balance": 123572,
-     "status": "正常",
-     "openDate": "2025-04-19"
-    },
-    {
-     "institution": "E银行",
-     "type": "消费贷",
-     "limit": 50000,
-     "balance": 12000,
-     "status": "逾期",
-     "openDate": "2025-07-19"
-    },
-    {
-     "institution": "A银行",
-     "type": "信用卡",
-     "limit": 50000,
-     "balance": 12000,
-     "status": "正常",
-     "openDate": "2024-10-19"
-    }
-   ],
-   "overdues": [
-    {
-     "date": "2026-06-12",
-     "institution": "E银行",
-     "days": 8,
-     "amount": 3200
-    },
-    {
-     "date": "2026-04-03",
-     "institution": "A银行",
-     "days": 3,
-     "amount": 3000
-    }
-   ],
-   "guaranties": [
-    {
-     "org": "杭州*峰商贸",
-     "amount": 500000,
-     "remain": 350000
-    }
-   ]
-  },
-  "income": {
-   "monthIncome": 15500,
-   "monthRepay": 10298,
-   "dti": 66,
-   "debtTotal": 183572,
-   "assetTotal": 990000,
-   "liabilityRatio": 19
-  },
-  "collaterals": [],
-  "guarantors": [],
-  "fundFlow": {
-   "purpose": "经营周转",
-   "riskFlag": "疑似回流",
-   "flows": [
-    {
-     "date": "2026-07-15",
-     "amount": 49429,
-     "to": "供应商 A（对公）",
-     "note": "货款结算",
-     "risk": "正常"
-    },
-    {
-     "date": "2026-07-16",
-     "amount": 37072,
-     "to": "供应商 B（对公）",
-     "note": "货款结算",
-     "risk": "正常"
-    },
-    {
-     "date": "2026-07-18",
-     "amount": 24714,
-     "to": "个人账户 王**",
-     "note": "大额转个人",
-     "risk": "疑似回流"
-    },
-    {
-     "date": "2026-07-22",
-     "amount": 12357,
-     "to": "经营场所租金",
-     "note": "租金支付",
-     "risk": "正常"
-    }
-   ]
-  },
-  "blacklist": {
-   "hits": [
-    {
-     "list": "网贷黑名单",
-     "matched": "手机号命中",
-     "date": "2026-06-20",
-     "score": 86
-    },
-    {
-     "list": "反欺诈名单",
-     "matched": "设备关联欺诈用户",
-     "date": "2026-07-02",
-     "score": 78
-    }
-   ],
-   "fraudTags": [
-    "设备聚集",
-    "深夜申请"
-   ],
-   "riskScore": 82
-  }
- },
- {
-  "custId": "C0002",
-  "name": "李*华",
-  "idCard": "3301**********5678",
-  "product": "消费贷",
-  "creditLine": 50000,
-  "loanBalance": 18000,
-  "loanStatus": "在贷",
-  "riskLevel": "中风险",
-  "scoreHistory": [
-   {
-    "month": "2026-02",
-    "score": 55,
-    "cohortAvg": 74
-   },
-   {
-    "month": "2026-03",
-    "score": 54,
-    "cohortAvg": 74
-   },
-   {
-    "month": "2026-04",
-    "score": 56,
-    "cohortAvg": 73
-   },
-   {
-    "month": "2026-05",
-    "score": 53,
-    "cohortAvg": 72
-   },
-   {
-    "month": "2026-06",
-    "score": 52,
-    "cohortAvg": 72
-   },
-   {
-    "month": "2026-07",
-    "score": 52,
-    "cohortAvg": 71
-   }
-  ],
-  "alerts": [
-   {
-    "time": "2026-08-04",
-    "level": "YELLOW",
-    "scene": "设备异常",
-    "ruleName": "7日内更换设备",
-    "metricValue": 2,
-    "threshold": 1,
-    "status": "待处置"
-   }
-  ],
-  "disposes": [],
-  "relations": [
-   {
-    "id": "C0002-r0",
-    "name": "鼎盛贸易",
-    "rel": "法人",
-    "type": "company"
-   },
-   {
-    "id": "C0002-r1",
-    "name": "旭日投资",
-    "rel": "法人",
-    "type": "company"
-   },
-   {
-    "id": "C0002-r2",
-    "name": "IMEI-8695003002",
-    "rel": "设备",
-    "type": "device"
-   },
-   {
-    "id": "C0002-rc",
-    "name": "张先生",
-    "rel": "紧急联系人",
-    "type": "contact"
-   }
-  ],
-  "riskDims": [
-   {
-    "dim": "负债",
-    "score": 41
-   },
-   {
-    "dim": "多头",
-    "score": 48
-   },
-   {
-    "dim": "欺诈",
-    "score": 55
-   },
-   {
-    "dim": "司法",
-    "score": 62
-   },
-   {
-    "dim": "行为",
-    "score": 69
-   },
-   {
-    "dim": "舆情",
-    "score": 46
-   }
-  ],
-  "creditReport": {
-   "queries": [
-    {
-     "month": "2026-03",
-     "count": 2,
-     "institutions": [
-      "A银行",
-      "C小贷"
-     ]
-    },
-    {
-     "month": "2026-04",
-     "count": 2,
-     "institutions": [
-      "B消费金融",
-      "D平台贷"
-     ]
-    },
-    {
-     "month": "2026-05",
-     "count": 2,
-     "institutions": [
-      "C小贷",
-      "E银行"
-     ]
-    },
-    {
-     "month": "2026-06",
-     "count": 3,
-     "institutions": [
-      "D平台贷",
-      "F消金"
-     ]
-    },
-    {
-     "month": "2026-07",
-     "count": 2,
-     "institutions": [
-      "E银行",
-      "A银行"
-     ]
-    },
-    {
-     "month": "2026-08",
-     "count": 2,
-     "institutions": [
-      "F消金",
-      "B消费金融"
-     ]
-    }
-   ],
-   "accounts": [
-    {
-     "institution": "本行",
-     "type": "消费贷",
-     "limit": 50000,
-     "balance": 18000,
-     "status": "正常",
-     "openDate": "2025-01-10"
-    },
-    {
-     "institution": "B消费金融",
-     "type": "消费贷",
-     "limit": 80000,
-     "balance": 12000,
-     "status": "正常",
-     "openDate": "2025-04-10"
-    },
-    {
-     "institution": "D平台贷",
-     "type": "信用卡",
-     "limit": 20000,
-     "balance": 14000,
-     "status": "正常",
-     "openDate": "2024-07-10"
-    }
-   ],
-   "overdues": [
-    {
-     "date": "2026-05-20",
-     "institution": "D平台贷",
-     "days": 2,
-     "amount": 800
-    }
-   ],
-   "guaranties": [
-    {
-     "org": "杭州*华商贸",
-     "amount": 800000,
-     "remain": 200000
-    }
-   ]
-  },
-  "income": {
-   "monthIncome": 17000,
-   "monthRepay": 750,
-   "dti": 4,
-   "debtTotal": 98000,
-   "assetTotal": 100000,
-   "liabilityRatio": 95
-  },
-  "collaterals": [],
-  "guarantors": [],
-  "fundFlow": {
-   "purpose": "经营周转",
-   "riskFlag": "正常",
-   "flows": [
-    {
-     "date": "2026-07-15",
-     "amount": 7200,
-     "to": "供应商 A（对公）",
-     "note": "货款结算",
-     "risk": "正常"
-    },
-    {
-     "date": "2026-07-16",
-     "amount": 5400,
-     "to": "供应商 B（对公）",
-     "note": "货款结算",
-     "risk": "正常"
-    },
-    {
-     "date": "2026-07-22",
-     "amount": 1800,
-     "to": "经营场所租金",
-     "note": "租金支付",
-     "risk": "正常"
-    }
-   ]
-  },
-  "blacklist": {
-   "hits": [
-    {
-     "list": "观察名单",
-     "matched": "IP 段聚集",
-     "date": "2026-07-10",
-     "score": 52
-    }
-   ],
-   "fraudTags": [
-    "资料频繁修改"
-   ],
-   "riskScore": 45
-  }
- },
- {
-  "custId": "C0005",
-  "name": "陈*敏",
-  "idCard": "3301**********7890",
-  "product": "消费贷",
-  "creditLine": 30000,
-  "loanBalance": 9000,
-  "loanStatus": "在贷",
-  "riskLevel": "中风险",
-  "scoreHistory": [
-   {
-    "month": "2026-02",
-    "score": 60,
-    "cohortAvg": 74
-   },
-   {
-    "month": "2026-03",
-    "score": 61,
-    "cohortAvg": 74
-   },
-   {
-    "month": "2026-04",
-    "score": 60,
-    "cohortAvg": 73
-   },
-   {
-    "month": "2026-05",
-    "score": 61,
-    "cohortAvg": 72
-   },
-   {
-    "month": "2026-06",
-    "score": 61,
-    "cohortAvg": 72
-   },
-   {
-    "month": "2026-07",
-    "score": 61,
-    "cohortAvg": 71
-   }
-  ],
-  "alerts": [
-   {
-    "time": "2026-08-03",
-    "level": "YELLOW",
-    "scene": "还款能力",
-    "ruleName": "临期余额不足",
-    "metricValue": 1,
-    "threshold": 0,
-    "status": "待处置"
-   }
-  ],
-  "disposes": [],
-  "relations": [
-   {
-    "id": "C0005-r0",
-    "name": "旭日投资",
-    "rel": "法人",
-    "type": "company"
-   },
-   {
-    "id": "C0005-r1",
-    "name": "华信商贸",
-    "rel": "法人",
-    "type": "company"
-   },
-   {
-    "id": "C0005-r2",
-    "name": "IMEI-8695004002",
-    "rel": "设备",
-    "type": "device"
-   },
-   {
-    "id": "C0005-rc",
-    "name": "刘女士",
-    "rel": "紧急联系人",
-    "type": "contact"
-   }
-  ],
-  "riskDims": [
-   {
-    "dim": "负债",
-    "score": 42
-   },
-   {
-    "dim": "多头",
-    "score": 49
-   },
-   {
-    "dim": "欺诈",
-    "score": 56
-   },
-   {
-    "dim": "司法",
-    "score": 63
-   },
-   {
-    "dim": "行为",
-    "score": 70
-   },
-   {
-    "dim": "舆情",
-    "score": 47
-   }
-  ],
-  "creditReport": {
-   "queries": [
-    {
-     "month": "2026-03",
-     "count": 3,
-     "institutions": [
-      "B消费金融",
-      "D平台贷"
-     ]
-    },
-    {
-     "month": "2026-04",
-     "count": 2,
-     "institutions": [
-      "C小贷",
-      "E银行"
-     ]
-    },
-    {
-     "month": "2026-05",
-     "count": 2,
-     "institutions": [
-      "D平台贷",
-      "F消金"
-     ]
-    },
-    {
-     "month": "2026-06",
-     "count": 2,
-     "institutions": [
-      "E银行",
-      "A银行"
-     ]
-    },
-    {
-     "month": "2026-07",
-     "count": 3,
-     "institutions": [
-      "F消金",
-      "B消费金融"
-     ]
-    },
-    {
-     "month": "2026-08",
-     "count": 2,
-     "institutions": [
-      "A银行",
-      "C小贷"
-     ]
-    }
-   ],
-   "accounts": [
-    {
-     "institution": "本行",
-     "type": "消费贷",
-     "limit": 30000,
-     "balance": 9000,
-     "status": "正常",
-     "openDate": "2025-02-02"
-    },
-    {
-     "institution": "C小贷",
-     "type": "消费贷",
-     "limit": 90000,
-     "balance": 17000,
-     "status": "正常",
-     "openDate": "2025-05-02"
-    },
-    {
-     "institution": "E银行",
-     "type": "信用卡",
-     "limit": 30000,
-     "balance": 8000,
-     "status": "正常",
-     "openDate": "2024-08-02"
-    }
-   ],
-   "overdues": [
-    {
-     "date": "2026-05-20",
-     "institution": "E银行",
-     "days": 2,
-     "amount": 1100
-    }
-   ],
-   "guaranties": [
-    {
-     "org": "杭州*敏商贸",
-     "amount": 900000,
-     "remain": 250000
-    }
-   ]
-  },
-  "income": {
-   "monthIncome": 17500,
-   "monthRepay": 375,
-   "dti": 2,
-   "debtTotal": 29000,
-   "assetTotal": 90000,
-   "liabilityRatio": 32
-  },
-  "collaterals": [],
-  "guarantors": [],
-  "fundFlow": {
-   "purpose": "经营周转",
-   "riskFlag": "正常",
-   "flows": [
-    {
-     "date": "2026-07-15",
-     "amount": 3600,
-     "to": "供应商 A（对公）",
-     "note": "货款结算",
-     "risk": "正常"
-    },
-    {
-     "date": "2026-07-16",
-     "amount": 2700,
-     "to": "供应商 B（对公）",
-     "note": "货款结算",
-     "risk": "正常"
-    },
-    {
-     "date": "2026-07-22",
-     "amount": 900,
-     "to": "经营场所租金",
-     "note": "租金支付",
-     "risk": "正常"
-    }
-   ]
-  },
-  "blacklist": {
-   "hits": [
-    {
-     "list": "观察名单",
-     "matched": "IP 段聚集",
-     "date": "2026-07-10",
-     "score": 52
-    }
-   ],
-   "fraudTags": [
-    "资料频繁修改"
-   ],
-   "riskScore": 45
-  }
- },
- {
-  "custId": "C0011",
-  "name": "许*文",
-  "idCard": "3301**********2222",
-  "product": "经营贷",
-  "creditLine": 171000,
-  "loanBalance": 71197,
-  "loanStatus": "在贷",
-  "riskLevel": "中风险",
-  "scoreHistory": [
-   {
-    "month": "2026-02",
-    "score": 70,
-    "cohortAvg": 72
-   },
-   {
-    "month": "2026-03",
-    "score": 69,
-    "cohortAvg": 73
-   },
-   {
-    "month": "2026-04",
-    "score": 68,
-    "cohortAvg": 72
-   },
-   {
-    "month": "2026-05",
-    "score": 67,
-    "cohortAvg": 73
-   },
-   {
-    "month": "2026-06",
-    "score": 66,
-    "cohortAvg": 72
-   },
-   {
-    "month": "2026-07",
-    "score": 65,
-    "cohortAvg": 73
-   }
-  ],
-  "alerts": [
-   {
-    "time": "2026-08-08",
-    "level": "YELLOW",
-    "scene": "贷中风控",
-    "ruleName": "历史还款日延迟≥2天",
-    "metricValue": 2,
-    "threshold": 1,
-    "status": "处置中"
-   }
-  ],
-  "disposes": [
-   {
-    "time": "2026-07",
-    "operator": "风控专员-张三",
-    "action": "关注",
-    "result": "已纳入观察",
-    "note": "按处置策略自动生成"
-   }
-  ],
-  "relations": [
-   {
-    "id": "C0011-r0",
-    "name": "华信商贸",
-    "rel": "法人",
-    "type": "company"
-   },
-   {
-    "id": "C0011-r1",
-    "name": "恒达科技",
-    "rel": "法人",
-    "type": "company"
-   },
-   {
-    "id": "C0011-r2",
-    "name": "IMEI-8695005002",
-    "rel": "设备",
-    "type": "device"
-   },
-   {
-    "id": "C0011-rc",
-    "name": "陈先生",
-    "rel": "紧急联系人",
-    "type": "contact"
-   }
-  ],
-  "riskDims": [
-   {
-    "dim": "负债",
-    "score": 38
-   },
-   {
-    "dim": "多头",
-    "score": 45
-   },
-   {
-    "dim": "欺诈",
-    "score": 52
-   },
-   {
-    "dim": "司法",
-    "score": 59
-   },
-   {
-    "dim": "行为",
-    "score": 66
-   },
-   {
-    "dim": "舆情",
-    "score": 43
-   }
-  ],
-  "creditReport": {
-   "queries": [
-    {
-     "month": "2026-03",
-     "count": 3,
-     "institutions": [
-      "E银行",
-      "A银行"
-     ]
-    },
-    {
-     "month": "2026-04",
-     "count": 4,
-     "institutions": [
-      "F消金",
-      "B消费金融"
-     ]
-    },
-    {
-     "month": "2026-05",
-     "count": 3,
-     "institutions": [
-      "A银行",
-      "C小贷"
-     ]
-    },
-    {
-     "month": "2026-06",
-     "count": 4,
-     "institutions": [
-      "B消费金融",
-      "D平台贷"
-     ]
-    },
-    {
-     "month": "2026-07",
-     "count": 4,
-     "institutions": [
-      "C小贷",
-      "E银行"
-     ]
-    },
-    {
-     "month": "2026-08",
-     "count": 3,
-     "institutions": [
-      "D平台贷",
-      "F消金"
-     ]
-    }
-   ],
-   "accounts": [
-    {
-     "institution": "本行",
-     "type": "经营贷",
-     "limit": 171000,
-     "balance": 71197,
-     "status": "正常",
-     "openDate": "2025-05-11"
-    },
-    {
-     "institution": "F消金",
-     "type": "消费贷",
-     "limit": 60000,
-     "balance": 17000,
-     "status": "正常",
-     "openDate": "2025-08-11"
-    },
-    {
-     "institution": "B消费金融",
-     "type": "信用卡",
-     "limit": 20000,
-     "balance": 6000,
-     "status": "正常",
-     "openDate": "2024-11-11"
-    }
-   ],
-   "overdues": [
-    {
-     "date": "2026-05-20",
-     "institution": "B消费金融",
-     "days": 2,
-     "amount": 800
-    }
-   ],
-   "guaranties": [
-    {
-     "org": "杭州*文商贸",
-     "amount": 600000,
-     "remain": 200000
-    }
-   ]
-  },
-  "income": {
-   "monthIncome": 16000,
-   "monthRepay": 2967,
-   "dti": 19,
-   "debtTotal": 71197,
-   "assetTotal": 342000,
-   "liabilityRatio": 21
-  },
-  "collaterals": [
-   {
-    "type": "房产",
-    "name": "住宅抵押（滨江）",
-    "valuation": 1900000,
-    "loanAmount": 171000,
-    "ratio": 9,
-    "status": "足值"
-   }
-  ],
-  "guarantors": [
-   {
-    "name": "李*丽",
-    "relation": "配偶",
-    "credit": "征信正常"
-   }
-  ],
-  "business": {
-   "companyName": "宁波*文商贸有限公司",
-   "industry": "批发零售",
-   "monthRevenue": 460000,
-   "taxMonthly": 22000,
-   "invoiceYear": 6800000,
-   "employees": 19,
-   "operateYears": 2,
-   "accountBalance": 240000
-  },
-  "fundFlow": {
-   "purpose": "经营周转",
-   "riskFlag": "正常",
-   "flows": [
-    {
-     "date": "2026-07-15",
-     "amount": 28479,
-     "to": "供应商 A（对公）",
-     "note": "货款结算",
-     "risk": "正常"
-    },
-    {
-     "date": "2026-07-16",
-     "amount": 21359,
-     "to": "供应商 B（对公）",
-     "note": "货款结算",
-     "risk": "正常"
-    },
-    {
-     "date": "2026-07-22",
-     "amount": 7120,
-     "to": "经营场所租金",
-     "note": "租金支付",
-     "risk": "正常"
-    }
-   ]
-  },
-  "blacklist": {
-   "hits": [
-    {
-     "list": "观察名单",
-     "matched": "IP 段聚集",
-     "date": "2026-07-10",
-     "score": 52
-    }
-   ],
-   "fraudTags": [
-    "资料频繁修改"
-   ],
-   "riskScore": 45
-  }
- },
- {
-  "custId": "C0004",
-  "name": "赵*强",
-  "idCard": "3301**********3456",
-  "product": "经营贷",
-  "creditLine": 200000,
-  "loanBalance": 156000,
-  "loanStatus": "在贷",
-  "riskLevel": "高风险",
-  "scoreHistory": [
-   {
-    "month": "2026-02",
-    "score": 50,
-    "cohortAvg": 74
-   },
-   {
-    "month": "2026-03",
-    "score": 45,
-    "cohortAvg": 74
-   },
-   {
-    "month": "2026-04",
-    "score": 41,
-    "cohortAvg": 73
-   },
-   {
-    "month": "2026-05",
-    "score": 36,
-    "cohortAvg": 72
-   },
-   {
-    "month": "2026-06",
-    "score": 31,
-    "cohortAvg": 72
-   },
-   {
-    "month": "2026-07",
-    "score": 28,
-    "cohortAvg": 71
-   }
-  ],
-  "alerts": [
-   {
-    "time": "2026-07-25",
-    "level": "RED",
-    "scene": "司法涉诉",
-    "ruleName": "新增被执行记录",
-    "metricValue": 1,
-    "threshold": 0,
-    "status": "处置中"
-   },
-   {
-    "time": "2026-08-04",
-    "level": "RED",
-    "scene": "司法涉诉",
-    "ruleName": "新增被执行记录",
-    "metricValue": 1,
-    "threshold": 0,
-    "status": "待处置"
-   }
-  ],
-  "disposes": [
-   {
-    "time": "2026-07-26",
-    "operator": "李四",
-    "action": "冻结额度",
-    "result": "已冻结全部可用额度",
-    "note": "待评估"
-   }
-  ],
-  "relations": [
-   {
-    "id": "C0004-r0",
-    "name": "恒达科技",
-    "rel": "法人",
-    "type": "company",
-    "risk": "高危"
-   },
-   {
-    "id": "C0004-r1",
-    "name": "中联供应链",
-    "rel": "法人",
-    "type": "company"
-   },
-   {
-    "id": "C0004-r2",
-    "name": "IMEI-8695006002",
-    "rel": "设备",
-    "type": "device"
-   },
-   {
-    "id": "C0004-r3",
-    "name": "刘*华",
-    "rel": "共借人",
-    "type": "person",
-    "risk": "关注"
-   }
-  ],
-  "riskDims": [
-   {
-    "dim": "负债",
-    "score": 63
-   },
-   {
-    "dim": "多头",
-    "score": 70
-   },
-   {
-    "dim": "欺诈",
-    "score": 77
-   },
-   {
-    "dim": "司法",
-    "score": 84
-   },
-   {
-    "dim": "行为",
-    "score": 91
-   },
-   {
-    "dim": "舆情",
-    "score": 68
-   }
-  ],
-  "creditReport": {
-   "queries": [
-    {
-     "month": "2026-03",
-     "count": 6,
-     "institutions": [
-      "C小贷",
-      "E银行"
-     ]
-    },
-    {
-     "month": "2026-04",
-     "count": 5,
-     "institutions": [
-      "D平台贷",
-      "F消金"
-     ]
-    },
-    {
-     "month": "2026-05",
-     "count": 4,
-     "institutions": [
-      "E银行",
-      "A银行"
-     ]
-    },
-    {
-     "month": "2026-06",
-     "count": 5,
-     "institutions": [
-      "F消金",
-      "B消费金融"
-     ]
-    },
-    {
-     "month": "2026-07",
-     "count": 6,
-     "institutions": [
-      "A银行",
-      "C小贷"
-     ]
-    },
-    {
-     "month": "2026-08",
-     "count": 5,
-     "institutions": [
-      "B消费金融",
-      "D平台贷"
-     ]
-    }
-   ],
-   "accounts": [
-    {
-     "institution": "本行",
-     "type": "经营贷",
-     "limit": 200000,
-     "balance": 156000,
-     "status": "正常",
-     "openDate": "2025-03-21"
-    },
-    {
-     "institution": "D平台贷",
-     "type": "消费贷",
-     "limit": 50000,
-     "balance": 22000,
-     "status": "逾期",
-     "openDate": "2025-06-21"
-    },
-    {
-     "institution": "F消金",
-     "type": "信用卡",
-     "limit": 40000,
-     "balance": 18000,
-     "status": "正常",
-     "openDate": "2024-09-21"
-    }
-   ],
-   "overdues": [
-    {
-     "date": "2026-06-12",
-     "institution": "D平台贷",
-     "days": 8,
-     "amount": 3200
-    },
-    {
-     "date": "2026-04-03",
-     "institution": "F消金",
-     "days": 3,
-     "amount": 2500
-    }
-   ],
-   "guaranties": [
-    {
-     "org": "杭州*强商贸",
-     "amount": 500000,
-     "remain": 300000
-    }
-   ]
-  },
-  "income": {
-   "monthIncome": 18000,
-   "monthRepay": 13000,
-   "dti": 72,
-   "debtTotal": 276000,
-   "assetTotal": 800000,
-   "liabilityRatio": 35
-  },
-  "collaterals": [
-   {
-    "type": "房产",
-    "name": "住宅抵押（拱墅）",
-    "valuation": 2000000,
-    "loanAmount": 200000,
-    "ratio": 10,
-    "status": "足值"
-   },
-   {
-    "type": "车辆",
-    "name": "浙A·5070 轿车",
-    "valuation": 180000,
-    "loanAmount": 120000,
-    "ratio": 67,
-    "status": "足值"
-   }
-  ],
-  "guarantors": [
-   {
-    "name": "王*强",
-    "relation": "配偶",
-    "credit": "征信正常"
-   },
-   {
-    "name": "赵*军",
-    "relation": "股东",
-    "credit": "征信有 1 笔逾期"
-   }
-  ],
-  "business": {
-   "companyName": "绍兴*强商贸有限公司",
-   "industry": "餐饮",
-   "monthRevenue": 800000,
-   "taxMonthly": 26000,
-   "invoiceYear": 7500000,
-   "employees": 28,
-   "operateYears": 8,
-   "accountBalance": 180000
-  },
-  "fundFlow": {
-   "purpose": "经营周转",
-   "riskFlag": "疑似回流",
-   "flows": [
-    {
-     "date": "2026-07-15",
-     "amount": 62400,
-     "to": "供应商 A（对公）",
-     "note": "货款结算",
-     "risk": "正常"
-    },
-    {
-     "date": "2026-07-16",
-     "amount": 46800,
-     "to": "供应商 B（对公）",
-     "note": "货款结算",
-     "risk": "正常"
-    },
-    {
-     "date": "2026-07-18",
-     "amount": 31200,
-     "to": "个人账户 王**",
-     "note": "大额转个人",
-     "risk": "疑似回流"
-    },
-    {
-     "date": "2026-07-22",
-     "amount": 15600,
-     "to": "经营场所租金",
-     "note": "租金支付",
-     "risk": "正常"
-    }
-   ]
-  },
-  "blacklist": {
-   "hits": [
-    {
-     "list": "网贷黑名单",
-     "matched": "手机号命中",
-     "date": "2026-06-20",
-     "score": 86
-    },
-    {
-     "list": "反欺诈名单",
-     "matched": "设备关联欺诈用户",
-     "date": "2026-07-02",
-     "score": 78
-    }
-   ],
-   "fraudTags": [
-    "设备聚集",
-    "深夜申请"
-   ],
-   "riskScore": 82
-  }
- },
- {
-  "custId": "C0012",
-  "name": "韩*磊",
-  "idCard": "3301**********4444",
-  "product": "分期贷",
-  "creditLine": 119000,
-  "loanBalance": 47456,
-  "loanStatus": "在贷",
-  "riskLevel": "中风险",
-  "scoreHistory": [
-   {
-    "month": "2026-02",
-    "score": 70,
-    "cohortAvg": 72
-   },
-   {
-    "month": "2026-03",
-    "score": 69,
-    "cohortAvg": 73
-   },
-   {
-    "month": "2026-04",
-    "score": 68,
-    "cohortAvg": 72
-   },
-   {
-    "month": "2026-05",
-    "score": 67,
-    "cohortAvg": 73
-   },
-   {
-    "month": "2026-06",
-    "score": 66,
-    "cohortAvg": 72
-   },
-   {
-    "month": "2026-07",
-    "score": 65,
-    "cohortAvg": 73
-   }
-  ],
-  "alerts": [
-   {
-    "time": "2026-08-08",
-    "level": "YELLOW",
-    "scene": "贷中风控",
-    "ruleName": "新增开庭公告",
-    "metricValue": 1,
-    "threshold": 0,
-    "status": "处置中"
-   }
-  ],
-  "disposes": [
-   {
-    "time": "2026-07",
-    "operator": "风控专员-张三",
-    "action": "关注",
-    "result": "已纳入观察",
-    "note": "按处置策略自动生成"
-   }
-  ],
-  "relations": [
-   {
-    "id": "C0012-r0",
-    "name": "中联供应链",
-    "rel": "法人",
-    "type": "company"
-   },
-   {
-    "id": "C0012-r1",
-    "name": "鼎盛贸易",
-    "rel": "法人",
-    "type": "company"
-   },
-   {
-    "id": "C0012-r2",
-    "name": "IMEI-8695007002",
-    "rel": "设备",
-    "type": "device"
-   },
-   {
-    "id": "C0012-rc",
-    "name": "刘女士",
-    "rel": "紧急联系人",
-    "type": "contact"
-   }
-  ],
-  "riskDims": [
-   {
-    "dim": "负债",
-    "score": 40
-   },
-   {
-    "dim": "多头",
-    "score": 47
-   },
-   {
-    "dim": "欺诈",
-    "score": 54
-   },
-   {
-    "dim": "司法",
-    "score": 61
-   },
-   {
-    "dim": "行为",
-    "score": 68
-   },
-   {
-    "dim": "舆情",
-    "score": 45
-   }
-  ],
-  "creditReport": {
-   "queries": [
-    {
-     "month": "2026-03",
-     "count": 3,
-     "institutions": [
-      "B消费金融",
-      "D平台贷"
-     ]
-    },
-    {
-     "month": "2026-04",
-     "count": 2,
-     "institutions": [
-      "C小贷",
-      "E银行"
-     ]
-    },
-    {
-     "month": "2026-05",
-     "count": 2,
-     "institutions": [
-      "D平台贷",
-      "F消金"
-     ]
-    },
-    {
-     "month": "2026-06",
-     "count": 2,
-     "institutions": [
-      "E银行",
-      "A银行"
-     ]
-    },
-    {
-     "month": "2026-07",
-     "count": 2,
-     "institutions": [
-      "F消金",
-      "B消费金融"
-     ]
-    },
-    {
-     "month": "2026-08",
-     "count": 2,
-     "institutions": [
-      "A银行",
-      "C小贷"
-     ]
-    }
-   ],
-   "accounts": [
-    {
-     "institution": "本行",
-     "type": "分期贷",
-     "limit": 119000,
-     "balance": 47456,
-     "status": "正常",
-     "openDate": "2025-02-08"
-    },
-    {
-     "institution": "C小贷",
-     "type": "消费贷",
-     "limit": 80000,
-     "balance": 47000,
-     "status": "正常",
-     "openDate": "2025-05-08"
-    },
-    {
-     "institution": "E银行",
-     "type": "信用卡",
-     "limit": 30000,
-     "balance": 8000,
-     "status": "正常",
-     "openDate": "2024-08-08"
-    }
-   ],
-   "overdues": [
-    {
-     "date": "2026-05-20",
-     "institution": "E银行",
-     "days": 2,
-     "amount": 1100
-    }
-   ],
-   "guaranties": [
-    {
-     "org": "杭州*磊商贸",
-     "amount": 800000,
-     "remain": 250000
-    }
-   ]
-  },
-  "income": {
-   "monthIncome": 14500,
-   "monthRepay": 1977,
-   "dti": 14,
-   "debtTotal": 67456,
-   "assetTotal": 357000,
-   "liabilityRatio": 19
-  },
-  "collaterals": [],
-  "guarantors": [],
-  "fundFlow": {
-   "purpose": "经营周转",
-   "riskFlag": "正常",
-   "flows": [
-    {
-     "date": "2026-07-15",
-     "amount": 18982,
-     "to": "供应商 A（对公）",
-     "note": "货款结算",
-     "risk": "正常"
-    },
-    {
-     "date": "2026-07-16",
-     "amount": 14237,
-     "to": "供应商 B（对公）",
-     "note": "货款结算",
-     "risk": "正常"
-    },
-    {
-     "date": "2026-07-22",
-     "amount": 4746,
-     "to": "经营场所租金",
-     "note": "租金支付",
-     "risk": "正常"
-    }
-   ]
-  },
-  "blacklist": {
-   "hits": [
-    {
-     "list": "观察名单",
-     "matched": "IP 段聚集",
-     "date": "2026-07-10",
-     "score": 52
-    }
-   ],
-   "fraudTags": [
-    "资料频繁修改"
-   ],
-   "riskScore": 45
-  }
- },
- {
-  "custId": "C0008",
-  "name": "吴*军",
-  "idCard": "3301**********5555",
-  "product": "消费贷",
-  "creditLine": 112000,
-  "loanBalance": 52444,
-  "loanStatus": "在贷",
-  "riskLevel": "高风险",
-  "scoreHistory": [
-   {
-    "month": "2026-02",
-    "score": 60,
-    "cohortAvg": 72
-   },
-   {
-    "month": "2026-03",
-    "score": 55,
-    "cohortAvg": 73
-   },
-   {
-    "month": "2026-04",
-    "score": 50,
-    "cohortAvg": 72
-   },
-   {
-    "month": "2026-05",
-    "score": 45,
-    "cohortAvg": 73
-   },
-   {
-    "month": "2026-06",
-    "score": 40,
-    "cohortAvg": 72
-   },
-   {
-    "month": "2026-07",
-    "score": 35,
-    "cohortAvg": 73
-   }
-  ],
-  "alerts": [
-   {
-    "time": "2026-08-08",
-    "level": "RED",
-    "scene": "贷中风控",
-    "ruleName": "关联企业经营异常",
-    "metricValue": 1,
-    "threshold": 0,
-    "status": "处置中"
-   }
-  ],
-  "disposes": [
-   {
-    "time": "2026-07",
-    "operator": "风控专员-张三",
-    "action": "降额",
-    "result": "已执行降额",
-    "note": "按处置策略自动生成"
-   }
-  ],
-  "relations": [
-   {
-    "id": "C0008-r0",
-    "name": "鼎盛贸易",
-    "rel": "法人",
-    "type": "company",
-    "risk": "高危"
-   },
-   {
-    "id": "C0008-r1",
-    "name": "旭日投资",
-    "rel": "法人",
-    "type": "company"
-   },
-   {
-    "id": "C0008-r2",
-    "name": "IMEI-8695008002",
-    "rel": "设备",
-    "type": "device"
-   },
-   {
-    "id": "C0008-r3",
-    "name": "李*丽",
-    "rel": "共借人",
-    "type": "person",
-    "risk": "关注"
-   }
-  ],
-  "riskDims": [
-   {
-    "dim": "负债",
-    "score": 65
-   },
-   {
-    "dim": "多头",
-    "score": 72
-   },
-   {
-    "dim": "欺诈",
-    "score": 79
-   },
-   {
-    "dim": "司法",
-    "score": 86
-   },
-   {
-    "dim": "行为",
-    "score": 93
-   },
-   {
-    "dim": "舆情",
-    "score": 70
-   }
-  ],
-  "creditReport": {
-   "queries": [
-    {
-     "month": "2026-03",
-     "count": 6,
-     "institutions": [
-      "C小贷",
-      "E银行"
-     ]
-    },
-    {
-     "month": "2026-04",
-     "count": 5,
-     "institutions": [
-      "D平台贷",
-      "F消金"
-     ]
-    },
-    {
-     "month": "2026-05",
-     "count": 4,
-     "institutions": [
-      "E银行",
-      "A银行"
-     ]
-    },
-    {
-     "month": "2026-06",
-     "count": 4,
-     "institutions": [
-      "F消金",
-      "B消费金融"
-     ]
-    },
-    {
-     "month": "2026-07",
-     "count": 5,
-     "institutions": [
-      "A银行",
-      "C小贷"
-     ]
-    },
-    {
-     "month": "2026-08",
-     "count": 6,
-     "institutions": [
-      "B消费金融",
-      "D平台贷"
-     ]
-    }
-   ],
-   "accounts": [
-    {
-     "institution": "本行",
-     "type": "消费贷",
-     "limit": 112000,
-     "balance": 52444,
-     "status": "正常",
-     "openDate": "2025-03-09"
-    },
-    {
-     "institution": "D平台贷",
-     "type": "消费贷",
-     "limit": 80000,
-     "balance": 52000,
-     "status": "逾期",
-     "openDate": "2025-06-09"
-    },
-    {
-     "institution": "F消金",
-     "type": "信用卡",
-     "limit": 40000,
-     "balance": 10000,
-     "status": "正常",
-     "openDate": "2024-09-09"
-    }
-   ],
-   "overdues": [
-    {
-     "date": "2026-06-12",
-     "institution": "D平台贷",
-     "days": 8,
-     "amount": 6200
-    },
-    {
-     "date": "2026-04-03",
-     "institution": "F消金",
-     "days": 3,
-     "amount": 2500
-    }
-   ],
-   "guaranties": [
-    {
-     "org": "杭州*军商贸",
-     "amount": 800000,
-     "remain": 300000
-    }
-   ]
-  },
-  "income": {
-   "monthIncome": 12000,
-   "monthRepay": 4370,
-   "dti": 36,
-   "debtTotal": 92444,
-   "assetTotal": 448000,
-   "liabilityRatio": 21
-  },
-  "collaterals": [],
-  "guarantors": [],
-  "fundFlow": {
-   "purpose": "经营周转",
-   "riskFlag": "疑似回流",
-   "flows": [
-    {
-     "date": "2026-07-15",
-     "amount": 20978,
-     "to": "供应商 A（对公）",
-     "note": "货款结算",
-     "risk": "正常"
-    },
-    {
-     "date": "2026-07-16",
-     "amount": 15733,
-     "to": "供应商 B（对公）",
-     "note": "货款结算",
-     "risk": "正常"
-    },
-    {
-     "date": "2026-07-18",
-     "amount": 10489,
-     "to": "个人账户 王**",
-     "note": "大额转个人",
-     "risk": "疑似回流"
-    },
-    {
-     "date": "2026-07-22",
-     "amount": 5244,
-     "to": "经营场所租金",
-     "note": "租金支付",
-     "risk": "正常"
-    }
-   ]
-  },
-  "blacklist": {
-   "hits": [
-    {
-     "list": "网贷黑名单",
-     "matched": "手机号命中",
-     "date": "2026-06-20",
-     "score": 86
-    },
-    {
-     "list": "反欺诈名单",
-     "matched": "设备关联欺诈用户",
-     "date": "2026-07-02",
-     "score": 78
-    }
-   ],
-   "fraudTags": [
-    "设备聚集",
-    "深夜申请"
-   ],
-   "riskScore": 82
-  }
- },
- {
-  "custId": "C0013",
-  "name": "曹*刚",
-  "idCard": "3301**********6666",
-  "product": "信用贷",
-  "creditLine": 33000,
-  "loanBalance": 19199,
-  "loanStatus": "在贷",
-  "riskLevel": "中风险",
-  "scoreHistory": [
-   {
-    "month": "2026-02",
-    "score": 70,
-    "cohortAvg": 72
-   },
-   {
-    "month": "2026-03",
-    "score": 69,
-    "cohortAvg": 73
-   },
-   {
-    "month": "2026-04",
-    "score": 68,
-    "cohortAvg": 72
-   },
-   {
-    "month": "2026-05",
-    "score": 67,
-    "cohortAvg": 73
-   },
-   {
-    "month": "2026-06",
-    "score": 66,
-    "cohortAvg": 72
-   },
-   {
-    "month": "2026-07",
-    "score": 65,
-    "cohortAvg": 73
-   }
-  ],
-  "alerts": [
-   {
-    "time": "2026-08-08",
-    "level": "YELLOW",
-    "scene": "贷中风控",
-    "ruleName": "担保企业出现逾期",
-    "metricValue": 2,
-    "threshold": 1,
-    "status": "处置中"
-   }
-  ],
-  "disposes": [
-   {
-    "time": "2026-07",
-    "operator": "风控专员-张三",
-    "action": "关注",
-    "result": "已纳入观察",
-    "note": "按处置策略自动生成"
-   }
-  ],
-  "relations": [
-   {
-    "id": "C0013-r0",
-    "name": "旭日投资",
-    "rel": "法人",
-    "type": "company"
-   },
-   {
-    "id": "C0013-r1",
-    "name": "华信商贸",
-    "rel": "法人",
-    "type": "company"
-   },
-   {
-    "id": "C0013-r2",
-    "name": "IMEI-8695009002",
-    "rel": "设备",
-    "type": "device"
-   },
-   {
-    "id": "C0013-rc",
-    "name": "张先生",
-    "rel": "紧急联系人",
-    "type": "contact"
-   }
-  ],
-  "riskDims": [
-   {
-    "dim": "负债",
-    "score": 42
-   },
-   {
-    "dim": "多头",
-    "score": 49
-   },
-   {
-    "dim": "欺诈",
-    "score": 56
-   },
-   {
-    "dim": "司法",
-    "score": 63
-   },
-   {
-    "dim": "行为",
-    "score": 70
-   },
-   {
-    "dim": "舆情",
-    "score": 47
-   }
-  ],
-  "creditReport": {
-   "queries": [
-    {
-     "month": "2026-03",
-     "count": 4,
-     "institutions": [
-      "C小贷",
-      "E银行"
-     ]
-    },
-    {
-     "month": "2026-04",
-     "count": 3,
-     "institutions": [
-      "D平台贷",
-      "F消金"
-     ]
-    },
-    {
-     "month": "2026-05",
-     "count": 2,
-     "institutions": [
-      "E银行",
-      "A银行"
-     ]
-    },
-    {
-     "month": "2026-06",
-     "count": 3,
-     "institutions": [
-      "F消金",
-      "B消费金融"
-     ]
-    },
-    {
-     "month": "2026-07",
-     "count": 2,
-     "institutions": [
-      "A银行",
-      "C小贷"
-     ]
-    },
-    {
-     "month": "2026-08",
-     "count": 2,
-     "institutions": [
-      "B消费金融",
-      "D平台贷"
-     ]
-    }
-   ],
-   "accounts": [
-    {
-     "institution": "本行",
-     "type": "信用贷",
-     "limit": 33000,
-     "balance": 19199,
-     "status": "正常",
-     "openDate": "2025-03-27"
-    },
-    {
-     "institution": "D平台贷",
-     "type": "消费贷",
-     "limit": 90000,
-     "balance": 52000,
-     "status": "正常",
-     "openDate": "2025-06-27"
-    },
-    {
-     "institution": "F消金",
-     "type": "信用卡",
-     "limit": 40000,
-     "balance": 18000,
-     "status": "正常",
-     "openDate": "2024-09-27"
-    }
-   ],
-   "overdues": [
-    {
-     "date": "2026-05-20",
-     "institution": "F消金",
-     "days": 2,
-     "amount": 1400
-    }
-   ],
-   "guaranties": [
-    {
-     "org": "杭州*刚商贸",
-     "amount": 900000,
-     "remain": 300000
-    }
-   ]
-  },
-  "income": {
-   "monthIncome": 15000,
-   "monthRepay": 800,
-   "dti": 5,
-   "debtTotal": 139199,
-   "assetTotal": 132000,
-   "liabilityRatio": 95
-  },
-  "collaterals": [],
-  "guarantors": [],
-  "fundFlow": {
-   "purpose": "经营周转",
-   "riskFlag": "正常",
-   "flows": [
-    {
-     "date": "2026-07-15",
-     "amount": 7680,
-     "to": "供应商 A（对公）",
-     "note": "货款结算",
-     "risk": "正常"
-    },
-    {
-     "date": "2026-07-16",
-     "amount": 5760,
-     "to": "供应商 B（对公）",
-     "note": "货款结算",
-     "risk": "正常"
-    },
-    {
-     "date": "2026-07-22",
-     "amount": 1920,
-     "to": "经营场所租金",
-     "note": "租金支付",
-     "risk": "正常"
-    }
-   ]
-  },
-  "blacklist": {
-   "hits": [
-    {
-     "list": "观察名单",
-     "matched": "IP 段聚集",
-     "date": "2026-07-10",
-     "score": 52
-    }
-   ],
-   "fraudTags": [
-    "资料频繁修改"
-   ],
-   "riskScore": 45
-  }
- },
- {
-  "custId": "C0014",
-  "name": "唐*霞",
-  "idCard": "3301**********1234",
-  "product": "消费贷",
-  "creditLine": 73000,
-  "loanBalance": 48511,
-  "loanStatus": "在贷",
-  "riskLevel": "中风险",
-  "scoreHistory": [
-   {
-    "month": "2026-02",
-    "score": 70,
-    "cohortAvg": 72
-   },
-   {
-    "month": "2026-03",
-    "score": 69,
-    "cohortAvg": 73
-   },
-   {
-    "month": "2026-04",
-    "score": 68,
-    "cohortAvg": 72
-   },
-   {
-    "month": "2026-05",
-    "score": 67,
-    "cohortAvg": 73
-   },
-   {
-    "month": "2026-06",
-    "score": 66,
-    "cohortAvg": 72
-   },
-   {
-    "month": "2026-07",
-    "score": 65,
-    "cohortAvg": 73
-   }
-  ],
-  "alerts": [
-   {
-    "time": "2026-08-08",
-    "level": "YELLOW",
-    "scene": "反欺诈监测",
-    "ruleName": "新设备深夜登录",
-    "metricValue": 1,
-    "threshold": 0,
-    "status": "处置中"
-   }
-  ],
-  "disposes": [
-   {
-    "time": "2026-07",
-    "operator": "风控专员-张三",
-    "action": "关注",
-    "result": "已纳入观察",
-    "note": "按处置策略自动生成"
-   }
-  ],
-  "relations": [
-   {
-    "id": "C0014-r0",
-    "name": "华信商贸",
-    "rel": "法人",
-    "type": "company"
-   },
-   {
-    "id": "C0014-r1",
-    "name": "恒达科技",
-    "rel": "法人",
-    "type": "company"
-   },
-   {
-    "id": "C0014-r2",
-    "name": "IMEI-8695010002",
-    "rel": "设备",
-    "type": "device"
-   },
-   {
-    "id": "C0014-rc",
-    "name": "刘女士",
-    "rel": "紧急联系人",
-    "type": "contact"
-   }
-  ],
-  "riskDims": [
-   {
-    "dim": "负债",
-    "score": 38
-   },
-   {
-    "dim": "多头",
-    "score": 45
-   },
-   {
-    "dim": "欺诈",
-    "score": 52
-   },
-   {
-    "dim": "司法",
-    "score": 59
-   },
-   {
-    "dim": "行为",
-    "score": 66
-   },
-   {
-    "dim": "舆情",
-    "score": 43
-   }
-  ],
-  "creditReport": {
-   "queries": [
-    {
-     "month": "2026-03",
-     "count": 4,
-     "institutions": [
-      "F消金",
-      "B消费金融"
-     ]
-    },
-    {
-     "month": "2026-04",
-     "count": 4,
-     "institutions": [
-      "A银行",
-      "C小贷"
-     ]
-    },
-    {
-     "month": "2026-05",
-     "count": 4,
-     "institutions": [
-      "B消费金融",
-      "D平台贷"
-     ]
-    },
-    {
-     "month": "2026-06",
-     "count": 4,
-     "institutions": [
-      "C小贷",
-      "E银行"
-     ]
-    },
-    {
-     "month": "2026-07",
-     "count": 3,
-     "institutions": [
-      "D平台贷",
-      "F消金"
-     ]
-    },
-    {
-     "month": "2026-08",
-     "count": 4,
-     "institutions": [
-      "E银行",
-      "A银行"
-     ]
-    }
-   ],
-   "accounts": [
-    {
-     "institution": "本行",
-     "type": "消费贷",
-     "limit": 73000,
-     "balance": 48511,
-     "status": "正常",
-     "openDate": "2025-12-24"
-    },
-    {
-     "institution": "A银行",
-     "type": "消费贷",
-     "limit": 60000,
-     "balance": 37000,
-     "status": "正常",
-     "openDate": "2025-03-24"
-    },
-    {
-     "institution": "C小贷",
-     "type": "信用卡",
-     "limit": 50000,
-     "balance": 20000,
-     "status": "正常",
-     "openDate": "2024-06-24"
-    }
-   ],
-   "overdues": [
-    {
-     "date": "2026-05-20",
-     "institution": "C小贷",
-     "days": 2,
-     "amount": 1700
-    }
-   ],
-   "guaranties": [
-    {
-     "org": "杭州*霞商贸",
-     "amount": 600000,
-     "remain": 350000
-    }
-   ]
-  },
-  "income": {
-   "monthIncome": 13500,
-   "monthRepay": 2021,
-   "dti": 15,
-   "debtTotal": 188511,
-   "assetTotal": 365000,
-   "liabilityRatio": 52
-  },
-  "collaterals": [],
-  "guarantors": [],
-  "fundFlow": {
-   "purpose": "经营周转",
-   "riskFlag": "正常",
-   "flows": [
-    {
-     "date": "2026-07-15",
-     "amount": 19404,
-     "to": "供应商 A（对公）",
-     "note": "货款结算",
-     "risk": "正常"
-    },
-    {
-     "date": "2026-07-16",
-     "amount": 14553,
-     "to": "供应商 B（对公）",
-     "note": "货款结算",
-     "risk": "正常"
-    },
-    {
-     "date": "2026-07-22",
-     "amount": 4851,
-     "to": "经营场所租金",
-     "note": "租金支付",
-     "risk": "正常"
-    }
-   ]
-  },
-  "blacklist": {
-   "hits": [
-    {
-     "list": "观察名单",
-     "matched": "IP 段聚集",
-     "date": "2026-07-10",
-     "score": 52
-    }
-   ],
-   "fraudTags": [
-    "资料频繁修改"
-   ],
-   "riskScore": 45
-  }
- },
- {
-  "custId": "C0015",
-  "name": "冯*军",
-  "idCard": "3301**********5678",
-  "product": "经营贷",
-  "creditLine": 189000,
-  "loanBalance": 127339,
-  "loanStatus": "在贷",
-  "riskLevel": "中风险",
-  "scoreHistory": [
-   {
-    "month": "2026-02",
-    "score": 70,
-    "cohortAvg": 72
-   },
-   {
-    "month": "2026-03",
-    "score": 69,
-    "cohortAvg": 73
-   },
-   {
-    "month": "2026-04",
-    "score": 68,
-    "cohortAvg": 72
-   },
-   {
-    "month": "2026-05",
-    "score": 67,
-    "cohortAvg": 73
-   },
-   {
-    "month": "2026-06",
-    "score": 66,
-    "cohortAvg": 72
-   },
-   {
-    "month": "2026-07",
-    "score": 65,
-    "cohortAvg": 73
-   }
-  ],
-  "alerts": [
-   {
-    "time": "2026-08-08",
-    "level": "YELLOW",
-    "scene": "反欺诈监测",
-    "ruleName": "资料与历史申请冲突",
-    "metricValue": 1,
-    "threshold": 0,
-    "status": "处置中"
-   }
-  ],
-  "disposes": [
-   {
-    "time": "2026-07",
-    "operator": "风控专员-张三",
-    "action": "关注",
-    "result": "已纳入观察",
-    "note": "按处置策略自动生成"
-   }
-  ],
-  "relations": [
-   {
-    "id": "C0015-r0",
-    "name": "恒达科技",
-    "rel": "法人",
-    "type": "company"
-   },
-   {
-    "id": "C0015-r1",
-    "name": "中联供应链",
-    "rel": "法人",
-    "type": "company"
-   },
-   {
-    "id": "C0015-r2",
-    "name": "IMEI-8695011002",
-    "rel": "设备",
-    "type": "device"
-   },
-   {
-    "id": "C0015-rc",
-    "name": "陈先生",
-    "rel": "紧急联系人",
-    "type": "contact"
-   }
-  ],
-  "riskDims": [
-   {
-    "dim": "负债",
-    "score": 39
-   },
-   {
-    "dim": "多头",
-    "score": 46
-   },
-   {
-    "dim": "欺诈",
-    "score": 53
-   },
-   {
-    "dim": "司法",
-    "score": 60
-   },
-   {
-    "dim": "行为",
-    "score": 67
-   },
-   {
-    "dim": "舆情",
-    "score": 44
-   }
-  ],
-  "creditReport": {
-   "queries": [
-    {
-     "month": "2026-03",
-     "count": 2,
-     "institutions": [
-      "A银行",
-      "C小贷"
-     ]
-    },
-    {
-     "month": "2026-04",
-     "count": 2,
-     "institutions": [
-      "B消费金融",
-      "D平台贷"
-     ]
-    },
-    {
-     "month": "2026-05",
-     "count": 2,
-     "institutions": [
-      "C小贷",
-      "E银行"
-     ]
-    },
-    {
-     "month": "2026-06",
-     "count": 3,
-     "institutions": [
-      "D平台贷",
-      "F消金"
-     ]
-    },
-    {
-     "month": "2026-07",
-     "count": 4,
-     "institutions": [
-      "E银行",
-      "A银行"
-     ]
-    },
-    {
-     "month": "2026-08",
-     "count": 4,
-     "institutions": [
-      "F消金",
-      "B消费金融"
-     ]
-    }
-   ],
-   "accounts": [
-    {
-     "institution": "本行",
-     "type": "经营贷",
-     "limit": 189000,
-     "balance": 127339,
-     "status": "正常",
-     "openDate": "2025-01-16"
-    },
-    {
-     "institution": "B消费金融",
-     "type": "消费贷",
-     "limit": 70000,
-     "balance": 42000,
-     "status": "正常",
-     "openDate": "2025-04-16"
-    },
-    {
-     "institution": "D平台贷",
-     "type": "信用卡",
-     "limit": 20000,
-     "balance": 14000,
-     "status": "正常",
-     "openDate": "2024-07-16"
-    }
-   ],
-   "overdues": [
-    {
-     "date": "2026-05-20",
-     "institution": "D平台贷",
-     "days": 2,
-     "amount": 800
-    }
-   ],
-   "guaranties": [
-    {
-     "org": "杭州*军商贸",
-     "amount": 700000,
-     "remain": 200000
-    }
-   ]
-  },
-  "income": {
-   "monthIncome": 14000,
-   "monthRepay": 5306,
-   "dti": 38,
-   "debtTotal": 207339,
-   "assetTotal": 378000,
-   "liabilityRatio": 55
-  },
-  "collaterals": [
-   {
-    "type": "房产",
-    "name": "住宅抵押（城西）",
-    "valuation": 2400000,
-    "loanAmount": 189000,
-    "ratio": 8,
-    "status": "足值"
-   }
-  ],
-  "guarantors": [
-   {
-    "name": "赵*军",
-    "relation": "配偶",
-    "credit": "征信正常"
-   }
-  ],
-  "business": {
-   "companyName": "杭州*军商贸有限公司",
-   "industry": "批发零售",
-   "monthRevenue": 420000,
-   "taxMonthly": 18000,
-   "invoiceYear": 6600000,
-   "employees": 20,
-   "operateYears": 6,
-   "accountBalance": 200000
-  },
-  "fundFlow": {
-   "purpose": "经营周转",
-   "riskFlag": "正常",
-   "flows": [
-    {
-     "date": "2026-07-15",
-     "amount": 50936,
-     "to": "供应商 A（对公）",
-     "note": "货款结算",
-     "risk": "正常"
-    },
-    {
-     "date": "2026-07-16",
-     "amount": 38202,
-     "to": "供应商 B（对公）",
-     "note": "货款结算",
-     "risk": "正常"
-    },
-    {
-     "date": "2026-07-22",
-     "amount": 12734,
-     "to": "经营场所租金",
-     "note": "租金支付",
-     "risk": "正常"
-    }
-   ]
-  },
-  "blacklist": {
-   "hits": [
-    {
-     "list": "观察名单",
-     "matched": "IP 段聚集",
-     "date": "2026-07-10",
-     "score": 52
-    }
-   ],
-   "fraudTags": [
-    "资料频繁修改"
-   ],
-   "riskScore": 45
-  }
- },
- {
-  "custId": "C0003",
-  "name": "王*芳",
-  "idCard": "3301**********9012",
-  "product": "信用贷",
-  "creditLine": 100000,
-  "loanBalance": 35000,
-  "loanStatus": "在贷",
-  "riskLevel": "低风险",
-  "scoreHistory": [
-   {
-    "month": "2026-02",
-    "score": 76,
-    "cohortAvg": 74
-   },
-   {
-    "month": "2026-03",
-    "score": 77,
-    "cohortAvg": 74
-   },
-   {
-    "month": "2026-04",
-    "score": 76,
-    "cohortAvg": 73
-   },
-   {
-    "month": "2026-05",
-    "score": 78,
-    "cohortAvg": 72
-   },
-   {
-    "month": "2026-06",
-    "score": 78,
-    "cohortAvg": 72
-   },
-   {
-    "month": "2026-07",
-    "score": 78,
-    "cohortAvg": 71
-   }
-  ],
-  "alerts": [
-   {
-    "time": "2026-08-02",
-    "level": "OPPORTUNITY",
-    "scene": "需求上升",
-    "ruleName": "额度使用率>80%",
-    "metricValue": 88,
-    "threshold": 80,
-    "status": "待处置"
-   }
-  ],
-  "disposes": [],
-  "relations": [
-   {
-    "id": "C0003-r0",
-    "name": "中联供应链",
-    "rel": "法人",
-    "type": "company"
-   },
-   {
-    "id": "C0003-r1",
-    "name": "鼎盛贸易",
-    "rel": "法人",
-    "type": "company"
-   }
-  ],
-  "riskDims": [
-   {
-    "dim": "负债",
-    "score": 14
-   },
-   {
-    "dim": "多头",
-    "score": 21
-   },
-   {
-    "dim": "欺诈",
-    "score": 28
-   },
-   {
-    "dim": "司法",
-    "score": 35
-   },
-   {
-    "dim": "行为",
-    "score": 42
-   },
-   {
-    "dim": "舆情",
-    "score": 19
-   }
-  ],
-  "creditReport": {
-   "queries": [
-    {
-     "month": "2026-03",
-     "count": 2,
-     "institutions": [
-      "F消金",
-      "B消费金融"
-     ]
-    },
-    {
-     "month": "2026-04",
-     "count": 2,
-     "institutions": [
-      "A银行",
-      "C小贷"
-     ]
-    },
-    {
-     "month": "2026-05",
-     "count": 2,
-     "institutions": [
-      "B消费金融",
-      "D平台贷"
-     ]
-    },
-    {
-     "month": "2026-06",
-     "count": 2,
-     "institutions": [
-      "C小贷",
-      "E银行"
-     ]
-    },
-    {
-     "month": "2026-07",
-     "count": 2,
-     "institutions": [
-      "D平台贷",
-      "F消金"
-     ]
-    },
-    {
-     "month": "2026-08",
-     "count": 2,
-     "institutions": [
-      "E银行",
-      "A银行"
-     ]
-    }
-   ],
-   "accounts": [
-    {
-     "institution": "本行",
-     "type": "信用贷",
-     "limit": 100000,
-     "balance": 35000,
-     "status": "正常",
-     "openDate": "2025-12-18"
-    },
-    {
-     "institution": "A银行",
-     "type": "消费贷",
-     "limit": 70000,
-     "balance": 52000,
-     "status": "正常",
-     "openDate": "2025-03-18"
-    },
-    {
-     "institution": "C小贷",
-     "type": "信用卡",
-     "limit": 50000,
-     "balance": 20000,
-     "status": "正常",
-     "openDate": "2024-06-18"
-    }
-   ],
-   "overdues": [],
-   "guaranties": []
-  },
-  "income": {
-   "monthIncome": 16500,
-   "monthRepay": 1458,
-   "dti": 9,
-   "debtTotal": 175000,
-   "assetTotal": 500000,
-   "liabilityRatio": 35
-  },
-  "collaterals": [],
-  "guarantors": [],
-  "fundFlow": {
-   "purpose": "经营周转",
-   "riskFlag": "正常",
-   "flows": [
-    {
-     "date": "2026-07-15",
-     "amount": 14000,
-     "to": "供应商 A（对公）",
-     "note": "货款结算",
-     "risk": "正常"
-    },
-    {
-     "date": "2026-07-16",
-     "amount": 10500,
-     "to": "供应商 B（对公）",
-     "note": "货款结算",
-     "risk": "正常"
-    },
-    {
-     "date": "2026-07-22",
-     "amount": 3500,
-     "to": "经营场所租金",
-     "note": "租金支付",
-     "risk": "正常"
-    }
-   ]
-  },
-  "blacklist": {
-   "hits": [],
-   "fraudTags": [],
-   "riskScore": 12
-  }
- },
- {
-  "custId": "C0016",
-  "name": "邓*平",
-  "idCard": "3301**********3456",
-  "product": "分期贷",
-  "creditLine": 138000,
-  "loanBalance": 108299,
-  "loanStatus": "在贷",
-  "riskLevel": "中风险",
-  "scoreHistory": [
-   {
-    "month": "2026-02",
-    "score": 70,
-    "cohortAvg": 72
-   },
-   {
-    "month": "2026-03",
-    "score": 69,
-    "cohortAvg": 73
-   },
-   {
-    "month": "2026-04",
-    "score": 68,
-    "cohortAvg": 72
-   },
-   {
-    "month": "2026-05",
-    "score": 67,
-    "cohortAvg": 73
-   },
-   {
-    "month": "2026-06",
-    "score": 66,
-    "cohortAvg": 72
-   },
-   {
-    "month": "2026-07",
-    "score": 65,
-    "cohortAvg": 73
-   }
-  ],
-  "alerts": [
-   {
-    "time": "2026-08-08",
-    "level": "YELLOW",
-    "scene": "贷中风控",
-    "ruleName": "临期余额不足",
-    "metricValue": 1,
-    "threshold": 0,
-    "status": "处置中"
-   }
-  ],
-  "disposes": [
-   {
-    "time": "2026-07",
-    "operator": "风控专员-张三",
-    "action": "关注",
-    "result": "已纳入观察",
-    "note": "按处置策略自动生成"
-   }
-  ],
-  "relations": [
-   {
-    "id": "C0016-r0",
-    "name": "鼎盛贸易",
-    "rel": "法人",
-    "type": "company"
-   },
-   {
-    "id": "C0016-r1",
-    "name": "旭日投资",
-    "rel": "法人",
-    "type": "company"
-   },
-   {
-    "id": "C0016-r2",
-    "name": "IMEI-8695013002",
-    "rel": "设备",
-    "type": "device"
-   },
-   {
-    "id": "C0016-rc",
-    "name": "刘女士",
-    "rel": "紧急联系人",
-    "type": "contact"
-   }
-  ],
-  "riskDims": [
-   {
-    "dim": "负债",
-    "score": 41
-   },
-   {
-    "dim": "多头",
-    "score": 48
-   },
-   {
-    "dim": "欺诈",
-    "score": 55
-   },
-   {
-    "dim": "司法",
-    "score": 62
-   },
-   {
-    "dim": "行为",
-    "score": 69
-   },
-   {
-    "dim": "舆情",
-    "score": 46
-   }
-  ],
-  "creditReport": {
-   "queries": [
-    {
-     "month": "2026-03",
-     "count": 2,
-     "institutions": [
-      "D平台贷",
-      "F消金"
-     ]
-    },
-    {
-     "month": "2026-04",
-     "count": 3,
-     "institutions": [
-      "E银行",
-      "A银行"
-     ]
-    },
-    {
-     "month": "2026-05",
-     "count": 4,
-     "institutions": [
-      "F消金",
-      "B消费金融"
-     ]
-    },
-    {
-     "month": "2026-06",
-     "count": 4,
-     "institutions": [
-      "A银行",
-      "C小贷"
-     ]
-    },
-    {
-     "month": "2026-07",
-     "count": 4,
-     "institutions": [
-      "B消费金融",
-      "D平台贷"
-     ]
-    },
-    {
-     "month": "2026-08",
-     "count": 3,
-     "institutions": [
-      "C小贷",
-      "E银行"
-     ]
-    }
-   ],
-   "accounts": [
-    {
-     "institution": "本行",
-     "type": "分期贷",
-     "limit": 138000,
-     "balance": 108299,
-     "status": "正常",
-     "openDate": "2025-10-13"
-    },
-    {
-     "institution": "E银行",
-     "type": "消费贷",
-     "limit": 90000,
-     "balance": 27000,
-     "status": "正常",
-     "openDate": "2025-01-13"
-    },
-    {
-     "institution": "A银行",
-     "type": "信用卡",
-     "limit": 30000,
-     "balance": 16000,
-     "status": "正常",
-     "openDate": "2024-04-13"
-    }
-   ],
-   "overdues": [
-    {
-     "date": "2026-05-20",
-     "institution": "A银行",
-     "days": 2,
-     "amount": 1100
-    }
-   ],
-   "guaranties": [
-    {
-     "org": "杭州*平商贸",
-     "amount": 900000,
-     "remain": 250000
-    }
-   ]
-  },
-  "income": {
-   "monthIncome": 12500,
-   "monthRepay": 4512,
-   "dti": 36,
-   "debtTotal": 208299,
-   "assetTotal": 414000,
-   "liabilityRatio": 50
-  },
-  "collaterals": [],
-  "guarantors": [],
-  "fundFlow": {
-   "purpose": "经营周转",
-   "riskFlag": "正常",
-   "flows": [
-    {
-     "date": "2026-07-15",
-     "amount": 43320,
-     "to": "供应商 A（对公）",
-     "note": "货款结算",
-     "risk": "正常"
-    },
-    {
-     "date": "2026-07-16",
-     "amount": 32490,
-     "to": "供应商 B（对公）",
-     "note": "货款结算",
-     "risk": "正常"
-    },
-    {
-     "date": "2026-07-22",
-     "amount": 10830,
-     "to": "经营场所租金",
-     "note": "租金支付",
-     "risk": "正常"
-    }
-   ]
-  },
-  "blacklist": {
-   "hits": [
-    {
-     "list": "观察名单",
-     "matched": "IP 段聚集",
-     "date": "2026-07-10",
-     "score": 52
-    }
-   ],
-   "fraudTags": [
-    "资料频繁修改"
-   ],
-   "riskScore": 45
-  }
- },
- {
-  "custId": "C0017",
-  "name": "曾*琳",
-  "idCard": "3301**********7890",
-  "product": "消费贷",
-  "creditLine": 172000,
-  "loanBalance": 93742,
-  "loanStatus": "在贷",
-  "riskLevel": "中风险",
-  "scoreHistory": [
-   {
-    "month": "2026-02",
-    "score": 70,
-    "cohortAvg": 72
-   },
-   {
-    "month": "2026-03",
-    "score": 69,
-    "cohortAvg": 73
-   },
-   {
-    "month": "2026-04",
-    "score": 68,
-    "cohortAvg": 72
-   },
-   {
-    "month": "2026-05",
-    "score": 67,
-    "cohortAvg": 73
-   },
-   {
-    "month": "2026-06",
-    "score": 66,
-    "cohortAvg": 72
-   },
-   {
-    "month": "2026-07",
-    "score": 65,
-    "cohortAvg": 73
-   }
-  ],
-  "alerts": [
-   {
-    "time": "2026-08-08",
-    "level": "YELLOW",
-    "scene": "贷后催收",
-    "ruleName": "电话拒接≥3次",
-    "metricValue": 3,
-    "threshold": 2,
-    "status": "处置中"
-   }
-  ],
-  "disposes": [
-   {
-    "time": "2026-07",
-    "operator": "风控专员-张三",
-    "action": "关注",
-    "result": "已纳入观察",
-    "note": "按处置策略自动生成"
-   }
-  ],
-  "relations": [
-   {
-    "id": "C0017-r0",
-    "name": "旭日投资",
-    "rel": "法人",
-    "type": "company"
-   },
-   {
-    "id": "C0017-r1",
-    "name": "华信商贸",
-    "rel": "法人",
-    "type": "company"
-   },
-   {
-    "id": "C0017-r2",
-    "name": "IMEI-8695014002",
-    "rel": "设备",
-    "type": "device"
-   },
-   {
-    "id": "C0017-rc",
-    "name": "陈先生",
-    "rel": "紧急联系人",
-    "type": "contact"
-   }
-  ],
-  "riskDims": [
-   {
-    "dim": "负债",
-    "score": 42
-   },
-   {
-    "dim": "多头",
-    "score": 49
-   },
-   {
-    "dim": "欺诈",
-    "score": 56
-   },
-   {
-    "dim": "司法",
-    "score": 63
-   },
-   {
-    "dim": "行为",
-    "score": 70
-   },
-   {
-    "dim": "舆情",
-    "score": 47
-   }
-  ],
-  "creditReport": {
-   "queries": [
-    {
-     "month": "2026-03",
-     "count": 3,
-     "institutions": [
-      "E银行",
-      "A银行"
-     ]
-    },
-    {
-     "month": "2026-04",
-     "count": 4,
-     "institutions": [
-      "F消金",
-      "B消费金融"
-     ]
-    },
-    {
-     "month": "2026-05",
-     "count": 4,
-     "institutions": [
-      "A银行",
-      "C小贷"
-     ]
-    },
-    {
-     "month": "2026-06",
-     "count": 3,
-     "institutions": [
-      "B消费金融",
-      "D平台贷"
-     ]
-    },
-    {
-     "month": "2026-07",
-     "count": 2,
-     "institutions": [
-      "C小贷",
-      "E银行"
-     ]
-    },
-    {
-     "month": "2026-08",
-     "count": 3,
-     "institutions": [
-      "D平台贷",
-      "F消金"
-     ]
-    }
-   ],
-   "accounts": [
-    {
-     "institution": "本行",
-     "type": "消费贷",
-     "limit": 172000,
-     "balance": 93742,
-     "status": "正常",
-     "openDate": "2025-11-05"
-    },
-    {
-     "institution": "F消金",
-     "type": "消费贷",
-     "limit": 50000,
-     "balance": 32000,
-     "status": "正常",
-     "openDate": "2025-02-05"
-    },
-    {
-     "institution": "B消费金融",
-     "type": "信用卡",
-     "limit": 40000,
-     "balance": 10000,
-     "status": "正常",
-     "openDate": "2024-05-05"
-    }
-   ],
-   "overdues": [
-    {
-     "date": "2026-05-20",
-     "institution": "B消费金融",
-     "days": 2,
-     "amount": 1400
-    }
-   ],
-   "guaranties": [
-    {
-     "org": "杭州*琳商贸",
-     "amount": 500000,
-     "remain": 300000
-    }
-   ]
-  },
-  "income": {
-   "monthIncome": 13000,
-   "monthRepay": 3906,
-   "dti": 30,
-   "debtTotal": 133742,
-   "assetTotal": 688000,
-   "liabilityRatio": 19
-  },
-  "collaterals": [],
-  "guarantors": [],
-  "fundFlow": {
-   "purpose": "经营周转",
-   "riskFlag": "正常",
-   "flows": [
-    {
-     "date": "2026-07-15",
-     "amount": 37497,
-     "to": "供应商 A（对公）",
-     "note": "货款结算",
-     "risk": "正常"
-    },
-    {
-     "date": "2026-07-16",
-     "amount": 28123,
-     "to": "供应商 B（对公）",
-     "note": "货款结算",
-     "risk": "正常"
-    },
-    {
-     "date": "2026-07-22",
-     "amount": 9374,
-     "to": "经营场所租金",
-     "note": "租金支付",
-     "risk": "正常"
-    }
-   ]
-  },
-  "blacklist": {
-   "hits": [
-    {
-     "list": "观察名单",
-     "matched": "IP 段聚集",
-     "date": "2026-07-10",
-     "score": 52
-    }
-   ],
-   "fraudTags": [
-    "资料频繁修改"
-   ],
-   "riskScore": 45
-  }
- },
- {
-  "custId": "C0007",
-  "name": "周*伟",
-  "idCard": "3301**********2222",
-  "product": "分期贷",
-  "creditLine": 129000,
-  "loanBalance": 40775,
-  "loanStatus": "在贷",
-  "riskLevel": "高风险",
-  "scoreHistory": [
-   {
-    "month": "2026-02",
-    "score": 60,
-    "cohortAvg": 72
-   },
-   {
-    "month": "2026-03",
-    "score": 55,
-    "cohortAvg": 73
-   },
-   {
-    "month": "2026-04",
-    "score": 50,
-    "cohortAvg": 72
-   },
-   {
-    "month": "2026-05",
-    "score": 45,
-    "cohortAvg": 73
-   },
-   {
-    "month": "2026-06",
-    "score": 40,
-    "cohortAvg": 72
-   },
-   {
-    "month": "2026-07",
-    "score": 35,
-    "cohortAvg": 73
-   }
-  ],
-  "alerts": [
-   {
-    "time": "2026-08-08",
-    "level": "RED",
-    "scene": "贷中风控",
-    "ruleName": "涉借贷纠纷负面舆情",
-    "metricValue": 2,
-    "threshold": 1,
-    "status": "处置中"
-   }
-  ],
-  "disposes": [
-   {
-    "time": "2026-07",
-    "operator": "风控专员-张三",
-    "action": "降额",
-    "result": "已执行降额",
-    "note": "按处置策略自动生成"
-   }
-  ],
-  "relations": [
-   {
-    "id": "C0007-r0",
-    "name": "华信商贸",
-    "rel": "法人",
-    "type": "company",
-    "risk": "高危"
-   },
-   {
-    "id": "C0007-r1",
-    "name": "恒达科技",
-    "rel": "法人",
-    "type": "company"
-   },
-   {
-    "id": "C0007-r2",
-    "name": "IMEI-8695015002",
-    "rel": "设备",
-    "type": "device"
-   },
-   {
-    "id": "C0007-r3",
-    "name": "陈*敏",
-    "rel": "共借人",
-    "type": "person",
-    "risk": "关注"
-   }
-  ],
-  "riskDims": [
-   {
-    "dim": "负债",
-    "score": 62
-   },
-   {
-    "dim": "多头",
-    "score": 69
-   },
-   {
-    "dim": "欺诈",
-    "score": 76
-   },
-   {
-    "dim": "司法",
-    "score": 83
-   },
-   {
-    "dim": "行为",
-    "score": 90
-   },
-   {
-    "dim": "舆情",
-    "score": 67
-   }
-  ],
-  "creditReport": {
-   "queries": [
-    {
-     "month": "2026-03",
-     "count": 4,
-     "institutions": [
-      "D平台贷",
-      "F消金"
-     ]
-    },
-    {
-     "month": "2026-04",
-     "count": 5,
-     "institutions": [
-      "E银行",
-      "A银行"
-     ]
-    },
-    {
-     "month": "2026-05",
-     "count": 4,
-     "institutions": [
-      "F消金",
-      "B消费金融"
-     ]
-    },
-    {
-     "month": "2026-06",
-     "count": 4,
-     "institutions": [
-      "A银行",
-      "C小贷"
-     ]
-    },
-    {
-     "month": "2026-07",
-     "count": 4,
-     "institutions": [
-      "B消费金融",
-      "D平台贷"
-     ]
-    },
-    {
-     "month": "2026-08",
-     "count": 5,
-     "institutions": [
-      "C小贷",
-      "E银行"
-     ]
-    }
-   ],
-   "accounts": [
-    {
-     "institution": "本行",
-     "type": "分期贷",
-     "limit": 129000,
-     "balance": 40775,
-     "status": "正常",
-     "openDate": "2025-04-13"
-    },
-    {
-     "institution": "E银行",
-     "type": "消费贷",
-     "limit": 60000,
-     "balance": 27000,
-     "status": "逾期",
-     "openDate": "2025-07-13"
-    },
-    {
-     "institution": "A银行",
-     "type": "信用卡",
-     "limit": 50000,
-     "balance": 12000,
-     "status": "正常",
-     "openDate": "2024-10-13"
-    }
-   ],
-   "overdues": [
-    {
-     "date": "2026-06-12",
-     "institution": "E银行",
-     "days": 8,
-     "amount": 4200
-    },
-    {
-     "date": "2026-04-03",
-     "institution": "A银行",
-     "days": 3,
-     "amount": 3000
-    }
-   ],
-   "guaranties": [
-    {
-     "org": "杭州*伟商贸",
-     "amount": 600000,
-     "remain": 350000
-    }
-   ]
-  },
-  "income": {
-   "monthIncome": 18500,
-   "monthRepay": 3398,
-   "dti": 18,
-   "debtTotal": 100775,
-   "assetTotal": 645000,
-   "liabilityRatio": 16
-  },
-  "collaterals": [],
-  "guarantors": [],
-  "fundFlow": {
-   "purpose": "经营周转",
-   "riskFlag": "疑似回流",
-   "flows": [
-    {
-     "date": "2026-07-15",
-     "amount": 16310,
-     "to": "供应商 A（对公）",
-     "note": "货款结算",
-     "risk": "正常"
-    },
-    {
-     "date": "2026-07-16",
-     "amount": 12233,
-     "to": "供应商 B（对公）",
-     "note": "货款结算",
-     "risk": "正常"
-    },
-    {
-     "date": "2026-07-18",
-     "amount": 8155,
-     "to": "个人账户 王**",
-     "note": "大额转个人",
-     "risk": "疑似回流"
-    },
-    {
-     "date": "2026-07-22",
-     "amount": 4078,
-     "to": "经营场所租金",
-     "note": "租金支付",
-     "risk": "正常"
-    }
-   ]
-  },
-  "blacklist": {
-   "hits": [
-    {
-     "list": "网贷黑名单",
-     "matched": "手机号命中",
-     "date": "2026-06-20",
-     "score": 86
-    },
-    {
-     "list": "反欺诈名单",
-     "matched": "设备关联欺诈用户",
-     "date": "2026-07-02",
-     "score": 78
-    }
-   ],
-   "fraudTags": [
-    "设备聚集",
-    "深夜申请"
-   ],
-   "riskScore": 82
-  }
- },
- {
-  "custId": "C0018",
-  "name": "袁*华",
-  "idCard": "3301**********3333",
-  "product": "分期贷",
-  "creditLine": 124000,
-  "loanBalance": 51946,
-  "loanStatus": "在贷",
-  "riskLevel": "中风险",
-  "scoreHistory": [
-   {
-    "month": "2026-02",
-    "score": 70,
-    "cohortAvg": 72
-   },
-   {
-    "month": "2026-03",
-    "score": 69,
-    "cohortAvg": 73
-   },
-   {
-    "month": "2026-04",
-    "score": 68,
-    "cohortAvg": 72
-   },
-   {
-    "month": "2026-05",
-    "score": 67,
-    "cohortAvg": 73
-   },
-   {
-    "month": "2026-06",
-    "score": 66,
-    "cohortAvg": 72
-   },
-   {
-    "month": "2026-07",
-    "score": 65,
-    "cohortAvg": 73
-   }
-  ],
-  "alerts": [
-   {
-    "time": "2026-08-08",
-    "level": "YELLOW",
-    "scene": "贷中风控",
-    "ruleName": "被投诉催收关联",
-    "metricValue": 1,
-    "threshold": 0,
-    "status": "处置中"
-   }
-  ],
-  "disposes": [
-   {
-    "time": "2026-07",
-    "operator": "风控专员-张三",
-    "action": "关注",
-    "result": "已纳入观察",
-    "note": "按处置策略自动生成"
-   }
-  ],
-  "relations": [
-   {
-    "id": "C0018-r0",
-    "name": "恒达科技",
-    "rel": "法人",
-    "type": "company"
-   },
-   {
-    "id": "C0018-r1",
-    "name": "中联供应链",
-    "rel": "法人",
-    "type": "company"
-   },
-   {
-    "id": "C0018-r2",
-    "name": "IMEI-8695016002",
-    "rel": "设备",
-    "type": "device"
-   },
-   {
-    "id": "C0018-rc",
-    "name": "刘女士",
-    "rel": "紧急联系人",
-    "type": "contact"
-   }
-  ],
-  "riskDims": [
-   {
-    "dim": "负债",
-    "score": 39
-   },
-   {
-    "dim": "多头",
-    "score": 46
-   },
-   {
-    "dim": "欺诈",
-    "score": 53
-   },
-   {
-    "dim": "司法",
-    "score": 60
-   },
-   {
-    "dim": "行为",
-    "score": 67
-   },
-   {
-    "dim": "舆情",
-    "score": 44
-   }
-  ],
-  "creditReport": {
-   "queries": [
-    {
-     "month": "2026-03",
-     "count": 4,
-     "institutions": [
-      "F消金",
-      "B消费金融"
-     ]
-    },
-    {
-     "month": "2026-04",
-     "count": 4,
-     "institutions": [
-      "A银行",
-      "C小贷"
-     ]
-    },
-    {
-     "month": "2026-05",
-     "count": 4,
-     "institutions": [
-      "B消费金融",
-      "D平台贷"
-     ]
-    },
-    {
-     "month": "2026-06",
-     "count": 3,
-     "institutions": [
-      "C小贷",
-      "E银行"
-     ]
-    },
-    {
-     "month": "2026-07",
-     "count": 4,
-     "institutions": [
-      "D平台贷",
-      "F消金"
-     ]
-    },
-    {
-     "month": "2026-08",
-     "count": 3,
-     "institutions": [
-      "E银行",
-      "A银行"
-     ]
-    }
-   ],
-   "accounts": [
-    {
-     "institution": "本行",
-     "type": "分期贷",
-     "limit": 124000,
-     "balance": 51946,
-     "status": "正常",
-     "openDate": "2025-12-09"
-    },
-    {
-     "institution": "A银行",
-     "type": "消费贷",
-     "limit": 80000,
-     "balance": 52000,
-     "status": "正常",
-     "openDate": "2025-03-09"
-    },
-    {
-     "institution": "C小贷",
-     "type": "信用卡",
-     "limit": 50000,
-     "balance": 12000,
-     "status": "正常",
-     "openDate": "2024-06-09"
-    }
-   ],
-   "overdues": [
-    {
-     "date": "2026-05-20",
-     "institution": "C小贷",
-     "days": 2,
-     "amount": 1700
-    }
-   ],
-   "guaranties": [
-    {
-     "org": "杭州*华商贸",
-     "amount": 800000,
-     "remain": 350000
-    }
-   ]
-  },
-  "income": {
-   "monthIncome": 19500,
-   "monthRepay": 2164,
-   "dti": 11,
-   "debtTotal": 111946,
-   "assetTotal": 620000,
-   "liabilityRatio": 18
-  },
-  "collaterals": [],
-  "guarantors": [],
-  "fundFlow": {
-   "purpose": "经营周转",
-   "riskFlag": "正常",
-   "flows": [
-    {
-     "date": "2026-07-15",
-     "amount": 20778,
-     "to": "供应商 A（对公）",
-     "note": "货款结算",
-     "risk": "正常"
-    },
-    {
-     "date": "2026-07-16",
-     "amount": 15584,
-     "to": "供应商 B（对公）",
-     "note": "货款结算",
-     "risk": "正常"
-    },
-    {
-     "date": "2026-07-22",
-     "amount": 5195,
-     "to": "经营场所租金",
-     "note": "租金支付",
-     "risk": "正常"
-    }
-   ]
-  },
-  "blacklist": {
-   "hits": [
-    {
-     "list": "观察名单",
-     "matched": "IP 段聚集",
-     "date": "2026-07-10",
-     "score": 52
-    }
-   ],
-   "fraudTags": [
-    "资料频繁修改"
-   ],
-   "riskScore": 45
-  }
- },
- {
-  "custId": "C0019",
-  "name": "蒋*梅",
-  "idCard": "3301**********4444",
-  "product": "信用贷",
-  "creditLine": 33000,
-  "loanBalance": 25643,
-  "loanStatus": "在贷",
-  "riskLevel": "低风险",
-  "scoreHistory": [
-   {
-    "month": "2026-02",
-    "score": 82,
-    "cohortAvg": 72
-   },
-   {
-    "month": "2026-03",
-    "score": 83,
-    "cohortAvg": 73
-   },
-   {
-    "month": "2026-04",
-    "score": 83,
-    "cohortAvg": 72
-   },
-   {
-    "month": "2026-05",
-    "score": 84,
-    "cohortAvg": 73
-   },
-   {
-    "month": "2026-06",
-    "score": 84,
-    "cohortAvg": 72
-   },
-   {
-    "month": "2026-07",
-    "score": 85,
-    "cohortAvg": 73
-   }
-  ],
-  "alerts": [
-   {
-    "time": "2026-08-08",
-    "level": "OPPORTUNITY",
-    "scene": "存量运营",
-    "ruleName": "近期借款需求上升",
-    "metricValue": 1,
-    "threshold": 0,
-    "status": "已升级"
-   }
-  ],
-  "disposes": [
-   {
-    "time": "2026-07",
-    "operator": "风控专员-张三",
-    "action": "提额评估",
-    "result": "已纳入观察",
-    "note": "按处置策略自动生成"
-   }
-  ],
-  "relations": [
-   {
-    "id": "C0019-r0",
-    "name": "中联供应链",
-    "rel": "法人",
-    "type": "company"
-   },
-   {
-    "id": "C0019-r1",
-    "name": "鼎盛贸易",
-    "rel": "法人",
-    "type": "company"
-   }
-  ],
-  "riskDims": [
-   {
-    "dim": "负债",
-    "score": 14
-   },
-   {
-    "dim": "多头",
-    "score": 21
-   },
-   {
-    "dim": "欺诈",
-    "score": 28
-   },
-   {
-    "dim": "司法",
-    "score": 35
-   },
-   {
-    "dim": "行为",
-    "score": 42
-   },
-   {
-    "dim": "舆情",
-    "score": 19
-   }
-  ],
-  "creditReport": {
-   "queries": [
-    {
-     "month": "2026-03",
-     "count": 0,
-     "institutions": []
-    },
-    {
-     "month": "2026-04",
-     "count": 0,
-     "institutions": []
-    },
-    {
-     "month": "2026-05",
-     "count": 0,
-     "institutions": []
-    },
-    {
-     "month": "2026-06",
-     "count": 0,
-     "institutions": []
-    },
-    {
-     "month": "2026-07",
-     "count": 0,
-     "institutions": []
-    },
-    {
-     "month": "2026-08",
-     "count": 1,
-     "institutions": [
-      "F消金"
-     ]
-    }
-   ],
-   "accounts": [
-    {
-     "institution": "本行",
-     "type": "信用贷",
-     "limit": 33000,
-     "balance": 25643,
-     "status": "正常",
-     "openDate": "2025-01-01"
-    },
-    {
-     "institution": "B消费金融",
-     "type": "消费贷",
-     "limit": 90000,
-     "balance": 12000,
-     "status": "正常",
-     "openDate": "2025-04-01"
-    },
-    {
-     "institution": "D平台贷",
-     "type": "信用卡",
-     "limit": 20000,
-     "balance": 6000,
-     "status": "正常",
-     "openDate": "2024-07-01"
-    }
-   ],
-   "overdues": [],
-   "guaranties": []
-  },
-  "income": {
-   "monthIncome": 20000,
-   "monthRepay": 1068,
-   "dti": 5,
-   "debtTotal": 25643,
-   "assetTotal": 66000,
-   "liabilityRatio": 39
-  },
-  "collaterals": [],
-  "guarantors": [],
-  "fundFlow": {
-   "purpose": "经营周转",
-   "riskFlag": "正常",
-   "flows": [
-    {
-     "date": "2026-07-15",
-     "amount": 10257,
-     "to": "供应商 A（对公）",
-     "note": "货款结算",
-     "risk": "正常"
-    },
-    {
-     "date": "2026-07-16",
-     "amount": 7693,
-     "to": "供应商 B（对公）",
-     "note": "货款结算",
-     "risk": "正常"
-    },
-    {
-     "date": "2026-07-22",
-     "amount": 2564,
-     "to": "经营场所租金",
-     "note": "租金支付",
-     "risk": "正常"
-    }
-   ]
-  },
-  "blacklist": {
-   "hits": [],
-   "fraudTags": [],
-   "riskScore": 12
-  }
- },
- {
-  "custId": "C0006",
-  "name": "孙*华",
-  "idCard": "3301**********5555",
-  "product": "抵押贷",
-  "creditLine": 121000,
-  "loanBalance": 72006,
-  "loanStatus": "在贷",
-  "riskLevel": "低风险",
-  "scoreHistory": [
-   {
-    "month": "2026-02",
-    "score": 82,
-    "cohortAvg": 72
-   },
-   {
-    "month": "2026-03",
-    "score": 83,
-    "cohortAvg": 73
-   },
-   {
-    "month": "2026-04",
-    "score": 83,
-    "cohortAvg": 72
-   },
-   {
-    "month": "2026-05",
-    "score": 84,
-    "cohortAvg": 73
-   },
-   {
-    "month": "2026-06",
-    "score": 84,
-    "cohortAvg": 72
-   },
-   {
-    "month": "2026-07",
-    "score": 85,
-    "cohortAvg": 73
-   }
-  ],
-  "alerts": [
-   {
-    "time": "2026-08-08",
-    "level": "OPPORTUNITY",
-    "scene": "存量运营",
-    "ruleName": "活跃度持续提升",
-    "metricValue": 1,
-    "threshold": 0,
-    "status": "已升级"
-   }
-  ],
-  "disposes": [
-   {
-    "time": "2026-07",
-    "operator": "风控专员-张三",
-    "action": "提额评估",
-    "result": "已纳入观察",
-    "note": "按处置策略自动生成"
-   }
-  ],
-  "relations": [
-   {
-    "id": "C0006-r0",
-    "name": "鼎盛贸易",
-    "rel": "法人",
-    "type": "company"
-   },
-   {
-    "id": "C0006-r1",
-    "name": "旭日投资",
-    "rel": "法人",
-    "type": "company"
-   }
-  ],
-  "riskDims": [
-   {
-    "dim": "负债",
-    "score": 15
-   },
-   {
-    "dim": "多头",
-    "score": 22
-   },
-   {
-    "dim": "欺诈",
-    "score": 29
-   },
-   {
-    "dim": "司法",
-    "score": 36
-   },
-   {
-    "dim": "行为",
-    "score": 43
-   },
-   {
-    "dim": "舆情",
-    "score": 20
-   }
-  ],
-  "creditReport": {
-   "queries": [
-    {
-     "month": "2026-03",
-     "count": 1,
-     "institutions": [
-      "E银行"
-     ]
-    },
-    {
-     "month": "2026-04",
-     "count": 2,
-     "institutions": [
-      "F消金",
-      "B消费金融"
-     ]
-    },
-    {
-     "month": "2026-05",
-     "count": 1,
-     "institutions": [
-      "A银行"
-     ]
-    },
-    {
-     "month": "2026-06",
-     "count": 2,
-     "institutions": [
-      "B消费金融",
-      "D平台贷"
-     ]
-    },
-    {
-     "month": "2026-07",
-     "count": 1,
-     "institutions": [
-      "C小贷"
-     ]
-    },
-    {
-     "month": "2026-08",
-     "count": 2,
-     "institutions": [
-      "D平台贷",
-      "F消金"
-     ]
-    }
-   ],
-   "accounts": [
-    {
-     "institution": "本行",
-     "type": "抵押贷",
-     "limit": 121000,
-     "balance": 72006,
-     "status": "正常",
-     "openDate": "2025-05-05"
-    },
-    {
-     "institution": "F消金",
-     "type": "消费贷",
-     "limit": 70000,
-     "balance": 32000,
-     "status": "正常",
-     "openDate": "2025-08-05"
-    },
-    {
-     "institution": "B消费金融",
-     "type": "信用卡",
-     "limit": 20000,
-     "balance": 6000,
-     "status": "正常",
-     "openDate": "2024-11-05"
-    }
-   ],
-   "overdues": [],
-   "guaranties": []
-  },
-  "income": {
-   "monthIncome": 19000,
-   "monthRepay": 3000,
-   "dti": 16,
-   "debtTotal": 72006,
-   "assetTotal": 242000,
-   "liabilityRatio": 30
-  },
-  "collaterals": [
-   {
-    "type": "房产",
-    "name": "住宅抵押（滨江）",
-    "valuation": 2200000,
-    "loanAmount": 121000,
-    "ratio": 6,
-    "status": "足值"
-   }
-  ],
-  "guarantors": [
-   {
-    "name": "赵*军",
-    "relation": "配偶",
-    "credit": "征信正常"
-   }
-  ],
-  "business": {
-   "companyName": "宁波*华商贸有限公司",
-   "industry": "批发零售",
-   "monthRevenue": 820000,
-   "taxMonthly": 28000,
-   "invoiceYear": 5600000,
-   "employees": 15,
-   "operateYears": 2,
-   "accountBalance": 200000
-  },
-  "fundFlow": {
-   "purpose": "经营周转",
-   "riskFlag": "正常",
-   "flows": [
-    {
-     "date": "2026-07-15",
-     "amount": 28802,
-     "to": "供应商 A（对公）",
-     "note": "货款结算",
-     "risk": "正常"
-    },
-    {
-     "date": "2026-07-16",
-     "amount": 21602,
-     "to": "供应商 B（对公）",
-     "note": "货款结算",
-     "risk": "正常"
-    },
-    {
-     "date": "2026-07-22",
-     "amount": 7201,
-     "to": "经营场所租金",
-     "note": "租金支付",
-     "risk": "正常"
-    }
-   ]
-  },
-  "blacklist": {
-   "hits": [],
-   "fraudTags": [],
-   "riskScore": 12
-  }
- }
 ]

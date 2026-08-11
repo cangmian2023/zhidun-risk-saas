@@ -1,19 +1,24 @@
 /* 单客得分详情页（cr:mid-cust-score?cust=&prod=&id=）
- * 从单客详情「模型评分」板块三卡片点击进入：看维度 → 证据明细（可解释性）
- * 满足审核人员：为什么是这个分 / 证据明细 / 决策建议 / 审批历史
- * 满足监管：模型版本 / 评分时间 / 等级阈值 / 评分依据说明 / 合规留痕
- * 旧数据（midCustomers.json 缺新字段）按分数 + 产品运行时兜底派生，不依赖重落盘
+ * 三模型为三个独立页面（prod 参数区分，URL 即页面）：智察分 / 智信分 / 智融分
+ * 顶部继承单客详情基础信息（客户名 + 标签 + 右侧模型快捷入口互跳 + 额度建议），Tab 吸顶（top 56 跟随全局标题）：
+ *   Tab1 模型分     —— 模型分概览（含维度拆解，三模型各自维度）+ 模型分趋势（环比/趋势）
+ *   Tab2 关联因子图谱 —— 按当前模型高亮「影响本模型的关联因子」，其余淡化（主题切换 关系网络/风险分布/团伙识别 + 节点详情抽屉 + 团伙汇总）
+ *   Tab3 预警与处置 —— 分值阈值预警 + 处置流程（动态读 bizFlows.json f-alert-dispose，一行节点 + 状态行 + 处置按钮）+ 规则命中预警（只显示与当前模型相关的，三页面各看各的；其余预警归对应模型页）+ 操作日志（统一时间线，由 Tab1 迁入）
+ *   Tab4 用户数据   —— 数据明细（原始数据 · 点击行展开逐笔表格 · 标注供哪个特征使用）+ 数据来源（按来源系统归集输入数据清单）
+ *   Tab5 模型信息   —— 基本信息（含版本历史）/ 结果含义 / 运营效果 / 算法解释
+ * 原则：不堆装饰性提示；处置动作跳真实页面（预警/处置工作台）；旧数据按 riskDims+alerts 运行时兜底派生。
  */
-import { useMemo } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { DetailHeader, Panel, Badge, DataTable, type Column, type Row } from '../components/ui';
+import { DetailHeader, Panel, Badge } from '../components/ui';
 import ScoreGauge from '../components/ScoreGauge';
 import { LineChart } from '../components/charts';
 import { Sam } from './SourceTag';
 import { PageShell } from './PageShell';
-import { useMidCustomers } from './midStore';
+import { useMidCustomers, useMidAlerts } from './midStore';
+import { useFlows, matchFlowGraph } from './flowStore';
 import { models } from './data';
-import type { MidCustomer, ModelScoreItem, ScoreEvidenceItem, ModelIntervention } from './midData';
+import type { MidCustomer, ModelScoreItem, ScoreEvidenceItem, CustRiskDim, CustRelationNode } from './midData';
 
 type ProdKey = 'zhicha' | 'zhixin' | 'zhirong';
 const PROD_KEYS: ProdKey[] = ['zhicha', 'zhixin', 'zhirong'];
@@ -27,10 +32,51 @@ const TAG_KIND: Record<string, 'red' | 'amber' | 'blue' | 'violet' | 'gray'> = {
   命中: 'red', 关注: 'amber', 评分项: 'blue', 融合来源: 'violet',
 };
 
+/* ---- 旧数据兜底：缺 scores 时按 riskDims + alerts 派生（运行时，不落盘） ---- */
+const DIM_LABEL: Record<string, string> = {
+  负债: '负债水平', 多头: '多头借贷', 欺诈: '欺诈风险', 司法: '司法涉诉', 行为: '行为评分', 舆情: '舆情风险',
+};
+const DIM_WEIGHT: Record<string, number> = { 欺诈: 0.3, 多头: 0.25, 行为: 0.2, 司法: 0.15, 负债: 0.1, 舆情: 0.05 };
+
+function deriveFallback(cust: MidCustomer, prod: ProdKey): ModelScoreItem | null {
+  const dims = cust.riskDims ?? [];
+  const used = dims.filter((d) => DIM_WEIGHT[d.dim] != null);
+  if (!used.length) return null;
+  const wsum = used.reduce((s, d) => s + DIM_WEIGHT[d.dim], 0);
+  const riskAvg = used.reduce((s, d) => s + d.score * DIM_WEIGHT[d.dim], 0) / wsum;
+  let score: number, range: [number, number], unit: string, hint: string;
+  if (prod === 'zhicha') {
+    score = Math.round(riskAvg); range = [0, 100]; unit = '欺诈分';
+    hint = '欺诈风险评分，分数越高欺诈风险越大';
+  } else if (prod === 'zhixin') {
+    score = Math.round(900 - riskAvg * 3.4); range = [300, 900]; unit = '信用分';
+    hint = '信用评分，分数越高信用越好';
+  } else {
+    score = Math.round(900 - riskAvg * 3.8); range = [300, 900]; unit = '综合分';
+    hint = '综合风险与价值评分，分数越高综合表现越好';
+  }
+  score = Math.max(range[0], Math.min(range[1], score));
+  const total = used.reduce((s, d) => s + d.score, 0) || 1;
+  const factors = used
+    .map((d) => ({
+      name: DIM_LABEL[d.dim] ?? d.dim,
+      level: (d.score >= 75 ? '高' : d.score >= 55 ? '中' : '低') as '高' | '中' | '低',
+      contribution: Math.round((d.score / total) * 100),
+    }))
+    .sort((a, b) => b.contribution - a.contribution);
+  const evidence: ScoreEvidenceItem[] = (cust.alerts ?? []).slice(0, 6).map((a) => ({
+    name: a.ruleName,
+    value: `${a.scene} · 触发值 ${a.metricValue}（阈值 ${a.threshold}）· 当前${a.status}`,
+    weight: a.level === 'RED' ? 24 : a.level === 'YELLOW' ? 16 : 10,
+    tag: a.level === 'RED' ? '命中' : a.level === 'YELLOW' ? '关注' : '评分项',
+  }));
+  return { score, range, unit, hint, factors, evidence: evidence.length ? evidence : undefined };
+}
+
 /* ---- 旧数据兜底：缺可解释字段时按分数 + 产品派生 ---- */
 function bandOf(item: ModelScoreItem): string {
   const s = item.score;
-  const hi = item.range[1] > 100; // 300-900 区间：信用/综合；0-100：欺诈
+  const hi = item.range[1] > 100;
   if (hi) {
     if (s >= 780) return 'A';
     if (s >= 660) return 'B';
@@ -78,33 +124,44 @@ function enrich(item: ModelScoreItem, prod: ProdKey): ModelScoreItem {
   return { ...item, probability, grade, gradeLabel, suggestion, modelVersion, calcedAt, evidence };
 }
 
-/* 等级阈值表（监管可解释：分数区间 → 等级含义） */
-const THRESHOLDS: Record<ProdKey, { range: string; grade: string; label: string; color: string }[]> = {
+/* 等级阈值表（含每档建议动作：分值碰撞区间 → 定级 → 处置方向） */
+type ThresholdRow = { range: string; grade: string; label: string; color: string; action: string };
+const THRESHOLDS: Record<ProdKey, ThresholdRow[]> = {
   zhicha: [
-    { range: '0 - 39', grade: '低风险', label: '无明显欺诈特征', color: '#16A34A' },
-    { range: '40 - 69', grade: '中风险', label: '存在部分风险信号', color: '#D97706' },
-    { range: '70 - 100', grade: '高风险', label: '欺诈特征显著', color: '#DC2626' },
+    { range: '0 - 39', grade: '低风险', label: '无明显欺诈特征', color: '#16A34A', action: '通过（继续准入/贷中评估）' },
+    { range: '40 - 69', grade: '中风险', label: '存在部分风险信号', color: '#D97706', action: '人工复核 / 加强监测' },
+    { range: '70 - 100', grade: '高风险', label: '欺诈特征显著', color: '#DC2626', action: '拒绝 / 转人工复核 / 冻结止付' },
   ],
   zhixin: [
-    { range: '780 - 900', grade: 'A · 优质', label: '违约概率低', color: '#16A34A' },
-    { range: '660 - 779', grade: 'B · 良好', label: '违约概率较低', color: '#65A30D' },
-    { range: '580 - 659', grade: 'C · 一般', label: '违约概率中等', color: '#D97706' },
-    { range: '300 - 579', grade: 'D · 较差', label: '违约概率高', color: '#DC2626' },
+    { range: '780 - 900', grade: 'A · 优质', label: '违约概率低', color: '#16A34A', action: '准入（标准额度）' },
+    { range: '660 - 779', grade: 'B · 良好', label: '违约概率较低', color: '#65A30D', action: '准入（审慎授信）' },
+    { range: '580 - 659', grade: 'C · 一般', label: '违约概率中等', color: '#D97706', action: '降额 / 加强监测' },
+    { range: '300 - 579', grade: 'D · 较差', label: '违约概率高', color: '#DC2626', action: '拒绝 / 冻结' },
   ],
   zhirong: [
-    { range: '780 - 900', grade: 'A · 优质', label: '综合风险低、价值高', color: '#16A34A' },
-    { range: '660 - 779', grade: 'B · 良好', label: '综合表现良好', color: '#65A30D' },
-    { range: '580 - 659', grade: 'C · 一般', label: '综合表现一般', color: '#D97706' },
-    { range: '300 - 579', grade: 'D · 较差', label: '综合风险高', color: '#DC2626' },
+    { range: '780 - 900', grade: 'A · 优质', label: '综合风险低、价值高', color: '#16A34A', action: '准入（标准额度）' },
+    { range: '660 - 779', grade: 'B · 良好', label: '综合表现良好', color: '#65A30D', action: '准入（审慎授信）' },
+    { range: '580 - 659', grade: 'C · 一般', label: '综合表现一般', color: '#D97706', action: '降额 / 加强监测' },
+    { range: '300 - 579', grade: 'D · 较差', label: '综合风险高', color: '#DC2626', action: '拒绝 / 冻结' },
   ],
 };
 
-/* 模型能力卡：对接 data.ts 模型注册表（AUC/KS/训练时点/状态），补充方法/稳定性/适用客群/负责人/血缘/全局特征重要 */
+/* 当前分数所在档位（分值阈值预警用） */
+function bandOfScore(prod: ProdKey, score: number): ThresholdRow {
+  const rows = THRESHOLDS[prod];
+  const parse = (r: string) => Number(r.split(' - ')[0]);
+  for (let i = rows.length - 1; i >= 0; i--) {
+    if (score >= parse(rows[i].range)) return rows[i];
+  }
+  return rows[0];
+}
+
 const PROD_TO_MODEL: Record<ProdKey, string> = { zhicha: 'M-智察分', zhixin: 'M-智信分', zhirong: 'M-智融分' };
 const MODEL_CAPA: Record<ProdKey, {
   method: string; owner: string; applicable: string; psi: number; monitor: string;
   lineage: { stage: string; detail: string }[];
   global: { name: string; importance: number }[];
+  versions: { version: string; date: string; note: string }[];
 }> = {
   zhicha: {
     method: 'XGBoost + 规则引擎融合：基于 2019–2025 年历史欺诈样本训练，叠加反欺诈专家规则与人工复核干预',
@@ -114,9 +171,14 @@ const MODEL_CAPA: Record<ProdKey, {
       { stage: '数据接入', detail: '设备指纹 / 多头借贷 / 黑灰名单 / 申请行为（输入数据版本 2026Q2）' },
       { stage: '特征工程', detail: '36 个反欺诈特征（聚集度、申请频次、环境风险…）' },
       { stage: '模型计算', detail: '智察分 V3.2（XGBoost）输出 0–100 欺诈分' },
-      { stage: '专家规则+人工干预', detail: '叠加专家规则与人工复核，形成最终欺诈分' },
+      { stage: '专家规则', detail: '叠加专家规则与人工复核，形成最终欺诈分' },
     ],
     global: [{ name: '设备聚集', importance: 24 }, { name: '申请频次', importance: 21 }, { name: '黑产特征', importance: 16 }, { name: '同设备关联', importance: 12 }, { name: 'IP/定位异常', importance: 10 }],
+    versions: [
+      { version: 'V3.2', date: '2026-04-18', note: '新增设备聚集特征，提升模拟器识别准确率；多头阈值由 ≥6 调整为 ≥5，降低漏报' },
+      { version: 'V3.1', date: '2025-11-02', note: '调整申请频次权重，减少旺季误报；补充灰名单关联规则' },
+      { version: 'V3.0', date: '2025-06-15', note: '基线版本（XGBoost + 规则引擎融合），36 个反欺诈特征' },
+    ],
   },
   zhixin: {
     method: 'LightGBM 评分卡：基于近 5 年信贷表现样本训练，叠加信用专家规则与人工复核干预',
@@ -126,23 +188,120 @@ const MODEL_CAPA: Record<ProdKey, {
       { stage: '数据接入', detail: '人行征信 / 负债结构 / 收入流水 / 历史还款（输入数据版本 2026Q2）' },
       { stage: '特征工程', detail: '42 个信用特征（逾期历史、负债比、稳定性…）' },
       { stage: '模型计算', detail: '智信分 V4.0（LightGBM）输出 300–900 信用分' },
-      { stage: '专家规则+人工干预', detail: '叠加专家规则与人工复核，形成最终信用分' },
+      { stage: '专家规则', detail: '叠加专家规则与人工复核，形成最终信用分' },
     ],
     global: [{ name: '历史还款', importance: 28 }, { name: '负债结构', importance: 22 }, { name: '收入稳定', importance: 20 }, { name: '征信查询', importance: 14 }, { name: '职业属性', importance: 9 }],
+    versions: [
+      { version: 'V4.0', date: '2026-03-10', note: '引入收入流水特征（12 个月），特征扩至 42 个；重新校准违约概率输出' },
+      { version: 'V3.9', date: '2025-10-21', note: '负债收入比阈值由 75% 收紧至 70%；修复低分段概率偏移' },
+      { version: 'V3.8', date: '2025-05-08', note: '基线版本（LightGBM 评分卡），38 个信用特征' },
+    ],
   },
   zhirong: {
-    method: '融合模型：引用智信分(信用) + 智察分(欺诈) + 价值/资产自有特征，逻辑回归融合，叠加人工干预',
+    method: '融合模型：引用智信分(信用) + 智察分(欺诈) + 价值/资产自有特征，逻辑回归融合',
     owner: '综合模型组 · 陈璐', applicable: '综合授信与额度核定', psi: 0.10,
     monitor: '日级 PSI 监控，阈值 0.25 触发告警复核',
     lineage: [
       { stage: '数据接入', detail: '智信分 / 智察分 / 价值与资产特征（输入数据版本 2026Q2）' },
       { stage: '特征工程', detail: '违约维度 + 欺诈维度 + 价值维度 + 资产维度' },
       { stage: '模型计算', detail: '智融分 V2.1（融合逻辑回归）输出 300–900 综合分' },
-      { stage: '专家规则+人工干预', detail: '叠加专家规则与人工复核，形成最终综合分' },
+      { stage: '专家规则', detail: '叠加专家规则与人工复核，形成最终综合分' },
     ],
     global: [{ name: '违约维度', importance: 34 }, { name: '欺诈维度', importance: 28 }, { name: '价值维度', importance: 24 }, { name: '资产维度', importance: 14 }],
+    versions: [
+      { version: 'V2.1', date: '2026-02-06', note: '调整智信分/智察分融合权重（信用 0.55 / 欺诈 0.45）；加入借贷兴趣价值特征' },
+      { version: 'V2.0', date: '2025-12-01', note: '基线融合版本（逻辑回归融合智信分 + 智察分 + 价值/资产特征）' },
+    ],
   },
 };
+
+/* ============ 运营效果（业务可理解指标，替代 AUC/KS/PSI） ============ */
+const MODEL_OPS: Record<ProdKey, {
+  metrics: { label: string; value: string; sub: string; color: string }[];
+  trend: { month: string; coverage: number; accuracy: number; timely: number }[];
+}> = {
+  zhicha: {
+    metrics: [
+      { label: '评分覆盖率', value: '98.5%', sub: '有评分客户 / 总客户', color: '#2563EB' },
+      { label: '预警准确率', value: '86.2%', sub: '预警后核实为真实欺诈', color: '#16A34A' },
+      { label: '处置及时率', value: '92.0%', sub: '规定时限内完成处置', color: '#7C3AED' },
+      { label: '本月调用', value: '12,480 次', sub: '模型评分调用总量', color: '#D97706' },
+    ],
+    trend: [
+      { month: '03月', coverage: 97.2, accuracy: 82.1, timely: 88.5 },
+      { month: '04月', coverage: 97.8, accuracy: 83.5, timely: 89.2 },
+      { month: '05月', coverage: 98.1, accuracy: 84.2, timely: 90.1 },
+      { month: '06月', coverage: 98.3, accuracy: 85.0, timely: 91.0 },
+      { month: '07月', coverage: 98.4, accuracy: 85.8, timely: 91.6 },
+      { month: '08月', coverage: 98.5, accuracy: 86.2, timely: 92.0 },
+    ],
+  },
+  zhixin: {
+    metrics: [
+      { label: '评分覆盖率', value: '99.1%', sub: '有评分客户 / 总客户', color: '#2563EB' },
+      { label: '预警准确率', value: '88.5%', sub: '预警后核实为真实风险', color: '#16A34A' },
+      { label: '处置及时率', value: '94.3%', sub: '规定时限内完成处置', color: '#7C3AED' },
+      { label: '本月调用', value: '18,620 次', sub: '模型评分调用总量', color: '#D97706' },
+    ],
+    trend: [
+      { month: '03月', coverage: 98.5, accuracy: 85.0, timely: 91.2 },
+      { month: '04月', coverage: 98.7, accuracy: 86.1, timely: 92.0 },
+      { month: '05月', coverage: 98.9, accuracy: 87.0, timely: 92.8 },
+      { month: '06月', coverage: 99.0, accuracy: 87.8, timely: 93.5 },
+      { month: '07月', coverage: 99.0, accuracy: 88.2, timely: 94.0 },
+      { month: '08月', coverage: 99.1, accuracy: 88.5, timely: 94.3 },
+    ],
+  },
+  zhirong: {
+    metrics: [
+      { label: '评分覆盖率', value: '95.8%', sub: '有评分客户 / 总客户', color: '#2563EB' },
+      { label: '预警准确率', value: '83.6%', sub: '预警后核实为真实风险', color: '#16A34A' },
+      { label: '处置及时率', value: '90.1%', sub: '规定时限内完成处置', color: '#7C3AED' },
+      { label: '本月调用', value: '8,360 次', sub: '模型评分调用总量', color: '#D97706' },
+    ],
+    trend: [
+      { month: '03月', coverage: 94.2, accuracy: 79.5, timely: 86.8 },
+      { month: '04月', coverage: 94.8, accuracy: 80.8, timely: 87.5 },
+      { month: '05月', coverage: 95.2, accuracy: 81.9, timely: 88.3 },
+      { month: '06月', coverage: 95.5, accuracy: 82.8, timely: 89.2 },
+      { month: '07月', coverage: 95.7, accuracy: 83.3, timely: 89.7 },
+      { month: '08月', coverage: 95.8, accuracy: 83.6, timely: 90.1 },
+    ],
+  },
+};
+
+/* ============ 三模型维度拆解（各自独立，符合专家拆解口径；from = 从 riskDims 借分，fb = 缺省值） ============ */
+const MODEL_DIM_DEFS: Record<ProdKey, { dim: string; from?: string; fb: number }[]> = {
+  zhicha: [
+    { dim: '多头聚集', from: '多头', fb: 60 },    // 近30天申贷/在贷平台 → 多头聚集
+    { dim: '设备环境', from: '欺诈', fb: 65 },    // 模拟器/设备指纹 → 设备环境
+    { dim: '申请行为', from: '行为', fb: 55 },    // 申请频次/征信查询 → 申请行为
+    { dim: '黑产关联', from: '司法', fb: 50 },    // 黑灰名单 → 黑产关联
+    { dim: '网络关联', from: '多头', fb: 45 },    // 同设备/关联账号 → 网络关联
+    { dim: '司法涉诉', from: '司法', fb: 50 },    // 被执行/失信 → 司法涉诉
+  ],
+  zhixin: [
+    { dim: '还款记录', from: '行为', fb: 60 },    // 历史逾期/还款表现 → 还款记录
+    { dim: '负债结构', from: '负债', fb: 62 },    // 负债收入比/在贷余额 → 负债结构
+    { dim: '收入稳定', from: '行为', fb: 50 },    // 流水连续性 → 收入稳定
+    { dim: '征信行为', from: '多头', fb: 45 },    // 查询频次/账户数 → 征信行为
+    { dim: '职业稳定', fb: 40 },                  // 司龄/社保 → 职业稳定
+    { dim: '司法涉诉', from: '司法', fb: 50 },    // 被执行/失信 → 司法涉诉
+  ],
+  zhirong: [
+    { dim: '信用风险', from: '负债', fb: 60 },    // 引用智信分 → 信用风险
+    { dim: '欺诈风险', from: '欺诈', fb: 65 },    // 引用智察分 → 欺诈风险
+    { dim: '价值潜力', from: '行为', fb: 45 },    // 借贷兴趣/活跃 → 价值潜力
+    { dim: '资产实力', fb: 40 },                  // 房产/理财 → 资产实力
+    { dim: '用信稳定', from: '多头', fb: 50 },    // 用信习惯/共债 → 用信稳定
+  ],
+};
+function dimsOf(prod: ProdKey, riskDims: CustRiskDim[]): { dim: string; score: number; lvl: '高' | '中' | '低' }[] {
+  return MODEL_DIM_DEFS[prod].map((x) => {
+    const score = (x.from && riskDims.find((d) => d.dim === x.from)?.score) ?? x.fb;
+    return { dim: x.dim, score, lvl: score >= 75 ? '高' : score >= 55 ? '中' : '低' };
+  });
+}
 
 function CapCell({ label, value, danger }: { label: string; value: string; danger?: boolean }) {
   return (
@@ -152,14 +311,450 @@ function CapCell({ label, value, danger }: { label: string; value: string; dange
     </div>
   );
 }
-function Perf({ label, value, color }: { label: string; value?: string; color: string }) {
+
+/* 数据明细（用户数据 Tab）：计算模型使用的原始数据，每行可展开逐笔明细（表格）；feat = 供哪个模型特征使用 */
+type InputDetail = {
+  name: string; source: string; window: string; value: string; status: '触发' | '关注' | '正常';
+  feat: string;                 // 对应模型特征（原始数据 → 特征 的映射）
+  detailTitle: string;
+  cols: string[];               // 明细表列头
+  rows: string[][];             // 明细表行（真实逐笔记录）
+};
+const INPUT_DETAILS: Record<ProdKey, InputDetail[]> = {
+  zhicha: [
+    {
+      name: '近30天申贷笔数', source: '多头借贷数据', window: '2026-07-10 ~ 08-08', value: '7 笔（阈值 ≥5）', status: '触发', feat: '多头聚集',
+      detailTitle: '申贷记录（近 30 天 · 逐笔）',
+      cols: ['申请日期', '机构', '产品', '状态'],
+      rows: [
+        ['07-12', '某银行', '消费贷', '已放款'],
+        ['07-15', '某消费金融', '现金贷', '已放款'],
+        ['07-18', '某网贷平台', '小额贷', '拒绝'],
+        ['07-23', '某银行', '信用贷', '审批中'],
+        ['07-27', '某消金', '循环额度', '已放款'],
+        ['08-02', '某平台', '现金分期', '审批中'],
+        ['08-06', '某银行', '消费分期', '申请'],
+      ],
+    },
+    {
+      name: '同时在贷平台数', source: '多头借贷数据', window: '当前时点', value: '5 家（阈值 ≥4）', status: '触发', feat: '多头聚集',
+      detailTitle: '在贷平台（当前）',
+      cols: ['平台', '在贷余额', '状态'],
+      rows: [
+        ['平台A', '¥12,000', '正常'],
+        ['平台B', '¥8,500', '正常'],
+        ['平台C', '¥15,000', '关注（近30天有申请）'],
+        ['平台D', '¥6,000', '正常'],
+        ['平台E', '¥20,000', '正常'],
+      ],
+    },
+    {
+      name: '设备环境', source: '设备指纹', window: '申请时点', value: '模拟器特征命中', status: '触发', feat: '设备环境',
+      detailTitle: '设备指纹（申请时点采集）',
+      cols: ['检测项', '结果'],
+      rows: [
+        ['设备指纹', 'DEV-A3F8-9C21（近30天 3 台关联设备）'],
+        ['环境特征', '模拟器特征命中（置信度 0.92）'],
+        ['IP 归属', '202.xx.xx.16 · 异地（与常驻地不符）'],
+      ],
+    },
+    {
+      name: '黑名单命中', source: '黑灰名单库', window: '当前', value: '外部灰名单 ID#88231', status: '触发', feat: '黑产关联',
+      detailTitle: '名单命中（黑灰名单库记录）',
+      cols: ['项', '内容'],
+      rows: [
+        ['名单类型', '外部灰名单（互金协会共享）'],
+        ['名单编号', 'ID#88231'],
+        ['入名单原因', '2025-11 疑似组团申贷'],
+        ['命中时点', '2026-08-08 10:30:12'],
+      ],
+    },
+    {
+      name: '同设备关联账号', source: '账号关系图谱', window: '当前', value: '3 个（阈值 ≥5 触发）', status: '关注', feat: '网络关联',
+      detailTitle: '同设备账号（设备维度关联）',
+      cols: ['账号', '关系', '风险'],
+      rows: [
+        ['张*明', '本人', '正常'],
+        ['王*芳', '同设备登录 2 次', '关注'],
+        ['李*华', '同设备登录 1 次', '关注'],
+      ],
+    },
+    {
+      name: '征信查询次数', source: '人行征信', window: '近 6 月', value: '8 次（阈值 ≥10）', status: '正常', feat: '申请行为',
+      detailTitle: '征信查询记录（近 6 月 · 逐笔）',
+      cols: ['查询日期', '查询机构', '查询类型'],
+      rows: [
+        ['03-02', '某银行', '贷前审批（信用卡）'],
+        ['03-15', '某消费金融', '贷前审批'],
+        ['04-11', '某银行', '贷前审批（贷款）'],
+        ['05-06', '某消金', '贷前审批'],
+        ['06-20', '本人', '本人查询'],
+        ['07-08', '某网贷平台', '贷前审批'],
+        ['07-22', '某银行', '贷后管理'],
+        ['08-02', '某消费金融', '贷后管理'],
+      ],
+    },
+    {
+      name: '收入流水稳定性', source: '银行流水', window: '近 12 月', value: '连续 14 月稳定', status: '正常', feat: '—',
+      detailTitle: '收入流水（近 12 月汇总）',
+      cols: ['项', '值'],
+      rows: [
+        ['月均入账', '¥18,000（代发工资）'],
+        ['连续入账月数', '14 个月'],
+        ['大额异动', '无'],
+      ],
+    },
+    {
+      name: '司法涉诉', source: '司法数据', window: '近 2 年', value: '无记录', status: '正常', feat: '司法涉诉',
+      detailTitle: '涉诉记录（近 2 年）',
+      cols: ['类型', '结果'],
+      rows: [
+        ['被执行', '无记录'],
+        ['失信名单', '无记录'],
+        ['开庭公告', '无记录'],
+      ],
+    },
+  ],
+  zhixin: [
+    {
+      name: '历史逾期记录', source: '人行征信', window: '近 2 年', value: 'M3+ 逾期 1 次', status: '触发', feat: '还款记录',
+      detailTitle: '逾期记录（近 2 年 · 逐笔）',
+      cols: ['日期', '账户', '明细'],
+      rows: [
+        ['2024-09', '某银行信用卡', '逾期 95 天（M3+）'],
+        ['2024-12', '某消金', '逾期 12 天（M1）已结清'],
+        ['2025-06', '某平台', '逾期 5 天（已结清）'],
+      ],
+    },
+    {
+      name: '负债收入比', source: '征信 + 收入流水', window: '当前', value: '58%（阈值 70%）', status: '关注', feat: '负债结构',
+      detailTitle: '负债构成（当前）',
+      cols: ['项', '值'],
+      rows: [
+        ['月收入', '¥18,000'],
+        ['月还款额', '¥10,440'],
+        ['负债收入比', '58%'],
+        ['在贷余额合计', '¥61,500'],
+      ],
+    },
+    {
+      name: '征信查询频次', source: '人行征信', window: '近 6 月', value: '8 次（阈值 ≥10）', status: '正常', feat: '征信行为',
+      detailTitle: '征信查询记录（近 6 月 · 逐笔）',
+      cols: ['查询日期', '查询机构', '查询类型'],
+      rows: [
+        ['03-02', '某银行', '贷前审批（信用卡）'],
+        ['03-15', '某消费金融', '贷前审批'],
+        ['04-11', '某银行', '贷前审批（贷款）'],
+        ['05-06', '某消金', '贷前审批'],
+        ['06-20', '本人', '本人查询'],
+        ['07-08', '某网贷平台', '贷前审批'],
+        ['07-22', '某银行', '贷后管理'],
+        ['08-02', '某消费金融', '贷后管理'],
+      ],
+    },
+    {
+      name: '收入稳定性', source: '银行流水', window: '近 12 月', value: '连续 14 月稳定', status: '正常', feat: '收入稳定',
+      detailTitle: '收入流水（近 12 月汇总）',
+      cols: ['项', '值'],
+      rows: [
+        ['月均入账', '¥18,000（代发工资）'],
+        ['连续入账月数', '14 个月'],
+        ['大额异动', '无'],
+      ],
+    },
+    {
+      name: '职业属性', source: '申请信息', window: '当前', value: '制造业 · 在职', status: '正常', feat: '职业稳定',
+      detailTitle: '职业信息（申请时点）',
+      cols: ['项', '值'],
+      rows: [
+        ['单位', '某制造集团（在职 4 年）'],
+        ['岗位', '生产管理'],
+        ['社保缴纳', '连续 36 个月'],
+      ],
+    },
+    {
+      name: '司法涉诉', source: '司法数据', window: '近 2 年', value: '无记录', status: '正常', feat: '司法涉诉',
+      detailTitle: '涉诉记录（近 2 年）',
+      cols: ['类型', '结果'],
+      rows: [
+        ['被执行', '无记录'],
+        ['失信名单', '无记录'],
+      ],
+    },
+  ],
+  zhirong: [
+    {
+      name: '欺诈维度（引用智察分）', source: '智察分', window: '本次评分', value: '欺诈分 78', status: '触发', feat: '欺诈风险',
+      detailTitle: '智察分引用（本次评分）',
+      cols: ['项', '值'],
+      rows: [
+        ['欺诈分', '78（高风险档）'],
+        ['主要触发', '多头借贷强度 28% · 设备环境风险 22%'],
+      ],
+    },
+    {
+      name: '违约维度（引用智信分）', source: '智信分', window: '本次评分', value: '信用分 688', status: '关注', feat: '信用风险',
+      detailTitle: '智信分引用（本次评分）',
+      cols: ['项', '值'],
+      rows: [
+        ['信用分', '688（C 档 · 一般）'],
+        ['主要扣分项', '历史逾期 M3+ 1 次 · 负债收入比 58%'],
+      ],
+    },
+    {
+      name: '价值维度（借贷兴趣）', source: '行为数据', window: '近 30 天', value: '活跃 18 天', status: '正常', feat: '价值潜力',
+      detailTitle: '行为活跃（近 30 天）',
+      cols: ['项', '值'],
+      rows: [
+        ['活跃天数', '18 / 30 天'],
+        ['偏好产品', '消费分期 · 现金分期'],
+      ],
+    },
+    {
+      name: '资产维度', source: '资产画像', window: '当前', value: '房产 + 理财持仓', status: '正常', feat: '资产实力',
+      detailTitle: '资产（当前）',
+      cols: ['项', '值'],
+      rows: [
+        ['房产', '自有住房（按揭中）'],
+        ['理财持仓', '¥80,000（货币基金）'],
+      ],
+    },
+  ],
+};
+
+/* 关联关系图谱（对齐单客详情：主题切换 type/risk/ring、高危红框、预警数角标、团伙着色） */
+const REL_COLOR: Record<CustRelationNode['type'], string> = {
+  company: '#2563EB', person: '#D97706', device: '#7C3AED', contact: '#059669',
+};
+const REL_LABEL: Record<CustRelationNode['type'], string> = {
+  company: '企业', person: '个人', device: '设备', contact: '联系人',
+};
+const RISK_COLOR: Record<'高' | '中' | '低', string> = { 高: '#DC2626', 中: '#D97706', 低: '#059669' };
+const RING_PALETTE = ['#DC2626', '#0891B2', '#7C3AED', '#D97706', '#0D9488'];
+const THEME_LABEL: Record<'type' | 'risk' | 'ring', string> = { type: '关系网络', risk: '风险分布', ring: '团伙识别' };
+
+function RelationGraph({ cust, colorBy, rings, prod }: {
+  cust: MidCustomer; colorBy: 'type' | 'risk' | 'ring'; prod: ProdKey;
+  rings: { id: number; name: string; risk: string; count: number }[];
+}) {
+  const rels = cust.relations ?? [];
+  const W = 560, H = 260, CX = W / 2, CY = H / 2, R = 92;
+  if (!rels.length) return <div style={{ fontSize: 13, color: '#94A3B8' }}>暂无关联实体</div>;
+  const pts = rels.map((r, i) => {
+    const ang = (Math.PI * 2 * i) / rels.length - Math.PI / 2;
+    return { r, x: CX + R * Math.cos(ang), y: CY + R * Math.sin(ang) };
+  });
+  const ringColor = (r: CustRelationNode) =>
+    r.ringId ? RING_PALETTE[(r.ringId - 1) % RING_PALETTE.length] : '#94A3B8';
+  const nodeColor = (r: CustRelationNode) =>
+    colorBy === 'risk' ? (r.riskLevel ? RISK_COLOR[r.riskLevel] : '#94A3B8')
+      : colorBy === 'ring' ? ringColor(r)
+        : REL_COLOR[r.type];
   return (
-    <div style={{ flex: 1, textAlign: 'center' }}>
-      <div style={{ fontSize: 18, fontWeight: 800, color }}>{value ?? '—'}</div>
-      <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 2 }}>{label}</div>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+      <svg width="100%" viewBox={`0 0 ${W} ${H}`} style={{ maxWidth: W }} role="img" aria-label="关联关系图谱">
+        {pts.map(({ r, x, y }) => {
+          const rel = relRelevance(r, prod);
+          const dim = !rel;
+          return (
+          <g key={r.id}>
+            <line x1={CX} y1={CY} x2={x} y2={y} stroke={r.risk === '高危' ? '#DC2626' : (rel ? PROD_META[prod].color : '#CBD5E1')} strokeOpacity={dim ? 0.18 : 1} strokeWidth={r.risk ? 1.6 : (rel ? 1.4 : 1)} strokeDasharray={r.risk ? '4 2' : undefined} />
+          </g>
+          );
+        })}
+        <circle cx={CX} cy={CY} r={34} fill="#2563EB" />
+        <text x={CX} y={CY - 4} textAnchor="middle" fontSize={13} fontWeight={700} fill="#fff">{cust.name}</text>
+        <text x={CX} y={CY + 12} textAnchor="middle" fontSize={10} fill="#DBEAFE">本人</text>
+        {pts.map(({ r, x, y }) => {
+          const c = nodeColor(r);
+          const isHi = r.risk === '高危';
+          const rel = relRelevance(r, prod);
+          const dim = !rel;
+          return (
+            <g key={r.id}>
+              <circle cx={x} cy={y} r={r.type === 'company' ? 24 : 19} fill={c} fillOpacity={dim ? 0.04 : (r.risk ? 0.16 : 0.1)} stroke={isHi ? '#DC2626' : (rel ? PROD_META[prod].color : c)} strokeOpacity={dim ? 0.3 : 1} strokeWidth={rel ? 2.4 : (isHi ? 2 : 1.4)} />
+              <text x={x} y={y + (r.type === 'company' ? -2 : 3)} textAnchor="middle" fontSize={r.type === 'company' ? 11 : 10} fontWeight={600} fill={c}>
+                {r.name.length > 6 ? r.name.slice(0, 5) + '…' : r.name}
+              </text>
+              <text x={x} y={y + (r.type === 'company' ? 14 : 16)} textAnchor="middle" fontSize={9} fill="#64748B">{r.rel}</text>
+              {isHi && <text x={x} y={y - (r.type === 'company' ? 30 : 26)} textAnchor="middle" fontSize={10} fontWeight={700} fill="#DC2626">{r.risk}</text>}
+              {!!r.openAlerts && (
+                <g>
+                  <circle cx={x + (r.type === 'company' ? 22 : 17)} cy={y - (r.type === 'company' ? 22 : 17)} r={9} fill="#DC2626" stroke="#fff" strokeWidth={1.5} />
+                  <text x={x + (r.type === 'company' ? 22 : 17)} y={y - (r.type === 'company' ? 22 : 17) + 3.5} textAnchor="middle" fontSize={10} fontWeight={700} fill="#fff">{r.openAlerts}</text>
+                </g>
+              )}
+            </g>
+          );
+        })}
+      </svg>
+      <div style={{ display: 'flex', gap: 12, fontSize: 11, color: '#64748B', marginTop: 4, flexWrap: 'wrap', justifyContent: 'center' }}>
+        {colorBy === 'type' ? (
+          (Object.keys(REL_COLOR) as CustRelationNode['type'][]).map((t) => (
+            <span key={t} style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+              <span style={{ width: 8, height: 8, borderRadius: '50%', background: REL_COLOR[t], display: 'inline-block' }} />{REL_LABEL[t]}
+            </span>
+          ))
+        ) : colorBy === 'risk' ? (
+          (['高', '中', '低'] as const).map((k) => (
+            <span key={k} style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+              <span style={{ width: 8, height: 8, borderRadius: '50%', background: RISK_COLOR[k], display: 'inline-block' }} />{k}风险
+            </span>
+          ))
+        ) : (
+          <>
+            {rings.map((rg) => (
+              <span key={rg.id} style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                <span style={{ width: 8, height: 8, borderRadius: '50%', background: RING_PALETTE[(rg.id - 1) % RING_PALETTE.length], display: 'inline-block' }} />{rg.name}
+              </span>
+            ))}
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+              <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#94A3B8', display: 'inline-block' }} />无团伙
+            </span>
+          </>
+        )}
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+          <span style={{ width: 8, height: 8, borderRadius: '50%', border: '2px solid #DC2626', display: 'inline-block' }} />高危
+        </span>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+          <span style={{ width: 16, height: 16, borderRadius: '50%', background: '#DC2626', color: '#fff', fontSize: 10, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>n</span>关联预警数
+        </span>
+      </div>
     </div>
   );
 }
+
+/* 关系人抽屉：右侧滑出，展示该关系人属性（对齐单客详情） */
+function RelationDrawer({ r, custName, onClose }: { r: CustRelationNode; custName: string; onClose: () => void }) {
+  const fields: { label: string; value: ReactNode }[] = [
+    { label: '关系', value: r.rel },
+    { label: '类型', value: REL_LABEL[r.type] },
+    { label: '风险等级', value: r.riskLevel ? <Badge kind={r.riskLevel === '高' ? 'red' : r.riskLevel === '中' ? 'amber' : 'green'}>{r.riskLevel}风险</Badge> : '—' },
+    { label: '关联预警', value: <span style={{ color: '#DC2626', fontWeight: 600 }}>{r.openAlerts ?? 0} 条</span> },
+    { label: '证件号', value: r.idCard ?? '—' },
+    { label: '手机号', value: r.phone ?? '—' },
+    { label: '注册资本', value: r.regCapital ?? '—' },
+    { label: '法定代表人', value: r.legalPerson ?? '—' },
+    { label: '接入渠道', value: r.channel ?? '—' },
+    { label: '备注', value: r.note ?? '—' },
+  ];
+  return (
+    <>
+      <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.35)', zIndex: 50 }} />
+      <div style={{ position: 'fixed', top: 0, right: 0, height: '100vh', width: 380, maxWidth: '90vw', background: '#fff', boxShadow: '-8px 0 24px rgba(0,0,0,0.12)', zIndex: 51, padding: 24, overflowY: 'auto' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ width: 36, height: 36, borderRadius: '50%', background: REL_COLOR[r.type], color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 700 }}>{r.name[0]}</span>
+            <div>
+              <div style={{ fontSize: 16, fontWeight: 700, color: '#1E293B' }}>{r.name}</div>
+              <div style={{ fontSize: 12, color: '#94A3B8' }}>{r.rel} · 与 {custName} 关联</div>
+            </div>
+          </div>
+          <span onClick={onClose} style={{ fontSize: 22, color: '#94A3B8', cursor: 'pointer', lineHeight: 1 }}>×</span>
+        </div>
+        <div style={{ borderTop: '1px solid #F1F5F9', paddingTop: 12 }}>
+          {fields.map((f, i) => (
+            <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '9px 0', borderBottom: '1px solid #F8FAFC', fontSize: 13 }}>
+              <span style={{ color: '#94A3B8', flexShrink: 0, marginRight: 16 }}>{f.label}</span>
+              <span style={{ color: '#334155', textAlign: 'right' }}>{f.value}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </>
+  );
+}
+
+/* 关联实体 → 对本模型（prod）的影响：返回 null 表示不计入本模型/不直接入模，否则给出方向与说明
+ * 作用：让模型得分页的图谱聚焦「哪些关联因子影响了本模型」，而非照搬完整关系网络 */
+function relRelevance(r: CustRelationNode, prod: ProdKey): { impact: '拉高' | '拉低'; desc: string } | null {
+  if (prod === 'zhicha') {
+    if (r.type === 'device') return { impact: '拉高', desc: '设备/网络关联（反欺诈入模）' };
+    if (r.type === 'company' && r.risk === '高危') return { impact: '拉高', desc: '高危实体 · 黑产关联' };
+    if (r.rel.includes('共借') || r.rel.includes('担保')) return { impact: '拉高', desc: '共借/担保（欺诈传导候选）' };
+    if (r.type === 'contact') return { impact: '拉高', desc: '联系人风险传导（候选）' };
+    return null;
+  }
+  if (prod === 'zhixin') {
+    if (r.rel.includes('共借') || r.rel.includes('担保')) return { impact: '拉低', desc: '共债/担保风险传导（入模）' };
+    if (r.type === 'company') return { impact: '拉低', desc: '经营风险（关联企业）' };
+    if (r.type === 'contact') return { impact: '拉低', desc: '联系人风险传导' };
+    return null; // 设备主要供反欺诈，不直接入信用模型
+  }
+  // zhirong 综合：经智察分/智信分间接受关联实体影响，相关因子即二者候选
+  if (r.type === 'device') return { impact: '拉低', desc: '经智察分间接影响·设备关联' };
+  if (r.type === 'company') return { impact: '拉低', desc: r.risk === '高危' ? '经智察分·高危实体黑产关联' : '经智信分·经营风险' };
+  if (r.rel.includes('共借') || r.rel.includes('担保')) return { impact: '拉低', desc: '经智信分·共债/担保传导' };
+  if (r.type === 'contact') return { impact: '拉低', desc: '经智信分·联系人传导' };
+  return null;
+}
+
+/* 处置流程兜底节点（动态流程来自 bizFlows.json · f-alert-dispose，此处仅作无配置回退） */
+const FLOW_STAGES = ['预警确认', '风险研判', '冻结止付', '已结案'];
+
+/* 规则命中预警 → 相关模型：预警是客户级事件（贷中监控触发），但不同模型关注不同预警类——
+ * 反欺诈（智察）看欺诈信号（设备/黑产/多头/行为异常）、信用（智信）看还款能力与意愿（负债/逾期/司法/失联）、
+ * 综合（智融）看价值与机会（提额/需求）。本页规则命中预警按此映射只展示与当前模型相关的条目。 */
+const ALERT_MODEL: Record<string, ProdKey> = {
+  设备异常: 'zhicha', 反欺诈命中: 'zhicha', 多头借贷: 'zhicha', 行为评分下降: 'zhicha', 舆情负面: 'zhicha',
+  负债激增: 'zhixin', 逾期预警: 'zhixin', 司法涉诉: 'zhixin', 还款能力不足: 'zhixin', 回访失联: 'zhixin', 关联企业风险: 'zhixin',
+  提额机会: 'zhirong', 需求上升: 'zhirong',
+};
+function alertModelOf(type?: string): ProdKey | null {
+  return type ? ALERT_MODEL[type] ?? null : null;
+}
+
+type FlowEvent = { time: string; tag: string; text: string; kind: 'red' | 'amber' | 'blue' | 'cyan' | 'green' };
+/* 统一操作日志时间线：自动事件（评分/重评/预警/核验）+ 人工事件（处置/审批）按时间倒序，标注对模型的影响 */
+function buildEvents(cust: MidCustomer, calcedAt: string, prod: ProdKey): FlowEvent[] {
+  const ev: FlowEvent[] = [];
+  // 评分/重评：每次模型计算都留痕（初始评分 + 贷中重评，来自月度快照 modelScoreHistory）
+  (cust.modelScoreHistory ?? []).forEach((p) => {
+    const v = (p as any)[prod];
+    if (v != null) ev.push({
+      time: p.month, tag: '评分',
+      text: `${PROD_META[prod].label}评分：${v} 分（月度快照）`,
+      kind: 'cyan',
+    });
+  });
+  (cust.alerts ?? []).forEach((a) => ev.push({
+    time: a.time, tag: a.level === 'RED' ? '预警' : a.level === 'OPPORTUNITY' ? '机会' : '预警',
+    text: `${a.scene}（${a.ruleName}）触发 · 当前${a.status}`,
+    kind: a.level === 'RED' ? 'red' : a.level === 'YELLOW' ? 'amber' : 'green',
+  }));
+  (cust.disposes ?? []).forEach((d) => ev.push({
+    time: d.time, tag: '处置', text: `${d.action}：${d.result}${d.note ? `（${d.note}）` : ''}`, kind: 'blue',
+  }));
+  (cust.approvalRecords ?? []).forEach((r) => ev.push({
+    time: r.time, tag: '审批',
+    text: `${r.kind} · ${r.result}（${r.opinion}）· ${r.operator}`, kind: 'green',
+  }));
+  (cust.externalChecks ?? []).forEach((c) => ev.push({
+    time: calcedAt, tag: '核验',
+    text: `外部核验 · ${c.category}·${c.item} → ${c.result}（${c.status}）`, kind: 'amber',
+  }));
+  return ev.sort((a, b) => b.time.localeCompare(a.time));
+}
+
+function EventLine({ ev }: { ev: FlowEvent }) {
+  const tagColor: Record<string, string> = { red: '#DC2626', amber: '#D97706', blue: '#185FA5', cyan: '#0891B2', green: '#16A34A' };
+  return (
+    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '7px 0', borderBottom: '1px dashed #F1F5F9' }}>
+      <span style={{ fontSize: 11, color: '#fff', background: tagColor[ev.kind], borderRadius: 6, padding: '2px 8px', flexShrink: 0 }}>{ev.tag}</span>
+      <span style={{ fontSize: 12, color: '#94A3B8', width: 90, flexShrink: 0, fontVariantNumeric: 'tabular-nums' }}>{ev.time}</span>
+      <span style={{ fontSize: 12.5, color: '#334155', lineHeight: 1.6 }}>{ev.text}</span>
+    </div>
+  );
+}
+
+type TabKey = 'score' | 'graph' | 'alert' | 'data' | 'model';
+const TABS: { key: TabKey; label: string }[] = [
+  { key: 'score', label: '模型分' },
+  { key: 'graph', label: '关联图谱' },
+  { key: 'alert', label: '预警与处置' },
+  { key: 'data', label: '用户数据' },
+  { key: 'model', label: '模型信息' },
+];
 
 export default function CustScoreDetail() {
   const [params] = useSearchParams();
@@ -169,27 +764,28 @@ export default function CustScoreDetail() {
   const fromAlertId = params.get('id') ?? '';
   const nav = useNavigate();
   const customers = useMidCustomers();
+  const globalAlerts = useMidAlerts();
+  const [tab, setTab] = useState<TabKey>('score');
+  const [openInput, setOpenInput] = useState<Record<number, boolean>>({});
+  const [graphTheme, setGraphTheme] = useState<'type' | 'risk' | 'ring'>('type');
+  const [selRel, setSelRel] = useState<CustRelationNode | null>(null);
+
   const cust: MidCustomer | undefined = useMemo(
     () => customers.find((c) => c.custId === custId) ?? customers[0],
     [customers, custId],
   );
   const meta = PROD_META[prod];
-  const item = useMemo<ModelScoreItem | null>(() => (cust?.scores?.[prod] ? enrich(cust.scores[prod], prod) : null), [cust, prod]);
+  const item = useMemo<ModelScoreItem | null>(() => {
+    if (!cust) return null;
+    const raw = cust.scores?.[prod] ?? deriveFallback(cust, prod);
+    return raw ? enrich(raw, prod) : null;
+  }, [cust, prod]);
   const backTo = () => nav('/console/cr/mid-cust-detail?cust=' + custId + (fromAlertId ? '&id=' + fromAlertId : ''));
 
   const reg: any = models.find((m) => m.id === PROD_TO_MODEL[prod]) ?? {};
   const capa = MODEL_CAPA[prod];
-  const history = cust.modelScoreHistory ?? [];
+  const history = cust?.modelScoreHistory ?? [];
   const isFraud = prod === 'zhicha';
-  const cohortRef = isFraud ? 70 : 720;
-  const topFactor = item.factors[0]?.name ?? '—';
-  const interventions: ModelIntervention[] = cust.manualInterventions ?? [];
-  // 因子方向：欺诈模型"高=拉高风险"；信用/综合模型"高=提升评分(压低风险)"
-  const dirOf = (lvl: string, danger: boolean) => {
-    if (lvl === '中') return { t: '中性影响', c: '#D97706' };
-    if (danger) return lvl === '高' ? { t: '拉高风险', c: '#DC2626' } : { t: '压低风险', c: '#059669' };
-    return lvl === '高' ? { t: '提升评分', c: '#059669' } : { t: '压低评分', c: '#DC2626' };
-  };
 
   if (!cust || !item) {
     return (
@@ -205,128 +801,673 @@ export default function CustScoreDetail() {
   const scoreColor = meta.danger
     ? (item.score >= 70 ? '#DC2626' : item.score >= 40 ? '#D97706' : '#16A34A')
     : (item.score >= 660 ? '#16A34A' : item.score >= 580 ? '#D97706' : '#DC2626');
-  const approvalCols: Column[] = [
-    { key: 'time', label: '时间', width: '140px' },
-    { key: 'kind', label: '类型', width: '100px' },
-    { key: 'result', label: '结论', type: 'badge', badgeKind: 'gray', width: '90px' },
-    { key: 'opinion', label: '审批意见' },
-    { key: 'operator', label: '经办人', width: '100px' },
-  ];
-  const approvalRows: Row[] = (cust.approvalRecords ?? []).map((r, i) => ({
-    id: String(i), time: r.time, kind: r.kind,
-    result: { v: r.result, kind: r.result === '通过' ? 'green' : r.result === '拒绝' ? 'red' : 'amber' },
-    opinion: r.opinion, operator: r.operator,
-  }));
+  const gradeBadgeKind = (meta.danger ? (item.grade === '高' ? 'red' : item.grade === '中' ? 'amber' : 'green') : (item.grade === 'A' ? 'green' : item.grade === 'B' ? 'green' : item.grade === 'C' ? 'amber' : 'red')) as 'red' | 'amber' | 'green';
+  const dims = dimsOf(prod, cust.riskDims ?? []);
+  const allEvents = buildEvents(cust, item?.calcedAt ?? '', prod);
+  // 团伙汇总（关联图谱 · 团伙识别主题用）
+  const ringsSummary = useMemo(() => {
+    const map = new Map<number, { name: string; risk: string; count: number }>();
+    (cust?.relations ?? []).forEach((r) => {
+      if (!r.ringId) return;
+      const cur = map.get(r.ringId) ?? { name: r.ringName ?? '关联团伙' + r.ringId, risk: r.ringRisk ?? '中', count: 0 };
+      cur.count += 1;
+      map.set(r.ringId, cur);
+    });
+    return [...map.entries()].map(([id, m]) => ({ id, ...m }));
+  }, [cust]);
+
+  // 全局预警（按客户匹配，带 alert_id / flowKey / flowState，可跳详情）
+  const custGlobalAlerts = globalAlerts.filter((a) => a.cust_id === cust.custId);
+  // 规则命中预警按"与当前模型的相关性"过滤：每个模型页面只看与本模型相关的预警（三页面不再雷同）；
+  // 其余预警属于其他模型，归到对应模型页面展示
+  const alertCards = custGlobalAlerts.filter((a) => alertModelOf(a.alert_type) === prod);
+  const otherAlerts = custGlobalAlerts.filter((a) => alertModelOf(a.alert_type) !== prod);
+  // 处置流程跟随本模型相关预警（红灯优先）；本模型无相关预警时回退到客户第一条有流程的预警（标注其归属模型）
+  const flow = alertCards.find((a) => a.flowKey) ?? custGlobalAlerts.find((a) => a.flowKey);
+  // 处置流程：读管理中心业务流程库（bizFlows.json · f-alert-dispose），按预警等级/类型匹配子流程（动态，非写死）
+  const alertFlowItem = useFlows().find((f) => f.id === 'f-alert-dispose');
+  const matched = matchFlowGraph(alertFlowItem, flow ? { level: flow.level, alert_type: flow.alert_type } : {});
+  const flowSteps = (matched.steps && matched.steps.length ? matched.steps : FLOW_STAGES.map((s) => ({ state: s, action: '', next: '' }))) as { state: string; action: string; color?: string }[];
+  const curStage = flow ? flowSteps.findIndex((s) => s.state === flow.flowState) : -1;
+  const flowName = matched.name || alertFlowItem?.name || '预警处置流程';
+
+  const goAlertDetail = (alertId?: string) => {
+    if (alertId) nav('/console/cr/mid-alert-detail?id=' + alertId);
+  };
+
+  /* 得分变化：环比差值 + 趋势判断（智察分升=恶化；智信/智融分降=恶化） */
+  const hist = history.filter((p) => (p as any)[prod] != null);
+  const lastScore = hist.length ? ((hist[hist.length - 1] as any)[prod] as number) : null;
+  const prevScore = hist.length > 1 ? ((hist[hist.length - 2] as any)[prod] as number) : null;
+  const delta = lastScore != null && prevScore != null ? lastScore - prevScore : null;
+  let trend: { t: string; c: string } | null = null;
+  if (hist.length >= 3) {
+    const vals = hist.slice(-3).map((p) => (p as any)[prod] as number);
+    const up = vals[2] > vals[0];
+    const worsened = isFraud ? up : !up;
+    trend = worsened ? { t: '近 3 月风险持续上升', c: '#DC2626' } : { t: '近 3 月风险趋稳 / 向好', c: '#16A34A' };
+  }
+
+  /* 客户标签（继承单客详情的基础信息语义） */
+  const custTags: { label: string; kind: 'red' | 'amber' | 'green' | 'gray' }[] = [];
+  if (cust.riskLevel) custTags.push({ label: cust.riskLevel, kind: cust.riskLevel === '高风险' ? 'red' : cust.riskLevel === '中风险' ? 'amber' : 'green' });
+  if ((cust.alerts ?? []).some((a) => a.level === 'RED')) custTags.push({ label: '贷中预警', kind: 'red' });
+  if ((cust.alerts ?? []).some((a) => a.scene.includes('逾期') || a.ruleName.includes('逾期'))) custTags.push({ label: '逾期', kind: 'amber' });
+  if ((cust.alerts ?? []).some((a) => a.scene.includes('负债') || a.scene.includes('多头'))) custTags.push({ label: '共债嫌疑', kind: 'amber' });
+  custTags.push({ label: '模型评分', kind: 'gray' });
+
+  /* 单模型分数（含旧数据兜底派生），供快捷入口展示 */
+  const scoreOf = (k: ProdKey): number | null => {
+    if (cust.scores?.[k]?.score != null) return cust.scores![k].score;
+    const d = deriveFallback(cust, k);
+    return d ? d.score : null;
+  };
+
+  const infoRow = (label: string, value: ReactNode, strong?: boolean) => (
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #F1F5F9', padding: '9px 0' }}>
+      <span style={{ color: '#64748B' }}>{label}</span>
+      <span style={strong ? { fontWeight: 700, color: '#1E293B' } : { color: '#334155' }}>{value}</span>
+    </div>
+  );
 
   return (
     <div style={{ padding: 24, maxWidth: 1160 }}>
-      <PageShell header={<DetailHeader title={`${meta.label} · ${cust.name}`} crumb="贷中监控 / 单客详情 / 得分详情" subtitle={`客户号 ${cust.custId} ｜ 产品 ${cust.product ?? ''} ｜ 证件号 ${cust.idCard}`} backLabel="← 返回单客详情" onBack={backTo} />} />
-      <div className="space-y-6">
-          {/* 三产品切换 */}
-          <div style={{ display: 'flex', gap: 8 }}>
-            {PROD_KEYS.map((k) => {
-              const m = PROD_META[k];
-              const active = k === prod;
-              return (
-                <button key={k} type="button"
-                  onClick={() => nav('/console/cr/mid-cust-score?cust=' + custId + '&prod=' + k + (fromAlertId ? '&id=' + fromAlertId : ''))}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px', borderRadius: 10, cursor: 'pointer',
-                    border: active ? '1px solid ' + m.color : '1px solid #E2E8F0',
-                    background: active ? (m.color + '14') : '#fff', fontSize: 13,
-                  }}>
-                  <span style={{ width: 8, height: 8, borderRadius: 999, background: m.color }} />
-                  <span style={{ fontWeight: active ? 600 : 500, color: active ? m.color : '#475569' }}>{m.label}</span>
-                  <span style={{ fontSize: 11, color: '#94A3B8' }}>{m.sub}</span>
-                  <span style={{ fontWeight: 800, color: active ? m.color : '#334155', fontVariantNumeric: 'tabular-nums' }}>{cust.scores?.[k]?.score ?? '—'}</span>
-                </button>
-              );
-            })}
-            <span style={{ marginLeft: 'auto', alignSelf: 'center', fontSize: 12, color: '#94A3B8' }}>数据来源 <Sam label="样例" value="midCustomers.json.scores" /></span>
+      <PageShell header={<DetailHeader title={`${meta.label} · ${cust.name}`} crumb="贷中监控 / 单客详情 / 得分详情" subtitle={`客户号 ${cust.custId} ｜ 产品 ${cust.product ?? ''} ｜ 证件号 ${cust.idCard}`} backLabel="← 返回单客详情" onBack={backTo} sticky={false} />} />
+      <div className="space-y-4">
+
+        {/* 客户概览：继承单客详情基础信息 + 右侧模型快捷入口（三模型独立页面互跳） */}
+        <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'flex-start', background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 14, padding: '12px 16px' }}>
+          <div style={{ flex: '1 1 340px', minWidth: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', fontSize: 15, fontWeight: 700, color: '#1E293B' }}>
+              {cust.name}
+              {custTags.map((t) => <Badge key={t.label} kind={t.kind}>{t.label}</Badge>)}
+            </div>
+            <div style={{ fontSize: 12, color: '#64748B', marginTop: 6, lineHeight: 1.7 }}>
+              客户号 {cust.custId} ｜ 产品 {cust.product ?? '—'} ｜ 证件号 {cust.idCard} ｜ 贷款状态 {cust.loanStatus ?? '—'} ｜ 数据来源 <Sam label="样例" value="midCustomers.json" />
+            </div>
           </div>
-
-          {/* 得分概览 + 决策建议 */}
-          <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
-            <Panel title="得分概览" desc="模型输出 + 可解释结论">
-              <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
-                <div style={{ minWidth: 240, flex: '0 0 auto' }}>
-                  <ScoreGauge value={item.score} min={item.range[0]} max={item.range[1]} label={`${item.unit}（${item.range[0]}-${item.range[1]}）`} color={meta.color} hint={item.hint} />
-                </div>
-                <div style={{ flex: 1, minWidth: 240, display: 'flex', flexDirection: 'column', gap: 8, fontSize: 13 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #F1F5F9', padding: '8px 0' }}>
-                    <span style={{ color: '#64748B' }}>当前得分</span>
-                    <b style={{ fontSize: 18, color: scoreColor, fontVariantNumeric: 'tabular-nums' }}>{item.score}</b>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #F1F5F9', padding: '8px 0' }}>
-                    <span style={{ color: '#64748B' }}>{prod === 'zhicha' ? '欺诈概率' : '违约概率'}</span>
-                    <b>{item.probability}</b>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #F1F5F9', padding: '8px 0' }}>
-                    <span style={{ color: '#64748B' }}>风险等级</span>
-                    <span><Badge kind={meta.danger ? (item.grade === '高' ? 'red' : item.grade === '中' ? 'amber' : 'green') : (item.grade === 'A' ? 'green' : item.grade === 'B' ? 'green' : item.grade === 'C' ? 'amber' : 'red')}>{item.grade}{item.gradeLabel ? ` · ${item.gradeLabel}` : ''}</Badge></span>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #F1F5F9', padding: '8px 0' }}>
-                    <span style={{ color: '#64748B' }}>模型版本</span>
-                    <b>{item.modelVersion}</b>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0' }}>
-                    <span style={{ color: '#64748B' }}>评分时间</span>
-                    <b>{item.calcedAt}</b>
-                  </div>
-                </div>
-              </div>
-            </Panel>
-
-            <Panel title="决策建议" desc="审核出口">
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: 13 }}>
-                <div style={{ background: (meta.color + '14'), border: '1px solid ' + meta.color + '44', borderRadius: 10, padding: '12px 14px' }}>
-                  <div style={{ color: '#64748B', fontSize: 12, marginBottom: 4 }}>模型决策建议</div>
-                  <div style={{ fontWeight: 700, color: '#1E293B' }}>{item.suggestion}</div>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #F1F5F9', padding: '8px 0' }}>
-                  <span style={{ color: '#64748B' }}>额度建议</span>
-                  <b>{cust.scores?.limitSuggest ?? '—'}</b>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0' }}>
-                  <span style={{ color: '#64748B' }}>建议额度</span>
-                  <b style={{ fontSize: 16, color: '#1E293B' }}>¥{(cust.scores?.limit ?? 0).toLocaleString()}</b>
-                </div>
-                <div style={{ fontSize: 12, color: '#94A3B8', lineHeight: 1.7 }}>
-                  本页评分与建议仅供审核参考，最终决策需结合人工复核确认并留痕；拒绝 / 降额需在审批意见中注明理由。
-                </div>
-              </div>
-            </Panel>
-          </div>
-
-          {/* 模型能力卡（体现模型能力：方法/性能/稳定性/适用客群/负责人/全局特征重要，对接 data.ts 模型注册表） */}
-          <Panel title="模型能力" desc="模型构建方法 · 性能 · 稳定性 · 适用客群（对接模型注册表）">
-            <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
-              <div>
-                <div style={{ fontSize: 13, color: '#334155', lineHeight: 1.9, marginBottom: 12 }}>
-                  <b>{meta.label}（{meta.sub}）</b> 由「{capa.method}」。
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0,1fr))', gap: 10 }}>
-                  <CapCell label="适用客群" value={capa.applicable} />
-                  <CapCell label="模型负责人" value={capa.owner} />
-                  <CapCell label="稳定性 PSI" value={capa.psi.toFixed(2)} danger={capa.psi > 0.25} />
-                  <CapCell label="监控机制" value={capa.monitor} />
-                </div>
-                <div style={{ fontSize: 12, color: '#94A3B8', marginTop: 10, lineHeight: 1.7 }}>
-                  输入数据版本 2026Q2；模型输出经专家规则与人工复核干预后形成最终分，详见下方「模型血缘」与「人工干预留痕」。
-                </div>
-              </div>
-              <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 12, padding: '12px 14px' }}>
-                <div style={{ fontSize: 12, fontWeight: 600, color: '#64748B', marginBottom: 8 }}>模型性能（注册表）</div>
-                <div style={{ display: 'flex', gap: 10 }}>
-                  <Perf label="AUC" value={reg.auc?.toFixed(2)} color="#2563EB" />
-                  <Perf label="KS" value={reg.ks?.toFixed(2)} color="#7C3AED" />
-                  <Perf label="状态" value={reg.status?.v} color="#16A34A" />
-                </div>
-                <div style={{ fontSize: 12, color: '#64748B', marginTop: 8 }}>最近训练 {reg.lastTrain}</div>
+          <div style={{ flexShrink: 0 }}>
+            <div style={{ fontSize: 11, color: '#94A3B8', marginBottom: 6 }}>模型评分快捷入口</div>
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+              {PROD_KEYS.map((k) => {
+                const m = PROD_META[k];
+                const s = scoreOf(k);
+                const active = k === prod;
+                return (
+                  <button
+                    key={k} type="button" title={`进入 ${m.label} 得分页面`}
+                    onClick={() => nav('/console/cr/mid-cust-score?cust=' + custId + '&prod=' + k + (fromAlertId ? '&id=' + fromAlertId : ''))}
+                    style={{
+                      border: active ? '1.5px solid ' + m.color : '1px solid #E2E8F0',
+                      background: active ? m.color + '0f' : '#fff', borderRadius: 8, padding: '6px 10px',
+                      cursor: 'pointer', fontSize: 12, display: 'flex', alignItems: 'center', gap: 5,
+                    }}
+                  >
+                    <span style={{ width: 6, height: 6, borderRadius: 999, background: m.color }} />
+                    <span style={{ fontWeight: active ? 600 : 500, color: active ? m.color : '#475569' }}>{m.label}</span>
+                    <b style={{ color: '#334155', fontVariantNumeric: 'tabular-nums' }}>{s ?? '—'}</b>
+                  </button>
+                );
+              })}
+              <div style={{ fontSize: 12, color: '#64748B', borderLeft: '1px solid #E2E8F0', paddingLeft: 12, marginLeft: 4 }}>
+                额度建议 <b style={{ color: '#6D28D9' }}>{cust.scores?.limitSuggest ?? '—'}</b>
+                {cust.scores?.limit ? <span style={{ color: '#94A3B8' }}> / ¥{cust.scores.limit.toLocaleString()}</span> : null}
               </div>
             </div>
-            <div style={{ marginTop: 16 }}>
-              <div style={{ fontSize: 13, fontWeight: 600, color: '#475569', marginBottom: 8 }}>全局特征重要性（模型级，区别于本客局部因子）</div>
+          </div>
+        </div>
+
+        {/* Tab 导航（仅 Tab 吸顶：标题不吸顶随滚动离开，Tab 吸到控制台 header 正下方 top=56px；zIndex 30 低于 header 的 z-40） */}
+        <div style={{ position: 'sticky', top: 56, zIndex: 30, background: '#fff', borderBottom: '1px solid #E2E8F0', margin: '12px 0 0', padding: '6px 2px 0', display: 'flex', gap: 2 }}>
+          {TABS.map((t) => (
+            <button
+              key={t.key} type="button" onClick={() => setTab(t.key)}
+              style={{
+                padding: '9px 16px', fontSize: 13.5, cursor: 'pointer', background: 'none', border: 'none',
+                borderBottom: tab === t.key ? '2px solid #1E293B' : '2px solid transparent',
+                color: tab === t.key ? '#1E293B' : '#64748B', fontWeight: tab === t.key ? 600 : 400,
+              }}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+
+        {/* ========== Tab1 得分 ========== */}
+        {tab === 'score' && (
+          <>
+            <Panel title="模型分概览" desc="模型评分快照 + 维度拆解">
+              <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_440px]">
+                {/* 左：概览 */}
+                <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap', alignItems: 'flex-start' }}>
+                  {/* 环形图：加小标题 + 简短解释 */}
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0 }}>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: '#475569', marginBottom: 2 }}>总分</div>
+                    <ScoreGauge value={item.score} min={item.range[0]} max={item.range[1]} label={`${item.unit}（${item.range[0]}-${item.range[1]}）`} color={meta.color} hint={undefined} />
+                    <div style={{ fontSize: 11.5, color: '#94A3B8', marginTop: 2 }}>{isFraud ? '分数越高，欺诈风险越大' : '分数越高，表现越好'}</div>
+                  </div>
+                  <div style={{ flex: 1, minWidth: 240, fontSize: 13 }}>
+                    {infoRow('当前得分', <b style={{ fontSize: 18, color: scoreColor, fontVariantNumeric: 'tabular-nums' }}>{item.score}</b>)}
+                    {infoRow('风险等级', <Badge kind={gradeBadgeKind}>{item.grade}{item.gradeLabel ? ` · ${item.gradeLabel}` : ''}</Badge>)}
+                    {infoRow(isFraud ? '欺诈概率' : '违约概率', item.probability)}
+                    {infoRow('模型版本', item.modelVersion)}
+                    {infoRow('评分时间', item.calcedAt)}
+                  </div>
+                </div>
+                {/* 右：维度拆解（仅列表，与概览顶对齐等高） */}
+                <div style={{ minWidth: 0, display: 'flex', flexDirection: 'column' }}>
+                  <div style={{ fontSize: 12.5, fontWeight: 600, color: '#475569', marginBottom: 8 }}>
+                    维度拆解 <span style={{ fontSize: 11, fontWeight: 400, color: '#94A3B8' }}>风险维度得分 0-100</span>
+                  </div>
+                  <div style={{ flex: 1, border: '1px solid #F1F5F9', borderRadius: 10, padding: '2px 12px' }}>
+                    {[...dims].sort((a, b) => b.score - a.score).map((d, i) => {
+                      const lvl = d.lvl;
+                      return (
+                        <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, padding: '10px 0', borderBottom: i < dims.length - 1 ? '1px dashed #F1F5F9' : 'none' }}>
+                          <span style={{ width: 64, flexShrink: 0, color: '#334155', fontWeight: 600 }}>{d.dim}</span>
+                          <div style={{ flex: 1, height: 6, background: '#F1F5F9', borderRadius: 999, overflow: 'hidden' }}>
+                            <div style={{ width: `${Math.min(d.score, 100)}%`, height: '100%', background: LEVEL_COLOR[lvl], borderRadius: 999 }} />
+                          </div>
+                          <span style={{ width: 26, textAlign: 'right', color: '#475569', fontVariantNumeric: 'tabular-nums' }}>{d.score}</span>
+                          <Badge kind={lvl === '高' ? 'red' : lvl === '中' ? 'amber' : 'green'}>{lvl}</Badge>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            </Panel>
+
+            <Panel title="模型分趋势" desc="贷中重评轨迹与影响事件">
+              {/* 最新分 + 环比 + 趋势 */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap', marginBottom: 14 }}>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+                  <span style={{ fontSize: 11, color: '#94A3B8' }}>最新得分</span>
+                  <span style={{ fontSize: 30, fontWeight: 800, color: scoreColor, fontVariantNumeric: 'tabular-nums', lineHeight: 1 }}>{lastScore ?? '—'}</span>
+                  {delta != null && (
+                    <span style={{ fontSize: 13, fontWeight: 700, color: (isFraud ? delta > 0 : delta < 0) ? '#DC2626' : '#16A34A' }}>
+                      {delta > 0 ? '▲' : delta < 0 ? '▼' : '＝'} {Math.abs(delta)}
+                    </span>
+                  )}
+                </div>
+                <div style={{ fontSize: 12, color: '#64748B' }}>
+                  {prevScore != null ? `较上次重评（${hist[hist.length - 2]?.month ?? ''} · ${prevScore} 分）` : '尚无历史对比'}
+                </div>
+                {trend && <Badge kind={trend.c === '#DC2626' ? 'red' : 'green'}>{trend.t}</Badge>}
+              </div>
+              {history.length ? (
+                <LineChart
+                  labels={history.map((p) => p.month)}
+                  series={[{ name: meta.label, color: meta.color, data: history.map((p) => (p as any)[prod]) }]}
+                  unit="分"
+                  height={200}
+                />
+              ) : (
+                <div style={{ fontSize: 13, color: '#94A3B8', padding: '6px 0' }}>暂无重评轨迹（贷中重评记录随预警/处置生成后留痕）。</div>
+              )}
+              {(cust.alerts ?? []).filter((a) => a.level !== 'OPPORTUNITY').length > 0 && (
+                <>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: '#475569', margin: '12px 0 8px' }}>近期影响得分的事件</div>
+                  <div className="space-y-1.5">
+                    {(cust.alerts ?? []).filter((a) => a.level !== 'OPPORTUNITY').slice(0, 4).map((a, i) => (
+                      <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 12.5, borderBottom: '1px dashed #F1F5F9', padding: '6px 0' }}>
+                        <span style={{ fontSize: 11, color: '#fff', background: a.level === 'RED' ? '#DC2626' : '#D97706', borderRadius: 6, padding: '2px 8px' }}>{a.level === 'RED' ? '红' : '黄'}</span>
+                        <span style={{ color: '#94A3B8', width: 90, flexShrink: 0 }}>{a.time}</span>
+                        <span style={{ color: '#334155', flex: 1 }}>{a.scene}（{a.ruleName}）</span>
+                        <span style={{ color: a.level === 'RED' ? '#DC2626' : '#D97706', flexShrink: 0 }}>{isFraud ? '拉高欺诈风险' : '影响信用/综合分'}</span>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+            </Panel>
+
+          </>
+        )}
+
+        {/* ========== Tab 关联因子图谱（按当前模型高亮影响因子，其余淡化） ========== */}
+        {tab === 'graph' && (
+          <Panel title="关联因子图谱" desc="按当前模型高亮「影响本模型的关联因子」，其余淡化 · 点击节点/列表项查看详情">
+            {(cust.relations ?? []).length ? (
+              <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
+                {/* 左：关系列表（点击选中 → 抽屉） */}
+                <div style={{ width: 280, flexShrink: 0 }}>
+                  {(() => {
+                    const relFactors = (cust.relations ?? []).filter((r) => relRelevance(r, prod));
+                    return (
+                      <div style={{ fontSize: 12, fontWeight: 600, color: '#64748B', marginBottom: 8 }}>
+                        关系列表（{cust.relations.length}）· <span style={{ color: meta.color }}>影响本模型 {relFactors.length} 项</span>
+                      </div>
+                    );
+                  })()}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    {[...(cust.relations ?? [])].sort((a, b) => (relRelevance(b, prod) ? 1 : 0) - (relRelevance(a, prod) ? 1 : 0)).map((r) => {
+                      const rel = relRelevance(r, prod);
+                      return (
+                      <div
+                        key={r.id}
+                        onClick={() => setSelRel(r)}
+                        style={{
+                          border: '1px solid ' + (selRel?.id === r.id ? '#2563EB' : (rel ? meta.color + '66' : '#E2E8F0')),
+                          background: selRel?.id === r.id ? '#EFF6FF' : (rel ? meta.color + '0a' : '#fff'),
+                          borderRadius: 10, padding: '10px 12px', cursor: 'pointer', transition: 'all .15s', opacity: rel ? 1 : 0.55,
+                        }}
+                      >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ fontSize: 13, fontWeight: 600, color: '#1E293B' }}>{r.name}</span>
+                          <span style={{ fontSize: 11, color: '#fff', background: REL_COLOR[r.type], borderRadius: 999, padding: '1px 7px' }}>{REL_LABEL[r.type]}</span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 6, flexWrap: 'wrap' }}>
+                          <span style={{ fontSize: 12, color: REL_COLOR[r.type] }}>{r.rel}</span>
+                          {r.riskLevel && <Badge kind={r.riskLevel === '高' ? 'red' : r.riskLevel === '中' ? 'amber' : 'green'}>{r.riskLevel}风险</Badge>}
+                          {!!r.openAlerts && <span style={{ fontSize: 11, color: '#DC2626', fontWeight: 600 }}>⚠ {r.openAlerts} 预警</span>}
+                          {rel && <span style={{ fontSize: 10.5, color: '#fff', background: meta.color, borderRadius: 999, padding: '1px 7px' }}>影响本模型 · {rel.impact === '拉高' ? '拉高风险' : '拉低得分'}</span>}
+                        </div>
+                        <div style={{ fontSize: 11, color: rel ? meta.color : '#94A3B8', marginTop: 4 }}>{rel ? rel.desc : '与本模型无直接关联'}</div>
+                      </div>
+                      );
+                    })}
+                  </div>
+                </div>
+                {/* 右：图谱 + 主题切换 */}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8, gap: 12 }}>
+                    {graphTheme === 'ring' ? (
+                      <div style={{ fontSize: 12, color: '#64748B' }}>
+                        检测到 <b style={{ color: '#DC2626' }}>{ringsSummary.length}</b> 个团伙：
+                        {ringsSummary.map((rg) => (
+                          <span key={rg.id} style={{ marginLeft: 8, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                            <span style={{ width: 8, height: 8, borderRadius: '50%', background: RING_PALETTE[(rg.id - 1) % RING_PALETTE.length], display: 'inline-block' }} />
+                            {rg.name}（{rg.count} 实体，{rg.risk}风险）
+                          </span>
+                        ))}
+                      </div>
+                    ) : <span />}
+                    <div style={{ display: 'inline-flex', border: '1px solid #E2E8F0', borderRadius: 8, overflow: 'hidden', flexShrink: 0 }}>
+                      {(['type', 'risk', 'ring'] as const).map((t) => (
+                        <span
+                          key={t}
+                          onClick={() => setGraphTheme(t)}
+                          style={{
+                            fontSize: 12, padding: '4px 12px', cursor: 'pointer',
+                            background: graphTheme === t ? '#2563EB' : '#fff', color: graphTheme === t ? '#fff' : '#475569',
+                          }}
+                        >{THEME_LABEL[t]}</span>
+                      ))}
+                    </div>
+                  </div>
+                  <RelationGraph cust={cust} colorBy={graphTheme} rings={ringsSummary} prod={prod} />
+                  <div style={{ fontSize: 12, color: '#64748B', marginTop: 10, lineHeight: 1.7, background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 8, padding: '8px 12px' }}>
+                    {(() => {
+                      const relFactors = (cust.relations ?? []).filter((r) => relRelevance(r, prod)).map((r) => ({ name: r.name, ...relRelevance(r, prod)! }));
+                      return (
+                        <>
+                          影响 <b style={{ color: meta.color }}>{meta.label}</b> 的关联因子共 <b>{relFactors.length}</b> 项（其余已淡化）：
+                          {relFactors.length
+                            ? relFactors.map((f, i) => <span key={i} style={{ marginLeft: 6, color: f.impact === '拉高' ? '#A32D2D' : '#3B6D11' }}>{f.name}（{f.impact === '拉高' ? '拉高' : '拉低'}{prod === 'zhicha' ? '欺诈风险' : '得分'}）</span>)
+                            : '当前无直接关联因子入模'}
+                        </>
+                      );
+                    })()}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div style={{ fontSize: 13, color: '#94A3B8', padding: '12px 0' }}>该客户暂无关联实体。</div>
+            )}
+          </Panel>
+        )}
+        {selRel && <RelationDrawer r={selRel} custName={cust.name} onClose={() => setSelRel(null)} />}
+
+        {/* ========== Tab2 预警与处置 ========== */}
+        {tab === 'alert' && (
+          <>
+            <Panel title="预警与处置" desc="分值/规则预警 → 处置流程（管理中心 f-alert-dispose 联动）→ 处置动作">
+              {/* 分值阈值预警：综合分碰撞区间定级 */}
+              {(() => {
+                const band = bandOfScore(prod, item.score);
+                return (
+                  <div style={{ border: '1px solid ' + band.color + '55', background: band.color + '0d', borderRadius: 10, padding: '10px 14px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', fontSize: 13 }}>
+                      <Badge kind={band.color === '#DC2626' ? 'red' : band.color === '#D97706' ? 'amber' : 'green'}>{band.grade}</Badge>
+                      <span style={{ fontWeight: 600, color: '#1E293B' }}>{meta.label} {item.score}</span>
+                      <span style={{ color: '#64748B' }}>落入「{band.range}」区间（{band.label}）→ 触发分值预警</span>
+                    </div>
+                    <div style={{ fontSize: 12, color: '#64748B', marginTop: 6, lineHeight: 1.7 }}>
+                      建议处置：<b style={{ color: band.color }}>{band.action}</b>。分值预警由综合分碰撞阈值区间产生；下方规则命中预警由数据项独立踩线触发（一票否决式进流程），两类共同驱动处置。
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* 处置流程（简化一行）+ 预警状态 + 处置按钮；流程跟随"与当前模型相关"的预警 */}
+              {flow ? (
+                <div style={{ border: '1px solid #E2E8F0', borderRadius: 10, padding: '12px 14px', margin: '12px 0' }}>
+                  <div style={{ fontSize: 11, color: '#94A3B8', marginBottom: 8 }}>
+                    处置流程由「{flow.alert_type}」预警驱动
+                    {alertModelOf(flow.alert_type) === prod
+                      ? <span style={{ color: meta.color, fontWeight: 600 }}>（与当前 {meta.label} 相关）</span>
+                      : <span>（该预警主要影响 {flow.alert_type ? PROD_META[alertModelOf(flow.alert_type) ?? 'zhicha'].label : ''}）</span>}
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 4, fontSize: 12 }}>
+                    {flowSteps.map((s, i) => (
+                      <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <span style={{
+                          padding: '3px 10px', borderRadius: 999, fontSize: 12,
+                          fontWeight: i === curStage ? 700 : 400,
+                          color: i === curStage ? '#fff' : i < curStage ? '#059669' : '#94A3B8',
+                          background: i === curStage ? (s.color ?? '#D97706') : i < curStage ? '#EAF3DE' : '#F1F5F9',
+                        }}>
+                          {s.state}
+                        </span>
+                        {i < flowSteps.length - 1 && <span style={{ color: '#CBD5E1', fontSize: 11 }}>→</span>}
+                      </div>
+                    ))}
+                    <span style={{ marginLeft: 'auto', fontSize: 11, color: '#94A3B8' }}>{flowName}</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginTop: 10, paddingTop: 10, borderTop: '1px dashed #E2E8F0' }}>
+                    <span style={{ fontSize: 12.5, color: '#64748B' }}>
+                      预警状态：<b style={{ color: '#D97706' }}>{flow.flowState}</b>（{flow.alert_type} · {flow.alert_date} · 流程 {flow.flowKey}）
+                    </span>
+                    <span style={{ marginLeft: 'auto', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                      <button
+                        type="button"
+                        onClick={() => nav('/console/cr/mid-dispose-workbench')}
+                        style={{ fontSize: 13, background: '#1E293B', color: '#fff', border: 'none', borderRadius: 8, padding: '7px 16px', cursor: 'pointer' }}
+                      >
+                        前往处置
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => goAlertDetail(flow.alert_id)}
+                        style={{ fontSize: 13, background: '#fff', color: '#334155', border: '1px solid #E2E8F0', borderRadius: 8, padding: '7px 16px', cursor: 'pointer' }}
+                      >
+                        查看预警详情
+                      </button>
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', border: '1px solid #E2E8F0', borderRadius: 10, padding: '12px 14px', margin: '12px 0' }}>
+                  <span style={{ fontSize: 12.5, color: '#94A3B8' }}>该客户暂无进行中的处置流程</span>
+                  <button
+                    type="button"
+                    onClick={() => nav('/console/cr/mid-dispose-workbench')}
+                    style={{ fontSize: 13, background: '#1E293B', color: '#fff', border: 'none', borderRadius: 8, padding: '7px 16px', cursor: 'pointer' }}
+                  >
+                    发起处置
+                  </button>
+                </div>
+              )}
+
+              {/* 规则命中预警列表（只显示与当前模型相关的预警：三模型页面各看各的） */}
+              <div style={{ fontSize: 13, fontWeight: 600, color: '#475569', margin: '14px 0 8px' }}>
+                规则命中预警（{alertCards.length} 条）
+                <span style={{ fontSize: 11, fontWeight: 400, color: '#94A3B8', marginLeft: 8 }}>
+                  {meta.label} 相关 · 由数据项踩线触发
+                </span>
+              </div>
+              {alertCards.length ? (
+                <div className="space-y-2">
+                  {alertCards.map((a, i) => (
+                    <button
+                      key={i} type="button"
+                      onClick={() => goAlertDetail(a.alert_id)}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: 12, width: '100%', textAlign: 'left',
+                        border: '1px solid ' + meta.color + '66',
+                        borderRadius: 10, padding: '10px 14px', background: meta.color + '0a', cursor: 'pointer',
+                      }}
+                    >
+                      <Badge kind={a.level === 'RED' ? 'red' : a.level === 'YELLOW' ? 'amber' : 'green'}>{a.level === 'RED' ? '红' : a.level === 'YELLOW' ? '黄' : '机'}</Badge>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: '#1E293B', display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                          {a.alert_type} · {a.scene}
+                          <span style={{ fontSize: 10.5, color: '#fff', background: meta.color, borderRadius: 6, padding: '1px 7px' }}>本模型相关</span>
+                        </div>
+                        <div style={{ fontSize: 12, color: '#94A3B8', marginTop: 2 }}>{a.rule_name} · 触发值 {a.metric_value}（阈值 {a.threshold}）· {a.alert_date}</div>
+                      </div>
+                      <div style={{ fontSize: 12, color: a.flowState ? '#D97706' : '#94A3B8', flexShrink: 0 }}>{a.flowState ?? (a.status ?? '待处置')}</div>
+                      <span style={{ fontSize: 12, color: '#94A3B8', flexShrink: 0 }}>›</span>
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <div style={{ fontSize: 13, color: '#94A3B8', padding: '12px 0' }}>该客户暂无与 {meta.label} 相关的规则命中预警。</div>
+              )}
+              {otherAlerts.length > 0 && (
+                <div style={{ fontSize: 12, color: '#94A3B8', marginTop: 10, lineHeight: 1.8, background: '#F8FAFC', border: '1px dashed #E2E8F0', borderRadius: 8, padding: '8px 12px' }}>
+                  另有 {otherAlerts.length} 条预警属于其他模型：
+                  {otherAlerts.map((a, i) => (
+                    <span key={i} style={{ marginLeft: 8 }}>
+                      <span style={{ color: PROD_META[alertModelOf(a.alert_type) ?? 'zhicha'].color }}>{PROD_META[alertModelOf(a.alert_type) ?? 'zhicha'].label}</span>
+                      · {a.alert_type}
+                      <span style={{ color: '#CBD5E1' }}>｜</span>
+                    </span>
+                  ))}
+                  <span>可在对应模型评分页查看。</span>
+                </div>
+              )}
+            </Panel>
+
+            {/* 操作日志（由 Tab1 迁入：评分/预警/处置/审批/核验 统一时间线，按时间倒序） */}
+            <Panel title="操作日志" desc="评分 · 预警 · 处置 · 审批 · 核验（按时间倒序，自动与人工对模型的影响全留痕）">
+              <div style={{ display: 'flex', gap: 12, fontSize: 11, color: '#94A3B8', marginBottom: 8, flexWrap: 'wrap' }}>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><span style={{ width: 8, height: 8, borderRadius: '50%', background: '#0891B2', display: 'inline-block' }} />评分/重评</span>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><span style={{ width: 8, height: 8, borderRadius: '50%', background: '#DC2626', display: 'inline-block' }} />预警</span>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><span style={{ width: 8, height: 8, borderRadius: '50%', background: '#185FA5', display: 'inline-block' }} />处置</span>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><span style={{ width: 8, height: 8, borderRadius: '50%', background: '#16A34A', display: 'inline-block' }} />审批</span>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><span style={{ width: 8, height: 8, borderRadius: '50%', background: '#D97706', display: 'inline-block' }} />核验</span>
+              </div>
+              {allEvents.length ? (
+                <div className="space-y-1">
+                  {allEvents.map((ev, i) => <EventLine key={i} ev={ev} />)}
+                </div>
+              ) : (
+                <div style={{ fontSize: 13, color: '#94A3B8', padding: '12px 0' }}>暂无操作日志。</div>
+              )}
+            </Panel>
+          </>
+        )}
+
+        {/* ========== Tab3 用户数据 ========== */}
+        {tab === 'data' && (
+          <>
+            <Panel title="数据明细" desc={`${meta.label} 评分使用的原始数据 · 点击行展开逐笔明细 · 「→ 特征」为该数据供哪个模型维度使用`}>
+              {INPUT_DETAILS[prod].map((d, i) => {
+                const open = !!openInput[i];
+                const statusKind = d.status === '触发' ? 'red' : d.status === '关注' ? 'amber' : 'green';
+                return (
+                  <div key={i} style={{ border: '1px solid ' + (open ? '#CBD5E1' : '#F1F5F9'), borderRadius: 10, marginBottom: 8, overflow: 'hidden' }}>
+                    <button
+                      type="button"
+                      onClick={() => setOpenInput((s) => ({ ...s, [i]: !s[i] }))}
+                      style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', background: '#fff', border: 'none', cursor: 'pointer', textAlign: 'left' }}
+                    >
+                      <span style={{ fontSize: 11, color: '#94A3B8', flexShrink: 0, width: 16, textAlign: 'center' }}>{open ? '▾' : '▸'}</span>
+                      <span style={{ fontSize: 12.5, fontWeight: 600, color: '#1E293B', width: 140, flexShrink: 0 }}>{d.name}</span>
+                      <span style={{ fontSize: 12, color: '#94A3B8', width: 100, flexShrink: 0 }}>{d.source}</span>
+                      <span style={{ fontSize: 12, color: '#94A3B8', width: 120, flexShrink: 0 }}>{d.window}</span>
+                      <span style={{ fontSize: 12, color: '#475569', flex: 1, minWidth: 0 }}>{d.value}</span>
+                      <span style={{ fontSize: 11, color: '#185FA5', flexShrink: 0 }}>→ 特征：{d.feat}</span>
+                      <Badge kind={statusKind}>{d.status}</Badge>
+                    </button>
+                    {open && (
+                      <div style={{ padding: '8px 14px 12px 42px', background: '#F8FAFC', borderTop: '1px dashed #E2E8F0' }}>
+                        <div style={{ fontSize: 11.5, fontWeight: 600, color: '#64748B', marginBottom: 6 }}>{d.detailTitle}</div>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                          <thead>
+                            <tr>
+                              {d.cols.map((c, j) => (
+                                <th key={j} style={{ textAlign: 'left', padding: '5px 8px', color: '#94A3B8', fontWeight: 500, borderBottom: '1px solid #E2E8F0' }}>{c}</th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {d.rows.map((r, j) => (
+                              <tr key={j} style={{ borderBottom: '1px solid #EEF2F7' }}>
+                                {r.map((cell, k) => (
+                                  <td key={k} style={{ padding: '5px 8px', color: '#334155' }}>{cell}</td>
+                                ))}
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+              <div style={{ fontSize: 12, color: '#94A3B8', marginTop: 8 }}>「触发」= 踩线并命中规则预警；「关注」= 接近阈值待观察；「正常」= 正常参与评分。原始数据经数据治理后提炼为模型特征，再参与评分（见模型信息 Tab）。</div>
+            </Panel>
+
+            <Panel title="数据来源" desc="模型评分输入数据清单 · 按来源系统归集（血缘/特征加工见「模型信息 · 算法解释」）">
+              {(() => {
+                const groups: Record<string, any[]> = {};
+                INPUT_DETAILS[prod].forEach((d: any) => { (groups[d.source] = groups[d.source] ?? []).push(d); });
+                return (
+                  <div className="space-y-3">
+                    {Object.entries(groups).map(([src, items]) => (
+                      <div key={src} style={{ border: '1px solid #E2E8F0', borderRadius: 10, overflow: 'hidden' }}>
+                        <div style={{ background: '#F8FAFC', padding: '8px 12px', fontSize: 12.5, fontWeight: 700, color: '#1E293B', borderBottom: '1px solid #E2E8F0' }}>{src}</div>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12.5 }}>
+                          <tbody>
+                            {items.map((d: any, j: number) => (
+                              <tr key={j} style={{ borderBottom: j < items.length - 1 ? '1px dashed #F1F5F9' : 'none' }}>
+                                <td style={{ padding: '7px 12px', color: '#334155', fontWeight: 500, width: 170 }}>{d.name}</td>
+                                <td style={{ padding: '7px 12px', color: '#64748B' }}>{d.window}</td>
+                                <td style={{ padding: '7px 12px', textAlign: 'right' }}>
+                                  <Badge kind={d.status === '触发' ? 'red' : d.status === '关注' ? 'amber' : 'green'}>{d.status}</Badge>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
+              <div style={{ fontSize: 12, color: '#94A3B8', marginTop: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
+                <button
+                  type="button"
+                  onClick={() => nav('/console/cr/mid-single-cust?cust=' + encodeURIComponent(custId))}
+                  style={{ fontSize: 12.5, color: '#185FA5', background: 'none', border: 'none', padding: 0, cursor: 'pointer', textDecoration: 'underline' }}
+                >
+                  查看完整用户数据档案 →
+                </button>
+                <span>（单客 360° 画像）</span>
+              </div>
+            </Panel>
+          </>
+        )}
+
+        {/* ========== Tab4 模型信息 ========== */}
+        {tab === 'model' && (
+          <>
+            <Panel title="基本信息" desc="模型版本与归属">
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 10 }}>
+                <CapCell label="模型" value={`${meta.label} · ${item.modelVersion}`} />
+                <CapCell label="模型类型" value={isFraud ? 'XGBoost + 规则融合' : prod === 'zhixin' ? 'LightGBM 评分卡' : '融合逻辑回归'} />
+                <CapCell label="最近训练" value={reg.lastTrain ?? '—'} />
+                <CapCell label="输入数据版本" value="2026Q2" />
+                <CapCell label="适用客群" value={capa.applicable} />
+                <CapCell label="模型负责人" value={capa.owner} />
+                <CapCell label="状态" value={reg.status?.v ?? '—'} />
+                <CapCell label="评分时间" value={item.calcedAt} />
+              </div>
+              <div style={{ fontSize: 12.5, fontWeight: 600, color: '#475569', margin: '16px 0 8px' }}>版本历史</div>
+              <div className="space-y-2">
+                {capa.versions.map((v, i) => (
+                  <div key={i} style={{ display: 'flex', gap: 12, padding: '8px 12px', border: '1px solid #F1F5F9', borderRadius: 10, background: i === 0 ? meta.color + '08' : '#fff' }}>
+                    <div style={{ flexShrink: 0, width: 110 }}>
+                      <div style={{ fontSize: 12.5, fontWeight: 700, color: meta.color }}>{v.version}</div>
+                      <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 2 }}>{v.date}</div>
+                    </div>
+                    <div style={{ fontSize: 12.5, color: '#475569', lineHeight: 1.7 }}>{v.note}</div>
+                    {i === 0 && <Badge kind={meta.danger ? 'red' : 'green'}>当前</Badge>}
+                  </div>
+                ))}
+              </div>
+            </Panel>
+
+            <Panel title="结果含义" desc="分数区间 → 等级 → 建议动作">
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                <thead>
+                  <tr style={{ color: '#94A3B8', fontSize: 12, textAlign: 'left', borderBottom: '1px solid #E2E8F0' }}>
+                    <th style={{ padding: '8px 10px', fontWeight: 500 }}>分数区间</th>
+                    <th style={{ padding: '8px 10px', fontWeight: 500 }}>等级</th>
+                    <th style={{ padding: '8px 10px', fontWeight: 500 }}>含义</th>
+                    <th style={{ padding: '8px 10px', fontWeight: 500 }}>建议动作</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {THRESHOLDS[prod].map((t, i) => (
+                    <tr key={i} style={{ borderBottom: '1px solid #F1F5F9' }}>
+                      <td style={{ padding: '8px 10px', fontVariantNumeric: 'tabular-nums', color: '#334155' }}>{t.range}</td>
+                      <td style={{ padding: '8px 10px', fontWeight: 600, color: t.color }}>{t.grade}</td>
+                      <td style={{ padding: '8px 10px', color: '#64748B' }}>{t.label}</td>
+                      <td style={{ padding: '8px 10px', color: '#475569' }}>{t.action}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <div style={{ fontSize: 12, color: '#94A3B8', marginTop: 8 }}>当前得分 {item.score} 落在「{item.grade}」档位，触发分值预警（见「预警与处置」Tab）。</div>
+            </Panel>
+
+            <Panel title="运营效果" desc="模型上线后的业务表现与趋势">
+              {(() => {
+                const ops = MODEL_OPS[prod];
+                return (
+                  <>
+                    {/* 指标卡片 */}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12, marginBottom: 16 }}>
+                      {ops.metrics.map((m, i) => (
+                        <div key={i} style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 10, padding: '12px 14px' }}>
+                          <div style={{ fontSize: 11, color: '#94A3B8' }}>{m.label}</div>
+                          <div style={{ fontSize: 22, fontWeight: 800, color: m.color, marginTop: 4, fontVariantNumeric: 'tabular-nums' }}>{m.value}</div>
+                          <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 2 }}>{m.sub}</div>
+                        </div>
+                      ))}
+                    </div>
+                    {/* 趋势图 */}
+                    <div style={{ fontSize: 12.5, fontWeight: 600, color: '#475569', marginBottom: 8 }}>近 6 月趋势</div>
+                    <LineChart
+                      labels={ops.trend.map((t) => t.month)}
+                      series={[
+                        { name: '评分覆盖率', color: '#2563EB', data: ops.trend.map((t) => t.coverage) },
+                        { name: '预警准确率', color: '#16A34A', data: ops.trend.map((t) => t.accuracy) },
+                        { name: '处置及时率', color: '#7C3AED', data: ops.trend.map((t) => t.timely) },
+                      ]}
+                      unit="%"
+                      height={200}
+                      yMin={75}
+                    />
+                    <div style={{ fontSize: 12, color: '#94A3B8', marginTop: 10, lineHeight: 1.7, background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 8, padding: '8px 12px' }}>
+                      <b style={{ color: '#475569' }}>指标说明：</b>评分覆盖率 = 有评分客户占目标客群比例；预警准确率 = 预警后经核实确实存在风险的比例；处置及时率 = 在规定时限内完成处置的预警占比。三项指标持续向好说明模型运营稳健。
+                    </div>
+                  </>
+                );
+              })()}
+            </Panel>
+
+            <Panel title="算法解释" desc="模型怎么算出来的">
+              <div style={{ fontSize: 13, color: '#334155', lineHeight: 1.9, marginBottom: 14 }}>
+                <b>方法：</b>{capa.method}
+              </div>
+              <div style={{ fontSize: 12.5, fontWeight: 600, color: '#475569', marginBottom: 8 }}>特征与血缘</div>
+              <div style={{ display: 'flex', alignItems: 'stretch', gap: 0, flexWrap: 'wrap', marginBottom: 16 }}>
+                {capa.lineage.map((s, i) => (
+                  <div key={i} style={{ flex: '1 1 200px', minWidth: 180, position: 'relative', padding: '0 8px' }}>
+                    <div style={{ border: '1px solid #E2E8F0', borderRadius: 10, padding: '10px 12px', height: '100%', background: '#fff' }}>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: meta.color }}>{s.stage}</div>
+                      <div style={{ fontSize: 12, color: '#64748B', marginTop: 6, lineHeight: 1.6 }}>{s.detail}</div>
+                    </div>
+                    {i < capa.lineage.length - 1 && <div style={{ position: 'absolute', right: -6, top: '50%', transform: 'translateY(-50%)', color: '#94A3B8', fontSize: 16 }}>→</div>}
+                  </div>
+                ))}
+              </div>
+              <div style={{ fontSize: 12.5, fontWeight: 600, color: '#475569', marginBottom: 8 }}>全局特征重要性（模型级，区别于本客局部因子）</div>
               <div className="space-y-2">
                 {capa.global.map((g, i) => (
                   <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -338,178 +1479,11 @@ export default function CustScoreDetail() {
                   </div>
                 ))}
               </div>
-            </div>
-          </Panel>
+            </Panel>
+          </>
+        )}
 
-          {/* 三模型分历史轨迹（用户历史与现状：逐月轨迹 + 同客群均值 + 评分变化归因） */}
-          <Panel title="模型分历史轨迹" desc={`${meta.label} 近 6 个月逐月轨迹 vs 同客群均值（切换上方产品查看另外两模型）`}>
-            {history.length ? (
-              <LineChart
-                labels={history.map((p) => p.month)}
-                series={[
-                  { name: meta.label, color: meta.color, data: history.map((p) => (p as any)[prod]) },
-                  { name: '同客群均值', color: '#94A3B8', data: history.map(() => cohortRef) },
-                ]}
-                unit="分"
-                height={240}
-              />
-            ) : <div style={{ fontSize: 13, color: '#94A3B8' }}>暂无历史轨迹数据</div>}
-            <div style={{ marginTop: 14 }}>
-              <div style={{ fontSize: 13, fontWeight: 600, color: '#475569', marginBottom: 8 }}>评分变化归因（影响事件）</div>
-              <div className="space-y-2">
-                {cust.alerts.filter((a) => a.level !== 'OPPORTUNITY').slice(0, 4).map((a, i) => (
-                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, borderBottom: '1px dashed #F1F5F9', padding: '6px 0' }}>
-                    <span style={{ fontSize: 11, color: '#fff', background: a.level === 'RED' ? '#DC2626' : '#D97706', borderRadius: 6, padding: '2px 8px' }}>{a.level === 'RED' ? '红' : '黄'}</span>
-                    <span style={{ color: '#94A3B8', width: 90, flexShrink: 0 }}>{a.time}</span>
-                    <span style={{ color: '#334155' }}>{a.scene}（{a.ruleName}）触发，影响{isFraud ? '欺诈' : '信用/综合'}分走势</span>
-                  </div>
-                ))}
               </div>
-            </div>
-          </Panel>
-
-          {/* 评分依据与模型说明（监管可解释） */}
-          <Panel title="评分依据与模型说明" desc="分数含义 · 等级阈值 · 合规说明">
-            <div className="grid gap-6 lg:grid-cols-2">
-              <div>
-                <div style={{ fontSize: 13, color: '#334155', lineHeight: 1.9, marginBottom: 12 }}>
-                  <b>{meta.label}（{meta.sub}）</b>：{item.hint}。分数由「{item.factors.map((f) => f.name).join('、')}」等维度综合计算得出，
-                  各维度贡献见下方「风险因子维度」。模型版本 {item.modelVersion}，评分时间 {item.calcedAt}。
-                </div>
-                <div style={{ fontSize: 12, color: '#64748B', lineHeight: 1.9, background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 10, padding: '12px 14px' }}>
-                  <b style={{ color: '#475569' }}>合规说明：</b>本评分由系统模型自动计算，评分结果及因子明细完整留痕，可回溯、可复核；
-                  模型输出仅作辅助决策，不替代人工审核；对评分结果有异议可发起复核并记录审批意见。
-                </div>
-                <div style={{ fontSize: 12, color: '#64748B', lineHeight: 1.9, background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 10, padding: '12px 14px', marginTop: 10 }}>
-                  <b style={{ color: '#475569' }}>概率推导：</b>{item.probability} 由模型概率校准（Platt Scaling）输出，表示本客户{isFraud ? '欺诈' : '违约'}可能性。
-                  <br /><b style={{ color: '#475569' }}>反事实示例（what-if）：</b>若将最高风险因子「{topFactor}」由当前风险降至中风险，{meta.label}预计变化约 ±{Math.max(5, Math.round((item.factors[0]?.contribution ?? 0) * 0.4))} 分（演示值，实际以模型重算为准）。
-                </div>
-              </div>
-              <div>
-                <div style={{ fontSize: 13, fontWeight: 600, color: '#475569', marginBottom: 8 }}>等级阈值</div>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
-                  <thead>
-                    <tr style={{ color: '#94A3B8', fontSize: 12, textAlign: 'left', borderBottom: '1px solid #E2E8F0' }}>
-                      <th style={{ padding: '8px 10px', fontWeight: 500 }}>分数区间</th>
-                      <th style={{ padding: '8px 10px', fontWeight: 500 }}>等级</th>
-                      <th style={{ padding: '8px 10px', fontWeight: 500 }}>含义</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {THRESHOLDS[prod].map((t, i) => (
-                      <tr key={i} style={{ borderBottom: '1px solid #F1F5F9' }}>
-                        <td style={{ padding: '8px 10px', fontVariantNumeric: 'tabular-nums', color: '#334155' }}>{t.range}</td>
-                        <td style={{ padding: '8px 10px', fontWeight: 600, color: t.color }}>{t.grade}</td>
-                        <td style={{ padding: '8px 10px', color: '#64748B' }}>{t.label}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-                <div style={{ fontSize: 12, color: '#94A3B8', marginTop: 8 }}>当前得分 {item.score} 落在「{item.grade}」档位。</div>
-              </div>
-            </div>
-          </Panel>
-
-          {/* 风险因子维度 */}
-          <Panel title="风险因子维度" desc="各因子对评分的贡献度（权重合计约 100%）">
-            <div className="space-y-4">
-              {item.factors.map((f, i) => (
-                <div key={i}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 13 }}>
-                    <span style={{ color: '#334155' }}>{f.name}</span>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <Badge kind={f.level === '高' ? 'red' : f.level === '中' ? 'amber' : 'green'}>{f.level}风险</Badge>
-                      <span style={{ fontSize: 11, color: dirOf(f.level, meta.danger).c }}>{dirOf(f.level, meta.danger).t}</span>
-                      <b style={{ fontVariantNumeric: 'tabular-nums' }}>{f.contribution}%</b>
-                    </span>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 6 }}>
-                    <div style={{ flex: 1, height: 8, background: '#F1F5F9', borderRadius: 999, overflow: 'hidden' }}>
-                      <div style={{ width: `${Math.min(f.contribution * 2.4, 100)}%`, height: '100%', background: LEVEL_COLOR[f.level], borderRadius: 999 }} />
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </Panel>
-
-          {/* 证据明细 */}
-          <Panel title="证据明细" desc={prod === 'zhicha' ? '规则命中明细：解释为什么判可疑' : prod === 'zhixin' ? '评分卡项明细：解释各评分项贡献' : '融合构成明细：解释综合分由什么融合而来'}>
-            <div className="space-y-3">
-              {item.evidence.map((e, i) => (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, border: '1px solid #F1F5F9', borderRadius: 10, padding: '10px 14px' }}>
-                  <Badge kind={TAG_KIND[e.tag ?? '评分项'] ?? 'gray'}>{e.tag ?? '证据'}</Badge>
-                  <div style={{ minWidth: 0, flex: 1 }}>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: '#1E293B' }}>{e.name}</div>
-                    <div style={{ fontSize: 12, color: '#64748B', marginTop: 2 }}>{e.value}</div>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-                    <div style={{ width: 90, height: 6, background: '#F1F5F9', borderRadius: 999, overflow: 'hidden' }}>
-                      <div style={{ width: `${Math.min(e.weight * 2.4, 100)}%`, height: '100%', background: '#64748B', borderRadius: 999 }} />
-                    </div>
-                    <span style={{ fontSize: 12, color: '#64748B', width: 40, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{e.weight}%</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </Panel>
-
-          {/* 模型血缘（监管溯源：输入数据→特征→模型→分数，证据挂源记录ID） */}
-          <Panel title="模型血缘" desc="输入数据 → 特征 → 模型 → 分数 的全链路溯源">
-            <div style={{ display: 'flex', alignItems: 'stretch', gap: 0, flexWrap: 'wrap' }}>
-              {capa.lineage.map((s, i) => (
-                <div key={i} style={{ flex: '1 1 200px', minWidth: 180, position: 'relative', padding: '0 8px' }}>
-                  <div style={{ border: '1px solid #E2E8F0', borderRadius: 10, padding: '10px 12px', height: '100%', background: '#fff' }}>
-                    <div style={{ fontSize: 12, fontWeight: 700, color: meta.color }}>{s.stage}</div>
-                    <div style={{ fontSize: 12, color: '#64748B', marginTop: 6, lineHeight: 1.6 }}>{s.detail}</div>
-                  </div>
-                  {i < capa.lineage.length - 1 && <div style={{ position: 'absolute', right: -6, top: '50%', transform: 'translateY(-50%)', color: '#94A3B8', fontSize: 16 }}>→</div>}
-                </div>
-              ))}
-            </div>
-            <div style={{ fontSize: 12, color: '#64748B', lineHeight: 1.8, marginTop: 12, background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 10, padding: '10px 14px' }}>
-              <b style={{ color: '#475569' }}>溯源说明：</b>模型版本 {item.modelVersion}（最近训练 {reg.lastTrain}），输入数据版本 2026Q2；
-              上方「证据明细」中每条证据均关联源系统记录（如 征信查询 #Q… / 规则引擎命中 R2003 / 设备指纹 D…），监管可凭记录 ID 回溯原始数据。
-            </div>
-          </Panel>
-
-          {/* 人工干预留痕（监管溯源核心："机器学习+人工干预"中的人工干预） */}
-          <Panel title="人工干预留痕" desc="专家规则 / 人工调分调额 / 偏离模型建议（含理由+操作人+时间，强制留痕）">
-            {interventions.length ? (
-              <div className="space-y-3">
-                {interventions.map((it, i) => (
-                  <div key={i} style={{ border: '1px solid #F1F5F9', borderRadius: 12, padding: '12px 14px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-                      <Badge kind={it.type === '偏离模型建议' ? 'red' : (it.type === '人工调额' || it.type === '人工调分') ? 'amber' : 'violet'}>{it.type}</Badge>
-                      <span style={{ fontSize: 13, fontWeight: 600, color: '#1E293B' }}>{it.target}</span>
-                      <span style={{ fontSize: 12, color: '#94A3B8', marginLeft: 'auto' }}>{it.time} · {it.operator}</span>
-                    </div>
-                    <div style={{ fontSize: 13, color: '#334155', marginTop: 8, lineHeight: 1.7 }}>{it.detail}</div>
-                    {it.before && it.after && (
-                      <div style={{ fontSize: 12, color: '#64748B', marginTop: 6 }}>
-                        {it.before} <span style={{ color: '#DC2626', fontWeight: 600 }}>→</span> {it.after}
-                      </div>
-                    )}
-                    <div style={{ fontSize: 12, color: '#475569', marginTop: 6, background: '#FFF7ED', border: '1px solid #FED7AA', borderRadius: 8, padding: '6px 10px', lineHeight: 1.6 }}>
-                      <b>干预理由：</b>{it.reason}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div style={{ fontSize: 13, color: '#94A3B8' }}>该客户暂无人工干预记录（模型建议直接采用）。</div>
-            )}
-          </Panel>
-
-          {/* 审批历史（审核留痕） */}
-          <Panel title="审批历史" desc="该客户历史审批决策记录（留痕可溯）">
-            {approvalRows.length ? (
-              <DataTable columns={approvalCols} rows={approvalRows} empty="暂无审批记录" pager={false} />
-            ) : (
-              <div style={{ fontSize: 13, color: '#94A3B8', padding: '12px 0' }}>暂无审批记录</div>
-            )}
-          </Panel>
-      </div>
     </div>
   );
 }

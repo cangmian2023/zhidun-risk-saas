@@ -156,6 +156,7 @@ export function DetailHeader({
   actions,
   id,
   flowBar,
+  sticky = true,
 }: {
   title: ReactNode
   crumb?: string
@@ -165,9 +166,15 @@ export function DetailHeader({
   actions?: ReactNode
   id?: string
   flowBar?: ReactNode // 需求21：流程操作行（面包屑下方，保存/流程按钮/状态标签）
+  sticky?: boolean // 是否吸顶（默认吸顶；个别页面仅需 Tab 吸顶时传 false）
 }) {
   return (
-    <div id={id} className="sticky top-14 z-30 -mx-4 bg-slate-50 px-4 pb-4 pt-1 lg:-mx-8 lg:px-8">
+    <div
+      id={id}
+      className={
+        (sticky ? 'sticky top-14 z-30 ' : '') + '-mx-4 bg-slate-50 px-4 pb-4 pt-1 lg:-mx-8 lg:px-8'
+      }
+    >
       {/* 第一行：返回按钮 + 面包屑 */}
       <div className="flex flex-wrap items-center gap-3">
         {onBack && (

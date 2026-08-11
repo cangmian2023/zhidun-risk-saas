@@ -44,50 +44,71 @@ export const creditRiskMenu: MenuGroup[] = [
   { group: '持续性周期监测', section: '贷中监控', items: [{ label: '持续性周期监测', key: 'cr:mid-td4', desc: '持续性周期监测评估：行为分 / 逾期 / 新增贷款按月趋势' }] },
   { group: '存量客群运营', section: '贷中监控', items: [{ label: '存量客群运营', key: 'cr:mid-td5', desc: '存量客群运营场景：授信 / 余额 / 逾期 + 产品结构 + 贷款台账' }] },
   // 单客 360° 画像（v3 新增）：企业档案（ep:qiye-profile）的单客版本，功能数据分离独立实现
-  { group: '单客视图', section: '贷中监控', items: [{ label: '单客详情', key: 'cr:mid-single-cust', keep: true, desc: '零售信贷单客 360° 画像：身份与职业收入、授信额度、负债逾期、行为画像、风险预警与联系人关系' }] },
+  { group: '单客视图', section: '贷中监控', items: [
+    { label: '单客详情', key: 'cr:mid-single-cust', keep: true, desc: '零售信贷单客 360° 画像：身份与职业收入、授信额度、负债逾期、行为画像、风险预警与联系人关系' },
+    { label: '单客详情2（高风险）', key: 'cr:mid-single-cust-2', desc: '同一单客画像页复用不同客户数据（CUST-100891）：预警密集、各模块均带风险标记的样例客户' },
+  ] },
 ]
 
 /* ============================================================
  * 二、评分产品
  * ========================================================== */
+/* ============================================================
+ * 二、评分产品（v3 新 IA：按用户工作流重组，不再按模型分拆）
+ *   工作台 / 在线评分 / 客户洞察 / 数据分析 / 模型管理 / 策略配置
+ *   复用：评分总览(ScoreModule)、预警处置(MidAlertWorkbench)、
+ *        客户详情(CustProfile)、处置流程(FlowCanvasEditor)
+ * ========================================================== */
 export const scoringMenu: MenuGroup[] = [
   {
-    group: '评分体系',
+    group: '工作台',
     section: '工作台',
-    items: [{ label: '评分体系总览', key: 'sc:overview', keep: true, desc: '子系统定位与三产品能力对比、目标用户拆解、业务闭环；输入申请人并排三分数（对象评分档案）与体系总览' }],
-  },
-  {
-    group: '智察分',
-    section: '智能察分 · 欺诈评分 0~100，分越高欺诈风险越高',
     items: [
-      { label: '欺诈评分查询', key: 'sc:zhicha-query', keep: true, desc: '输入标识 → 欺诈分(0~100)+欺诈概率+决策建议；结果下钻规则命中明细、黑名单与团伙' },
-      { label: '欺诈监控', key: 'sc:zhicha-monitor', keep: true, desc: '新客欺诈率、通道欺诈率、命中 TOP 规则趋势' },
+      { label: '评分总览', key: 'sc:overview', keep: true, desc: '三产品评分总览与对象评分档案：并排展示智察分/智信分/智融分，支持单客分数检索与批量评分入口' },
+      { label: '预警处置', key: 'sc:alert-workbench', keep: true, desc: '复用零售信贷预警工作台：红黄灯预警任务队列，逐条核实、发起处置' },
     ],
   },
   {
-    group: '智信分',
-    section: '智能信分 · 违约评分 300~900，分越高违约概率越低',
+    group: '在线评分',
+    section: '在线评分',
     items: [
-      { label: '违约评分查询', key: 'sc:zhixin-query', keep: true, desc: '输入标识 → 信用分(300~900)+违约概率+信用等级；结果下钻评分卡解释、额度与拒绝建议' },
-      { label: '客群分布与逾期表现', key: 'sc:zhixin-vintage', keep: true, desc: '分档通过率、Vintage 逾期曲线、评分分布' },
+      { label: '评分记录', key: 'sc:score-records', desc: '三产品评分流水记录，支持单客分数检索与批量评分导入' },
     ],
   },
   {
-    group: '智融分',
-    section: '智能融分 · 风险 + 价值融合评分',
+    group: '客户洞察',
+    section: '客户洞察',
     items: [
-      { label: '融合评分查询', key: 'sc:zhirong-query', keep: true, desc: '输入标识 → 综合分；结果下钻融合构成（双维引用+价值）、场景评分对比、360 风险×价值评估' },
-      { label: '客户分层', key: 'sc:zhirong-tier', keep: true, desc: '高价值/高风险/沉睡/活跃客群分组与占比' },
-      { label: '场景效果监控', key: 'sc:zhirong-monitor', keep: true, desc: '各场景转化率/命中率/用信情况' },
+      { label: '客群分组', key: 'sc:crowd-groups', desc: '按风险/价值/行为等维度定义客群分组，支撑分层经营' },
+      { label: '客户列表', key: 'sc:customer-list', desc: '客群分组下的客户清单，点击进入客户详情' },
+      { label: '客户详情', key: 'sc:customer-detail', keep: true, desc: '单客 360° 画像（复用零售信贷单客视图）：身份、授信、负债、行为、风险预警与关系' },
     ],
   },
   {
-    group: '公共能力',
-    section: '公共能力 · 三产品通用服务',
+    group: '数据分析',
+    section: '数据分析',
     items: [
-      { label: 'API 对接', key: 'sc:api', keep: true, desc: '一次对接三产品（单接口按需返回分数组合）、鉴权、调用日志' },
-      { label: '批量评分', key: 'sc:batch', keep: true, desc: '文件上传→任务队列→结果下载（三产品通用）' },
-      { label: '计费与账单', key: 'sc:bill', keep: true, desc: '三产品统一账本、充值、余额、月度账单' },
+      { label: '评分分布', key: 'sc:score-dist', desc: '各产品评分分段分布、客群占比与分布漂移观测' },
+      { label: '命中分析', key: 'sc:hit-analysis', desc: '规则命中与名单命中分析：命中 TOP 规则、命中客群特征与趋势' },
+    ],
+  },
+  {
+    group: '模型管理',
+    section: '模型管理',
+    items: [
+      { label: '模型管理', key: 'sc:model-manage', desc: '智察分/智信分/智融分及其版本的管理：状态、训练信息、发布' },
+      { label: '模型监控', key: 'sc:model-monitor', desc: '模型稳定性与区分力监控：PSI / CSI / KS / AUC 漂移预警' },
+      { label: '模型效果', key: 'sc:model-effect', desc: '模型效果评估：区分力、lift 曲线、各客群表现与坏账回溯' },
+      { label: '版本管理', key: 'sc:model-version', desc: '模型版本迭代记录、回滚与灰度发布管理' },
+    ],
+  },
+  {
+    group: '策略配置',
+    section: '策略配置',
+    items: [
+      { label: '评分阈值', key: 'sc:score-threshold', desc: '配置各产品评分阈值、风险分层与决策建议映射' },
+      { label: '预警规则', key: 'sc:alert-rule', desc: '配置分值阈值预警与规则命中预警的触发条件与通知渠道' },
+      { label: '处置流程', key: 'sc:dispose-flow', keep: true, desc: '处置流程画布配置（复用 FlowCanvasEditor）：预警处置节点与流转' },
     ],
   },
 ]
@@ -286,9 +307,6 @@ export interface PlannedExtra {
 }
 export const plannedExtras: PlannedExtra[] = [
   { key: 'cr:pre-report-detail', sub: 'cr', group: '进件审核', label: '进件审核详情页', desc: '整合信息核验+信用风控+欺诈识别的综合报告，输出最终决策建议' },
-  { key: 'sc:zhicha-detail', sub: 'sc', group: '智察分', label: '智察分评分详情页', desc: '展示单次查询的智察分结果、评分分布、风险标签' },
-  { key: 'sc:zhixin-detail', sub: 'sc', group: '智信分', label: '智信分评分详情页', desc: '展示单次查询的智信分结果、风险等级、违约概率预测' },
-  { key: 'sc:zhirong-detail', sub: 'sc', group: '智融分', label: '智融分评分详情页', desc: '展示单次查询的智融分结果、场景评分、价值标签' },
   { key: 'ep:ent-verify-detail', sub: 'ep', group: '企业信息核验', label: '企业核验报告详情页', desc: '展示企业工商、司法、经营、舆情等核验结果' },
   { key: 'ep:ent-credit-detail', sub: 'ep', group: '企业信用评估', label: '企业信用报告详情页', desc: '展示企业的信用评分、风险维度、授信建议' },
   { key: 'ep:ent-graph-detail', sub: 'ep', group: '企业关联图谱', label: '企业关联图谱详情页', desc: '展示企业间的股权关系、担保关系、关联交易等' },

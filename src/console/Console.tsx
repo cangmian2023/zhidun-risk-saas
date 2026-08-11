@@ -49,6 +49,7 @@ import { CollectionOverview, CollectionCases, CollectionStrategy, CollectionReco
 import { DunAssignment, DunImport, DunChannels, DunAgencies, DunQa, DunRepayment } from './DunPages'
 import { QiyeSearch, QiyeProfile } from './QiyePages'
 import ScoreModule from './ScoreModule'
+import ScDisposeFlow from './ScDisposeFlow'
 import { getDashboardByKey } from './dashboardData'
 import { creditRiskMenu, scoringMenu, entMenu, dmMenu, dataGovernanceMenu, cmMenu, collectionMenu, type MenuGroup } from './menus'
 import SidebarMenu from './SidebarMenu'
@@ -180,46 +181,22 @@ export default function Console() {
     'cr:mid-td3': 'bell',
     'cr:mid-td4': 'trend',
     'cr:mid-td5': 'flag',
-    // 评分产品
-    'sc:zhicha-query': 'search',
-    'sc:zhicha-batch': 'stack',
-    'sc:zhicha-dist': 'pie',
-    'sc:zhicha-eval': 'analytics',
-    'sc:zhicha-tune': 'wrench',
-    'sc:zhicha-bill-query': 'bars',
-    'sc:zhicha-bill-hit': 'tag',
-    'sc:zhicha-bill': 'id',
-    'sc:zhicha-detail': 'eye',
-    'sc:zhixin-query': 'zoom',
-    'sc:zhixin-batch': 'layers',
-    'sc:zhixin-dist': 'chart',
-    'sc:zhixin-eval': 'trend',
-    'sc:zhixin-tune': 'code',
-    'sc:zhixin-bill-query': 'filter',
-    'sc:zhixin-bill-hit': 'grid',
-    'sc:zhixin-bill': 'plug',
-    'sc:zhixin-detail': 'cloud',
-    'sc:zhirong-query': 'search',
-    'sc:zhirong-batch': 'stack',
-    'sc:zhirong-dist': 'pie',
-    'sc:zhirong-eval': 'analytics',
-    'sc:zhirong-tune': 'wrench',
-    'sc:zhirong-sc-default': 'sliders',
-    'sc:zhirong-sc-credit': 'settings',
-    'sc:zhirong-sc-interest': 'work_flow',
-    'sc:zhirong-bill-query': 'bars',
-    'sc:zhirong-bill-hit': 'tag',
-    'sc:zhirong-bill': 'id',
-    'sc:zhirong-detail': 'eye',
-    // 需求19：补全以下漏注册图标（原回退 dashboard）的菜单/详情页，分配合法且与同子系统可见项不冲突的图标
+    // 评分产品（v3 新 IA：工作台/在线评分/客户洞察/数据分析/模型管理/策略配置）
     'sc:overview': 'dashboard',
-    'sc:zhicha-monitor': 'monitor',
-    'sc:zhixin-vintage': 'clock',
-    'sc:zhirong-tier': 'cube',
-    'sc:zhirong-monitor': 'pulse',
-    'sc:api': 'link',
-    'sc:batch': 'database',
-    'sc:bill': 'inbox',
+    'sc:alert-workbench': 'bell',
+    'sc:score-records': 'list',
+    'sc:crowd-groups': 'users',
+    'sc:customer-list': 'id',
+    'sc:customer-detail': 'eye',
+    'sc:score-dist': 'pie',
+    'sc:hit-analysis': 'filter',
+    'sc:model-manage': 'model',
+    'sc:model-monitor': 'monitor',
+    'sc:model-effect': 'analytics',
+    'sc:model-version': 'stack',
+    'sc:score-threshold': 'sliders',
+    'sc:alert-rule': 'alert',
+    'sc:dispose-flow': 'work_flow',
     'cr:mid-alert-detail': 'alert',
     'cr:mid-dispose-detail': 'inbox',
     'cm:mid-data-source-detail': 'database',
@@ -334,6 +311,7 @@ export default function Console() {
     'cr:mid-dispose-workbench': 'work_flow',
     'cr:mid-cust-detail': 'monitor',
     'cr:mid-single-cust': 'id',
+    'cr:mid-single-cust-2': 'id',
     // 催贷管理（6 大模块重新规划）
     'zz:overview': 'chart',
     'zz:cases': 'work_flow',
@@ -601,7 +579,9 @@ export default function Console() {
             ) : key === 'cr:mid-cust-score' ? (
               <CustScoreDetail />
             ) : key === 'cr:mid-single-cust' ? (
-              <CustProfile />
+              <CustProfile custId={new URLSearchParams(loc.search).get('cust') ?? undefined} />
+            ) : key === 'cr:mid-single-cust-2' ? (
+              <CustProfile custId="CUST-100891" title="单客详情2（高风险）" />
             ) : key === 'cm:mid-data-source-detail' ? (
               <MidDataSourceDetail />
             ) : key === 'cm:mid-metric-detail' ? (
@@ -616,9 +596,16 @@ export default function Console() {
               <MidDisposeDetail />
             ) : getDashboardByKey(key) ? (
               <MidDashboardPage pageKey={key} />
-            ) : key.startsWith('sc:') ? (
-              // 评分产品子系统（v2）：评分体系总览/三产品查询(下钻明细)/监控/分层/场景效果/API/批量/账单
+            ) : key === 'sc:overview' ? (
               <ScoreModule pageKey={key} />
+            ) : key === 'sc:alert-workbench' ? (
+              <MidAlertWorkbench />
+            ) : key === 'sc:customer-detail' ? (
+              <CustProfile custId={new URLSearchParams(loc.search).get('cust') ?? undefined} />
+            ) : key === 'sc:dispose-flow' ? (
+              <ScDisposeFlow />
+            ) : key.startsWith('sc:') ? (
+              <ModulePage spec={moduleSpecs[key] ?? emptySpec(subName[sub] ?? '控制台')} />
             ) : (
               <ModulePage spec={moduleSpecs[key] ?? emptySpec(subName[sub] ?? '控制台')} />
             )}

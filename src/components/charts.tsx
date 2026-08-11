@@ -11,6 +11,7 @@ export function LineChart({
   labels,
   series,
   height = 240,
+  width,
   yMax,
   yMin = 0,
   unit = '',
@@ -18,6 +19,7 @@ export function LineChart({
   labels: string[]
   series: Series[]
   height?: number
+  width?: number
   yMax?: number
   yMin?: number
   unit?: string
@@ -49,7 +51,7 @@ export function LineChart({
 
   return (
     <div>
-      <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ height }} onMouseMove={onMove} onMouseLeave={() => setHover(null)}>
+      <svg viewBox={`0 0 ${W} ${H}`} style={{ height, width: width ?? '100%' }} onMouseMove={onMove} onMouseLeave={() => setHover(null)}>
         {Array.from({ length: grid + 1 }).map((_, i) => {
           const gy = padT + (i / grid) * plotH
           const val = max - (i / grid) * (max - min)

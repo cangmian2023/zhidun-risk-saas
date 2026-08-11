@@ -33,37 +33,25 @@ export interface CustAlert {
   status: '待处置' | '处置中' | '已闭环' // 处置状态
 }
 
-export interface CustContact {
-  id: string
-  name: string
-  relation: string // 关系：配偶 / 紧急联系人 / 关联账户
-  phone: string // 脱敏手机号
-  coDebt?: boolean // 是否共债
-}
-
 export interface CustBehaviorItem {
   name: string // 行为子项
   count: number // 次数 / 数值
   danger?: boolean // 风险类（红）
+  category?: '用信' | '还款' | '查询' | '风险' // 行为分组
+  desc?: string // 指标说明
 }
 
 /* ---- 模型评分（智察 / 智信 / 智融 三评分卡 + 额度建议） ---- */
-export interface CustFactor {
-  name: string
-  impact: '正面' | '负面' | '中性'
-  detail: string
-}
 export interface CustScoreCard {
   name: string // 智察(反欺诈) / 智信(信用) / 智融(综合)
   score: number // 评分（模型各自量纲）
   level: string // 等级：优 / 良 / 中 / 差
-  factors: CustFactor[]
 }
 export interface CustScores {
   zhiCha: CustScoreCard
   zhiXin: CustScoreCard
   zhiRong: CustScoreCard
-  limitSuggest: { suggested: number; current: number; note: string }
+  limitSuggest: { suggested: number; current: number }
 }
 
 /* ---- 征信（人行征信主题） ---- */
@@ -98,12 +86,73 @@ export interface CustCreditSummary {
   guaranteeCount: number // 对外担保笔数
   relatedRepay: number // 相关还款责任账户数（共同借款）
 }
+// 信息概要 · 金额维度（未结清账户授信与余额、逾期极值）
+export interface CustCreditSummaryAmount {
+  firstBizYear: number // 首笔业务年份
+  openCreditLimit: number // 未结清账户授信总额（元）
+  usedBalance: number // 未结清账户余额（元）
+  maxMonthlyOverdue: number // 单月最高逾期总额（元）
+  longestOverdueMonths: number // 最长逾期月数
+}
+// 报告头（报告编号 / 查询时间 / 被查询者）
+export interface CustCreditHeader {
+  reportNo: string
+  queryTime: string
+  queriedBy: string // 被查询者姓名
+  idNo: string // 证件号（脱敏）
+}
+// 授信协议信息（循环额度共享协议）
+export interface CustCreditAgreement {
+  id: string
+  org: string // 管理机构
+  limit: number // 授信额度（元）
+  currency: string // 币种
+  shareAccounts: number // 协议下账户数
+  effectiveDate: string // 生效日期
+  expireDate: string // 到期日期
+  status: string // 状态：正常 / 关注 / 终止
+}
+// 相关还款责任（共同借款）明细
+export interface CustRelatedRepay {
+  name: string // 责任人 / 共同借款人
+  relation: string // 关系
+  org: string // 管理机构
+  product: string // 业务品种
+  amount: number // 相关还款责任金额（元）
+  status: string // 状态
+}
+// 公共记录明细（欠税 / 民事判决 / 强制执行 / 行政处罚 / 公积金缴存）
+export interface CustPublicRecord {
+  type: string
+  org: string // 记录机构
+  date: string // 发生日期
+  content: string // 记录内容 / 金额
+  status: string // 状态
+}
+// 本人查询（区别于机构查询）
+export interface CustSelfQuery {
+  date: string
+  type: string // 查询原因（本人查询）
+}
+// 标注及声明信息（本人声明 / 异议标注）
+export interface CustCreditAnnotation {
+  type: string
+  content: string
+  date: string
+}
 export interface CustCredit {
-  recentQueries: CustCreditQuery[] // 近 6 月查询
+  header: CustCreditHeader // 报告头
+  recentQueries: CustCreditQuery[] // 近 6 月机构查询
+  selfQueries: CustSelfQuery[] // 本人查询
   accounts: CustCreditAccount[] // 信贷账户明细
+  agreements: CustCreditAgreement[] // 授信协议信息
   summary: CustCreditSummary // 信息概要（账户数汇总）
+  summaryAmount: CustCreditSummaryAmount // 信息概要（金额维度）
+  relatedRepayList: CustRelatedRepay[] // 相关还款责任明细
+  publicRecords: CustPublicRecord[] // 公共记录明细
   overdue: { count: number; amount: number }
   guarantee: CustGuarantee[] // 对外担保
+  annotations: CustCreditAnnotation[] // 标注及声明信息
 }
 
 /* ---- 设备与欺诈维度 ---- */
@@ -125,6 +174,9 @@ export interface CustExternalCheck {
   result: string
   status: '一致' | '异常' | '待核'
   field?: string // 对应的基本信息字段 key（用于字段后打核验标记；缺省则归入「其他外部核验」列表）
+  verifyOrg?: string // 第三方核验单位（数据源）
+  verifyTime?: string // 核验时间
+  cost?: number // 单次核验花费（元）
 }
 
 /* ---- 担保与经营 ---- */
@@ -133,15 +185,41 @@ export interface CustCollateral {
   type: string
   value: number
   status: string
+  verifyOrg?: string // 第三方核验单位（如不动产登记中心）
+  verifyTime?: string // 核验时间
+  verified?: boolean // 是否通过第三方核验
 }
 export interface CustBizEntity {
   name: string
   role: string
-  status: string
+  status: string // 存续 / 注销 / 吊销
+  // 主体基本信息
+  creditCode?: string // 统一社会信用代码
+  legalRep?: string // 法定代表人 / 负责人
+  regCapital?: number // 注册资本（万元）
+  regDate?: string // 成立日期
+  industry?: string // 所属行业
+  // 风控维度：经营主体的风险信息
+  risk?: '正常' | '关注' | '高风险'
+  riskTags?: string[] // 经营异常 / 行政处罚 / 司法涉诉 / 欠税 等
+  riskItems?: { type: string; date: string; reason: string }[] // 风险明细列表（经营异常 / 行政处罚 / 欠税 等逐条）
+  healthScore?: number // 经营健康度评分（0~100），主体维度
+  litigationCount?: number // 涉诉案件数
+  penaltyCount?: number // 行政处罚数
+  verifyOrg?: string
+  verifyTime?: string
+  verified?: boolean
 }
 export interface CustCollateralBiz {
   collateral: CustCollateral[]
   business: CustBizEntity[]
+  guaranteeAlert?: { level: '红' | '黄'; rule: string; desc: string } // 担保维度预警（抵押物/经营实体风险）
+  bizHealth?: {
+    years: number // 持续经营年限
+    monthlyRevenue: number // 近 3 月月均营收（元）
+    stability: '稳定' | '波动' | '下滑' // 经营稳定性
+    score: number // 经营健康度评分（0~100）
+  }
 }
 
 /* ---- 关系图谱 ---- */
@@ -163,11 +241,14 @@ export interface CustGraphEdge {
   rel: string
   theme: GraphTheme // 所属主题，用于主题切换
   danger?: boolean // 红色高亮（共债 / 共享设备等）
+  since?: string // 关系最近活跃时间（YYYY-MM-DD），用于时间段筛选（默认全部）
 }
 export interface CustRelationGraph {
   nodes: CustGraphNode[]
   edges: CustGraphEdge[]
   themes: GraphTheme[] // 可切换的主题
+  collectedAt: string // 图谱数据采集时间
+  source: string // 数据来源说明
 }
 
 /* ---- 多头共债 ---- */
@@ -222,13 +303,25 @@ export interface CustPostRisk {
   blacklist: CustBlacklistHit[]
 }
 
+/* ---- 司法涉诉（法律诉讼 / 执行信息） ---- */
+export interface CustLitigation {
+  type: string // 裁判文书 / 被执行人 / 失信被执行人 / 开庭公告 / 立案信息
+  caseNo: string // 案号
+  court: string // 审理法院
+  filingDate: string // 立案 / 裁判日期
+  role: string // 原告 / 被告 / 被执行人 / 申请人
+  amount: number // 涉诉金额（元）
+  status: string // 未结 / 执行中 / 已结 / 已履行
+  desc?: string
+}
+
 /* ---- 处置与操作日志 ---- */
 export interface CustLogEntry {
   time: string
-  kind: 'task' | 'op'
+  kind: 'task' | 'op' | 'verify' | 'credit' // 处置工单 / 历史操作 / 自动核验 / 央行征信调取
   title: string
   sub: string
-  status?: string
+  status?: string // 工单：待处置/处置中/已闭环；核验：通过/异常/待核
 }
 
 export interface CustProfile {
@@ -241,12 +334,10 @@ export interface CustProfile {
   // 基本信息
   gender: string
   age: number
-  channel: string // 进件渠道
   region: string // 所在地
   occupation: string // 职业
   employer: string // 工作单位
   income: number // 月收入（元）
-  incomeProof: string // 收入证明方式
   education: string // 学历
   marital: string // 婚姻状况
   phone: string // 脱敏手机号
@@ -257,7 +348,6 @@ export interface CustProfile {
   creditLimit: number // 授信额度（元）
   usedLimit: number // 已用额度（元）
   availLimit: number // 可用额度（元）
-  annualRate: number // 额度年化 %
   // 负债与逾期
   totalDebt: number // 在贷总余额（元）
   monthlyPay: number // 月供合计（元）
@@ -268,8 +358,6 @@ export interface CustProfile {
   behavior: CustBehaviorItem[]
   // 风险预警
   alerts: CustAlert[]
-  // 联系人 / 关系
-  contacts: CustContact[]
   // 模型评分（替代原风险评分）
   scores: CustScores
   // 征信
@@ -288,8 +376,11 @@ export interface CustProfile {
   collections: CustCollection[]
   // 贷后风险
   postRisk: CustPostRisk
+  // 司法涉诉
+  litigation: CustLitigation[]
   // 处置与操作日志
   disposeLog: CustLogEntry[]
+  creditReportLog: CustLogEntry[] // 央行征信调取日志（进件硬查询 + 贷中软查询复拉）
   followed: boolean // 是否已关注
 }
 
@@ -309,12 +400,10 @@ export const SEED_CUST: CustData = {
       avatarText: '张',
       gender: '男',
       age: 34,
-      channel: 'APP 自主进件',
       region: '浙江省杭州市',
       occupation: '软件工程师',
       employer: '杭州云算科技有限公司',
       income: 28000,
-      incomeProof: '社保 + 个税 app 截屏',
       education: '本科',
       marital: '已婚',
       phone: '138****6621',
@@ -331,7 +420,6 @@ export const SEED_CUST: CustData = {
       creditLimit: 200000,
       usedLimit: 86000,
       availLimit: 114000,
-      annualRate: 11.8,
       totalDebt: 86000,
       monthlyPay: 2680,
       overdueDays: 0,
@@ -341,71 +429,64 @@ export const SEED_CUST: CustData = {
         { id: 'LN-90115', product: '现金分期·教育', principal: 50000, balance: 30000, rate: 12.6, term: 24, monthly: 2680, status: '正常' },
       ],
       behavior: [
-        { name: '用信笔数', count: 42 },
-        { name: '提前还款', count: 3 },
-        { name: '正常还款', count: 39 },
-        { name: '逾期还款', count: 0, danger: true },
-        { name: '机构查询', count: 6 },
-        { name: '多头借贷', count: 1, danger: true },
-        { name: '夜间用信', count: 8 },
-        { name: '额度使用率', count: 43 },
+        { name: '用信笔数', count: 42, category: '用信', desc: '累计借款支用次数' },
+        { name: '提前还款', count: 3, category: '还款', desc: '提前结清笔数' },
+        { name: '正常还款', count: 39, category: '还款', desc: '按期还款笔数' },
+        { name: '逾期还款', count: 0, danger: true, category: '还款', desc: '发生逾期的笔数' },
+        { name: '机构查询', count: 6, category: '查询', desc: '近 90 天机构征信查询次数' },
+        { name: '多头借贷', count: 1, danger: true, category: '查询', desc: '同时在贷机构数' },
+        { name: '夜间用信', count: 8, category: '用信', desc: '23:00-05:00 用信笔数' },
+        { name: '额度使用率', count: 43, category: '用信', desc: '已用 / 授信（%）' },
       ],
       alerts: [
         { id: 'AL-2026-0312', rule: '额度使用率超 40% 持续 60 天', level: '蓝', date: '2026-07-28', desc: '客户额度使用率长期偏高，关注再融资倾向', status: '已闭环' },
         { id: 'AL-2026-0288', rule: '近 90 天机构查询 ≥ 5', level: '黄', date: '2026-06-15', desc: '查询次数偏多，存在多头申请迹象', status: '处置中' },
-      ],
-      contacts: [
-        { id: 'CT-01', name: '李芸', relation: '配偶', phone: '139****2048', coDebt: true },
-        { id: 'CT-02', name: '张建国', relation: '紧急联系人', phone: '137****7711' },
-        { id: 'CT-03', name: '关联账户·微信', relation: '关联账户', phone: 'wxid_****m9k2' },
       ],
       scores: {
         zhiCha: {
           name: '智察（反欺诈）',
           score: 892,
           level: '优',
-          factors: [
-            { name: '设备环境', impact: '正面', detail: '常用设备一致，无模拟器' },
-            { name: '申请行为', impact: '正面', detail: '无异常高频申请' },
-            { name: '黑灰名单', impact: '正面', detail: '无命中' },
-          ],
         },
         zhiXin: {
           name: '智信（信用）',
           score: 768,
           level: '良',
-          factors: [
-            { name: '历史还款', impact: '正面', detail: '历史 39 次正常还款' },
-            { name: '负债比', impact: '中性', detail: 'DTI 处于中等水平' },
-            { name: '查询密度', impact: '负面', detail: '近 90 天查询 6 次偏多' },
-          ],
         },
         zhiRong: {
           name: '智融（综合）',
           score: 815,
           level: '良',
-          factors: [
-            { name: '收入稳定性', impact: '正面', detail: '在职稳定，社保连续' },
-            { name: '额度使用率', impact: '负面', detail: '使用率 43% 长期偏高' },
-            { name: '综合稳定性', impact: '正面', detail: '无逾期记录' },
-          ],
         },
-        limitSuggest: { suggested: 200000, current: 200000, note: '维持当前授信，关注额度使用率趋势' },
+        limitSuggest: { suggested: 200000, current: 200000 },
       },
       credit: {
+        header: { reportNo: 'PBOC-2026-0812-0007', queryTime: '2026-08-12 09:30:15', queriedBy: '张伟', idNo: '3301**********1234' },
         recentQueries: [
           { org: '本行', date: '2026-07-12', type: '贷后管理' },
           { org: '招商银行', date: '2026-06-15', type: '信用卡审批' },
           { org: '蚂蚁消金', date: '2026-05-20', type: '贷款审批' },
+        ],
+        selfQueries: [
+          { date: '2026-07-01', type: '本人查询（自助查询机）' },
         ],
         accounts: [
           { type: '住房贷款', bank: '工商银行', openDate: '2019-03-12', dueDate: '2049-03-11', creditLimit: 1800000, balance: 1200000, currency: '人民币', guarantee: '抵押', overdueMonths: 0, overdueAmt: 0, status: '正常' },
           { type: '信用卡', bank: '招商银行', openDate: '2021-06-01', dueDate: '--', creditLimit: 50000, balance: 18000, currency: '人民币', guarantee: '信用', overdueMonths: 0, overdueAmt: 0, status: '正常' },
           { type: '消费贷', bank: '本行', openDate: '2024-11-08', dueDate: '2027-11-07', creditLimit: 200000, balance: 86000, currency: '人民币', guarantee: '信用', overdueMonths: 0, overdueAmt: 0, status: '正常' },
         ],
+        agreements: [
+          { id: 'AG-ICBC-001', org: '工商银行', limit: 1800000, currency: '人民币', shareAccounts: 1, effectiveDate: '2019-03-12', expireDate: '2049-03-11', status: '正常' },
+          { id: 'AG-CMB-002', org: '招商银行', limit: 50000, currency: '人民币', shareAccounts: 1, effectiveDate: '2021-06-01', expireDate: '长期', status: '正常' },
+          { id: 'AG-BANK-003', org: '本行', limit: 200000, currency: '人民币', shareAccounts: 1, effectiveDate: '2024-11-08', expireDate: '2027-11-07', status: '正常' },
+        ],
         summary: { creditCards: 1, loans: 2, overdueAccounts: 0, overdue90Plus: 0, guaranteeCount: 0, relatedRepay: 0 },
+        summaryAmount: { firstBizYear: 2019, openCreditLimit: 2030000, usedBalance: 1298000, maxMonthlyOverdue: 0, longestOverdueMonths: 0 },
+        relatedRepayList: [],
+        publicRecords: [],
         overdue: { count: 0, amount: 0 },
         guarantee: [],
+        annotations: [],
       },
       device: {
         device: 'iPhone 15 Pro',
@@ -418,15 +499,21 @@ export const SEED_CUST: CustData = {
         lastLogin: '2026-08-09 21:34',
       },
       externalChecks: [
-        { source: '公安', item: '证件核验', result: '证件号与姓名一致', status: '一致', field: 'maskedId' },
-        { source: '运营商', item: '手机号实名', result: '实名认证一致', status: '一致', field: 'phone' },
-        { source: '邮箱服务', item: '邮箱有效性', result: '可送达、无退信', status: '一致', field: 'email' },
-        { source: '工商', item: '名下企业', result: '无关联企业', status: '一致' },
-        { source: '司法', item: '涉诉查询', result: '无未结案件', status: '一致' },
-        { source: '税务', item: '个税缴纳', result: '连续缴纳 36 个月', status: '一致', field: 'income' },
-        { source: '社保公积金', item: '社保状态', result: '在缴、基数正常', status: '一致', field: 'income' },
+        { source: '公安', item: '证件核验', result: '证件号与姓名一致', status: '一致', field: 'maskedId', verifyOrg: '公安部公民身份信息库', verifyTime: '2026-08-09 10:02', cost: 0 },
+        { source: '运营商', item: '手机号实名', result: '实名认证一致', status: '一致', field: 'phone', verifyOrg: '中国移动实名库', verifyTime: '2026-08-09 10:03', cost: 0.2 },
+        { source: '邮箱服务', item: '邮箱有效性', result: '可送达、无退信', status: '一致', field: 'email', verifyOrg: '邮箱服务商', verifyTime: '2026-08-09 10:03', cost: 0 },
+        { source: '工商', item: '名下企业', result: '无关联企业', status: '一致', verifyOrg: '国家企业信用信息公示系统', verifyTime: '2026-08-09 10:05', cost: 0.5 },
+        { source: '司法', item: '涉诉查询', result: '无未结案件', status: '一致', verifyOrg: '中国执行信息公开网', verifyTime: '2026-08-09 10:06', cost: 0.5 },
+        { source: '税务', item: '个税缴纳', result: '连续缴纳 36 个月', status: '一致', field: 'income', verifyOrg: '自然人电子税务局', verifyTime: '2026-08-09 10:07', cost: 0.3 },
+        { source: '社保公积金', item: '社保状态', result: '在缴、基数正常', status: '一致', field: 'income', verifyOrg: '人社 / 公积金中心', verifyTime: '2026-08-09 10:08', cost: 0.3 },
       ],
-      collateralBiz: { collateral: [], business: [] },
+      collateralBiz: {
+        collateral: [],
+        business: [
+          { name: '明远网络工作室', role: '经营者（个体工商户）', status: '存续', creditCode: '92330106MA2G8XK21', legalRep: '张明远', regCapital: 10, regDate: '2021-03-15', industry: '软件和信息技术服务业', risk: '正常', riskTags: [], healthScore: 88, verifyOrg: '国家企业信用信息公示系统', verifyTime: '2026-08-09 10:05', verified: true },
+        ],
+        bizHealth: { years: 5, monthlyRevenue: 46000, stability: '稳定', score: 88 },
+      },
       relationGraph: {
         nodes: [
           { id: 'self', name: '张明远', type: 'self', rel: '本人' },
@@ -465,49 +552,51 @@ export const SEED_CUST: CustData = {
         ],
         edges: [
           // 家族
-          { source: 'self', target: 'spouse', rel: '配偶', theme: '家族' },
-          { source: 'self', target: 'father', rel: '父子', theme: '家族' },
-          { source: 'self', target: 'mother', rel: '母子', theme: '家族' },
-          { source: 'self', target: 'brother', rel: '兄弟', theme: '家族' },
-          { source: 'spouse', target: 'father_in_law', rel: '翁婿', theme: '家族' },
+          { source: 'self', target: 'spouse', rel: '配偶', theme: '家族', since: '2026-08-08' },
+          { source: 'self', target: 'father', rel: '父子', theme: '家族', since: '2026-08-01' },
+          { source: 'self', target: 'mother', rel: '母子', theme: '家族', since: '2026-07-20' },
+          { source: 'self', target: 'brother', rel: '兄弟', theme: '家族', since: '2026-07-25' },
+          { source: 'spouse', target: 'father_in_law', rel: '翁婿', theme: '家族', since: '2026-06-15' },
           // 社交
-          { source: 'self', target: 'colleague', rel: '同事', theme: '社交' },
-          { source: 'self', target: 'friend1', rel: '朋友', theme: '社交' },
-          { source: 'self', target: 'friend2', rel: '同学', theme: '社交' },
-          { source: 'self', target: 'ec', rel: '紧急联系人', theme: '社交' },
-          { source: 'friend1', target: 'co2', rel: '社交交集', theme: '社交' },
+          { source: 'self', target: 'colleague', rel: '同事', theme: '社交', since: '2026-08-07' },
+          { source: 'self', target: 'friend1', rel: '朋友', theme: '社交', since: '2026-08-05' },
+          { source: 'self', target: 'friend2', rel: '同学', theme: '社交', since: '2026-03-01' },
+          { source: 'self', target: 'ec', rel: '紧急联系人', theme: '社交', since: '2026-07-10' },
+          { source: 'friend1', target: 'co2', rel: '社交交集', theme: '社交', since: '2026-07-03' },
           // 资金
-          { source: 'self', target: 'acc_bank', rel: '本行账户', theme: '资金' },
-          { source: 'self', target: 'acc_wx', rel: '微信', theme: '资金' },
-          { source: 'self', target: 'acc_zfb', rel: '支付宝', theme: '资金' },
-          { source: 'self', target: 'acc_other', rel: '他行账户', theme: '资金' },
-          { source: 'emp', target: 'self', rel: '工资入账', theme: '资金' },
-          { source: 'self', target: 'biz', rel: '经营收款', theme: '资金' },
+          { source: 'self', target: 'acc_bank', rel: '本行账户', theme: '资金', since: '2026-08-09' },
+          { source: 'self', target: 'acc_wx', rel: '微信', theme: '资金', since: '2026-08-09' },
+          { source: 'self', target: 'acc_zfb', rel: '支付宝', theme: '资金', since: '2026-08-09' },
+          { source: 'self', target: 'acc_other', rel: '他行账户', theme: '资金', since: '2026-08-02' },
+          { source: 'emp', target: 'self', rel: '工资入账', theme: '资金', since: '2026-08-05' },
+          { source: 'self', target: 'biz', rel: '经营收款', theme: '资金', since: '2026-08-06' },
           // 经营
-          { source: 'self', target: 'emp', rel: '任职', theme: '经营' },
-          { source: 'self', target: 'biz', rel: '经营', theme: '经营' },
-          { source: 'biz', target: 'supplier', rel: '供应链', theme: '经营' },
-          { source: 'emp', target: 'biz', rel: '关联', theme: '经营' },
+          { source: 'self', target: 'emp', rel: '任职', theme: '经营', since: '2026-08-05' },
+          { source: 'self', target: 'biz', rel: '经营', theme: '经营', since: '2026-08-06' },
+          { source: 'biz', target: 'supplier', rel: '供应链', theme: '经营', since: '2026-07-28' },
+          { source: 'emp', target: 'biz', rel: '关联', theme: '经营', since: '2026-08-06' },
           // 共债
-          { source: 'self', target: 'co1', rel: '共债', theme: '共债', danger: true },
-          { source: 'self', target: 'co2', rel: '共债', theme: '共债', danger: true },
-          { source: 'self', target: 'co3', rel: '共债/同设备', theme: '共债', danger: true },
-          { source: 'self', target: 'org_a', rel: '共债机构', theme: '共债', danger: true },
-          { source: 'self', target: 'org_b', rel: '共债机构', theme: '共债', danger: true },
-          { source: 'self', target: 'org_c', rel: '共债机构', theme: '共债', danger: true },
-          { source: 'co1', target: 'co2', rel: '共债链条', theme: '共债', danger: true },
-          { source: 'co1', target: 'co3', rel: '同设备', theme: '共债', danger: true },
-          { source: 'org_a', target: 'org_b', rel: '多头', theme: '共债', danger: true },
+          { source: 'self', target: 'co1', rel: '共债', theme: '共债', danger: true, since: '2026-06-20' },
+          { source: 'self', target: 'co2', rel: '共债', theme: '共债', danger: true, since: '2026-07-03' },
+          { source: 'self', target: 'co3', rel: '共债/同设备', theme: '共债', danger: true, since: '2026-07-15' },
+          { source: 'self', target: 'org_a', rel: '共债机构', theme: '共债', danger: true, since: '2026-05-12' },
+          { source: 'self', target: 'org_b', rel: '共债机构', theme: '共债', danger: true, since: '2026-05-12' },
+          { source: 'self', target: 'org_c', rel: '共债机构', theme: '共债', danger: true, since: '2026-06-08' },
+          { source: 'co1', target: 'co2', rel: '共债链条', theme: '共债', danger: true, since: '2026-07-03' },
+          { source: 'co1', target: 'co3', rel: '同设备', theme: '共债', danger: true, since: '2026-07-15' },
+          { source: 'org_a', target: 'org_b', rel: '多头', theme: '共债', danger: true, since: '2026-05-12' },
           // 担保
-          { source: 'self', target: 'spouse', rel: '担保（配偶）', theme: '担保' },
-          { source: 'self', target: 'guar_biz', rel: '担保（经营实体）', theme: '担保' },
-          { source: 'guar_biz', target: 'org_a', rel: '担保代偿', theme: '担保' },
+          { source: 'self', target: 'spouse', rel: '担保（配偶）', theme: '担保', since: '2026-08-08' },
+          { source: 'self', target: 'guar_biz', rel: '担保（经营实体）', theme: '担保', since: '2026-08-06' },
+          { source: 'guar_biz', target: 'org_a', rel: '担保代偿', theme: '担保', since: '2026-05-12' },
           // 设备
-          { source: 'self', target: 'dev1', rel: '常用设备', theme: '设备' },
-          { source: 'self', target: 'dev2', rel: '共享设备', theme: '设备', danger: true },
-          { source: 'co3', target: 'dev2', rel: '同设备', theme: '设备', danger: true },
+          { source: 'self', target: 'dev1', rel: '常用设备', theme: '设备', since: '2026-08-09' },
+          { source: 'self', target: 'dev2', rel: '共享设备', theme: '设备', danger: true, since: '2026-07-28' },
+          { source: 'co3', target: 'dev2', rel: '同设备', theme: '设备', danger: true, since: '2026-07-28' },
         ],
         themes: ['综合', '家族', '社交', '资金', '经营', '共债', '担保', '设备'],
+        collectedAt: '2026-08-10 02:15（T+1 批跑）',
+        source: '关系挖掘引擎 · 融合申请 / 设备 / 征信 / 共债',
       },
       coDebt: {
         applications30d: 1,
@@ -526,6 +615,11 @@ export const SEED_CUST: CustData = {
         { time: '2026-07-28 10:12', kind: 'op', title: '额度使用率预警闭环', sub: '系统自动复核后关闭' },
         { time: '2026-06-15 14:30', kind: 'task', title: '查询偏多核查', sub: '已核查为正常信贷需求', status: '已闭环' },
       ],
+      creditReportLog: [
+        { time: '2026-08-09 10:09', kind: 'credit', title: '央行征信调取（进件授权硬查询）', sub: '客户授权后拉取 · 报告编号 PBOC-2026-0809-100237 · 机构数 3' },
+        { time: '2026-08-10 02:15', kind: 'credit', title: '央行征信复拉（贷中夜间软查询）', sub: '增量批跑刷新监控特征 · 无新增硬查询' },
+      ],
+      litigation: [],
       followed: false,
     },
     {
@@ -537,12 +631,10 @@ export const SEED_CUST: CustData = {
       avatarText: '陈',
       gender: '女',
       age: 29,
-      channel: '合作渠道·H5',
       region: '广东省深圳市',
       occupation: '自由职业',
       employer: '个体经营（电商）',
       income: 15000,
-      incomeProof: '流水 + 经营证明',
       education: '大专',
       marital: '未婚',
       phone: '159****3380',
@@ -559,7 +651,6 @@ export const SEED_CUST: CustData = {
       creditLimit: 120000,
       usedLimit: 118000,
       availLimit: 2000,
-      annualRate: 15.4,
       totalDebt: 118000,
       monthlyPay: 6120,
       overdueDays: 23,
@@ -569,60 +660,42 @@ export const SEED_CUST: CustData = {
         { id: 'LN-79002', product: '随借随还·消费贷', principal: 60000, balance: 47000, rate: 16.8, term: 12, monthly: 2000, status: '逾期', dueDays: 11 },
       ],
       behavior: [
-        { name: '用信笔数', count: 71 },
-        { name: '提前还款', count: 0 },
-        { name: '正常还款', count: 14 },
-        { name: '逾期还款', count: 9, danger: true },
-        { name: '机构查询', count: 19 },
-        { name: '多头借贷', count: 6, danger: true },
-        { name: '夜间用信', count: 33, danger: true },
-        { name: '额度使用率', count: 98, danger: true },
+        { name: '用信笔数', count: 71, category: '用信', desc: '累计借款支用次数' },
+        { name: '提前还款', count: 0, category: '还款', desc: '提前结清笔数' },
+        { name: '正常还款', count: 14, category: '还款', desc: '按期还款笔数' },
+        { name: '逾期还款', count: 9, danger: true, category: '还款', desc: '发生逾期的笔数' },
+        { name: '机构查询', count: 19, category: '查询', desc: '近 90 天机构征信查询次数' },
+        { name: '多头借贷', count: 6, danger: true, category: '查询', desc: '同时在贷机构数' },
+        { name: '夜间用信', count: 33, danger: true, category: '用信', desc: '23:00-05:00 用信笔数' },
+        { name: '额度使用率', count: 98, danger: true, category: '用信', desc: '已用 / 授信（%）' },
       ],
       alerts: [
         { id: 'AL-2026-0401', rule: '连续逾期 ≥ 20 天', level: '红', date: '2026-08-02', desc: '主借产品逾期超 20 天，触发红灯预警', status: '待处置' },
         { id: 'AL-2026-0388', rule: '多头借贷 ≥ 5 家机构', level: '红', date: '2026-07-22', desc: '跨机构借贷集中，共债风险高', status: '处置中' },
+        { id: 'AL-2026-0410', rule: '设备环境风险 ≥ 80', level: '红', date: '2026-08-09', desc: '模拟器 + 同设备多账号，疑似团伙欺诈', status: '待处置' },
+        { id: 'AL-2026-0399', rule: '关联账户资金回流', level: '黄', date: '2026-08-03', desc: '贷后资金流向共债关联人，疑似以贷养贷', status: '处置中' },
         { id: 'AL-2026-0355', rule: '额度使用率 ≥ 95%', level: '黄', date: '2026-07-05', desc: '额度近乎用满，再融资空间极低', status: '已闭环' },
-      ],
-      contacts: [
-        { id: 'CT-01', name: '王浩', relation: '紧急联系人', phone: '186****9920' },
-        { id: 'CT-02', name: '关联账户·支付宝', relation: '关联账户', phone: '2088****3321' },
-        { id: 'CT-03', name: '周敏', relation: '共债关联', phone: '150****6644', coDebt: true },
-        { id: 'CT-04', name: '刘洋', relation: '共债关联', phone: '133****1187', coDebt: true },
       ],
       scores: {
         zhiCha: {
           name: '智察（反欺诈）',
           score: 412,
           level: '差',
-          factors: [
-            { name: '设备环境', impact: '负面', detail: '检测到模拟器运行' },
-            { name: '同设备多账号', impact: '负面', detail: '同设备关联 3 个借贷账号' },
-            { name: '黑灰名单', impact: '负面', detail: '命中灰名单' },
-          ],
         },
         zhiXin: {
           name: '智信（信用）',
           score: 388,
           level: '差',
-          factors: [
-            { name: '历史还款', impact: '负面', detail: '近 6 月逾期 9 次' },
-            { name: '负债比', impact: '负面', detail: 'DTI 超 100%' },
-            { name: '查询密度', impact: '负面', detail: '近 90 天查询 19 次' },
-          ],
         },
         zhiRong: {
           name: '智融（综合）',
           score: 351,
           level: '差',
-          factors: [
-            { name: '收入稳定性', impact: '负面', detail: '自由职业、流水波动大' },
-            { name: '额度使用率', impact: '负面', detail: '使用率 98%' },
-            { name: '共债集中', impact: '负面', detail: '跨 6 家机构共债' },
-          ],
         },
-        limitSuggest: { suggested: 0, current: 120000, note: '建议冻结新增授信，启动贷中处置' },
+        limitSuggest: { suggested: 0, current: 120000 },
       },
       credit: {
+        header: { reportNo: 'PBOC-2026-0812-0023', queryTime: '2026-08-12 14:05:40', queriedBy: '李强', idNo: '4401**********5678' },
         recentQueries: [
           { org: '本行', date: '2026-07-22', type: '贷后管理' },
           { org: '马上消金', date: '2026-07-18', type: '贷款审批' },
@@ -630,15 +703,33 @@ export const SEED_CUST: CustData = {
           { org: '京东金条', date: '2026-06-29', type: '贷款审批' },
           { org: '微粒贷', date: '2026-06-21', type: '贷款审批' },
         ],
+        selfQueries: [
+          { date: '2026-06-10', type: '本人查询（商业银行网上银行）' },
+        ],
         accounts: [
           { type: '消费贷', bank: '本行', openDate: '2025-02-20', dueDate: '2027-02-19', creditLimit: 200000, balance: 118000, currency: '人民币', guarantee: '信用', overdueMonths: 2, overdueAmt: 3900, status: '逾期' },
           { type: '消费贷', bank: '马上消金', openDate: '2025-05-11', dueDate: '2026-05-10', creditLimit: 60000, balance: 42000, currency: '人民币', guarantee: '信用', overdueMonths: 1, overdueAmt: 2220, status: '逾期' },
           { type: '现金贷', bank: '360 借条', openDate: '2025-09-03', dueDate: '2026-09-02', creditLimit: 30000, balance: 28000, currency: '人民币', guarantee: '信用', overdueMonths: 0, overdueAmt: 0, status: '正常' },
           { type: '信用卡', bank: '广发银行', openDate: '2023-08-15', dueDate: '--', creditLimit: 40000, balance: 35000, currency: '人民币', guarantee: '信用', overdueMonths: 0, overdueAmt: 0, status: '关注' },
         ],
-        summary: { creditCards: 1, loans: 3, overdueAccounts: 2, overdue90Plus: 0, guaranteeCount: 1, relatedRepay: 0 },
+        agreements: [
+          { id: 'AG-BANK-101', org: '本行', limit: 200000, currency: '人民币', shareAccounts: 1, effectiveDate: '2025-02-20', expireDate: '2027-02-19', status: '正常' },
+          { id: 'AG-MASHANG-102', org: '马上消金', limit: 60000, currency: '人民币', shareAccounts: 1, effectiveDate: '2025-05-11', expireDate: '2026-05-10', status: '正常' },
+          { id: 'AG-360-103', org: '360 借条', limit: 30000, currency: '人民币', shareAccounts: 1, effectiveDate: '2025-09-03', expireDate: '2026-09-02', status: '正常' },
+        ],
+        summary: { creditCards: 1, loans: 3, overdueAccounts: 2, overdue90Plus: 0, guaranteeCount: 1, relatedRepay: 1 },
+        summaryAmount: { firstBizYear: 2023, openCreditLimit: 330000, usedBalance: 223000, maxMonthlyOverdue: 3900, longestOverdueMonths: 2 },
+        relatedRepayList: [
+          { name: '王芳', relation: '配偶', org: '本行', product: '消费贷', amount: 118000, status: '正常' },
+        ],
+        publicRecords: [
+          { type: '强制执行', org: '杭州市西湖区人民法院', date: '2026-05-12', content: '金融借款合同纠纷，执行标的 ¥38,000', status: '未履行' },
+        ],
         overdue: { count: 2, amount: 6120 },
         guarantee: [{ name: '为周敏担保', amount: 50000, status: '关注' }],
+        annotations: [
+          { type: '异议标注', content: '客户对「马上消金」一笔逾期记录提出异议，经办机构核查中', date: '2026-07-15' },
+        ],
       },
       device: {
         device: '未知 Android',
@@ -655,21 +746,23 @@ export const SEED_CUST: CustData = {
         lastLogin: '2026-08-09 02:11',
       },
       externalChecks: [
-        { source: '公安', item: '证件核验', result: '证件号与姓名一致', status: '一致', field: 'maskedId' },
-        { source: '运营商', item: '手机号实名', result: '实名认证一致', status: '一致', field: 'phone' },
-        { source: '邮箱服务', item: '邮箱有效性', result: '退信、疑似失效', status: '异常', field: 'email' },
-        { source: '工商', item: '名下企业', result: '个体户·电商（存续）', status: '一致' },
-        { source: '司法', item: '涉诉查询', result: '民间借贷纠纷 1 起', status: '异常' },
-        { source: '税务', item: '个税缴纳', result: '近 6 月无申报', status: '异常', field: 'income' },
-        { source: '社保公积金', item: '社保状态', result: '断缴超 12 个月', status: '异常', field: 'income' },
+        { source: '公安', item: '证件核验', result: '证件号与姓名一致', status: '一致', field: 'maskedId', verifyOrg: '公安部公民身份信息库', verifyTime: '2026-08-09 09:58', cost: 0 },
+        { source: '运营商', item: '手机号实名', result: '实名认证一致', status: '一致', field: 'phone', verifyOrg: '中国移动实名库', verifyTime: '2026-08-09 09:59', cost: 0.2 },
+        { source: '邮箱服务', item: '邮箱有效性', result: '退信、疑似失效', status: '异常', field: 'email', verifyOrg: '邮箱服务商', verifyTime: '2026-08-09 09:59', cost: 0 },
+        { source: '工商', item: '名下企业', result: '个体户·电商（存续）', status: '一致', verifyOrg: '国家企业信用信息公示系统', verifyTime: '2026-08-09 10:01', cost: 0.5 },
+        { source: '司法', item: '涉诉查询', result: '民间借贷纠纷 1 起', status: '异常', verifyOrg: '中国执行信息公开网', verifyTime: '2026-08-09 10:02', cost: 0.5 },
+        { source: '税务', item: '个税缴纳', result: '近 6 月无申报', status: '异常', field: 'income', verifyOrg: '自然人电子税务局', verifyTime: '2026-08-09 10:03', cost: 0.3 },
+        { source: '社保公积金', item: '社保状态', result: '断缴超 12 个月', status: '异常', field: 'income', verifyOrg: '人社 / 公积金中心', verifyTime: '2026-08-09 10:04', cost: 0.3 },
       ],
       collateralBiz: {
-        collateral: [{ name: '电商店铺经营权', type: '经营权质押', value: 60000, status: '评估中' }],
-        business: [{ name: '深圳市某电商商行', role: '经营者', status: '存续' }],
+        collateral: [{ name: '电商店铺经营权', type: '经营权质押', value: 60000, status: '评估中', verifyOrg: '经营权登记平台', verifyTime: '2026-08-09 11:20', verified: false }],
+        business: [{ name: '深圳市某电商商行', role: '经营者（个体工商户）', status: '存续', creditCode: '92440300MA5F3XK88', legalRep: '陈晓楠', regCapital: 20, regDate: '2024-07-22', industry: '零售业', risk: '关注', riskTags: ['经营异常 1 次', '司法涉诉 1 起'], riskItems: [{ type: '经营异常', date: '2026-03-10', reason: '通过登记的住所或者经营场所无法联系，被列入经营异常名录' }, { type: '司法涉诉', date: '2026-05-18', reason: '民间借贷纠纷（被告），案号 (2026)粤0305民初1234，深圳市南山区人民法院' }], litigationCount: 1, penaltyCount: 0, healthScore: 45, verifyOrg: '国家企业信用信息公示系统', verifyTime: '2026-08-09 10:01', verified: true }],
+        guaranteeAlert: { level: '黄', rule: '抵押物评估未完成', desc: '电商店铺经营权质押评估中，担保能力存疑，建议补充第二顺位担保' },
+        bizHealth: { years: 2, monthlyRevenue: 22000, stability: '波动', score: 52 },
       },
       relationGraph: {
         nodes: [
-          { id: 'self', name: '陈晓楠', type: 'self', rel: '本人', risk: '高危', openAlerts: 3 },
+          { id: 'self', name: '陈晓楠', type: 'self', rel: '本人', risk: '高危', openAlerts: 5 },
           { id: 'zhou', name: '周敏', type: 'person', rel: '共债关联', risk: '高危', openAlerts: 2 },
           { id: 'liu', name: '刘洋', type: 'person', rel: '共债关联', risk: '高危', openAlerts: 1 },
           { id: 'lin', name: '林晓', type: 'person', rel: '同设备账号', risk: '高危', openAlerts: 1 },
@@ -684,23 +777,25 @@ export const SEED_CUST: CustData = {
           { id: 'dev2', name: '共享设备·OPPO', type: 'device', rel: '共享设备', risk: '高危' },
         ],
         edges: [
-          { source: 'self', target: 'zhou', rel: '共债', theme: '共债', danger: true },
-          { source: 'self', target: 'liu', rel: '共债', theme: '共债', danger: true },
-          { source: 'self', target: 'lin', rel: '同设备', theme: '共债', danger: true },
-          { source: 'self', target: 'org_a', rel: '共债机构', theme: '共债', danger: true },
-          { source: 'self', target: 'org_b', rel: '共债机构', theme: '共债', danger: true },
-          { source: 'self', target: 'org_c', rel: '共债机构', theme: '共债', danger: true },
-          { source: 'zhou', target: 'liu', rel: '共债链条', theme: '共债', danger: true },
-          { source: 'zhou', target: 'lin', rel: '同设备', theme: '共债', danger: true },
-          { source: 'self', target: 'shop', rel: '经营', theme: '经营' },
-          { source: 'self', target: 'wang', rel: '亲属', theme: '家族' },
-          { source: 'self', target: 'acc_wx', rel: '微信', theme: '资金' },
-          { source: 'self', target: 'acc_zfb', rel: '支付宝', theme: '资金' },
-          { source: 'self', target: 'dev1', rel: '常用设备', theme: '设备' },
-          { source: 'self', target: 'dev2', rel: '共享设备', theme: '设备', danger: true },
-          { source: 'lin', target: 'dev2', rel: '同设备', theme: '设备', danger: true },
+          { source: 'self', target: 'zhou', rel: '共债', theme: '共债', danger: true, since: '2026-07-20' },
+          { source: 'self', target: 'liu', rel: '共债', theme: '共债', danger: true, since: '2026-07-25' },
+          { source: 'self', target: 'lin', rel: '同设备', theme: '共债', danger: true, since: '2026-07-22' },
+          { source: 'self', target: 'org_a', rel: '共债机构', theme: '共债', danger: true, since: '2026-06-30' },
+          { source: 'self', target: 'org_b', rel: '共债机构', theme: '共债', danger: true, since: '2026-06-30' },
+          { source: 'self', target: 'org_c', rel: '共债机构', theme: '共债', danger: true, since: '2026-07-10' },
+          { source: 'zhou', target: 'liu', rel: '共债链条', theme: '共债', danger: true, since: '2026-07-25' },
+          { source: 'zhou', target: 'lin', rel: '同设备', theme: '共债', danger: true, since: '2026-07-22' },
+          { source: 'self', target: 'shop', rel: '经营', theme: '经营', since: '2026-07-15' },
+          { source: 'self', target: 'wang', rel: '亲属', theme: '家族', since: '2026-07-05' },
+          { source: 'self', target: 'acc_wx', rel: '微信', theme: '资金', since: '2026-08-08' },
+          { source: 'self', target: 'acc_zfb', rel: '支付宝', theme: '资金', since: '2026-08-08' },
+          { source: 'self', target: 'dev1', rel: '常用设备', theme: '设备', since: '2026-08-09' },
+          { source: 'self', target: 'dev2', rel: '共享设备', theme: '设备', danger: true, since: '2026-07-28' },
+          { source: 'lin', target: 'dev2', rel: '同设备', theme: '设备', danger: true, since: '2026-07-28' },
         ],
         themes: ['综合', '家族', '社交', '资金', '经营', '共债', '担保', '设备'],
+        collectedAt: '2026-08-10 02:15（T+1 批跑）',
+        source: '关系挖掘引擎 · 融合申请 / 设备 / 征信 / 共债',
       },
       coDebt: {
         applications30d: 6,
@@ -763,6 +858,13 @@ export const SEED_CUST: CustData = {
         { time: '2026-08-02 09:00', kind: 'task', title: '连续逾期红灯处置', sub: '派发处置工单 D-2026-0401', status: '待处置' },
         { time: '2026-07-22 16:40', kind: 'task', title: '多头共债核查', sub: '派发核查工单 D-2026-0388', status: '处置中' },
         { time: '2026-07-05 11:20', kind: 'op', title: '额度使用率预警闭环', sub: '系统自动复核后关闭' },
+      ],
+      creditReportLog: [
+        { time: '2026-08-09 10:05', kind: 'credit', title: '央行征信调取（进件授权硬查询）', sub: '客户授权后拉取 · 报告编号 PBOC-2026-0809-100891 · 机构数 7', status: '异常' },
+        { time: '2026-08-03 09:30', kind: 'credit', title: '央行征信复拉（逾期触发软查询）', sub: '逾期事件触发复拉 · 近1月查询+4 次', status: '异常' },
+      ],
+      litigation: [
+        { type: '裁判文书', caseNo: '(2026)粤0305民初1234号', court: '深圳市南山区人民法院', filingDate: '2026-06-18', role: '被告', amount: 85000, status: '未结', desc: '民间借贷纠纷：原告主张偿还借款本金及利息，尚在审理中' },
       ],
       followed: false,
     },
