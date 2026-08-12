@@ -3,20 +3,18 @@
  *
  * 只读画板（非编辑态）：把模型真实的【决策图】摆出来——
  *   - 多数据源并行、多个子分模型并行、多套规则集、规则碰撞冲突裁决、阈值分支、输出
- *   - 带缩放 / 平移工具条 + 图例，像真编辑器，但所有节点都是真实配置实体（不发明、不编辑）
- *   - 节点里的因子权重 / 规则命中次数 / 阈值动作 均来自本系统真实配置（与命中分析、评分阈值页同源）
- *   - 「规则碰撞 · 冲突裁决」节点可点击进入编辑抽屉：在模型配置阶段定义冲突如何生成预警，随 scoreData.json 持久化
- *   - 下方「决策映射表」把分数段 → 等级 → 动作 → 执行引擎 一一对应
+ *   - 画板内顶部贴图工具条：缩放 / 平移 / 全屏 / 主线·支线高亮 / 适应 / 1:1 / 复位
+ *   - 点击任意节点在【画板内右侧】弹出抽屉（不置灰、不遮挡画板操作，全屏可见）
+ *   - 下方三张表：①分数段→处置（阈值决策映射）②审批结论与预警裁决 ③节点明细（说明/输入/输出）
  *
  * 纯前端、零依赖。
  * ========================================================================= */
-import { useState } from 'react'
+import { useState, useRef, useEffect, useMemo } from 'react'
 import type { ScoreProd, ModelMeta, ThresholdRow, CollisionRule, ScoreCardFactor } from './scoreData'
 import { SCORE_PROD_LABEL, COLLISION_SEED, ZHIXIN_SCORECARD } from './scoreData'
-import { MODEL_DECISION_GRAPH, GNODE_META, NODE_W, NODE_H, type GNode } from './modelGraphData'
+import { MODEL_DECISION_GRAPH, GNODE_META, NODE_W, NODE_H, type GNode, type GGraph } from './modelGraphData'
 
-/* 模型节点内渲染的「评分卡计分表」：直接读 model.bins（与 computeZhixin 同源），
- * 让决策图里画出来的算法 = 推演页里可验算的算法（基础分 600 + 各因子分箱→加分）。 */
+/* 模型节点内渲染的「评分卡计分表」：直接读 model.bins（与 computeZhixin 同源）。 */
 function ScoreCardView({ bins }: { bins: ScoreCardFactor[] }) {
   return (
     <div className="text-[11px] leading-tight">
@@ -38,8 +36,11 @@ function ScoreCardView({ bins }: { bins: ScoreCardFactor[] }) {
   )
 }
 
+type Hi = 'all' | 'main' | 'branch'
+
 export default function ModelDecisionGraph({
-  prod, model, thresholds, onJumpRules, onJumpStrategy, onSaveCollisions,
+  prod, model, thresholds, onJumpRules, onJumpStrategy, onSaveCollisions, graph: graphProp,
+  nodeResults, currentScore,
 }: {
   prod: ScoreProd
   model: ModelMeta
@@ -47,21 +48,42 @@ export default function ModelDecisionGraph({
   onJumpRules: () => void
   onJumpStrategy: () => void
   onSaveCollisions: (rules: CollisionRule[]) => void
+  graph?: GGraph
+  /* 当前用户在该节点上的实际输出（key = 节点 id），用于「节点明细」表「结果」列 */
+  nodeResults?: Record<string, string>
+  /* 当前用户评分：用于「决策映射」表高亮所在分数段 */
+  currentScore?: number
 }) {
-  const graph = MODEL_DECISION_GRAPH[prod]
+  const graph = graphProp ?? MODEL_DECISION_GRAPH[prod]
+  const isPipeline = !!graphProp
+  const containerRef = useRef<HTMLDivElement>(null)
   const [scale, setScale] = useState(1)
+  const [tx, setTx] = useState(0)
+  const [ty, setTy] = useState(0)
+  const [hi, setHi] = useState<Hi>('all')
+  const [focus, setFocus] = useState<string | null>(null)
+  const [selected, setSelected] = useState<GNode | null>(null)
   const [editingCollision, setEditingCollision] = useState(false)
   const [localRules, setLocalRules] = useState<CollisionRule[]>([])
-  const nodeMap = new Map<string, GNode>(graph.nodes.map((n) => [n.id, n]))
+  const [isFs, setIsFs] = useState(false)
+  const [openNodes, setOpenNodes] = useState<Set<string>>(new Set())
+  /* 节点拖拽：位置覆盖（原始坐标），未拖动则回退到 graph 里的 x/y */
+  const [pos, setPos] = useState<Record<string, { x: number; y: number }>>({})
+  const dragRef = useRef<{ id: string; sx: number; sy: number; px: number; py: number; moved: boolean } | null>(null)
+  const [dragging, setDragging] = useState(false)
 
-  const anchorR = (n: GNode) => ({ x: n.x + NODE_W, y: n.y + NODE_H / 2 })
-  const anchorL = (n: GNode) => ({ x: n.x, y: n.y + NODE_H / 2 })
+  const nodeMap = new Map<string, GNode>(graph.nodes.map((n) => [n.id, n]))
+  const ppos = (n: GNode) => pos[n.id] ?? { x: n.x, y: n.y }
+  const anchorR = (n: GNode) => ({ x: ppos(n).x + NODE_W, y: ppos(n).y + NODE_H / 2 })
+  const anchorL = (n: GNode) => ({ x: ppos(n).x, y: ppos(n).y + NODE_H / 2 })
   const isAlertEdge = (e: { from: string; to: string }) =>
-    nodeMap.get(e.from)?.type === 'collision' || nodeMap.get(e.to)?.type === 'collision'
+    nodeMap.get(e.from)?.type === 'alert' || nodeMap.get(e.to)?.type === 'alert'
 
   const rows = thresholds.filter((t) => t.prod === prod)
-
-  /* 碰撞节点展示内容来自可配置的 collisionRules（旧数据缺失时回退到 COALLISION_SEED） */
+  /* 当前用户分数落在哪个分数段（决策映射表高亮用） */
+  const hitRow = currentScore != null
+    ? rows.find((t) => { const [lo, hi] = t.range.split('-').map(Number); return currentScore >= lo && currentScore <= hi })
+    : undefined
   const effectiveRules = model.collisionRules?.length ? model.collisionRules : COLLISION_SEED[prod]
   const metaOf = (n: GNode): string[] => {
     if (n.type === 'collision' && effectiveRules.length) {
@@ -70,6 +92,90 @@ export default function ModelDecisionGraph({
     return n.meta ?? []
   }
 
+  /* ---- 工具条动作 ---- */
+  const zoom = (d: number) => setScale((s) => +Math.min(2, Math.max(0.4, +(s + d).toFixed(2))))
+  const pan = (dx: number, dy: number) => { setTx((x) => x + dx); setTy((y) => y + dy) }
+  const resetView = () => { setScale(1); setTx(0); setTy(0) }
+  const fit = () => {
+    const el = containerRef.current
+    if (!el) return
+    const s = Math.min(el.clientWidth / graph.width, el.clientHeight / graph.height)
+    setScale(+Math.min(2, Math.max(0.4, s)).toFixed(2)); setTx(0); setTy(0)
+  }
+  useEffect(() => {
+    const onCh = () => setIsFs(!!document.fullscreenElement)
+    document.addEventListener('fullscreenchange', onCh)
+    return () => document.removeEventListener('fullscreenchange', onCh)
+  }, [])
+  const toggleFs = () => {
+    if (document.fullscreenElement) document.exitFullscreen()
+    else containerRef.current?.requestFullscreen?.()
+  }
+  const exportJson = () => {
+    const blob = new Blob([JSON.stringify(graph, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `decision-graph-${isPipeline ? 'pipeline' : prod}.json`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+  const print = () => window.print()
+
+  /* ---- 节点拖拽：区分「拖拽」与「点击查看详情」 ---- */
+  const startDrag = (e: React.MouseEvent, n: GNode) => {
+    e.stopPropagation()
+    const cur = pos[n.id] ?? { x: n.x, y: n.y }
+    dragRef.current = { id: n.id, sx: e.clientX, sy: e.clientY, px: cur.x, py: cur.y, moved: false }
+    setDragging(true)
+    const onMove = (ev: MouseEvent) => {
+      const d = dragRef.current
+      if (!d) return
+      const dx = (ev.clientX - d.sx) / scale
+      const dy = (ev.clientY - d.sy) / scale
+      if (Math.abs(ev.clientX - d.sx) > 3 || Math.abs(ev.clientY - d.sy) > 3) d.moved = true
+      setPos((p) => ({ ...p, [d.id]: { x: Math.round(d.px + dx), y: Math.round(d.py + dy) } }))
+    }
+    const onUp = () => {
+      const d = dragRef.current
+      window.removeEventListener('mousemove', onMove)
+      window.removeEventListener('mouseup', onUp)
+      setDragging(false)
+      if (d && !d.moved) { setSelected(nodeMap.get(d.id) ?? null); setFocus(d.id) }
+      dragRef.current = null
+    }
+    window.addEventListener('mousemove', onMove)
+    window.addEventListener('mouseup', onUp)
+  }
+
+  /* ---- 高亮 / 聚焦 计算 ---- */
+  const focusPath = useMemo(() => {
+    if (!focus) return null
+    const anc = new Set<string>()
+    const dec = new Set<string>([focus])
+    let st: string[] = [focus]
+    while (st.length) {
+      const c = st.pop()!
+      graph.edges.forEach((e) => { if (e.to === c && !anc.has(e.from)) { anc.add(e.from); st.push(e.from) } })
+    }
+    st = [focus]
+    while (st.length) {
+      const c = st.pop()!
+      graph.edges.forEach((e) => { if (e.from === c && !dec.has(e.to)) { dec.add(e.to); st.push(e.to) } })
+    }
+    return new Set<string>([...anc, ...dec])
+  }, [focus, graph])
+  const nodeDim = (n: GNode) =>
+    focusPath ? !focusPath.has(n.id) : (hi === 'main' && n.type === 'alert') || (hi === 'branch' && n.type !== 'alert')
+  const edgeDim = (e: GEdgeLocal) =>
+    focusPath ? !(focusPath.has(e.from) && focusPath.has(e.to)) : (hi === 'main' && isAlertEdge(e)) || (hi === 'branch' && !isAlertEdge(e))
+
+  /* 节点的输入（上游）/输出（下游）来源 = 边 */
+  const inputsOf = (id: string) => graph.edges.filter((e) => e.to === id).map((e) => nodeMap.get(e.from)?.title ?? e.from)
+  const outputsOf = (id: string) => graph.edges.filter((e) => e.from === id).map((e) => nodeMap.get(e.to)?.title ?? e.to)
+  const toggleNode = (id: string) => setOpenNodes((prev) => { const s = new Set(prev); if (s.has(id)) s.delete(id); else s.add(id); return s })
+
+  /* ---- 碰撞编辑抽屉 ---- */
   const openCollision = () => {
     setLocalRules(effectiveRules.map((r) => ({ ...r })))
     setEditingCollision(true)
@@ -80,101 +186,319 @@ export default function ModelDecisionGraph({
     setLocalRules((rs) => rs.map((r) => (r.id === id ? { ...r, enabled: !r.enabled } : r)))
   const removeRule = (id: string) => setLocalRules((rs) => rs.filter((r) => r.id !== id))
   const addRule = () =>
-    setLocalRules((rs) => [
-      ...rs,
-      { id: `cc-${Date.now().toString(36)}`, conflict: '', result: '', priority: '转人工', enabled: true },
-    ])
-  const saveCollision = () => {
-    onSaveCollisions(localRules)
-    setEditingCollision(false)
-  }
+    setLocalRules((rs) => [...rs, { id: `cc-${Date.now().toString(36)}`, conflict: '', result: '', priority: '转人工', enabled: true }])
+  const saveCollision = () => { onSaveCollisions(localRules); setEditingCollision(false) }
+
+  const TBtn = ({ onClick, title, children }: { onClick: () => void; title: string; children: React.ReactNode }) => (
+    <button onClick={onClick} title={title} className="h-7 min-w-7 rounded-md border border-slate-200 bg-white px-2 text-xs text-slate-600 hover:border-brand-400 hover:bg-slate-50">
+      {children}
+    </button>
+  )
 
   return (
     <div>
-      {/* 工具条 */}
-      <div className="mb-3 flex flex-wrap items-center gap-2">
-        <div className="flex items-center gap-1 rounded-lg border border-slate-200 bg-white p-0.5">
-          <button onClick={() => setScale((s) => Math.max(0.5, +(s - 0.1).toFixed(2)))} className="h-7 w-7 rounded-md text-slate-600 hover:bg-slate-100" title="缩小">−</button>
+      {/* ============ 画板外框（即全屏目标；relative 让抽屉 absolute 相对它定位） ============ */}
+      <div
+        ref={containerRef}
+        className="relative flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-[#FAFBFC]"
+        style={isFs ? { height: '100vh' } : { maxHeight: 600 }}
+      >
+        {/* 工具条：固定在画板顶部 */}
+        <div className="sticky top-0 z-20 flex shrink-0 flex-wrap items-center gap-1 border-b border-slate-200 bg-white/95 px-2 py-1.5 backdrop-blur">
+          {/* 缩放组 */}
+          <span className="mr-1 text-[11px] text-slate-400">缩放</span>
+          <TBtn onClick={() => zoom(-0.1)} title="缩小">−</TBtn>
           <span className="w-12 text-center text-xs tabular-nums text-slate-500">{Math.round(scale * 100)}%</span>
-          <button onClick={() => setScale((s) => Math.min(1.6, +(s + 0.1).toFixed(2)))} className="h-7 w-7 rounded-md text-slate-600 hover:bg-slate-100" title="放大">+</button>
-          <button onClick={() => setScale(1)} className="h-7 rounded-md px-2 text-xs text-slate-600 hover:bg-slate-100" title="重置">重置</button>
+          <TBtn onClick={() => zoom(0.1)} title="放大">＋</TBtn>
+          <TBtn onClick={fit} title="适应屏幕">适应</TBtn>
+          <TBtn onClick={() => setScale(1)} title="原始大小 100%">1:1</TBtn>
+          <span className="mx-1 h-5 w-px bg-slate-200" />
+          {/* 视图组 */}
+          <span className="mr-1 text-[11px] text-slate-400">视图</span>
+          <TBtn onClick={resetView} title="复位（缩放+平移归零）">复位</TBtn>
+          <TBtn onClick={toggleFs} title={isFs ? '退出全屏' : '全屏'}>{isFs ? '退出全屏' : '全屏'}</TBtn>
+          <span className="mx-1 h-5 w-px bg-slate-200" />
+          {/* 高亮组 */}
+          <span className="mr-1 text-[11px] text-slate-400">高亮</span>
+          <TBtn onClick={() => { setHi('main'); setFocus(null) }} title="仅高亮主线（串行链路）">主线</TBtn>
+          <TBtn onClick={() => { setHi('branch'); setFocus(null) }} title="仅高亮支线（并行预警）">支线</TBtn>
+          <TBtn onClick={() => { setHi('all'); setFocus(null) }} title="全部显示（取消高亮）">全部</TBtn>
+          <span className="ml-2 text-[11px] text-slate-300">拖拽节点可调整位置 · 点击节点查看详情并高亮其整条链路</span>
         </div>
-        <span className="text-xs text-slate-400">只读画板 · 每个节点均为真实配置（可缩放 / 滚动条平移；点击红色「规则碰撞」节点可编辑冲突裁决）</span>
-        <div className="ml-auto flex flex-wrap items-center gap-3">
-          {(['source', 'transform', 'model', 'ruleset', 'collision', 'decision', 'output'] as const).map((t) => (
-            <span key={t} className="flex items-center gap-1.5 text-xs text-slate-500">
-              <span className="h-2.5 w-2.5 rounded-sm" style={{ background: GNODE_META[t].color }} />
-              {GNODE_META[t].label}
-            </span>
-          ))}
-        </div>
-      </div>
 
-      {/* 画板（可平移的滚动视口 + 缩放画布） */}
-      <div className="relative max-h-[560px] overflow-auto rounded-xl border border-slate-200 bg-[#FAFBFC]" style={{ backgroundImage: 'radial-gradient(#E2E8F0 1px, transparent 1px)', backgroundSize: '18px 18px' }}>
-        <div style={{ width: graph.width * scale, height: graph.height * scale, position: 'relative', transform: `scale(${scale})`, transformOrigin: 'top left' }}>
-          {/* 连线层 */}
-          <svg width={graph.width} height={graph.height} className="pointer-events-none absolute left-0 top-0">
-            {graph.edges.map((e, i) => {
-              const a = anchorR(nodeMap.get(e.from)!)
-              const b = anchorL(nodeMap.get(e.to)!)
-              const alert = isAlertEdge(e)
-              const midX = (a.x + b.x) / 2
-              const d = `M ${a.x} ${a.y} C ${midX} ${a.y}, ${midX} ${b.y}, ${b.x} ${b.y}`
-              const col = alert ? '#E11D48' : '#CBD5E1'
+        {/* 画布滚动视口（缩放/平移作用于内层 transform） */}
+        <div className="relative flex-1 overflow-auto">
+          <div
+            style={{
+              width: graph.width * scale,
+              height: graph.height * scale,
+              transform: `translate(${tx}px, ${ty}px) scale(${scale})`,
+              transformOrigin: 'top left',
+              backgroundImage: 'radial-gradient(#E2E8F0 1px, transparent 1px)', backgroundSize: '18px 18px',
+            }}
+          >
+            {/* 连线层 */}
+            <svg width={graph.width} height={graph.height} className="pointer-events-none absolute left-0 top-0">
+              <defs>
+                <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+                  <path d="M0,0 L8,3 L0,6 Z" fill="#94A3B8" />
+                </marker>
+              </defs>
+              {graph.edges.map((e, i) => {
+                const a = anchorR(nodeMap.get(e.from)!)
+                const b = anchorL(nodeMap.get(e.to)!)
+                const midX = (a.x + b.x) / 2
+                const d = `M ${a.x} ${a.y} C ${midX} ${a.y}, ${midX} ${b.y}, ${b.x} ${b.y}`
+                const col = e.color ?? (isAlertEdge(e) ? '#0891B2' : '#CBD5E1')
+                const dim = edgeDim(e)
+                return (
+                  <g key={i} style={{ opacity: dim ? 0.18 : 1, transition: 'opacity .15s' }}>
+                    <path d={d} fill="none" stroke={col} strokeWidth={isAlertEdge(e) ? 2 : 1.5} strokeDasharray={e.dashed ? '5 4' : undefined} markerEnd={'url(#arrow)'} />
+                    {e.label && <text x={midX} y={(a.y + b.y) / 2 - 6} textAnchor="middle" fontSize={11} fill={col}>{e.label}</text>}
+                  </g>
+                )
+              })}
+            </svg>
+
+            {/* 节点层 */}
+            {graph.nodes.map((n) => {
+              const meta = GNODE_META[n.type]
+              const isModel = n.type === 'model'
+              const isAlertNode = n.type === 'alert'
+              const cardBins = isPipeline ? undefined : (isModel && prod === 'zhixin' ? (model.bins?.length ? model.bins : ZHIXIN_SCORECARD) : undefined)
+              const headerBg = isModel ? model.color : meta.color
+              const isCollision = n.type === 'collision'
+              const dim = nodeDim(n)
+              const cp = pos[n.id] ?? { x: n.x, y: n.y }
               return (
-                <g key={i}>
-                  <path d={d} fill="none" stroke={col} strokeWidth={alert ? 2 : 1.5} strokeDasharray={e.dashed ? '5 4' : undefined} />
-                  {e.label && (
-                    <text x={midX} y={(a.y + b.y) / 2 - 6} textAnchor="middle" fontSize={11} fill={col}>{e.label}</text>
-                  )}
-                </g>
+                <div
+                  key={n.id}
+                  className={`absolute flex flex-col overflow-hidden rounded-xl border bg-white shadow-sm transition-opacity ${dim ? 'opacity-20' : 'opacity-100'} ${isCollision ? 'cursor-grab hover:border-rose-400 hover:ring-2 hover:ring-rose-200 active:cursor-grabbing' : 'cursor-grab hover:border-slate-400 hover:ring-2 hover:ring-slate-200 active:cursor-grabbing'}`}
+                  style={{ left: cp.x, top: cp.y, width: NODE_W, height: NODE_H, ...(isAlertNode ? { borderStyle: 'dashed', borderColor: '#0891B2' } : {}) }}
+                  onMouseDown={(e) => startDrag(e, n)}
+                >
+                  <div className="flex shrink-0 items-center justify-between rounded-t-xl px-3 py-1.5" style={{ background: headerBg }}>
+                    <span className="text-xs font-semibold text-white">{n.title}</span>
+                    <span className="flex items-center gap-1.5">
+                      {isCollision && <span className="rounded bg-white/25 px-1 py-0.5 text-[10px] font-medium text-white">可编辑</span>}
+                      {n.badge && <span className="rounded-full bg-white/25 px-1.5 py-0.5 text-[10px] font-medium text-white">{n.badge}</span>}
+                    </span>
+                  </div>
+                  <div className="min-h-0 flex-1 overflow-y-auto px-3 py-1.5">
+                    {cardBins ? (
+                      <ScoreCardView bins={cardBins} />
+                    ) : (
+                      <>
+                        {n.subtitle && <div className="mb-1 text-[11px] text-slate-400">{n.subtitle}</div>}
+                        <div className="space-y-0.5">
+                          {metaOf(n).map((m, i) => (
+                            <div key={i} className="whitespace-normal break-words text-[11px] leading-tight text-slate-600">{m}</div>
+                          ))}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
               )
             })}
-          </svg>
+          </div>
+        </div>
 
-          {/* 节点层 */}
-          {graph.nodes.map((n) => {
-            const meta = GNODE_META[n.type]
-            const isModel = n.type === 'model'
-            const cardBins = isModel ? (model.bins?.length ? model.bins : (prod === 'zhixin' ? ZHIXIN_SCORECARD : undefined)) : undefined
-            const headerBg = isModel ? model.color : meta.color
-            const isCollision = n.type === 'collision'
-            return (
-              <div
-                key={n.id}
-                className={`absolute flex flex-col overflow-hidden rounded-xl border bg-white shadow-sm ${isCollision ? 'cursor-pointer hover:border-rose-400 hover:ring-2 hover:ring-rose-200' : ''}`}
-                style={{ left: n.x, top: n.y, width: NODE_W, height: NODE_H }}
-                onClick={isCollision ? openCollision : undefined}
-              >
-                <div className="flex shrink-0 items-center justify-between rounded-t-xl px-3 py-1.5" style={{ background: headerBg }}>
-                  <span className="text-xs font-semibold text-white">{n.title}</span>
-                  <span className="flex items-center gap-1.5">
-                    {isCollision && <span className="rounded bg-white/25 px-1 py-0.5 text-[10px] font-medium text-white">点击编辑</span>}
-                    {n.badge && <span className="rounded-full bg-white/25 px-1.5 py-0.5 text-[10px] font-medium text-white">{n.badge}</span>}
-                  </span>
-                </div>
-                <div className="min-h-0 flex-1 overflow-y-auto px-3 py-1.5">
-                  {cardBins ? (
-                    <ScoreCardView bins={cardBins} />
-                  ) : (
-                    <>
-                      {n.subtitle && <div className="mb-1 text-[11px] text-slate-400">{n.subtitle}</div>}
-                      <div className="space-y-0.5">
-                        {metaOf(n).map((m, i) => (
-                          <div key={i} className="whitespace-normal break-words text-[11px] leading-tight text-slate-600">{m}</div>
-                        ))}
-                      </div>
-                    </>
-                  )}
+        {/* ============ 节点详情抽屉（画板内右侧，不置灰、不遮挡画板操作，全屏可见） ============ */}
+        {selected && (
+          <div className="absolute right-0 top-10 bottom-0 z-30 flex w-[360px] max-w-[80%] flex-col border-l border-slate-200 bg-white shadow-2xl">
+            <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
+              <div className="flex items-center gap-2">
+                <span className="h-3 w-3 rounded-sm" style={{ background: GNODE_META[selected.type].color }} />
+                <span className="text-sm font-semibold text-slate-800">{selected.title}</span>
+              </div>
+              <button onClick={() => { setSelected(null); setFocus(null) }} className="rounded-md px-2 py-1 text-sm text-slate-400 hover:bg-slate-100">关闭</button>
+            </div>
+            <div className="flex-1 space-y-3 overflow-y-auto px-4 py-3">
+              <div className="flex flex-wrap items-center gap-2 text-xs">
+                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-slate-500">{GNODE_META[selected.type].label}</span>
+                {selected.subtitle && <span className="text-slate-400">{selected.subtitle}</span>}
+                {selected.badge && <span className="rounded-full bg-brand-50 px-2 py-0.5 text-brand-600">{selected.badge}</span>}
+              </div>
+              <div>
+                <div className="mb-1 text-xs font-medium text-slate-500">说明</div>
+                <div className="rounded-lg bg-slate-50 px-3 py-2 text-[12px] leading-relaxed text-slate-600">
+                  {(metaOf(selected).length ? metaOf(selected) : ['（该节点无额外配置说明）']).map((m, i) => (
+                    <div key={i} className="whitespace-pre-wrap">{m}</div>
+                  ))}
                 </div>
               </div>
-            )
-          })}
+              <div>
+                <div className="mb-1 text-xs font-medium text-slate-500">输入（上游节点）</div>
+                <div className="flex flex-wrap gap-1.5">
+                  {inputsOf(selected.id).map((t, i) => (
+                    <span key={i} className="rounded bg-slate-100 px-2 py-0.5 text-[11px] text-slate-600">{t}</span>
+                  ))}
+                  {inputsOf(selected.id).length === 0 && <span className="text-[11px] text-slate-300">无（起点节点）</span>}
+                </div>
+              </div>
+              <div>
+                <div className="mb-1 text-xs font-medium text-slate-500">输出（下游节点）</div>
+                <div className="flex flex-wrap gap-1.5">
+                  {outputsOf(selected.id).map((t, i) => (
+                    <span key={i} className="rounded bg-slate-100 px-2 py-0.5 text-[11px] text-slate-600">{t}</span>
+                  ))}
+                  {outputsOf(selected.id).length === 0 && <span className="text-[11px] text-slate-300">无（终点节点）</span>}
+                </div>
+              </div>
+              {selected.type === 'collision' && onSaveCollisions && (
+                <button onClick={() => { setSelected(null); setFocus(null); openCollision() }} className="w-full rounded-lg border border-rose-200 bg-rose-50 py-2 text-sm font-medium text-rose-600 hover:bg-rose-100">
+                  编辑冲突裁决规则 →
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ============ 规则碰撞 · 冲突裁决 编辑抽屉（画板内覆盖，全屏可见） ============ */}
+        {editingCollision && (
+          <div className="absolute inset-0 z-40 flex justify-end bg-black/20" onClick={() => setEditingCollision(false)}>
+            <div className="flex h-full w-[440px] max-w-[90%] flex-col bg-white shadow-xl" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
+                <div className="text-sm font-semibold text-slate-800">
+                  规则碰撞 · 冲突裁决 <span className="ml-1 text-xs font-normal text-slate-400">{SCORE_PROD_LABEL[prod]}</span>
+                </div>
+                <button onClick={() => setEditingCollision(false)} className="rounded-md px-2 py-1 text-sm text-slate-400 hover:bg-slate-100">关闭</button>
+              </div>
+              <div className="flex-1 space-y-3 overflow-y-auto px-4 py-3">
+                <p className="text-xs text-slate-400">定义当多条规则同时命中产生冲突时如何裁决、并生成何种预警。此即模型配置阶段的冲突逻辑，保存后随模型持久化。</p>
+                {localRules.map((r, i) => (
+                  <div key={r.id} className="rounded-xl border border-slate-200 p-3">
+                    <div className="mb-2 flex items-center justify-between">
+                      <span className="text-xs font-medium text-slate-500">裁决规则 {i + 1}</span>
+                      <div className="flex items-center gap-3">
+                        <label className="flex items-center gap-1 text-xs text-slate-500">
+                          <input type="checkbox" checked={r.enabled} onChange={() => toggleRule(r.id)} className="accent-rose-500" /> 启用
+                        </label>
+                        <button onClick={() => removeRule(r.id)} className="text-xs text-rose-500 hover:underline">删除</button>
+                      </div>
+                    </div>
+                    <input
+                      className="mb-2 w-full rounded-lg border border-slate-200 px-2 py-1.5 text-sm outline-none focus:border-brand-400"
+                      placeholder="冲突条件（如：黑灰名单命中 ∩ XGB 中风险）"
+                      value={r.conflict}
+                      onChange={(e) => updateRule(r.id, 'conflict', e.target.value)}
+                    />
+                    <input
+                      className="mb-2 w-full rounded-lg border border-slate-200 px-2 py-1.5 text-sm outline-none focus:border-brand-400"
+                      placeholder="裁决结果 / 生成的预警（如：强制拒绝，生成欺诈预警）"
+                      value={r.result}
+                      onChange={(e) => updateRule(r.id, 'result', e.target.value)}
+                    />
+                    <select
+                      className="w-full rounded-lg border border-slate-200 px-2 py-1.5 text-sm outline-none focus:border-brand-400"
+                      value={r.priority}
+                      onChange={(e) => updateRule(r.id, 'priority', e.target.value)}
+                    >
+                      <option value="拦截优先">优先级：拦截优先（规则/名单压过分数）</option>
+                      <option value="分数优先">优先级：分数优先（模型分决定）</option>
+                      <option value="转人工">优先级：转人工复核</option>
+                    </select>
+                  </div>
+                ))}
+                {localRules.length === 0 && <div className="rounded-lg border border-dashed border-slate-200 px-3 py-6 text-center text-xs text-slate-400">暂无冲突裁决规则，点击下方新增。</div>}
+                <button onClick={addRule} className="w-full rounded-lg border border-dashed border-slate-300 py-2 text-sm text-slate-500 hover:border-brand-400 hover:text-brand-600">＋ 新增冲突裁决规则</button>
+              </div>
+              <div className="flex gap-2 border-t border-slate-100 px-4 py-3">
+                <button onClick={saveCollision} className="flex-1 rounded-lg bg-brand-600 px-3 py-2 text-sm font-medium text-white hover:bg-brand-700">保存</button>
+                <button onClick={() => setEditingCollision(false)} className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50">取消</button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* 图例 */}
+      <div className="mt-2 flex flex-wrap items-center gap-3">
+        {(Object.keys(GNODE_META) as (keyof typeof GNODE_META)[]).map((t) => (
+          <span key={t} className="flex items-center gap-1.5 text-xs text-slate-500">
+            <span className="h-2.5 w-2.5 rounded-sm" style={{ background: GNODE_META[t].color }} />
+            {GNODE_META[t].label}
+          </span>
+        ))}
+        <span className="flex items-center gap-1.5 text-xs text-slate-500"><span className="inline-block h-0 w-5 border-t-2 border-dashed border-cyan-500" />并行预警（虚线）</span>
+      </div>
+
+      {/* ============ 底部表 1：节点明细（表格；说明列可折叠） ============ */}
+      <div className="mt-4 overflow-hidden rounded-xl border border-slate-200">
+        <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-3 py-2">
+          <div className="text-sm font-semibold text-slate-800">节点明细 · 每个节点的说明 / 输入 / 输出</div>
+          <button
+            onClick={() => setOpenNodes(openNodes.size === graph.nodes.length ? new Set() : new Set(graph.nodes.map((n) => n.id)))}
+            className="text-xs text-blue-600 hover:underline"
+          >
+            {openNodes.size === graph.nodes.length ? '全部展开说明' : '全部收起说明'}
+          </button>
+        </div>
+        <div className="max-h-[340px] overflow-auto">
+          <table className="w-full text-sm">
+            <thead className="sticky top-0 bg-slate-50">
+              <tr className="text-left text-xs text-slate-400">
+                <th className="px-3 py-2 font-medium">节点</th>
+                <th className="px-3 py-2 font-medium">类型</th>
+                <th className="px-3 py-2 font-medium">结果（本客户在此节点的输出）</th>
+                <th className="px-3 py-2 font-medium">说明</th>
+                <th className="px-3 py-2 font-medium">输入（上游）</th>
+                <th className="px-3 py-2 font-medium">输出（下游）</th>
+              </tr>
+            </thead>
+            <tbody>
+              {graph.nodes.map((n) => {
+                const open = openNodes.has(n.id)
+                const ins = inputsOf(n.id)
+                const outs = outputsOf(n.id)
+                const m = metaOf(n)
+                return (
+                  <tr key={n.id} className="border-t border-slate-50 align-top">
+                    <td className="px-3 py-2">
+                      <span className="flex items-center gap-1.5">
+                        <span className="h-2.5 w-2.5 shrink-0 rounded-sm" style={{ background: GNODE_META[n.type].color }} />
+                        <span className="font-medium text-slate-700">{n.title}</span>
+                        {n.badge && <span className="rounded-full bg-brand-50 px-1.5 py-0.5 text-[10px] text-brand-600">{n.badge}</span>}
+                      </span>
+                    </td>
+                    <td className="px-3 py-2 text-slate-500">{GNODE_META[n.type].label}</td>
+                    <td className="px-3 py-2">
+                      {nodeResults?.[n.id] ? (
+                        <span className="inline-block max-w-[240px] whitespace-pre-wrap rounded-md bg-emerald-50 px-2 py-1 text-[11px] font-medium leading-snug text-emerald-700">{nodeResults[n.id]}</span>
+                      ) : (
+                        <span className="text-[11px] text-slate-300">—</span>
+                      )}
+                    </td>
+                    <td className="px-3 py-2 text-slate-600">
+                      <div className="space-y-0.5">
+                        {m.length ? m.map((t, i) => (
+                          <div key={i} className={`whitespace-pre-wrap text-[12px] leading-tight ${!open && i > 0 ? 'hidden' : ''}`}>{t}</div>
+                        )) : <span className="text-[12px] text-slate-300">（无）</span>}
+                      </div>
+                      {m.length > 1 && (
+                        <button onClick={() => toggleNode(n.id)} className="mt-1 text-[11px] text-blue-600 hover:underline">{open ? '收起' : '展开说明'}</button>
+                      )}
+                    </td>
+                    <td className="px-3 py-2 text-slate-600">
+                      {ins.length ? ins.map((t, i) => (
+                        <span key={i} className="mr-1 mb-1 inline-block rounded bg-slate-100 px-1.5 py-0.5 text-[11px] text-slate-600">{t}</span>
+                      )) : <span className="text-[11px] text-slate-300">无</span>}
+                    </td>
+                    <td className="px-3 py-2 text-slate-600">
+                      {outs.length ? outs.map((t, i) => (
+                        <span key={i} className="mr-1 mb-1 inline-block rounded bg-slate-100 px-1.5 py-0.5 text-[11px] text-slate-600">{t}</span>
+                      )) : <span className="text-[11px] text-slate-300">无</span>}
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
         </div>
       </div>
 
-      {/* 决策映射表 */}
+      {/* ============ 底部表 2：分数段 → 处置 ============ */}
       <div className="mt-4 overflow-hidden rounded-xl border border-slate-200">
         <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-3 py-2">
           <div className="text-sm font-semibold text-slate-800">决策映射 · 输出分数如何变成处置动作</div>
@@ -191,79 +515,32 @@ export default function ModelDecisionGraph({
             </tr>
           </thead>
           <tbody>
-            {rows.map((t) => (
-              <tr key={t.range} className="border-t border-slate-50">
-                <td className="px-3 py-2 tabular-nums text-slate-700">{t.range}</td>
-                <td className="px-3 py-2 text-slate-700">{t.level}</td>
-                <td className="px-3 py-2 text-slate-500">{t.meaning}</td>
-                <td className="px-3 py-2 text-slate-700">{t.action}</td>
-                <td className="px-3 py-2 text-sky-500">规则引擎 · 实时 API</td>
-              </tr>
-            ))}
+            {rows.map((t) => {
+              const hit = hitRow?.range === t.range
+              return (
+                <tr key={t.range} className="border-t border-slate-50" style={hit ? { background: '#EFF6FF', boxShadow: 'inset 3px 0 0 #2563EB' } : undefined}>
+                  <td className="px-3 py-2 tabular-nums text-slate-700">
+                    {t.range}
+                    {hit && <span className="ml-2 rounded-full bg-blue-600 px-1.5 py-0.5 text-[10px] font-medium text-white">◀ 本客户 {currentScore} 分</span>}
+                  </td>
+                  <td className="px-3 py-2 font-semibold" style={hit ? { color: '#1D4ED8' } : { color: '#334155' }}>{t.level}</td>
+                  <td className="px-3 py-2" style={hit ? { color: '#1E40AF' } : { color: '#64748B' }}>{t.meaning}</td>
+                  <td className="px-3 py-2" style={hit ? { color: '#1E40AF', fontWeight: 600 } : { color: '#334155' }}>{t.action}</td>
+                  <td className="px-3 py-2 text-sky-500">规则引擎 · 实时 API</td>
+                </tr>
+              )
+            })}
+            {rows.length === 0 && <tr><td colSpan={5} className="px-3 py-3 text-center text-xs text-slate-400">当前模型暂无阈值决策配置</td></tr>}
           </tbody>
         </table>
         <div className="flex items-center justify-between border-t border-slate-100 bg-slate-50 px-3 py-2 text-[11px] text-slate-400">
-          <span>阈值规则与预警规则均由规则引擎子系统统一执行（实时 API）；「规则碰撞 · 冲突裁决」节点在模型配置阶段即定义了冲突如何生成预警，点击该节点可编辑并持久化。链路实体均来自真实配置（scoreData.json / ruleHub.json），非示意。</span>
+          <span>阈值规则与预警规则均由规则引擎子系统统一执行（实时 API）；链路实体均来自真实配置（scoreData.json / ruleHub.json），非示意。</span>
           <button onClick={onJumpRules} className="ml-3 shrink-0 text-xs text-blue-600 hover:underline">在规则引擎查看全部规则 →</button>
         </div>
       </div>
-
-      {/* 规则碰撞 · 冲突裁决 编辑抽屉 */}
-      {editingCollision && (
-        <div className="fixed inset-0 z-50 flex justify-end bg-black/30" onClick={() => setEditingCollision(false)}>
-          <div className="flex h-full w-[460px] flex-col bg-white shadow-xl" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
-              <div className="text-sm font-semibold text-slate-800">
-                规则碰撞 · 冲突裁决 <span className="ml-1 text-xs font-normal text-slate-400">{SCORE_PROD_LABEL[prod]}</span>
-              </div>
-              <button onClick={() => setEditingCollision(false)} className="rounded-md px-2 py-1 text-sm text-slate-400 hover:bg-slate-100">关闭</button>
-            </div>
-            <div className="flex-1 space-y-3 overflow-y-auto px-4 py-3">
-              <p className="text-xs text-slate-400">定义当多条规则同时命中产生冲突时如何裁决、并生成何种预警。此即模型配置阶段的冲突逻辑，保存后随模型持久化。</p>
-              {localRules.map((r, i) => (
-                <div key={r.id} className="rounded-xl border border-slate-200 p-3">
-                  <div className="mb-2 flex items-center justify-between">
-                    <span className="text-xs font-medium text-slate-500">裁决规则 {i + 1}</span>
-                    <div className="flex items-center gap-3">
-                      <label className="flex items-center gap-1 text-xs text-slate-500">
-                        <input type="checkbox" checked={r.enabled} onChange={() => toggleRule(r.id)} className="accent-rose-500" /> 启用
-                      </label>
-                      <button onClick={() => removeRule(r.id)} className="text-xs text-rose-500 hover:underline">删除</button>
-                    </div>
-                  </div>
-                  <input
-                    className="mb-2 w-full rounded-lg border border-slate-200 px-2 py-1.5 text-sm outline-none focus:border-brand-400"
-                    placeholder="冲突条件（如：黑灰名单命中 ∩ XGB 中风险）"
-                    value={r.conflict}
-                    onChange={(e) => updateRule(r.id, 'conflict', e.target.value)}
-                  />
-                  <input
-                    className="mb-2 w-full rounded-lg border border-slate-200 px-2 py-1.5 text-sm outline-none focus:border-brand-400"
-                    placeholder="裁决结果 / 生成的预警（如：强制拒绝，生成欺诈预警）"
-                    value={r.result}
-                    onChange={(e) => updateRule(r.id, 'result', e.target.value)}
-                  />
-                  <select
-                    className="w-full rounded-lg border border-slate-200 px-2 py-1.5 text-sm outline-none focus:border-brand-400"
-                    value={r.priority}
-                    onChange={(e) => updateRule(r.id, 'priority', e.target.value)}
-                  >
-                    <option value="拦截优先">优先级：拦截优先（规则/名单压过分数）</option>
-                    <option value="分数优先">优先级：分数优先（模型分决定）</option>
-                    <option value="转人工">优先级：转人工复核</option>
-                  </select>
-                </div>
-              ))}
-              {localRules.length === 0 && <div className="rounded-lg border border-dashed border-slate-200 px-3 py-6 text-center text-xs text-slate-400">暂无冲突裁决规则，点击下方新增。</div>}
-              <button onClick={addRule} className="w-full rounded-lg border border-dashed border-slate-300 py-2 text-sm text-slate-500 hover:border-brand-400 hover:text-brand-600">＋ 新增冲突裁决规则</button>
-            </div>
-            <div className="flex gap-2 border-t border-slate-100 px-4 py-3">
-              <button onClick={saveCollision} className="flex-1 rounded-lg bg-brand-600 px-3 py-2 text-sm font-medium text-white hover:bg-brand-700">保存</button>
-              <button onClick={() => setEditingCollision(false)} className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50">取消</button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }
+
+/* 本地边类型（仅用于高亮计算，避免与 modelGraphData 的 GEdge 循环引用麻烦） */
+interface GEdgeLocal { from: string; to: string; dashed?: boolean; color?: string }

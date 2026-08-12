@@ -18,6 +18,9 @@ import { PageShell } from './PageShell';
 import { useMidCustomers, useMidAlerts } from './midStore';
 import { useFlows, matchFlowGraph } from './flowStore';
 import { models } from './data';
+import { useScore, updateScore, type ScoreProd, type ModelMeta } from './scoreData';
+import ModelDecisionGraph from './ModelDecisionGraph';
+import { PIPELINE_GRAPHS } from './modelGraphData';
 import type { MidCustomer, ModelScoreItem, CustRiskDim, CustRelationNode } from './midData';
 
 type ProdKey = 'zhicha' | 'zhixin' | 'zhirong';
@@ -747,6 +750,43 @@ export default function CustScoreDetail() {
   const capa = MODEL_CAPA[prod];
   const history = cust?.modelScoreHistory ?? [];
   const isFraud = prod === 'zhicha';
+  const data = useScore();
+  const gModel: ModelMeta = data.models.find((x) => x.prod === prod) ?? data.models[0];
+
+  /* 节点明细「结果」列：本客户在流水线各节点的实际输出（key = 图节点 id，按 prod 定制） */
+  const nodeResults = useMemo<Record<string, string>>(() => {
+    if (!cust || !item) return {};
+    const alerts = cust.alerts ?? [];
+    const rels = cust.relations ?? [];
+    const dims = cust.riskDims ?? [];
+    const nonOpp = alerts.filter((a) => a.level !== 'OPPORTUNITY');
+    const opp = alerts.filter((a) => a.level === 'OPPORTUNITY');
+    const r: Record<string, string> = {};
+    if (prod === 'zhixin') {
+      r.s1 = `已受理 ${cust.name} · ${cust.custId}${cust.product ? '（' + cust.product + '）' : ''}`;
+      r.g1 = `关联实体 ${rels.length} 个${rels.length ? '，已并入团伙识别' : ''}`;
+      r.f1 = dims.length ? dims.slice(0, 4).map((d) => `${d.dim} ${d.score}`).join(' / ') : '特征已衍生';
+      r.b1 = '未命中硬拦截 → 放行';
+      r.m1 = `评分卡输出 ${item.score} 分`;
+      r.r1 = `规则扣分评估后 ${item.score} 分`;
+      r.w1 = nonOpp.length ? `主线预警 ${nonOpp.length} 条` : '未触发主线预警';
+      r.k1 = `${item.grade ?? '—'}${item.gradeLabel ? ' · ' + item.gradeLabel : ''}`;
+      r.a1 = opp.length ? `并行预警 ${opp.length} 条` : '未触发并行预警';
+      r.o1 = `智信分 ${item.score} → ${item.grade ?? '—'}`;
+    } else if (prod === 'zhicha') {
+      r.s1 = `多头/名单查询完成`;
+      r.m1 = `XGBoost 欺诈输出 ${item.score}`;
+      r.r1 = `规则修正后 ${item.score}`;
+      r.o1 = `智察分 ${item.score} → ${item.grade ?? '—'}`;
+    } else {
+      r.s1 = `信用子分输入就绪`;
+      r.m1 = `违约维度子分`;
+      r.f1 = `加权融合输出 ${item.score}`;
+      r.r1 = `规则修正后 ${item.score}`;
+      r.o1 = `智融分 ${item.score} → ${item.grade ?? '—'}`;
+    }
+    return r;
+  }, [cust, item, prod]);
 
   if (!cust || !item) {
     return (
@@ -1308,6 +1348,25 @@ export default function CustScoreDetail() {
         {/* ========== Tab4 模型信息 ========== */}
         {tab === 'model' && (
           <>
+            <Panel title="模型决策链路" desc="本模型真实决策链路：数据源 → 算法与因子 → 规则集 → 输出分数 → 决策映射（点击节点查看详情、可拖动节点调整布局、工具条支持缩放/全屏/高亮）">
+              <ModelDecisionGraph
+                prod={prod as ScoreProd}
+                model={gModel}
+                thresholds={data.thresholds}
+                graph={prod === 'zhixin' ? PIPELINE_GRAPHS.zhixin_credit_v1 : undefined}
+                nodeResults={nodeResults}
+                currentScore={item.score}
+                onJumpRules={() => nav('/console/cm/rule-hub')}
+                onJumpStrategy={() => nav('/console/sc/score-threshold?prod=' + prod)}
+                onSaveCollisions={(rules) =>
+                  updateScore((d) => ({
+                    ...d,
+                    models: d.models.map((mm) => (mm.prod === prod ? { ...mm, collisionRules: rules } : mm)),
+                  }))
+                }
+              />
+            </Panel>
+
             <Panel title="基本信息" desc="模型版本与归属">
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 10 }}>
                 <CapCell label="模型" value={`${meta.label} · ${item.modelVersion}`} />
@@ -1334,95 +1393,6 @@ export default function CustScoreDetail() {
               </div>
             </Panel>
 
-            <Panel title="结果含义" desc="分数区间 → 等级 → 建议动作">
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
-                <thead>
-                  <tr style={{ color: '#94A3B8', fontSize: 12, textAlign: 'left', borderBottom: '1px solid #E2E8F0' }}>
-                    <th style={{ padding: '8px 10px', fontWeight: 500 }}>分数区间</th>
-                    <th style={{ padding: '8px 10px', fontWeight: 500 }}>等级</th>
-                    <th style={{ padding: '8px 10px', fontWeight: 500 }}>含义</th>
-                    <th style={{ padding: '8px 10px', fontWeight: 500 }}>建议动作</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {THRESHOLDS[prod].map((t, i) => (
-                    <tr key={i} style={{ borderBottom: '1px solid #F1F5F9' }}>
-                      <td style={{ padding: '8px 10px', fontVariantNumeric: 'tabular-nums', color: '#334155' }}>{t.range}</td>
-                      <td style={{ padding: '8px 10px', fontWeight: 600, color: t.color }}>{t.grade}</td>
-                      <td style={{ padding: '8px 10px', color: '#64748B' }}>{t.label}</td>
-                      <td style={{ padding: '8px 10px', color: '#475569' }}>{t.action}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              <div style={{ fontSize: 12, color: '#94A3B8', marginTop: 8 }}>当前得分 {item.score} 落在「{item.grade}」档位，触发分值预警（见「预警与处置」Tab）。</div>
-            </Panel>
-
-            <Panel title="运营效果" desc="模型上线后的业务表现与趋势">
-              {(() => {
-                const ops = MODEL_OPS[prod];
-                return (
-                  <>
-                    {/* 指标卡片 */}
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12, marginBottom: 16 }}>
-                      {ops.metrics.map((m, i) => (
-                        <div key={i} style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 10, padding: '12px 14px' }}>
-                          <div style={{ fontSize: 11, color: '#94A3B8' }}>{m.label}</div>
-                          <div style={{ fontSize: 22, fontWeight: 800, color: m.color, marginTop: 4, fontVariantNumeric: 'tabular-nums' }}>{m.value}</div>
-                          <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 2 }}>{m.sub}</div>
-                        </div>
-                      ))}
-                    </div>
-                    {/* 趋势图 */}
-                    <div style={{ fontSize: 12.5, fontWeight: 600, color: '#475569', marginBottom: 8 }}>近 6 月趋势</div>
-                    <LineChart
-                      labels={ops.trend.map((t) => t.month)}
-                      series={[
-                        { name: '评分覆盖率', color: '#2563EB', data: ops.trend.map((t) => t.coverage) },
-                        { name: '预警准确率', color: '#16A34A', data: ops.trend.map((t) => t.accuracy) },
-                        { name: '处置及时率', color: '#7C3AED', data: ops.trend.map((t) => t.timely) },
-                      ]}
-                      unit="%"
-                      height={200}
-                      yMin={75}
-                    />
-                    <div style={{ fontSize: 12, color: '#94A3B8', marginTop: 10, lineHeight: 1.7, background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 8, padding: '8px 12px' }}>
-                      <b style={{ color: '#475569' }}>指标说明：</b>评分覆盖率 = 有评分客户占目标客群比例；预警准确率 = 预警后经核实确实存在风险的比例；处置及时率 = 在规定时限内完成处置的预警占比。三项指标持续向好说明模型运营稳健。
-                    </div>
-                  </>
-                );
-              })()}
-            </Panel>
-
-            <Panel title="算法解释" desc="模型怎么算出来的">
-              <div style={{ fontSize: 13, color: '#334155', lineHeight: 1.9, marginBottom: 14 }}>
-                <b>方法：</b>{capa.method}
-              </div>
-              <div style={{ fontSize: 12.5, fontWeight: 600, color: '#475569', marginBottom: 8 }}>特征与血缘</div>
-              <div style={{ display: 'flex', alignItems: 'stretch', gap: 0, flexWrap: 'wrap', marginBottom: 16 }}>
-                {capa.lineage.map((s, i) => (
-                  <div key={i} style={{ flex: '1 1 200px', minWidth: 180, position: 'relative', padding: '0 8px' }}>
-                    <div style={{ border: '1px solid #E2E8F0', borderRadius: 10, padding: '10px 12px', height: '100%', background: '#fff' }}>
-                      <div style={{ fontSize: 12, fontWeight: 700, color: meta.color }}>{s.stage}</div>
-                      <div style={{ fontSize: 12, color: '#64748B', marginTop: 6, lineHeight: 1.6 }}>{s.detail}</div>
-                    </div>
-                    {i < capa.lineage.length - 1 && <div style={{ position: 'absolute', right: -6, top: '50%', transform: 'translateY(-50%)', color: '#94A3B8', fontSize: 16 }}>→</div>}
-                  </div>
-                ))}
-              </div>
-              <div style={{ fontSize: 12.5, fontWeight: 600, color: '#475569', marginBottom: 8 }}>全局特征重要性（模型级，区别于本客局部因子）</div>
-              <div className="space-y-2">
-                {capa.global.map((g, i) => (
-                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <span style={{ fontSize: 12, color: '#334155', width: 90, flexShrink: 0 }}>{g.name}</span>
-                    <div style={{ flex: 1, height: 7, background: '#F1F5F9', borderRadius: 999, overflow: 'hidden' }}>
-                      <div style={{ width: `${Math.min(g.importance * 2.4, 100)}%`, height: '100%', background: meta.color, borderRadius: 999 }} />
-                    </div>
-                    <span style={{ fontSize: 12, color: '#64748B', width: 36, textAlign: 'right' }}>{g.importance}%</span>
-                  </div>
-                ))}
-              </div>
-            </Panel>
           </>
         )}
 

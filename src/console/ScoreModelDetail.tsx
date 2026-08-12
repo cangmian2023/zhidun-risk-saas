@@ -8,6 +8,7 @@ import { PageShell } from './PageShell'
 import { Panel, Button, Badge, DataTable, type Column, type Row } from '../components/ui'
 import { Sam, Cfg, Cal } from './SourceTag'
 import ModelDecisionGraph from './ModelDecisionGraph'
+import { PIPELINE_GRAPHS } from './modelGraphData'
 
 const MODEL_COLOR: Record<ScoreProd, string> = {
   zhicha: '#ef4444',
@@ -181,19 +182,22 @@ export default function ScoreModelDetailPage() {
           }
         >
           {algoTab === 'visual' ? (
-            <ModelDecisionGraph
-              prod={m.prod}
-              model={m}
-              thresholds={data.thresholds}
-              onJumpRules={() => nav('/console/cm/rule-hub')}
-              onJumpStrategy={() => nav('/console/sc/score-threshold?prod=' + prod)}
-              onSaveCollisions={(rules) =>
-                updateScore((d) => ({
-                  ...d,
-                  models: d.models.map((mm) => (mm.prod === prod ? { ...mm, collisionRules: rules } : mm)),
-                }))
-              }
-            />
+            <div>
+              <ModelDecisionGraph
+                prod={m.prod}
+                model={m}
+                thresholds={data.thresholds}
+                graph={m.prod === 'zhixin' ? PIPELINE_GRAPHS.zhixin_credit_v1 : undefined}
+                onJumpRules={() => nav('/console/cm/rule-hub')}
+                onJumpStrategy={() => nav('/console/sc/score-threshold?prod=' + prod)}
+                onSaveCollisions={(rules) =>
+                  updateScore((d) => ({
+                    ...d,
+                    models: d.models.map((mm) => (mm.prod === prod ? { ...mm, collisionRules: rules } : mm)),
+                  }))
+                }
+              />
+            </div>
           ) : (
             <div className="space-y-2">
               <div className="flex items-center justify-between">

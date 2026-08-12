@@ -1,5 +1,5 @@
 // 评分产品子系统（v3 新 IA）· 数据层
-// 三个产品：智察分（欺诈 0-100）/ 智信分（违约 300-900）/ 智融分（综合 300-900）
+// 三个产品：智察分（欺诈 0-100）/ 智信分（违约 300-900）/ 智融分（综合 350-950）
 // 数据持久化到本地 scoreData.json，复用 /api/load-mid /api/save-mid
 
 import { useSyncExternalStore } from 'react'
@@ -287,15 +287,22 @@ export const SEED_SCORE: ScoreData = {
       enabled: true,
       version: 'v2.3.1',
       updatedAt: '2026-07-28',
-      algoType: '梯度提升树 XGBoost + 规则硬拦截',
-      algoCode: `# 智察分 · 欺诈识别模型（XGBoost + 规则）
+      algoType: '梯度提升树 XGBoost + 规则硬拦截 + 规则修正',
+      algoCode: `# 智察分 · 欺诈识别模型（XGBoost + 规则硬拦截 + 主线规则修正）
 # 输出 0-100，分数越高欺诈风险越高
 def score_zhicha(req):
-    feats = extract_features(req)          # 设备/网络/行为/名单
-    score = xgb_model.predict_proba(feats)['fraud'] * 100
-    if hit_blacklist(req):                 # 规则硬拦截：命中外部黑灰名单直接封顶
-        score = max(score, 95)
-    return round(score, 1)
+    feats = extract_features(req)                 # 设备/网络/行为/名单
+    base = xgb_model.predict_proba(feats)['fraud'] * 100   # 欺诈基础分 0-100
+    if hit_blacklist(req):                        # 规则硬拦截：命中外部黑灰名单直接封顶
+        base = max(base, 95)
+    # 主线风险规则修正引擎（独立判定、累加，封顶 100）
+    adjust = 0
+    if device_multi_apply_tag == 1:  adjust += 12   # Rule-001 同设备短期多次申请
+    if ip_risk_tag == 1:            adjust += 10   # Rule-002 申请IP风险画像
+    if black_contact_tag == 1:      adjust += 15   # Rule-003 紧急联系人命中风险名单
+    if mobile_register_months < 3:  adjust += 8    # Rule-004 手机号入网不足3个月
+    final = min(base + adjust, 100)                # 分数上限100，不溢出
+    return round(final, 1)
 
 # 特征分裂增益（归一化）
 WEIGHTS = {
@@ -315,6 +322,13 @@ WEIGHTS = {
         { name: '命中黑灰名单', weight: 20 },
         { name: '同设备关联账号', weight: 18 },
         { name: '负债收入比', weight: 12 },
+      ],
+      /* 主线规则修正引擎（数据落地：规则集与算法分离，改内容只动此处） */
+      bins: [
+        { key: 'rule_001', name: 'Rule-001 同一设备短期内多次申请', bins: [{ label: 'device_multi_apply_tag == 1', points: 12 }] },
+        { key: 'rule_002', name: 'Rule-002 申请IP存在风险画像', bins: [{ label: 'ip_risk_tag == 1', points: 10 }] },
+        { key: 'rule_003', name: 'Rule-003 紧急联系人命中风险名单', bins: [{ label: 'black_contact_tag == 1', points: 15 }] },
+        { key: 'rule_004', name: 'Rule-004 手机号入网不足3个月', bins: [{ label: 'mobile_register_months < 3', points: 8 }] },
       ],
       collisionRules: COLLISION_SEED.zhicha.map((r) => ({ ...r })),
     },
@@ -371,7 +385,7 @@ WEIGHTS = {
     {
       prod: 'zhirong',
       name: '智融分',
-      range: [300, 900],
+      range: [350, 950],
       color: '#8b5cf6',
       score: 655,
       dims: [
@@ -383,16 +397,27 @@ WEIGHTS = {
       enabled: true,
       version: 'v1.4.2',
       updatedAt: '2026-07-31',
-      algoType: '加权融合（Fusion · 多模型集成）',
-      algoCode: `# 智融分 · 综合价值模型（加权融合）
-# 融合 违约(智信分) + 兴趣 + 转化意愿 + 资产
+      algoType: '梯度提升树GBDT + 逻辑回归融合模型 · 信用规则修正 + 加权融合',
+      algoCode: `# 智融分 · 综合价值模型（GBDT+LR 基础模型 + 信用规则修正 + 加权融合）
+# 分数区间 350-950，基础分 600；分数越高信用资质越好、违约概率越低
 def score_zhirong(cust):
-    return (
-        0.34 * normalize(zhixin(cust)) +
-        0.24 * interest(cust) +
-        0.18 * conversion(cust) +
-        0.24 * asset(cust)
-    ) * 600 + 300                       # 映射至 300-900
+    # 基础模型：GBDT+LR 融合违约/兴趣/转化/资产，输出 base_credit_score（350-950）
+    base = gbdt_lr_model.predict(cust_features(cust))
+    # 主线信用规则修正引擎（独立判定、累加；负向扣减、正向加分；封顶区间）
+    adjust = 0
+    if current_overdue_status == 1:                 adjust -= 60   # Rule-001 当前存在逾期
+    if twentyfour_month_overdue_cnt >= 3:           adjust -= 40   # Rule-002 近24月多次逾期
+    if credit_util_ratio > 0.85:                    adjust -= 35   # Rule-003 授信使用率过高
+    if dti_ratio > 0.8:                             adjust -= 30   # Rule-004 负债收入比超标
+    if six_month_query_cnt > 12:                    adjust -= 25   # Rule-005 征信查询频繁
+    if overdue == 0 and util < 0.5 and dti < 0.4:   adjust += 20   # Rule-006 征信优质负债健康
+    final_credit_score = clip(base + adjust, 350, 950)            # 强制约束区间，无溢出
+    # 综合价值融合（违约维度由智信分提供）
+    value = (0.34 * normalize(zhixin(cust)) +
+             0.24 * interest(cust) +
+             0.18 * conversion(cust) +
+             0.24 * asset(cust)) * 600 + 300
+    return value
 
 # 融合权重
 WEIGHTS = {
@@ -410,6 +435,15 @@ WEIGHTS = {
         { name: '借贷兴趣', weight: 24 },
         { name: '转化意愿', weight: 18 },
         { name: '资产状况', weight: 24 },
+      ],
+      /* 主线信用规则修正引擎（数据落地：规则集与算法分离，改内容只动此处） */
+      bins: [
+        { key: 'rule_001', name: 'Rule-001 当前存在逾期', bins: [{ label: 'current_overdue_status == 1', points: -60 }] },
+        { key: 'rule_002', name: 'Rule-002 近24个月多次逾期', bins: [{ label: 'twentyfour_month_overdue_cnt >= 3', points: -40 }] },
+        { key: 'rule_003', name: 'Rule-003 循环授信使用率过高', bins: [{ label: 'credit_util_ratio > 0.85', points: -35 }] },
+        { key: 'rule_004', name: 'Rule-004 负债收入比超标', bins: [{ label: 'dti_ratio > 0.8', points: -30 }] },
+        { key: 'rule_005', name: 'Rule-005 短期征信查询频繁', bins: [{ label: 'six_month_query_cnt > 12', points: -25 }] },
+        { key: 'rule_006', name: 'Rule-006 征信优质负债健康', bins: [{ label: 'overdue == 0 && util < 0.5 && dti < 0.4', points: 20 }] },
       ],
       collisionRules: COLLISION_SEED.zhirong.map((r) => ({ ...r })),
     },
@@ -508,10 +542,10 @@ WEIGHTS = {
     { prod: 'zhixin', range: '541-660', level: 'C', meaning: '违约概率偏高', action: '审慎授信' },
     { prod: 'zhixin', range: '661-780', level: 'B', meaning: '违约概率可控', action: '标准额度' },
     { prod: 'zhixin', range: '781-900', level: 'A', meaning: '违约概率低', action: '提额 + 优先经营' },
-    { prod: 'zhirong', range: '300-540', level: 'D', meaning: '综合价值低且高风险', action: '拒绝或仅营销低风险产品' },
-    { prod: 'zhirong', range: '541-660', level: 'C', meaning: '综合价值一般', action: '标准策略' },
-    { prod: 'zhirong', range: '661-780', level: 'B', meaning: '价值与风险均衡', action: '常规经营' },
-    { prod: 'zhirong', range: '781-900', level: 'A', meaning: '高价值低风险的优质客户', action: '提额 + 优先经营' },
+    { prod: 'zhirong', range: '350-499', level: 'D', meaning: '综合价值低且高风险', action: '拒绝或仅营销低风险产品' },
+    { prod: 'zhirong', range: '500-649', level: 'C', meaning: '综合价值一般', action: '标准策略' },
+    { prod: 'zhirong', range: '650-799', level: 'B', meaning: '价值与风险均衡', action: '常规经营' },
+    { prod: 'zhirong', range: '800-950', level: 'A', meaning: '高价值低风险的优质客户', action: '提额 + 优先经营' },
   ],
   alertRules: [
     { id: 'AR-1', name: '智察分阈值预警', cond: '智察分 ≥ 70', threshold: 70, level: '高', enabled: true },
