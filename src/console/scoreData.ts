@@ -1,9 +1,9 @@
 // 评分产品子系统（v3 新 IA）· 数据层
 // 三个产品：智察分（欺诈 0-100）/ 智信分（违约 300-900）/ 智融分（综合 350-950）
 // 数据持久化到本地 scoreData.json，复用 /api/load-mid /api/save-mid
+// 处置流程统一由管理中心「业务流程」配置（bizFlows.json · f-alert-dispose），本数据层不再持有 flow
 
 import { useSyncExternalStore } from 'react'
-import type { FlowGraph } from './reportTemplateData'
 
 export type ScoreProd = 'zhicha' | 'zhixin' | 'zhirong'
 
@@ -136,9 +136,14 @@ export function computeZhixin(raw: Record<string, number>): { score: number; tot
       (b.max === undefined || v <= b.max) &&
       (b.gt === undefined || v > b.gt) &&
       (b.lt === undefined || v < b.lt),
-    ) || f.bins[f.bins.length - 1]
-    total += hit.points
-    steps.push({ factor: f.name, input: v, bin: hit.label, points: hit.points })
+    )
+    if (hit) {
+      total += hit.points
+      steps.push({ factor: f.name, input: v, bin: hit.label, points: hit.points })
+    } else {
+      // 未命中任何分箱（如小数落在整数箱间隙）：显式记 0 分并标注，避免静默落到最差档误判
+      steps.push({ factor: f.name, input: v, bin: '未覆盖区间', points: 0 })
+    }
   }
   return { score: Math.max(300, Math.min(900, ZHIXIN_BASE + total)), total, steps }
 }
@@ -244,30 +249,6 @@ export interface ScoreData {
   callTrend: { month: string; zhicha: number; zhixin: number; zhirong: number }[]
   riskRate: number
   monthlyCount: number
-  flow: FlowGraph
-}
-
-const DEFAULT_FLOW: FlowGraph = {
-  name: '评分预警处置流程',
-  match: [{ field: 'level', value: 'RED' }],
-  flowSteps: [
-    { state: '待处理', action: '接收预警', next: '核实中', color: '#ef4444', timeLimit: 30 },
-    { state: '核实中', action: '人工核实', next: '处置中', color: '#f59e0b', timeLimit: 60 },
-    { state: '处置中', action: '发起处置', next: '已闭环', color: '#3b82f6', timeLimit: 120 },
-    { state: '已闭环', action: '结案', color: '#22c55e' },
-  ],
-  nodes: [
-    { id: 'n_start', type: 'start', label: '预警触发', x: 80, y: 220 },
-    { id: 'n1', type: 'normal', label: '核实预警', buttonName: '提交核实', timeLimit: 60, x: 300, y: 220, role: '风控专员', results: ['通过', '拒绝'], resultStates: ['处置中', '已闭环'] },
-    { id: 'n2', type: 'normal', label: '发起处置', buttonName: '发起处置', timeLimit: 120, x: 560, y: 220, role: '处置专员', results: ['转人工', '拒绝'], resultStates: ['已闭环', '已闭环'] },
-    { id: 'n_end', type: 'end', label: '闭环', x: 820, y: 220 },
-  ],
-  edges: [
-    { id: 'e1', from: 'n_start', to: 'n1' },
-    { id: 'e2', from: 'n1', to: 'n2', label: '通过', result: '通过' },
-    { id: 'e3', from: 'n1', to: 'n_end', label: '拒绝', result: '拒绝' },
-    { id: 'e4', from: 'n2', to: 'n_end', label: '结案' },
-  ],
 }
 
 export const SEED_SCORE: ScoreData = {
@@ -565,7 +546,6 @@ WEIGHTS = {
   ],
   riskRate: 6.8,
   monthlyCount: 29910,
-  flow: DEFAULT_FLOW,
 }
 
 /* ---- 轻量 store ---- */

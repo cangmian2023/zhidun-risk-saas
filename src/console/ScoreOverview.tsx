@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useScore, SCORE_PROD_LABEL, updateScore, type ScoreProd, type ScoreRecord } from './scoreData'
+import { useScore, SCORE_PROD_LABEL, updateScore, zhixinGrade, type ScoreProd, type ScoreRecord } from './scoreData'
 import { PageShell } from './PageShell'
 import { Panel, StatCard, Button, Badge, Modal } from '../components/ui'
 import { Sam, Cal } from './SourceTag'
@@ -45,18 +45,40 @@ export default function ScoreOverviewPage() {
   const [search, setSearch] = useState('')
   const [importOpen, setImportOpen] = useState(false)
   const [csv, setCsv] = useState('')
+  const [importMsg, setImportMsg] = useState('')
 
   const onSearch = () => {
     const v = search.trim()
-    if (v) nav('/console/cr/mid-cust-score?cust=' + encodeURIComponent(v) + '&prod=zhixin')
+    if (v) nav('/console/cr/mid-cust-score?cust=' + encodeURIComponent(v) + '&prod=zhixin&back=' + encodeURIComponent('/console/sc/overview'))
   }
-  const openImport = () => setImportOpen(true)
+  const openImport = () => {
+    setImportMsg('')
+    setImportOpen(true)
+  }
   const confirmImport = () => {
+    const MODEL_MAP: Record<string, ScoreProd> = {
+      zhicha: 'zhicha', 智察分: 'zhicha', 智察: 'zhicha',
+      zhixin: 'zhixin', 智信分: 'zhixin', 智信: 'zhixin',
+      zhirong: 'zhirong', 智融分: 'zhirong', 智融: 'zhirong',
+    }
     const now = new Date().toISOString().slice(0, 19).replace('T', ' ')
-    const recs: ScoreRecord[] = [
-      { id: `R-IMP-${Date.now()}`, time: now, custId: 'CUST-IMPORT', custName: '导入客户', model: 'zhixin', score: 650, level: 'B', source: '批量', status: 'success' },
-      { id: `R-IMP-${Date.now() + 1}`, time: now, custId: 'CUST-IMPORT', custName: '导入客户', model: 'zhirong', score: 720, level: 'A', source: '批量', status: 'success' },
-    ]
+    const recs: ScoreRecord[] = []
+    csv.split(/\r?\n/).forEach((rawLine, i) => {
+      const line = rawLine.trim()
+      if (!line || line.startsWith('#')) return
+      const parts = line.split(/[,，\t]/).map((s) => s.trim())
+      if (parts.length < 3) return
+      const [custId, modelRaw, scoreRaw] = parts
+      const model = MODEL_MAP[modelRaw] ?? (modelRaw as ScoreProd)
+      const score = Number(scoreRaw)
+      if (!custId || !Number.isFinite(score) || score < 0) return
+      const level = model === 'zhixin' ? zhixinGrade(score).level : score >= 70 ? '高' : score >= 40 ? '中' : '低'
+      recs.push({ id: `R-IMP-${Date.now()}-${i}`, time: now, custId, custName: custId, model, score, level, source: '批量', status: 'success' })
+    })
+    if (!recs.length) {
+      setImportMsg('未解析到有效行：每行格式「客户号,模型,分数」，模型为 zhicha/zhixin/zhirong（或智察分/智信分/智融分）')
+      return
+    }
     updateScore((d) => ({ ...d, records: [...recs, ...d.records] }))
     setImportOpen(false)
     setCsv('')
@@ -157,15 +179,16 @@ export default function ScoreOverviewPage() {
       </div>
 
       <Modal open={importOpen} onClose={() => setImportOpen(false)} title="批量评分导入">
-        <p className="mb-3 text-xs text-slate-500">支持粘贴 CSV（客户号,模型,分数），确认后追加为评分记录。</p>
+        <p className="mb-3 text-xs text-slate-500">每行一条：客户号,模型,分数（模型：zhicha/zhixin/zhirong 或 智察分/智信分/智融分）。</p>
         <textarea
           value={csv}
           onChange={(e) => setCsv(e.target.value)}
-          placeholder="粘贴 CSV（客户号,模型,分数）"
-          className="h-40 w-full resize-none rounded-lg border border-slate-200 p-3 text-sm text-ink-900 outline-none focus:border-brand-400"
+          placeholder={'CUST-100001,zhixin,712\nCUST-100002,智察分,78'}
+          className="h-40 w-full resize-none rounded-lg border border-slate-200 p-3 font-mono text-sm text-ink-900 outline-none focus:border-brand-400"
         />
+        {importMsg && <p className="mt-2 text-xs text-amber-600">{importMsg}</p>}
         <p className="mt-2 text-[11px] text-slate-400">
-          <Sam value="scoreData.json" /> 将生成示例记录（智信分/智融分）
+          <Sam value="scoreData.json" /> 解析成功后追加为评分记录（按你输入的 CSV 逐行生成）
         </p>
         <div className="mt-4 flex justify-end gap-2">
           <Button size="sm" variant="ghost" onClick={() => setImportOpen(false)}>取消</Button>

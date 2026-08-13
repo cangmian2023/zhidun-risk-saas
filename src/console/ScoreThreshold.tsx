@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useScore, updateScore, SCORE_PROD_LABEL, type ScoreProd, type ThresholdRow } from './scoreData'
 import { PageShell } from './PageShell'
-import { Panel, DataTable, Button, type Column, type Row } from '../components/ui'
+import { Panel, DataTable, Button, Modal, type Column, type Row } from '../components/ui'
 import { Cfg } from './SourceTag'
 
 function levelKind(level: string): 'red' | 'amber' | 'blue' | 'green' | 'gray' {
@@ -19,6 +19,9 @@ export default function ScoreThresholdPage() {
   const [prod, setProd] = useState<ScoreProd>(((params.get('prod') as ScoreProd) || 'zhicha'))
   const [editingId, setEditingId] = useState<string | null>(null)
   const [actionVal, setActionVal] = useState('')
+  // 新增阈值弹窗
+  const [newOpen, setNewOpen] = useState(false)
+  const [draft, setDraft] = useState({ range: '', level: '', meaning: '', action: '' })
 
   const editKey = (t: ThresholdRow) => `${t.prod}|${t.range}|${t.level}`
   const findT = (id: string) => {
@@ -38,11 +41,23 @@ export default function ScoreThresholdPage() {
     }))
     setEditingId(null)
   }
-  const addRow = () =>
+  const openNew = () => {
+    setDraft({ range: '', level: '', meaning: '', action: '' })
+    setNewOpen(true)
+  }
+  const confirmNew = () => {
+    const range = draft.range.trim()
+    const level = draft.level.trim()
+    if (!range || !level) return
     updateScore((d) => ({
       ...d,
-      thresholds: [...d.thresholds, { prod, range: '新增区间', level: '新', meaning: '', action: '' }],
+      thresholds: [
+        ...d.thresholds,
+        { prod, range, level, meaning: draft.meaning.trim(), action: draft.action.trim() },
+      ],
     }))
+    setNewOpen(false)
+  }
 
   const cols: Column[] = [
     { key: 'range', label: '分数区间', width: '160px' },
@@ -90,7 +105,7 @@ export default function ScoreThresholdPage() {
       <PageShell
         title="评分阈值"
         crumb="评分产品 / 策略配置"
-        actions={<Button size="sm" variant="primary" onClick={addRow}>新增阈值</Button>}
+        actions={<Button size="sm" variant="primary" onClick={openNew}>新增阈值</Button>}
       />
       <div className="space-y-4">
         <div className="flex gap-2">
@@ -104,6 +119,35 @@ export default function ScoreThresholdPage() {
           <DataTable columns={cols} rows={rows} empty="暂无阈值" pager defaultPageSize={10} />
         </Panel>
       </div>
+
+      <Modal open={newOpen} onClose={() => setNewOpen(false)} title={`新增阈值 · ${SCORE_PROD_LABEL[prod]}`}>
+        <div className="space-y-3">
+          <label className="block">
+            <span className="mb-1 block text-xs text-slate-400">分数区间（如 0-40 / 41-69）</span>
+            <input value={draft.range} onChange={(e) => setDraft({ ...draft, range: e.target.value })} placeholder="0-40"
+              className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm outline-none focus:border-brand-400" />
+          </label>
+          <label className="block">
+            <span className="mb-1 block text-xs text-slate-400">等级（如 高 / 中 / 低 或 A-E）</span>
+            <input value={draft.level} onChange={(e) => setDraft({ ...draft, level: e.target.value })} placeholder="高"
+              className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm outline-none focus:border-brand-400" />
+          </label>
+          <label className="block">
+            <span className="mb-1 block text-xs text-slate-400">含义</span>
+            <input value={draft.meaning} onChange={(e) => setDraft({ ...draft, meaning: e.target.value })} placeholder="欺诈风险极高，直接拒绝"
+              className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm outline-none focus:border-brand-400" />
+          </label>
+          <label className="block">
+            <span className="mb-1 block text-xs text-slate-400">建议动作</span>
+            <input value={draft.action} onChange={(e) => setDraft({ ...draft, action: e.target.value })} placeholder="拒绝 / 审慎授信 / 标准额度"
+              className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm outline-none focus:border-brand-400" />
+          </label>
+        </div>
+        <div className="mt-4 flex justify-end gap-2">
+          <Button size="sm" variant="ghost" onClick={() => setNewOpen(false)}>取消</Button>
+          <Button size="sm" variant="primary" onClick={confirmNew}>确认新增</Button>
+        </div>
+      </Modal>
     </>
   )
 }

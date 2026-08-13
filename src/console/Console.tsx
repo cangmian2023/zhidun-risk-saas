@@ -24,7 +24,6 @@ import MidMonitorConfig from './MidMonitorConfig'
 import MidDisposeConfig from './MidDisposeConfig'
 import MidDashboardConfig from './MidDashboardConfig'
 import MidAlertWorkbench from './MidAlertWorkbench'
-import MidCustDetail from './MidCustDetail'
 import { CustProfile } from './CustProfile'
 import CustScoreDetail from './CustScoreDetail'
 import MidDisposeWorkbench from './MidDisposeWorkbench'
@@ -305,7 +304,6 @@ export default function Console() {
     'cr:mid-overview': 'chart',
     'cr:mid-alert-workbench': 'zoom',
     'cr:mid-dispose-workbench': 'work_flow',
-    'cr:mid-cust-detail': 'monitor',
     'cr:mid-single-cust': 'id',
     'cr:mid-single-cust-2': 'id',
     // 催贷管理（6 大模块重新规划）
@@ -570,8 +568,6 @@ export default function Console() {
               <MidAlertWorkbench />
             ) : key === 'cr:mid-dispose-workbench' ? (
               <MidDisposeWorkbench />
-            ) : key === 'cr:mid-cust-detail' ? (
-              <MidCustDetail />
             ) : key === 'cr:mid-cust-score' ? (
               <CustScoreDetail />
             ) : key === 'cr:mid-single-cust' ? (

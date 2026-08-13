@@ -28,7 +28,7 @@ export default function ScoreCrowdPage() {
   const nav = useNavigate()
 
   const crowds: CrowdGroup[] = data.crowds ?? []
-  const openDetail = (custId: string) => nav('/console/cr/mid-cust-score?cust=' + custId + '&prod=zhixin')
+  const openDetail = (custId: string) => nav('/console/cr/mid-cust-score?cust=' + custId + '&prod=zhixin&back=' + encodeURIComponent('/console/sc/crowd-groups'))
 
   return (
     <>
@@ -67,7 +67,7 @@ export default function ScoreCrowdPage() {
                   <div className="mt-3 space-y-1">
                     {preview.map((c) => (
                       <div
-                        key={c?.custId ?? Math.random()}
+                        key={c?.custId ?? ''}
                         className="flex items-center justify-between rounded-md px-2 py-1 text-xs text-slate-500 hover:bg-slate-50"
                         onClick={(e) => {
                           e.stopPropagation()

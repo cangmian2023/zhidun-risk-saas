@@ -8,39 +8,31 @@ import { Sam, Cal } from './SourceTag';
 import { PageShell } from './PageShell';
 import { useMidAlerts, useMidSaveStatus, updateAlerts } from './midStore';
 import { LEVEL_META } from './midData';
-import { useFlows, flowStepOf, matchFlowGraph, nodeTimeLimitOf } from './flowStore';
+import { useFlows } from './flowStore';
 import FlowStateCell from './FlowStateCell';
+// 统一流程绑定层：与贷前四页（进件审核/信息核验/信用风控/欺诈识别）共用同一套实现
+import { useMinuteTick, renderCountdown, matchObjOf, flowIdOfRow, nowStamp, usePageFlow } from './flowBinding';
+
+/* 本页流程匹配字段（需求16）：{ 流程配置字段名: 行数据键名 } */
+const ALERT_MATCH_FIELDS = { level: 'levelRaw', alert_type: 'alertTypeRaw', scene: 'scene' };
 
 export default function MidAlertWorkbench() {
   const alerts = useMidAlerts();
   const saveStatus = useMidSaveStatus();
-  const flows = useFlows();
+  useFlows(); // 订阅流程配置变更
+  const pageFlow = usePageFlow('/console/cr/mid-alert'); // 未配 flowKey 的行回落本页关联流程
   const nav = useNavigate();
 
-  // 需求14：时限倒计时每分钟刷新
-  const [, setTick] = useState(0);
-  useEffect(() => {
-    const t = setInterval(() => setTick((x) => x + 1), 60000);
-    return () => clearInterval(t);
-  }, []);
+  useMinuteTick(); // 需求14：时限倒计时每分钟刷新
 
-  // 节点时限倒计时（分钟）：无时限 / 终态 / 未记录进入时间 → '—'
-  // 需求16：按对象字段（level/alert_type）匹配具体流程；需求22：时限取「节点属性」timeLimit
-  const countdownOf = (r: Row): React.ReactNode => {
-    const f = String(r.flowKey ?? '') ? flows.find((x) => x.id === String(r.flowKey)) : undefined;
-    const { graph, steps } = matchFlowGraph(f, { level: r.levelRaw ?? '', alert_type: r.alertTypeRaw ?? '' });
-    if (!f || !steps.length || !r.flowStateAt) return <span style={{ color: '#94A3B8' }}>—</span>;
-    const { step } = flowStepOf({ flowSteps: steps, flowState: String(r.flowState ?? '') });
-    if (!step?.next) return <span style={{ color: '#94A3B8' }}>—</span>; // 终态无倒计时
-    const tl = nodeTimeLimitOf(graph, String(r.flowState ?? ''));
-    if (!tl) return <span style={{ color: '#94A3B8' }}>—</span>;
-    const remain = new Date(String(r.flowStateAt)).getTime() + tl * 60000 - Date.now();
-    if (remain <= 0) return <span style={{ color: '#DC2626', fontWeight: 600 }}>已超时</span>;
-    const h = Math.floor(remain / 3600000);
-    const m = Math.floor((remain % 3600000) / 60000);
-    const color = remain < 30 * 60000 ? '#DC2626' : remain < 120 * 60000 ? '#D97706' : '#475569';
-    return <span style={{ color, fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>{h > 0 ? `${h}小时${m}分` : `${m}分钟`}</span>;
-  };
+  // 节点时限倒计时：统一实现（与贷前四页完全一致）
+  const countdownOf = (r: Row): React.ReactNode =>
+    renderCountdown({
+      flowId: flowIdOfRow(r as any, pageFlow),
+      flowState: String(r.flowState ?? ''),
+      flowStateAt: String(r.flowStateAt ?? ''),
+      matchObj: matchObjOf(r as any, ALERT_MATCH_FIELDS),
+    });
 
   const [lvl, setLvl] = useState<string>('');
   const [scene, setScene] = useState<string>('');

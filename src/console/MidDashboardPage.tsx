@@ -68,7 +68,7 @@ export default function MidDashboardPage({ pageKey }: { pageKey: string }) {
     if ((w.drill?.type ?? 'none') === 'none' || !w.drill?.rowKey) return;
     const rows = filteredRows(w.datasetId);
     const firstCust = rows.find((r) => r[w.drill!.rowKey!])?.[w.drill!.rowKey!];
-    if (firstCust) nav(`/console/cr/mid-cust-detail?cust=${firstCust}`);
+    if (firstCust) nav(`/console/cr/mid-single-cust?cust=${firstCust}`);
   };
 
   // 需求18：组件「数据详情」→ 左侧嵌套抽屉（外层=明细列表，内层=行数据详情两列）
@@ -241,7 +241,7 @@ export function WidgetView({ w, ds, metric, metrics, rows, onDrill, nav, onEdit,
   );
   return (
     <Panel title={w.title} actions={tableActions} className="h-full" hoverTip={tip}>
-      <DataTable columns={cols} rows={trows} clickableKey={w.dimensions?.[0]} onCellClick={(r) => { if (drillable && w.drill?.rowKey) { const raw = rows[Number(r.id)]; const cid = raw?.[w.drill.rowKey]; if (cid) nav(`/console/cr/mid-cust-detail?cust=${cid}`); } }} />
+      <DataTable columns={cols} rows={trows} clickableKey={w.dimensions?.[0]} onCellClick={(r) => { if (drillable && w.drill?.rowKey) { const raw = rows[Number(r.id)]; const cid = raw?.[w.drill.rowKey]; if (cid) nav(`/console/cr/mid-single-cust?cust=${cid}`); } }} />
     </Panel>
   );
 }

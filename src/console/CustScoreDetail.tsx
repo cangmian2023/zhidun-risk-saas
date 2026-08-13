@@ -18,7 +18,7 @@ import { PageShell } from './PageShell';
 import { useMidCustomers, useMidAlerts } from './midStore';
 import { useFlows, matchFlowGraph } from './flowStore';
 import { models } from './data';
-import { useScore, updateScore, type ScoreProd, type ModelMeta } from './scoreData';
+import { useScore, updateScore, computeZhixin, ZHIXIN_SCORECARD, type ScoreProd, type ModelMeta } from './scoreData';
 import ModelDecisionGraph from './ModelDecisionGraph';
 import { PIPELINE_GRAPHS } from './modelGraphData';
 import type { MidCustomer, ModelScoreItem, CustRiskDim, CustRelationNode } from './midData';
@@ -726,6 +726,9 @@ export default function CustScoreDetail() {
   const prodParam = (params.get('prod') ?? 'zhicha') as ProdKey;
   const prod: ProdKey = PROD_KEYS.includes(prodParam) ? prodParam : 'zhicha';
   const fromAlertId = params.get('id') ?? '';
+  // 返回地址：入口跳转带 back 参数（如客户分组/客户列表/评分总览搜索），缺省回退单客详情
+  const backParam = params.get('back');
+  const backTarget = backParam ? decodeURIComponent(backParam) : null;
   const nav = useNavigate();
   const customers = useMidCustomers();
   const globalAlerts = useMidAlerts();
@@ -744,7 +747,7 @@ export default function CustScoreDetail() {
     const raw = cust.scores?.[prod] ?? deriveFallback(cust, prod);
     return raw ? enrich(raw, prod) : null;
   }, [cust, prod]);
-  const backTo = () => nav('/console/cr/mid-cust-detail?cust=' + custId + (fromAlertId ? '&id=' + fromAlertId : ''));
+  const backTo = () => nav(backTarget ?? ('/console/cr/mid-single-cust?cust=' + custId + (fromAlertId ? '&id=' + fromAlertId : '')));
 
   const reg: any = models.find((m) => m.id === PROD_TO_MODEL[prod]) ?? {};
   const capa = MODEL_CAPA[prod];
@@ -897,7 +900,7 @@ export default function CustScoreDetail() {
                 return (
                   <button
                     key={k} type="button" title={`进入 ${m.label} 得分页面`}
-                    onClick={() => nav('/console/cr/mid-cust-score?cust=' + custId + '&prod=' + k + (fromAlertId ? '&id=' + fromAlertId : ''))}
+                    onClick={() => nav('/console/cr/mid-cust-score?cust=' + custId + '&prod=' + k + (fromAlertId ? '&id=' + fromAlertId : '') + (backTarget ? '&back=' + encodeURIComponent(backTarget) : ''))}
                     style={{
                       border: active ? '1.5px solid ' + m.color : '1px solid #E2E8F0',
                       background: active ? m.color + '0f' : '#fff', borderRadius: 8, padding: '6px 10px',
@@ -1393,10 +1396,108 @@ export default function CustScoreDetail() {
               </div>
             </Panel>
 
+            {prod === 'zhixin' ? <ScorecardLedger cust={cust} /> : (
+              <Panel title="评分计算" desc="该模型当前为演示样例分（静态快照），未内置可复现计算；如需接入评分卡账本可后续补充">
+                <div style={{ fontSize: 13, color: '#64748B', lineHeight: 1.8 }}>
+                  智信分已实现可验证的「评分卡计算」（输入原始值 → 分箱加分 → 总分），可在智信分页面查看。
+                  智察分 / 智融分保持静态样例分展示。
+                </div>
+              </Panel>
+            )}
           </>
         )}
 
               </div>
     </div>
+  );
+}
+
+/* ===== 评分卡计算账本（智信分 · 可验证计算） =====
+ * 输入 5 个原始值 → 按 ZHIXIN_SCORECARD 分箱加分 → 基础分 600 + 加分 = 总分（裁剪 300-900）。
+ * 默认样例输入与 model-trace.html 一致（m3=1, dir=58, inc=14, q6=8, util=43 → 712 分可复现）。
+ */
+function ScorecardLedger({ cust }: { cust: MidCustomer }) {
+  const [raw, setRaw] = useState({ m3: 1, dir: 58, inc: 14, q6: 8, util: 43 });
+  const result = useMemo(() => computeZhixin(raw), [raw]);
+  const grade = result.score <= 540 ? 'D' : result.score <= 660 ? 'C' : result.score <= 780 ? 'B' : 'A';
+  const gradeColor = grade === 'A' ? '#16A34A' : grade === 'B' ? '#0891B2' : grade === 'C' ? '#D97706' : '#DC2626';
+
+  const fieldDefs = [
+    { key: 'm3' as const, label: '历史逾期（近2年 M3+ 次数）', unit: '次', min: 0, max: 5 },
+    { key: 'dir' as const, label: '负债收入比（%）', unit: '%', min: 0, max: 100 },
+    { key: 'inc' as const, label: '收入稳定（连续还款月数）', unit: '月', min: 0, max: 36 },
+    { key: 'q6' as const, label: '征信查询（近6月次数）', unit: '次', min: 0, max: 30 },
+    { key: 'util' as const, label: '授信使用率（%）', unit: '%', min: 0, max: 100 },
+  ];
+
+  return (
+    <Panel title="评分卡计算账本" desc="输入原始数据 → 分箱加分 → 总分：分数可复核（基础分 600，样例输入 712 分可复现）">
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 10 }}>
+        {fieldDefs.map((f) => (
+          <label key={f.key} style={{ display: 'block' }}>
+            <div style={{ fontSize: 12, color: '#64748B', marginBottom: 4 }}>{f.label}</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <input
+                type="number"
+                value={raw[f.key]}
+                min={f.min}
+                max={f.max}
+                onChange={(e) => setRaw((r) => ({ ...r, [f.key]: Number(e.target.value) }))}
+                style={{ width: '100%', border: '1px solid #E2E8F0', borderRadius: 8, padding: '6px 10px', fontSize: 14, outline: 'none' }}
+              />
+              <span style={{ fontSize: 12, color: '#94A3B8' }}>{f.unit}</span>
+            </div>
+          </label>
+        ))}
+      </div>
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: 16, margin: '14px 0 4px', padding: '10px 14px', background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 10 }}>
+        <div>
+          <div style={{ fontSize: 12, color: '#64748B' }}>总分（基础 600 + {result.total}）</div>
+          <div style={{ fontSize: 26, fontWeight: 800, color: gradeColor, fontVariantNumeric: 'tabular-nums' }}>{result.score}</div>
+        </div>
+        <div>
+          <div style={{ fontSize: 12, color: '#64748B' }}>信用等级</div>
+          <div style={{ fontSize: 20, fontWeight: 700, color: gradeColor }}>{grade}</div>
+        </div>
+        <div style={{ fontSize: 12, color: '#94A3B8', lineHeight: 1.7 }}>
+          参考动作：{grade === 'D' ? '拒绝' : grade === 'C' ? '审慎授信' : grade === 'B' ? '标准额度' : '提额 + 优先经营'}
+          <br />客户：{cust.name} · {cust.custId}（样例输入，可拖动调整验证）
+        </div>
+      </div>
+
+      <div style={{ overflowX: 'auto', marginTop: 6 }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12.5 }}>
+          <thead>
+            <tr style={{ color: '#64748B', textAlign: 'left' }}>
+              <th style={{ padding: '6px 10px', borderBottom: '1px solid #E2E8F0' }}>评分因子</th>
+              <th style={{ padding: '6px 10px', borderBottom: '1px solid #E2E8F0' }}>输入值</th>
+              <th style={{ padding: '6px 10px', borderBottom: '1px solid #E2E8F0' }}>命中分箱</th>
+              <th style={{ padding: '6px 10px', borderBottom: '1px solid #E2E8F0', textAlign: 'right' }}>加分</th>
+            </tr>
+          </thead>
+          <tbody>
+            {result.steps.map((s, i) => (
+              <tr key={i} style={{ color: '#334155' }}>
+                <td style={{ padding: '6px 10px', borderBottom: '1px dashed #F1F5F9' }}>{s.factor}</td>
+                <td style={{ padding: '6px 10px', borderBottom: '1px dashed #F1F5F9', fontVariantNumeric: 'tabular-nums' }}>{s.input}</td>
+                <td style={{ padding: '6px 10px', borderBottom: '1px dashed #F1F5F9' }}>
+                  <span style={{ background: s.bin === '未覆盖区间' ? '#FEF3C7' : '#F1F5F9', borderRadius: 6, padding: '1px 8px' }}>{s.bin}</span>
+                </td>
+                <td style={{ padding: '6px 10px', borderBottom: '1px dashed #F1F5F9', textAlign: 'right', fontWeight: 700, color: s.points >= 0 ? '#16A34A' : '#DC2626' }}>{s.points > 0 ? '+' : ''}{s.points}</td>
+              </tr>
+            ))}
+            <tr style={{ color: '#0F172A', fontWeight: 700 }}>
+              <td style={{ padding: '6px 10px' }}>合计加分</td>
+              <td colSpan={2} />
+              <td style={{ padding: '6px 10px', textAlign: 'right' }}>{result.total > 0 ? '+' : ''}{result.total}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div style={{ fontSize: 11.5, color: '#94A3B8', marginTop: 8 }}>
+        分箱表与阈值见 <code>scoreData.ts</code> ZHIXIN_SCORECARD / model-trace.html；区间端点含、gt/lt 不含；未覆盖区间记 0 分。
+      </div>
+    </Panel>
   );
 }

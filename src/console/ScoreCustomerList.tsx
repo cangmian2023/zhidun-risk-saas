@@ -38,7 +38,7 @@ export default function ScoreCustomerListPage() {
   const groupRisk = group?.riskLevel;
   const groupName = group?.name;
 
-  const openDetail = (custId: string) => nav('/console/cr/mid-cust-score?cust=' + custId + '&prod=zhixin');
+  const openDetail = (custId: string) => nav('/console/cr/mid-cust-score?cust=' + custId + '&prod=zhixin&back=' + encodeURIComponent('/console/sc/customer-list' + (groupId ? '?group=' + groupId : '')));
 
   const rows = useMemo(() => {
     const ql = (q ?? '').trim().toLowerCase();
@@ -69,7 +69,7 @@ export default function ScoreCustomerListPage() {
             <Button
               size="sm"
               variant="ghost"
-              onClick={() => nav('/console/cr/mid-cust-score?cust=' + (c?.custId ?? '') + '&prod=zhixin')}
+              onClick={() => openDetail(c?.custId ?? '')}
             >
               查看
             </Button>

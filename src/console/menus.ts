@@ -43,11 +43,7 @@ export const creditRiskMenu: MenuGroup[] = [
   { group: '红黄灯预警中心', section: '贷中监控', items: [{ label: '红黄灯预警中心', key: 'cr:mid-td3', desc: '红黄灯预警信号作业台：按等级筛选 / 命中规则 TOP / 规则明细还原' }] },
   { group: '持续性周期监测', section: '贷中监控', items: [{ label: '持续性周期监测', key: 'cr:mid-td4', desc: '持续性周期监测评估：行为分 / 逾期 / 新增贷款按月趋势' }] },
   { group: '存量客群运营', section: '贷中监控', items: [{ label: '存量客群运营', key: 'cr:mid-td5', desc: '存量客群运营场景：授信 / 余额 / 逾期 + 产品结构 + 贷款台账' }] },
-  // 单客 360° 画像（v3 新增）：企业档案（ep:qiye-profile）的单客版本，功能数据分离独立实现
-  { group: '单客视图', section: '贷中监控', items: [
-    { label: '单客详情', key: 'cr:mid-single-cust', keep: true, desc: '零售信贷单客 360° 画像：身份与职业收入、授信额度、负债逾期、行为画像、风险预警与联系人关系' },
-    { label: '单客详情2（高风险）', key: 'cr:mid-single-cust-2', desc: '同一单客画像页复用不同客户数据（CUST-100891）：预警密集、各模块均带风险标记的样例客户' },
-  ] },
+  // 单客 360° 画像：由原独立菜单入口改为经首页搜索 / 预警详情 / 看板下钻直达（cr:mid-single-cust），故此处不再单列菜单项
 ]
 
 /* ============================================================
@@ -94,17 +90,8 @@ export const scoringMenu: MenuGroup[] = [
     group: '模型管理',
     section: '模型管理',
     items: [
-      { label: '模型管理', key: 'sc:model-manage', desc: '智察分/智信分/智融分管理：点击卡片进入模型详情（基本信息、算法编辑、版本管理）' },
+      { label: '模型管理', key: 'sc:model-manage', desc: '智察分/智信分/智融分管理：点击卡片进入模型详情（基本信息、算法编辑、模型效果、评分阈值、预警规则、版本管理）' },
       { label: '模型效果', key: 'sc:model-effect', desc: '模型效果评估：覆盖率、准确率、及时率、调用量与趋势（三模型铺开对比）' },
-    ],
-  },
-  {
-    group: '策略配置',
-    section: '策略配置',
-    items: [
-      { label: '评分阈值', key: 'sc:score-threshold', desc: '配置各产品评分阈值、风险分层与决策建议映射' },
-      { label: '预警规则', key: 'sc:alert-rule', desc: '配置分值阈值预警与规则命中预警的触发条件与通知渠道' },
-      { label: '处置流程', key: 'sc:dispose-flow', keep: true, desc: '处置流程画布配置（复用 FlowCanvasEditor）：预警处置节点与流转' },
     ],
   },
 ]

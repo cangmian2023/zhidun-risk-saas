@@ -93,7 +93,7 @@ export default function RetailCreditHome() {
     setFocus(false);
   };
   const goCust = (custId: string) => {
-    nav(`/console/cr/mid-cust-detail?cust=${custId}`);
+    nav(`/console/cr/mid-single-cust?cust=${custId}`);
     setQ(''); setFocus(false); setAdvOpen(false);
   };
   const onEnter = () => {

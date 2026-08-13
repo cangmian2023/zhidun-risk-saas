@@ -93,7 +93,7 @@ export default function MidAlertDetail() {
 
       {/* 需求17：客户摘要（按 custId 匹配；「查看单客视图」按钮移入本区块）——第一位 */}
       <Panel className="mb-4" title="客户摘要" desc={cust ? <span>以客户为中心看全局 · <Sam label="样例" /> 客户号 {cust.custId}</span> : '该客户暂无档案（midCustomers.json）'}
-        actions={cust ? <Button size="sm" variant="ghost" onClick={() => nav(`/console/cr/mid-cust-detail?cust=${cust.custId}&id=${a.alert_id}`)}>查看单客视图 →</Button> : undefined}>
+        actions={cust ? <Button size="sm" variant="ghost" onClick={() => nav(`/console/cr/mid-single-cust?cust=${cust.custId}&id=${a.alert_id}`)}>查看单客视图 →</Button> : undefined}>
         {cust ? (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0,1fr))', gap: '6px 16px', fontSize: 13 }}>
             {([
