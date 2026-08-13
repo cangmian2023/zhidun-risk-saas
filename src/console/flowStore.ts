@@ -72,14 +72,21 @@ export function matchFlowGraph(item: FlowItem | undefined, obj: Record<string, u
   const hit = graphs.find(condHit)
   const fallback = hit ?? graphs.find((g) => !(g.match?.length))
   if (!fallback) return { graph: undefined, steps: [], name: '' }
-  const steps = (fallback.flowSteps?.length ? fallback.flowSteps : item.flowSteps?.length ? item.flowSteps : DEFAULT_FLOW_STEPS) as FlowStep[]
+  const rawSteps = (fallback.flowSteps?.length ? fallback.flowSteps : item.flowSteps?.length ? item.flowSteps : DEFAULT_FLOW_STEPS) as FlowStep[]
+  // 同步：画布节点 buttonName 覆盖 flowStep.action（用户在画布编辑器改按钮名 → 列表/详情按钮自动同步）
+  const nodes = fallback.nodes ?? []
+  const steps = rawSteps.map(s => {
+    const node = nodes.find(n => (n.label ?? '') === s.state)
+    return node?.buttonName ? { ...s, action: node.buttonName } : s
+  })
   return { graph: fallback, steps, name: fallback.name ?? item.name }
 }
 
 /* 需求22：节点时限从「节点属性」取（不在状态机）——按当前状态匹配 flowGraph 中 label 相同的节点 */
 export function nodeTimeLimitOf(graph: FlowGraph | undefined, flowState: string | undefined): number | undefined {
   if (!graph || !flowState) return undefined
-  const n = graph.nodes.find((x) => (x.label ?? '') === flowState || (x.buttonName ?? '') === flowState)
+  // nodes 可能缺省（部分流程只配了 flowSteps 没有画布节点），用空数组兜底避免 .find 崩溃
+  const n = (graph.nodes ?? []).find((x) => (x.label ?? '') === flowState || (x.buttonName ?? '') === flowState)
   return n?.timeLimit
 }
 

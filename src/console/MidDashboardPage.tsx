@@ -10,7 +10,7 @@ import FlowActionBar from './FlowActionBar';
 import { useMidDashboards, useMidDataSources, useMidMetrics, updateDataSources } from './midStore';
 import {
   type MidDashboardPage, type MidWidget, type MidPageFilter, type MidDataSource, type MidMetric,
-  resolveMetricsForRows, groupRowsByDim, LEVEL_META,
+  resolveMetricsForRows, groupRowsByDim, applyMetricFilters, LEVEL_META,
 } from './midData';
 
 const PALETTE = ['#2563EB', '#0891B2', '#7C3AED', '#DB2777', '#EA580C', '#16A34A', '#CA8A04', '#475569'];
@@ -26,7 +26,7 @@ const DATA_FLOW_MAP: Record<string, string> = {
   ds_event: 'f-event-analyze',
 };
 
-export default function MidDashboardPage({ pageKey }: { pageKey: string }) {
+export default function MidDashboardPage({ pageKey, crumbPrefix }: { pageKey: string; crumbPrefix?: string }) {
   const dashboards = useMidDashboards();
   const sources = useMidDataSources();
   const metrics = useMidMetrics();
@@ -38,6 +38,10 @@ export default function MidDashboardPage({ pageKey }: { pageKey: string }) {
 
   // 页面级交叉筛选
   const [filters, setFilters] = useState<Record<string, any>>({});
+  // 需求18：组件「数据详情」→ 左侧嵌套抽屉（外层=明细列表，内层=行数据详情两列）——必须在 early return 之前（React Hooks 规则）
+  const [dlWidget, setDlWidget] = useState<MidWidget | null>(null);
+  const [dlOpen, setDlOpen] = useState(false);
+  const [dlRow, setDlRow] = useState<number | null>(null);
 
   if (!page) {
     return <div style={{ padding: 24 }}><PageShell title="监控看板" crumb="零售信贷风控 / 贷中监控" subtitle="暂无页面配置" /></div>;
@@ -63,6 +67,12 @@ export default function MidDashboardPage({ pageKey }: { pageKey: string }) {
     }));
 
   const filteredRows = (dsId: string) => applyFilters(dsById(dsId)?.rows ?? [], page.filters ?? []);
+  /* 组件级筛选（widget.filters，配置端可配）：在页面级筛选后再按组件筛选条件过滤，供单个组件只看某类数据 */
+  const widgetRows = (w: MidWidget) => {
+    const rows = filteredRows(w.datasetId);
+    if (!w.filters?.length) return rows;
+    return applyMetricFilters(rows, w.filters);
+  };
 
   const drillTo = (w: MidWidget) => {
     if ((w.drill?.type ?? 'none') === 'none' || !w.drill?.rowKey) return;
@@ -72,9 +82,6 @@ export default function MidDashboardPage({ pageKey }: { pageKey: string }) {
   };
 
   // 需求18：组件「数据详情」→ 左侧嵌套抽屉（外层=明细列表，内层=行数据详情两列）
-  const [dlWidget, setDlWidget] = useState<MidWidget | null>(null);
-  const [dlOpen, setDlOpen] = useState(false);
-  const [dlRow, setDlRow] = useState<number | null>(null);
   const openDetail = (w: MidWidget) => { setDlWidget(w); setDlRow(null); setDlOpen(true); };
   // 需求23：组件关联流程 → 卡片顶部 + 数据详情抽屉显示流程操作行
   const dlDs = dlWidget ? dsById(dlWidget.datasetId) : undefined;
@@ -86,7 +93,7 @@ export default function MidDashboardPage({ pageKey }: { pageKey: string }) {
 
   return (
     <div style={{ padding: 24, maxWidth: 1280 }}>
-      <PageShell title={page.name} crumb={`零售信贷风控 / 贷中监控 / ${page.group}`} subtitle={page.desc}
+      <PageShell title={page.name} crumb={`${crumbPrefix ?? '零售信贷风控 / 贷中监控'} / ${page.group}`} subtitle={page.desc}
         actions={<><Sam label="页面配置" value="midDashboards.json" /><Sam label="样例数据" value={`${pageDs.reduce((a, s) => a + (s.rows?.length || 0), 0)} 行`} /><Cal label="实时计算" /></>} />
 
       {/* 交叉筛选条 */}
@@ -102,7 +109,7 @@ export default function MidDashboardPage({ pageKey }: { pageKey: string }) {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 16, alignItems: 'stretch' }}>
         {page.widgets.map((w) => (
           <div key={w.id} style={{ gridColumn: `span ${widgetColSpan(w)}`, height: '100%' }}>
-            <WidgetView w={w} ds={dsById(w.datasetId)} metric={metricById(w.metricId)} metrics={metrics} rows={filteredRows(w.datasetId)} onDrill={() => drillTo(w)} onDetail={() => openDetail(w)} nav={nav} />
+            <WidgetView w={w} ds={dsById(w.datasetId)} metric={metricById(w.metricId)} metrics={metrics} rows={widgetRows(w)} onDrill={() => drillTo(w)} onDetail={() => openDetail(w)} nav={nav} />
           </div>
         ))}
       </div>
@@ -166,6 +173,8 @@ export function WidgetView({ w, ds, metric, metrics, rows, onDrill, nav, onEdit,
   onDetail?: (rowIndex?: number) => void; // 需求11：查看详情 → 子页面
 }) {
   const H = widgetChartH(w);
+  // WidgetView 是独立组件，metricById 需在自身作用域内定义（MidDashboardPage 的局部函数不可见）
+  const metricById = (id: string) => metrics.find((m) => m.id === id);
   // 需求38：组件说明（hover 角标）——数据源/指标/维度/粒度
   const tip = [
     ds ? `数据源：${ds.name}` : '',
@@ -200,7 +209,19 @@ export function WidgetView({ w, ds, metric, metrics, rows, onDrill, nav, onEdit,
 
   const groups = groupRowsByDim(rows, dim);
   const labels = groups.map((g) => g.key);
-  const seriesData = groups.map((g) => resolveMetricsForRows(metrics, g.rows)[w.metricId] ?? 0);
+  // 多指标多系列：widget.metricIds 有多个 → 每指标一根线/一组柱（如 三模型调用量 3 根线）；
+  // 仅 metricId → 单系列（兼容旧配置）
+  const metricIds = (w.metricIds?.length ? w.metricIds : [w.metricId]).filter((id) => metricById(id));
+  const seriesOf = () => metricIds.map((mid, si) => {
+    const m = metricById(mid)!;
+    return {
+      name: m.name,
+      color: PALETTE[si % PALETTE.length],
+      unit: m.unit ?? '',
+      precision: m.precision ?? 0,
+      data: groups.map((g) => resolveMetricsForRows(metrics, g.rows)[mid] ?? 0),
+    };
+  });
   const colorOf = (k: string) => LEVEL_META[k]?.fill ?? PALETTE[labels.indexOf(k) % PALETTE.length];
 
   const drillable = (w.drill?.type ?? 'none') !== 'none';
@@ -209,16 +230,25 @@ export function WidgetView({ w, ds, metric, metrics, rows, onDrill, nav, onEdit,
       <button type="button" onClick={onDrill} style={{ fontSize: 12, color: '#1D4ED8', background: 'none', border: 'none', cursor: 'pointer' }}>下钻个体明细 →</button>
     </div>
   ) : null;
+  /* 图表副标题：数据源 + 指标列表（多指标多系列时展示所有系列名） */
+  const chartDesc = (
+    <span style={{ fontSize: 11, color: '#94A3B8' }}>
+      {ds?.name} · {metricIds.map((id) => metricById(id)?.name).filter(Boolean).join(' / ')}
+    </span>
+  );
 
   if (w.type === 'donut') {
-    const data = groups.map((g) => ({ label: g.key, value: resolveMetricsForRows(metrics, g.rows)[w.metricId] ?? 0, color: colorOf(g.key) }));
-    return <Panel title={w.title} actions={editAction} className="h-full" hoverTip={tip}>{footer}<DonutChart data={data} centerLabel={metric.name} centerValue={fmt(vals[w.metricId] ?? 0, metric.precision, metric.unit)} height={H} /></Panel>;
+    const data = groups.map((g) => ({ label: g.key, value: resolveMetricsForRows(metrics, g.rows)[metricIds[0]] ?? 0, color: colorOf(g.key) }));
+    const m0 = metricById(metricIds[0]);
+    return <Panel title={w.title} desc={chartDesc} actions={editAction} className="h-full" hoverTip={tip}>{footer}<DonutChart data={data} centerLabel={m0?.name ?? metric?.name} centerValue={fmt(vals[metricIds[0]] ?? 0, m0?.precision ?? metric.precision, m0?.unit ?? metric.unit)} height={H} /></Panel>;
   }
   if (w.type === 'bar') {
-    return <Panel title={w.title} actions={editAction} className="h-full" hoverTip={tip}>{footer}<BarChart labels={labels} series={[{ name: metric.name, color: '#2563EB', data: seriesData }]} unit={metric.unit ?? ''} height={H} /></Panel>;
+    const ss = seriesOf();
+    return <Panel title={w.title} desc={chartDesc} actions={editAction} className="h-full" hoverTip={tip}>{footer}<BarChart labels={labels} series={ss.map((s) => ({ name: s.name, color: s.color, data: s.data }))} unit={ss[0]?.unit ?? metric.unit ?? ''} height={H} /></Panel>;
   }
   if (w.type === 'line') {
-    return <Panel title={w.title} actions={editAction} className="h-full" hoverTip={tip}>{footer}<LineChart labels={labels} series={[{ name: metric.name, color: '#2563EB', data: seriesData }]} unit={metric.unit ?? ''} height={H} /></Panel>;
+    const ss = seriesOf();
+    return <Panel title={w.title} desc={chartDesc} actions={editAction} className="h-full" hoverTip={tip}>{footer}<LineChart labels={labels} series={ss.map((s) => ({ name: s.name, color: s.color, data: s.data }))} unit={ss[0]?.unit ?? metric.unit ?? ''} height={H} /></Panel>;
   }
   // table
   const cols: Column[] = (w.dimensions ?? []).map((d) => {

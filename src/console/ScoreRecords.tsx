@@ -5,17 +5,26 @@ import { PageShell } from './PageShell'
 import { Panel, StatCard, DataTable, Button, Badge, Modal } from '../components/ui'
 import { Sam } from './SourceTag'
 
-function levelKind(level: string): 'red' | 'amber' | 'green' | 'blue' {
-  switch (level) {
-    case '高': return 'red'
-    case '中': return 'amber'
-    case '低': return 'green'
-    case 'A': return 'green'
-    case 'B': return 'blue'
-    case 'C': return 'amber'
-    case 'D': return 'red'
-    default: return 'gray'
+/** 根据模型+分数动态计算等级（与评分阈值页 THRESHOLDS 一致：智察 70/40 分档，智信/智融 780/660/580 分档） */
+function computeLevel(model: ScoreProd, score: number): string {
+  if (model === 'zhicha') {
+    if (score >= 70) return '高风险'
+    if (score >= 40) return '中风险'
+    return '低风险'
   }
+  // zhixin / zhirong 统一用 A/B/C/D + 中文含义（阈值与阈值表一致）
+  if (score >= 780) return 'A · 优质'
+  if (score >= 660) return 'B · 良好'
+  if (score >= 580) return 'C · 一般'
+  return 'D · 较差'
+}
+
+function levelKind(level: string): 'red' | 'amber' | 'green' | 'blue' {
+  if (level.includes('高风险') || level.startsWith('D')) return 'red'
+  if (level.includes('中风险') || level.startsWith('C')) return 'amber'
+  if (level.includes('低风险') || level.startsWith('A')) return 'green'
+  if (level.startsWith('B')) return 'blue'
+  return 'gray'
 }
 
 function modelKind(m: ScoreProd): 'red' | 'green' | 'violet' {
@@ -48,8 +57,8 @@ export default function ScoreRecordsPage() {
   const confirmImport = () => {
     const now = new Date().toISOString().slice(0, 19).replace('T', ' ')
     const recs: ScoreRecord[] = [
-      { id: `R-IMP-${Date.now()}`, time: now, custId: 'CUST-IMPORT', custName: '导入客户', model: 'zhixin', score: 650, level: 'B', source: '批量', status: 'success' },
-      { id: `R-IMP-${Date.now() + 1}`, time: now, custId: 'CUST-IMPORT', custName: '导入客户', model: 'zhirong', score: 720, level: 'A', source: '批量', status: 'success' },
+      { id: `R-IMP-${Date.now()}`, time: now, custId: 'CUST-IMPORT', custName: '导入客户', model: 'zhixin', score: 650, level: computeLevel('zhixin', 650), source: '批量', status: 'success' },
+      { id: `R-IMP-${Date.now() + 1}`, time: now, custId: 'CUST-IMPORT', custName: '导入客户', model: 'zhirong', score: 720, level: computeLevel('zhirong', 720), source: '批量', status: 'success' },
     ]
     updateScore((d) => ({ ...d, records: [...recs, ...d.records] }))
     setImportOpen(false)
@@ -100,7 +109,7 @@ export default function ScoreRecordsPage() {
     custId: r.custId,
     model: r.model,
     score: r.score,
-    level: r.level,
+    level: computeLevel(r.model, r.score),
     source: r.source,
     status: r.status,
   }))
@@ -152,7 +161,7 @@ export default function ScoreRecordsPage() {
             defaultPageSize={10}
             actions={(r: any) => (
               <div className="flex items-center gap-2">
-                <Button size="sm" variant="ghost" onClick={() => nav('/console/cr/mid-cust-score?cust=' + r.custId + '&prod=' + r.model)}>查看</Button>
+                <Button size="sm" variant="ghost" onClick={() => nav('/console/cr/mid-cust-score?cust=' + r.custId + '&prod=' + r.model + '&back=' + encodeURIComponent('/console/sc/score-records'))}>查看</Button>
                 {r.status === 'fail' ? (
                   <Button size="sm" variant="ghost" onClick={() => retry(r.id)}>重试</Button>
                 ) : null}

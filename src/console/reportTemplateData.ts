@@ -2770,7 +2770,10 @@ export function getAuditFlowByGrade(tpl: ReportTemplate | undefined, gradeId: st
     opinionPresets: defaultOpinionPresets(),
   }
   if (!tpl) return fallback
+  // 共用流程兼容（需求：一条业务流程配置关联多个页面/全分段时，businessFlow 条目无 gradeId）：
+  // 按 gradeId 精确匹配优先，匹配不到 → 回退第一条无 gradeId 的共用流程
   const bf = (tpl.businessFlow ?? []).find((x) => x.gradeId === gradeId)
+    ?? (tpl.businessFlow ?? []).find((x) => !x.gradeId)
   const autoResult: AutoResult = tpl.scoreDisplay.grades.find((g) => g.grade === gradeId)?.autoResult ?? '转人工'
   const g = bf?.flowGraphs?.[graphIndex] ?? bf?.flowGraphs?.[0] ?? buildDefaultFlowGraph(bf ?? defaultFlowRow(gradeId, ''), autoResult)
   const manual = g.nodes.filter((n) => n.results && n.results.length)

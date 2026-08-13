@@ -1,7 +1,8 @@
-import { useScore, type CrowdGroup } from './scoreData'
+import { useState } from 'react'
+import { useScore, updateScore, type CrowdGroup } from './scoreData'
 import { useMidCustomers } from './midStore'
 import { PageShell } from './PageShell'
-import { Button, Badge } from '../components/ui'
+import { Button, Badge, Modal } from '../components/ui'
 import { Sam } from './SourceTag'
 import { useNavigate } from 'react-router-dom'
 
@@ -28,14 +29,48 @@ export default function ScoreCrowdPage() {
   const nav = useNavigate()
 
   const crowds: CrowdGroup[] = data.crowds ?? []
+
+  // 新增分组弹窗
+  const [addOpen, setAddOpen] = useState(false)
+  const [draft, setDraft] = useState<{ name: string; rule: string; riskLevel: string; count: string }>({
+    name: '', rule: '', riskLevel: '低', count: '0',
+  })
+
+  const openAdd = () => {
+    setDraft({ name: '', rule: '', riskLevel: '低', count: '0' })
+    setAddOpen(true)
+  }
+  const confirmAdd = () => {
+    const name = draft.name.trim()
+    if (!name) return
+    const g: CrowdGroup = {
+      id: 'g-' + Date.now().toString(36),
+      name,
+      rule: draft.rule.trim() || '—',
+      riskLevel: draft.riskLevel,
+      count: Math.max(0, parseInt(draft.count || '0', 10) || 0),
+    }
+    updateScore((d) => ({ ...d, crowds: [...d.crowds, g] }))
+    setAddOpen(false)
+  }
+
+  const removeGroup = (id: string) => {
+    updateScore((d) => ({ ...d, crowds: d.crowds.filter((g) => g.id !== id) }))
+  }
+
   const openDetail = (custId: string) => nav('/console/cr/mid-cust-score?cust=' + custId + '&prod=zhixin&back=' + encodeURIComponent('/console/sc/crowd-groups'))
 
   return (
     <>
       <PageShell title="客户分组" crumb="评分产品 / 客户洞察" />
       <div className="space-y-4">
-        <Sam value="scoreData.json" />
-        <p className="text-xs text-slate-400">点击任意分组卡片，进入该分组的客户列表（新页面）。</p>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Sam value="scoreData.json" />
+            <p className="text-xs text-slate-400">点击任意分组卡片，进入该分组的客户列表（新页面）。</p>
+          </div>
+          <Button size="sm" variant="primary" onClick={openAdd}>＋ 新增分组</Button>
+        </div>
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
           {crowds.map((group) => {
@@ -51,7 +86,17 @@ export default function ScoreCrowdPage() {
               >
                 <div className="flex items-center justify-between">
                   <span className="font-semibold text-ink-900">{group.name}</span>
-                  <Badge kind={riskKind(group.riskLevel)}>{group.riskLevel ?? '—'}</Badge>
+                  <div className="flex items-center gap-2">
+                    <Badge kind={riskKind(group.riskLevel)}>{group.riskLevel ?? '—'}</Badge>
+                    <button
+                      type="button"
+                      title="删除该分组"
+                      onClick={(e) => { e.stopPropagation(); removeGroup(group.id) }}
+                      className="rounded-md border border-slate-200 px-2 py-0.5 text-xs text-slate-400 transition hover:border-rose-300 hover:text-rose-600"
+                    >
+                      删除
+                    </button>
+                  </div>
                 </div>
 
                 <p className="mt-2 text-sm text-slate-500">{group.rule}</p>
@@ -94,6 +139,56 @@ export default function ScoreCrowdPage() {
             )
           })}
         </div>
+
+        {/* 新增分组弹窗 */}
+        <Modal open={addOpen} onClose={() => setAddOpen(false)} title="新增客户分组">
+          <div className="space-y-3">
+            <div>
+              <div className="mb-1 text-xs text-slate-500">分组名称 *</div>
+              <input
+                value={draft.name}
+                onChange={(e) => setDraft((p) => ({ ...p, name: e.target.value }))}
+                placeholder="如：高额度活跃客户"
+                className="h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-ink-900 outline-none focus:border-brand-400"
+              />
+            </div>
+            <div>
+              <div className="mb-1 text-xs text-slate-500">分组规则</div>
+              <input
+                value={draft.rule}
+                onChange={(e) => setDraft((p) => ({ ...p, rule: e.target.value }))}
+                placeholder="如：智融分≥680 且 近30天活跃≥15天"
+                className="h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-ink-900 outline-none focus:border-brand-400"
+              />
+            </div>
+            <div>
+              <div className="mb-1 text-xs text-slate-500">风险等级</div>
+              <select
+                value={draft.riskLevel}
+                onChange={(e) => setDraft((p) => ({ ...p, riskLevel: e.target.value }))}
+                className="h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-ink-900 outline-none focus:border-brand-400"
+              >
+                <option value="低">低</option>
+                <option value="中">中</option>
+                <option value="高">高</option>
+              </select>
+            </div>
+            <div>
+              <div className="mb-1 text-xs text-slate-500">成员数</div>
+              <input
+                value={draft.count}
+                onChange={(e) => setDraft((p) => ({ ...p, count: e.target.value }))}
+                placeholder="0"
+                type="number"
+                className="h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-ink-900 outline-none focus:border-brand-400"
+              />
+            </div>
+          </div>
+          <div className="mt-4 flex justify-end gap-2">
+            <Button size="sm" variant="ghost" onClick={() => setAddOpen(false)}>取消</Button>
+            <Button size="sm" variant="primary" onClick={confirmAdd} disabled={!draft.name.trim()}>确认新增</Button>
+          </div>
+        </Modal>
       </div>
     </>
   )

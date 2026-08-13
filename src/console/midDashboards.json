@@ -1,1 +1,3756 @@
-[{"id":"db-051","key":"cr:mid-td1","name":"贷中监控大盘","group":"贷中监控大盘","order":0,"enabled":true,"desc":"同盾需求·红黄灯综合预警信号总览（预警总量/红黄灯结构/场景分布/规则还原）","widgets":[{"id":"w1","type":"metric","title":"预警总数","datasetId":"ds_alert","metricId":"m_alert_cnt","span":3,"windowSize":"lg","flowKey":"f-alert-dispose"},{"id":"w2","type":"donut","title":"红黄灯分布","datasetId":"ds_alert","metricId":"m_alert_cnt","dimensions":["level"],"span":2,"windowSize":"md","flowKey":"f-alert-dispose"},{"id":"w3","type":"bar","title":"预警场景分布","datasetId":"ds_alert","metricId":"m_alert_cnt","dimensions":["scene"],"span":1,"windowSize":"sm","flowKey":"f-alert-dispose"},{"id":"w4","type":"table","title":"预警明细 · 规则还原","datasetId":"ds_alert","metricId":"m_alert_cnt","dimensions":["alert_id","cust_name","scene","level","alert_date","rule_name","metric_value","threshold"],"span":3,"windowSize":"lg","flowKey":"f-alert-dispose"},{"id":"w5","type":"table","title":"共债网络 TOP","datasetId":"ds_codebt_top","metricId":"m_codebt_balance","dimensions":["cust_name","level","org_cnt","total_balance"],"span":3,"windowSize":"lg","drill":{"type":"cust","rowKey":"cust_id"},"flowKey":"f-online-approve","flowState":"待上线"},{"id":"w6","type":"table","title":"高危设备看板","datasetId":"ds_risky_device","metricId":"m_device_acct","dimensions":["device_id","model","env_score","risk","account_cnt"],"span":3,"windowSize":"lg","flowKey":"f-online-approve","flowState":"待上线"},{"id":"w7","type":"table","title":"引擎运行态势","datasetId":"ds_engine_task","metricId":"m_engine_hit","dimensions":["name","cron","status","scanned","hits","success_rate"],"span":3,"windowSize":"lg","flowKey":"f-online-approve","flowState":"待上线"}],"flowKey":"f-online-approve","flowState":"待上线"},{"id":"db-052","key":"cr:mid-td2","name":"风险监测","group":"风险监测","order":1,"enabled":true,"desc":"同盾需求·分场景分产品监测（风险视角），支持按产品线筛选","filters":[{"id":"f_product","label":"产品线","kind":"select","field":"product"}],"widgets":[{"id":"w1","type":"metric","title":"在贷客户数","datasetId":"ds_customer","metricId":"m_cust_cnt","span":1,"windowSize":"sm","flowKey":"f-online-approve"},{"id":"w2","type":"metric","title":"在贷余额","datasetId":"ds_loan","metricId":"m_loan_balance","span":1,"windowSize":"sm","flowKey":"f-online-approve"},{"id":"w3","type":"metric","title":"逾期金额","datasetId":"ds_loan","metricId":"m_overdue_amt","span":1,"windowSize":"sm","flowKey":"f-loan-collect"},{"id":"w4","type":"donut","title":"风险等级分布","datasetId":"ds_customer","metricId":"m_cust_cnt","dimensions":["risk_level"],"span":2,"windowSize":"md","flowKey":"f-cust-operate"},{"id":"w5","type":"bar","title":"各产品逾期金额","datasetId":"ds_loan","metricId":"m_overdue_amt","dimensions":["product"],"span":1,"windowSize":"sm","flowKey":"f-loan-collect"},{"id":"w6","type":"table","title":"客户明细","datasetId":"ds_customer","metricId":"m_cust_cnt","dimensions":["cust_id","cust_name","product","risk_level","credit_line","loan_balance","behavior_score"],"span":3,"windowSize":"lg","flowKey":"f-cust-operate"}],"flowKey":"f-online-approve","flowState":"待上线"},{"id":"db-053","key":"cr:mid-td3","name":"红黄灯预警中心","group":"预警中心","order":2,"enabled":true,"desc":"同盾需求·红黄灯综合预警信号作业台（按等级筛选/命中规则TOP/规则明细还原）","filters":[{"id":"f_level","label":"预警等级","kind":"select","field":"level"}],"widgets":[{"id":"w1","type":"metric","title":"预警总数","datasetId":"ds_alert","metricId":"m_alert_cnt","span":3,"windowSize":"lg","flowKey":"f-alert-dispose"},{"id":"w2","type":"donut","title":"红黄灯分布","datasetId":"ds_alert","metricId":"m_alert_cnt","dimensions":["level"],"span":2,"windowSize":"md","flowKey":"f-alert-dispose"},{"id":"w3","type":"bar","title":"命中规则 TOP","datasetId":"ds_alert","metricId":"m_alert_cnt","dimensions":["rule_name"],"span":1,"windowSize":"sm","flowKey":"f-alert-dispose"},{"id":"w4","type":"table","title":"预警明细 · 规则还原","datasetId":"ds_alert","metricId":"m_alert_cnt","dimensions":["alert_id","cust_name","scene","level","rule_name","metric_value","threshold","alert_date"],"span":3,"windowSize":"lg","flowKey":"f-alert-dispose"}],"flowKey":"f-online-approve","flowState":"复审中"},{"id":"db-054","key":"cr:mid-td4","name":"持续性周期监测","group":"周期监测","order":3,"enabled":true,"desc":"同盾需求·持续性周期监测评估（行为分/逾期/新增贷款按月趋势）","widgets":[{"id":"w1","type":"line","title":"行为均分月度趋势","datasetId":"ds_behavior","metricId":"m_score_avg","dimensions":["month"],"span":3,"windowSize":"lg","flowKey":"f-behavior-promote"},{"id":"w2","type":"bar","title":"月度逾期金额","datasetId":"ds_behavior","metricId":"m_overdue_amt","dimensions":["month"],"span":1,"windowSize":"sm","flowKey":"f-behavior-promote"},{"id":"w3","type":"bar","title":"月度新增贷款","datasetId":"ds_behavior","metricId":"m_new_cust","dimensions":["month"],"span":1,"windowSize":"sm","flowKey":"f-behavior-promote"},{"id":"w4","type":"metric","title":"行为均分","datasetId":"ds_behavior","metricId":"m_score_avg","span":1,"windowSize":"sm","flowKey":"f-behavior-promote"}],"flowKey":"f-online-approve","flowState":"复审中"},{"id":"db-055","key":"cr:mid-td5","name":"存量客群运营","group":"客群运营","order":4,"enabled":true,"desc":"同盾需求·存量客群运营场景（授信/余额/逾期 + 客群产品结构 + 贷款台账）","widgets":[{"id":"w1","type":"metric","title":"授信总额","datasetId":"ds_loan","metricId":"m_credit_line","span":1,"windowSize":"sm","flowKey":"f-loan-collect"},{"id":"w2","type":"metric","title":"在贷余额","datasetId":"ds_loan","metricId":"m_loan_balance","span":1,"windowSize":"sm","flowKey":"f-loan-collect"},{"id":"w3","type":"metric","title":"逾期金额","datasetId":"ds_loan","metricId":"m_overdue_amt","span":1,"windowSize":"sm","flowKey":"f-loan-collect"},{"id":"w4","type":"donut","title":"客群产品分布","datasetId":"ds_customer","metricId":"m_cust_cnt","dimensions":["product"],"span":2,"windowSize":"md","flowKey":"f-cust-operate"},{"id":"w5","type":"bar","title":"各产品授信额度","datasetId":"ds_loan","metricId":"m_credit_line","dimensions":["product"],"span":1,"windowSize":"sm","flowKey":"f-loan-collect"},{"id":"w6","type":"table","title":"贷款台账明细","datasetId":"ds_loan","metricId":"m_loan_balance","dimensions":["cust_id","product","loan_balance","overdue_amt","credit_line"],"span":3,"windowSize":"lg","flowKey":"f-loan-collect"},{"id":"w7","type":"table","title":"运营名单跟踪","datasetId":"ds_ops_track","metricId":"m_ops_amount","dimensions":["cust_name","tier","action","eval_status","amount","owner","next_eval","cycle"],"span":3,"windowSize":"lg","drill":{"type":"cust","rowKey":"cust_id"},"flowKey":"f-online-approve","flowState":"待上线"},{"id":"w8","type":"table","title":"促活/提额效果看板","datasetId":"ds_ops_effect","metricId":"m_ops_effect","dimensions":["label","value","desc"],"span":3,"windowSize":"lg","flowKey":"f-online-approve","flowState":"待上线"}],"flowKey":"f-online-approve","flowState":"已下线"},{"id":"db-001","key":"cr:mid-p1","name":"客群画像总览","group":"客群","order":0,"enabled":true,"desc":"客群画像总览实时监控看板","widgets":[{"id":"w1","type":"donut","title":"客群画像总览·risk_level分布","datasetId":"ds_customer","metricId":"m_cust_cnt","dimensions":["risk_level"],"span":1,"drill":{"type":"detail","rowKey":"cust_id","title":"明细"},"flowKey":"f-cust-operate"},{"id":"w2","type":"metric","title":"本月新增客户数","datasetId":"ds_customer","metricId":"m_new_cust","span":1,"flowKey":"f-cust-operate"},{"id":"w3","type":"table","title":"客群画像总览明细","datasetId":"ds_customer","metricId":"m_cust_cnt","dimensions":["cust_id","cust_name","product","risk_level","credit_line"],"span":2,"drill":{"type":"none","title":""},"flowKey":"f-cust-operate"}],"flowKey":"f-online-approve","flowState":"已下线"},{"id":"db-002","key":"cr:mid-p2","name":"新客获取分析","group":"客群","order":1,"enabled":true,"desc":"新客获取分析实时监控看板","widgets":[{"id":"w1","type":"donut","title":"新客获取分析·risk_level分布","datasetId":"ds_customer","metricId":"m_cust_cnt","dimensions":["risk_level"],"span":1,"drill":{"type":"detail","rowKey":"cust_id","title":"明细"},"flowKey":"f-cust-operate"},{"id":"w2","type":"metric","title":"本月新增客户数","datasetId":"ds_customer","metricId":"m_new_cust","span":1,"flowKey":"f-cust-operate"},{"id":"w3","type":"table","title":"新客获取分析明细","datasetId":"ds_customer","metricId":"m_cust_cnt","dimensions":["cust_id","cust_name","product","risk_level","credit_line"],"span":2,"drill":{"type":"none","title":""},"flowKey":"f-cust-operate"}],"flowKey":"f-online-approve","flowState":"待上线"},{"id":"db-003","key":"cr:mid-p3","name":"活跃客群监控","group":"客群","order":2,"enabled":true,"desc":"活跃客群监控实时监控看板","widgets":[{"id":"w1","type":"donut","title":"活跃客群监控·risk_level分布","datasetId":"ds_customer","metricId":"m_cust_cnt","dimensions":["risk_level"],"span":1,"drill":{"type":"detail","rowKey":"cust_id","title":"明细"},"flowKey":"f-cust-operate"},{"id":"w2","type":"metric","title":"本月新增客户数","datasetId":"ds_customer","metricId":"m_new_cust","span":1,"flowKey":"f-cust-operate"},{"id":"w3","type":"table","title":"活跃客群监控明细","datasetId":"ds_customer","metricId":"m_cust_cnt","dimensions":["cust_id","cust_name","product","risk_level","credit_line"],"span":2,"drill":{"type":"none","title":""},"flowKey":"f-cust-operate"}],"flowKey":"f-online-approve","flowState":"复审中"},{"id":"db-004","key":"cr:mid-p4","name":"客群分层看板","group":"客群","order":3,"enabled":true,"desc":"客群分层看板实时监控看板","widgets":[{"id":"w1","type":"donut","title":"客群分层看板·risk_level分布","datasetId":"ds_customer","metricId":"m_cust_cnt","dimensions":["risk_level"],"span":1,"drill":{"type":"detail","rowKey":"cust_id","title":"明细"},"flowKey":"f-cust-operate"},{"id":"w2","type":"metric","title":"本月新增客户数","datasetId":"ds_customer","metricId":"m_new_cust","span":1,"flowKey":"f-cust-operate"},{"id":"w3","type":"table","title":"客群分层看板明细","datasetId":"ds_customer","metricId":"m_cust_cnt","dimensions":["cust_id","cust_name","product","risk_level","credit_line"],"span":2,"drill":{"type":"none","title":""},"flowKey":"f-cust-operate"}],"flowKey":"f-online-approve","flowState":"待上线"},{"id":"db-005","key":"cr:mid-p5","name":"高价值客群洞察","group":"客群","order":4,"enabled":true,"desc":"高价值客群洞察实时监控看板","widgets":[{"id":"w1","type":"donut","title":"高价值客群洞察·risk_level分布","datasetId":"ds_customer","metricId":"m_cust_cnt","dimensions":["risk_level"],"span":1,"drill":{"type":"detail","rowKey":"cust_id","title":"明细"},"flowKey":"f-cust-operate"},{"id":"w2","type":"metric","title":"本月新增客户数","datasetId":"ds_customer","metricId":"m_new_cust","span":1,"flowKey":"f-cust-operate"},{"id":"w3","type":"table","title":"高价值客群洞察明细","datasetId":"ds_customer","metricId":"m_cust_cnt","dimensions":["cust_id","cust_name","product","risk_level","credit_line"],"span":2,"drill":{"type":"none","title":""},"flowKey":"f-cust-operate"}],"flowKey":"f-online-approve","flowState":"已上线"},{"id":"db-006","key":"cr:mid-p6","name":"风险总览驾驶舱","group":"风险","order":5,"enabled":true,"desc":"风险总览驾驶舱实时监控看板","widgets":[{"id":"w1","type":"donut","title":"风险总览驾驶舱·scene分布","datasetId":"ds_alert","metricId":"m_loan_balance","dimensions":["scene"],"span":1,"drill":{"type":"detail","rowKey":"alert_id","title":"明细"},"flowKey":"f-alert-dispose"},{"id":"w2","type":"metric","title":"逾期金额","datasetId":"ds_alert","metricId":"m_overdue_amt","span":1,"flowKey":"f-alert-dispose"},{"id":"w3","type":"table","title":"风险总览驾驶舱明细","datasetId":"ds_alert","metricId":"m_loan_balance","dimensions":["alert_id","cust_id","cust_name","scene","level"],"span":2,"drill":{"type":"none","title":""},"flowKey":"f-alert-dispose"}],"flowKey":"f-online-approve","flowState":"待上线"},{"id":"db-007","key":"cr:mid-p7","name":"信用风险评估","group":"风险","order":6,"enabled":true,"desc":"信用风险评估实时监控看板","widgets":[{"id":"w1","type":"donut","title":"信用风险评估·product分布","datasetId":"ds_loan","metricId":"m_loan_balance","dimensions":["product"],"span":1,"drill":{"type":"detail","rowKey":"cust_id","title":"明细"},"flowKey":"f-loan-collect"},{"id":"w2","type":"metric","title":"逾期金额","datasetId":"ds_loan","metricId":"m_overdue_amt","span":1,"flowKey":"f-loan-collect"},{"id":"w3","type":"table","title":"信用风险评估明细","datasetId":"ds_loan","metricId":"m_loan_balance","dimensions":["cust_id","product","loan_balance","overdue_amt","credit_line"],"span":2,"drill":{"type":"none","title":""},"flowKey":"f-loan-collect"}],"flowKey":"f-online-approve","flowState":"待上线"},{"id":"db-008","key":"cr:mid-p8","name":"风险等级分布","group":"风险","order":7,"enabled":true,"desc":"风险等级分布实时监控看板","widgets":[{"id":"w1","type":"donut","title":"风险等级分布·scene分布","datasetId":"ds_alert","metricId":"m_loan_balance","dimensions":["scene"],"span":1,"drill":{"type":"detail","rowKey":"alert_id","title":"明细"},"flowKey":"f-alert-dispose"},{"id":"w2","type":"metric","title":"逾期金额","datasetId":"ds_alert","metricId":"m_overdue_amt","span":1,"flowKey":"f-alert-dispose"},{"id":"w3","type":"table","title":"风险等级分布明细","datasetId":"ds_alert","metricId":"m_loan_balance","dimensions":["alert_id","cust_id","cust_name","scene","level"],"span":2,"drill":{"type":"none","title":""},"flowKey":"f-alert-dispose"}],"flowKey":"f-online-approve","flowState":"复审中"},{"id":"db-009","key":"cr:mid-p9","name":"风险趋势监控","group":"风险","order":8,"enabled":true,"desc":"风险趋势监控实时监控看板","widgets":[{"id":"w1","type":"donut","title":"风险趋势监控·month分布","datasetId":"ds_behavior","metricId":"m_loan_balance","dimensions":["month"],"span":1,"drill":{"type":"detail","rowKey":"cust_id","title":"明细"},"flowKey":"f-behavior-promote"},{"id":"w2","type":"metric","title":"逾期金额","datasetId":"ds_behavior","metricId":"m_overdue_amt","span":1,"flowKey":"f-behavior-promote"},{"id":"w3","type":"table","title":"风险趋势监控明细","datasetId":"ds_behavior","metricId":"m_loan_balance","dimensions":["cust_id","month","score","new_loans","overdue_amt"],"span":2,"drill":{"type":"none","title":""},"flowKey":"f-behavior-promote"},{"id":"w4","type":"line","title":"月度趋势","datasetId":"ds_behavior","metricId":"m_loan_balance","dimensions":["month"],"span":2,"flowKey":"f-behavior-promote"}],"flowKey":"f-online-approve","flowState":"待上线"},{"id":"db-010","key":"cr:mid-p10","name":"风险敞口看板","group":"风险","order":9,"enabled":true,"desc":"风险敞口看板实时监控看板","widgets":[{"id":"w1","type":"donut","title":"风险敞口看板·product分布","datasetId":"ds_loan","metricId":"m_loan_balance","dimensions":["product"],"span":1,"drill":{"type":"detail","rowKey":"cust_id","title":"明细"},"flowKey":"f-loan-collect"},{"id":"w2","type":"metric","title":"逾期金额","datasetId":"ds_loan","metricId":"m_overdue_amt","span":1,"flowKey":"f-loan-collect"},{"id":"w3","type":"table","title":"风险敞口看板明细","datasetId":"ds_loan","metricId":"m_loan_balance","dimensions":["cust_id","product","loan_balance","overdue_amt","credit_line"],"span":2,"drill":{"type":"none","title":""},"flowKey":"f-loan-collect"}],"flowKey":"f-online-approve","flowState":"已上线"},{"id":"db-011","key":"cr:mid-p11","name":"贷后风险预警","group":"风险","order":10,"enabled":true,"desc":"贷后风险预警实时监控看板","widgets":[{"id":"w1","type":"donut","title":"贷后风险预警·scene分布","datasetId":"ds_alert","metricId":"m_loan_balance","dimensions":["scene"],"span":1,"drill":{"type":"detail","rowKey":"alert_id","title":"明细"},"flowKey":"f-alert-dispose"},{"id":"w2","type":"metric","title":"逾期金额","datasetId":"ds_alert","metricId":"m_overdue_amt","span":1,"flowKey":"f-alert-dispose"},{"id":"w3","type":"table","title":"贷后风险预警明细","datasetId":"ds_alert","metricId":"m_loan_balance","dimensions":["alert_id","cust_id","cust_name","scene","level"],"span":2,"drill":{"type":"none","title":""},"flowKey":"f-alert-dispose"}],"flowKey":"f-online-approve","flowState":"待上线"},{"id":"db-012","key":"cr:mid-p12","name":"红黄灯预警","group":"预警","order":11,"enabled":true,"desc":"红黄灯预警实时监控看板","widgets":[{"id":"w1","type":"donut","title":"红黄灯预警·scene分布","datasetId":"ds_alert","metricId":"m_alert_cnt","dimensions":["scene"],"span":1,"drill":{"type":"detail","rowKey":"alert_id","title":"明细"},"flowKey":"f-alert-dispose"},{"id":"w2","type":"metric","title":"红灯预警数","datasetId":"ds_alert","metricId":"m_red_cnt","span":1,"flowKey":"f-alert-dispose"},{"id":"w3","type":"table","title":"红黄灯预警明细","datasetId":"ds_alert","metricId":"m_alert_cnt","dimensions":["alert_id","cust_id","cust_name","scene","level"],"span":2,"drill":{"type":"none","title":""},"flowKey":"f-alert-dispose"}],"flowKey":"f-online-approve","flowState":"待上线"},{"id":"db-013","key":"cr:mid-p13","name":"预警等级分布","group":"预警","order":12,"enabled":true,"desc":"预警等级分布实时监控看板","widgets":[{"id":"w1","type":"donut","title":"预警等级分布·scene分布","datasetId":"ds_alert","metricId":"m_alert_cnt","dimensions":["scene"],"span":1,"drill":{"type":"detail","rowKey":"alert_id","title":"明细"},"flowKey":"f-alert-dispose"},{"id":"w2","type":"metric","title":"红灯预警数","datasetId":"ds_alert","metricId":"m_red_cnt","span":1,"flowKey":"f-alert-dispose"},{"id":"w3","type":"table","title":"预警等级分布明细","datasetId":"ds_alert","metricId":"m_alert_cnt","dimensions":["alert_id","cust_id","cust_name","scene","level"],"span":2,"drill":{"type":"none","title":""},"flowKey":"f-alert-dispose"}],"flowKey":"f-online-approve","flowState":"复审中"},{"id":"db-014","key":"cr:mid-p14","name":"预警处置时效","group":"预警","order":13,"enabled":true,"desc":"预警处置时效实时监控看板","widgets":[{"id":"w1","type":"donut","title":"预警处置时效·scene分布","datasetId":"ds_alert","metricId":"m_alert_cnt","dimensions":["scene"],"span":1,"drill":{"type":"detail","rowKey":"alert_id","title":"明细"},"flowKey":"f-alert-dispose"},{"id":"w2","type":"metric","title":"红灯预警数","datasetId":"ds_alert","metricId":"m_red_cnt","span":1,"flowKey":"f-alert-dispose"},{"id":"w3","type":"table","title":"预警处置时效明细","datasetId":"ds_alert","metricId":"m_alert_cnt","dimensions":["alert_id","cust_id","cust_name","scene","level"],"span":2,"drill":{"type":"none","title":""},"flowKey":"f-alert-dispose"}],"flowKey":"f-online-approve","flowState":"待上线"},{"id":"db-015","key":"cr:mid-p15","name":"预警来源分析","group":"预警","order":14,"enabled":true,"desc":"预警来源分析实时监控看板","widgets":[{"id":"w1","type":"donut","title":"预警来源分析·scene分布","datasetId":"ds_alert","metricId":"m_alert_cnt","dimensions":["scene"],"span":1,"drill":{"type":"detail","rowKey":"alert_id","title":"明细"},"flowKey":"f-alert-dispose"},{"id":"w2","type":"metric","title":"红灯预警数","datasetId":"ds_alert","metricId":"m_red_cnt","span":1,"flowKey":"f-alert-dispose"},{"id":"w3","type":"table","title":"预警来源分析明细","datasetId":"ds_alert","metricId":"m_alert_cnt","dimensions":["alert_id","cust_id","cust_name","scene","level"],"span":2,"drill":{"type":"none","title":""},"flowKey":"f-alert-dispose"}],"flowKey":"f-online-approve","flowState":"已上线"},{"id":"db-016","key":"cr:mid-p16","name":"处置闭环总览","group":"处置","order":15,"enabled":true,"desc":"处置闭环总览实时监控看板","widgets":[{"id":"w1","type":"donut","title":"处置闭环总览·scene分布","datasetId":"ds_alert","metricId":"m_dispose_cnt","dimensions":["scene"],"span":1,"drill":{"type":"detail","rowKey":"alert_id","title":"明细"},"flowKey":"f-alert-dispose"},{"id":"w2","type":"metric","title":"处置率","datasetId":"ds_alert","metricId":"m_dispose_rate","span":1,"flowKey":"f-alert-dispose"},{"id":"w3","type":"table","title":"处置闭环总览明细","datasetId":"ds_alert","metricId":"m_dispose_cnt","dimensions":["alert_id","cust_id","cust_name","scene","level"],"span":2,"drill":{"type":"none","title":""},"flowKey":"f-alert-dispose"}],"flowKey":"f-online-approve","flowState":"待上线"},{"id":"db-017","key":"cr:mid-p17","name":"处置策略效果","group":"处置","order":16,"enabled":true,"desc":"处置策略效果实时监控看板","widgets":[{"id":"w1","type":"donut","title":"处置策略效果·scene分布","datasetId":"ds_alert","metricId":"m_dispose_cnt","dimensions":["scene"],"span":1,"drill":{"type":"detail","rowKey":"alert_id","title":"明细"},"flowKey":"f-alert-dispose"},{"id":"w2","type":"metric","title":"处置率","datasetId":"ds_alert","metricId":"m_dispose_rate","span":1,"flowKey":"f-alert-dispose"},{"id":"w3","type":"table","title":"处置策略效果明细","datasetId":"ds_alert","metricId":"m_dispose_cnt","dimensions":["alert_id","cust_id","cust_name","scene","level"],"span":2,"drill":{"type":"none","title":""},"flowKey":"f-alert-dispose"}],"flowKey":"f-online-approve","flowState":"待上线"},{"id":"db-018","key":"cr:mid-p18","name":"自动处置监控","group":"处置","order":17,"enabled":true,"desc":"自动处置监控实时监控看板","widgets":[{"id":"w1","type":"donut","title":"自动处置监控·scene分布","datasetId":"ds_alert","metricId":"m_dispose_cnt","dimensions":["scene"],"span":1,"drill":{"type":"detail","rowKey":"alert_id","title":"明细"},"flowKey":"f-alert-dispose"},{"id":"w2","type":"metric","title":"处置率","datasetId":"ds_alert","metricId":"m_dispose_rate","span":1,"flowKey":"f-alert-dispose"},{"id":"w3","type":"table","title":"自动处置监控明细","datasetId":"ds_alert","metricId":"m_dispose_cnt","dimensions":["alert_id","cust_id","cust_name","scene","level"],"span":2,"drill":{"type":"none","title":""},"flowKey":"f-alert-dispose"}],"flowKey":"f-online-approve","flowState":"复审中"},{"id":"db-019","key":"cr:mid-p19","name":"处置工单分析","group":"处置","order":18,"enabled":true,"desc":"处置工单分析实时监控看板","widgets":[{"id":"w1","type":"donut","title":"处置工单分析·scene分布","datasetId":"ds_alert","metricId":"m_dispose_cnt","dimensions":["scene"],"span":1,"drill":{"type":"detail","rowKey":"alert_id","title":"明细"},"flowKey":"f-alert-dispose"},{"id":"w2","type":"metric","title":"处置率","datasetId":"ds_alert","metricId":"m_dispose_rate","span":1,"flowKey":"f-alert-dispose"},{"id":"w3","type":"table","title":"处置工单分析明细","datasetId":"ds_alert","metricId":"m_dispose_cnt","dimensions":["alert_id","cust_id","cust_name","scene","level"],"span":2,"drill":{"type":"none","title":""},"flowKey":"f-alert-dispose"}],"flowKey":"f-online-approve","flowState":"待上线"},{"id":"db-020","key":"cr:mid-p20","name":"授信审批监控","group":"授信","order":19,"enabled":true,"desc":"授信审批监控实时监控看板","widgets":[{"id":"w1","type":"donut","title":"授信审批监控·product分布","datasetId":"ds_loan","metricId":"m_credit_remain","dimensions":["product"],"span":1,"drill":{"type":"detail","rowKey":"cust_id","title":"明细"},"flowKey":"f-loan-collect"},{"id":"w2","type":"metric","title":"额度使用率>90%客户数","datasetId":"ds_loan","metricId":"m_util_high_cnt","span":1,"flowKey":"f-loan-collect"},{"id":"w3","type":"table","title":"授信审批监控明细","datasetId":"ds_loan","metricId":"m_credit_remain","dimensions":["cust_id","product","loan_balance","overdue_amt","credit_line"],"span":2,"drill":{"type":"none","title":""},"flowKey":"f-loan-collect"}],"flowKey":"f-online-approve","flowState":"已上线"},{"id":"db-021","key":"cr:mid-p21","name":"授信额度使用","group":"授信","order":20,"enabled":true,"desc":"授信额度使用实时监控看板","widgets":[{"id":"w1","type":"donut","title":"授信额度使用·product分布","datasetId":"ds_loan","metricId":"m_credit_remain","dimensions":["product"],"span":1,"drill":{"type":"detail","rowKey":"cust_id","title":"明细"},"flowKey":"f-loan-collect"},{"id":"w2","type":"metric","title":"额度使用率>90%客户数","datasetId":"ds_loan","metricId":"m_util_high_cnt","span":1,"flowKey":"f-loan-collect"},{"id":"w3","type":"table","title":"授信额度使用明细","datasetId":"ds_loan","metricId":"m_credit_remain","dimensions":["cust_id","product","loan_balance","overdue_amt","credit_line"],"span":2,"drill":{"type":"none","title":""},"flowKey":"f-loan-collect"}],"flowKey":"f-online-approve","flowState":"待上线"},{"id":"db-022","key":"cr:mid-p22","name":"授信政策效果","group":"授信","order":21,"enabled":true,"desc":"授信政策效果实时监控看板","widgets":[{"id":"w1","type":"donut","title":"授信政策效果·product分布","datasetId":"ds_loan","metricId":"m_credit_remain","dimensions":["product"],"span":1,"drill":{"type":"detail","rowKey":"cust_id","title":"明细"},"flowKey":"f-loan-collect"},{"id":"w2","type":"metric","title":"额度使用率>90%客户数","datasetId":"ds_loan","metricId":"m_util_high_cnt","span":1,"flowKey":"f-loan-collect"},{"id":"w3","type":"table","title":"授信政策效果明细","datasetId":"ds_loan","metricId":"m_credit_remain","dimensions":["cust_id","product","loan_balance","overdue_amt","credit_line"],"span":2,"drill":{"type":"none","title":""},"flowKey":"f-loan-collect"}],"flowKey":"f-online-approve","flowState":"待上线"},{"id":"db-023","key":"cr:mid-p23","name":"授信通过率分析","group":"授信","order":22,"enabled":true,"desc":"授信通过率分析实时监控看板","widgets":[{"id":"w1","type":"donut","title":"授信通过率分析·product分布","datasetId":"ds_loan","metricId":"m_credit_remain","dimensions":["product"],"span":1,"drill":{"type":"detail","rowKey":"cust_id","title":"明细"},"flowKey":"f-loan-collect"},{"id":"w2","type":"metric","title":"额度使用率>90%客户数","datasetId":"ds_loan","metricId":"m_util_high_cnt","span":1,"flowKey":"f-loan-collect"},{"id":"w3","type":"table","title":"授信通过率分析明细","datasetId":"ds_loan","metricId":"m_credit_remain","dimensions":["cust_id","product","loan_balance","overdue_amt","credit_line"],"span":2,"drill":{"type":"none","title":""},"flowKey":"f-loan-collect"}],"flowKey":"f-online-approve","flowState":"复审中"},{"id":"db-024","key":"cr:mid-p24","name":"授信客群分析","group":"授信","order":23,"enabled":true,"desc":"授信客群分析实时监控看板","widgets":[{"id":"w1","type":"donut","title":"授信客群分析·risk_level分布","datasetId":"ds_customer","metricId":"m_credit_remain","dimensions":["risk_level"],"span":1,"drill":{"type":"detail","rowKey":"cust_id","title":"明细"},"flowKey":"f-cust-operate"},{"id":"w2","type":"metric","title":"额度使用率>90%客户数","datasetId":"ds_customer","metricId":"m_util_high_cnt","span":1,"flowKey":"f-cust-operate"},{"id":"w3","type":"table","title":"授信客群分析明细","datasetId":"ds_customer","metricId":"m_credit_remain","dimensions":["cust_id","cust_name","product","risk_level","credit_line"],"span":2,"drill":{"type":"none","title":""},"flowKey":"f-cust-operate"}],"flowKey":"f-online-approve","flowState":"待上线"},{"id":"db-025","key":"cr:mid-p25","name":"贷款业务总览","group":"贷款","order":24,"enabled":true,"desc":"贷款业务总览实时监控看板","widgets":[{"id":"w1","type":"donut","title":"贷款业务总览·product分布","datasetId":"ds_loan","metricId":"m_loan_cnt","dimensions":["product"],"span":1,"drill":{"type":"detail","rowKey":"cust_id","title":"明细"},"flowKey":"f-loan-collect"},{"id":"w2","type":"metric","title":"贷款发放总额","datasetId":"ds_loan","metricId":"m_loan_total","span":1,"flowKey":"f-loan-collect"},{"id":"w3","type":"table","title":"贷款业务总览明细","datasetId":"ds_loan","metricId":"m_loan_cnt","dimensions":["cust_id","product","loan_balance","overdue_amt","credit_line"],"span":2,"drill":{"type":"none","title":""},"flowKey":"f-loan-collect"}],"flowKey":"f-online-approve","flowState":"已上线"},{"id":"db-026","key":"cr:mid-p26","name":"贷款余额监控","group":"贷款","order":25,"enabled":true,"desc":"贷款余额监控实时监控看板","widgets":[{"id":"w1","type":"donut","title":"贷款余额监控·product分布","datasetId":"ds_loan","metricId":"m_loan_cnt","dimensions":["product"],"span":1,"drill":{"type":"detail","rowKey":"cust_id","title":"明细"},"flowKey":"f-loan-collect"},{"id":"w2","type":"metric","title":"贷款发放总额","datasetId":"ds_loan","metricId":"m_loan_total","span":1,"flowKey":"f-loan-collect"},{"id":"w3","type":"table","title":"贷款余额监控明细","datasetId":"ds_loan","metricId":"m_loan_cnt","dimensions":["cust_id","product","loan_balance","overdue_amt","credit_line"],"span":2,"drill":{"type":"none","title":""},"flowKey":"f-loan-collect"}],"flowKey":"f-online-approve","flowState":"待上线"},{"id":"db-027","key":"cr:mid-p27","name":"贷款逾期分析","group":"贷款","order":26,"enabled":true,"desc":"贷款逾期分析实时监控看板","widgets":[{"id":"w1","type":"donut","title":"贷款逾期分析·product分布","datasetId":"ds_loan","metricId":"m_loan_cnt","dimensions":["product"],"span":1,"drill":{"type":"detail","rowKey":"cust_id","title":"明细"},"flowKey":"f-loan-collect"},{"id":"w2","type":"metric","title":"贷款发放总额","datasetId":"ds_loan","metricId":"m_loan_total","span":1,"flowKey":"f-loan-collect"},{"id":"w3","type":"table","title":"贷款逾期分析明细","datasetId":"ds_loan","metricId":"m_loan_cnt","dimensions":["cust_id","product","loan_balance","overdue_amt","credit_line"],"span":2,"drill":{"type":"none","title":""},"flowKey":"f-loan-collect"}],"flowKey":"f-online-approve","flowState":"待上线"},{"id":"db-028","key":"cr:mid-p28","name":"贷款质量看板","group":"贷款","order":27,"enabled":true,"desc":"贷款质量看板实时监控看板","widgets":[{"id":"w1","type":"donut","title":"贷款质量看板·product分布","datasetId":"ds_loan","metricId":"m_loan_cnt","dimensions":["product"],"span":1,"drill":{"type":"detail","rowKey":"cust_id","title":"明细"},"flowKey":"f-loan-collect"},{"id":"w2","type":"metric","title":"贷款发放总额","datasetId":"ds_loan","metricId":"m_loan_total","span":1,"flowKey":"f-loan-collect"},{"id":"w3","type":"table","title":"贷款质量看板明细","datasetId":"ds_loan","metricId":"m_loan_cnt","dimensions":["cust_id","product","loan_balance","overdue_amt","credit_line"],"span":2,"drill":{"type":"none","title":""},"flowKey":"f-loan-collect"}],"flowKey":"f-online-approve","flowState":"复审中"},{"id":"db-029","key":"cr:mid-p29","name":"还款行为分析","group":"贷款","order":28,"enabled":true,"desc":"还款行为分析实时监控看板","widgets":[{"id":"w1","type":"donut","title":"还款行为分析·month分布","datasetId":"ds_behavior","metricId":"m_loan_cnt","dimensions":["month"],"span":1,"drill":{"type":"detail","rowKey":"cust_id","title":"明细"},"flowKey":"f-behavior-promote"},{"id":"w2","type":"metric","title":"贷款发放总额","datasetId":"ds_behavior","metricId":"m_loan_total","span":1,"flowKey":"f-behavior-promote"},{"id":"w3","type":"table","title":"还款行为分析明细","datasetId":"ds_behavior","metricId":"m_loan_cnt","dimensions":["cust_id","month","score","new_loans","overdue_amt"],"span":2,"drill":{"type":"none","title":""},"flowKey":"f-behavior-promote"},{"id":"w4","type":"line","title":"月度趋势","datasetId":"ds_behavior","metricId":"m_loan_cnt","dimensions":["month"],"span":2,"flowKey":"f-behavior-promote"}],"flowKey":"f-online-approve","flowState":"待上线"},{"id":"db-030","key":"cr:mid-p30","name":"贷款发放趋势","group":"贷款","order":29,"enabled":true,"desc":"贷款发放趋势实时监控看板","widgets":[{"id":"w1","type":"donut","title":"贷款发放趋势·product分布","datasetId":"ds_loan","metricId":"m_loan_cnt","dimensions":["product"],"span":1,"drill":{"type":"detail","rowKey":"cust_id","title":"明细"},"flowKey":"f-loan-collect"},{"id":"w2","type":"metric","title":"贷款发放总额","datasetId":"ds_loan","metricId":"m_loan_total","span":1,"flowKey":"f-loan-collect"},{"id":"w3","type":"table","title":"贷款发放趋势明细","datasetId":"ds_loan","metricId":"m_loan_cnt","dimensions":["cust_id","product","loan_balance","overdue_amt","credit_line"],"span":2,"drill":{"type":"none","title":""},"flowKey":"f-loan-collect"}],"flowKey":"f-online-approve","flowState":"已上线"},{"id":"db-031","key":"cr:mid-p31","name":"客户行为分析","group":"行为","order":30,"enabled":true,"desc":"客户行为分析实时监控看板","widgets":[{"id":"w1","type":"donut","title":"客户行为分析·month分布","datasetId":"ds_behavior","metricId":"m_txn_amt","dimensions":["month"],"span":1,"drill":{"type":"detail","rowKey":"cust_id","title":"明细"},"flowKey":"f-behavior-promote"},{"id":"w2","type":"metric","title":"交易笔数","datasetId":"ds_behavior","metricId":"m_txn_cnt","span":1,"flowKey":"f-behavior-promote"},{"id":"w3","type":"table","title":"客户行为分析明细","datasetId":"ds_behavior","metricId":"m_txn_amt","dimensions":["cust_id","month","score","new_loans","overdue_amt"],"span":2,"drill":{"type":"none","title":""},"flowKey":"f-behavior-promote"},{"id":"w4","type":"line","title":"月度趋势","datasetId":"ds_behavior","metricId":"m_txn_amt","dimensions":["month"],"span":2,"flowKey":"f-behavior-promote"}],"flowKey":"f-online-approve","flowState":"待上线"},{"id":"db-032","key":"cr:mid-p32","name":"行为评分监控","group":"行为","order":31,"enabled":true,"desc":"行为评分监控实时监控看板","widgets":[{"id":"w1","type":"donut","title":"行为评分监控·month分布","datasetId":"ds_behavior","metricId":"m_txn_amt","dimensions":["month"],"span":1,"drill":{"type":"detail","rowKey":"cust_id","title":"明细"},"flowKey":"f-behavior-promote"},{"id":"w2","type":"metric","title":"交易笔数","datasetId":"ds_behavior","metricId":"m_txn_cnt","span":1,"flowKey":"f-behavior-promote"},{"id":"w3","type":"table","title":"行为评分监控明细","datasetId":"ds_behavior","metricId":"m_txn_amt","dimensions":["cust_id","month","score","new_loans","overdue_amt"],"span":2,"drill":{"type":"none","title":""},"flowKey":"f-behavior-promote"},{"id":"w4","type":"line","title":"月度趋势","datasetId":"ds_behavior","metricId":"m_txn_amt","dimensions":["month"],"span":2,"flowKey":"f-behavior-promote"}],"flowKey":"f-online-approve","flowState":"待上线"},{"id":"db-033","key":"cr:mid-p33","name":"行为趋势看板","group":"行为","order":32,"enabled":true,"desc":"行为趋势看板实时监控看板","widgets":[{"id":"w1","type":"donut","title":"行为趋势看板·month分布","datasetId":"ds_behavior","metricId":"m_txn_amt","dimensions":["month"],"span":1,"drill":{"type":"detail","rowKey":"cust_id","title":"明细"},"flowKey":"f-behavior-promote"},{"id":"w2","type":"metric","title":"交易笔数","datasetId":"ds_behavior","metricId":"m_txn_cnt","span":1,"flowKey":"f-behavior-promote"},{"id":"w3","type":"table","title":"行为趋势看板明细","datasetId":"ds_behavior","metricId":"m_txn_amt","dimensions":["cust_id","month","score","new_loans","overdue_amt"],"span":2,"drill":{"type":"none","title":""},"flowKey":"f-behavior-promote"},{"id":"w4","type":"line","title":"月度趋势","datasetId":"ds_behavior","metricId":"m_txn_amt","dimensions":["month"],"span":2,"flowKey":"f-behavior-promote"}],"flowKey":"f-online-approve","flowState":"复审中"},{"id":"db-034","key":"cr:mid-p34","name":"用信行为分析","group":"行为","order":33,"enabled":true,"desc":"用信行为分析实时监控看板","widgets":[{"id":"w1","type":"donut","title":"用信行为分析·month分布","datasetId":"ds_behavior","metricId":"m_txn_amt","dimensions":["month"],"span":1,"drill":{"type":"detail","rowKey":"cust_id","title":"明细"},"flowKey":"f-behavior-promote"},{"id":"w2","type":"metric","title":"交易笔数","datasetId":"ds_behavior","metricId":"m_txn_cnt","span":1,"flowKey":"f-behavior-promote"},{"id":"w3","type":"table","title":"用信行为分析明细","datasetId":"ds_behavior","metricId":"m_txn_amt","dimensions":["cust_id","month","score","new_loans","overdue_amt"],"span":2,"drill":{"type":"none","title":""},"flowKey":"f-behavior-promote"},{"id":"w4","type":"line","title":"月度趋势","datasetId":"ds_behavior","metricId":"m_txn_amt","dimensions":["month"],"span":2,"flowKey":"f-behavior-promote"}],"flowKey":"f-online-approve","flowState":"待上线"},{"id":"db-035","key":"cr:mid-p35","name":"沉睡客户预警","group":"行为","order":34,"enabled":true,"desc":"沉睡客户预警实时监控看板","widgets":[{"id":"w1","type":"donut","title":"沉睡客户预警·month分布","datasetId":"ds_behavior","metricId":"m_txn_amt","dimensions":["month"],"span":1,"drill":{"type":"detail","rowKey":"cust_id","title":"明细"},"flowKey":"f-behavior-promote"},{"id":"w2","type":"metric","title":"交易笔数","datasetId":"ds_behavior","metricId":"m_txn_cnt","span":1,"flowKey":"f-behavior-promote"},{"id":"w3","type":"table","title":"沉睡客户预警明细","datasetId":"ds_behavior","metricId":"m_txn_amt","dimensions":["cust_id","month","score","new_loans","overdue_amt"],"span":2,"drill":{"type":"none","title":""},"flowKey":"f-behavior-promote"},{"id":"w4","type":"line","title":"月度趋势","datasetId":"ds_behavior","metricId":"m_txn_amt","dimensions":["month"],"span":2,"flowKey":"f-behavior-promote"}],"flowKey":"f-online-approve","flowState":"已上线"},{"id":"db-036","key":"cr:mid-p36","name":"欺诈风险总览","group":"欺诈","order":35,"enabled":true,"desc":"欺诈风险总览实时监控看板","widgets":[{"id":"w1","type":"metric","title":"欺诈命中客户数","datasetId":"ds_api_demo","metricId":"m_fraud_hit_cust","span":1,"flowKey":"f-credit-check"},{"id":"w2","type":"table","title":"欺诈风险总览明细","datasetId":"ds_api_demo","metricId":"m_fraud_hit","dimensions":["id_no","score","query_cnt"],"span":2,"drill":{"type":"none","title":""},"flowKey":"f-credit-check"},{"id":"w3","type":"metric","title":"欺诈命中次数","datasetId":"ds_api_demo","metricId":"m_fraud_hit","span":1,"flowKey":"f-credit-check"}],"flowKey":"f-online-approve","flowState":"待上线"},{"id":"db-037","key":"cr:mid-p37","name":"欺诈识别监控","group":"欺诈","order":36,"enabled":true,"desc":"欺诈识别监控实时监控看板","widgets":[{"id":"w1","type":"metric","title":"欺诈命中客户数","datasetId":"ds_api_demo","metricId":"m_fraud_hit_cust","span":1,"flowKey":"f-credit-check"},{"id":"w2","type":"table","title":"欺诈识别监控明细","datasetId":"ds_api_demo","metricId":"m_fraud_hit","dimensions":["id_no","score","query_cnt"],"span":2,"drill":{"type":"none","title":""},"flowKey":"f-credit-check"},{"id":"w3","type":"metric","title":"欺诈命中次数","datasetId":"ds_api_demo","metricId":"m_fraud_hit","span":1,"flowKey":"f-credit-check"}],"flowKey":"f-online-approve","flowState":"待上线"},{"id":"db-038","key":"cr:mid-p38","name":"欺诈案件分析","group":"欺诈","order":37,"enabled":true,"desc":"欺诈案件分析实时监控看板","widgets":[{"id":"w1","type":"metric","title":"欺诈命中客户数","datasetId":"ds_api_demo","metricId":"m_fraud_hit_cust","span":1,"flowKey":"f-credit-check"},{"id":"w2","type":"table","title":"欺诈案件分析明细","datasetId":"ds_api_demo","metricId":"m_fraud_hit","dimensions":["id_no","score","query_cnt"],"span":2,"drill":{"type":"none","title":""},"flowKey":"f-credit-check"},{"id":"w3","type":"metric","title":"欺诈命中次数","datasetId":"ds_api_demo","metricId":"m_fraud_hit","span":1,"flowKey":"f-credit-check"}],"flowKey":"f-online-approve","flowState":"复审中"},{"id":"db-039","key":"cr:mid-p39","name":"设备指纹风险","group":"欺诈","order":38,"enabled":true,"desc":"设备指纹风险实时监控看板","widgets":[{"id":"w1","type":"metric","title":"欺诈命中客户数","datasetId":"ds_api_demo","metricId":"m_fraud_hit_cust","span":1,"flowKey":"f-credit-check"},{"id":"w2","type":"table","title":"设备指纹风险明细","datasetId":"ds_api_demo","metricId":"m_fraud_hit","dimensions":["id_no","score","query_cnt"],"span":2,"drill":{"type":"none","title":""},"flowKey":"f-credit-check"},{"id":"w3","type":"metric","title":"欺诈命中次数","datasetId":"ds_api_demo","metricId":"m_fraud_hit","span":1,"flowKey":"f-credit-check"}],"flowKey":"f-online-approve","flowState":"待上线"},{"id":"db-040","key":"cr:mid-p40","name":"异常行为预警","group":"欺诈","order":39,"enabled":true,"desc":"异常行为预警实时监控看板","widgets":[{"id":"w1","type":"metric","title":"欺诈命中客户数","datasetId":"ds_api_demo","metricId":"m_fraud_hit_cust","span":1,"flowKey":"f-credit-check"},{"id":"w2","type":"table","title":"异常行为预警明细","datasetId":"ds_api_demo","metricId":"m_fraud_hit","dimensions":["id_no","score","query_cnt"],"span":2,"drill":{"type":"none","title":""},"flowKey":"f-credit-check"},{"id":"w3","type":"metric","title":"欺诈命中次数","datasetId":"ds_api_demo","metricId":"m_fraud_hit","span":1,"flowKey":"f-credit-check"}],"flowKey":"f-online-approve","flowState":"已上线"},{"id":"db-041","key":"cr:mid-p41","name":"营销活动效果","group":"营销","order":40,"enabled":true,"desc":"营销活动效果实时监控看板","widgets":[{"id":"w1","type":"donut","title":"营销活动效果·risk_level分布","datasetId":"ds_customer","metricId":"m_promo_cnt","dimensions":["risk_level"],"span":1,"drill":{"type":"detail","rowKey":"cust_id","title":"明细"},"flowKey":"f-cust-operate"},{"id":"w2","type":"metric","title":"提额邀请数","datasetId":"ds_customer","metricId":"m_invite_cnt","span":1,"flowKey":"f-cust-operate"},{"id":"w3","type":"table","title":"营销活动效果明细","datasetId":"ds_customer","metricId":"m_promo_cnt","dimensions":["cust_id","cust_name","product","risk_level","credit_line"],"span":2,"drill":{"type":"none","title":""},"flowKey":"f-cust-operate"}],"flowKey":"f-online-approve","flowState":"待上线"},{"id":"db-042","key":"cr:mid-p42","name":"营销机会挖掘","group":"营销","order":41,"enabled":true,"desc":"营销机会挖掘实时监控看板","widgets":[{"id":"w1","type":"donut","title":"营销机会挖掘·risk_level分布","datasetId":"ds_customer","metricId":"m_promo_cnt","dimensions":["risk_level"],"span":1,"drill":{"type":"detail","rowKey":"cust_id","title":"明细"},"flowKey":"f-cust-operate"},{"id":"w2","type":"metric","title":"提额邀请数","datasetId":"ds_customer","metricId":"m_invite_cnt","span":1,"flowKey":"f-cust-operate"},{"id":"w3","type":"table","title":"营销机会挖掘明细","datasetId":"ds_customer","metricId":"m_promo_cnt","dimensions":["cust_id","cust_name","product","risk_level","credit_line"],"span":2,"drill":{"type":"none","title":""},"flowKey":"f-cust-operate"}],"flowKey":"f-online-approve","flowState":"待上线"},{"id":"db-043","key":"cr:mid-p43","name":"营销响应分析","group":"营销","order":42,"enabled":true,"desc":"营销响应分析实时监控看板","widgets":[{"id":"w1","type":"donut","title":"营销响应分析·risk_level分布","datasetId":"ds_customer","metricId":"m_promo_cnt","dimensions":["risk_level"],"span":1,"drill":{"type":"detail","rowKey":"cust_id","title":"明细"},"flowKey":"f-cust-operate"},{"id":"w2","type":"metric","title":"提额邀请数","datasetId":"ds_customer","metricId":"m_invite_cnt","span":1,"flowKey":"f-cust-operate"},{"id":"w3","type":"table","title":"营销响应分析明细","datasetId":"ds_customer","metricId":"m_promo_cnt","dimensions":["cust_id","cust_name","product","risk_level","credit_line"],"span":2,"drill":{"type":"none","title":""},"flowKey":"f-cust-operate"}],"flowKey":"f-online-approve","flowState":"复审中"},{"id":"db-044","key":"cr:mid-p44","name":"精准营销看板","group":"营销","order":43,"enabled":true,"desc":"精准营销看板实时监控看板","widgets":[{"id":"w1","type":"donut","title":"精准营销看板·risk_level分布","datasetId":"ds_customer","metricId":"m_promo_cnt","dimensions":["risk_level"],"span":1,"drill":{"type":"detail","rowKey":"cust_id","title":"明细"},"flowKey":"f-cust-operate"},{"id":"w2","type":"metric","title":"提额邀请数","datasetId":"ds_customer","metricId":"m_invite_cnt","span":1,"flowKey":"f-cust-operate"},{"id":"w3","type":"table","title":"精准营销看板明细","datasetId":"ds_customer","metricId":"m_promo_cnt","dimensions":["cust_id","cust_name","product","risk_level","credit_line"],"span":2,"drill":{"type":"none","title":""},"flowKey":"f-cust-operate"}],"flowKey":"f-online-approve","flowState":"待上线"},{"id":"db-045","key":"cr:mid-p45","name":"客户生命周期","group":"营销","order":44,"enabled":true,"desc":"客户生命周期实时监控看板","widgets":[{"id":"w1","type":"donut","title":"客户生命周期·risk_level分布","datasetId":"ds_customer","metricId":"m_promo_cnt","dimensions":["risk_level"],"span":1,"drill":{"type":"detail","rowKey":"cust_id","title":"明细"},"flowKey":"f-cust-operate"},{"id":"w2","type":"metric","title":"提额邀请数","datasetId":"ds_customer","metricId":"m_invite_cnt","span":1,"flowKey":"f-cust-operate"},{"id":"w3","type":"table","title":"客户生命周期明细","datasetId":"ds_customer","metricId":"m_promo_cnt","dimensions":["cust_id","cust_name","product","risk_level","credit_line"],"span":2,"drill":{"type":"none","title":""},"flowKey":"f-cust-operate"}],"flowKey":"f-online-approve","flowState":"已上线"},{"id":"db-046","key":"cr:mid-p46","name":"合规指标监控","group":"合规","order":45,"enabled":true,"desc":"合规指标监控实时监控看板","widgets":[{"id":"w1","type":"metric","title":"拨备覆盖率","datasetId":"ds_sql_demo","metricId":"m_provision","span":1,"flowKey":"f-loan-collect"},{"id":"w2","type":"table","title":"合规指标监控明细","datasetId":"ds_sql_demo","metricId":"m_car_ratio","dimensions":["cust_id","loan_balance","overdue_amt"],"span":2,"drill":{"type":"none","title":""},"flowKey":"f-loan-collect"},{"id":"w3","type":"metric","title":"资本充足率","datasetId":"ds_sql_demo","metricId":"m_car_ratio","span":1,"flowKey":"f-loan-collect"}],"flowKey":"f-online-approve","flowState":"待上线"},{"id":"db-047","key":"cr:mid-p47","name":"监管报送看板","group":"合规","order":46,"enabled":true,"desc":"监管报送看板实时监控看板","widgets":[{"id":"w1","type":"metric","title":"拨备覆盖率","datasetId":"ds_sql_demo","metricId":"m_provision","span":1,"flowKey":"f-loan-collect"},{"id":"w2","type":"table","title":"监管报送看板明细","datasetId":"ds_sql_demo","metricId":"m_car_ratio","dimensions":["cust_id","loan_balance","overdue_amt"],"span":2,"drill":{"type":"none","title":""},"flowKey":"f-loan-collect"},{"id":"w3","type":"metric","title":"资本充足率","datasetId":"ds_sql_demo","metricId":"m_car_ratio","span":1,"flowKey":"f-loan-collect"}],"flowKey":"f-online-approve","flowState":"待上线"},{"id":"db-048","key":"cr:mid-p48","name":"合规风险预警","group":"合规","order":47,"enabled":true,"desc":"合规风险预警实时监控看板","widgets":[{"id":"w1","type":"metric","title":"拨备覆盖率","datasetId":"ds_sql_demo","metricId":"m_provision","span":1,"flowKey":"f-loan-collect"},{"id":"w2","type":"table","title":"合规风险预警明细","datasetId":"ds_sql_demo","metricId":"m_car_ratio","dimensions":["cust_id","loan_balance","overdue_amt"],"span":2,"drill":{"type":"none","title":""},"flowKey":"f-loan-collect"},{"id":"w3","type":"metric","title":"资本充足率","datasetId":"ds_sql_demo","metricId":"m_car_ratio","span":1,"flowKey":"f-loan-collect"}],"flowKey":"f-online-approve","flowState":"复审中"},{"id":"db-049","key":"cr:mid-p49","name":"事件分析总览","group":"事件分析","order":48,"enabled":true,"desc":"事件分析总览实时监控看板","widgets":[{"id":"w1","type":"donut","title":"事件分析总览·country分布","datasetId":"ds_event","metricId":"m_web_stay_7d","dimensions":["country"],"span":1,"drill":{"type":"detail","rowKey":"user_id","title":"明细"},"flowKey":"f-event-analyze"},{"id":"w2","type":"metric","title":"直播间-点击立即购买的人均次数","datasetId":"ds_event","metricId":"m_live_buy_peruser","span":1,"flowKey":"f-event-analyze"},{"id":"w3","type":"table","title":"事件分析总览明细","datasetId":"ds_event","metricId":"m_web_stay_7d","dimensions":["user_id","ip","startup_dur","country","web_stay_7d"],"span":2,"drill":{"type":"none","title":""},"flowKey":"f-event-analyze"}],"flowKey":"f-online-approve","flowState":"待上线"},{"id":"db-050","key":"cr:mid-p50","name":"用户启动时长分析","group":"事件分析","order":49,"enabled":true,"desc":"用户启动时长分析实时监控看板","widgets":[{"id":"w1","type":"donut","title":"用户启动时长分析·country分布","datasetId":"ds_event","metricId":"m_web_stay_7d","dimensions":["country"],"span":1,"drill":{"type":"detail","rowKey":"user_id","title":"明细"},"flowKey":"f-event-analyze"},{"id":"w2","type":"metric","title":"直播间-点击立即购买的人均次数","datasetId":"ds_event","metricId":"m_live_buy_peruser","span":1,"flowKey":"f-event-analyze"},{"id":"w3","type":"table","title":"用户启动时长分析明细","datasetId":"ds_event","metricId":"m_web_stay_7d","dimensions":["user_id","ip","startup_dur","country","web_stay_7d"],"span":2,"drill":{"type":"none","title":""},"flowKey":"f-event-analyze"}],"flowKey":"f-online-approve","flowState":"已上线"},{"id":"db-100","key":"cr:overview","name":"概览看板","group":"概览看板","order":0,"enabled":true,"desc":"零售信贷风控总览：贷前进件（进件量/通过率/欺诈命中/审批分布）+ 贷中监测（余额/逾期/预警/风险等级/处置）","widgets":[{"id":"w1","type":"metric","title":"今日进件量","datasetId":"ds_pre_apply","metricId":"m_pre_in_cnt","span":1,"windowSize":"sm"},{"id":"w2","type":"metric","title":"进件通过率","datasetId":"ds_pre_apply","metricId":"m_pre_pass_rate","span":1,"windowSize":"sm"},{"id":"w3","type":"metric","title":"欺诈命中率","datasetId":"ds_pre_apply","metricId":"m_pre_fraud_rate","span":1,"windowSize":"sm"},{"id":"w4","type":"donut","title":"审批结论分布","datasetId":"ds_pre_apply","metricId":"m_pre_in_cnt","dimensions":["decision"],"span":1,"windowSize":"sm"},{"id":"w5","type":"bar","title":"渠道进件分布","datasetId":"ds_pre_apply","metricId":"m_pre_in_cnt","dimensions":["channel"],"span":2,"windowSize":"md"},{"id":"w6","type":"metric","title":"在贷余额","datasetId":"ds_loan","metricId":"m_loan_balance","span":1,"windowSize":"sm"},{"id":"w7","type":"metric","title":"逾期率","datasetId":"ds_loan","metricId":"m_overdue_rate","span":1,"windowSize":"sm"},{"id":"w8","type":"metric","title":"红灯预警","datasetId":"ds_alert","metricId":"m_red_cnt","span":1,"windowSize":"sm"},{"id":"w9","type":"donut","title":"风险等级分布","datasetId":"ds_customer","metricId":"m_cust_cnt","dimensions":["risk_level"],"span":2,"windowSize":"md"},{"id":"w10","type":"metric","title":"处置完成率","datasetId":"ds_alert","metricId":"m_dispose_rate","span":1,"windowSize":"sm"}],"flowKey":"f-online-approve","flowState":"已上线"}]
+[
+  {
+    "id": "db-051",
+    "key": "cr:mid-td1",
+    "name": "贷中监控大盘",
+    "group": "贷中监控大盘",
+    "order": 0,
+    "enabled": true,
+    "desc": "同盾需求·红黄灯综合预警信号总览（预警总量/红黄灯结构/场景分布/规则还原）",
+    "widgets": [
+      {
+        "id": "w1",
+        "type": "metric",
+        "title": "预警总数",
+        "datasetId": "ds_alert",
+        "metricId": "m_alert_cnt",
+        "span": 3,
+        "windowSize": "lg",
+        "flowKey": "f-alert-dispose"
+      },
+      {
+        "id": "w2",
+        "type": "donut",
+        "title": "红黄灯分布",
+        "datasetId": "ds_alert",
+        "metricId": "m_alert_cnt",
+        "dimensions": [
+          "level"
+        ],
+        "span": 2,
+        "windowSize": "md",
+        "flowKey": "f-alert-dispose"
+      },
+      {
+        "id": "w3",
+        "type": "bar",
+        "title": "预警场景分布",
+        "datasetId": "ds_alert",
+        "metricId": "m_alert_cnt",
+        "dimensions": [
+          "scene"
+        ],
+        "span": 1,
+        "windowSize": "sm",
+        "flowKey": "f-alert-dispose"
+      },
+      {
+        "id": "w4",
+        "type": "table",
+        "title": "预警明细 · 规则还原",
+        "datasetId": "ds_alert",
+        "metricId": "m_alert_cnt",
+        "dimensions": [
+          "alert_id",
+          "cust_name",
+          "scene",
+          "level",
+          "alert_date",
+          "rule_name",
+          "metric_value",
+          "threshold"
+        ],
+        "span": 3,
+        "windowSize": "lg",
+        "flowKey": "f-alert-dispose"
+      },
+      {
+        "id": "w5",
+        "type": "table",
+        "title": "共债网络 TOP",
+        "datasetId": "ds_codebt_top",
+        "metricId": "m_codebt_balance",
+        "dimensions": [
+          "cust_name",
+          "level",
+          "org_cnt",
+          "total_balance"
+        ],
+        "span": 3,
+        "windowSize": "lg",
+        "drill": {
+          "type": "cust",
+          "rowKey": "cust_id"
+        },
+        "flowKey": "f-online-approve",
+        "flowState": "待上线"
+      },
+      {
+        "id": "w6",
+        "type": "table",
+        "title": "高危设备看板",
+        "datasetId": "ds_risky_device",
+        "metricId": "m_device_acct",
+        "dimensions": [
+          "device_id",
+          "model",
+          "env_score",
+          "risk",
+          "account_cnt"
+        ],
+        "span": 3,
+        "windowSize": "lg",
+        "flowKey": "f-online-approve",
+        "flowState": "待上线"
+      },
+      {
+        "id": "w7",
+        "type": "table",
+        "title": "引擎运行态势",
+        "datasetId": "ds_engine_task",
+        "metricId": "m_engine_hit",
+        "dimensions": [
+          "name",
+          "cron",
+          "status",
+          "scanned",
+          "hits",
+          "success_rate"
+        ],
+        "span": 3,
+        "windowSize": "lg",
+        "flowKey": "f-online-approve",
+        "flowState": "待上线"
+      }
+    ],
+    "flowKey": "f-online-approve",
+    "flowState": "待上线"
+  },
+  {
+    "id": "db-052",
+    "key": "cr:mid-td2",
+    "name": "风险监测",
+    "group": "风险监测",
+    "order": 1,
+    "enabled": true,
+    "desc": "同盾需求·分场景分产品监测（风险视角），支持按产品线筛选",
+    "filters": [
+      {
+        "id": "f_product",
+        "label": "产品线",
+        "kind": "select",
+        "field": "product"
+      }
+    ],
+    "widgets": [
+      {
+        "id": "w1",
+        "type": "metric",
+        "title": "在贷客户数",
+        "datasetId": "ds_customer",
+        "metricId": "m_cust_cnt",
+        "span": 1,
+        "windowSize": "sm",
+        "flowKey": "f-online-approve"
+      },
+      {
+        "id": "w2",
+        "type": "metric",
+        "title": "在贷余额",
+        "datasetId": "ds_loan",
+        "metricId": "m_loan_balance",
+        "span": 1,
+        "windowSize": "sm",
+        "flowKey": "f-online-approve"
+      },
+      {
+        "id": "w3",
+        "type": "metric",
+        "title": "逾期金额",
+        "datasetId": "ds_loan",
+        "metricId": "m_overdue_amt",
+        "span": 1,
+        "windowSize": "sm",
+        "flowKey": "f-loan-collect"
+      },
+      {
+        "id": "w4",
+        "type": "donut",
+        "title": "风险等级分布",
+        "datasetId": "ds_customer",
+        "metricId": "m_cust_cnt",
+        "dimensions": [
+          "risk_level"
+        ],
+        "span": 2,
+        "windowSize": "md",
+        "flowKey": "f-cust-operate"
+      },
+      {
+        "id": "w5",
+        "type": "bar",
+        "title": "各产品逾期金额",
+        "datasetId": "ds_loan",
+        "metricId": "m_overdue_amt",
+        "dimensions": [
+          "product"
+        ],
+        "span": 1,
+        "windowSize": "sm",
+        "flowKey": "f-loan-collect"
+      },
+      {
+        "id": "w6",
+        "type": "table",
+        "title": "客户明细",
+        "datasetId": "ds_customer",
+        "metricId": "m_cust_cnt",
+        "dimensions": [
+          "cust_id",
+          "cust_name",
+          "product",
+          "risk_level",
+          "credit_line",
+          "loan_balance",
+          "behavior_score"
+        ],
+        "span": 3,
+        "windowSize": "lg",
+        "flowKey": "f-cust-operate"
+      }
+    ],
+    "flowKey": "f-online-approve",
+    "flowState": "待上线"
+  },
+  {
+    "id": "db-053",
+    "key": "cr:mid-td3",
+    "name": "红黄灯预警中心",
+    "group": "预警中心",
+    "order": 2,
+    "enabled": true,
+    "desc": "同盾需求·红黄灯综合预警信号作业台（按等级筛选/命中规则TOP/规则明细还原）",
+    "filters": [
+      {
+        "id": "f_level",
+        "label": "预警等级",
+        "kind": "select",
+        "field": "level"
+      }
+    ],
+    "widgets": [
+      {
+        "id": "w1",
+        "type": "metric",
+        "title": "预警总数",
+        "datasetId": "ds_alert",
+        "metricId": "m_alert_cnt",
+        "span": 3,
+        "windowSize": "lg",
+        "flowKey": "f-alert-dispose"
+      },
+      {
+        "id": "w2",
+        "type": "donut",
+        "title": "红黄灯分布",
+        "datasetId": "ds_alert",
+        "metricId": "m_alert_cnt",
+        "dimensions": [
+          "level"
+        ],
+        "span": 2,
+        "windowSize": "md",
+        "flowKey": "f-alert-dispose"
+      },
+      {
+        "id": "w3",
+        "type": "bar",
+        "title": "命中规则 TOP",
+        "datasetId": "ds_alert",
+        "metricId": "m_alert_cnt",
+        "dimensions": [
+          "rule_name"
+        ],
+        "span": 1,
+        "windowSize": "sm",
+        "flowKey": "f-alert-dispose"
+      },
+      {
+        "id": "w4",
+        "type": "table",
+        "title": "预警明细 · 规则还原",
+        "datasetId": "ds_alert",
+        "metricId": "m_alert_cnt",
+        "dimensions": [
+          "alert_id",
+          "cust_name",
+          "scene",
+          "level",
+          "rule_name",
+          "metric_value",
+          "threshold",
+          "alert_date"
+        ],
+        "span": 3,
+        "windowSize": "lg",
+        "flowKey": "f-alert-dispose"
+      }
+    ],
+    "flowKey": "f-online-approve",
+    "flowState": "复审中"
+  },
+  {
+    "id": "db-054",
+    "key": "cr:mid-td4",
+    "name": "持续性周期监测",
+    "group": "周期监测",
+    "order": 3,
+    "enabled": true,
+    "desc": "同盾需求·持续性周期监测评估（行为分/逾期/新增贷款按月趋势）",
+    "widgets": [
+      {
+        "id": "w1",
+        "type": "line",
+        "title": "行为均分月度趋势",
+        "datasetId": "ds_behavior",
+        "metricId": "m_score_avg",
+        "dimensions": [
+          "month"
+        ],
+        "span": 3,
+        "windowSize": "lg",
+        "flowKey": "f-behavior-promote"
+      },
+      {
+        "id": "w2",
+        "type": "bar",
+        "title": "月度逾期金额",
+        "datasetId": "ds_behavior",
+        "metricId": "m_overdue_amt",
+        "dimensions": [
+          "month"
+        ],
+        "span": 1,
+        "windowSize": "sm",
+        "flowKey": "f-behavior-promote"
+      },
+      {
+        "id": "w3",
+        "type": "bar",
+        "title": "月度新增贷款",
+        "datasetId": "ds_behavior",
+        "metricId": "m_new_cust",
+        "dimensions": [
+          "month"
+        ],
+        "span": 1,
+        "windowSize": "sm",
+        "flowKey": "f-behavior-promote"
+      },
+      {
+        "id": "w4",
+        "type": "metric",
+        "title": "行为均分",
+        "datasetId": "ds_behavior",
+        "metricId": "m_score_avg",
+        "span": 1,
+        "windowSize": "sm",
+        "flowKey": "f-behavior-promote"
+      }
+    ],
+    "flowKey": "f-online-approve",
+    "flowState": "复审中"
+  },
+  {
+    "id": "db-055",
+    "key": "cr:mid-td5",
+    "name": "存量客群运营",
+    "group": "客群运营",
+    "order": 4,
+    "enabled": true,
+    "desc": "同盾需求·存量客群运营场景（授信/余额/逾期 + 客群产品结构 + 贷款台账）",
+    "widgets": [
+      {
+        "id": "w1",
+        "type": "metric",
+        "title": "授信总额",
+        "datasetId": "ds_loan",
+        "metricId": "m_credit_line",
+        "span": 1,
+        "windowSize": "sm",
+        "flowKey": "f-loan-collect"
+      },
+      {
+        "id": "w2",
+        "type": "metric",
+        "title": "在贷余额",
+        "datasetId": "ds_loan",
+        "metricId": "m_loan_balance",
+        "span": 1,
+        "windowSize": "sm",
+        "flowKey": "f-loan-collect"
+      },
+      {
+        "id": "w3",
+        "type": "metric",
+        "title": "逾期金额",
+        "datasetId": "ds_loan",
+        "metricId": "m_overdue_amt",
+        "span": 1,
+        "windowSize": "sm",
+        "flowKey": "f-loan-collect"
+      },
+      {
+        "id": "w4",
+        "type": "donut",
+        "title": "客群产品分布",
+        "datasetId": "ds_customer",
+        "metricId": "m_cust_cnt",
+        "dimensions": [
+          "product"
+        ],
+        "span": 2,
+        "windowSize": "md",
+        "flowKey": "f-cust-operate"
+      },
+      {
+        "id": "w5",
+        "type": "bar",
+        "title": "各产品授信额度",
+        "datasetId": "ds_loan",
+        "metricId": "m_credit_line",
+        "dimensions": [
+          "product"
+        ],
+        "span": 1,
+        "windowSize": "sm",
+        "flowKey": "f-loan-collect"
+      },
+      {
+        "id": "w6",
+        "type": "table",
+        "title": "贷款台账明细",
+        "datasetId": "ds_loan",
+        "metricId": "m_loan_balance",
+        "dimensions": [
+          "cust_id",
+          "product",
+          "loan_balance",
+          "overdue_amt",
+          "credit_line"
+        ],
+        "span": 3,
+        "windowSize": "lg",
+        "flowKey": "f-loan-collect"
+      },
+      {
+        "id": "w7",
+        "type": "table",
+        "title": "运营名单跟踪",
+        "datasetId": "ds_ops_track",
+        "metricId": "m_ops_amount",
+        "dimensions": [
+          "cust_name",
+          "tier",
+          "action",
+          "eval_status",
+          "amount",
+          "owner",
+          "next_eval",
+          "cycle"
+        ],
+        "span": 3,
+        "windowSize": "lg",
+        "drill": {
+          "type": "cust",
+          "rowKey": "cust_id"
+        },
+        "flowKey": "f-online-approve",
+        "flowState": "待上线"
+      },
+      {
+        "id": "w8",
+        "type": "table",
+        "title": "促活/提额效果看板",
+        "datasetId": "ds_ops_effect",
+        "metricId": "m_ops_effect",
+        "dimensions": [
+          "label",
+          "value",
+          "desc"
+        ],
+        "span": 3,
+        "windowSize": "lg",
+        "flowKey": "f-online-approve",
+        "flowState": "待上线"
+      }
+    ],
+    "flowKey": "f-online-approve",
+    "flowState": "已下线"
+  },
+  {
+    "id": "db-001",
+    "key": "cr:mid-p1",
+    "name": "客群画像总览",
+    "group": "客群",
+    "order": 0,
+    "enabled": true,
+    "desc": "客群画像总览实时监控看板",
+    "widgets": [
+      {
+        "id": "w1",
+        "type": "donut",
+        "title": "客群画像总览·risk_level分布",
+        "datasetId": "ds_customer",
+        "metricId": "m_cust_cnt",
+        "dimensions": [
+          "risk_level"
+        ],
+        "span": 1,
+        "drill": {
+          "type": "detail",
+          "rowKey": "cust_id",
+          "title": "明细"
+        },
+        "flowKey": "f-cust-operate"
+      },
+      {
+        "id": "w2",
+        "type": "metric",
+        "title": "本月新增客户数",
+        "datasetId": "ds_customer",
+        "metricId": "m_new_cust",
+        "span": 1,
+        "flowKey": "f-cust-operate"
+      },
+      {
+        "id": "w3",
+        "type": "table",
+        "title": "客群画像总览明细",
+        "datasetId": "ds_customer",
+        "metricId": "m_cust_cnt",
+        "dimensions": [
+          "cust_id",
+          "cust_name",
+          "product",
+          "risk_level",
+          "credit_line"
+        ],
+        "span": 2,
+        "drill": {
+          "type": "none",
+          "title": ""
+        },
+        "flowKey": "f-cust-operate"
+      }
+    ],
+    "flowKey": "f-online-approve",
+    "flowState": "已下线"
+  },
+  {
+    "id": "db-002",
+    "key": "cr:mid-p2",
+    "name": "新客获取分析",
+    "group": "客群",
+    "order": 1,
+    "enabled": true,
+    "desc": "新客获取分析实时监控看板",
+    "widgets": [
+      {
+        "id": "w1",
+        "type": "donut",
+        "title": "新客获取分析·risk_level分布",
+        "datasetId": "ds_customer",
+        "metricId": "m_cust_cnt",
+        "dimensions": [
+          "risk_level"
+        ],
+        "span": 1,
+        "drill": {
+          "type": "detail",
+          "rowKey": "cust_id",
+          "title": "明细"
+        },
+        "flowKey": "f-cust-operate"
+      },
+      {
+        "id": "w2",
+        "type": "metric",
+        "title": "本月新增客户数",
+        "datasetId": "ds_customer",
+        "metricId": "m_new_cust",
+        "span": 1,
+        "flowKey": "f-cust-operate"
+      },
+      {
+        "id": "w3",
+        "type": "table",
+        "title": "新客获取分析明细",
+        "datasetId": "ds_customer",
+        "metricId": "m_cust_cnt",
+        "dimensions": [
+          "cust_id",
+          "cust_name",
+          "product",
+          "risk_level",
+          "credit_line"
+        ],
+        "span": 2,
+        "drill": {
+          "type": "none",
+          "title": ""
+        },
+        "flowKey": "f-cust-operate"
+      }
+    ],
+    "flowKey": "f-online-approve",
+    "flowState": "待上线"
+  },
+  {
+    "id": "db-003",
+    "key": "cr:mid-p3",
+    "name": "活跃客群监控",
+    "group": "客群",
+    "order": 2,
+    "enabled": true,
+    "desc": "活跃客群监控实时监控看板",
+    "widgets": [
+      {
+        "id": "w1",
+        "type": "donut",
+        "title": "活跃客群监控·risk_level分布",
+        "datasetId": "ds_customer",
+        "metricId": "m_cust_cnt",
+        "dimensions": [
+          "risk_level"
+        ],
+        "span": 1,
+        "drill": {
+          "type": "detail",
+          "rowKey": "cust_id",
+          "title": "明细"
+        },
+        "flowKey": "f-cust-operate"
+      },
+      {
+        "id": "w2",
+        "type": "metric",
+        "title": "本月新增客户数",
+        "datasetId": "ds_customer",
+        "metricId": "m_new_cust",
+        "span": 1,
+        "flowKey": "f-cust-operate"
+      },
+      {
+        "id": "w3",
+        "type": "table",
+        "title": "活跃客群监控明细",
+        "datasetId": "ds_customer",
+        "metricId": "m_cust_cnt",
+        "dimensions": [
+          "cust_id",
+          "cust_name",
+          "product",
+          "risk_level",
+          "credit_line"
+        ],
+        "span": 2,
+        "drill": {
+          "type": "none",
+          "title": ""
+        },
+        "flowKey": "f-cust-operate"
+      }
+    ],
+    "flowKey": "f-online-approve",
+    "flowState": "复审中"
+  },
+  {
+    "id": "db-004",
+    "key": "cr:mid-p4",
+    "name": "客群分层看板",
+    "group": "客群",
+    "order": 3,
+    "enabled": true,
+    "desc": "客群分层看板实时监控看板",
+    "widgets": [
+      {
+        "id": "w1",
+        "type": "donut",
+        "title": "客群分层看板·risk_level分布",
+        "datasetId": "ds_customer",
+        "metricId": "m_cust_cnt",
+        "dimensions": [
+          "risk_level"
+        ],
+        "span": 1,
+        "drill": {
+          "type": "detail",
+          "rowKey": "cust_id",
+          "title": "明细"
+        },
+        "flowKey": "f-cust-operate"
+      },
+      {
+        "id": "w2",
+        "type": "metric",
+        "title": "本月新增客户数",
+        "datasetId": "ds_customer",
+        "metricId": "m_new_cust",
+        "span": 1,
+        "flowKey": "f-cust-operate"
+      },
+      {
+        "id": "w3",
+        "type": "table",
+        "title": "客群分层看板明细",
+        "datasetId": "ds_customer",
+        "metricId": "m_cust_cnt",
+        "dimensions": [
+          "cust_id",
+          "cust_name",
+          "product",
+          "risk_level",
+          "credit_line"
+        ],
+        "span": 2,
+        "drill": {
+          "type": "none",
+          "title": ""
+        },
+        "flowKey": "f-cust-operate"
+      }
+    ],
+    "flowKey": "f-online-approve",
+    "flowState": "待上线"
+  },
+  {
+    "id": "db-005",
+    "key": "cr:mid-p5",
+    "name": "高价值客群洞察",
+    "group": "客群",
+    "order": 4,
+    "enabled": true,
+    "desc": "高价值客群洞察实时监控看板",
+    "widgets": [
+      {
+        "id": "w1",
+        "type": "donut",
+        "title": "高价值客群洞察·risk_level分布",
+        "datasetId": "ds_customer",
+        "metricId": "m_cust_cnt",
+        "dimensions": [
+          "risk_level"
+        ],
+        "span": 1,
+        "drill": {
+          "type": "detail",
+          "rowKey": "cust_id",
+          "title": "明细"
+        },
+        "flowKey": "f-cust-operate"
+      },
+      {
+        "id": "w2",
+        "type": "metric",
+        "title": "本月新增客户数",
+        "datasetId": "ds_customer",
+        "metricId": "m_new_cust",
+        "span": 1,
+        "flowKey": "f-cust-operate"
+      },
+      {
+        "id": "w3",
+        "type": "table",
+        "title": "高价值客群洞察明细",
+        "datasetId": "ds_customer",
+        "metricId": "m_cust_cnt",
+        "dimensions": [
+          "cust_id",
+          "cust_name",
+          "product",
+          "risk_level",
+          "credit_line"
+        ],
+        "span": 2,
+        "drill": {
+          "type": "none",
+          "title": ""
+        },
+        "flowKey": "f-cust-operate"
+      }
+    ],
+    "flowKey": "f-online-approve",
+    "flowState": "已上线"
+  },
+  {
+    "id": "db-006",
+    "key": "cr:mid-p6",
+    "name": "风险总览驾驶舱",
+    "group": "风险",
+    "order": 5,
+    "enabled": true,
+    "desc": "风险总览驾驶舱实时监控看板",
+    "widgets": [
+      {
+        "id": "w1",
+        "type": "donut",
+        "title": "风险总览驾驶舱·scene分布",
+        "datasetId": "ds_alert",
+        "metricId": "m_loan_balance",
+        "dimensions": [
+          "scene"
+        ],
+        "span": 1,
+        "drill": {
+          "type": "detail",
+          "rowKey": "alert_id",
+          "title": "明细"
+        },
+        "flowKey": "f-alert-dispose"
+      },
+      {
+        "id": "w2",
+        "type": "metric",
+        "title": "逾期金额",
+        "datasetId": "ds_alert",
+        "metricId": "m_overdue_amt",
+        "span": 1,
+        "flowKey": "f-alert-dispose"
+      },
+      {
+        "id": "w3",
+        "type": "table",
+        "title": "风险总览驾驶舱明细",
+        "datasetId": "ds_alert",
+        "metricId": "m_loan_balance",
+        "dimensions": [
+          "alert_id",
+          "cust_id",
+          "cust_name",
+          "scene",
+          "level"
+        ],
+        "span": 2,
+        "drill": {
+          "type": "none",
+          "title": ""
+        },
+        "flowKey": "f-alert-dispose"
+      }
+    ],
+    "flowKey": "f-online-approve",
+    "flowState": "待上线"
+  },
+  {
+    "id": "db-007",
+    "key": "cr:mid-p7",
+    "name": "信用风险评估",
+    "group": "风险",
+    "order": 6,
+    "enabled": true,
+    "desc": "信用风险评估实时监控看板",
+    "widgets": [
+      {
+        "id": "w1",
+        "type": "donut",
+        "title": "信用风险评估·product分布",
+        "datasetId": "ds_loan",
+        "metricId": "m_loan_balance",
+        "dimensions": [
+          "product"
+        ],
+        "span": 1,
+        "drill": {
+          "type": "detail",
+          "rowKey": "cust_id",
+          "title": "明细"
+        },
+        "flowKey": "f-loan-collect"
+      },
+      {
+        "id": "w2",
+        "type": "metric",
+        "title": "逾期金额",
+        "datasetId": "ds_loan",
+        "metricId": "m_overdue_amt",
+        "span": 1,
+        "flowKey": "f-loan-collect"
+      },
+      {
+        "id": "w3",
+        "type": "table",
+        "title": "信用风险评估明细",
+        "datasetId": "ds_loan",
+        "metricId": "m_loan_balance",
+        "dimensions": [
+          "cust_id",
+          "product",
+          "loan_balance",
+          "overdue_amt",
+          "credit_line"
+        ],
+        "span": 2,
+        "drill": {
+          "type": "none",
+          "title": ""
+        },
+        "flowKey": "f-loan-collect"
+      }
+    ],
+    "flowKey": "f-online-approve",
+    "flowState": "待上线"
+  },
+  {
+    "id": "db-008",
+    "key": "cr:mid-p8",
+    "name": "风险等级分布",
+    "group": "风险",
+    "order": 7,
+    "enabled": true,
+    "desc": "风险等级分布实时监控看板",
+    "widgets": [
+      {
+        "id": "w1",
+        "type": "donut",
+        "title": "风险等级分布·scene分布",
+        "datasetId": "ds_alert",
+        "metricId": "m_loan_balance",
+        "dimensions": [
+          "scene"
+        ],
+        "span": 1,
+        "drill": {
+          "type": "detail",
+          "rowKey": "alert_id",
+          "title": "明细"
+        },
+        "flowKey": "f-alert-dispose"
+      },
+      {
+        "id": "w2",
+        "type": "metric",
+        "title": "逾期金额",
+        "datasetId": "ds_alert",
+        "metricId": "m_overdue_amt",
+        "span": 1,
+        "flowKey": "f-alert-dispose"
+      },
+      {
+        "id": "w3",
+        "type": "table",
+        "title": "风险等级分布明细",
+        "datasetId": "ds_alert",
+        "metricId": "m_loan_balance",
+        "dimensions": [
+          "alert_id",
+          "cust_id",
+          "cust_name",
+          "scene",
+          "level"
+        ],
+        "span": 2,
+        "drill": {
+          "type": "none",
+          "title": ""
+        },
+        "flowKey": "f-alert-dispose"
+      }
+    ],
+    "flowKey": "f-online-approve",
+    "flowState": "复审中"
+  },
+  {
+    "id": "db-009",
+    "key": "cr:mid-p9",
+    "name": "风险趋势监控",
+    "group": "风险",
+    "order": 8,
+    "enabled": true,
+    "desc": "风险趋势监控实时监控看板",
+    "widgets": [
+      {
+        "id": "w1",
+        "type": "donut",
+        "title": "风险趋势监控·month分布",
+        "datasetId": "ds_behavior",
+        "metricId": "m_loan_balance",
+        "dimensions": [
+          "month"
+        ],
+        "span": 1,
+        "drill": {
+          "type": "detail",
+          "rowKey": "cust_id",
+          "title": "明细"
+        },
+        "flowKey": "f-behavior-promote"
+      },
+      {
+        "id": "w2",
+        "type": "metric",
+        "title": "逾期金额",
+        "datasetId": "ds_behavior",
+        "metricId": "m_overdue_amt",
+        "span": 1,
+        "flowKey": "f-behavior-promote"
+      },
+      {
+        "id": "w3",
+        "type": "table",
+        "title": "风险趋势监控明细",
+        "datasetId": "ds_behavior",
+        "metricId": "m_loan_balance",
+        "dimensions": [
+          "cust_id",
+          "month",
+          "score",
+          "new_loans",
+          "overdue_amt"
+        ],
+        "span": 2,
+        "drill": {
+          "type": "none",
+          "title": ""
+        },
+        "flowKey": "f-behavior-promote"
+      },
+      {
+        "id": "w4",
+        "type": "line",
+        "title": "月度趋势",
+        "datasetId": "ds_behavior",
+        "metricId": "m_loan_balance",
+        "dimensions": [
+          "month"
+        ],
+        "span": 2,
+        "flowKey": "f-behavior-promote"
+      }
+    ],
+    "flowKey": "f-online-approve",
+    "flowState": "待上线"
+  },
+  {
+    "id": "db-010",
+    "key": "cr:mid-p10",
+    "name": "风险敞口看板",
+    "group": "风险",
+    "order": 9,
+    "enabled": true,
+    "desc": "风险敞口看板实时监控看板",
+    "widgets": [
+      {
+        "id": "w1",
+        "type": "donut",
+        "title": "风险敞口看板·product分布",
+        "datasetId": "ds_loan",
+        "metricId": "m_loan_balance",
+        "dimensions": [
+          "product"
+        ],
+        "span": 1,
+        "drill": {
+          "type": "detail",
+          "rowKey": "cust_id",
+          "title": "明细"
+        },
+        "flowKey": "f-loan-collect"
+      },
+      {
+        "id": "w2",
+        "type": "metric",
+        "title": "逾期金额",
+        "datasetId": "ds_loan",
+        "metricId": "m_overdue_amt",
+        "span": 1,
+        "flowKey": "f-loan-collect"
+      },
+      {
+        "id": "w3",
+        "type": "table",
+        "title": "风险敞口看板明细",
+        "datasetId": "ds_loan",
+        "metricId": "m_loan_balance",
+        "dimensions": [
+          "cust_id",
+          "product",
+          "loan_balance",
+          "overdue_amt",
+          "credit_line"
+        ],
+        "span": 2,
+        "drill": {
+          "type": "none",
+          "title": ""
+        },
+        "flowKey": "f-loan-collect"
+      }
+    ],
+    "flowKey": "f-online-approve",
+    "flowState": "已上线"
+  },
+  {
+    "id": "db-011",
+    "key": "cr:mid-p11",
+    "name": "贷后风险预警",
+    "group": "风险",
+    "order": 10,
+    "enabled": true,
+    "desc": "贷后风险预警实时监控看板",
+    "widgets": [
+      {
+        "id": "w1",
+        "type": "donut",
+        "title": "贷后风险预警·scene分布",
+        "datasetId": "ds_alert",
+        "metricId": "m_loan_balance",
+        "dimensions": [
+          "scene"
+        ],
+        "span": 1,
+        "drill": {
+          "type": "detail",
+          "rowKey": "alert_id",
+          "title": "明细"
+        },
+        "flowKey": "f-alert-dispose"
+      },
+      {
+        "id": "w2",
+        "type": "metric",
+        "title": "逾期金额",
+        "datasetId": "ds_alert",
+        "metricId": "m_overdue_amt",
+        "span": 1,
+        "flowKey": "f-alert-dispose"
+      },
+      {
+        "id": "w3",
+        "type": "table",
+        "title": "贷后风险预警明细",
+        "datasetId": "ds_alert",
+        "metricId": "m_loan_balance",
+        "dimensions": [
+          "alert_id",
+          "cust_id",
+          "cust_name",
+          "scene",
+          "level"
+        ],
+        "span": 2,
+        "drill": {
+          "type": "none",
+          "title": ""
+        },
+        "flowKey": "f-alert-dispose"
+      }
+    ],
+    "flowKey": "f-online-approve",
+    "flowState": "待上线"
+  },
+  {
+    "id": "db-012",
+    "key": "cr:mid-p12",
+    "name": "红黄灯预警",
+    "group": "预警",
+    "order": 11,
+    "enabled": true,
+    "desc": "红黄灯预警实时监控看板",
+    "widgets": [
+      {
+        "id": "w1",
+        "type": "donut",
+        "title": "红黄灯预警·scene分布",
+        "datasetId": "ds_alert",
+        "metricId": "m_alert_cnt",
+        "dimensions": [
+          "scene"
+        ],
+        "span": 1,
+        "drill": {
+          "type": "detail",
+          "rowKey": "alert_id",
+          "title": "明细"
+        },
+        "flowKey": "f-alert-dispose"
+      },
+      {
+        "id": "w2",
+        "type": "metric",
+        "title": "红灯预警数",
+        "datasetId": "ds_alert",
+        "metricId": "m_red_cnt",
+        "span": 1,
+        "flowKey": "f-alert-dispose"
+      },
+      {
+        "id": "w3",
+        "type": "table",
+        "title": "红黄灯预警明细",
+        "datasetId": "ds_alert",
+        "metricId": "m_alert_cnt",
+        "dimensions": [
+          "alert_id",
+          "cust_id",
+          "cust_name",
+          "scene",
+          "level"
+        ],
+        "span": 2,
+        "drill": {
+          "type": "none",
+          "title": ""
+        },
+        "flowKey": "f-alert-dispose"
+      }
+    ],
+    "flowKey": "f-online-approve",
+    "flowState": "待上线"
+  },
+  {
+    "id": "db-013",
+    "key": "cr:mid-p13",
+    "name": "预警等级分布",
+    "group": "预警",
+    "order": 12,
+    "enabled": true,
+    "desc": "预警等级分布实时监控看板",
+    "widgets": [
+      {
+        "id": "w1",
+        "type": "donut",
+        "title": "预警等级分布·scene分布",
+        "datasetId": "ds_alert",
+        "metricId": "m_alert_cnt",
+        "dimensions": [
+          "scene"
+        ],
+        "span": 1,
+        "drill": {
+          "type": "detail",
+          "rowKey": "alert_id",
+          "title": "明细"
+        },
+        "flowKey": "f-alert-dispose"
+      },
+      {
+        "id": "w2",
+        "type": "metric",
+        "title": "红灯预警数",
+        "datasetId": "ds_alert",
+        "metricId": "m_red_cnt",
+        "span": 1,
+        "flowKey": "f-alert-dispose"
+      },
+      {
+        "id": "w3",
+        "type": "table",
+        "title": "预警等级分布明细",
+        "datasetId": "ds_alert",
+        "metricId": "m_alert_cnt",
+        "dimensions": [
+          "alert_id",
+          "cust_id",
+          "cust_name",
+          "scene",
+          "level"
+        ],
+        "span": 2,
+        "drill": {
+          "type": "none",
+          "title": ""
+        },
+        "flowKey": "f-alert-dispose"
+      }
+    ],
+    "flowKey": "f-online-approve",
+    "flowState": "复审中"
+  },
+  {
+    "id": "db-014",
+    "key": "cr:mid-p14",
+    "name": "预警处置时效",
+    "group": "预警",
+    "order": 13,
+    "enabled": true,
+    "desc": "预警处置时效实时监控看板",
+    "widgets": [
+      {
+        "id": "w1",
+        "type": "donut",
+        "title": "预警处置时效·scene分布",
+        "datasetId": "ds_alert",
+        "metricId": "m_alert_cnt",
+        "dimensions": [
+          "scene"
+        ],
+        "span": 1,
+        "drill": {
+          "type": "detail",
+          "rowKey": "alert_id",
+          "title": "明细"
+        },
+        "flowKey": "f-alert-dispose"
+      },
+      {
+        "id": "w2",
+        "type": "metric",
+        "title": "红灯预警数",
+        "datasetId": "ds_alert",
+        "metricId": "m_red_cnt",
+        "span": 1,
+        "flowKey": "f-alert-dispose"
+      },
+      {
+        "id": "w3",
+        "type": "table",
+        "title": "预警处置时效明细",
+        "datasetId": "ds_alert",
+        "metricId": "m_alert_cnt",
+        "dimensions": [
+          "alert_id",
+          "cust_id",
+          "cust_name",
+          "scene",
+          "level"
+        ],
+        "span": 2,
+        "drill": {
+          "type": "none",
+          "title": ""
+        },
+        "flowKey": "f-alert-dispose"
+      }
+    ],
+    "flowKey": "f-online-approve",
+    "flowState": "待上线"
+  },
+  {
+    "id": "db-015",
+    "key": "cr:mid-p15",
+    "name": "预警来源分析",
+    "group": "预警",
+    "order": 14,
+    "enabled": true,
+    "desc": "预警来源分析实时监控看板",
+    "widgets": [
+      {
+        "id": "w1",
+        "type": "donut",
+        "title": "预警来源分析·scene分布",
+        "datasetId": "ds_alert",
+        "metricId": "m_alert_cnt",
+        "dimensions": [
+          "scene"
+        ],
+        "span": 1,
+        "drill": {
+          "type": "detail",
+          "rowKey": "alert_id",
+          "title": "明细"
+        },
+        "flowKey": "f-alert-dispose"
+      },
+      {
+        "id": "w2",
+        "type": "metric",
+        "title": "红灯预警数",
+        "datasetId": "ds_alert",
+        "metricId": "m_red_cnt",
+        "span": 1,
+        "flowKey": "f-alert-dispose"
+      },
+      {
+        "id": "w3",
+        "type": "table",
+        "title": "预警来源分析明细",
+        "datasetId": "ds_alert",
+        "metricId": "m_alert_cnt",
+        "dimensions": [
+          "alert_id",
+          "cust_id",
+          "cust_name",
+          "scene",
+          "level"
+        ],
+        "span": 2,
+        "drill": {
+          "type": "none",
+          "title": ""
+        },
+        "flowKey": "f-alert-dispose"
+      }
+    ],
+    "flowKey": "f-online-approve",
+    "flowState": "已上线"
+  },
+  {
+    "id": "db-016",
+    "key": "cr:mid-p16",
+    "name": "处置闭环总览",
+    "group": "处置",
+    "order": 15,
+    "enabled": true,
+    "desc": "处置闭环总览实时监控看板",
+    "widgets": [
+      {
+        "id": "w1",
+        "type": "donut",
+        "title": "处置闭环总览·scene分布",
+        "datasetId": "ds_alert",
+        "metricId": "m_dispose_cnt",
+        "dimensions": [
+          "scene"
+        ],
+        "span": 1,
+        "drill": {
+          "type": "detail",
+          "rowKey": "alert_id",
+          "title": "明细"
+        },
+        "flowKey": "f-alert-dispose"
+      },
+      {
+        "id": "w2",
+        "type": "metric",
+        "title": "处置率",
+        "datasetId": "ds_alert",
+        "metricId": "m_dispose_rate",
+        "span": 1,
+        "flowKey": "f-alert-dispose"
+      },
+      {
+        "id": "w3",
+        "type": "table",
+        "title": "处置闭环总览明细",
+        "datasetId": "ds_alert",
+        "metricId": "m_dispose_cnt",
+        "dimensions": [
+          "alert_id",
+          "cust_id",
+          "cust_name",
+          "scene",
+          "level"
+        ],
+        "span": 2,
+        "drill": {
+          "type": "none",
+          "title": ""
+        },
+        "flowKey": "f-alert-dispose"
+      }
+    ],
+    "flowKey": "f-online-approve",
+    "flowState": "待上线"
+  },
+  {
+    "id": "db-017",
+    "key": "cr:mid-p17",
+    "name": "处置策略效果",
+    "group": "处置",
+    "order": 16,
+    "enabled": true,
+    "desc": "处置策略效果实时监控看板",
+    "widgets": [
+      {
+        "id": "w1",
+        "type": "donut",
+        "title": "处置策略效果·scene分布",
+        "datasetId": "ds_alert",
+        "metricId": "m_dispose_cnt",
+        "dimensions": [
+          "scene"
+        ],
+        "span": 1,
+        "drill": {
+          "type": "detail",
+          "rowKey": "alert_id",
+          "title": "明细"
+        },
+        "flowKey": "f-alert-dispose"
+      },
+      {
+        "id": "w2",
+        "type": "metric",
+        "title": "处置率",
+        "datasetId": "ds_alert",
+        "metricId": "m_dispose_rate",
+        "span": 1,
+        "flowKey": "f-alert-dispose"
+      },
+      {
+        "id": "w3",
+        "type": "table",
+        "title": "处置策略效果明细",
+        "datasetId": "ds_alert",
+        "metricId": "m_dispose_cnt",
+        "dimensions": [
+          "alert_id",
+          "cust_id",
+          "cust_name",
+          "scene",
+          "level"
+        ],
+        "span": 2,
+        "drill": {
+          "type": "none",
+          "title": ""
+        },
+        "flowKey": "f-alert-dispose"
+      }
+    ],
+    "flowKey": "f-online-approve",
+    "flowState": "待上线"
+  },
+  {
+    "id": "db-018",
+    "key": "cr:mid-p18",
+    "name": "自动处置监控",
+    "group": "处置",
+    "order": 17,
+    "enabled": true,
+    "desc": "自动处置监控实时监控看板",
+    "widgets": [
+      {
+        "id": "w1",
+        "type": "donut",
+        "title": "自动处置监控·scene分布",
+        "datasetId": "ds_alert",
+        "metricId": "m_dispose_cnt",
+        "dimensions": [
+          "scene"
+        ],
+        "span": 1,
+        "drill": {
+          "type": "detail",
+          "rowKey": "alert_id",
+          "title": "明细"
+        },
+        "flowKey": "f-alert-dispose"
+      },
+      {
+        "id": "w2",
+        "type": "metric",
+        "title": "处置率",
+        "datasetId": "ds_alert",
+        "metricId": "m_dispose_rate",
+        "span": 1,
+        "flowKey": "f-alert-dispose"
+      },
+      {
+        "id": "w3",
+        "type": "table",
+        "title": "自动处置监控明细",
+        "datasetId": "ds_alert",
+        "metricId": "m_dispose_cnt",
+        "dimensions": [
+          "alert_id",
+          "cust_id",
+          "cust_name",
+          "scene",
+          "level"
+        ],
+        "span": 2,
+        "drill": {
+          "type": "none",
+          "title": ""
+        },
+        "flowKey": "f-alert-dispose"
+      }
+    ],
+    "flowKey": "f-online-approve",
+    "flowState": "复审中"
+  },
+  {
+    "id": "db-019",
+    "key": "cr:mid-p19",
+    "name": "处置工单分析",
+    "group": "处置",
+    "order": 18,
+    "enabled": true,
+    "desc": "处置工单分析实时监控看板",
+    "widgets": [
+      {
+        "id": "w1",
+        "type": "donut",
+        "title": "处置工单分析·scene分布",
+        "datasetId": "ds_alert",
+        "metricId": "m_dispose_cnt",
+        "dimensions": [
+          "scene"
+        ],
+        "span": 1,
+        "drill": {
+          "type": "detail",
+          "rowKey": "alert_id",
+          "title": "明细"
+        },
+        "flowKey": "f-alert-dispose"
+      },
+      {
+        "id": "w2",
+        "type": "metric",
+        "title": "处置率",
+        "datasetId": "ds_alert",
+        "metricId": "m_dispose_rate",
+        "span": 1,
+        "flowKey": "f-alert-dispose"
+      },
+      {
+        "id": "w3",
+        "type": "table",
+        "title": "处置工单分析明细",
+        "datasetId": "ds_alert",
+        "metricId": "m_dispose_cnt",
+        "dimensions": [
+          "alert_id",
+          "cust_id",
+          "cust_name",
+          "scene",
+          "level"
+        ],
+        "span": 2,
+        "drill": {
+          "type": "none",
+          "title": ""
+        },
+        "flowKey": "f-alert-dispose"
+      }
+    ],
+    "flowKey": "f-online-approve",
+    "flowState": "待上线"
+  },
+  {
+    "id": "db-020",
+    "key": "cr:mid-p20",
+    "name": "授信审批监控",
+    "group": "授信",
+    "order": 19,
+    "enabled": true,
+    "desc": "授信审批监控实时监控看板",
+    "widgets": [
+      {
+        "id": "w1",
+        "type": "donut",
+        "title": "授信审批监控·product分布",
+        "datasetId": "ds_loan",
+        "metricId": "m_credit_remain",
+        "dimensions": [
+          "product"
+        ],
+        "span": 1,
+        "drill": {
+          "type": "detail",
+          "rowKey": "cust_id",
+          "title": "明细"
+        },
+        "flowKey": "f-loan-collect"
+      },
+      {
+        "id": "w2",
+        "type": "metric",
+        "title": "额度使用率>90%客户数",
+        "datasetId": "ds_loan",
+        "metricId": "m_util_high_cnt",
+        "span": 1,
+        "flowKey": "f-loan-collect"
+      },
+      {
+        "id": "w3",
+        "type": "table",
+        "title": "授信审批监控明细",
+        "datasetId": "ds_loan",
+        "metricId": "m_credit_remain",
+        "dimensions": [
+          "cust_id",
+          "product",
+          "loan_balance",
+          "overdue_amt",
+          "credit_line"
+        ],
+        "span": 2,
+        "drill": {
+          "type": "none",
+          "title": ""
+        },
+        "flowKey": "f-loan-collect"
+      }
+    ],
+    "flowKey": "f-online-approve",
+    "flowState": "已上线"
+  },
+  {
+    "id": "db-021",
+    "key": "cr:mid-p21",
+    "name": "授信额度使用",
+    "group": "授信",
+    "order": 20,
+    "enabled": true,
+    "desc": "授信额度使用实时监控看板",
+    "widgets": [
+      {
+        "id": "w1",
+        "type": "donut",
+        "title": "授信额度使用·product分布",
+        "datasetId": "ds_loan",
+        "metricId": "m_credit_remain",
+        "dimensions": [
+          "product"
+        ],
+        "span": 1,
+        "drill": {
+          "type": "detail",
+          "rowKey": "cust_id",
+          "title": "明细"
+        },
+        "flowKey": "f-loan-collect"
+      },
+      {
+        "id": "w2",
+        "type": "metric",
+        "title": "额度使用率>90%客户数",
+        "datasetId": "ds_loan",
+        "metricId": "m_util_high_cnt",
+        "span": 1,
+        "flowKey": "f-loan-collect"
+      },
+      {
+        "id": "w3",
+        "type": "table",
+        "title": "授信额度使用明细",
+        "datasetId": "ds_loan",
+        "metricId": "m_credit_remain",
+        "dimensions": [
+          "cust_id",
+          "product",
+          "loan_balance",
+          "overdue_amt",
+          "credit_line"
+        ],
+        "span": 2,
+        "drill": {
+          "type": "none",
+          "title": ""
+        },
+        "flowKey": "f-loan-collect"
+      }
+    ],
+    "flowKey": "f-online-approve",
+    "flowState": "待上线"
+  },
+  {
+    "id": "db-022",
+    "key": "cr:mid-p22",
+    "name": "授信政策效果",
+    "group": "授信",
+    "order": 21,
+    "enabled": true,
+    "desc": "授信政策效果实时监控看板",
+    "widgets": [
+      {
+        "id": "w1",
+        "type": "donut",
+        "title": "授信政策效果·product分布",
+        "datasetId": "ds_loan",
+        "metricId": "m_credit_remain",
+        "dimensions": [
+          "product"
+        ],
+        "span": 1,
+        "drill": {
+          "type": "detail",
+          "rowKey": "cust_id",
+          "title": "明细"
+        },
+        "flowKey": "f-loan-collect"
+      },
+      {
+        "id": "w2",
+        "type": "metric",
+        "title": "额度使用率>90%客户数",
+        "datasetId": "ds_loan",
+        "metricId": "m_util_high_cnt",
+        "span": 1,
+        "flowKey": "f-loan-collect"
+      },
+      {
+        "id": "w3",
+        "type": "table",
+        "title": "授信政策效果明细",
+        "datasetId": "ds_loan",
+        "metricId": "m_credit_remain",
+        "dimensions": [
+          "cust_id",
+          "product",
+          "loan_balance",
+          "overdue_amt",
+          "credit_line"
+        ],
+        "span": 2,
+        "drill": {
+          "type": "none",
+          "title": ""
+        },
+        "flowKey": "f-loan-collect"
+      }
+    ],
+    "flowKey": "f-online-approve",
+    "flowState": "待上线"
+  },
+  {
+    "id": "db-023",
+    "key": "cr:mid-p23",
+    "name": "授信通过率分析",
+    "group": "授信",
+    "order": 22,
+    "enabled": true,
+    "desc": "授信通过率分析实时监控看板",
+    "widgets": [
+      {
+        "id": "w1",
+        "type": "donut",
+        "title": "授信通过率分析·product分布",
+        "datasetId": "ds_loan",
+        "metricId": "m_credit_remain",
+        "dimensions": [
+          "product"
+        ],
+        "span": 1,
+        "drill": {
+          "type": "detail",
+          "rowKey": "cust_id",
+          "title": "明细"
+        },
+        "flowKey": "f-loan-collect"
+      },
+      {
+        "id": "w2",
+        "type": "metric",
+        "title": "额度使用率>90%客户数",
+        "datasetId": "ds_loan",
+        "metricId": "m_util_high_cnt",
+        "span": 1,
+        "flowKey": "f-loan-collect"
+      },
+      {
+        "id": "w3",
+        "type": "table",
+        "title": "授信通过率分析明细",
+        "datasetId": "ds_loan",
+        "metricId": "m_credit_remain",
+        "dimensions": [
+          "cust_id",
+          "product",
+          "loan_balance",
+          "overdue_amt",
+          "credit_line"
+        ],
+        "span": 2,
+        "drill": {
+          "type": "none",
+          "title": ""
+        },
+        "flowKey": "f-loan-collect"
+      }
+    ],
+    "flowKey": "f-online-approve",
+    "flowState": "复审中"
+  },
+  {
+    "id": "db-024",
+    "key": "cr:mid-p24",
+    "name": "授信客群分析",
+    "group": "授信",
+    "order": 23,
+    "enabled": true,
+    "desc": "授信客群分析实时监控看板",
+    "widgets": [
+      {
+        "id": "w1",
+        "type": "donut",
+        "title": "授信客群分析·risk_level分布",
+        "datasetId": "ds_customer",
+        "metricId": "m_credit_remain",
+        "dimensions": [
+          "risk_level"
+        ],
+        "span": 1,
+        "drill": {
+          "type": "detail",
+          "rowKey": "cust_id",
+          "title": "明细"
+        },
+        "flowKey": "f-cust-operate"
+      },
+      {
+        "id": "w2",
+        "type": "metric",
+        "title": "额度使用率>90%客户数",
+        "datasetId": "ds_customer",
+        "metricId": "m_util_high_cnt",
+        "span": 1,
+        "flowKey": "f-cust-operate"
+      },
+      {
+        "id": "w3",
+        "type": "table",
+        "title": "授信客群分析明细",
+        "datasetId": "ds_customer",
+        "metricId": "m_credit_remain",
+        "dimensions": [
+          "cust_id",
+          "cust_name",
+          "product",
+          "risk_level",
+          "credit_line"
+        ],
+        "span": 2,
+        "drill": {
+          "type": "none",
+          "title": ""
+        },
+        "flowKey": "f-cust-operate"
+      }
+    ],
+    "flowKey": "f-online-approve",
+    "flowState": "待上线"
+  },
+  {
+    "id": "db-025",
+    "key": "cr:mid-p25",
+    "name": "贷款业务总览",
+    "group": "贷款",
+    "order": 24,
+    "enabled": true,
+    "desc": "贷款业务总览实时监控看板",
+    "widgets": [
+      {
+        "id": "w1",
+        "type": "donut",
+        "title": "贷款业务总览·product分布",
+        "datasetId": "ds_loan",
+        "metricId": "m_loan_cnt",
+        "dimensions": [
+          "product"
+        ],
+        "span": 1,
+        "drill": {
+          "type": "detail",
+          "rowKey": "cust_id",
+          "title": "明细"
+        },
+        "flowKey": "f-loan-collect"
+      },
+      {
+        "id": "w2",
+        "type": "metric",
+        "title": "贷款发放总额",
+        "datasetId": "ds_loan",
+        "metricId": "m_loan_total",
+        "span": 1,
+        "flowKey": "f-loan-collect"
+      },
+      {
+        "id": "w3",
+        "type": "table",
+        "title": "贷款业务总览明细",
+        "datasetId": "ds_loan",
+        "metricId": "m_loan_cnt",
+        "dimensions": [
+          "cust_id",
+          "product",
+          "loan_balance",
+          "overdue_amt",
+          "credit_line"
+        ],
+        "span": 2,
+        "drill": {
+          "type": "none",
+          "title": ""
+        },
+        "flowKey": "f-loan-collect"
+      }
+    ],
+    "flowKey": "f-online-approve",
+    "flowState": "已上线"
+  },
+  {
+    "id": "db-026",
+    "key": "cr:mid-p26",
+    "name": "贷款余额监控",
+    "group": "贷款",
+    "order": 25,
+    "enabled": true,
+    "desc": "贷款余额监控实时监控看板",
+    "widgets": [
+      {
+        "id": "w1",
+        "type": "donut",
+        "title": "贷款余额监控·product分布",
+        "datasetId": "ds_loan",
+        "metricId": "m_loan_cnt",
+        "dimensions": [
+          "product"
+        ],
+        "span": 1,
+        "drill": {
+          "type": "detail",
+          "rowKey": "cust_id",
+          "title": "明细"
+        },
+        "flowKey": "f-loan-collect"
+      },
+      {
+        "id": "w2",
+        "type": "metric",
+        "title": "贷款发放总额",
+        "datasetId": "ds_loan",
+        "metricId": "m_loan_total",
+        "span": 1,
+        "flowKey": "f-loan-collect"
+      },
+      {
+        "id": "w3",
+        "type": "table",
+        "title": "贷款余额监控明细",
+        "datasetId": "ds_loan",
+        "metricId": "m_loan_cnt",
+        "dimensions": [
+          "cust_id",
+          "product",
+          "loan_balance",
+          "overdue_amt",
+          "credit_line"
+        ],
+        "span": 2,
+        "drill": {
+          "type": "none",
+          "title": ""
+        },
+        "flowKey": "f-loan-collect"
+      }
+    ],
+    "flowKey": "f-online-approve",
+    "flowState": "待上线"
+  },
+  {
+    "id": "db-027",
+    "key": "cr:mid-p27",
+    "name": "贷款逾期分析",
+    "group": "贷款",
+    "order": 26,
+    "enabled": true,
+    "desc": "贷款逾期分析实时监控看板",
+    "widgets": [
+      {
+        "id": "w1",
+        "type": "donut",
+        "title": "贷款逾期分析·product分布",
+        "datasetId": "ds_loan",
+        "metricId": "m_loan_cnt",
+        "dimensions": [
+          "product"
+        ],
+        "span": 1,
+        "drill": {
+          "type": "detail",
+          "rowKey": "cust_id",
+          "title": "明细"
+        },
+        "flowKey": "f-loan-collect"
+      },
+      {
+        "id": "w2",
+        "type": "metric",
+        "title": "贷款发放总额",
+        "datasetId": "ds_loan",
+        "metricId": "m_loan_total",
+        "span": 1,
+        "flowKey": "f-loan-collect"
+      },
+      {
+        "id": "w3",
+        "type": "table",
+        "title": "贷款逾期分析明细",
+        "datasetId": "ds_loan",
+        "metricId": "m_loan_cnt",
+        "dimensions": [
+          "cust_id",
+          "product",
+          "loan_balance",
+          "overdue_amt",
+          "credit_line"
+        ],
+        "span": 2,
+        "drill": {
+          "type": "none",
+          "title": ""
+        },
+        "flowKey": "f-loan-collect"
+      }
+    ],
+    "flowKey": "f-online-approve",
+    "flowState": "待上线"
+  },
+  {
+    "id": "db-028",
+    "key": "cr:mid-p28",
+    "name": "贷款质量看板",
+    "group": "贷款",
+    "order": 27,
+    "enabled": true,
+    "desc": "贷款质量看板实时监控看板",
+    "widgets": [
+      {
+        "id": "w1",
+        "type": "donut",
+        "title": "贷款质量看板·product分布",
+        "datasetId": "ds_loan",
+        "metricId": "m_loan_cnt",
+        "dimensions": [
+          "product"
+        ],
+        "span": 1,
+        "drill": {
+          "type": "detail",
+          "rowKey": "cust_id",
+          "title": "明细"
+        },
+        "flowKey": "f-loan-collect"
+      },
+      {
+        "id": "w2",
+        "type": "metric",
+        "title": "贷款发放总额",
+        "datasetId": "ds_loan",
+        "metricId": "m_loan_total",
+        "span": 1,
+        "flowKey": "f-loan-collect"
+      },
+      {
+        "id": "w3",
+        "type": "table",
+        "title": "贷款质量看板明细",
+        "datasetId": "ds_loan",
+        "metricId": "m_loan_cnt",
+        "dimensions": [
+          "cust_id",
+          "product",
+          "loan_balance",
+          "overdue_amt",
+          "credit_line"
+        ],
+        "span": 2,
+        "drill": {
+          "type": "none",
+          "title": ""
+        },
+        "flowKey": "f-loan-collect"
+      }
+    ],
+    "flowKey": "f-online-approve",
+    "flowState": "复审中"
+  },
+  {
+    "id": "db-029",
+    "key": "cr:mid-p29",
+    "name": "还款行为分析",
+    "group": "贷款",
+    "order": 28,
+    "enabled": true,
+    "desc": "还款行为分析实时监控看板",
+    "widgets": [
+      {
+        "id": "w1",
+        "type": "donut",
+        "title": "还款行为分析·month分布",
+        "datasetId": "ds_behavior",
+        "metricId": "m_loan_cnt",
+        "dimensions": [
+          "month"
+        ],
+        "span": 1,
+        "drill": {
+          "type": "detail",
+          "rowKey": "cust_id",
+          "title": "明细"
+        },
+        "flowKey": "f-behavior-promote"
+      },
+      {
+        "id": "w2",
+        "type": "metric",
+        "title": "贷款发放总额",
+        "datasetId": "ds_behavior",
+        "metricId": "m_loan_total",
+        "span": 1,
+        "flowKey": "f-behavior-promote"
+      },
+      {
+        "id": "w3",
+        "type": "table",
+        "title": "还款行为分析明细",
+        "datasetId": "ds_behavior",
+        "metricId": "m_loan_cnt",
+        "dimensions": [
+          "cust_id",
+          "month",
+          "score",
+          "new_loans",
+          "overdue_amt"
+        ],
+        "span": 2,
+        "drill": {
+          "type": "none",
+          "title": ""
+        },
+        "flowKey": "f-behavior-promote"
+      },
+      {
+        "id": "w4",
+        "type": "line",
+        "title": "月度趋势",
+        "datasetId": "ds_behavior",
+        "metricId": "m_loan_cnt",
+        "dimensions": [
+          "month"
+        ],
+        "span": 2,
+        "flowKey": "f-behavior-promote"
+      }
+    ],
+    "flowKey": "f-online-approve",
+    "flowState": "待上线"
+  },
+  {
+    "id": "db-030",
+    "key": "cr:mid-p30",
+    "name": "贷款发放趋势",
+    "group": "贷款",
+    "order": 29,
+    "enabled": true,
+    "desc": "贷款发放趋势实时监控看板",
+    "widgets": [
+      {
+        "id": "w1",
+        "type": "donut",
+        "title": "贷款发放趋势·product分布",
+        "datasetId": "ds_loan",
+        "metricId": "m_loan_cnt",
+        "dimensions": [
+          "product"
+        ],
+        "span": 1,
+        "drill": {
+          "type": "detail",
+          "rowKey": "cust_id",
+          "title": "明细"
+        },
+        "flowKey": "f-loan-collect"
+      },
+      {
+        "id": "w2",
+        "type": "metric",
+        "title": "贷款发放总额",
+        "datasetId": "ds_loan",
+        "metricId": "m_loan_total",
+        "span": 1,
+        "flowKey": "f-loan-collect"
+      },
+      {
+        "id": "w3",
+        "type": "table",
+        "title": "贷款发放趋势明细",
+        "datasetId": "ds_loan",
+        "metricId": "m_loan_cnt",
+        "dimensions": [
+          "cust_id",
+          "product",
+          "loan_balance",
+          "overdue_amt",
+          "credit_line"
+        ],
+        "span": 2,
+        "drill": {
+          "type": "none",
+          "title": ""
+        },
+        "flowKey": "f-loan-collect"
+      }
+    ],
+    "flowKey": "f-online-approve",
+    "flowState": "已上线"
+  },
+  {
+    "id": "db-031",
+    "key": "cr:mid-p31",
+    "name": "客户行为分析",
+    "group": "行为",
+    "order": 30,
+    "enabled": true,
+    "desc": "客户行为分析实时监控看板",
+    "widgets": [
+      {
+        "id": "w1",
+        "type": "donut",
+        "title": "客户行为分析·month分布",
+        "datasetId": "ds_behavior",
+        "metricId": "m_txn_amt",
+        "dimensions": [
+          "month"
+        ],
+        "span": 1,
+        "drill": {
+          "type": "detail",
+          "rowKey": "cust_id",
+          "title": "明细"
+        },
+        "flowKey": "f-behavior-promote"
+      },
+      {
+        "id": "w2",
+        "type": "metric",
+        "title": "交易笔数",
+        "datasetId": "ds_behavior",
+        "metricId": "m_txn_cnt",
+        "span": 1,
+        "flowKey": "f-behavior-promote"
+      },
+      {
+        "id": "w3",
+        "type": "table",
+        "title": "客户行为分析明细",
+        "datasetId": "ds_behavior",
+        "metricId": "m_txn_amt",
+        "dimensions": [
+          "cust_id",
+          "month",
+          "score",
+          "new_loans",
+          "overdue_amt"
+        ],
+        "span": 2,
+        "drill": {
+          "type": "none",
+          "title": ""
+        },
+        "flowKey": "f-behavior-promote"
+      },
+      {
+        "id": "w4",
+        "type": "line",
+        "title": "月度趋势",
+        "datasetId": "ds_behavior",
+        "metricId": "m_txn_amt",
+        "dimensions": [
+          "month"
+        ],
+        "span": 2,
+        "flowKey": "f-behavior-promote"
+      }
+    ],
+    "flowKey": "f-online-approve",
+    "flowState": "待上线"
+  },
+  {
+    "id": "db-032",
+    "key": "cr:mid-p32",
+    "name": "行为评分监控",
+    "group": "行为",
+    "order": 31,
+    "enabled": true,
+    "desc": "行为评分监控实时监控看板",
+    "widgets": [
+      {
+        "id": "w1",
+        "type": "donut",
+        "title": "行为评分监控·month分布",
+        "datasetId": "ds_behavior",
+        "metricId": "m_txn_amt",
+        "dimensions": [
+          "month"
+        ],
+        "span": 1,
+        "drill": {
+          "type": "detail",
+          "rowKey": "cust_id",
+          "title": "明细"
+        },
+        "flowKey": "f-behavior-promote"
+      },
+      {
+        "id": "w2",
+        "type": "metric",
+        "title": "交易笔数",
+        "datasetId": "ds_behavior",
+        "metricId": "m_txn_cnt",
+        "span": 1,
+        "flowKey": "f-behavior-promote"
+      },
+      {
+        "id": "w3",
+        "type": "table",
+        "title": "行为评分监控明细",
+        "datasetId": "ds_behavior",
+        "metricId": "m_txn_amt",
+        "dimensions": [
+          "cust_id",
+          "month",
+          "score",
+          "new_loans",
+          "overdue_amt"
+        ],
+        "span": 2,
+        "drill": {
+          "type": "none",
+          "title": ""
+        },
+        "flowKey": "f-behavior-promote"
+      },
+      {
+        "id": "w4",
+        "type": "line",
+        "title": "月度趋势",
+        "datasetId": "ds_behavior",
+        "metricId": "m_txn_amt",
+        "dimensions": [
+          "month"
+        ],
+        "span": 2,
+        "flowKey": "f-behavior-promote"
+      }
+    ],
+    "flowKey": "f-online-approve",
+    "flowState": "待上线"
+  },
+  {
+    "id": "db-033",
+    "key": "cr:mid-p33",
+    "name": "行为趋势看板",
+    "group": "行为",
+    "order": 32,
+    "enabled": true,
+    "desc": "行为趋势看板实时监控看板",
+    "widgets": [
+      {
+        "id": "w1",
+        "type": "donut",
+        "title": "行为趋势看板·month分布",
+        "datasetId": "ds_behavior",
+        "metricId": "m_txn_amt",
+        "dimensions": [
+          "month"
+        ],
+        "span": 1,
+        "drill": {
+          "type": "detail",
+          "rowKey": "cust_id",
+          "title": "明细"
+        },
+        "flowKey": "f-behavior-promote"
+      },
+      {
+        "id": "w2",
+        "type": "metric",
+        "title": "交易笔数",
+        "datasetId": "ds_behavior",
+        "metricId": "m_txn_cnt",
+        "span": 1,
+        "flowKey": "f-behavior-promote"
+      },
+      {
+        "id": "w3",
+        "type": "table",
+        "title": "行为趋势看板明细",
+        "datasetId": "ds_behavior",
+        "metricId": "m_txn_amt",
+        "dimensions": [
+          "cust_id",
+          "month",
+          "score",
+          "new_loans",
+          "overdue_amt"
+        ],
+        "span": 2,
+        "drill": {
+          "type": "none",
+          "title": ""
+        },
+        "flowKey": "f-behavior-promote"
+      },
+      {
+        "id": "w4",
+        "type": "line",
+        "title": "月度趋势",
+        "datasetId": "ds_behavior",
+        "metricId": "m_txn_amt",
+        "dimensions": [
+          "month"
+        ],
+        "span": 2,
+        "flowKey": "f-behavior-promote"
+      }
+    ],
+    "flowKey": "f-online-approve",
+    "flowState": "复审中"
+  },
+  {
+    "id": "db-034",
+    "key": "cr:mid-p34",
+    "name": "用信行为分析",
+    "group": "行为",
+    "order": 33,
+    "enabled": true,
+    "desc": "用信行为分析实时监控看板",
+    "widgets": [
+      {
+        "id": "w1",
+        "type": "donut",
+        "title": "用信行为分析·month分布",
+        "datasetId": "ds_behavior",
+        "metricId": "m_txn_amt",
+        "dimensions": [
+          "month"
+        ],
+        "span": 1,
+        "drill": {
+          "type": "detail",
+          "rowKey": "cust_id",
+          "title": "明细"
+        },
+        "flowKey": "f-behavior-promote"
+      },
+      {
+        "id": "w2",
+        "type": "metric",
+        "title": "交易笔数",
+        "datasetId": "ds_behavior",
+        "metricId": "m_txn_cnt",
+        "span": 1,
+        "flowKey": "f-behavior-promote"
+      },
+      {
+        "id": "w3",
+        "type": "table",
+        "title": "用信行为分析明细",
+        "datasetId": "ds_behavior",
+        "metricId": "m_txn_amt",
+        "dimensions": [
+          "cust_id",
+          "month",
+          "score",
+          "new_loans",
+          "overdue_amt"
+        ],
+        "span": 2,
+        "drill": {
+          "type": "none",
+          "title": ""
+        },
+        "flowKey": "f-behavior-promote"
+      },
+      {
+        "id": "w4",
+        "type": "line",
+        "title": "月度趋势",
+        "datasetId": "ds_behavior",
+        "metricId": "m_txn_amt",
+        "dimensions": [
+          "month"
+        ],
+        "span": 2,
+        "flowKey": "f-behavior-promote"
+      }
+    ],
+    "flowKey": "f-online-approve",
+    "flowState": "待上线"
+  },
+  {
+    "id": "db-035",
+    "key": "cr:mid-p35",
+    "name": "沉睡客户预警",
+    "group": "行为",
+    "order": 34,
+    "enabled": true,
+    "desc": "沉睡客户预警实时监控看板",
+    "widgets": [
+      {
+        "id": "w1",
+        "type": "donut",
+        "title": "沉睡客户预警·month分布",
+        "datasetId": "ds_behavior",
+        "metricId": "m_txn_amt",
+        "dimensions": [
+          "month"
+        ],
+        "span": 1,
+        "drill": {
+          "type": "detail",
+          "rowKey": "cust_id",
+          "title": "明细"
+        },
+        "flowKey": "f-behavior-promote"
+      },
+      {
+        "id": "w2",
+        "type": "metric",
+        "title": "交易笔数",
+        "datasetId": "ds_behavior",
+        "metricId": "m_txn_cnt",
+        "span": 1,
+        "flowKey": "f-behavior-promote"
+      },
+      {
+        "id": "w3",
+        "type": "table",
+        "title": "沉睡客户预警明细",
+        "datasetId": "ds_behavior",
+        "metricId": "m_txn_amt",
+        "dimensions": [
+          "cust_id",
+          "month",
+          "score",
+          "new_loans",
+          "overdue_amt"
+        ],
+        "span": 2,
+        "drill": {
+          "type": "none",
+          "title": ""
+        },
+        "flowKey": "f-behavior-promote"
+      },
+      {
+        "id": "w4",
+        "type": "line",
+        "title": "月度趋势",
+        "datasetId": "ds_behavior",
+        "metricId": "m_txn_amt",
+        "dimensions": [
+          "month"
+        ],
+        "span": 2,
+        "flowKey": "f-behavior-promote"
+      }
+    ],
+    "flowKey": "f-online-approve",
+    "flowState": "已上线"
+  },
+  {
+    "id": "db-036",
+    "key": "cr:mid-p36",
+    "name": "欺诈风险总览",
+    "group": "欺诈",
+    "order": 35,
+    "enabled": true,
+    "desc": "欺诈风险总览实时监控看板",
+    "widgets": [
+      {
+        "id": "w1",
+        "type": "metric",
+        "title": "欺诈命中客户数",
+        "datasetId": "ds_api_demo",
+        "metricId": "m_fraud_hit_cust",
+        "span": 1,
+        "flowKey": "f-credit-check"
+      },
+      {
+        "id": "w2",
+        "type": "table",
+        "title": "欺诈风险总览明细",
+        "datasetId": "ds_api_demo",
+        "metricId": "m_fraud_hit",
+        "dimensions": [
+          "id_no",
+          "score",
+          "query_cnt"
+        ],
+        "span": 2,
+        "drill": {
+          "type": "none",
+          "title": ""
+        },
+        "flowKey": "f-credit-check"
+      },
+      {
+        "id": "w3",
+        "type": "metric",
+        "title": "欺诈命中次数",
+        "datasetId": "ds_api_demo",
+        "metricId": "m_fraud_hit",
+        "span": 1,
+        "flowKey": "f-credit-check"
+      }
+    ],
+    "flowKey": "f-online-approve",
+    "flowState": "待上线"
+  },
+  {
+    "id": "db-037",
+    "key": "cr:mid-p37",
+    "name": "欺诈识别监控",
+    "group": "欺诈",
+    "order": 36,
+    "enabled": true,
+    "desc": "欺诈识别监控实时监控看板",
+    "widgets": [
+      {
+        "id": "w1",
+        "type": "metric",
+        "title": "欺诈命中客户数",
+        "datasetId": "ds_api_demo",
+        "metricId": "m_fraud_hit_cust",
+        "span": 1,
+        "flowKey": "f-credit-check"
+      },
+      {
+        "id": "w2",
+        "type": "table",
+        "title": "欺诈识别监控明细",
+        "datasetId": "ds_api_demo",
+        "metricId": "m_fraud_hit",
+        "dimensions": [
+          "id_no",
+          "score",
+          "query_cnt"
+        ],
+        "span": 2,
+        "drill": {
+          "type": "none",
+          "title": ""
+        },
+        "flowKey": "f-credit-check"
+      },
+      {
+        "id": "w3",
+        "type": "metric",
+        "title": "欺诈命中次数",
+        "datasetId": "ds_api_demo",
+        "metricId": "m_fraud_hit",
+        "span": 1,
+        "flowKey": "f-credit-check"
+      }
+    ],
+    "flowKey": "f-online-approve",
+    "flowState": "待上线"
+  },
+  {
+    "id": "db-038",
+    "key": "cr:mid-p38",
+    "name": "欺诈案件分析",
+    "group": "欺诈",
+    "order": 37,
+    "enabled": true,
+    "desc": "欺诈案件分析实时监控看板",
+    "widgets": [
+      {
+        "id": "w1",
+        "type": "metric",
+        "title": "欺诈命中客户数",
+        "datasetId": "ds_api_demo",
+        "metricId": "m_fraud_hit_cust",
+        "span": 1,
+        "flowKey": "f-credit-check"
+      },
+      {
+        "id": "w2",
+        "type": "table",
+        "title": "欺诈案件分析明细",
+        "datasetId": "ds_api_demo",
+        "metricId": "m_fraud_hit",
+        "dimensions": [
+          "id_no",
+          "score",
+          "query_cnt"
+        ],
+        "span": 2,
+        "drill": {
+          "type": "none",
+          "title": ""
+        },
+        "flowKey": "f-credit-check"
+      },
+      {
+        "id": "w3",
+        "type": "metric",
+        "title": "欺诈命中次数",
+        "datasetId": "ds_api_demo",
+        "metricId": "m_fraud_hit",
+        "span": 1,
+        "flowKey": "f-credit-check"
+      }
+    ],
+    "flowKey": "f-online-approve",
+    "flowState": "复审中"
+  },
+  {
+    "id": "db-039",
+    "key": "cr:mid-p39",
+    "name": "设备指纹风险",
+    "group": "欺诈",
+    "order": 38,
+    "enabled": true,
+    "desc": "设备指纹风险实时监控看板",
+    "widgets": [
+      {
+        "id": "w1",
+        "type": "metric",
+        "title": "欺诈命中客户数",
+        "datasetId": "ds_api_demo",
+        "metricId": "m_fraud_hit_cust",
+        "span": 1,
+        "flowKey": "f-credit-check"
+      },
+      {
+        "id": "w2",
+        "type": "table",
+        "title": "设备指纹风险明细",
+        "datasetId": "ds_api_demo",
+        "metricId": "m_fraud_hit",
+        "dimensions": [
+          "id_no",
+          "score",
+          "query_cnt"
+        ],
+        "span": 2,
+        "drill": {
+          "type": "none",
+          "title": ""
+        },
+        "flowKey": "f-credit-check"
+      },
+      {
+        "id": "w3",
+        "type": "metric",
+        "title": "欺诈命中次数",
+        "datasetId": "ds_api_demo",
+        "metricId": "m_fraud_hit",
+        "span": 1,
+        "flowKey": "f-credit-check"
+      }
+    ],
+    "flowKey": "f-online-approve",
+    "flowState": "待上线"
+  },
+  {
+    "id": "db-040",
+    "key": "cr:mid-p40",
+    "name": "异常行为预警",
+    "group": "欺诈",
+    "order": 39,
+    "enabled": true,
+    "desc": "异常行为预警实时监控看板",
+    "widgets": [
+      {
+        "id": "w1",
+        "type": "metric",
+        "title": "欺诈命中客户数",
+        "datasetId": "ds_api_demo",
+        "metricId": "m_fraud_hit_cust",
+        "span": 1,
+        "flowKey": "f-credit-check"
+      },
+      {
+        "id": "w2",
+        "type": "table",
+        "title": "异常行为预警明细",
+        "datasetId": "ds_api_demo",
+        "metricId": "m_fraud_hit",
+        "dimensions": [
+          "id_no",
+          "score",
+          "query_cnt"
+        ],
+        "span": 2,
+        "drill": {
+          "type": "none",
+          "title": ""
+        },
+        "flowKey": "f-credit-check"
+      },
+      {
+        "id": "w3",
+        "type": "metric",
+        "title": "欺诈命中次数",
+        "datasetId": "ds_api_demo",
+        "metricId": "m_fraud_hit",
+        "span": 1,
+        "flowKey": "f-credit-check"
+      }
+    ],
+    "flowKey": "f-online-approve",
+    "flowState": "已上线"
+  },
+  {
+    "id": "db-041",
+    "key": "cr:mid-p41",
+    "name": "营销活动效果",
+    "group": "营销",
+    "order": 40,
+    "enabled": true,
+    "desc": "营销活动效果实时监控看板",
+    "widgets": [
+      {
+        "id": "w1",
+        "type": "donut",
+        "title": "营销活动效果·risk_level分布",
+        "datasetId": "ds_customer",
+        "metricId": "m_promo_cnt",
+        "dimensions": [
+          "risk_level"
+        ],
+        "span": 1,
+        "drill": {
+          "type": "detail",
+          "rowKey": "cust_id",
+          "title": "明细"
+        },
+        "flowKey": "f-cust-operate"
+      },
+      {
+        "id": "w2",
+        "type": "metric",
+        "title": "提额邀请数",
+        "datasetId": "ds_customer",
+        "metricId": "m_invite_cnt",
+        "span": 1,
+        "flowKey": "f-cust-operate"
+      },
+      {
+        "id": "w3",
+        "type": "table",
+        "title": "营销活动效果明细",
+        "datasetId": "ds_customer",
+        "metricId": "m_promo_cnt",
+        "dimensions": [
+          "cust_id",
+          "cust_name",
+          "product",
+          "risk_level",
+          "credit_line"
+        ],
+        "span": 2,
+        "drill": {
+          "type": "none",
+          "title": ""
+        },
+        "flowKey": "f-cust-operate"
+      }
+    ],
+    "flowKey": "f-online-approve",
+    "flowState": "待上线"
+  },
+  {
+    "id": "db-042",
+    "key": "cr:mid-p42",
+    "name": "营销机会挖掘",
+    "group": "营销",
+    "order": 41,
+    "enabled": true,
+    "desc": "营销机会挖掘实时监控看板",
+    "widgets": [
+      {
+        "id": "w1",
+        "type": "donut",
+        "title": "营销机会挖掘·risk_level分布",
+        "datasetId": "ds_customer",
+        "metricId": "m_promo_cnt",
+        "dimensions": [
+          "risk_level"
+        ],
+        "span": 1,
+        "drill": {
+          "type": "detail",
+          "rowKey": "cust_id",
+          "title": "明细"
+        },
+        "flowKey": "f-cust-operate"
+      },
+      {
+        "id": "w2",
+        "type": "metric",
+        "title": "提额邀请数",
+        "datasetId": "ds_customer",
+        "metricId": "m_invite_cnt",
+        "span": 1,
+        "flowKey": "f-cust-operate"
+      },
+      {
+        "id": "w3",
+        "type": "table",
+        "title": "营销机会挖掘明细",
+        "datasetId": "ds_customer",
+        "metricId": "m_promo_cnt",
+        "dimensions": [
+          "cust_id",
+          "cust_name",
+          "product",
+          "risk_level",
+          "credit_line"
+        ],
+        "span": 2,
+        "drill": {
+          "type": "none",
+          "title": ""
+        },
+        "flowKey": "f-cust-operate"
+      }
+    ],
+    "flowKey": "f-online-approve",
+    "flowState": "待上线"
+  },
+  {
+    "id": "db-043",
+    "key": "cr:mid-p43",
+    "name": "营销响应分析",
+    "group": "营销",
+    "order": 42,
+    "enabled": true,
+    "desc": "营销响应分析实时监控看板",
+    "widgets": [
+      {
+        "id": "w1",
+        "type": "donut",
+        "title": "营销响应分析·risk_level分布",
+        "datasetId": "ds_customer",
+        "metricId": "m_promo_cnt",
+        "dimensions": [
+          "risk_level"
+        ],
+        "span": 1,
+        "drill": {
+          "type": "detail",
+          "rowKey": "cust_id",
+          "title": "明细"
+        },
+        "flowKey": "f-cust-operate"
+      },
+      {
+        "id": "w2",
+        "type": "metric",
+        "title": "提额邀请数",
+        "datasetId": "ds_customer",
+        "metricId": "m_invite_cnt",
+        "span": 1,
+        "flowKey": "f-cust-operate"
+      },
+      {
+        "id": "w3",
+        "type": "table",
+        "title": "营销响应分析明细",
+        "datasetId": "ds_customer",
+        "metricId": "m_promo_cnt",
+        "dimensions": [
+          "cust_id",
+          "cust_name",
+          "product",
+          "risk_level",
+          "credit_line"
+        ],
+        "span": 2,
+        "drill": {
+          "type": "none",
+          "title": ""
+        },
+        "flowKey": "f-cust-operate"
+      }
+    ],
+    "flowKey": "f-online-approve",
+    "flowState": "复审中"
+  },
+  {
+    "id": "db-044",
+    "key": "cr:mid-p44",
+    "name": "精准营销看板",
+    "group": "营销",
+    "order": 43,
+    "enabled": true,
+    "desc": "精准营销看板实时监控看板",
+    "widgets": [
+      {
+        "id": "w1",
+        "type": "donut",
+        "title": "精准营销看板·risk_level分布",
+        "datasetId": "ds_customer",
+        "metricId": "m_promo_cnt",
+        "dimensions": [
+          "risk_level"
+        ],
+        "span": 1,
+        "drill": {
+          "type": "detail",
+          "rowKey": "cust_id",
+          "title": "明细"
+        },
+        "flowKey": "f-cust-operate"
+      },
+      {
+        "id": "w2",
+        "type": "metric",
+        "title": "提额邀请数",
+        "datasetId": "ds_customer",
+        "metricId": "m_invite_cnt",
+        "span": 1,
+        "flowKey": "f-cust-operate"
+      },
+      {
+        "id": "w3",
+        "type": "table",
+        "title": "精准营销看板明细",
+        "datasetId": "ds_customer",
+        "metricId": "m_promo_cnt",
+        "dimensions": [
+          "cust_id",
+          "cust_name",
+          "product",
+          "risk_level",
+          "credit_line"
+        ],
+        "span": 2,
+        "drill": {
+          "type": "none",
+          "title": ""
+        },
+        "flowKey": "f-cust-operate"
+      }
+    ],
+    "flowKey": "f-online-approve",
+    "flowState": "待上线"
+  },
+  {
+    "id": "db-045",
+    "key": "cr:mid-p45",
+    "name": "客户生命周期",
+    "group": "营销",
+    "order": 44,
+    "enabled": true,
+    "desc": "客户生命周期实时监控看板",
+    "widgets": [
+      {
+        "id": "w1",
+        "type": "donut",
+        "title": "客户生命周期·risk_level分布",
+        "datasetId": "ds_customer",
+        "metricId": "m_promo_cnt",
+        "dimensions": [
+          "risk_level"
+        ],
+        "span": 1,
+        "drill": {
+          "type": "detail",
+          "rowKey": "cust_id",
+          "title": "明细"
+        },
+        "flowKey": "f-cust-operate"
+      },
+      {
+        "id": "w2",
+        "type": "metric",
+        "title": "提额邀请数",
+        "datasetId": "ds_customer",
+        "metricId": "m_invite_cnt",
+        "span": 1,
+        "flowKey": "f-cust-operate"
+      },
+      {
+        "id": "w3",
+        "type": "table",
+        "title": "客户生命周期明细",
+        "datasetId": "ds_customer",
+        "metricId": "m_promo_cnt",
+        "dimensions": [
+          "cust_id",
+          "cust_name",
+          "product",
+          "risk_level",
+          "credit_line"
+        ],
+        "span": 2,
+        "drill": {
+          "type": "none",
+          "title": ""
+        },
+        "flowKey": "f-cust-operate"
+      }
+    ],
+    "flowKey": "f-online-approve",
+    "flowState": "已上线"
+  },
+  {
+    "id": "db-046",
+    "key": "cr:mid-p46",
+    "name": "合规指标监控",
+    "group": "合规",
+    "order": 45,
+    "enabled": true,
+    "desc": "合规指标监控实时监控看板",
+    "widgets": [
+      {
+        "id": "w1",
+        "type": "metric",
+        "title": "拨备覆盖率",
+        "datasetId": "ds_sql_demo",
+        "metricId": "m_provision",
+        "span": 1,
+        "flowKey": "f-loan-collect"
+      },
+      {
+        "id": "w2",
+        "type": "table",
+        "title": "合规指标监控明细",
+        "datasetId": "ds_sql_demo",
+        "metricId": "m_car_ratio",
+        "dimensions": [
+          "cust_id",
+          "loan_balance",
+          "overdue_amt"
+        ],
+        "span": 2,
+        "drill": {
+          "type": "none",
+          "title": ""
+        },
+        "flowKey": "f-loan-collect"
+      },
+      {
+        "id": "w3",
+        "type": "metric",
+        "title": "资本充足率",
+        "datasetId": "ds_sql_demo",
+        "metricId": "m_car_ratio",
+        "span": 1,
+        "flowKey": "f-loan-collect"
+      }
+    ],
+    "flowKey": "f-online-approve",
+    "flowState": "待上线"
+  },
+  {
+    "id": "db-047",
+    "key": "cr:mid-p47",
+    "name": "监管报送看板",
+    "group": "合规",
+    "order": 46,
+    "enabled": true,
+    "desc": "监管报送看板实时监控看板",
+    "widgets": [
+      {
+        "id": "w1",
+        "type": "metric",
+        "title": "拨备覆盖率",
+        "datasetId": "ds_sql_demo",
+        "metricId": "m_provision",
+        "span": 1,
+        "flowKey": "f-loan-collect"
+      },
+      {
+        "id": "w2",
+        "type": "table",
+        "title": "监管报送看板明细",
+        "datasetId": "ds_sql_demo",
+        "metricId": "m_car_ratio",
+        "dimensions": [
+          "cust_id",
+          "loan_balance",
+          "overdue_amt"
+        ],
+        "span": 2,
+        "drill": {
+          "type": "none",
+          "title": ""
+        },
+        "flowKey": "f-loan-collect"
+      },
+      {
+        "id": "w3",
+        "type": "metric",
+        "title": "资本充足率",
+        "datasetId": "ds_sql_demo",
+        "metricId": "m_car_ratio",
+        "span": 1,
+        "flowKey": "f-loan-collect"
+      }
+    ],
+    "flowKey": "f-online-approve",
+    "flowState": "待上线"
+  },
+  {
+    "id": "db-048",
+    "key": "cr:mid-p48",
+    "name": "合规风险预警",
+    "group": "合规",
+    "order": 47,
+    "enabled": true,
+    "desc": "合规风险预警实时监控看板",
+    "widgets": [
+      {
+        "id": "w1",
+        "type": "metric",
+        "title": "拨备覆盖率",
+        "datasetId": "ds_sql_demo",
+        "metricId": "m_provision",
+        "span": 1,
+        "flowKey": "f-loan-collect"
+      },
+      {
+        "id": "w2",
+        "type": "table",
+        "title": "合规风险预警明细",
+        "datasetId": "ds_sql_demo",
+        "metricId": "m_car_ratio",
+        "dimensions": [
+          "cust_id",
+          "loan_balance",
+          "overdue_amt"
+        ],
+        "span": 2,
+        "drill": {
+          "type": "none",
+          "title": ""
+        },
+        "flowKey": "f-loan-collect"
+      },
+      {
+        "id": "w3",
+        "type": "metric",
+        "title": "资本充足率",
+        "datasetId": "ds_sql_demo",
+        "metricId": "m_car_ratio",
+        "span": 1,
+        "flowKey": "f-loan-collect"
+      }
+    ],
+    "flowKey": "f-online-approve",
+    "flowState": "复审中"
+  },
+  {
+    "id": "db-049",
+    "key": "cr:mid-p49",
+    "name": "事件分析总览",
+    "group": "事件分析",
+    "order": 48,
+    "enabled": true,
+    "desc": "事件分析总览实时监控看板",
+    "widgets": [
+      {
+        "id": "w1",
+        "type": "donut",
+        "title": "事件分析总览·country分布",
+        "datasetId": "ds_event",
+        "metricId": "m_web_stay_7d",
+        "dimensions": [
+          "country"
+        ],
+        "span": 1,
+        "drill": {
+          "type": "detail",
+          "rowKey": "user_id",
+          "title": "明细"
+        },
+        "flowKey": "f-event-analyze"
+      },
+      {
+        "id": "w2",
+        "type": "metric",
+        "title": "直播间-点击立即购买的人均次数",
+        "datasetId": "ds_event",
+        "metricId": "m_live_buy_peruser",
+        "span": 1,
+        "flowKey": "f-event-analyze"
+      },
+      {
+        "id": "w3",
+        "type": "table",
+        "title": "事件分析总览明细",
+        "datasetId": "ds_event",
+        "metricId": "m_web_stay_7d",
+        "dimensions": [
+          "user_id",
+          "ip",
+          "startup_dur",
+          "country",
+          "web_stay_7d"
+        ],
+        "span": 2,
+        "drill": {
+          "type": "none",
+          "title": ""
+        },
+        "flowKey": "f-event-analyze"
+      }
+    ],
+    "flowKey": "f-online-approve",
+    "flowState": "待上线"
+  },
+  {
+    "id": "db-050",
+    "key": "cr:mid-p50",
+    "name": "用户启动时长分析",
+    "group": "事件分析",
+    "order": 49,
+    "enabled": true,
+    "desc": "用户启动时长分析实时监控看板",
+    "widgets": [
+      {
+        "id": "w1",
+        "type": "donut",
+        "title": "用户启动时长分析·country分布",
+        "datasetId": "ds_event",
+        "metricId": "m_web_stay_7d",
+        "dimensions": [
+          "country"
+        ],
+        "span": 1,
+        "drill": {
+          "type": "detail",
+          "rowKey": "user_id",
+          "title": "明细"
+        },
+        "flowKey": "f-event-analyze"
+      },
+      {
+        "id": "w2",
+        "type": "metric",
+        "title": "直播间-点击立即购买的人均次数",
+        "datasetId": "ds_event",
+        "metricId": "m_live_buy_peruser",
+        "span": 1,
+        "flowKey": "f-event-analyze"
+      },
+      {
+        "id": "w3",
+        "type": "table",
+        "title": "用户启动时长分析明细",
+        "datasetId": "ds_event",
+        "metricId": "m_web_stay_7d",
+        "dimensions": [
+          "user_id",
+          "ip",
+          "startup_dur",
+          "country",
+          "web_stay_7d"
+        ],
+        "span": 2,
+        "drill": {
+          "type": "none",
+          "title": ""
+        },
+        "flowKey": "f-event-analyze"
+      }
+    ],
+    "flowKey": "f-online-approve",
+    "flowState": "已上线"
+  },
+  {
+    "id": "db-100",
+    "key": "cr:overview",
+    "name": "概览看板",
+    "group": "概览看板",
+    "order": 0,
+    "enabled": true,
+    "desc": "零售信贷风控总览：贷前进件（进件量/通过率/欺诈命中/审批分布）+ 贷中监测（余额/逾期/预警/风险等级/处置）",
+    "widgets": [
+      {
+        "id": "w1",
+        "type": "metric",
+        "title": "今日进件量",
+        "datasetId": "ds_pre_apply",
+        "metricId": "m_pre_in_cnt",
+        "span": 1,
+        "windowSize": "sm"
+      },
+      {
+        "id": "w2",
+        "type": "metric",
+        "title": "进件通过率",
+        "datasetId": "ds_pre_apply",
+        "metricId": "m_pre_pass_rate",
+        "span": 1,
+        "windowSize": "sm"
+      },
+      {
+        "id": "w3",
+        "type": "metric",
+        "title": "欺诈命中率",
+        "datasetId": "ds_pre_apply",
+        "metricId": "m_pre_fraud_rate",
+        "span": 1,
+        "windowSize": "sm"
+      },
+      {
+        "id": "w4",
+        "type": "donut",
+        "title": "审批结论分布",
+        "datasetId": "ds_pre_apply",
+        "metricId": "m_pre_in_cnt",
+        "dimensions": [
+          "decision"
+        ],
+        "span": 1,
+        "windowSize": "sm"
+      },
+      {
+        "id": "w5",
+        "type": "bar",
+        "title": "渠道进件分布",
+        "datasetId": "ds_pre_apply",
+        "metricId": "m_pre_in_cnt",
+        "dimensions": [
+          "channel"
+        ],
+        "span": 2,
+        "windowSize": "md"
+      },
+      {
+        "id": "w6",
+        "type": "metric",
+        "title": "在贷余额",
+        "datasetId": "ds_loan",
+        "metricId": "m_loan_balance",
+        "span": 1,
+        "windowSize": "sm"
+      },
+      {
+        "id": "w7",
+        "type": "metric",
+        "title": "逾期率",
+        "datasetId": "ds_loan",
+        "metricId": "m_overdue_rate",
+        "span": 1,
+        "windowSize": "sm"
+      },
+      {
+        "id": "w8",
+        "type": "metric",
+        "title": "红灯预警",
+        "datasetId": "ds_alert",
+        "metricId": "m_red_cnt",
+        "span": 1,
+        "windowSize": "sm"
+      },
+      {
+        "id": "w9",
+        "type": "donut",
+        "title": "风险等级分布",
+        "datasetId": "ds_customer",
+        "metricId": "m_cust_cnt",
+        "dimensions": [
+          "risk_level"
+        ],
+        "span": 2,
+        "windowSize": "md"
+      },
+      {
+        "id": "w10",
+        "type": "metric",
+        "title": "处置完成率",
+        "datasetId": "ds_alert",
+        "metricId": "m_dispose_rate",
+        "span": 1,
+        "windowSize": "sm"
+      }
+    ],
+    "flowKey": "f-online-approve",
+    "flowState": "已上线"
+  },
+  {
+    "id": "db-score-ov",
+    "key": "sc:overview",
+    "name": "评分总览",
+    "group": "评分产品",
+    "order": 100,
+    "enabled": true,
+    "desc": "评分产品工作台 · 三模型调用量/覆盖率/准确率/及时率总览",
+    "widgets": [
+      {
+        "id": "w1",
+        "type": "metric",
+        "title": "累计调用量",
+        "datasetId": "ds_score_ops",
+        "metricId": "m_score_ops_calls",
+        "span": 1,
+        "windowSize": "sm"
+      },
+      {
+        "id": "w2",
+        "type": "metric",
+        "title": "评分覆盖率",
+        "datasetId": "ds_score_ops",
+        "metricId": "m_score_ops_coverage",
+        "span": 1,
+        "windowSize": "sm"
+      },
+      {
+        "id": "w3",
+        "type": "metric",
+        "title": "预警准确率",
+        "datasetId": "ds_score_ops",
+        "metricId": "m_score_ops_accuracy",
+        "span": 1,
+        "windowSize": "sm"
+      },
+      {
+        "id": "w4",
+        "type": "metric",
+        "title": "处置及时率",
+        "datasetId": "ds_score_ops",
+        "metricId": "m_score_ops_timely",
+        "span": 1,
+        "windowSize": "sm"
+      },
+      {
+        "id": "w5",
+        "type": "line",
+        "title": "三模型调用趋势",
+        "datasetId": "ds_score_calls",
+        "metricId": "m_call_zhicha",
+        "metricIds": [
+          "m_call_zhicha",
+          "m_call_zhixin",
+          "m_call_zhirong"
+        ],
+        "dimensions": [
+          "month"
+        ],
+        "span": 3,
+        "windowSize": "lg"
+      }
+    ]
+  },
+  {
+    "id": "db-score-dist",
+    "key": "sc:score-dist",
+    "name": "评分分布",
+    "group": "评分产品",
+    "order": 101,
+    "enabled": true,
+    "desc": "三模型评分分布 · 按统一档位对比（低分段→高分段）",
+    "widgets": [
+      {
+        "id": "w1",
+        "type": "bar",
+        "title": "分数段分布（三模型对比）",
+        "datasetId": "ds_score_dist",
+        "metricId": "m_dist_zhicha",
+        "metricIds": [
+          "m_dist_zhicha",
+          "m_dist_zhixin",
+          "m_dist_zhirong"
+        ],
+        "dimensions": [
+          "grade_name"
+        ],
+        "span": 3,
+        "windowSize": "lg"
+      }
+    ]
+  },
+  {
+    "id": "db-score-hit",
+    "key": "sc:hit-analysis",
+    "name": "命中分析",
+    "group": "评分产品",
+    "order": 102,
+    "enabled": true,
+    "desc": "三模型规则命中 TOP 与命中率",
+    "widgets": [
+      {
+        "id": "w1",
+        "type": "bar",
+        "title": "规则命中数 TOP（三模型）",
+        "datasetId": "ds_score_hit",
+        "metricId": "m_hit_zhicha",
+        "metricIds": [
+          "m_hit_zhicha",
+          "m_hit_zhixin",
+          "m_hit_zhirong"
+        ],
+        "dimensions": [
+          "rule"
+        ],
+        "span": 3,
+        "windowSize": "lg"
+      },
+      {
+        "id": "w2",
+        "type": "table",
+        "title": "命中规则明细",
+        "datasetId": "ds_score_hit",
+        "metricId": "m_score_hit_rate",
+        "metricIds": [
+          "m_score_hit_cnt",
+          "m_score_hit_rate"
+        ],
+        "dimensions": [
+          "model",
+          "rule"
+        ],
+        "span": 3,
+        "windowSize": "lg"
+      }
+    ]
+  },
+  {
+    "id": "db-score-effect",
+    "key": "sc:model-effect",
+    "name": "模型效果",
+    "group": "评分产品",
+    "order": 103,
+    "enabled": true,
+    "desc": "三模型运营效果趋势（覆盖率/准确率/及时率）",
+    "widgets": [
+      {
+        "id": "w1",
+        "type": "line",
+        "title": "评分覆盖率趋势",
+        "datasetId": "ds_score_ops",
+        "metricId": "m_ops_cov_zhicha",
+        "metricIds": [
+          "m_ops_cov_zhicha",
+          "m_ops_cov_zhixin",
+          "m_ops_cov_zhirong"
+        ],
+        "dimensions": [
+          "month"
+        ],
+        "span": 3,
+        "windowSize": "lg"
+      },
+      {
+        "id": "w2",
+        "type": "line",
+        "title": "预警准确率趋势",
+        "datasetId": "ds_score_ops",
+        "metricId": "m_ops_acc_zhicha",
+        "metricIds": [
+          "m_ops_acc_zhicha",
+          "m_ops_acc_zhixin",
+          "m_ops_acc_zhirong"
+        ],
+        "dimensions": [
+          "month"
+        ],
+        "span": 3,
+        "windowSize": "lg"
+      },
+      {
+        "id": "w3",
+        "type": "line",
+        "title": "处置及时率趋势",
+        "datasetId": "ds_score_ops",
+        "metricId": "m_ops_timely_zhicha",
+        "metricIds": [
+          "m_ops_timely_zhicha",
+          "m_ops_timely_zhixin",
+          "m_ops_timely_zhirong"
+        ],
+        "dimensions": [
+          "month"
+        ],
+        "span": 3,
+        "windowSize": "lg"
+      }
+    ]
+  }
+]

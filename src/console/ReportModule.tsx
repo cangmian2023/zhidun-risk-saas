@@ -1,17 +1,20 @@
 /* ============================================================================
  * 报告模块统一配置 + 通用列表组件（N.1：按信息核验222 架构，一套组件跑四类模块）
  * 信息核验 / 信用风控 / 欺诈识别 / 进件审核 共用同一列表逻辑：
- *   数据从本地 JSON 读取，得分/自动审核按模板分段生成，人工审核弹窗按模板业务流程沿边走
+ *   数据从本地 JSON 读取，得分/自动审核按模板分段生成；
+ *   业务流程状态经统一绑定层（flowBinding）显示「流程状态」列并流转
  * ========================================================================== */
 import { useEffect, useMemo, useState, type CSSProperties } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { PageHeader, Panel, Badge, StatCard, SingleSelect, Button, DecisionTag, StatusTag, type SelectOption } from '../components/ui'
-import { ApprovalModal } from './ApprovalModal'
+import { PageHeader, Panel, Badge, StatCard, SingleSelect, Button, DecisionTag, type SelectOption } from '../components/ui'
 import type { VerifyRow } from './VerifyOps'
+import { Sam } from './SourceTag'
 import { useTemplate } from './templateStore'
-import { withResolvedFlows } from './flowStore'
 import { useReportRows, updateReportRows } from './reportListStore'
-import { matchGrade, scoreForVerifySys, computeReportTotal, getAuditFlowByGrade, nextNodeByResult, type ScoreGrade, type ReviewResult, type ReportType } from './reportTemplateData'
+// 统一流程绑定层（与预警工作台同一套）：列表页显示「流程状态」列，状态流转写回各自 JSON
+import FlowStateCell from './FlowStateCell'
+import { matchObjOf, flowIdOfRow, nowStamp, usePageFlow } from './flowBinding'
+import { matchGrade, scoreForVerifySys, computeReportTotal, type ScoreGrade, type ReportType } from './reportTemplateData'
 import infoListJson from './infoVerify222Data.json'
 import infoDetailSamples from './infoVerify222DetailData.json'
 import infoDefaultSample from './infoVerify222Sample.json'
@@ -80,8 +83,6 @@ export interface ModuleRow extends VerifyRow {
   segScore: number | null
   segGrade?: string
   segResult: string
-  flowDone?: boolean      // 人工审核流程是否真正走完（中间态如「待复核」不算）
-  flowNodeId?: string     // 流程当前待审节点 id（中间态时按钮显示该节点名）
 }
 
 const PRODUCTS = ['信用贷', '抵押贷', '经营贷']
@@ -95,13 +96,6 @@ const TIME_OPTIONS: SelectOption[] = [
 const SYS_RESULTS: string[] = ['处理中', '通过', '转人工', '拒绝']
 const SYS_KIND: Record<string, 'gray' | 'green' | 'red' | 'amber'> = {
   处理中: 'gray', 通过: 'green', 拒绝: 'red', 预警: 'amber', 转人工: 'amber',
-}
-/* 人工审核状态配色：模板 statusEnum（待人工/通过/拒绝/驳回…）+ 兼容旧值 */
-const WORK_KIND: Record<string, 'gray' | 'blue' | 'green' | 'amber' | 'red' | 'violet'> = {
-  核验计算中: 'gray', 待确认: 'blue', 已确认: 'green', 待审核: 'amber',
-  提交复核: 'amber', '复核通过': 'green', '复核拒绝': 'red', 强制放行: 'violet',
-  待人工: 'blue', 通过: 'green', 拒绝: 'red', 驳回: 'amber', 待复核: 'amber',
-  加入黑名单: 'red', 复核中: 'amber', 退回: 'amber',
 }
 
 function MultiChip<T extends string>({ label, options, selected, onChange }: {
@@ -135,7 +129,7 @@ function MultiChip<T extends string>({ label, options, selected, onChange }: {
 }
 
 type Side = 'left' | 'right' | null
-const C = { id: 168, name: 104, product: 96, channel: 84, amount: 128, score: 100, sys: 116, work: 148, operator: 208, time: 160, op: 224 }
+const C = { id: 168, name: 104, product: 96, channel: 84, amount: 128, score: 100, sys: 116, time: 160, flowState: 150, op: 224 }
 const headStyle = (w: number, side: Side, offset = 0): CSSProperties => {
   const s: CSSProperties = { width: w, minWidth: w, maxWidth: w, position: 'sticky', top: 0 }
   if (side === 'left') { s.left = offset; s.zIndex = 30 }
@@ -153,6 +147,8 @@ const bodyStyle = (w: number, side: Side, offset = 0): CSSProperties => {
 export function ReportModuleList({ cfg }: { cfg: ReportModuleCfg }) {
   const tpl = useTemplate(cfg.templateId) ?? useTemplate(undefined, cfg.fallbackType)
   const grades: ScoreGrade[] = tpl?.scoreDisplay.grades ?? []
+  // 统一流程绑定：本页关联的业务流程（bizFlows.json 由管理中心配置，四页共用 f-loan-review）
+  const pageFlow = usePageFlow(cfg.listRoute)
   // 列表数据来自运行时磁盘读取（共享 store）；缺失回落打包 JSON。得分/自动审核实时算（与详情页共用算法）
   const allRows = useReportRows(cfg.saveFile, cfg.listJson)
   const enrichRow = (r: VerifyRow): ModuleRow => {
@@ -164,57 +160,10 @@ export function ReportModuleList({ cfg }: { cfg: ReportModuleCfg }) {
     return { ...r, segScore: sc, segGrade: g?.grade ?? seg?.grade, segResult: g?.autoResult ?? r.sysResult }
   }
   const rows = useMemo<ModuleRow[]>(() => allRows.map(enrichRow), [allRows])
-  // 该行落段对应的人工审核业务流程按钮（与详情页第二卡片一致：模板 businessFlow → flowGraphs 起点按钮名）
-  // 流程库注入：模板 flowRefId 关联 bizFlows.json（方案A），消费函数零改动
-  const rtpl = withResolvedFlows(tpl, [cfg.listRoute, cfg.detailRoute])
-  const listGraphsOf = (gradeId?: string): any[] => {
-    if (!gradeId || !rtpl) return []
-    return (rtpl.businessFlow ?? []).filter((bf) => !bf.gradeId || bf.gradeId === gradeId).flatMap((bf) => bf.flowGraphs ?? [])
-  }
-  const [auditRow, setAuditRow] = useState<ModuleRow | null>(null)      // 正在审批的行
-  const [auditGraphIdx, setAuditGraphIdx] = useState(0)              // 该行第几条流程
-  const [listNodeId, setListNodeId] = useState<string | null>(null)  // 当前待审节点 id
-  const listCurGraph = auditRow ? listGraphsOf(auditRow.segGrade)[auditGraphIdx] : undefined
-  const listCurNode = listCurGraph && listNodeId ? listCurGraph.nodes.find((n: any) => n.id === listNodeId) : undefined
-  const listAuditFlow = auditRow && listCurGraph ? getAuditFlowByGrade(rtpl, auditRow.segGrade ?? '', auditGraphIdx, 0, listNodeId ?? undefined) : null
-  const applyListAudit = (p: { result: ReviewResult; checks: string[]; opinionText: string; fileName: string }) => {
-    if (!auditRow || !listCurGraph) return
-    const node = listCurNode ?? listCurGraph.nodes.find((n: any) => n.type === 'start')
-    if (!node) return
-    const af = getAuditFlowByGrade(rtpl, auditRow.segGrade ?? '', auditGraphIdx, 0, node.id)
-    const fallback: Record<string, string> = { 通过: '已确认', 转人工: '待审核', 拒绝: '复核拒绝' }
-    const next = af.resultStates?.[p.result] ?? fallback[p.result]
-    const roleToUser: Record<string, string> = { 初审员: '张三', 复审员: '李四', 风控主管: '王五', 风控经理: '赵六', 风控总监: '管理员' }
-    const op = (node?.role && roleToUser[node.role]) || '管理员'
-    // 沿边步进：匹配条件边 → 无条件兜底；下一节点是 end 或无审批结果则流程结束
-    // （end 节点可能残留 results 默认值，不能作为「还有审批内容」的中间态）
-    const nextNode = nextNodeByResult(listCurGraph, node.id, p.result)
-    const upd = (x: ModuleRow): ModuleRow => ({
-      ...x,
-      workStatus: (next as any) ?? x.workStatus,
-      operator: x.operator && x.operator !== '--' ? `${x.operator}；${node?.buttonName ?? node?.label ?? '审批'}：${op}` : `${node?.buttonName ?? node?.label ?? '审批'}：${op}`,
-    })
-    // 落盘：经共享 store 写回本地 JSON（与详情页同一缓存，跨列表/详情页一致），刷新不丢
-    const updated = rows.map((x) =>
-      x.id === auditRow.id
-        ? (nextNode && nextNode.results?.length && nextNode.type !== 'end'
-            ? { ...upd(x), flowNodeId: nextNode.id }
-            : { ...upd(x), flowDone: true, flowNodeId: undefined })
-        : x,
-    )
-    const clean = (rs: ModuleRow[]) => rs.map(({ segScore, segGrade, segResult, ...raw }) => raw)
-    updateReportRows(cfg.saveFile, () => clean(updated))
-    // 与详情页一致：确认后关闭弹窗，按钮变为下一节点名，再点按钮打开下一节点弹窗
-    setListNodeId(null); setAuditRow(null)
-  }
   const [kw, setKw] = useState('')
-  // 人工审核状态枚举：来自模板「人工审核配置 - 状态枚举类」（flowBlock.statusEnum），用户数据（json）值须在其内
-  const statusEnum: string[] = tpl?.flowBlock?.statusEnum?.length ? tpl.flowBlock.statusEnum : ['待人工', '通过', '拒绝', '驳回']
   const [products, setProducts] = useState<string[]>([])
   const [channels, setChannels] = useState<string[]>([])
   const [sysResults, setSysResults] = useState<string[]>([])
-  const [workStatuses, setWorkStatuses] = useState<string[]>([])
-  const [opKw, setOpKw] = useState('')
   const [creditMax, setCreditMax] = useState('')
   const [amountMax, setAmountMax] = useState('')
   const [timeRange, setTimeRange] = useState('')
@@ -227,15 +176,15 @@ export function ReportModuleList({ cfg }: { cfg: ReportModuleCfg }) {
 
   const stats = useMemo(() => {
     const total = rows.length
-    const pending = rows.filter((r) => ['核验计算中', '待确认', '待审核'].includes(r.workStatus)).length
-    const review = rows.filter((r) => r.workStatus === '提交复核').length
     const passed = rows.filter((r) => r.sysResult === '通过').length
-    const forced = rows.filter((r) => r.workStatus === '强制放行').length
+    const pending = rows.filter((r) => r.flowState === '待审核').length
+    const doing = rows.filter((r) => r.flowState === '审核中').length
+    const done = rows.filter((r) => r.flowState === '已通过').length
     return [
-      { label: '待人工处置', value: String(pending), hint: '核验计算中 / 待确认 / 待审核', accent: 'amber' as const },
-      { label: '自动审核通过率', value: total ? `${Math.round((passed / total) * 100)}%` : '0%', hint: `系统通过 ${passed} / 共 ${total} 笔`, accent: 'emerald' as const },
-      { label: '待双人复核', value: String(review), hint: '提交复核等待终审', accent: 'violet' as const },
-      { label: '强制放行(高敏感)', value: String(forced), hint: '人工强制放行件', accent: 'rose' as const },
+      { label: '待审核', value: String(pending), hint: '流程状态 · 待审核', accent: 'amber' as const },
+      { label: '审核中', value: String(doing), hint: '流程状态 · 审核中', accent: 'blue' as const },
+      { label: '已通过', value: String(done), hint: '流程状态 · 已通过', accent: 'emerald' as const },
+      { label: '自动审核通过率', value: total ? `${Math.round((passed / total) * 100)}%` : '0%', hint: `系统通过 ${passed} / 共 ${total} 笔`, accent: 'violet' as const },
     ]
   }, [rows])
 
@@ -246,8 +195,6 @@ export function ReportModuleList({ cfg }: { cfg: ReportModuleCfg }) {
       if (products.length && !products.includes(r.product)) return false
       if (channels.length && !channels.includes(r.channel)) return false
       if (sysResults.length && !sysResults.includes(r.segResult)) return false
-      if (workStatuses.length && !workStatuses.includes(r.workStatus)) return false
-      if (opKw && !(r.operator ?? '').toLowerCase().includes(opKw.toLowerCase())) return false
       if (creditMax && r.segScore != null && r.segScore > Number(creditMax)) return false
       if (amountMax && r.amount > Number(amountMax)) return false
       if (timeRange) {
@@ -256,15 +203,15 @@ export function ReportModuleList({ cfg }: { cfg: ReportModuleCfg }) {
       }
       return true
     })
-  }, [rows, kw, products, channels, sysResults, workStatuses, opKw, creditMax, amountMax, timeRange])
+  }, [rows, kw, products, channels, sysResults, creditMax, amountMax, timeRange])
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize))
   const safePage = Math.min(page, totalPages)
   const pageRows = filtered.slice((safePage - 1) * pageSize, safePage * pageSize)
 
   const resetFilters = () => {
-    setKw(''); setProducts([]); setChannels([]); setSysResults([]); setWorkStatuses([])
-    setOpKw(''); setCreditMax(''); setAmountMax(''); setTimeRange('')
+    setKw(''); setProducts([]); setChannels([]); setSysResults([])
+    setCreditMax(''); setAmountMax(''); setTimeRange('')
   }
 
   return (
@@ -289,8 +236,6 @@ export function ReportModuleList({ cfg }: { cfg: ReportModuleCfg }) {
               <MultiChip label="产品" options={PRODUCTS} selected={products} onChange={setProducts} />
               <MultiChip label="渠道" options={CHANNELS} selected={channels} onChange={setChannels} />
               <MultiChip label="自动审核" options={SYS_RESULTS} selected={sysResults} onChange={setSysResults} />
-              <MultiChip label="人工审核" options={statusEnum} selected={workStatuses} onChange={setWorkStatuses} />
-              <input value={opKw} onChange={(e) => setOpKw(e.target.value)} placeholder="搜索审核人" className="w-40 rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100" />
             </div>
             <div className="hidden min-w-[1rem] flex-1 xl:block" />
             <div className="flex flex-wrap items-center gap-3">
@@ -314,9 +259,8 @@ export function ReportModuleList({ cfg }: { cfg: ReportModuleCfg }) {
                   <th style={headStyle(C.amount, null)} className="border-b border-slate-200 bg-slate-50 px-3 py-3 text-right font-medium">申请额度</th>
                   <th style={headStyle(C.score, null)} className="border-b border-slate-200 bg-slate-50 px-3 py-3 text-right font-medium">得分</th>
                   <th style={headStyle(C.sys, null)} className="border-b border-slate-200 bg-slate-50 px-3 py-3 text-center font-medium">自动审核</th>
-                  <th style={headStyle(C.work, null)} className="border-b border-slate-200 bg-slate-50 px-3 py-3 text-center font-medium">人工审核</th>
-                  <th style={headStyle(C.operator, null)} className="border-b border-slate-200 bg-slate-50 px-3 py-3 text-left font-medium">审核人</th>
                   <th style={headStyle(C.time, null)} className="border-b border-slate-200 bg-slate-50 px-3 py-3 text-left font-medium">申请时间</th>
+                  <th style={headStyle(C.flowState, 'right', C.op)} className="border-b border-slate-200 bg-slate-50 px-3 py-3 text-center font-medium">流程状态<Sam f="流程状态" /></th>
                   <th style={headStyle(C.op, 'right', 0)} className="border-b border-slate-200 bg-slate-50 px-3 py-3 pr-[22px] text-left font-medium">操作</th>
                 </tr>
               </thead>
@@ -345,41 +289,25 @@ export function ReportModuleList({ cfg }: { cfg: ReportModuleCfg }) {
                         <DecisionTag kind={SYS_KIND[r.segResult]} soft={r.segResult === '处理中'}>{r.segResult}</DecisionTag>
                         <Cal f="matchGrade" v={r.segResult} />
                       </td>
-                      <td style={bodyStyle(C.work, null)} className="whitespace-nowrap px-3 py-3 text-center">
-                        {r.workStatus ? <><StatusTag kind={WORK_KIND[r.workStatus]}>{r.workStatus}</StatusTag><Dat f="JSON:workStatus" v={r.workStatus} /></> : <span className="text-slate-300">—</span>}
-                      </td>
-                      <td style={bodyStyle(C.operator, null)} className="whitespace-nowrap px-3 py-3 text-slate-600">{r.operator ?? '—'}<Dat f="JSON:operator" v={r.operator ?? null} /></td>
                       <td style={bodyStyle(C.time, null)} className="whitespace-nowrap px-3 py-3 tabular-nums text-slate-500">{r.auditTime}</td>
+                      <td style={bodyStyle(C.flowState, 'right', C.op)} className="whitespace-nowrap bg-white px-3 py-3 text-center group-hover:bg-slate-50/60">
+                        <FlowStateCell
+                          flowId={flowIdOfRow(r, pageFlow)}
+                          state={String(r.flowState ?? '')}
+                          matchObj={matchObjOf(r as any)}
+                          onChange={(next) => updateReportRows(cfg.saveFile, (rs) => rs.map((x) => x.id === r.id ? { ...x, flowState: next, flowStateAt: nowStamp() } : x))}
+                        />
+                      </td>
                       <td style={bodyStyle(C.op, 'right', 0)} className="whitespace-nowrap bg-white px-3 py-3 pr-[22px] text-left group-hover:bg-slate-50/60">
                         <div className="flex flex-wrap items-center justify-start gap-3">
                           <button type="button" onClick={() => goReport(r)} className="whitespace-nowrap text-xs font-medium text-brand-600 hover:underline">查看</button>
-                          {listGraphsOf(r.segGrade).map((fg, bi) => {
-                            const st = fg.nodes?.find((n: any) => n.type === 'start')
-                            const end = fg.nodes?.find((n: any) => n.type === 'end')
-                            // 办结判定：仅流程真正走完（flowDone）才算；
-                            // 中间态（如「待复核」）即使出现在状态枚举里也不算办结，按钮继续显示下一节点
-                            // 防御：flowNodeId 若落在 end 节点（旧数据残留），同样视为已办结
-                            const curNode = r.flowNodeId ? fg.nodes?.find((n: any) => n.id === r.flowNodeId) : undefined
-                            const done = r.flowDone === true || curNode?.type === 'end'
-                            if (done && end?.showButton === false) return null // 办结且配置不显示 → 隐藏按钮
-                            const label = done ? '已办结' : (curNode?.buttonName ?? curNode?.label ?? st?.buttonName ?? fg.name ?? '操作')
-                            return (
-                              <button key={`${r.id}-seg-${bi}`} type="button"
-                                onClick={() => { if (!done) { setAuditRow(r); setAuditGraphIdx(bi); setListNodeId(r.flowNodeId ?? st?.id ?? null) } }}
-                                disabled={done}
-                                className={`whitespace-nowrap text-xs font-medium ${done ? 'text-slate-300' : 'text-brand-600 hover:underline'}`}>
-                                {label}
-                                <Tpl f="业务按钮" v={label} />
-                              </button>
-                            )
-                          })}
                         </div>
                       </td>
                     </tr>
                   )
                 })}
                 {pageRows.length === 0 && (
-                  <tr><td colSpan={11} className="whitespace-nowrap px-3 py-10 text-center text-sm text-slate-400">暂无符合条件的核验记录</td></tr>
+                  <tr><td colSpan={10} className="whitespace-nowrap px-3 py-10 text-center text-sm text-slate-400">暂无符合条件的核验记录</td></tr>
                 )}
               </tbody>
             </table>
@@ -394,17 +322,6 @@ export function ReportModuleList({ cfg }: { cfg: ReportModuleCfg }) {
           </div>
         </div>
       </div>
-
-      {auditRow && listCurGraph && listAuditFlow && (
-        <ApprovalModal
-          open
-          title={`审批决策 · ${listCurGraph.nodes.find((n: any) => n.type === 'start')?.buttonName ?? listCurGraph.name ?? '审批'}`}
-          conclusion={`案件结论：自动审核 ${auditRow.segResult}（${auditRow.workStatus}）`}
-          auditFlow={listAuditFlow}
-          onClose={() => { setAuditRow(null); setListNodeId(null) }}
-          onConfirm={applyListAudit}
-        />
-      )}
     </div>
   )
 }

@@ -10,7 +10,9 @@
     "sysResult": "处理中",
     "workStatus": null,
     "operator": null,
-    "auditTime": "2026-08-01 09:00"
+    "auditTime": "2026-08-01 09:00",
+    "flowState": "待审核",
+    "flowStateAt": "2026-08-01 09:00:00"
   },
   {
     "id": "CR-20260801-002",
@@ -23,7 +25,9 @@
     "sysResult": "通过",
     "workStatus": "待审核",
     "operator": null,
-    "auditTime": "2026-08-01 10:07"
+    "auditTime": "2026-08-01 10:07",
+    "flowState": "待审核",
+    "flowStateAt": "2026-08-01 10:07:00"
   },
   {
     "id": "CR-20260801-003",
@@ -36,7 +40,9 @@
     "sysResult": "通过",
     "workStatus": "待审核",
     "operator": null,
-    "auditTime": "2026-08-01 11:14"
+    "auditTime": "2026-08-01 11:14",
+    "flowState": "待审核",
+    "flowStateAt": "2026-08-01 11:14:00"
   },
   {
     "id": "CR-20260801-004",
@@ -49,7 +55,9 @@
     "sysResult": "通过",
     "workStatus": "待审核",
     "operator": null,
-    "auditTime": "2026-08-01 12:21"
+    "auditTime": "2026-08-01 12:21",
+    "flowState": "待审核",
+    "flowStateAt": "2026-08-01 12:21:00"
   },
   {
     "id": "CR-20260801-005",
@@ -62,7 +70,9 @@
     "sysResult": "转人工",
     "workStatus": "待审核",
     "operator": null,
-    "auditTime": "2026-08-01 13:28"
+    "auditTime": "2026-08-01 13:28",
+    "flowState": "待审核",
+    "flowStateAt": "2026-08-01 13:28:00"
   },
   {
     "id": "CR-20260801-006",
@@ -75,7 +85,9 @@
     "sysResult": "转人工",
     "workStatus": "待审核",
     "operator": null,
-    "auditTime": "2026-08-01 14:35"
+    "auditTime": "2026-08-01 14:35",
+    "flowState": "待审核",
+    "flowStateAt": "2026-08-01 14:35:00"
   },
   {
     "id": "CR-20260801-007",
@@ -88,7 +100,9 @@
     "sysResult": "转人工",
     "workStatus": "待审核",
     "operator": null,
-    "auditTime": "2026-08-01 15:42"
+    "auditTime": "2026-08-01 15:42",
+    "flowState": "待审核",
+    "flowStateAt": "2026-08-01 15:42:00"
   },
   {
     "id": "CR-20260801-008",
@@ -101,7 +115,9 @@
     "sysResult": "转人工",
     "workStatus": "待审核",
     "operator": null,
-    "auditTime": "2026-08-01 16:49"
+    "auditTime": "2026-08-01 16:49",
+    "flowState": "待审核",
+    "flowStateAt": "2026-08-01 16:49:00"
   },
   {
     "id": "CR-20260801-009",
@@ -114,7 +130,9 @@
     "sysResult": "转人工",
     "workStatus": "待审核",
     "operator": null,
-    "auditTime": "2026-08-01 17:56"
+    "auditTime": "2026-08-01 17:56",
+    "flowState": "待审核",
+    "flowStateAt": "2026-08-01 17:56:00"
   },
   {
     "id": "CR-20260801-010",
@@ -127,7 +145,9 @@
     "sysResult": "拒绝",
     "workStatus": "待审核",
     "operator": null,
-    "auditTime": "2026-08-01 18:03"
+    "auditTime": "2026-08-01 18:03",
+    "flowState": "待审核",
+    "flowStateAt": "2026-08-01 18:03:00"
   },
   {
     "id": "CR-20260801-011",
@@ -140,7 +160,9 @@
     "sysResult": "拒绝",
     "workStatus": "待审核",
     "operator": null,
-    "auditTime": "2026-08-01 19:10"
+    "auditTime": "2026-08-01 19:10",
+    "flowState": "待审核",
+    "flowStateAt": "2026-08-01 19:10:00"
   },
   {
     "id": "CR-20260801-012",
@@ -153,6 +175,8 @@
     "sysResult": "拒绝",
     "workStatus": "待审核",
     "operator": null,
-    "auditTime": "2026-08-01 20:17"
+    "auditTime": "2026-08-01 20:17",
+    "flowState": "待审核",
+    "flowStateAt": "2026-08-01 20:17:00"
   }
 ]

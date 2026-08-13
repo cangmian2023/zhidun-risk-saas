@@ -285,16 +285,28 @@ export default function ModelDecisionGraph({
                     </span>
                   </div>
                   <div className="min-h-0 flex-1 overflow-y-auto px-3 py-1.5">
+                    {/* 本客户在该节点的值（数据源=实际值/阈值；模型=中间计算结果）—— 突出显示 */}
+                    {nodeResults?.[n.id] && (
+                      <div className="mb-1.5 rounded-md bg-emerald-50 px-1.5 py-1 text-[11px] font-semibold leading-snug text-emerald-700">
+                        {nodeResults[n.id]}
+                      </div>
+                    )}
                     {cardBins ? (
                       <ScoreCardView bins={cardBins} />
                     ) : (
                       <>
                         {n.subtitle && <div className="mb-1 text-[11px] text-slate-400">{n.subtitle}</div>}
-                        <div className="space-y-0.5">
+                        {/* 算法/规则说明：弱化（更小、更浅、默认折叠） */}
+                        <div className="space-y-0.5 opacity-60">
                           {metaOf(n).map((m, i) => (
-                            <div key={i} className="whitespace-normal break-words text-[11px] leading-tight text-slate-600">{m}</div>
+                            <div key={i} className={`whitespace-normal break-words text-[10.5px] leading-tight text-slate-500 ${!openNodes.has(n.id) && i > 0 ? 'hidden' : ''}`}>{m}</div>
                           ))}
                         </div>
+                        {metaOf(n).length > 1 && (
+                          <button onClick={() => toggleNode(n.id)} className="mt-0.5 text-[10px] text-blue-500 hover:underline">
+                            {openNodes.has(n.id) ? '收起说明' : '展开说明'}
+                          </button>
+                        )}
                       </>
                     )}
                   </div>
@@ -319,6 +331,13 @@ export default function ModelDecisionGraph({
                 <span className="rounded-full bg-slate-100 px-2 py-0.5 text-slate-500">{GNODE_META[selected.type].label}</span>
                 {selected.subtitle && <span className="text-slate-400">{selected.subtitle}</span>}
                 {selected.badge && <span className="rounded-full bg-brand-50 px-2 py-0.5 text-brand-600">{selected.badge}</span>}
+              </div>
+              {/* 本客户在该节点的值（与图上绿条同源） */}
+              <div>
+                <div className="mb-1 text-xs font-medium text-slate-500">本客户值</div>
+                <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-[12.5px] font-semibold leading-relaxed text-emerald-700">
+                  {nodeResults?.[selected.id] ?? '—（该节点无本客户取值）'}
+                </div>
               </div>
               <div>
                 <div className="mb-1 text-xs font-medium text-slate-500">说明</div>

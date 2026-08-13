@@ -32,7 +32,7 @@ export default function ScoreDisposeFlowPage() {
         <Panel title="流程已统一到管理中心" actions={<Cfg value="bizFlows.json" />}>
           <p className="text-sm leading-relaxed text-slate-600">
             评分产品的预警处置流程已统一由「管理中心 → 业务流程」配置（流程 ID：<code className="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-xs">f-alert-dispose</code>），
-            与预警处置工作台、预警详情、模型评分页「预警与处置」共用同一份配置，改一处全局生效。
+            与预警处置工作台、预警详情、模型评分页「预警处置」共用同一份配置，改一处全局生效。
           </p>
           <div className="mt-3 flex gap-2">
             <Button size="sm" variant="secondary" onClick={() => nav('/console/cm/biz-flow')}>管理中心 · 业务流程</Button>
