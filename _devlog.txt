@@ -1,0 +1,94 @@
+Re-optimizing dependencies because lockfile has changed
+Port 5180 is in use, trying another one...
+
+  [32m[1mVITE[22m v5.4.21[39m  [2mready in [0m[1m1551[22m[2m[0m ms[22m
+
+  [32m➜[39m  [1mLocal[22m:   [36mhttp://localhost:[1m5181[22m/[39m
+  [32m➜[39m  [1mNetwork[22m: [36mhttp://192.168.1.53:[1m5181[22m/[39m
+Error: [31m  Failed to scan for dependencies from entries:
+  d:/yuexin/project/risk/saas/index.html
+d:/yuexin/project/risk/saas/model-trace.html
+d:/yuexin/project/risk/saas/tmp_new_alert.html
+d:/yuexin/project/risk/saas/sensors/1.元事件 元数据管理 事件详情.html
+d:/yuexin/project/risk/saas/sensors/1.元事件 元数据管理.html
+d:/yuexin/project/risk/saas/sensors/2.事件属性 事件属性详情.html
+d:/yuexin/project/risk/saas/sensors/2.事件属性.html
+d:/yuexin/project/risk/saas/sensors/3.用户属性 用户属性详情.html
+d:/yuexin/project/risk/saas/sensors/3.用户属性.html
+d:/yuexin/project/risk/saas/sensors/4.维度表 items.html
+d:/yuexin/project/risk/saas/sensors/4.维度表.html
+d:/yuexin/project/risk/saas/sensors/5.物品属性.html
+d:/yuexin/project/risk/saas/sensors/6.虚拟属性 元数据管理.html
+d:/yuexin/project/risk/saas/sensors/6.虚拟属性 虚拟属性详情.html
+d:/yuexin/project/risk/saas/sensors/7.虚拟事件 事件详情.html
+d:/yuexin/project/risk/saas/sensors/7.虚拟事件.html
+d:/yuexin/project/risk/saas/sensors/8.可视化全埋点事件.html
+d:/yuexin/project/risk/saas/record/temp/event_from_file.html
+d:/yuexin/project/risk/saas/sensors/visual/1.空白.html
+d:/yuexin/project/risk/saas/sensors/visual/2.1 事件分析.html
+d:/yuexin/project/risk/saas/sensors/visual/2.新建组件.html
+
+  [39m[31mX [41;31m[[41;97mERROR[41;31m][0m [1mCannot assign to import "qiyeSelectedName"[0m
+
+    src/console/EnterprisePages.tsx:240:64:
+[37m      240 │ ...lick={() => { if (m) { [32mqiyeSelectedName[37m = m.name; qiyeSelected...
+          ╵                           [32m~~~~~~~~~~~~~~~~[0m
+
+  Imports are immutable in JavaScript. To modify the value of this import, you must export a setter function in the imported file (e.g. "setQiyeSelectedName") and then import and call that function here instead.
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mCannot assign to import "qiyeSelectedKeyNo"[0m
+
+    src/console/EnterprisePages.tsx:240:91:
+[37m      240 │ ...SelectedName = m.name; [32mqiyeSelectedKeyNo[37m = m.keyNo; nav('/cons...
+          ╵                           [32m~~~~~~~~~~~~~~~~~[0m
+
+  Imports are immutable in JavaScript. To modify the value of this import, you must export a setter function in the imported file (e.g. "setQiyeSelectedKeyNo") and then import and call that function here instead.
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mCannot assign to import "qiyeSelectedName"[0m
+
+    src/console/EnterprisePages.tsx:503:64:
+[37m      503 │ ...lick={() => { if (l) { [32mqiyeSelectedName[37m = l.name; qiyeSelected...
+          ╵                           [32m~~~~~~~~~~~~~~~~[0m
+
+  Imports are immutable in JavaScript. To modify the value of this import, you must export a setter function in the imported file (e.g. "setQiyeSelectedName") and then import and call that function here instead.
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mCannot assign to import "qiyeSelectedKeyNo"[0m
+
+    src/console/EnterprisePages.tsx:503:91:
+[37m      503 │ ...SelectedName = l.name; [32mqiyeSelectedKeyNo[37m = l.id; nav('/console...
+          ╵                           [32m~~~~~~~~~~~~~~~~~[0m
+
+  Imports are immutable in JavaScript. To modify the value of this import, you must export a setter function in the imported file (e.g. "setQiyeSelectedKeyNo") and then import and call that function here instead.
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mCannot assign to import "qiyeSelectedName"[0m
+
+    src/console/EnterprisePages.tsx:701:55:
+[37m      701 │ ...tton" onClick={() => { [32mqiyeSelectedName[37m = a.entName; qiyeSelec...
+          ╵                           [32m~~~~~~~~~~~~~~~~[0m
+
+  Imports are immutable in JavaScript. To modify the value of this import, you must export a setter function in the imported file (e.g. "setQiyeSelectedName") and then import and call that function here instead.
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mCannot assign to import "qiyeSelectedKeyNo"[0m
+
+    src/console/EnterprisePages.tsx:701:85:
+[37m      701 │ ...ectedName = a.entName; [32mqiyeSelectedKeyNo[37m = a.entKeyNo ?? ''; n...
+          ╵                           [32m~~~~~~~~~~~~~~~~~[0m
+
+  Imports are immutable in JavaScript. To modify the value of this import, you must export a setter function in the imported file (e.g. "setQiyeSelectedKeyNo") and then import and call that function here instead.
+
+
+    at failureErrorWithLog (d:\yuexin\project\risk\saas\node_modules\esbuild\lib\main.js:1472:15)
+    at d:\yuexin\project\risk\saas\node_modules\esbuild\lib\main.js:945:25
+    at runOnEndCallbacks (d:\yuexin\project\risk\saas\node_modules\esbuild\lib\main.js:1315:45)
+    at buildResponseToResult (d:\yuexin\project\risk\saas\node_modules\esbuild\lib\main.js:943:7)
+    at d:\yuexin\project\risk\saas\node_modules\esbuild\lib\main.js:955:9
+    at new Promise (<anonymous>)
+    at requestCallbacks.on-end (d:\yuexin\project\risk\saas\node_modules\esbuild\lib\main.js:954:54)
+    at handleRequest (d:\yuexin\project\risk\saas\node_modules\esbuild\lib\main.js:647:17)
+    at handleIncomingPacket (d:\yuexin\project\risk\saas\node_modules\esbuild\lib\main.js:672:7)
+    at Socket.readFromStdout (d:\yuexin\project\risk\saas\node_modules\esbuild\lib\main.js:600:7)
