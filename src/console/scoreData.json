@@ -513,37 +513,79 @@
     {
       "id": "g-high",
       "name": "高价值客户",
-      "rule": "智融分≥680 且 风险等级≤B",
-      "riskLevel": "低",
-      "count": 12840
+      "rule": "智融分 大于 680",
+      "logic": "and",
+      "count": 0,
+      "conds": [
+        {
+          "field": "score.zhirong",
+          "op": "gt",
+          "value": "680"
+        }
+      ]
     },
     {
       "id": "g-active",
       "name": "活跃客户",
-      "rule": "近30天活跃≥15天",
-      "riskLevel": "低",
-      "count": 35200
+      "rule": "贷款状态 等于 在贷 且 额度使用率 区间 30~80",
+      "logic": "and",
+      "count": 0,
+      "conds": [
+        {
+          "field": "loanStatus",
+          "op": "eq",
+          "value": "在贷"
+        },
+        {
+          "field": "utilization",
+          "op": "range",
+          "value": "30",
+          "rangeMax": "80"
+        }
+      ]
     },
     {
-      "id": "g-sleep",
-      "name": "沉睡客户",
-      "rule": "近30天活跃≤3天",
-      "riskLevel": "中",
-      "count": 42100
+      "id": "g-lowval",
+      "name": "低价值客户",
+      "rule": "智融分 小于 600",
+      "logic": "and",
+      "count": 0,
+      "conds": [
+        {
+          "field": "score.zhirong",
+          "op": "lt",
+          "value": "600"
+        }
+      ]
     },
     {
       "id": "g-risk",
       "name": "高风险客户",
-      "rule": "智察分≥70 或 风险等级为高风险",
-      "riskLevel": "高",
-      "count": 13360
+      "rule": "智察分 大于 70",
+      "logic": "and",
+      "count": 0,
+      "conds": [
+        {
+          "field": "score.zhicha",
+          "op": "gt",
+          "value": "70"
+        }
+      ]
     },
     {
       "id": "g-watch",
       "name": "观测客户",
-      "rule": "风险等级为关注且 PSI 偏移",
-      "riskLevel": "中",
-      "count": 8120
+      "rule": "智信分 区间 600~660",
+      "logic": "and",
+      "count": 0,
+      "conds": [
+        {
+          "field": "score.zhixin",
+          "op": "range",
+          "value": "600",
+          "rangeMax": "660"
+        }
+      ]
     }
   ],
   "dist": [

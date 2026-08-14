@@ -46,7 +46,8 @@ import MetaAutoTrackConfig from './MetaAutoTrackConfig'
 import EventAnalysis from './EventAnalysis'
 import { CollectionOverview, CollectionCases, CollectionStrategy, CollectionRecords } from './CollectionPages'
 import { DunAssignment, DunImport, DunChannels, DunAgencies, DunQa, DunRepayment } from './DunPages'
-import { QiyeSearch, QiyeProfile } from './QiyePages'
+import EnterpriseModule from './EnterpriseModule'
+import EnterpriseDashboard from './EnterpriseDashboard'
 import ScoreModule from './ScoreModule'
 import { getDashboardByKey } from './dashboardData'
 import { creditRiskMenu, scoringMenu, entMenu, dmMenu, dataGovernanceMenu, cmMenu, collectionMenu, type MenuGroup } from './menus'
@@ -68,7 +69,7 @@ const subName: Record<string, string> = {
 const subsystems = [
   { key: 'cr', name: '零售信贷风控', open: true },
   { key: 'sc', name: '评分产品', open: true },
-  { key: 'ep', name: '企业风控', open: false },
+  { key: 'ep', name: '企业风控', open: true },
   { key: 'dm', name: '数字营销', open: false },
   { key: 'dg', name: '数据治理', open: true },
   { key: 'zz', name: '催贷管理', open: true },
@@ -200,20 +201,20 @@ export default function Console() {
     'cm:mid-dashboard-detail': 'monitor',
     // 企业风控
     'ep:overview': 'dashboard',
-    'ep:ent-verify': 'verify',
-    'ep:ent-verify-config': 'filter',
-    'ep:ent-credit': 'shield',
-    'ep:ent-credit-config': 'sliders',
-    'ep:ent-graph': 'link',
-    'ep:ent-graph-gang': 'plug',
-    'ep:ent-mid-task': 'cube',
-    'ep:ent-mid-alert': 'bell',
-    'ep:ent-mid-board': 'chart',
-    'ep:ent-verify-detail': 'eye',
-    'ep:ent-credit-detail': 'cloud',
-    'ep:ent-graph-detail': 'link',
+    'ep:overview-realtime': 'monitor',
     'ep:qiye-search': 'search',
     'ep:qiye-profile': 'id',
+    'ep:batch-due': 'stack',
+    'ep:monitor-list': 'users',
+    'ep:decision-events': 'report',
+    'ep:decision-trace': 'analytics',
+    'ep:review-order': 'inbox',
+    'ep:model-list': 'model',
+    'ep:list-manage': 'plug',
+    'ep:datasource': 'database',
+    'ep:alert-rule': 'alert',
+    'ep:alert-workbench': 'bell',
+    'ep:archive': 'id',
     // 数字营销
     'dm:overview': 'dashboard',
     'dm:radar-query': 'search',
@@ -556,10 +557,10 @@ export default function Console() {
               <DunQa />
             ) : key === 'zz:repayment' ? (
               <DunRepayment />
-            ) : key === 'ep:qiye-search' ? (
-              <QiyeSearch />
-            ) : key === 'ep:qiye-profile' ? (
-              <QiyeProfile />
+            ) : key === 'ep:overview' || key === 'ep:overview-realtime' || key === 'ep:decision-trace' ? (
+              <EnterpriseDashboard key={key} pageKey={key} />
+            ) : key.startsWith('ep:') ? (
+              <EnterpriseModule pageKey={key} />
             ) : key === 'cr:overview' ? (
               <RetailCreditHome />
             ) : key.startsWith('cr:mid-td') || key === 'cr:mid-overview' || key === 'cr:mid-alert' || key === 'cr:mid-crowd' ? (

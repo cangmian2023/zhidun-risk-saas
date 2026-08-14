@@ -97,44 +97,92 @@ export const scoringMenu: MenuGroup[] = [
 ]
 
 /* ============================================================
- * 三、企业风控（规划中）
+ * 三、企业风控
  * ========================================================== */
 export const entMenu: MenuGroup[] = [
-  { group: '概览看板', section: '工作台', items: [{ label: '概览看板', key: 'ep:overview', desc: '展示企业风控核心指标的实时概览看板' }] },
   {
-    group: '企业信息核验',
+    group: '风险驾驶舱',
+    section: '首页',
     items: [
-      { label: '企业信息核验', key: 'ep:ent-verify', desc: '展示企业客户的核验记录' },
-      { label: '企业核验规则', key: 'ep:ent-verify-config', desc: '配置企业核验的规则、阈值' },
+      { label: '风险总览大盘', key: 'ep:overview', desc: '企业风控核心监控指标总览：企业总数 / 风险分布 / 预警 / 尽调任务 / 决策事件', keep: true },
+      { label: '实时态势大屏', key: 'ep:overview-realtime', desc: '实时态势大屏：企业风险事件、司法涉诉、舆情、名单命中实时滚动', keep: true },
     ],
   },
   {
-    group: '企业信用评估',
+    group: '企业一键风险查询',
+    section: '企业风险尽调中心',
     items: [
-      { label: '企业信用评分', key: 'ep:ent-credit', desc: '展示企业客户的信用评分记录' },
-      { label: '企业评分模型', key: 'ep:ent-credit-config', desc: '配置企业信用评分的权重、规则' },
+      { label: '企业一键风险查询', key: 'ep:qiye-search', desc: '按企业名称 / 行业 / 法定代表人 / 唯一标识一键查询企业全维度风险；点击「查看档案」进入企业风险画像详情', keep: true },
     ],
   },
   {
-    group: '企业关联图谱',
+    group: '批量尽调任务',
+    section: '企业风险尽调中心',
     items: [
-      { label: '企业关联图谱', key: 'ep:ent-graph', desc: '展示企业关联关系分析记录' },
-      { label: '企业团伙', key: 'ep:ent-graph-gang', desc: '识别企业欺诈团伙、空壳公司集群' },
+      { label: '批量尽调任务', key: 'ep:batch-due', desc: '批量尽调任务：上传企业名单批量查询风险，创建任务、监控任务状态与命中结果，点击查看进入任务详情', keep: true },
     ],
   },
   {
-    group: '企业贷中监控',
+    group: '存量企业监控名单',
+    section: '企业风险尽调中心',
     items: [
-      { label: '企业监控任务', key: 'ep:ent-mid-task', desc: '展示企业客户的监控任务' },
-      { label: '企业预警', key: 'ep:ent-mid-alert', desc: '展示企业经营异常、司法风险、舆情风险等预警' },
-      { label: '企业风险', key: 'ep:ent-mid-board', desc: '展示企业客群的实时风险分布' },
+      { label: '存量企业监控名单', key: 'ep:monitor-list', desc: '存量企业监控名单：名单内企业持续监控，风险变化即预警', keep: true },
     ],
   },
   {
-    group: '企业档案',
+    group: '决策事件列表',
+    section: '风险事件管理',
     items: [
-      { label: '企业档案检索', key: 'ep:qiye-search', desc: '按企业名称 / 行业 / 法定代表人 / 唯一标识检索企业工商档案，查看全维度画像', keep: true },
-      { label: '企业档案', key: 'ep:qiye-profile', desc: '工商信息 / 股东与主要人员 / 对外投资与分支 / 司法与经营风险 / 经营信息 / 企业发展 / 知识产权 全维度档案', keep: true },
+      { label: '决策事件列表', key: 'ep:decision-events', desc: '企业授信 / 尽调 / 风控决策事件列表，可追踪决策过程', keep: true },
+    ],
+  },
+  {
+    group: '决策追踪详情',
+    section: '风险事件管理',
+    items: [
+      { label: '决策追踪详情', key: 'ep:decision-trace', desc: '决策追踪详情：决策过程全链路还原，指标 / 规则 / 模型 / 结论', keep: true },
+    ],
+  },
+  {
+    group: '人工复核工单',
+    section: '风险事件管理',
+    items: [
+      { label: '人工复核工单', key: 'ep:review-order', desc: '需人工复核的决策工单：待复核 / 复核中 / 已复核队列', keep: true },
+    ],
+  },
+  {
+    group: '模型列表',
+    section: '模型管理中心',
+    items: [
+      { label: '模型列表', key: 'ep:model-list', desc: '企业风控模型列表：企业违约分 / 欺诈分 / 关联风险模型，点击进入模型详情', keep: true },
+    ],
+  },
+  {
+    group: '名单管理',
+    section: '名单管理',
+    items: [
+      { label: '名单管理（黑白灰名单）', key: 'ep:list-manage', desc: '企业黑白灰名单管理：黑名单拦截、白名单放行、灰名单预警', keep: true },
+    ],
+  },
+  {
+    group: '数据源市场',
+    section: '数据源市场与管理',
+    items: [
+      { label: '数据源市场与管理', key: 'ep:datasource', desc: '企业数据源市场：工商 / 司法 / 税务 / 征信 / 舆情 / 关联等数据源接入与管理', keep: true },
+    ],
+  },
+  {
+    group: '预警规则配置',
+    section: '风险预警中心',
+    items: [
+      { label: '预警规则配置', key: 'ep:alert-rule', desc: '企业风险预警规则配置：司法涉诉 / 经营异常 / 舆情负面 / 财务恶化等预警规则', keep: true },
+    ],
+  },
+  {
+    group: '预警处置工作台',
+    section: '风险预警中心',
+    items: [
+      { label: '预警处置工作台', key: 'ep:alert-workbench', desc: '企业预警处置工作台：预警队列逐条核实、发起处置（内容数据换成企业）', keep: true },
     ],
   },
 ]

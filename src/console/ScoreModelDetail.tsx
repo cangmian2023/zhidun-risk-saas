@@ -93,6 +93,11 @@ export default function ScoreModelDetailPage() {
       ),
     }))
 
+  /* ---------- 上线管理：上下线 + 上线版本/变更内容 ---------- */
+  const [onlineOpen, setOnlineOpen] = useState(false)
+  const [onlineVer, setOnlineVer] = useState(m.version)
+  const [onlineNote, setOnlineNote] = useState('')
+
   /* ---------- 算法编辑：可视化 / 代码 ---------- */
   const [algoTab, setAlgoTab] = useState<'visual' | 'code'>('visual')
   const [code, setCode] = useState(m.algoCode)
@@ -228,7 +233,7 @@ export default function ScoreModelDetailPage() {
     <>
       <PageShell
         title={m.name}
-        subtitle={`${SCORE_PROD_LABEL[m.prod]} · 模型详情（基本信息 / 算法编辑 / 模型效果 / 评分阈值 / 预警规则 / 版本管理）`}
+        subtitle={`${SCORE_PROD_LABEL[m.prod]} · 模型详情（基本信息 / 算法编辑 / 模型效果 / 评分阈值 / 预警规则 / 版本日志）`}
         crumb="评分产品 / 模型管理"
         actions={
           <Button size="sm" variant="secondary" onClick={() => nav('/console/sc/model-manage')}>← 返回模型列表</Button>
@@ -306,6 +311,41 @@ export default function ScoreModelDetailPage() {
               )}
             </Panel>
 
+            {/* ===== 上线管理（上/下线 + 上线版本与变更内容） ===== */}
+            <Panel
+              title="上线管理"
+              desc="模型投产与下线控制；上线时可指定版本与变更内容，自动记入版本日志"
+              actions={<Cfg value="scoreData.json" />}
+            >
+              <div className="flex flex-wrap items-center gap-3">
+                <Badge kind={m.enabled ? 'green' : 'gray'}>{m.enabled ? '已上线' : '已下线'}</Badge>
+                <span className="text-sm text-slate-500">当前版本 {m.version}</span>
+                <div className="flex-1" />
+                {m.enabled ? (
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    onClick={() =>
+                      updateScore((d) => ({
+                        ...d,
+                        models: d.models.map((mm) => (mm.prod === prod ? { ...mm, enabled: false } : mm)),
+                      }))
+                    }
+                  >
+                    下线
+                  </Button>
+                ) : (
+                  <Button
+                    size="sm"
+                    variant="primary"
+                    onClick={() => { setOnlineVer(m.version); setOnlineNote(''); setOnlineOpen(true) }}
+                  >
+                    上线
+                  </Button>
+                )}
+              </div>
+            </Panel>
+
             {/* ===== 部署对接（只读） ===== */}
             <Panel title="部署与对接" desc="模型生产化对接方式（只读）" actions={<Cal />}>
               <dl className="grid grid-cols-1 gap-x-8 gap-y-2 text-sm md:grid-cols-2">
@@ -319,7 +359,7 @@ export default function ScoreModelDetailPage() {
             </Panel>
 
             {/* ===== 版本管理（内置） ===== */}
-            <Panel title="版本管理" desc="本模型版本历史，可回滚至历史版本" actions={<Cfg value="scoreData.json" />}>
+            <Panel title="版本日志" desc="本模型版本历史，可回滚至历史版本" actions={<Cfg value="scoreData.json" />}>
               <DataTable columns={verCols} rows={verRows} empty="暂无版本" pager defaultPageSize={10} />
             </Panel>
           </>
@@ -343,13 +383,20 @@ export default function ScoreModelDetailPage() {
                   prod={m.prod}
                   model={m}
                   thresholds={data.thresholds}
-                  graph={m.prod === 'zhixin' ? PIPELINE_GRAPHS.zhixin_credit_v1 : undefined}
+                  graph={m.decisionGraph ?? (m.prod === 'zhixin' ? PIPELINE_GRAPHS.zhixin_credit_v1 : undefined)}
                   onJumpRules={() => nav('/console/cm/rule-hub')}
                   onJumpStrategy={() => nav('/console/sc/model-detail?prod=' + prod + '&tab=threshold')}
                   onSaveCollisions={(rules) =>
                     updateScore((d) => ({
                       ...d,
                       models: d.models.map((mm) => (mm.prod === prod ? { ...mm, collisionRules: rules } : mm)),
+                    }))
+                  }
+                  editable
+                  onSaveGraph={(g) =>
+                    updateScore((d) => ({
+                      ...d,
+                      models: d.models.map((mm) => (mm.prod === prod ? { ...mm, decisionGraph: g } : mm)),
                     }))
                   }
                 />
@@ -441,6 +488,60 @@ export default function ScoreModelDetailPage() {
           </Panel>
         )}
       </div>
+
+      {/* ===== 上线 Modal（版本 + 变更内容） ===== */}
+      <Modal open={onlineOpen} onClose={() => setOnlineOpen(false)} title={`上线 · ${SCORE_PROD_LABEL[prod]}`}>
+        <div className="space-y-3">
+          <label className="block">
+            <span className="mb-1 block text-xs text-slate-400">上线版本</span>
+            <input
+              value={onlineVer}
+              onChange={(e) => setOnlineVer(e.target.value)}
+              placeholder="如 v2.3.1"
+              className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm outline-none focus:border-brand-400"
+            />
+          </label>
+          <label className="block">
+            <span className="mb-1 block text-xs text-slate-400">变更内容</span>
+            <textarea
+              value={onlineNote}
+              onChange={(e) => setOnlineNote(e.target.value)}
+              placeholder="本次上线的主要变更说明（将记入版本日志）"
+              className="h-24 w-full resize-none rounded-lg border border-slate-200 p-3 text-sm outline-none focus:border-brand-400"
+            />
+          </label>
+        </div>
+        <div className="mt-4 flex justify-end gap-2">
+          <Button size="sm" variant="ghost" onClick={() => setOnlineOpen(false)}>取消</Button>
+          <Button
+            size="sm"
+            variant="primary"
+            onClick={() => {
+              const today = new Date().toISOString().slice(0, 10)
+              const ver = onlineVer.trim() || m.version
+              updateScore((d) => ({
+                ...d,
+                models: d.models.map((mm) =>
+                  mm.prod === prod
+                    ? {
+                        ...mm,
+                        enabled: true,
+                        version: ver,
+                        versions: [
+                          { version: ver, date: today, note: onlineNote.trim() || '上线投产', current: true },
+                          ...mm.versions.map((v) => ({ ...v, current: false })),
+                        ],
+                      }
+                    : mm,
+                ),
+              }))
+              setOnlineOpen(false)
+            }}
+          >
+            确认上线
+          </Button>
+        </div>
+      </Modal>
 
       {/* ===== 新增阈值 Modal ===== */}
       <Modal open={thNewOpen} onClose={() => setThNewOpen(false)} title={`新增阈值 · ${SCORE_PROD_LABEL[prod]}`}>

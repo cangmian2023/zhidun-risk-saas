@@ -3752,5 +3752,297 @@
         "windowSize": "lg"
       }
     ]
+  },
+  {
+    "id": "db-ent-overview",
+    "key": "ep:overview",
+    "name": "风险总览大盘",
+    "group": "企业风控",
+    "order": 200,
+    "enabled": true,
+    "desc": "企业风控风险总览：监控企业 / 风险分布 / 预警 / 决策事件 / 尽调任务",
+    "widgets": [
+      {
+        "id": "w1",
+        "type": "metric",
+        "title": "监控企业数",
+        "datasetId": "ds_ent_monitor",
+        "metricId": "m_ent_monitor_cnt",
+        "span": 1,
+        "windowSize": "sm"
+      },
+      {
+        "id": "w2",
+        "type": "metric",
+        "title": "高风险企业",
+        "datasetId": "ds_ent_monitor",
+        "metricId": "m_ent_monitor_high",
+        "span": 1,
+        "windowSize": "sm"
+      },
+      {
+        "id": "w3",
+        "type": "metric",
+        "title": "中风险企业",
+        "datasetId": "ds_ent_monitor",
+        "metricId": "m_ent_monitor_mid",
+        "span": 1,
+        "windowSize": "sm"
+      },
+      {
+        "id": "w4",
+        "type": "metric",
+        "title": "企业预警数",
+        "datasetId": "ds_ent_alert",
+        "metricId": "m_ent_alert_cnt",
+        "span": 1,
+        "windowSize": "sm"
+      },
+      {
+        "id": "w5",
+        "type": "bar",
+        "title": "企业风险等级分布",
+        "datasetId": "ds_ent_monitor",
+        "metricId": "m_ent_monitor_cnt",
+        "dimensions": [
+          "risk_level"
+        ],
+        "span": 2,
+        "windowSize": "md"
+      },
+      {
+        "id": "w6",
+        "type": "donut",
+        "title": "企业预警等级结构",
+        "datasetId": "ds_ent_alert",
+        "metricId": "m_ent_alert_cnt",
+        "dimensions": [
+          "level"
+        ],
+        "span": 1,
+        "windowSize": "sm"
+      },
+      {
+        "id": "w7",
+        "type": "metric",
+        "title": "决策事件数",
+        "datasetId": "ds_ent_event",
+        "metricId": "m_ent_event_cnt",
+        "span": 1,
+        "windowSize": "sm"
+      },
+      {
+        "id": "w8",
+        "type": "metric",
+        "title": "决策拒绝数",
+        "datasetId": "ds_ent_event",
+        "metricId": "m_ent_event_reject",
+        "span": 1,
+        "windowSize": "sm"
+      },
+      {
+        "id": "w9",
+        "type": "metric",
+        "title": "尽调命中风险",
+        "datasetId": "ds_ent_due",
+        "metricId": "m_ent_due_hit",
+        "span": 1,
+        "windowSize": "sm"
+      },
+      {
+        "id": "w10",
+        "type": "table",
+        "title": "企业预警明细",
+        "datasetId": "ds_ent_alert",
+        "metricId": "m_ent_alert_cnt",
+        "dimensions": [
+          "ent_name",
+          "category",
+          "rule_name",
+          "level",
+          "alert_date"
+        ],
+        "span": 3,
+        "windowSize": "lg"
+      }
+    ]
+  },
+  {
+    "id": "db-ent-realtime",
+    "key": "ep:overview-realtime",
+    "name": "实时态势大屏",
+    "group": "企业风控",
+    "order": 201,
+    "enabled": true,
+    "desc": "企业实时态势：风险事件 / 预警实时滚动 / 尽调任务进度 / 决策事件",
+    "widgets": [
+      {
+        "id": "w1",
+        "type": "metric",
+        "title": "企业预警总数",
+        "datasetId": "ds_ent_alert",
+        "metricId": "m_ent_alert_cnt",
+        "span": 1,
+        "windowSize": "sm"
+      },
+      {
+        "id": "w2",
+        "type": "metric",
+        "title": "红灯预警",
+        "datasetId": "ds_ent_alert",
+        "metricId": "m_ent_alert_red",
+        "span": 1,
+        "windowSize": "sm"
+      },
+      {
+        "id": "w3",
+        "type": "metric",
+        "title": "黄灯预警",
+        "datasetId": "ds_ent_alert",
+        "metricId": "m_ent_alert_yellow",
+        "span": 1,
+        "windowSize": "sm"
+      },
+      {
+        "id": "w4",
+        "type": "metric",
+        "title": "决策事件数",
+        "datasetId": "ds_ent_event",
+        "metricId": "m_ent_event_cnt",
+        "span": 1,
+        "windowSize": "sm"
+      },
+      {
+        "id": "w5",
+        "type": "table",
+        "title": "实时预警滚动",
+        "datasetId": "ds_ent_alert",
+        "metricId": "m_ent_alert_cnt",
+        "dimensions": [
+          "ent_name",
+          "category",
+          "rule_name",
+          "level",
+          "alert_date",
+          "status"
+        ],
+        "span": 3,
+        "windowSize": "lg"
+      },
+      {
+        "id": "w6",
+        "type": "donut",
+        "title": "决策结果分布",
+        "datasetId": "ds_ent_event",
+        "metricId": "m_ent_event_cnt",
+        "dimensions": [
+          "result"
+        ],
+        "span": 1,
+        "windowSize": "sm"
+      },
+      {
+        "id": "w7",
+        "type": "bar",
+        "title": "预警分类分布",
+        "datasetId": "ds_ent_alert",
+        "metricId": "m_ent_alert_cnt",
+        "dimensions": [
+          "category"
+        ],
+        "span": 2,
+        "windowSize": "md"
+      }
+    ]
+  },
+  {
+    "id": "db-ent-decision-trace",
+    "key": "ep:decision-trace",
+    "name": "决策追踪详情",
+    "group": "风险事件管理",
+    "order": 202,
+    "enabled": true,
+    "desc": "企业决策事件追踪：决策结果分布 / 决策场景构成 / 等级结构与事件明细",
+    "widgets": [
+      {
+        "id": "w1",
+        "type": "metric",
+        "title": "决策事件数",
+        "datasetId": "ds_ent_event",
+        "metricId": "m_ent_event_cnt",
+        "span": 1,
+        "windowSize": "sm"
+      },
+      {
+        "id": "w2",
+        "type": "metric",
+        "title": "决策拒绝数",
+        "datasetId": "ds_ent_event",
+        "metricId": "m_ent_event_reject",
+        "span": 1,
+        "windowSize": "sm"
+      },
+      {
+        "id": "w3",
+        "type": "metric",
+        "title": "决策转人工数",
+        "datasetId": "ds_ent_event",
+        "metricId": "m_ent_event_manual",
+        "span": 1,
+        "windowSize": "sm"
+      },
+      {
+        "id": "w4",
+        "type": "donut",
+        "title": "决策结果分布",
+        "datasetId": "ds_ent_event",
+        "metricId": "m_ent_event_cnt",
+        "dimensions": [
+          "result"
+        ],
+        "span": 1,
+        "windowSize": "sm"
+      },
+      {
+        "id": "w5",
+        "type": "bar",
+        "title": "决策场景构成",
+        "datasetId": "ds_ent_event",
+        "metricId": "m_ent_event_cnt",
+        "dimensions": [
+          "scene"
+        ],
+        "span": 2,
+        "windowSize": "md"
+      },
+      {
+        "id": "w6",
+        "type": "bar",
+        "title": "决策等级结构",
+        "datasetId": "ds_ent_event",
+        "metricId": "m_ent_event_cnt",
+        "dimensions": [
+          "level"
+        ],
+        "span": 1,
+        "windowSize": "sm"
+      },
+      {
+        "id": "w7",
+        "type": "table",
+        "title": "决策事件明细",
+        "datasetId": "ds_ent_event",
+        "metricId": "m_ent_event_cnt",
+        "dimensions": [
+          "scene",
+          "result",
+          "level",
+          "status",
+          "decided_at"
+        ],
+        "span": 2,
+        "windowSize": "md"
+      }
+    ]
   }
 ]

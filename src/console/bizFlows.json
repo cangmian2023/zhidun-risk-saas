@@ -2131,5 +2131,164 @@
         ]
       }
     ]
+  },
+  {
+    "id": "f-ent-alert",
+    "name": "企业预警处置流程",
+    "desc": "企业风控·预警处置工作台统一流程：按预警等级（红灯/黄灯）匹配具体处置流程，列表显示「时限倒计时」与「流程状态」列，状态沿流程流转（参照贷中预警处置流程架构）",
+    "pageRoutes": [
+      "/console/ep/alert-workbench"
+    ],
+    "pageNames": [
+      "预警处置工作台"
+    ],
+    "flowGraphs": [
+      {
+        "name": "红灯·高风险处置流程",
+        "match": [
+          {
+            "field": "level",
+            "value": "RED"
+          }
+        ],
+        "flowSteps": [
+          { "state": "预警确认中", "action": "确认", "next": "风险研判中", "color": "#DC2626" },
+          { "state": "风险研判中", "action": "研判", "next": "处置执行中", "color": "#DC2626" },
+          { "state": "处置执行中", "action": "执行处置", "next": "效果跟踪中", "color": "#F59E0B" },
+          { "state": "效果跟踪中", "action": "跟踪评估", "next": "已结案", "color": "#059669" },
+          { "state": "已结案", "action": "", "next": "", "color": "#059669" }
+        ],
+        "nodes": [
+          {
+            "id": "n_0",
+            "type": "start",
+            "label": "预警确认中",
+            "x": 40,
+            "y": 140,
+            "showButton": false,
+            "checkItems": [],
+            "results": ["确认"],
+            "resultStates": { "确认": "风险研判中" },
+            "timeLimit": 24
+          },
+          {
+            "id": "n_1",
+            "type": "normal",
+            "label": "风险研判中",
+            "x": 280,
+            "y": 140,
+            "role": "风控专员",
+            "buttonName": "研判",
+            "checkItems": ["预警真实性与影响评估"],
+            "results": ["通过"],
+            "opinionPresets": { "通过": ["风险研判完成，进入处置执行"] },
+            "resultStates": { "通过": "处置执行中" },
+            "timeLimit": 48
+          },
+          {
+            "id": "n_2",
+            "type": "normal",
+            "label": "处置执行中",
+            "x": 520,
+            "y": 140,
+            "role": "风控主管",
+            "buttonName": "执行处置",
+            "checkItems": ["处置方案确认与执行"],
+            "results": ["通过"],
+            "opinionPresets": { "通过": ["处置执行完成"] },
+            "resultStates": { "通过": "效果跟踪中" },
+            "timeLimit": 72
+          },
+          {
+            "id": "n_3",
+            "type": "normal",
+            "label": "效果跟踪中",
+            "x": 760,
+            "y": 140,
+            "role": "风控专员",
+            "buttonName": "跟踪评估",
+            "checkItems": ["处置效果复核"],
+            "results": ["通过"],
+            "opinionPresets": { "通过": ["处置效果达标，结案"] },
+            "resultStates": { "通过": "已结案" },
+            "timeLimit": 168
+          },
+          {
+            "id": "n_4",
+            "type": "end",
+            "label": "已结案",
+            "x": 1000,
+            "y": 140,
+            "showButton": false,
+            "checkItems": [],
+            "results": [],
+            "opinionPresets": {}
+          }
+        ],
+        "edges": [
+          { "id": "e1", "from": "n_0", "to": "n_1", "result": "确认" },
+          { "id": "e2", "from": "n_1", "to": "n_2", "result": "通过" },
+          { "id": "e3", "from": "n_2", "to": "n_3", "result": "通过" },
+          { "id": "e4", "from": "n_3", "to": "n_4", "result": "通过" }
+        ]
+      },
+      {
+        "name": "黄灯·中风险研判流程",
+        "match": [
+          {
+            "field": "level",
+            "value": "YELLOW"
+          }
+        ],
+        "flowSteps": [
+          { "state": "预警确认中", "action": "确认", "next": "风险研判中", "color": "#D97706" },
+          { "state": "风险研判中", "action": "研判", "next": "已结案", "color": "#059669" },
+          { "state": "已结案", "action": "", "next": "", "color": "#059669" }
+        ],
+        "nodes": [
+          {
+            "id": "n_0",
+            "type": "start",
+            "label": "预警确认中",
+            "x": 40,
+            "y": 140,
+            "showButton": false,
+            "checkItems": [],
+            "results": ["确认"],
+            "resultStates": { "确认": "风险研判中" },
+            "timeLimit": 48
+          },
+          {
+            "id": "n_1",
+            "type": "normal",
+            "label": "风险研判中",
+            "x": 280,
+            "y": 140,
+            "role": "风控专员",
+            "buttonName": "研判",
+            "checkItems": ["预警研判"],
+            "results": ["通过"],
+            "opinionPresets": { "通过": ["研判完成，结案"] },
+            "resultStates": { "通过": "已结案" },
+            "timeLimit": 72
+          },
+          {
+            "id": "n_2",
+            "type": "end",
+            "label": "已结案",
+            "x": 520,
+            "y": 140,
+            "showButton": false,
+            "checkItems": [],
+            "results": [],
+            "opinionPresets": {}
+          }
+        ],
+        "edges": [
+          { "id": "e1", "from": "n_0", "to": "n_1", "result": "确认" },
+          { "id": "e2", "from": "n_1", "to": "n_2", "result": "通过" }
+        ]
+      }
+    ]
   }
 ]

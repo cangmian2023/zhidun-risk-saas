@@ -3598,5 +3598,155 @@
     "unit": "次",
     "precision": 0,
     "enabled": true
+  },
+  {
+    "id": "m_ent_monitor_cnt",
+    "name": "监控企业数",
+    "group": "企业风控",
+    "dataSourceId": "ds_ent_monitor",
+    "type": "base",
+    "field": "name",
+    "agg": "count",
+    "unit": "家",
+    "precision": 0,
+    "enabled": true
+  },
+  {
+    "id": "m_ent_monitor_high",
+    "name": "高风险企业数",
+    "group": "企业风控",
+    "dataSourceId": "ds_ent_monitor",
+    "type": "base",
+    "field": "name",
+    "agg": "count",
+    "filters": [
+      { "field": "risk_level", "op": "eq", "value": "高" }
+    ],
+    "unit": "家",
+    "precision": 0,
+    "enabled": true
+  },
+  {
+    "id": "m_ent_monitor_mid",
+    "name": "中风险企业数",
+    "group": "企业风控",
+    "dataSourceId": "ds_ent_monitor",
+    "type": "base",
+    "field": "name",
+    "agg": "count",
+    "filters": [
+      { "field": "risk_level", "op": "eq", "value": "中" }
+    ],
+    "unit": "家",
+    "precision": 0,
+    "enabled": true
+  },
+  {
+    "id": "m_ent_alert_cnt",
+    "name": "企业预警数",
+    "group": "企业风控",
+    "dataSourceId": "ds_ent_alert",
+    "type": "base",
+    "field": "ent_name",
+    "agg": "count",
+    "unit": "条",
+    "precision": 0,
+    "enabled": true
+  },
+  {
+    "id": "m_ent_alert_red",
+    "name": "企业红灯预警数",
+    "group": "企业风控",
+    "dataSourceId": "ds_ent_alert",
+    "type": "base",
+    "field": "ent_name",
+    "agg": "count",
+    "filters": [
+      { "field": "level", "op": "eq", "value": "RED" }
+    ],
+    "unit": "条",
+    "precision": 0,
+    "enabled": true
+  },
+  {
+    "id": "m_ent_alert_yellow",
+    "name": "企业黄灯预警数",
+    "group": "企业风控",
+    "dataSourceId": "ds_ent_alert",
+    "type": "base",
+    "field": "ent_name",
+    "agg": "count",
+    "filters": [
+      { "field": "level", "op": "eq", "value": "YELLOW" }
+    ],
+    "unit": "条",
+    "precision": 0,
+    "enabled": true
+  },
+  {
+    "id": "m_ent_event_cnt",
+    "name": "决策事件数",
+    "group": "企业风控",
+    "dataSourceId": "ds_ent_event",
+    "type": "base",
+    "field": "scene",
+    "agg": "count",
+    "unit": "件",
+    "precision": 0,
+    "enabled": true
+  },
+  {
+    "id": "m_ent_event_reject",
+    "name": "决策拒绝数",
+    "group": "企业风控",
+    "dataSourceId": "ds_ent_event",
+    "type": "base",
+    "field": "scene",
+    "agg": "count",
+    "filters": [
+      { "field": "result", "op": "eq", "value": "拒绝" }
+    ],
+    "unit": "件",
+    "precision": 0,
+    "enabled": true
+  },
+  {
+    "id": "m_ent_event_manual",
+    "name": "决策转人工数",
+    "group": "企业风控",
+    "dataSourceId": "ds_ent_event",
+    "type": "base",
+    "field": "scene",
+    "agg": "count",
+    "filters": [
+      { "field": "result", "op": "eq", "value": "转人工" }
+    ],
+    "unit": "件",
+    "precision": 0,
+    "enabled": true
+  },
+  {
+    "id": "m_ent_due_cnt",
+    "name": "尽调任务数",
+    "group": "企业风控",
+    "dataSourceId": "ds_ent_due",
+    "type": "base",
+    "field": "name",
+    "agg": "count",
+    "unit": "个",
+    "precision": 0,
+    "enabled": true
+  },
+  {
+    "id": "m_ent_due_hit",
+    "name": "尽调命中风险企业数",
+    "group": "企业风控",
+    "dataSourceId": "ds_ent_due",
+    "type": "base",
+    "field": "hit_risk",
+    "agg": "sum",
+    "unit": "家",
+    "precision": 0,
+    "enabled": true
   }
 ]

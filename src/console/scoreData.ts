@@ -4,6 +4,7 @@
 // 处置流程统一由管理中心「业务流程」配置（bizFlows.json · f-alert-dispose），本数据层不再持有 flow
 
 import { useSyncExternalStore } from 'react'
+import type { VisualCond } from './midData'
 
 export type ScoreProd = 'zhicha' | 'zhixin' | 'zhirong'
 
@@ -40,6 +41,7 @@ export interface ModelMeta {
   versions: ModelVersion[]
   collisionRules: CollisionRule[]
   bins?: ScoreCardFactor[] // 评分卡：分箱→计分表（让分数可从原始数据算出、可验证）
+  decisionGraph?: import('./modelGraphData').GGraph // 算法编辑画布：用户定制的决策图（未定制则用静态默认）
 }
 
 /* 模型配置阶段的「规则碰撞 · 冲突裁决」规则：
@@ -148,12 +150,50 @@ export function computeZhixin(raw: Record<string, number>): { score: number; tot
   return { score: Math.max(300, Math.min(900, ZHIXIN_BASE + total)), total, steps }
 }
 
-/** 智信分 → 等级/动作（与 SEED thresholds 一致） */
+/** 通用「分数 → 等级 / 风险结论」解析：单一数据源，直接查 thresholds 配置。
+ *  与 SEED_SCORE.thresholds 保持一致，避免列表/详情里的等级和阈值页脱节
+ *  （之前 ScoreRecords 的 computeLevel 把 zhixin/zhirong 分界写死成 580，与阈值配置的 540/499 不符）。 */
+export function resolveRisk(prod: ScoreProd, score: number): { level: string; meaning: string; action: string; range: string } | null {
+  for (const t of SEED_SCORE.thresholds) {
+    if (t.prod !== prod) continue
+    const m = t.range.match(/^\s*(\d+)\s*-\s*(\d+)\s*$/)
+    if (!m) continue
+    const min = Number(m[1])
+    const max = Number(m[2])
+    if (score >= min && score <= max) return { level: t.level, meaning: t.meaning, action: t.action, range: t.range }
+  }
+  return null
+}
+
+/** 智信分 → 等级/动作（委托 resolveRisk，与 SEED thresholds 单一来源一致） */
 export function zhixinGrade(s: number): { level: string; action: string } {
-  if (s <= 540) return { level: 'D', action: '拒绝' }
-  if (s <= 660) return { level: 'C', action: '审慎授信' }
-  if (s <= 780) return { level: 'B', action: '标准额度' }
-  return { level: 'A', action: '提额 + 优先经营' }
+  const r = resolveRisk('zhixin', s)
+  return r ? { level: r.level, action: r.action } : { level: 'D', action: '拒绝' }
+}
+
+/** 某产品阈值档位（按分数升序，含边界） */
+export function thresholdRows(prod: ScoreProd) {
+  return SEED_SCORE.thresholds
+    .filter((t) => t.prod === prod)
+    .map((t) => {
+      const m = t.range.match(/^\s*(\d+)\s*-\s*(\d+)\s*$/)
+      return { min: Number(m?.[1]), max: Number(m?.[2]), level: t.level, range: t.range, action: t.action }
+    })
+    .sort((a, b) => a.min - b.min)
+}
+
+/** 距「下一档」的距离（用于概览提示）：
+ *   信用/综合分（越高越好）→ 距上升一档的分数；欺诈分（越高越危险）→ 距高风险线的分数；已最优/已最高危返回 null。 */
+export function nextUpgrade(prod: ScoreProd, score: number): { toLevel: string; gap: number } | null {
+  const rows = thresholdRows(prod)
+  if (!rows.length) return null
+  if (prod === 'zhicha') {
+    const hi = rows.find((r) => r.level === '高风险')
+    if (hi && score < hi.min) return { toLevel: '高风险', gap: hi.min - score }
+    return null
+  }
+  const better = rows.filter((r) => r.min > score).sort((a, b) => a.min - b.min)[0]
+  return better ? { toLevel: better.level, gap: better.min - score } : null
 }
 
 /* ---------- 评分记录 ---------- */
@@ -173,9 +213,13 @@ export interface ScoreRecord {
 export interface CrowdGroup {
   id: string
   name: string
-  rule: string
-  riskLevel: string
-  count: number
+  rule: string              // 规则可读文本（由 conds 生成；旧数据直接存文案）
+  riskLevel?: string        // 兼容旧数据（已弃用：分组不再按风险等级定义）
+  count: number             // 成员数：规则求值所得（编辑保存时写回；渲染时实时计算覆盖展示）
+  conds?: VisualCond[]      // 结构化规则条件（复用指标库可视化 SQL 的条件结构）
+  logic?: 'and' | 'or'      // 顶层条件连接关系
+  createdAt?: string
+  updatedAt?: string
 }
 
 /* ---------- 评分分布 ---------- */
@@ -452,11 +496,11 @@ WEIGHTS = {
     { id: 'R-020', time: '2026-08-10 16:18', custId: 'CUST-100910', custName: '马莉', model: 'zhixin', score: 701, level: 'A', source: '实时', status: 'success' },
   ],
   crowds: [
-    { id: 'g-high', name: '高价值客户', rule: '智融分≥680 且 风险等级≤B', riskLevel: '低', count: 12840 },
-    { id: 'g-active', name: '活跃客户', rule: '近30天活跃≥15天', riskLevel: '低', count: 35200 },
-    { id: 'g-sleep', name: '沉睡客户', rule: '近30天活跃≤3天', riskLevel: '中', count: 42100 },
-    { id: 'g-risk', name: '高风险客户', rule: '智察分≥70 或 风险等级为高风险', riskLevel: '高', count: 13360 },
-    { id: 'g-watch', name: '观测客户', rule: '风险等级为关注且 PSI 偏移', riskLevel: '中', count: 8120 },
+    { id: 'g-high', name: '高价值客户', rule: '智融分 大于 680', logic: 'and', count: 0, conds: [{ field: 'score.zhirong', op: 'gt', value: '680' }] },
+    { id: 'g-active', name: '活跃客户', rule: '贷款状态 等于 在贷 且 额度使用率 区间 30~80', logic: 'and', count: 0, conds: [{ field: 'loanStatus', op: 'eq', value: '在贷' }, { field: 'utilization', op: 'range', value: '30', rangeMax: '80' }] },
+    { id: 'g-lowval', name: '低价值客户', rule: '智融分 小于 600', logic: 'and', count: 0, conds: [{ field: 'score.zhirong', op: 'lt', value: '600' }] },
+    { id: 'g-risk', name: '高风险客户', rule: '智察分 大于 70', logic: 'and', count: 0, conds: [{ field: 'score.zhicha', op: 'gt', value: '70' }] },
+    { id: 'g-watch', name: '观测客户', rule: '智信分 区间 600~660', logic: 'and', count: 0, conds: [{ field: 'score.zhixin', op: 'range', value: '600', rangeMax: '660' }] },
   ],
   dist: [
     { prod: 'zhicha', labels: ['0-20', '21-40', '41-60', '61-80', '81-100'], data: [12, 28, 35, 18, 7] },

@@ -15,6 +15,7 @@ import {
   type VisualAggOp, type VisualFilterOp, type VisualCond,
   VISUAL_AGG_LABEL, VISUAL_AGG_TO_SQL, VISUAL_OP_LABEL,
 } from './midData';
+import { CondBuilder, type VFilter, type VGroup } from './CondBuilder';
 
 const inp: React.CSSProperties = { padding: '6px 8px', borderRadius: 6, border: '1px solid #E2E8F0', fontSize: 12, width: '100%', background: '#fff' };
 const inpSm: React.CSSProperties = { padding: '4px 6px', borderRadius: 6, border: '1px solid #E2E8F0', fontSize: 12, background: '#fff' };
@@ -33,9 +34,7 @@ const EVENT_LETTERS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
 
 const letterBadge: React.CSSProperties = { display: 'inline-flex', width: 18, height: 18, borderRadius: 4, background: '#2563EB', color: '#fff', fontSize: 11, fontWeight: 700, alignItems: 'center', justifyContent: 'center', flexShrink: 0 };
 
-/* 全局筛选类型（3.12：可先添加未分组条件 loose，添加分组时自动归入第 1 组） */
-type VGroup = { logic: 'and' | 'or'; conds: VisualCond[] };
-type VFilter = { logic: 'and' | 'or'; groups: VGroup[]; loose?: VisualCond[] };
+/* 全局筛选类型（3.12：可先添加未分组条件 loose，添加分组时自动归入第 1 组）—— 类型定义已迁至 CondBuilder.tsx */
 
 /* 字段引用统一为 "sourceId:fieldKey"，选项显示（数据源名）字段名 */
 function fieldRef(src: MidDataSource, f: { key: string; label?: string }) {
@@ -162,164 +161,6 @@ function buildVisualSql(v: MidMetric, sources: MidDataSource[]): string {
   const timeSel = timeNotes.length ? `\n-- ${timeNotes.join('；')}` : '';
 
   return `SELECT\n${selectBody}\nFROM ${from}${whereSql}${gsql}${timeSel}`;
-}
-
-/* 神策样式：且/或 双态切换 */
-function LogicSwitch({ value, onChange }: { value: 'and' | 'or'; onChange: (v: 'and' | 'or') => void }) {
-  const seg: React.CSSProperties = { display: 'inline-flex', border: '1px solid #E2E8F0', borderRadius: 6, overflow: 'hidden' };
-  const opt = (v: 'and' | 'or', label: string): React.CSSProperties => ({
-    padding: '2px 10px', fontSize: 11, cursor: 'pointer', userSelect: 'none',
-    background: value === v ? '#2563EB' : '#fff', color: value === v ? '#fff' : '#64748B', fontWeight: value === v ? 600 : 400,
-  });
-  return (
-    <div style={seg}>
-      <div style={opt('and', '且')} onClick={() => onChange('and')}>且</div>
-      <div style={opt('or', '或')} onClick={() => onChange('or')}>或</div>
-    </div>
-  );
-}
-
-/* 单条筛选条件行（操作符 → 输入框类型：单框/双框/无框/多选） */
-function CondRow({ cond, fields, onPatch, onRemove, indent }: {
-  cond: VisualCond; fields: { ref: string; label: string }[];
-  onPatch: (c: VisualCond) => void; onRemove: () => void; indent?: boolean;
-}) {
-  const inputWrap: React.CSSProperties = { display: 'flex', gap: 4, alignItems: 'center' };
-  const hasVal = cond.op === 'eq' || cond.op === 'neq' || cond.op === 'lt' || cond.op === 'gt';
-  const isRange = cond.op === 'range';
-  const noVal = cond.op === 'has' || cond.op === 'empty';
-  const isIn = cond.op === 'in';
-  // 包含多选的候选值（模拟样例值）
-  const inCandidates = ['中国', '美国', '日本', '韩国', '其他'];
-  return (
-    <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 6, flexWrap: 'wrap', paddingLeft: indent ? 16 : 0 }}>
-      <select style={inpSm} value={cond.field} onChange={(e) => onPatch({ ...cond, field: e.target.value })}>
-        <option value="">选择字段</option>
-        {fields.map((x) => <option key={x.ref} value={x.ref}>{x.label}</option>)}
-      </select>
-      <select style={inpSm} value={cond.op} onChange={(e) => onPatch({ ...cond, op: e.target.value as VisualFilterOp })}>
-        {(Object.keys(VISUAL_OP_LABEL) as VisualFilterOp[]).map((op) => <option key={op} value={op}>{VISUAL_OP_LABEL[op]}</option>)}
-      </select>
-      {hasVal && (
-        <input style={{ ...inpSm, width: 160 }} value={cond.value ?? ''} placeholder="输入值"
-          onChange={(e) => onPatch({ ...cond, value: e.target.value })} />
-      )}
-      {isRange && (
-        <div style={inputWrap}>
-          <input style={{ ...inpSm, width: 110 }} value={cond.value ?? ''} placeholder="最小值"
-            onChange={(e) => onPatch({ ...cond, value: e.target.value })} />
-          <span style={{ color: '#94A3B8', fontSize: 11 }}>~</span>
-          <input style={{ ...inpSm, width: 110 }} value={cond.rangeMax ?? ''} placeholder="最大值"
-            onChange={(e) => onPatch({ ...cond, rangeMax: e.target.value })} />
-        </div>
-      )}
-      {isIn && (
-        <div style={{ ...inpSm, display: 'inline-flex', gap: 4, flexWrap: 'wrap', alignItems: 'center', padding: '3px 6px', minWidth: 220 }}>
-          {(cond.values ?? []).map((v) => (
-            <span key={v} style={{ display: 'inline-flex', alignItems: 'center', gap: 2, fontSize: 11, padding: '1px 6px', borderRadius: 10, background: '#DBEAFE', color: '#1D4ED8' }}>
-              {v}
-              <span style={{ cursor: 'pointer', fontWeight: 700 }} onClick={() => onPatch({ ...cond, values: (cond.values ?? []).filter((x) => x !== v) })}>✕</span>
-            </span>
-          ))}
-          <select style={{ border: 'none', background: 'transparent', fontSize: 11, color: '#2563EB', outline: 'none', cursor: 'pointer' }}
-            value="" onChange={(e) => { if (e.target.value) onPatch({ ...cond, values: [...(cond.values ?? []), e.target.value] }); }}>
-            <option value="">+ 多选值</option>
-            {inCandidates.filter((c) => !(cond.values ?? []).includes(c)).map((c) => <option key={c} value={c}>{c}</option>)}
-          </select>
-        </div>
-      )}
-      {noVal && <span style={{ fontSize: 11, color: '#94A3B8' }}>（无需输入值）</span>}
-      <button type="button" onClick={onRemove}
-        style={{ border: '1px solid #FECACA', background: '#fff', color: '#DC2626', borderRadius: 6, padding: '3px 8px', fontSize: 12, cursor: 'pointer' }}>删除</button>
-    </div>
-  );
-}
-
-/* 嵌套筛选组件（全局筛选 / 字段级筛选共用）：顶层且/或（独立一行） + 条件组（组内且/或 + 条件行）
- * 默认无分组；点击「＋ 添加条件组」后才有分组 */
-function FilterEditor({ value, fields, onChange, title, sourceTag }: {
-  value: VFilter | undefined; fields: { ref: string; label: string }[];
-  onChange: (f: VFilter) => void; title: string; sourceTag: React.ReactNode;
-}) {
-  // 3.12：默认无分组，可直接添加/编辑条件（loose）；添加分组时 loose 自动归入第 1 组
-  const vf: VFilter = value ?? { logic: 'and', groups: [], loose: [] };
-  const setFilter = (f: VFilter) => onChange(f);
-  const groups = vf.groups ?? [];
-  const loose = vf.loose ?? [];
-  const hasGroups = groups.length > 0;
-  // 添加条件：无分组时进 loose；有分组时进最后一个组
-  const addCond = () => {
-    if (!hasGroups) {
-      setFilter({ ...vf, loose: [...loose, { field: '', op: 'eq' as VisualFilterOp, value: '' }] });
-    } else {
-      const gi = groups.length - 1;
-      setFilter({ ...vf, groups: groups.map((x, k) => k === gi ? { ...x, conds: [...(x.conds ?? []), { field: '', op: 'eq' as VisualFilterOp, value: '' }] } : x) });
-    }
-  };
-  // 添加分组：loose 有内容 → 归入第 1 组；否则加空组
-  const addGroup = () => {
-    if (loose.length) {
-      setFilter({ ...vf, loose: [], groups: [{ logic: vf.logic, conds: loose }, ...groups] });
-    } else {
-      setFilter({ ...vf, groups: [...groups, { logic: 'and', conds: [{ field: '', op: 'eq' as VisualFilterOp, value: '' }] }] });
-    }
-  };
-  return (
-    <div style={{ border: '1px solid #E2E8F0', borderRadius: 10, padding: 12, background: '#FCFDFE' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, fontWeight: 600, color: '#0F172A', marginBottom: 8, flexWrap: 'wrap' }}>
-        {title} {sourceTag}
-        <span style={{ fontSize: 11, fontWeight: 400, color: '#94A3B8' }}>
-          {hasGroups ? `共 ${groups.length} 个条件组` : (loose.length ? `${loose.length} 个条件` : '尚未添加条件')}
-        </span>
-      </div>
-      {/* 组间 且/或 独立一行（有分组时显示） */}
-      {hasGroups && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10, padding: '6px 10px', background: '#F1F5F9', borderRadius: 8 }}>
-          <span style={{ fontSize: 12, color: '#64748B' }}>组间关系：</span>
-          <LogicSwitch value={vf.logic} onChange={(logic) => setFilter({ ...vf, logic })} />
-          <span style={{ fontSize: 11, color: '#94A3B8', marginLeft: 4 }}>条件组之间用此关系连接</span>
-        </div>
-      )}
-      {/* 未分组条件（loose）：无分组时直接编辑 */}
-      {!hasGroups && loose.map((c, ci) => (
-        <CondRow key={ci} cond={c} fields={fields}
-          onPatch={(nc) => setFilter({ ...vf, loose: loose.map((y, j) => j === ci ? nc : y) })}
-          onRemove={() => setFilter({ ...vf, loose: loose.filter((_, j) => j !== ci) })} />
-      ))}
-      {!hasGroups && (
-        <div style={{ fontSize: 11, color: '#94A3B8', marginBottom: 6 }}>
-          提示：直接添加筛选条件即可；需要嵌套关系时可「＋ 添加条件组」，已有条件会自动归入第 1 组。
-        </div>
-      )}
-      {groups.map((g, gi) => (
-        <div key={gi} style={{ border: '1px solid #E2E8F0', borderRadius: 8, padding: '10px 12px', marginBottom: 8, background: '#fff' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 12, color: '#475569', marginBottom: 8, flexWrap: 'wrap' }}>
-            <span style={{ color: '#64748B' }}>第 {gi + 1} 组</span>
-            <span style={{ fontSize: 11, color: '#94A3B8' }}>组内 <LogicSwitch value={g.logic} onChange={(logic) => setFilter({ ...vf, groups: groups.map((x, k) => k === gi ? { ...x, logic } : x) })} /></span>
-            <span style={{ fontSize: 11, color: '#94A3B8' }}>{g.conds?.length ?? 0} 个条件</span>
-            <span style={{ marginLeft: 'auto' }}>
-              <button type="button" onClick={() => setFilter({ ...vf, groups: groups.filter((_, k) => k !== gi) })}
-                style={{ border: '1px solid #FECACA', background: '#fff', color: '#DC2626', borderRadius: 6, padding: '2px 8px', fontSize: 11, cursor: 'pointer' }}>删除组</button>
-            </span>
-          </div>
-          {(g.conds ?? []).map((c, ci) => (
-            <CondRow key={ci} cond={c} fields={fields} indent
-              onPatch={(nc) => setFilter({ ...vf, groups: groups.map((x, k) => k === gi ? { ...x, conds: x.conds.map((y, j) => j === ci ? nc : y) } : x) })}
-              onRemove={() => setFilter({ ...vf, groups: groups.map((x, k) => k === gi ? { ...x, conds: x.conds.filter((_, j) => j !== ci) } : x) })} />
-          ))}
-          <button type="button" onClick={() => setFilter({ ...vf, groups: groups.map((x, k) => k === gi ? { ...x, conds: [...(x.conds ?? []), { field: '', op: 'eq' as VisualFilterOp, value: '' }] } : x) })}
-            style={{ border: '1px dashed #93C5FD', background: '#EFF6FF', color: '#2563EB', borderRadius: 6, padding: '4px 10px', fontSize: 12, cursor: 'pointer' }}>＋ 组内添加条件</button>
-        </div>
-      ))}
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-        <button type="button" onClick={addCond}
-          style={{ border: '1px dashed #93C5FD', background: '#EFF6FF', color: '#2563EB', borderRadius: 6, padding: '5px 12px', fontSize: 12, cursor: 'pointer' }}>＋ 添加条件</button>
-        <button type="button" onClick={addGroup}
-          style={{ border: '1px dashed #93C5FD', background: '#EFF6FF', color: '#2563EB', borderRadius: 6, padding: '5px 12px', fontSize: 12, cursor: 'pointer' }}>＋ 添加条件组</button>
-      </div>
-      <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 6 }}>组内条件之间用「组内且/或」连接，条件组之间用「组间且/或」连接，生成 SQL 自动加括号。</div>
-    </div>
-  );
 }
 
 /* 数值格式（3.14：无名字的下拉，百分比两位小数 / 百分比三位小数 / 取整） */
@@ -546,7 +387,7 @@ export function VisualSqlEditor({ value, sources, onChange }: {
                 </div>
                 {fieldFltsOpen[i] && (
                   <div style={{ marginBottom: 8, marginLeft: 8 }}>
-                    <FilterEditor
+                    <CondBuilder
                       title={`字段 ${EVENT_LETTERS[i] ?? i + 1} 筛选`}
                       sourceTag={<Sam value="midMetrics.json.visualSql.events[].filters" />}
                       value={e.filters}
@@ -574,7 +415,7 @@ export function VisualSqlEditor({ value, sources, onChange }: {
       </div>
 
       {/* ── 全局筛选（嵌套且/或 + 新操作符） ── */}
-      <FilterEditor
+      <CondBuilder
         title="全局筛选"
         sourceTag={<Sam value="midMetrics.json.visualSql.globalFilters" />}
         value={vs.globalFilters}

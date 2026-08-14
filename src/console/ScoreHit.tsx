@@ -1,6 +1,6 @@
 import { useScore, SCORE_PROD_LABEL, type ScoreProd } from './scoreData'
 import { PageShell } from './PageShell'
-import { Panel, DataTable, type Column, type Row } from '../components/ui'
+import { Panel } from '../components/ui'
 import { Sam } from './SourceTag'
 import { BarChart } from '../components/charts'
 
@@ -9,28 +9,14 @@ const MODEL_COLOR: Record<ScoreProd, string> = {
   zhixin: '#22c55e',
   zhirong: '#8b5cf6',
 }
-const KIND_OF: Record<ScoreProd, string> = {
-  zhicha: 'red',
-  zhixin: 'green',
-  zhirong: 'violet',
-}
 const FUNNEL_COLORS = ['#ef4444', '#f97316', '#f59e0b', '#84cc16', '#22c55e']
 
 export default function ScoreHit() {
   const data = useScore()
   const prods: ScoreProd[] = ['zhicha', 'zhixin', 'zhirong']
 
-  const byModel = (p: ScoreProd) =>
-    data.hits.filter((h) => h.model === p).slice().sort((a, b) => b.hits - a.hits)
-
   // 全部规则按命中数排序，单图内按所属模型着色（三色对应三模型）
   const allHits = data.hits.slice().sort((a, b) => b.hits - a.hits)
-
-  const hitColumns: Column[] = [
-    { key: 'rule', label: '规则' },
-    { key: 'hits', label: '命中数', align: 'right' },
-    { key: 'rate', label: '命中率', align: 'right' },
-  ]
 
   const maxFunnel = Math.max(...data.funnel.map((f) => f.value), 1)
 
@@ -53,27 +39,6 @@ export default function ScoreHit() {
             }))}
             height={320}
           />
-        </Panel>
-
-        {/* 命中率统计：一行三模型 */}
-        <Panel title="命中率统计" desc="各模型规则命中数与命中率（一行铺开三个模型）" actions={<Sam value="scoreData.json" />}>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-            {prods.map((p) => {
-              const hits = byModel(p)
-              const rows: Row[] = hits.map((h, i) => ({
-                id: `${p}-${i}`,
-                rule: h.rule,
-                hits: h.hits,
-                rate: { v: `${h.rate}%`, kind: KIND_OF[p] as 'red' | 'green' | 'violet' },
-              }))
-              return (
-                <div key={p} className="rounded-xl border border-slate-100 p-3">
-                  <div className="mb-2 text-sm font-semibold text-ink-900">{SCORE_PROD_LABEL[p]}</div>
-                  <DataTable columns={hitColumns} rows={rows} empty="暂无命中规则" />
-                </div>
-              )
-            })}
-          </div>
         </Panel>
 
         {/* 预警转化漏斗（全局） */}

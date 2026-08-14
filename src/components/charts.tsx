@@ -1,4 +1,21 @@
-import { useState, type MouseEvent } from 'react'
+import { useState, useRef, useEffect, type MouseEvent } from 'react'
+
+/* 容器宽度自适应：用 ResizeObserver 实测父容器像素宽，驱动图表 viewBox 宽度，
+ * 避免「固定 640 viewBox + width:100%」在小容器内被 preserveAspectRatio 横向留白（图表只显示一半宽、局促）。 */
+function useContainerWidth(fallback = 640): [React.RefObject<HTMLDivElement>, number] {
+  const ref = useRef<HTMLDivElement>(null)
+  const [w, setW] = useState(fallback)
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const apply = () => { const cw = el.clientWidth; if (cw > 0) setW(Math.floor(cw)) }
+    apply()
+    const ro = new ResizeObserver(apply)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+  return [ref, w]
+}
 
 interface Series {
   name: string
@@ -24,7 +41,8 @@ export function LineChart({
   yMin?: number
   unit?: string
 }) {
-  const W = 640
+  const [wrapRef, measured] = useContainerWidth(640)
+  const W = width ?? measured
   const H = height
   const padL = 46
   const padR = 16
@@ -50,7 +68,7 @@ export function LineChart({
   }
 
   return (
-    <div>
+    <div ref={wrapRef}>
       <svg viewBox={`0 0 ${W} ${H}`} style={{ height, width: width ?? '100%' }} onMouseMove={onMove} onMouseLeave={() => setHover(null)}>
         {Array.from({ length: grid + 1 }).map((_, i) => {
           const gy = padT + (i / grid) * plotH
@@ -133,7 +151,8 @@ export function BarChart({
   height?: number
   unit?: string
 }) {
-  const W = 640
+  const [wrapRef, measured] = useContainerWidth(640)
+  const W = measured
   const H = height
   const padL = 46
   const padR = 16
@@ -158,7 +177,7 @@ export function BarChart({
   }
 
   return (
-    <div>
+    <div ref={wrapRef}>
       <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ height }} onMouseMove={onMove} onMouseLeave={() => setHover(null)}>
         {Array.from({ length: grid + 1 }).map((_, i) => {
           const gy = padT + (i / grid) * plotH

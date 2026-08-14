@@ -11,11 +11,13 @@ import type { Column, Row } from '../components/ui';
 import { Sam, Cal } from './SourceTag';
 import { PageShell } from './PageShell';
 import { useQiyeData, toggleFollow, type QiyeProfile, type QiyeCountItem } from './qiyeData';
+import { useEnterpriseData } from './enterpriseData';
 
 const CRUMB = '企业风控 / 企业档案';
 
 // 跨页面预选企业（从检索页跳转时带入）
 export let qiyeSelectedKeyNo = '';
+export let qiyeSelectedName = '';
 
 const STATUS_KIND: Record<string, 'green' | 'blue' | 'red' | 'gray' | 'amber'> = {
   存续: 'green', 在业: 'blue', 吊销: 'red', 注销: 'gray', 迁出: 'amber',
@@ -101,16 +103,17 @@ function CountGrid({ title, items }: { title: string; items: QiyeCountItem[] }) 
 }
 
 /* ============ ② 企业档案详情 ============ */
-const TABS = ['基本信息', '法律诉讼', '经营风险', '经营信息', '企业发展', '知识产权'] as const;
+const TABS = ['风险画像', '基本信息', '法律诉讼', '经营风险', '经营信息', '企业发展', '知识产权'] as const;
 type Tab = (typeof TABS)[number];
 
 export function QiyeProfile() {
   const d = useQiyeData();
-  const init = qiyeSelectedKeyNo ? d.enterprises.find((e) => e.keyNo === qiyeSelectedKeyNo) : undefined;
+  const ent = useEnterpriseData();
+  const init =
+    (qiyeSelectedName ? d.enterprises.find((e) => e.name === qiyeSelectedName) : undefined) ??
+    (qiyeSelectedKeyNo ? d.enterprises.find((e) => e.keyNo === qiyeSelectedKeyNo) : undefined);
   const [cur, setCur] = useState<QiyeProfile>(init ?? d.enterprises[0]);
-  const [tab, setTab] = useState<Tab>('基本信息');
-
-  const switchTo = (e: QiyeProfile) => { setCur(e); setTab('基本信息'); };
+  const [tab, setTab] = useState<Tab>('风险画像');
 
   if (!cur) return <div style={{ padding: 24 }}>暂无企业档案</div>;
 
@@ -176,6 +179,39 @@ export function QiyeProfile() {
   const riskCases = cur.legalCases.length;
   const dangerCount = cur.riskCounts.filter((r) => r.danger && r.count > 0).length;
 
+  // ---- 企业风险画像（基于企业风险模型 + 监控名单 + 预警） ----
+  const mon = ent.monitorList.find((m) => m.name === cur.name) ?? { riskLevel: '低' as const, alerts: 0, lastAlert: '—', monitorSince: '—' };
+  const alertOf = ent.alerts.filter((a) => a.entName === cur.name);
+  const riskLevel = mon.riskLevel;
+  // 按风险等级派生的各模型示意分（业务口径：风险越高 违约分越低、欺诈/关联分越高）
+  const modelScore = (mid: string): number => {
+    if (mid === 'ent-credit') return riskLevel === '高' ? 498 : riskLevel === '中' ? 648 : 792;
+    if (mid === 'ent-fraud') return riskLevel === '高' ? 82 : riskLevel === '中' ? 58 : 32;
+    return riskLevel === '高' ? 78 : riskLevel === '中' ? 54 : 28; // ent-rel
+  };
+  // 违约分模型：分数越高违约风险越低 → 反转；欺诈/关联分：分数越高风险越高 → 正序
+  const gradeOf = (score: number, range: [number, number], invert = false) => {
+    const w = range[1] - range[0];
+    let pos = (score - range[0]) / w;
+    if (invert) pos = 1 - pos;
+    return pos < 0.34 ? '低风险' : pos < 0.67 ? '中风险' : '高风险';
+  };
+  const riskLevelKind = (lv: string): 'red' | 'amber' | 'green' => (lv === '高' ? 'red' : lv === '中' ? 'amber' : 'green');
+
+  // Tab 数据提示：每个标签显示该维度的数据量（风险类命中项红色高亮）
+  const tabBadge = (t: Tab): { n: number; danger?: boolean } | null => {
+    switch (t) {
+      case '风险画像': return { n: alertOf.length || dangerCount, danger: (alertOf.length || dangerCount) > 0 };
+      case '基本信息': return { n: cur.shareholders.length + cur.persons.length };
+      case '法律诉讼': return { n: riskCases, danger: riskCases > 0 };
+      case '经营风险': return { n: dangerCount, danger: dangerCount > 0 };
+      case '经营信息': return { n: cur.bizCounts.reduce((s, r) => s + r.count, 0) };
+      case '企业发展': return { n: cur.devCounts.reduce((s, r) => s + r.count, 0) };
+      case '知识产权': return { n: cur.ipCounts.reduce((s, r) => s + r.count, 0) };
+      default: return null;
+    }
+  };
+
   return (
     <div style={{ padding: 24, maxWidth: 1360 }}>
       <PageShell title="企业档案" crumb={`${CRUMB} / ${cur.name}`} subtitle="企业工商档案：工商信息、股东与主要人员、对外投资与分支、司法与经营风险、经营信息、企业发展与知识产权全维度画像"
@@ -223,27 +259,91 @@ export function QiyeProfile() {
         </div>
       </div>
 
-      {/* 企业切换（在档列表） */}
-      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 12 }}>
-        {d.enterprises.map((e) => (
-          <button key={e.keyNo} onClick={() => switchTo(e)}
-            style={{ fontSize: 12, padding: '4px 10px', borderRadius: 999, border: '1px solid', borderColor: e.keyNo === cur.keyNo ? '#0EA5E9' : '#E2E8F0', background: e.keyNo === cur.keyNo ? '#E0F2FE' : '#fff', color: e.keyNo === cur.keyNo ? '#0369A1' : '#475569', cursor: 'pointer' }}>
-            {e.name}
-          </button>
-        ))}
-      </div>
-
-      {/* Tab 导航 */}
+      {/* Tab 导航（带数据提示） */}
       <div style={{ display: 'flex', gap: 4, borderBottom: '1px solid #E2E8F0', marginBottom: 14, flexWrap: 'wrap' }}>
-        {TABS.map((t) => (
-          <button key={t} onClick={() => setTab(t)}
-            style={{ padding: '8px 14px', fontSize: 13, border: 'none', background: 'none', cursor: 'pointer', color: t === tab ? '#0EA5E9' : '#64748B', fontWeight: t === tab ? 700 : 400, borderBottom: t === tab ? '2px solid #0EA5E9' : '2px solid transparent', marginBottom: -1 }}>
-            {t}
-          </button>
-        ))}
+        {TABS.map((t) => {
+          const bg = tabBadge(t);
+          return (
+            <button key={t} onClick={() => setTab(t)}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 14px', fontSize: 13, border: 'none', background: 'none', cursor: 'pointer', color: t === tab ? '#0EA5E9' : '#64748B', fontWeight: t === tab ? 700 : 400, borderBottom: t === tab ? '2px solid #0EA5E9' : '2px solid transparent', marginBottom: -1 }}>
+              {t}
+              {bg && (
+                <span style={{ fontSize: 10, fontWeight: 600, lineHeight: 1, padding: '2px 6px', borderRadius: 999, background: bg.danger ? '#FEE2E2' : '#E0F2FE', color: bg.danger ? '#B91C1C' : '#0369A1' }}>
+                  {bg.n}
+                </span>
+              )}
+            </button>
+          );
+        })}
       </div>
 
       {/* Tab 内容 */}
+      {tab === '风险画像' && (
+        <>
+          {/* 风险概览 */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0,1fr))', gap: 12, marginBottom: 14 }}>
+            <StatCard label="综合风险等级" value={riskLevel} accent={riskLevelKind(riskLevel)} hint={<Cal label="模型+监控名单" />} />
+            <StatCard label="累计预警" value={String(mon.alerts)} accent="amber" hint={mon.lastAlert !== '—' ? `最近 ${mon.lastAlert}` : '无预警'} />
+            <StatCard label="司法涉诉" value={String(riskCases)} accent={riskCases > 0 ? 'rose' : 'green'} hint="裁判文书 + 立案" />
+            <StatCard label="风险命中项" value={String(dangerCount)} accent={dangerCount > 0 ? 'rose' : 'green'} hint="经营风险命中" />
+          </div>
+
+          {/* 风险模型结果 */}
+          <Panel title="风险模型结果" desc={<span>企业风控模型评分与风险结论 · <Cal label="实时计算" /> · <Sam value="enterpriseData.json.models" /></span>}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0,1fr))', gap: 12 }}>
+              {ent.models.map((m) => {
+                const score = modelScore(m.id);
+                const gr = gradeOf(score, m.range, m.id === 'ent-credit');
+                const grKind = gr === '高风险' ? 'red' : gr === '中风险' ? 'amber' : 'green';
+                const thr = m.thresholds.find((t) => t.level === gr);
+                return (
+                  <div key={m.id} style={{ border: '1px solid #E2E8F0', borderRadius: 12, padding: 14, background: '#F8FAFC' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: 14, fontWeight: 700, color: '#0F172A' }}>{m.name}</span>
+                      <Badge kind={grKind}>{gr}</Badge>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, margin: '10px 0' }}>
+                      <span style={{ fontSize: 30, fontWeight: 800, color: m.color, fontVariantNumeric: 'tabular-nums' }}>{score}</span>
+                      <span style={{ fontSize: 12, color: '#94A3B8' }}>/ {m.range[0]}–{m.range[1]}</span>
+                    </div>
+                    <div style={{ fontSize: 12, color: '#475569', lineHeight: 1.6 }}>
+                      <div>算法：{m.algoType} · {m.version}</div>
+                      <div>结论：{thr?.meaning ?? '—'}</div>
+                      <div style={{ color: '#94A3B8' }}>建议：{thr?.action ?? '—'}</div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </Panel>
+
+          {/* 预警记录 */}
+          <Panel title="预警记录" desc={<span>该企业近期预警 · <Sam value="enterpriseData.json.alerts" /></span>}>
+            <DataTable columns={[
+              { key: 'time', label: '预警时间', type: 'text', width: '150px' },
+              { key: 'rule', label: '命中规则', type: 'text', width: '180px' },
+              { key: 'lv', label: '等级', type: 'badge', badgeKind: 'gray', width: '110px' },
+              { key: 'detail', label: '预警内容', type: 'text' },
+              { key: 'status', label: '状态', type: 'badge', badgeKind: 'gray', width: '100px' },
+            ]} rows={alertOf.map((a, i) => ({ id: String(i), time: a.alert_date, rule: a.ruleName, lv: { v: a.level === 'RED' ? '红灯' : a.level === 'YELLOW' ? '黄灯' : '机会', kind: a.level === 'RED' ? 'red' : a.level === 'YELLOW' ? 'amber' : 'cyan' }, detail: a.detail, status: { v: a.status, kind: a.status === '待处置' ? 'red' : a.status === '核实中' ? 'amber' : 'green' } }))}
+              empty="该企业暂无预警" pager defaultPageSize={6} />
+          </Panel>
+
+          {/* 风险命中维度 */}
+          <Panel title="风险命中维度" desc={<span>经营/司法/舆情等风险维度 · <Sam value="qiyeData.json.riskCounts" /></span>}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0,1fr))', gap: 8 }}>
+              {cur.riskCounts.map((r) => (
+                <div key={r.name} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid #F1F5F9', borderRadius: 8, padding: '8px 12px', fontSize: 13 }}>
+                  <span style={{ color: '#475569' }}>{r.name}</span>
+                  <span style={{ color: r.danger && r.count > 0 ? '#DC2626' : '#059669', fontWeight: 600 }}>
+                    {r.count > 0 ? `${r.count} 项` : '无'} {r.danger && r.count > 0 ? '⚠' : '✓'}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </Panel>
+        </>
+      )}
       {tab === '基本信息' && (
         <>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0,1fr))', gap: 12, marginBottom: 14 }}>
