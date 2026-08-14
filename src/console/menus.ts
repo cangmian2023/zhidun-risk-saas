@@ -90,7 +90,7 @@ export const scoringMenu: MenuGroup[] = [
     group: '模型管理',
     section: '模型管理',
     items: [
-      { label: '模型管理', key: 'sc:model-manage', desc: '智察分/智信分/智融分管理：点击卡片进入模型详情（基本信息、算法编辑、模型效果、评分阈值、预警规则、版本管理）' },
+      { label: '模型管理', key: 'sc:model-manage', desc: '智察分/智信分/智融分管理：点击卡片进入模型详情（基本信息、算法编辑、模型效果、评分阈值、版本管理）' },
       { label: '模型效果', key: 'sc:model-effect', desc: '模型效果评估：覆盖率、准确率、及时率、调用量与趋势（三模型铺开对比）' },
     ],
   },

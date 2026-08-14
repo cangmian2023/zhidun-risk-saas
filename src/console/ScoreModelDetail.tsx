@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
   useScore, updateScore, SCORE_PROD_LABEL,
-  type ScoreProd, type ModelMeta, type ModelVersion, type ThresholdRow, type AlertRule,
+  type ScoreProd, type ModelMeta, type ModelVersion, type ThresholdRow,
 } from './scoreData'
 import { PageShell } from './PageShell'
 import { Panel, Button, Badge, DataTable, Modal, type Column, type Row } from '../components/ui'
@@ -10,6 +10,9 @@ import { Sam, Cfg, Cal } from './SourceTag'
 import { LineChart } from '../components/charts'
 import ModelDecisionGraph from './ModelDecisionGraph'
 import { PIPELINE_GRAPHS } from './modelGraphData'
+import FlowCanvasEditor from './FlowCanvasEditor'
+import { useFlows, getFlowById } from './flowStore'
+import { updateAlerts, midNewId, type MidAlert } from './midStore'
 
 const MODEL_COLOR: Record<ScoreProd, string> = {
   zhicha: '#ef4444',
@@ -18,13 +21,12 @@ const MODEL_COLOR: Record<ScoreProd, string> = {
 }
 const PSI_KIND: Record<string, 'green' | 'amber' | 'red'> = { 稳定: 'green', 临界: 'amber', 偏移: 'red' }
 
-type DetailTab = 'base' | 'algo' | 'effect' | 'threshold' | 'alert'
+type DetailTab = 'base' | 'algo' | 'effect' | 'threshold'
 const DETAIL_TABS: { key: DetailTab; label: string }[] = [
   { key: 'base', label: '基本信息' },
   { key: 'algo', label: '算法编辑' },
   { key: 'effect', label: '模型效果' },
   { key: 'threshold', label: '评分阈值' },
-  { key: 'alert', label: '预警规则' },
 ]
 
 function levelKind(level: string): 'red' | 'amber' | 'blue' | 'green' | 'gray' {
@@ -34,13 +36,6 @@ function levelKind(level: string): 'red' | 'amber' | 'blue' | 'green' | 'gray' {
   if (level === 'D') return 'red'
   return 'gray'
 }
-function alertLevelKind(level: string): 'red' | 'amber' | 'blue' | 'gray' {
-  if (level === '高') return 'red'
-  if (level === '中') return 'amber'
-  if (level === '低') return 'blue'
-  return 'gray'
-}
-
 export default function ScoreModelDetailPage() {
   const data = useScore()
   const [params] = useSearchParams()
@@ -140,19 +135,53 @@ export default function ScoreModelDetailPage() {
 
   const current = m.versions.find((v) => v.current)
 
-  /* ---------- 评分阈值（本模型）：编辑动作 + 新增 ---------- */
+  /* ---------- 评分阈值（本模型）：分值分区 + 关联预警处置流程 ---------- */
+  const flows = useFlows()
+  const flowName = (id?: string) => flows.find((f) => f.id === id)?.name ?? '未关联'
   const [thEditId, setThEditId] = useState<string | null>(null)
   const [thAction, setThAction] = useState('')
+  const [thBizOpen, setThBizOpen] = useState<string | null>(null) // 正在选流程的阈值 id
+  const [thBizId, setThBizId] = useState('')
+  const [thSelId, setThSelId] = useState<string | null>(null) // 选中查看处置流程的阈值
   const [thNewOpen, setThNewOpen] = useState(false)
-  const [thDraft, setThDraft] = useState({ range: '', level: '', meaning: '', action: '' })
+  const [thDraft, setThDraft] = useState({ range: '', level: '', meaning: '', action: '', bizFlowId: '' })
   const thKey = (t: ThresholdRow) => `${t.prod}|${t.range}|${t.level}`
   const thRows: Row[] = data.thresholds
     .filter((t) => t.prod === prod)
-    .map((t) => ({ id: thKey(t), range: t.range, level: { v: t.level, kind: levelKind(t.level) }, meaning: t.meaning, action: t.action }))
+    .map((t) => ({
+      id: thKey(t), range: t.range, level: { v: t.level, kind: levelKind(t.level) },
+      meaning: t.meaning, action: t.action, bizFlowId: t.bizFlowId ?? '',
+    }))
   const thCols: Column[] = [
-    { key: 'range', label: '分数区间', width: '160px' },
-    { key: 'level', label: '等级', type: 'badge', badgeKind: 'gray', width: '120px' },
-    { key: 'meaning', label: '含义' },
+    { key: 'range', label: '分数区间', width: '150px' },
+    { key: 'level', label: '等级', type: 'badge', badgeKind: 'gray', width: '90px' },
+    { key: 'meaning', label: '含义', width: '200px' },
+    {
+      key: 'bizFlow', label: '预警处置流程', width: '200px',
+      render: (r: Row) => {
+        const id = r.id as string
+        const cur = (r.bizFlowId as string) || ''
+        if (thBizOpen === id) {
+          return (
+            <select value={thBizId} onChange={(e) => {
+              const v = e.target.value
+              setThBizId(v)
+              updateScore((d) => ({ ...d, thresholds: d.thresholds.map((t) => (thKey(t) === id ? { ...t, bizFlowId: v } : t)) }))
+              setThBizOpen(null)
+            }}
+              className="w-full rounded border border-slate-200 px-2 py-1 text-sm outline-none focus:border-brand-400">
+              <option value="">未关联</option>
+              {flows.map((f) => <option key={f.id} value={f.id}>{f.name}</option>)}
+            </select>
+          )
+        }
+        return (
+          <button className="text-left text-sm text-brand-600 hover:underline" onClick={() => { setThBizOpen(id); setThBizId(cur) }}>
+            {cur ? flowName(cur) : '＋ 关联流程'}
+          </button>
+        )
+      },
+    },
     {
       key: 'action', label: '建议动作',
       render: (r: Row) => {
@@ -182,48 +211,54 @@ export default function ScoreModelDetailPage() {
         )
       },
     },
+    {
+      key: 'flowPrev', label: '处置流程', width: '96px',
+      render: (r: Row) => {
+        const t = data.thresholds.find((x) => thKey(x) === r.id)
+        if (!t?.bizFlowId) return <span className="text-xs text-slate-300">—</span>
+        return <Button size="sm" variant="ghost" onClick={() => setThSelId(r.id as string)}>查看</Button>
+      },
+    },
   ]
   const confirmThNew = () => {
     const range = thDraft.range.trim(); const level = thDraft.level.trim()
     if (!range || !level) return
-    updateScore((d) => ({ ...d, thresholds: [...d.thresholds, { prod, range, level, meaning: thDraft.meaning.trim(), action: thDraft.action.trim() }] }))
+    updateScore((d) => ({ ...d, thresholds: [...d.thresholds, { prod, range, level, meaning: thDraft.meaning.trim(), action: thDraft.action.trim(), bizFlowId: thDraft.bizFlowId || undefined }] }))
     setThNewOpen(false)
   }
+  const selThreshold = data.thresholds.find((t) => thKey(t) === thSelId) ?? null
+  const selFlow = selThreshold?.bizFlowId ? getFlowById(selThreshold.bizFlowId) : undefined
 
-  /* ---------- 预警规则（全局，作用于全部模型）：启停 + 新增 ---------- */
-  const [arOpen, setArOpen] = useState(false)
-  const [arForm, setArForm] = useState({ name: '', cond: '', threshold: 0, level: '中' })
-  const toggleRule = (id: string) =>
-    updateScore((d) => ({ ...d, alertRules: d.alertRules.map((r) => (r.id === id ? { ...r, enabled: !r.enabled } : r)) }))
-  const addRule = () => {
-    updateScore((d) => ({
-      ...d,
-      alertRules: [
-        ...d.alertRules,
-        { id: `AR-${Date.now()}`, name: arForm.name || '未命名规则', cond: arForm.cond || '自定义条件', threshold: Number(arForm.threshold) || 0, level: arForm.level, enabled: true },
-      ],
-    }))
-    setArForm({ name: '', cond: '', threshold: 0, level: '中' })
-    setArOpen(false)
+  /* ---------- 关联预警（预警平台 midAlerts，模型管理仅作编辑入口） ---------- */
+  const PROD_SCENE: Record<ScoreProd, string> = { zhicha: '反欺诈监测', zhixin: '贷中风控', zhirong: '贷后催收' }
+  const midAlerts = useMidAlerts()
+  const relatedAlerts = midAlerts.filter((a) => a.scene === PROD_SCENE[prod])
+  const [alOpen, setAlOpen] = useState(false)
+  const [alForm, setAlForm] = useState({ cust_name: '', alert_type: '负债激增', level: 'RED' as MidAlert['level'], rule_name: '', metric_value: 0, threshold: 0, flowKey: '' })
+  const addAlert = () => {
+    const today = new Date().toISOString().slice(0, 10)
+    updateAlerts((list) => [...list, {
+      alert_id: midNewId('AL'), cust_id: 'C' + String(Math.floor(Math.random() * 9000) + 1000),
+      cust_name: alForm.cust_name || '未知客户', scene: PROD_SCENE[prod], alert_type: alForm.alert_type,
+      level: alForm.level, alert_date: today, rule_name: alForm.rule_name || '自定义规则',
+      metric_value: Number(alForm.metric_value) || 0, threshold: Number(alForm.threshold) || 0,
+      flowKey: alForm.flowKey || undefined,
+    }])
+    setAlForm({ cust_name: '', alert_type: '负债激增', level: 'RED', rule_name: '', metric_value: 0, threshold: 0, flowKey: '' })
+    setAlOpen(false)
   }
-  const arCols: Column[] = [
-    { key: 'name', label: '规则名称', width: '200px' },
-    { key: 'cond', label: '条件', width: '260px' },
-    { key: 'threshold', label: '阈值', type: 'text', width: '100px' },
-    { key: 'level', label: '等级', type: 'badge', badgeKind: 'gray', width: '100px' },
-    { key: 'status', label: '生效状态', type: 'badge', badgeKind: 'gray', width: '100px' },
-    {
-      key: 'op', label: '操作', width: '100px',
-      render: (r: Row) => {
-        const r0 = data.alertRules.find((x) => x.id === r.id)!
-        return <Button size="sm" variant="ghost" onClick={() => toggleRule(r0.id)}>{r0.enabled ? '停用' : '启用'}</Button>
-      },
-    },
+  const alCols: Column[] = [
+    { key: 'alert_id', label: '预警编号', width: '130px' },
+    { key: 'cust_name', label: '客户', width: '110px' },
+    { key: 'alert_type', label: '类型', width: '130px' },
+    { key: 'level', label: '等级', type: 'badge', badgeKind: 'gray', width: '90px' },
+    { key: 'rule_name', label: '命中规则' },
+    { key: 'flowState', label: '处置状态', width: '130px' },
   ]
-  const arRows: Row[] = data.alertRules.map((r: AlertRule) => ({
-    id: r.id, name: r.name, cond: r.cond, threshold: r.threshold,
-    level: { v: r.level, kind: alertLevelKind(r.level) },
-    status: r.enabled ? { v: '启用', kind: 'green' } : { v: '停用', kind: 'gray' },
+  const alRows: Row[] = relatedAlerts.map((a) => ({
+    id: a.alert_id, alert_id: a.alert_id, cust_name: a.cust_name, alert_type: a.alert_type,
+    level: { v: a.level === 'RED' ? '红' : a.level === 'YELLOW' ? '黄' : '机会', kind: a.level === 'RED' ? 'red' : a.level === 'YELLOW' ? 'amber' : 'blue' },
+    rule_name: a.rule_name, flowState: a.flowState ?? '—',
   }))
 
   /* ---------- 模型效果（本模型） ---------- */
@@ -233,7 +268,7 @@ export default function ScoreModelDetailPage() {
     <>
       <PageShell
         title={m.name}
-        subtitle={`${SCORE_PROD_LABEL[m.prod]} · 模型详情（基本信息 / 算法编辑 / 模型效果 / 评分阈值 / 预警规则 / 版本日志）`}
+        subtitle={`${SCORE_PROD_LABEL[m.prod]} · 模型详情（基本信息 / 算法编辑 / 模型效果 / 评分阈值 / 版本日志）`}
         crumb="评分产品 / 模型管理"
         actions={
           <Button size="sm" variant="secondary" onClick={() => nav('/console/sc/model-manage')}>← 返回模型列表</Button>
@@ -457,35 +492,42 @@ export default function ScoreModelDetailPage() {
         )}
 
         {tab === 'threshold' && (
-          /* ===== 评分阈值（本模型） ===== */
-          <Panel
-            title={`评分阈值配置 · ${SCORE_PROD_LABEL[prod]}`}
-            desc="分数区间 → 等级 → 含义 → 建议动作（本模型输出映射，随模型管理）"
-            actions={
-              <>
-                <Cfg value="scoreData.json" />
-                <Button size="sm" variant="primary" onClick={() => { setThDraft({ range: '', level: '', meaning: '', action: '' }); setThNewOpen(true) }}>新增阈值</Button>
-              </>
-            }
-          >
-            <DataTable columns={thCols} rows={thRows} empty="暂无阈值" pager defaultPageSize={10} />
-          </Panel>
-        )}
+          <div className="space-y-4">
+            <Panel
+              title={`评分阈值配置 · ${SCORE_PROD_LABEL[prod]}`}
+              desc="分值分区 → 等级 → 含义 → 建议动作 → 关联预警处置流程（本模型输出映射，随模型管理）"
+              actions={
+                <>
+                  <Cfg value="scoreData.json" />
+                  <Button size="sm" variant="primary" onClick={() => { setThDraft({ range: '', level: '', meaning: '', action: '', bizFlowId: '' }); setThNewOpen(true) }}>新增阈值</Button>
+                </>
+              }
+            >
+              <DataTable columns={thCols} rows={thRows} empty="暂无阈值" pager defaultPageSize={10} />
+              {selFlow?.flowGraphs?.[0] && (
+                <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-3">
+                  <div className="mb-2 flex items-center justify-between">
+                    <span className="text-sm font-medium text-slate-700">处置流程预览：{selFlow.name}</span>
+                    <Button size="sm" variant="ghost" onClick={() => setThSelId(null)}>收起</Button>
+                  </div>
+                  <FlowCanvasEditor graph={selFlow.flowGraphs[0]} readOnly />
+                </div>
+              )}
+            </Panel>
 
-        {tab === 'alert' && (
-          /* ===== 预警规则（全局） ===== */
-          <Panel
-            title="预警规则"
-            desc="分值阈值预警与规则命中预警的触发条件（全局规则，作用于全部三个模型）"
-            actions={
-              <>
-                <Cfg value="scoreData.json" />
-                <Button size="sm" variant="primary" onClick={() => setArOpen(true)}>新增规则</Button>
-              </>
-            }
-          >
-            <DataTable columns={arCols} rows={arRows} empty="暂无规则" pager defaultPageSize={10} />
-          </Panel>
+            <Panel
+              title="关联预警（预警平台）"
+              desc={`本模型的预警统一来源于预警平台 midAlerts（场景：${PROD_SCENE[prod]}），模型管理仅作编辑入口`}
+              actions={
+                <>
+                  <Cfg value="midAlerts.json" />
+                  <Button size="sm" variant="primary" onClick={() => setAlOpen(true)}>新增预警</Button>
+                </>
+              }
+            >
+              <DataTable columns={alCols} rows={alRows} empty="暂无关联预警" pager defaultPageSize={10} />
+            </Panel>
+          </div>
         )}
       </div>
 
@@ -566,6 +608,14 @@ export default function ScoreModelDetailPage() {
             <input value={thDraft.action} onChange={(e) => setThDraft({ ...thDraft, action: e.target.value })} placeholder="拒绝 / 审慎授信 / 标准额度"
               className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm outline-none focus:border-brand-400" />
           </label>
+          <label className="block">
+            <span className="mb-1 block text-xs text-slate-400">关联预警处置流程（可选）</span>
+            <select value={thDraft.bizFlowId} onChange={(e) => setThDraft({ ...thDraft, bizFlowId: e.target.value })}
+              className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm outline-none focus:border-brand-400">
+              <option value="">未关联</option>
+              {flows.map((f) => <option key={f.id} value={f.id}>{f.name}</option>)}
+            </select>
+          </label>
         </div>
         <div className="mt-4 flex justify-end gap-2">
           <Button size="sm" variant="ghost" onClick={() => setThNewOpen(false)}>取消</Button>
@@ -573,34 +623,54 @@ export default function ScoreModelDetailPage() {
         </div>
       </Modal>
 
-      {/* ===== 新增预警规则 Modal ===== */}
-      <Modal open={arOpen} onClose={() => setArOpen(false)} title="新增预警规则">
+      {/* ===== 新增关联预警 Modal（写入 midAlerts 预警平台） ===== */}
+      <Modal open={alOpen} onClose={() => setAlOpen(false)} title={`新增关联预警 · ${SCORE_PROD_LABEL[prod]}`}>
         <div className="space-y-3">
           <label className="block">
-            <span className="text-sm text-slate-500">规则名称</span>
-            <input value={arForm.name} onChange={(e) => setArForm((f) => ({ ...f, name: e.target.value }))} className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand-400" />
+            <span className="text-sm text-slate-500">客户名称</span>
+            <input value={alForm.cust_name} onChange={(e) => setAlForm((f) => ({ ...f, cust_name: e.target.value }))} placeholder="如 张*明"
+              className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand-400" />
           </label>
           <label className="block">
-            <span className="text-sm text-slate-500">条件</span>
-            <input value={arForm.cond} onChange={(e) => setArForm((f) => ({ ...f, cond: e.target.value }))} className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand-400" />
+            <span className="text-sm text-slate-500">预警类型</span>
+            <input value={alForm.alert_type} onChange={(e) => setAlForm((f) => ({ ...f, alert_type: e.target.value }))} placeholder="如 负债激增 / 多头借贷 / 司法涉诉"
+              className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand-400" />
           </label>
           <div className="grid grid-cols-2 gap-3">
             <label className="block">
-              <span className="text-sm text-slate-500">阈值</span>
-              <input type="number" value={arForm.threshold} onChange={(e) => setArForm((f) => ({ ...f, threshold: Number(e.target.value) }))} className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand-400" />
+              <span className="text-sm text-slate-500">等级</span>
+              <select value={alForm.level} onChange={(e) => setAlForm((f) => ({ ...f, level: e.target.value as MidAlert['level'] }))} className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand-400">
+                <option value="RED">红（高风险）</option>
+                <option value="YELLOW">黄（关注）</option>
+                <option value="OPPORTUNITY">机会（营销）</option>
+              </select>
             </label>
             <label className="block">
-              <span className="text-sm text-slate-500">等级</span>
-              <select value={arForm.level} onChange={(e) => setArForm((f) => ({ ...f, level: e.target.value }))} className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand-400">
-                <option value="高">高</option>
-                <option value="中">中</option>
-                <option value="低">低</option>
+              <span className="text-sm text-slate-500">关联处置流程</span>
+              <select value={alForm.flowKey} onChange={(e) => setAlForm((f) => ({ ...f, flowKey: e.target.value }))} className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand-400">
+                <option value="">未关联</option>
+                {flows.map((f) => <option key={f.id} value={f.id}>{f.name}</option>)}
               </select>
             </label>
           </div>
+          <div className="grid grid-cols-2 gap-3">
+            <label className="block">
+              <span className="text-sm text-slate-500">指标值</span>
+              <input type="number" value={alForm.metric_value} onChange={(e) => setAlForm((f) => ({ ...f, metric_value: Number(e.target.value) }))} className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand-400" />
+            </label>
+            <label className="block">
+              <span className="text-sm text-slate-500">阈值</span>
+              <input type="number" value={alForm.threshold} onChange={(e) => setAlForm((f) => ({ ...f, threshold: Number(e.target.value) }))} className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand-400" />
+            </label>
+          </div>
+          <label className="block">
+            <span className="text-sm text-slate-500">命中规则</span>
+            <input value={alForm.rule_name} onChange={(e) => setAlForm((f) => ({ ...f, rule_name: e.target.value }))} placeholder="如 近30天新增贷款≥3笔"
+              className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand-400" />
+          </label>
           <div className="flex justify-end gap-2 pt-2">
-            <Button variant="ghost" onClick={() => setArOpen(false)}>取消</Button>
-            <Button variant="primary" onClick={addRule}>确认新增</Button>
+            <Button variant="ghost" onClick={() => setAlOpen(false)}>取消</Button>
+            <Button variant="primary" onClick={addAlert}>确认新增</Button>
           </div>
         </div>
       </Modal>

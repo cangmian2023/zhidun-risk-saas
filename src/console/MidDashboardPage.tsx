@@ -74,11 +74,15 @@ export default function MidDashboardPage({ pageKey, crumbPrefix }: { pageKey: st
     return applyMetricFilters(rows, w.filters);
   };
 
+  // 来源感知：评分产品子系统看板下钻到单客详情时，带 source=sc 与精确回退地址
+  const isSc = crumbPrefix === '评分产品';
+  const custBack = isSc ? '/console/' + pageKey.replace(':', '/') : null;
+
   const drillTo = (w: MidWidget) => {
     if ((w.drill?.type ?? 'none') === 'none' || !w.drill?.rowKey) return;
     const rows = filteredRows(w.datasetId);
     const firstCust = rows.find((r) => r[w.drill!.rowKey!])?.[w.drill!.rowKey!];
-    if (firstCust) nav(`/console/cr/mid-single-cust?cust=${firstCust}`);
+    if (firstCust) nav(`/console/cr/mid-single-cust?cust=${firstCust}` + (custBack ? `&back=${encodeURIComponent(custBack)}&source=sc` : ``));
   };
 
   // 需求18：组件「数据详情」→ 左侧嵌套抽屉（外层=明细列表，内层=行数据详情两列）
@@ -109,7 +113,7 @@ export default function MidDashboardPage({ pageKey, crumbPrefix }: { pageKey: st
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 16, alignItems: 'stretch' }}>
         {page.widgets.map((w) => (
           <div key={w.id} style={{ gridColumn: `span ${widgetColSpan(w)}`, height: '100%' }}>
-            <WidgetView w={w} ds={dsById(w.datasetId)} metric={metricById(w.metricId)} metrics={metrics} rows={widgetRows(w)} onDrill={() => drillTo(w)} onDetail={() => openDetail(w)} nav={nav} />
+            <WidgetView w={w} ds={dsById(w.datasetId)} metric={metricById(w.metricId ?? w.metricIds?.[0] ?? '')} metrics={metrics} rows={widgetRows(w)} onDrill={() => drillTo(w)} onDetail={() => openDetail(w)} nav={nav} />
           </div>
         ))}
       </div>
@@ -196,10 +200,19 @@ export function WidgetView({ w, ds, metric, metrics, rows, onDrill, nav, onEdit,
   const vals = resolveMetricsForRows(metrics, rows);
 
   if (w.type === 'metric') {
-    const v = vals[w.metricId] ?? 0;
+    const ids = (w.metricIds?.length ? w.metricIds : [w.metricId]).filter(Boolean).filter((id) => metricById(id));
+    const cards = ids.map((id) => {
+      const m = metricById(id)!;
+      const v = vals[id] ?? 0;
+      return <StatCard key={id} label={m.name} value={fmt(v, m.precision, m.unit)} accent="brand" />;
+    });
     return (
       <Panel title={w.title} actions={editAction} className="h-full" hoverTip={tip}>
-        <StatCard label={metric.name} value={fmt(v, metric.precision, metric.unit)} accent="brand" />
+        {cards.length ? (
+          <div style={{ display: 'grid', gridTemplateColumns: ids.length > 1 ? 'repeat(auto-fit, minmax(150px, 1fr))' : '1fr', gap: 12 }}>
+            {cards}
+          </div>
+        ) : <div style={{ fontSize: 12, color: '#94A3B8' }}>未配置指标</div>}
       </Panel>
     );
   }
@@ -271,7 +284,7 @@ export function WidgetView({ w, ds, metric, metrics, rows, onDrill, nav, onEdit,
   );
   return (
     <Panel title={w.title} actions={tableActions} className="h-full" hoverTip={tip}>
-      <DataTable columns={cols} rows={trows} clickableKey={w.dimensions?.[0]} onCellClick={(r) => { if (drillable && w.drill?.rowKey) { const raw = rows[Number(r.id)]; const cid = raw?.[w.drill.rowKey]; if (cid) nav(`/console/cr/mid-single-cust?cust=${cid}`); } }} />
+      <DataTable columns={cols} rows={trows} clickableKey={w.dimensions?.[0]} onCellClick={(r) => { if (drillable && w.drill?.rowKey) { const raw = rows[Number(r.id)]; const cid = raw?.[w.drill.rowKey]; if (cid) nav(`/console/cr/mid-single-cust?cust=${cid}` + (custBack ? `&back=${encodeURIComponent(custBack)}&source=sc` : ``)); } }} />
     </Panel>
   );
 }

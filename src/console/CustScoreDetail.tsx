@@ -590,6 +590,8 @@ export default function CustScoreDetail() {
   // 返回地址：入口跳转带 back 参数（如客户分组/客户列表/评分总览搜索），缺省回退单客详情
   const backParam = params.get('back');
   const backTarget = backParam ? decodeURIComponent(backParam) : null;
+  // 来源感知：从「评分产品」子系统进入时带 source=sc，返回链与面包屑跟随评分产品语境
+  const source = params.get('source') ?? undefined;
   const nav = useNavigate();
   const customers = useMidCustomers();
   const globalAlerts = useMidAlerts();
@@ -609,7 +611,7 @@ export default function CustScoreDetail() {
     const raw = cust.scores?.[prod] ?? deriveFallback(cust, prod);
     return raw ? enrich(raw, prod) : null;
   }, [cust, prod]);
-  const backTo = () => nav(backTarget ?? ('/console/cr/mid-single-cust?cust=' + custId + (fromAlertId ? '&id=' + fromAlertId : '')));
+  const backTo = () => nav(backTarget ?? ('/console/cr/mid-single-cust?cust=' + custId + (fromAlertId ? '&id=' + fromAlertId : '') + (source ? '&source=sc' : '')));
 
   const reg: any = models.find((m) => m.id === PROD_TO_MODEL[prod]) ?? {};
   const capa = MODEL_CAPA[prod];
@@ -686,7 +688,7 @@ export default function CustScoreDetail() {
   if (!cust || !item) {
     return (
       <div style={{ padding: 24 }}>
-        <PageShell header={<DetailHeader title="得分详情" crumb="贷中监控 / 单客详情 / 得分详情" backLabel="← 返回单客详情" onBack={backTo} />} />
+        <PageShell header={<DetailHeader title="得分详情" crumb={(source ? '评分产品' : '贷中监控') + ' / 单客详情 / 得分详情'} backLabel="← 返回单客详情" onBack={backTo} />} />
         <Panel title="暂无评分数据" desc="该客户没有模型评分快照">
           <div style={{ fontSize: 13, color: '#94A3B8', padding: '16px 0' }}>请返回单客详情页查看其它板块。</div>
         </Panel>
@@ -766,7 +768,7 @@ export default function CustScoreDetail() {
 
   return (
     <div style={{ padding: 24, maxWidth: 1160 }}>
-      <PageShell header={<DetailHeader title={`${meta.label} · ${cust.name}`} crumb="贷中监控 / 单客详情 / 得分详情" subtitle={`客户号 ${cust.custId} ｜ 产品 ${cust.product ?? ''} ｜ 证件号 ${cust.idCard}`} backLabel="← 返回单客详情" onBack={backTo} sticky={false} />} />
+      <PageShell header={<DetailHeader title={`${meta.label} · ${cust.name}`} crumb={(source ? '评分产品' : '贷中监控') + ' / 单客详情 / 得分详情'} subtitle={`客户号 ${cust.custId} ｜ 产品 ${cust.product ?? ''} ｜ 证件号 ${cust.idCard}`} backLabel="← 返回单客详情" onBack={backTo} sticky={false} />} />
       <div className="space-y-4">
 
         {/* 客户概览：继承单客详情基础信息 + 右侧模型快捷入口（三模型独立页面互跳） */}
@@ -790,7 +792,7 @@ export default function CustScoreDetail() {
                 return (
                   <button
                     key={k} type="button" title={`进入 ${m.label} 得分页面`}
-                    onClick={() => nav('/console/cr/mid-cust-score?cust=' + custId + '&prod=' + k + (fromAlertId ? '&id=' + fromAlertId : '') + (backTarget ? '&back=' + encodeURIComponent(backTarget) : ''))}
+                    onClick={() => nav('/console/cr/mid-cust-score?cust=' + custId + '&prod=' + k + (fromAlertId ? '&id=' + fromAlertId : '') + (backTarget ? '&back=' + encodeURIComponent(backTarget) : (source ? '&source=sc' : '')))}
                     style={{
                       border: active ? '1.5px solid ' + m.color : '1px solid #E2E8F0',
                       background: active ? m.color + '0f' : '#fff', borderRadius: 8, padding: '6px 10px',
@@ -1190,7 +1192,7 @@ export default function CustScoreDetail() {
               <div style={{ fontSize: 12, color: '#94A3B8', marginTop: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
                 <button
                   type="button"
-                  onClick={() => nav('/console/cr/mid-single-cust?cust=' + encodeURIComponent(custId))}
+                  onClick={() => nav('/console/cr/mid-single-cust?cust=' + encodeURIComponent(custId) + (source ? '&source=sc' : ''))}
                   style={{ fontSize: 12.5, color: '#185FA5', background: 'none', border: 'none', padding: 0, cursor: 'pointer', textDecoration: 'underline' }}
                 >
                   查看完整用户数据档案 →
@@ -1213,7 +1215,7 @@ export default function CustScoreDetail() {
                 nodeResults={nodeResults}
                 currentScore={item.score}
                 onJumpRules={() => nav('/console/cm/rule-hub')}
-                onJumpStrategy={() => nav('/console/sc/score-threshold?prod=' + prod)}
+                onJumpStrategy={() => nav('/console/sc/model-detail?prod=' + prod + '&tab=threshold')}
               />
             </Panel>
 

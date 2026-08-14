@@ -190,8 +190,6 @@ export default function Console() {
     'sc:hit-analysis': 'filter',
     'sc:model-manage': 'model',
     'sc:model-effect': 'analytics',
-    'sc:score-threshold': 'sliders',
-    'sc:alert-rule': 'alert',
     'sc:dispose-flow': 'work_flow',
     'cr:mid-alert-detail': 'alert',
     'cr:mid-dispose-detail': 'inbox',

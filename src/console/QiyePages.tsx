@@ -18,6 +18,11 @@ const CRUMB = '企业风控 / 企业档案';
 // 跨页面预选企业（从检索页跳转时带入）
 export let qiyeSelectedKeyNo = '';
 export let qiyeSelectedName = '';
+// ESM 下导入绑定不可直接赋值，跨模块修改请走 setter
+export const setQiyeSelected = (name: string, keyNo: string) => {
+  qiyeSelectedName = name;
+  qiyeSelectedKeyNo = keyNo;
+};
 
 const STATUS_KIND: Record<string, 'green' | 'blue' | 'red' | 'gray' | 'amber'> = {
   存续: 'green', 在业: 'blue', 吊销: 'red', 注销: 'gray', 迁出: 'amber',

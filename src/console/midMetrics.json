@@ -3315,6 +3315,18 @@
     "enabled": true
   },
   {
+    "id": "m_dist_total",
+    "name": "评分客户总数",
+    "group": "评分",
+    "dataSourceId": "ds_score_dist",
+    "type": "base",
+    "field": "count",
+    "agg": "sum",
+    "unit": "人",
+    "precision": 0,
+    "enabled": true
+  },
+  {
     "id": "m_call_zhicha",
     "name": "智察分调用量",
     "group": "评分",

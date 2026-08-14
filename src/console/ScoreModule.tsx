@@ -8,8 +8,6 @@ import ScoreCrowdPage from './ScoreCrowd'
 import ScoreCustomerListPage from './ScoreCustomerList'
 import ScoreModelManagePage from './ScoreModelManage'
 import ScoreModelDetailPage from './ScoreModelDetail'
-import ScoreThresholdPage from './ScoreThreshold'
-import ScoreAlertRulePage from './ScoreAlertRule'
 import ScoreDisposeFlowPage from './ScoreDisposeFlow'
 import MidAlertWorkbench from './MidAlertWorkbench'
 import MidDashboardPage from './MidDashboardPage'
@@ -39,10 +37,6 @@ export default function ScoreModule({ pageKey }: { pageKey: string; search?: str
       return <ScoreModelManagePage />
     case 'model-detail':
       return <ScoreModelDetailPage />
-    case 'score-threshold':
-      return <ScoreThresholdPage />
-    case 'alert-rule':
-      return <ScoreAlertRulePage />
     case 'dispose-flow':
       return <ScoreDisposeFlowPage />
     default:

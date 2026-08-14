@@ -7,8 +7,8 @@
  *         关系网络各自成 Tab。做到「一眼看全、按需下钻」。
  */
 import { useState, useEffect, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { Panel, DataTable, Button, Badge, Modal } from '../components/ui'
+import { useNavigate, useSearchParams } from 'react-router-dom'
+import { Panel, DataTable, Button, Badge, Modal, DetailHeader } from '../components/ui'
 import type { Column, Row } from '../components/ui'
 import { Sam, Cal } from './SourceTag'
 import { PageShell } from './PageShell'
@@ -225,14 +225,18 @@ function VerifyMark({ checks }: { checks: CustExternalCheck[] }) {
 }
 
 /* ============ 模型评分（常驻 2×2：额度建议 + 智察 / 智信 / 智融 三卡，点击进详情） ============ */
-function ModelScorePanel({ scores, custId }: { scores: CustScores; custId: string }) {
+function ModelScorePanel({ scores, custId, source }: { scores: CustScores; custId: string; source?: string }) {
   const nav = useNavigate()
   const cards = [
     { prod: 'zhicha', c: scores.zhiCha },
     { prod: 'zhixin', c: scores.zhiXin },
     { prod: 'zhirong', c: scores.zhiRong },
   ]
-  const go = (prod: string) => nav(`/console/cr/mid-cust-score?cust=${custId}&prod=${prod}`)
+  // 点击评分卡进入得分详情：从评分产品进入则带 source=sc，得分详情返回时回到单客详情（评分产品语境）
+  const go = (prod: string) => {
+    const back = source === 'sc' ? '/console/cr/mid-single-cust?cust=' + custId + '&source=sc' : null
+    nav(`/console/cr/mid-cust-score?cust=${custId}&prod=${prod}` + (back ? '&back=' + encodeURIComponent(back) : ''))
+  }
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gridTemplateRows: '1fr 1fr', gap: 8, flex: 1, minHeight: 0 }}>
       {/* 额度建议：最左上角 */}
@@ -315,6 +319,13 @@ type GraphSelection =
 
 export function CustProfile({ custId, title = '单客详情' }: { custId?: string; title?: string }) {
   const d = useCustData()
+  const [sp] = useSearchParams()
+  const nav = useNavigate()
+  // 来源感知：从「评分产品」子系统进入时带 source=sc，返回按钮回到评分产品而非零售信贷
+  const source = sp.get('source') ?? undefined
+  const isSc = source === 'sc'
+  const backParam = sp.get('back')
+  const backTarget = backParam ? decodeURIComponent(backParam) : isSc ? '/console/sc/overview' : null
   const cur = custId ? (d.customers.find((c) => c.custId === custId) ?? d.customers[0]) : d.customers[0]
   const [tab, setTab] = useState<Tab>('基本信息')
   const [alertDetail, setAlertDetail] = useState<CustAlert | null>(null)
@@ -536,13 +547,19 @@ export function CustProfile({ custId, title = '单客详情' }: { custId?: strin
   return (
     <div style={{ padding: 24, maxWidth: 1360 }}>
       <PageShell
-        title={title}
-        crumb={`${CRUMB} / ${cur.name}`}
-        actions={
-          <>
-            <Sam label="单客样例" value="custProfileData.ts" />
-            <Cal label="实时聚合" />
-          </>
+        header={
+          <DetailHeader
+            title={title}
+            crumb={(isSc ? '评分产品' : CRUMB) + ' / ' + cur.name}
+            backLabel={isSc ? '← 返回评分产品' : '← 返回'}
+            onBack={backTarget ? () => nav(backTarget) : undefined}
+            actions={
+              <>
+                <Sam label="单客样例" value="custProfileData.ts" />
+                <Cal label="实时聚合" />
+              </>
+            }
+          />
         }
       />
 
@@ -608,7 +625,7 @@ export function CustProfile({ custId, title = '单客详情' }: { custId?: strin
             <span style={{ fontSize: 13, fontWeight: 700, color: '#0F172A' }}>模型评分</span>
             <span style={{ fontSize: 11, color: '#94A3B8' }}>点击卡片查看明细 <Sam label="样例" value="custProfileData.ts" /></span>
           </div>
-          <ModelScorePanel scores={cur.scores} custId={cur.custId} />
+          <ModelScorePanel scores={cur.scores} custId={cur.custId} source={source} />
         </div>
       </div>
 

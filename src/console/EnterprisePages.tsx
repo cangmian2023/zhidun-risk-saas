@@ -10,7 +10,7 @@ import { Sam, Cal, Cfg } from './SourceTag';
 import { PageShell } from './PageShell';
 import { LineChart } from '../components/charts';
 import { useEnterpriseData, updateEnterpriseData } from './enterpriseData';
-import { QiyeSearch, QiyeProfile, qiyeSelectedKeyNo, qiyeSelectedName } from './QiyePages';
+import { QiyeSearch, QiyeProfile, setQiyeSelected } from './QiyePages';
 // 统一流程绑定层（与贷中预警工作台/贷前四页同一套）：列表显示「时限倒计时 + 流程状态」列，状态流转写回 enterpriseData.json
 import FlowStateCell from './FlowStateCell';
 import { useMinuteTick, renderCountdown, matchObjOf, flowIdOfRow, nowStamp, usePageFlow } from './flowBinding';
@@ -88,7 +88,7 @@ export function EntBatchDue() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0,1fr))', gap: 12, marginBottom: 16 }}>
         <StatCard label="任务总数" value={String(ent.dueTasks.length)} accent="brand" />
         <StatCard label="进行中" value={String(ent.dueTasks.filter((t) => t.status === '进行中').length)} accent="amber" />
-        <StatCard label="已完成" value={String(ent.dueTasks.filter((t) => t.status === '已完成').length)} accent="green" />
+        <StatCard label="已完成" value={String(ent.dueTasks.filter((t) => t.status === '已完成').length)} accent="emerald" />
         <StatCard label="累计命中风险" value={String(ent.dueTasks.reduce((s, t) => s + t.hitRisk, 0))} accent="rose" />
       </div>
       <Panel title="尽调任务列表" desc={<span>批量尽调任务与进度 · <Sam value="enterpriseData.json" /></span>}>
@@ -159,7 +159,7 @@ export function EntBatchDueDetail() {
 
       {/* 任务概览 */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0,1fr))', gap: 12, marginBottom: 16 }}>
-        <StatCard label="任务状态" value={task.status} accent={task.status === '已完成' ? 'green' : task.status === '失败' ? 'rose' : task.status === '进行中' ? 'amber' : 'gray'} />
+        <StatCard label="任务状态" value={task.status} accent={task.status === '已完成' ? 'emerald' : task.status === '失败' ? 'rose' : task.status === '进行中' ? 'amber' : 'brand'} />
         <StatCard label="企业总数" value={String(task.count)} accent="brand" />
         <StatCard label="命中风险" value={String(task.hitRisk)} accent="rose" />
         <StatCard label="创建人" value={task.createdBy} accent="cyan" />
@@ -237,7 +237,7 @@ export function EntMonitorList() {
             const m = ent.monitorList.find((x) => x.keyNo === String(r.id));
             return (
               <div style={{ display: 'flex', gap: 6 }}>
-                <button type="button" onClick={() => { if (m) { qiyeSelectedName = m.name; qiyeSelectedKeyNo = m.keyNo; nav('/console/ep/qiye-profile'); } }}
+                <button type="button" onClick={() => { if (m) { setQiyeSelected(m.name, m.keyNo); nav('/console/ep/qiye-profile'); } }}
                   style={{ padding: '3px 12px', borderRadius: 6, border: '1px solid #C7D2FE', background: '#EFF6FF', color: '#1D4ED8', fontSize: 12, cursor: 'pointer' }}>查看档案</button>
               </div>
             );
@@ -277,7 +277,7 @@ export function EntDecisionEvents() {
         actions={<><Sam value="enterpriseData.json.decisionEvents" /><Cal label="实时统计" /></>} />
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0,1fr))', gap: 12, marginBottom: 16 }}>
         <StatCard label="决策事件" value={String(ent.decisionEvents.length)} accent="brand" />
-        <StatCard label="通过" value={String(ent.decisionEvents.filter((d) => d.result === '通过').length)} accent="green" />
+        <StatCard label="通过" value={String(ent.decisionEvents.filter((d) => d.result === '通过').length)} accent="emerald" />
         <StatCard label="拒绝" value={String(ent.decisionEvents.filter((d) => d.result === '拒绝').length)} accent="rose" />
         <StatCard label="转人工" value={String(ent.decisionEvents.filter((d) => d.result === '转人工').length)} accent="amber" />
       </div>
@@ -324,9 +324,9 @@ export function EntReviewOrders() {
         actions={<><Sam value="enterpriseData.json.reviewOrders" /><Cal label="实时统计" /></>} />
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0,1fr))', gap: 12, marginBottom: 16 }}>
         <StatCard label="工单总数" value={String(ent.reviewOrders.length)} accent="brand" />
-        <StatCard label="待复核" value={String(ent.reviewOrders.filter((o) => o.status === '待复核').length)} accent="red" />
+        <StatCard label="待复核" value={String(ent.reviewOrders.filter((o) => o.status === '待复核').length)} accent="rose" />
         <StatCard label="复核中" value={String(ent.reviewOrders.filter((o) => o.status === '复核中').length)} accent="amber" />
-        <StatCard label="已复核" value={String(ent.reviewOrders.filter((o) => o.status === '已复核').length)} accent="green" />
+        <StatCard label="已复核" value={String(ent.reviewOrders.filter((o) => o.status === '已复核').length)} accent="emerald" />
       </div>
       <Panel title="复核工单" desc={<span>复核工单队列 · <Cal label="实时过滤" /></span>}
         actions={<select value={st} onChange={(e) => setSt(e.target.value)} style={{ padding: '4px 8px', borderRadius: 6, border: '1px solid #E2E8F0', fontSize: 12, background: '#fff' }}><option value="">全部状态</option><option value="待复核">待复核</option><option value="复核中">复核中</option><option value="已复核">已复核</option><option value="已驳回">已驳回</option></select>}>
@@ -425,7 +425,7 @@ export function EntModelDetail() {
         <>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0,1fr))', gap: 12, marginBottom: 14 }}>
             <StatCard label="覆盖率" value={`${m.ops.coverage}%`} accent="brand" />
-            <StatCard label="准确率" value={`${m.ops.accuracy}%`} accent="green" />
+            <StatCard label="准确率" value={`${m.ops.accuracy}%`} accent="emerald" />
             <StatCard label="及时率" value={`${m.ops.timely}%`} accent="amber" />
             <StatCard label="累计调用" value={m.ops.calls.toLocaleString()} accent="violet" />
           </div>
@@ -483,8 +483,8 @@ export function EntListManage() {
         actions={<><Sam value="enterpriseData.json.listEnts" /><Cal label="实时统计" /></>} />
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0,1fr))', gap: 12, marginBottom: 16 }}>
         <StatCard label="黑名单" value={String(cnt('black'))} accent="rose" />
-        <StatCard label="白名单" value={String(cnt('white'))} accent="green" />
-        <StatCard label="灰名单" value={String(cnt('gray'))} accent="gray" />
+        <StatCard label="白名单" value={String(cnt('white'))} accent="emerald" />
+        <StatCard label="灰名单" value={String(cnt('gray'))} accent="brand" />
       </div>
       <div style={{ display: 'flex', gap: 4, borderBottom: '1px solid #E2E8F0', marginBottom: 14 }}>
         {(['black', 'white', 'gray'] as const).map((t) => (
@@ -500,7 +500,7 @@ export function EntListManage() {
             const l = ent.listEnts.find((x) => x.id === String(r.id));
             return (
               <div style={{ display: 'flex', gap: 6 }}>
-                <button type="button" onClick={() => { if (l) { qiyeSelectedName = l.name; qiyeSelectedKeyNo = l.id; nav('/console/ep/qiye-profile'); } }}
+                <button type="button" onClick={() => { if (l) { setQiyeSelected(l.name, l.id); nav('/console/ep/qiye-profile'); } }}
                   style={{ padding: '3px 12px', borderRadius: 6, border: '1px solid #C7D2FE', background: '#EFF6FF', color: '#1D4ED8', fontSize: 12, cursor: 'pointer' }}>查看档案</button>
               </div>
             );
@@ -534,9 +534,9 @@ export function EntDataSource() {
         actions={<><Sam value="enterpriseData.json.dataSources" /><Cal label="实时统计" /></>} />
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0,1fr))', gap: 12, marginBottom: 16 }}>
         <StatCard label="数据源总数" value={String(ent.dataSources.length)} accent="brand" />
-        <StatCard label="已接入" value={String(ent.dataSources.filter((s) => s.status === '已接入').length)} accent="green" />
+        <StatCard label="已接入" value={String(ent.dataSources.filter((s) => s.status === '已接入').length)} accent="emerald" />
         <StatCard label="测试中" value={String(ent.dataSources.filter((s) => s.status === '测试中').length)} accent="amber" />
-        <StatCard label="未接入" value={String(ent.dataSources.filter((s) => s.status === '未接入').length)} accent="gray" />
+        <StatCard label="未接入" value={String(ent.dataSources.filter((s) => s.status === '未接入').length)} accent="brand" />
       </div>
       <Panel title="数据源列表" desc={<span>企业数据源 · <Sam value="enterpriseData.json" /></span>}>
         <DataTable columns={cols} rows={rows} empty="暂无数据源" pager defaultPageSize={10}
@@ -597,9 +597,9 @@ export function EntAlertRule() {
         actions={<><Sam value="enterpriseData.json.alertRules" /><Button size="sm" variant="primary" onClick={() => setNewOpen(true)}>＋ 新增规则</Button></>} />
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0,1fr))', gap: 12, marginBottom: 16 }}>
         <StatCard label="规则总数" value={String(ent.alertRules.length)} accent="brand" />
-        <StatCard label="启用" value={String(ent.alertRules.filter((r) => r.enabled).length)} accent="green" />
+        <StatCard label="启用" value={String(ent.alertRules.filter((r) => r.enabled).length)} accent="emerald" />
         <StatCard label="高风险" value={String(ent.alertRules.filter((r) => r.level === '高').length)} accent="rose" />
-        <StatCard label="已停用" value={String(ent.alertRules.filter((r) => !r.enabled).length)} accent="gray" />
+        <StatCard label="已停用" value={String(ent.alertRules.filter((r) => !r.enabled).length)} accent="brand" />
       </div>
       <Panel title="预警规则" desc={<span>企业预警规则 · <Cal label="实时统计" /></span>}>
         <DataTable columns={cols} rows={rows} empty="暂无规则" pager defaultPageSize={10}
@@ -689,7 +689,7 @@ export function EntAlertWorkbench() {
         <StatCard label="预警总数" value={String(ent.alerts.length)} accent="brand" />
         <StatCard label="红灯预警" value={String(lc.RED)} accent="rose" />
         <StatCard label="黄灯预警" value={String(lc.YELLOW)} accent="amber" />
-        <StatCard label="待处置" value={String(ent.alerts.filter((a) => a.status === '待处置').length)} accent="red" />
+        <StatCard label="待处置" value={String(ent.alerts.filter((a) => a.status === '待处置').length)} accent="rose" />
       </div>
       <Panel title="企业预警队列" desc={<span>筛选后 <b>{filtered.length}</b> 条 · <Cal label="实时过滤" /></span>}
         actions={<select value={lvl} onChange={(e) => setLvl(e.target.value)} style={{ padding: '4px 8px', borderRadius: 6, border: '1px solid #E2E8F0', fontSize: 12, background: '#fff' }}><option value="">全部等级</option><option value="RED">红灯</option><option value="YELLOW">黄灯</option><option value="OPPORTUNITY">机会</option></select>}>
@@ -698,7 +698,7 @@ export function EntAlertWorkbench() {
             const a = ent.alerts.find((x) => x.id === String(r.id))!;
             return (
               <div style={{ display: 'flex', gap: 6 }}>
-                <button type="button" onClick={() => { qiyeSelectedName = a.entName; qiyeSelectedKeyNo = a.entKeyNo ?? ''; nav('/console/ep/qiye-profile'); }}
+                <button type="button" onClick={() => { setQiyeSelected(a.entName, a.entKeyNo ?? ''); nav('/console/ep/qiye-profile'); }}
                   style={{ padding: '3px 12px', borderRadius: 6, border: '1px solid #C7D2FE', background: '#EFF6FF', color: '#1D4ED8', fontSize: 12, cursor: 'pointer' }}>查看档案</button>
               </div>
             );

@@ -3566,38 +3566,16 @@
       {
         "id": "w1",
         "type": "metric",
-        "title": "累计调用量",
+        "title": "核心运营指标",
         "datasetId": "ds_score_ops",
-        "metricId": "m_score_ops_calls",
-        "span": 1,
-        "windowSize": "sm"
-      },
-      {
-        "id": "w2",
-        "type": "metric",
-        "title": "评分覆盖率",
-        "datasetId": "ds_score_ops",
-        "metricId": "m_score_ops_coverage",
-        "span": 1,
-        "windowSize": "sm"
-      },
-      {
-        "id": "w3",
-        "type": "metric",
-        "title": "预警准确率",
-        "datasetId": "ds_score_ops",
-        "metricId": "m_score_ops_accuracy",
-        "span": 1,
-        "windowSize": "sm"
-      },
-      {
-        "id": "w4",
-        "type": "metric",
-        "title": "处置及时率",
-        "datasetId": "ds_score_ops",
-        "metricId": "m_score_ops_timely",
-        "span": 1,
-        "windowSize": "sm"
+        "metricIds": [
+          "m_score_ops_calls",
+          "m_score_ops_coverage",
+          "m_score_ops_accuracy",
+          "m_score_ops_timely"
+        ],
+        "span": 3,
+        "windowSize": "md"
       },
       {
         "id": "w5",
@@ -3643,6 +3621,25 @@
         ],
         "span": 3,
         "windowSize": "lg"
+      },
+      {
+        "id": "w2",
+        "type": "donut",
+        "title": "客群风险档位构成",
+        "datasetId": "ds_score_dist",
+        "metricId": "m_dist_total",
+        "dimensions": ["grade_name"],
+        "span": 1,
+        "windowSize": "sm"
+      },
+      {
+        "id": "w3",
+        "type": "metric",
+        "title": "各模型客群规模",
+        "datasetId": "ds_score_dist",
+        "metricIds": ["m_dist_zhicha", "m_dist_zhixin", "m_dist_zhirong"],
+        "span": 2,
+        "windowSize": "md"
       }
     ]
   },
@@ -3688,6 +3685,16 @@
         ],
         "span": 3,
         "windowSize": "lg"
+      },
+      {
+        "id": "w3",
+        "type": "donut",
+        "title": "命中规则类型分布",
+        "datasetId": "ds_score_hit",
+        "metricId": "m_score_hit_cnt",
+        "dimensions": ["rule"],
+        "span": 1,
+        "windowSize": "sm"
       }
     ]
   },
@@ -3750,6 +3757,15 @@
         ],
         "span": 3,
         "windowSize": "lg"
+      },
+      {
+        "id": "w4",
+        "type": "metric",
+        "title": "运营质量均值",
+        "datasetId": "ds_score_ops",
+        "metricIds": ["m_score_ops_coverage", "m_score_ops_accuracy", "m_score_ops_timely"],
+        "span": 3,
+        "windowSize": "md"
       }
     ]
   },

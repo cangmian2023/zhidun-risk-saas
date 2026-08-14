@@ -260,6 +260,7 @@ export interface ThresholdRow {
   level: string
   meaning: string
   action: string
+  bizFlowId?: string // 关联预警业务流程（管理中心「业务流程」库），分值落入该分区即触发对应预警流程
 }
 
 /* ---------- 预警规则 ---------- */

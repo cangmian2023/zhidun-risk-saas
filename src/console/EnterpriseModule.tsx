@@ -4,7 +4,7 @@
  */
 import { QiyeSearch, QiyeProfile } from './QiyePages';
 import {
-  EntQuickSearch, EntRiskProfile, EntBatchDue, EntMonitorList,
+  EntQuickSearch, EntRiskProfile, EntBatchDue, EntBatchDueDetail, EntMonitorList,
   EntDecisionEvents, EntReviewOrders,
   EntModelList, EntModelDetail, EntListManage, EntDataSource,
   EntAlertRule, EntAlertWorkbench, EntArchive,
