@@ -2,19 +2,20 @@
  * 三模型为三个独立页面（prod 参数区分，URL 即页面）：智察分 / 智信分 / 智融分
  * 顶部继承单客详情基础信息（客户名 + 标签 + 右侧模型快捷入口互跳 + 额度建议），Tab 吸顶（top 56 跟随全局标题）：
  *   Tab1 模型分     —— 模型分概览（含维度拆解，三模型各自维度）+ 模型分趋势（环比/趋势）
- *   Tab2 关联因子图谱 —— 复用单客详情 RelationGraphView 公共组件，仅展示「影响本模型的关联因子」（relRelevance 判定），不编造模型外内容
+ *   Tab2 关系图谱 —— 复用单客详情 RelationGraphView 公共组件，仅展示「影响本模型的关联因子」（relRelevance 判定），不编造模型外内容
  *   Tab3 预警处置 —— 分值阈值预警 + 处置流程（动态读 bizFlows.json f-alert-dispose，一行节点 + 状态行 + 处置按钮）+ 规则命中预警（只显示与当前模型相关的，三页面各看各的；其余预警归对应模型页）+ 操作日志（统一时间线，由 Tab1 迁入）
  *   Tab4 用户数据   —— 数据明细（原始数据 · 点击行展开逐笔表格 · 标注供哪个特征使用）+ 数据来源
  *   Tab5 模型信息   —— 基本信息（含版本历史）/ 结果含义 / 运营效果 / 算法解释
  * 原则：不堆装饰性提示；处置动作跳真实页面（预警/处置工作台）；旧数据按 riskDims+alerts 运行时兜底派生。
  */
 import { useMemo, useState, type ReactNode } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { DetailHeader, Panel, Badge } from '../components/ui';
 import ScoreGauge from '../components/ScoreGauge';
 import { LineChart } from '../components/charts';
 import { Sam } from './SourceTag';
 import { PageShell } from './PageShell';
+import { usePageNav } from './pageNav';
 import { useMidCustomers, useMidAlerts, updateAlerts } from './midStore';
 import FlowActionBar from './FlowActionBar';
 import { models } from './data';
@@ -92,7 +93,6 @@ const PROD_TO_MODEL: Record<ProdKey, string> = { zhicha: 'M-智察分', zhixin: 
 const MODEL_CAPA: Record<ProdKey, {
   method: string; owner: string; applicable: string; psi: number; monitor: string;
   lineage: { stage: string; detail: string }[];
-  global: { name: string; importance: number }[];
   versions: { version: string; date: string; note: string }[];
 }> = {
   zhicha: {
@@ -105,7 +105,6 @@ const MODEL_CAPA: Record<ProdKey, {
       { stage: '模型计算', detail: '智察分 V3.2（XGBoost）输出 0–100 欺诈分' },
       { stage: '专家规则', detail: '叠加专家规则与人工复核，形成最终欺诈分' },
     ],
-    global: [{ name: '设备聚集', importance: 24 }, { name: '申请频次', importance: 21 }, { name: '黑产特征', importance: 16 }, { name: '同设备关联', importance: 12 }, { name: 'IP/定位异常', importance: 10 }],
     versions: [
       { version: 'V3.2', date: '2026-04-18', note: '新增设备聚集特征，提升模拟器识别准确率；多头阈值由 ≥6 调整为 ≥5，降低漏报' },
       { version: 'V3.1', date: '2025-11-02', note: '调整申请频次权重，减少旺季误报；补充灰名单关联规则' },
@@ -122,7 +121,6 @@ const MODEL_CAPA: Record<ProdKey, {
       { stage: '模型计算', detail: '智信分 V4.0（LightGBM）输出 300–900 信用分' },
       { stage: '专家规则', detail: '叠加专家规则与人工复核，形成最终信用分' },
     ],
-    global: [{ name: '历史还款', importance: 28 }, { name: '负债结构', importance: 22 }, { name: '收入稳定', importance: 20 }, { name: '征信查询', importance: 14 }, { name: '职业属性', importance: 9 }],
     versions: [
       { version: 'V4.0', date: '2026-03-10', note: '引入收入流水特征（12 个月），特征扩至 42 个；重新校准违约概率输出' },
       { version: 'V3.9', date: '2025-10-21', note: '负债收入比阈值由 75% 收紧至 70%；修复低分段概率偏移' },
@@ -139,7 +137,6 @@ const MODEL_CAPA: Record<ProdKey, {
       { stage: '模型计算', detail: '智融分 V2.1（融合逻辑回归）输出 300–900 综合分' },
       { stage: '专家规则', detail: '叠加专家规则与人工复核，形成最终综合分' },
     ],
-    global: [{ name: '违约维度', importance: 34 }, { name: '欺诈维度', importance: 28 }, { name: '价值维度', importance: 24 }, { name: '资产维度', importance: 14 }],
     versions: [
       { version: 'V2.1', date: '2026-02-06', note: '调整智信分/智察分融合权重（信用 0.55 / 欺诈 0.45）；加入借贷兴趣价值特征' },
       { version: 'V2.0', date: '2025-12-01', note: '基线融合版本（逻辑回归融合智信分 + 智察分 + 价值/资产特征）' },
@@ -202,36 +199,31 @@ const MODEL_OPS: Record<ProdKey, {
   },
 };
 
-/* ============ 维度拆解：直接复用「模型信息」(MODEL_CAPA.global) 的维度构成（同名同序），与模型信息严格一致 ========
- * 客户维度得分从 cust.riskDims 映射（from = 风险维度来源），未命中用 fb 兜底；importance 取模型信息权重作参考。 */
-const DIM_SOURCE: Record<ProdKey, Record<string, { from?: string; fb: number }>> = {
-  zhicha: {
-    '设备聚集': { from: '欺诈', fb: 72 },
-    '申请频次': { from: '行为', fb: 55 },
-    '黑产特征': { from: '司法', fb: 50 },
-    '同设备关联': { from: '多头', fb: 45 },
-    'IP/定位异常': { fb: 60 },
-  },
-  zhixin: {
-    '历史还款': { from: '行为', fb: 60 },
-    '负债结构': { from: '负债', fb: 62 },
-    '收入稳定': { from: '行为', fb: 50 },
-    '征信查询': { from: '多头', fb: 45 },
-    '职业属性': { fb: 40 },
-  },
-  zhirong: {
-    '违约维度': { from: '负债', fb: 60 },
-    '欺诈维度': { from: '欺诈', fb: 65 },
-    '价值维度': { from: '行为', fb: 45 },
-    '资产维度': { fb: 40 },
-  },
+/* ============ 维度拆解：维度定义单一数据源（模型自身 gModel.dims） ============
+ * 维度名 / 权重直接从模型 ModelMeta.dims 读取，与「模型信息 / 算法编辑图」同源，改模型即改拆解；
+ * 客户维度得分从 cust.riskDims 映射（from = 风险维度来源），未命中用 fb 兜底。 */
+const DIM_SOURCE: Record<string, { from?: string; fb: number }> = {
+  '多头借贷强度': { from: '欺诈', fb: 72 },
+  '设备环境风险': { from: '行为', fb: 55 },
+  '黑灰名单命中': { from: '司法', fb: 50 },
+  '同设备关联': { from: '多头', fb: 45 },
+  '历史逾期记录': { from: '行为', fb: 60 },
+  '负债收入比': { from: '负债', fb: 62 },
+  '征信查询频次': { from: '多头', fb: 45 },
+  '收入稳定性': { from: '行为', fb: 50 },
+  '授信使用率': { fb: 40 },
+  '违约维度（智信分）': { from: '负债', fb: 60 },
+  '欺诈维度': { from: '欺诈', fb: 65 },
+  '借贷兴趣': { from: '行为', fb: 45 },
+  '转化意愿': { fb: 40 },
+  '资产状况': { fb: 40 },
 };
-function dimsOf(prod: ProdKey, riskDims: CustRiskDim[]): { dim: string; score: number; lvl: '高' | '中' | '低'; importance: number; src: '实测' | '兜底' }[] {
-  return MODEL_CAPA[prod].global.map((g) => {
-    const cfg = DIM_SOURCE[prod][g.name] ?? { fb: 55 };
+function dimsOf(modelDims: { name: string; weight: number }[], riskDims: CustRiskDim[]): { dim: string; score: number; lvl: '高' | '中' | '低'; importance: number; src: '实测' | '兜底' }[] {
+  return modelDims.map((g) => {
+    const cfg = DIM_SOURCE[g.name] ?? { fb: 55 };
     const hit = cfg.from ? riskDims.find((d) => d.dim === cfg.from) : undefined;
     const score = (cfg.from && hit?.score) ?? cfg.fb;
-    return { dim: g.name, score, lvl: score >= 75 ? '高' : score >= 55 ? '中' : '低', importance: g.importance, src: hit ? '实测' : '兜底' };
+    return { dim: g.name, score, lvl: score >= 75 ? '高' : score >= 55 ? '中' : '低', importance: g.weight, src: hit ? '实测' : '兜底' };
   });
 }
 
@@ -464,7 +456,7 @@ const INPUT_DETAILS: Record<ProdKey, InputDetail[]> = {
   ],
 };
 
-/* 关联关系图谱适配器：把 midCustomers.relations（扁平节点）转成单客详情共用的 CustRelationGraph，
+/* 关系图谱适配器：把 midCustomers.relations（扁平节点）转成单客详情共用的 CustRelationGraph，
  * 仅保留「影响本模型的关联因子」（relRelevance 判定），不编造模型外内容；type→theme 映射支持主题切换。 */
 const REL_THEME: Record<string, GraphTheme> = { company: '经营', device: '设备', person: '社交', contact: '社交' };
 const RISK_MAP: Record<string, CustGraphNode['risk']> = { 高危: '高危', 中: '关注', 低: '正常' };
@@ -478,7 +470,14 @@ function toRelationGraph(cust: MidCustomer | undefined, prod: ProdKey): CustRela
       name: r.name,
       rel: r.rel,
       risk: RISK_MAP[r.risk ?? ''],
+      riskLevel: r.riskLevel,
       openAlerts: (r as { openAlerts?: number }).openAlerts,
+      idCard: r.idCard,
+      phone: r.phone,
+      channel: r.channel,
+      regCapital: r.regCapital,
+      legalPerson: r.legalPerson,
+      ringId: r.ringId,
     })),
   ];
   const edges: CustGraphEdge[] = rels.map((r) => ({
@@ -575,7 +574,7 @@ function EventLine({ ev }: { ev: FlowEvent }) {
 type TabKey = 'score' | 'graph' | 'alert' | 'data' | 'model';
 const TABS: { key: TabKey; label: string }[] = [
   { key: 'score', label: '模型分' },
-  { key: 'graph', label: '关联图谱' },
+  { key: 'graph', label: '关系图谱' },
   { key: 'alert', label: '预警处置' },
   { key: 'data', label: '用户数据' },
   { key: 'model', label: '模型信息' },
@@ -592,7 +591,7 @@ export default function CustScoreDetail() {
   const backTarget = backParam ? decodeURIComponent(backParam) : null;
   // 来源感知：从「评分产品」子系统进入时带 source=sc，返回链与面包屑跟随评分产品语境
   const source = params.get('source') ?? undefined;
-  const nav = useNavigate();
+  const { goDetail, back } = usePageNav();
   const customers = useMidCustomers();
   const globalAlerts = useMidAlerts();
   const [tab, setTab] = useState<TabKey>('score');
@@ -611,7 +610,7 @@ export default function CustScoreDetail() {
     const raw = cust.scores?.[prod] ?? deriveFallback(cust, prod);
     return raw ? enrich(raw, prod) : null;
   }, [cust, prod]);
-  const backTo = () => nav(backTarget ?? ('/console/cr/mid-single-cust?cust=' + custId + (fromAlertId ? '&id=' + fromAlertId : '') + (source ? '&source=sc' : '')));
+  const backTo = () => back('/console/cr/mid-single-cust?cust=' + custId + (fromAlertId ? '&id=' + fromAlertId : '') + (source ? '&source=sc' : ''));
 
   const reg: any = models.find((m) => m.id === PROD_TO_MODEL[prod]) ?? {};
   const capa = MODEL_CAPA[prod];
@@ -677,7 +676,7 @@ export default function CustScoreDetail() {
     return r;
   }, [cust, item, prod]);
 
-  // 关联图谱派生（复用单客详情 RelationGraphView 公共组件）：仅保留影响本模型的关联因子
+  // 关系图谱派生（复用单客详情 RelationGraphView 公共组件）：仅保留影响本模型的关联因子
   const graphRelevant = useMemo(
     () => (cust?.relations ?? []).filter((r) => relRelevance(r, prod)).map((r) => ({ name: r.name, ...relRelevance(r, prod)! })),
     [cust, prod],
@@ -699,7 +698,7 @@ export default function CustScoreDetail() {
   const band = riskBand(prod, item.score);
   const scoreColor = band.color;
   const gradeBadgeKind = (band.level === '高风险' || band.level === 'D' ? 'red' : band.level === '中风险' || band.level === 'C' ? 'amber' : 'green') as 'red' | 'amber' | 'green';
-  const dims = dimsOf(prod, cust.riskDims ?? []);
+  const dims = dimsOf(gModel.dims ?? [], cust.riskDims ?? []);
   const nonOppCount = (cust.alerts ?? []).filter((a) => a.level !== 'OPPORTUNITY').length;
   const gap = nextUpgrade(prod, item.score);
   const scoreNote = isFraud
@@ -719,7 +718,7 @@ export default function CustScoreDetail() {
   // 具体流转由下方 FlowActionBar 统一渲染（流程名 + 状态 + 按钮），此处不再自绘状态行
 
   const goAlertDetail = (alertId?: string) => {
-    if (alertId) nav('/console/cr/mid-alert-detail?id=' + alertId);
+    if (alertId) goDetail('/console/cr/mid-alert-detail?id=' + alertId);
   };
 
   /* 得分变化：环比差值 + 趋势判断（智察分升=恶化；智信/智融分降=恶化） */
@@ -792,7 +791,7 @@ export default function CustScoreDetail() {
                 return (
                   <button
                     key={k} type="button" title={`进入 ${m.label} 得分页面`}
-                    onClick={() => nav('/console/cr/mid-cust-score?cust=' + custId + '&prod=' + k + (fromAlertId ? '&id=' + fromAlertId : '') + (backTarget ? '&back=' + encodeURIComponent(backTarget) : (source ? '&source=sc' : '')))}
+                    onClick={() => goDetail('/console/cr/mid-cust-score?cust=' + custId + '&prod=' + k + (fromAlertId ? '&id=' + fromAlertId : ''))}
                     style={{
                       border: active ? '1.5px solid ' + m.color : '1px solid #E2E8F0',
                       background: active ? m.color + '0f' : '#fff', borderRadius: 8, padding: '6px 10px',
@@ -857,7 +856,7 @@ export default function CustScoreDetail() {
                     </div>
                   </div>
                 </div>
-                {/* 右：维度拆解（与模型信息 global 同名同序；importance 取模型信息权重） */}
+                {/* 右：维度拆解（维度名/权重读模型 ModelMeta.dims，与「模型信息」面板同源） */}
                 <div style={{ minWidth: 0, display: 'flex', flexDirection: 'column' }}>
                   <div style={{ fontSize: 12.5, fontWeight: 600, color: '#475569', marginBottom: 8 }}>
                     维度拆解 <span style={{ fontSize: 11, fontWeight: 400, color: '#94A3B8' }}>模型维度得分 0-100 · 权重来自模型信息</span>
@@ -974,9 +973,9 @@ export default function CustScoreDetail() {
           </>
         )}
 
-        {/* ========== Tab 关联因子图谱（按当前模型高亮影响因子，其余淡化） ========== */}
+        {/* ========== Tab 关系图谱（按当前模型高亮影响因子，其余淡化） ========== */}
         {tab === 'graph' && (
-          <Panel title="关联因子图谱" desc={`复用单客详情关系图谱组件 · 仅展示影响「${meta.label}」的关联因子（共 ${graphRelevant.length} 项）`}>
+          <Panel title="关系图谱" desc={`复用单客详情关系图谱组件 · 仅展示影响「${meta.label}」的关联因子（共 ${graphRelevant.length} 项）`}>
             {graphRelevant.length ? (
               <>
                 <RelationGraphView
@@ -1192,7 +1191,7 @@ export default function CustScoreDetail() {
               <div style={{ fontSize: 12, color: '#94A3B8', marginTop: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
                 <button
                   type="button"
-                  onClick={() => nav('/console/cr/mid-single-cust?cust=' + encodeURIComponent(custId) + (source ? '&source=sc' : ''))}
+                  onClick={() => goDetail('/console/cr/mid-single-cust?cust=' + encodeURIComponent(custId) + (source ? '&source=sc' : ''))}
                   style={{ fontSize: 12.5, color: '#185FA5', background: 'none', border: 'none', padding: 0, cursor: 'pointer', textDecoration: 'underline' }}
                 >
                   查看完整用户数据档案 →
@@ -1214,8 +1213,8 @@ export default function CustScoreDetail() {
                 graph={prod === 'zhixin' ? PIPELINE_GRAPHS.zhixin_credit_v1 : undefined}
                 nodeResults={nodeResults}
                 currentScore={item.score}
-                onJumpRules={() => nav('/console/cm/rule-hub')}
-                onJumpStrategy={() => nav('/console/sc/model-detail?prod=' + prod + '&tab=threshold')}
+                onJumpRules={() => goDetail('/console/cm/rule-hub')}
+                onJumpStrategy={() => goDetail('/console/sc/model-detail?prod=' + prod + '&tab=threshold')}
               />
             </Panel>
 
@@ -1244,15 +1243,15 @@ export default function CustScoreDetail() {
               </div>
             </Panel>
 
-            <Panel title="维度构成（模型权重）" desc="模型由以下维度构成，权重为各维度在模型中的贡献占比；与「模型分」页维度拆解同名同序">
+            <Panel title="维度构成（模型权重）" desc="模型由以下维度构成，权重为各维度在模型中的贡献占比；与「模型分」页维度拆解同源（均读模型 ModelMeta.dims）">
               <div style={{ border: '1px solid #F1F5F9', borderRadius: 10, padding: '2px 12px' }}>
-                {capa.global.map((g, i) => (
-                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, padding: '10px 0', borderBottom: i < capa.global.length - 1 ? '1px dashed #F1F5F9' : 'none' }}>
+                {(gModel.dims ?? []).map((g, i) => (
+                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, padding: '10px 0', borderBottom: i < (gModel.dims?.length ?? 1) - 1 ? '1px dashed #F1F5F9' : 'none' }}>
                     <span style={{ width: 88, flexShrink: 0, color: '#334155', fontWeight: 600 }}>{g.name}</span>
                     <div style={{ flex: 1, height: 6, background: '#F1F5F9', borderRadius: 999, overflow: 'hidden' }}>
-                      <div style={{ width: `${g.importance}%`, height: '100%', background: meta.color, borderRadius: 999 }} />
+                      <div style={{ width: `${g.weight}%`, height: '100%', background: meta.color, borderRadius: 999 }} />
                     </div>
-                    <span style={{ width: 38, textAlign: 'right', color: '#475569', fontVariantNumeric: 'tabular-nums' }}>{g.importance}%</span>
+                    <span style={{ width: 38, textAlign: 'right', color: '#475569', fontVariantNumeric: 'tabular-nums' }}>{g.weight}%</span>
                   </div>
                 ))}
               </div>

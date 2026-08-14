@@ -173,6 +173,16 @@ export function Editor({ value, metrics, sources, onChange, onRemove }: {
                     {(Object.keys(WTYPE_LABEL) as WidgetType[]).map((t) => <option key={t} value={t}>{WTYPE_LABEL[t]}</option>)}
                   </select>
                 </label>
+                {w.type === 'productMetrics' ? (
+                  <label style={lbl}>评分产品
+                    <select style={inpSm} value={w.product ?? 'zhixin'} onChange={(e) => setWidget(i, { product: e.target.value })}>
+                      <option value="zhixin">智信分</option>
+                      <option value="zhirong">智融分</option>
+                      <option value="zhicha">智查分</option>
+                    </select>
+                  </label>
+                ) : (
+                  <>
                 <label style={lbl}>数据集（数据源）
                   <select style={inpSm} value={w.datasetId} onChange={(e) => setWidget(i, { datasetId: e.target.value })}>
                     {sources.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
@@ -183,6 +193,8 @@ export function Editor({ value, metrics, sources, onChange, onRemove }: {
                   <MetricPicker metrics={metrics} value={w.metricIds ?? (w.metricId ? [w.metricId] : [])}
                     onChange={(v) => setWidget(i, { metricIds: v, metricId: v[0] ?? '' })} />
                 </label>
+                  </>
+                )}
                 <label style={lbl}>跨列
                   <select style={inpSm} value={w.span ?? 1} onChange={(e) => setWidget(i, { span: Number(e.target.value) as 1 | 2 })}>
                     <option value={1}>1 列</option><option value={2}>2 列</option>

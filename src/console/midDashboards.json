@@ -3561,21 +3561,31 @@
     "group": "评分产品",
     "order": 100,
     "enabled": true,
-    "desc": "评分产品工作台 · 三模型调用量/覆盖率/准确率/及时率总览",
+    "desc": "评分产品工作台 · 按评分产品分区的覆盖率/准确率/及时率/调用量总览",
     "widgets": [
       {
-        "id": "w1",
-        "type": "metric",
-        "title": "核心运营指标",
-        "datasetId": "ds_score_ops",
-        "metricIds": [
-          "m_score_ops_calls",
-          "m_score_ops_coverage",
-          "m_score_ops_accuracy",
-          "m_score_ops_timely"
-        ],
-        "span": 3,
-        "windowSize": "md"
+        "id": "w_zhixin",
+        "type": "productMetrics",
+        "title": "智信分",
+        "product": "zhixin",
+        "span": 1,
+        "windowSize": "sm"
+      },
+      {
+        "id": "w_zhirong",
+        "type": "productMetrics",
+        "title": "智融分",
+        "product": "zhirong",
+        "span": 1,
+        "windowSize": "sm"
+      },
+      {
+        "id": "w_zhicha",
+        "type": "productMetrics",
+        "title": "智查分",
+        "product": "zhicha",
+        "span": 1,
+        "windowSize": "sm"
       },
       {
         "id": "w5",

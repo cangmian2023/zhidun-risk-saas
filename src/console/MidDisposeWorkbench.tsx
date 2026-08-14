@@ -1,7 +1,7 @@
 // ⑧ 处置工单（使用域 · 列表）— 读 midDisposeTasks.json 橘；实时统计 灰
 // 行点击跳转工单详情页（cr:mid-dispose-detail），处置回填与流转在详情页完成
 import { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { usePageNav } from './pageNav';
 import { Panel, StatCard, DataTable } from '../components/ui';
 import type { Column, Row } from '../components/ui';
 import { Sam, Cal } from './SourceTag';
@@ -17,7 +17,7 @@ const STATUS_KIND: Record<Status, 'red' | 'amber' | 'blue' | 'green' | 'violet' 
 export default function MidDisposeWorkbench() {
   const tasks = useMidDisposeTasks();
   const saveStatus = useMidSaveStatus();
-  const nav = useNavigate();
+  const { goDetail } = usePageNav();
 
   const [status, setStatus] = useState<string>('');
   const [assign, setAssign] = useState<string>('');
@@ -66,7 +66,7 @@ export default function MidDisposeWorkbench() {
         }>
         <DataTable columns={cols} rows={rows} empty="无匹配工单"
           clickableKey="id"
-          onCellClick={(r) => nav('/console/cr/mid-dispose-detail?id=' + String(r.id))} />
+          onCellClick={(r) => goDetail('/console/cr/mid-dispose-detail?id=' + String(r.id))} />
       </Panel>
 
       <div style={{ marginTop: 10, fontSize: 11, color: '#94A3B8' }}>

@@ -8,6 +8,7 @@ import { Sam, Cal } from './SourceTag';
 import { PageShell } from './PageShell';
 import FlowActionBar from './FlowActionBar';
 import { useMidDashboards, useMidDataSources, useMidMetrics, updateDataSources } from './midStore';
+import { useScore, scoreOpsOf, SCORE_PROD_LABEL } from './scoreData';
 import {
   type MidDashboardPage, type MidWidget, type MidPageFilter, type MidDataSource, type MidMetric,
   resolveMetricsForRows, groupRowsByDim, applyMetricFilters, LEVEL_META,
@@ -194,6 +195,32 @@ export function WidgetView({ w, ds, metric, metrics, rows, onDrill, nav, onEdit,
       {onDelete && <button type="button" onClick={onDelete} style={{ fontSize: 12, color: '#B91C1C', background: 'none', border: '1px solid #FECACA', borderRadius: 6, padding: '2px 8px', cursor: 'pointer' }}>删除</button>}
     </div>
   );
+
+  // 评分产品指标卡：按产品读取运营效果（覆盖率/准确率/及时率/调用量），2x2 自动换行；不依赖数据集/指标
+  if (w.type === 'productMetrics') {
+    const ops = useScore().ops.find((o) => o.prod === (w.product ?? 'zhixin')) ?? scoreOpsOf((w.product as any) ?? 'zhixin');
+    const label = SCORE_PROD_LABEL[(w.product as any) ?? 'zhixin'] ?? w.product ?? '评分产品';
+    const cards = ops ? [
+      { k: '覆盖率', v: ops.coverage + '%' },
+      { k: '预警准确率', v: ops.accuracy + '%' },
+      { k: '处置及时率', v: ops.timely + '%' },
+      { k: '本月调用', v: ops.calls.toLocaleString() },
+    ] : [];
+    return (
+      <Panel title={w.title || label} actions={editAction} className="h-full" hoverTip={tip}>
+        {ops ? (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 10 }}>
+            {cards.map((c) => (
+              <div key={c.k} style={{ background: '#F8FAFC', border: '1px solid #EEF2F6', borderRadius: 8, padding: '8px 10px' }}>
+                <div style={{ fontSize: 11, color: '#64748B' }}>{c.k}</div>
+                <div style={{ fontSize: 18, fontWeight: 700, color: '#1E293B', fontVariantNumeric: 'tabular-nums' }}>{c.v}</div>
+              </div>
+            ))}
+          </div>
+        ) : <div style={{ fontSize: 12, color: '#94A3B8' }}>未配置产品</div>}
+      </Panel>
+    );
+  }
 
   if (!ds || !metric) return <Panel title={w.title} actions={editAction} className="h-full" hoverTip={tip}><div style={{ fontSize: 12, color: '#94A3B8' }}>配置缺失：数据集或指标未找到</div></Panel>;
 

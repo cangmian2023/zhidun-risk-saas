@@ -5,6 +5,7 @@ import { PageShell } from './PageShell'
 import { Button, Badge } from '../components/ui'
 import { Sam } from './SourceTag'
 import { useNavigate } from 'react-router-dom'
+import { usePageNav } from './pageNav'
 import { CrowdDrawer } from './CrowdDrawer'
 import { crowdMembers } from './crowdRule'
 
@@ -22,6 +23,7 @@ export default function ScoreCrowdPage() {
   const data = useScore()
   const customers = useMidCustomers()
   const nav = useNavigate()
+  const { goDetail } = usePageNav()
 
   const crowds: CrowdGroup[] = data.crowds ?? []
 
@@ -44,7 +46,7 @@ export default function ScoreCrowdPage() {
     updateScore((d) => ({ ...d, crowds: d.crowds.filter((g) => g.id !== id) }))
   }
 
-  const openDetail = (custId: string) => nav('/console/cr/mid-cust-score?cust=' + custId + '&prod=zhixin&back=' + encodeURIComponent('/console/sc/crowd-groups'))
+  const openDetail = (custId: string) => goDetail('/console/cr/mid-cust-score?cust=' + custId + '&prod=zhixin')
   const openList = (g: CrowdGroup) => nav('/console/sc/customer-list?group=' + g.id)
 
   return (

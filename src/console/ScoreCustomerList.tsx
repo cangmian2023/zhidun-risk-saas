@@ -4,9 +4,10 @@ import { useMidCustomers } from './midStore';
 import { PageShell } from './PageShell';
 import { DetailHeader, Panel, DataTable, Button, Badge } from '../components/ui';
 import { Sam } from './SourceTag';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { CrowdDrawer } from './CrowdDrawer';
 import { crowdMembers } from './crowdRule';
+import { usePageNav } from './pageNav';
 
 // 客户风险等级 → 徽标样式（客户主档为「高风险/中风险/低风险」）
 function riskKindOf(level?: string): 'red' | 'amber' | 'green' {
@@ -26,7 +27,7 @@ function tagFrom(level?: string): string {
 export default function ScoreCustomerListPage() {
   const data = useScore();
   const customers = useMidCustomers();
-  const nav = useNavigate();
+  const { goDetail } = usePageNav();
   const [params] = useSearchParams();
   const groupId = params.get('group');
   const [q, setQ] = useState('');
@@ -48,7 +49,7 @@ export default function ScoreCustomerListPage() {
     [group, customers],
   );
 
-  const openDetail = (custId: string) => nav('/console/cr/mid-cust-score?cust=' + custId + '&prod=zhixin&back=' + encodeURIComponent('/console/sc/customer-list' + (groupId ? '?group=' + groupId : '')));
+  const openDetail = (custId: string) => goDetail('/console/cr/mid-cust-score?cust=' + custId + '&prod=zhixin');
 
   const rows = useMemo(() => {
     const ql = (q ?? '').trim().toLowerCase();
@@ -98,7 +99,7 @@ export default function ScoreCustomerListPage() {
             crumb="评分产品 / 客户洞察 / 客户列表"
             subtitle={group ? `分组规则：${group.rule} · 成员 ${members.length} 人（规则实时计算）` : '全部客户'}
             backLabel="← 返回客户分组"
-            onBack={() => nav('/console/sc/crowd-groups')}
+            backTo="/console/sc/crowd-groups"
             actions={
               <>
                 <input

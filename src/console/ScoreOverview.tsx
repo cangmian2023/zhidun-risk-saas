@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { usePageNav } from './pageNav'
 import { useScore, SCORE_PROD_LABEL, updateScore, zhixinGrade, type ScoreProd, type ScoreRecord } from './scoreData'
 import { PageShell } from './PageShell'
 import { Panel, StatCard, Button, Badge, Modal } from '../components/ui'
@@ -42,6 +43,7 @@ function RiskGauge({ rate }: { rate: number }) {
 export default function ScoreOverviewPage() {
   const data = useScore()
   const nav = useNavigate()
+  const { goDetail } = usePageNav()
   const [search, setSearch] = useState('')
   const [importOpen, setImportOpen] = useState(false)
   const [csv, setCsv] = useState('')
@@ -49,7 +51,7 @@ export default function ScoreOverviewPage() {
 
   const onSearch = () => {
     const v = search.trim()
-    if (v) nav('/console/cr/mid-cust-score?cust=' + encodeURIComponent(v) + '&prod=zhixin&back=' + encodeURIComponent('/console/sc/overview'))
+    if (v) goDetail('/console/cr/mid-cust-score?cust=' + encodeURIComponent(v) + '&prod=zhixin')
   }
   const openImport = () => {
     setImportMsg('')

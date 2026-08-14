@@ -200,6 +200,21 @@ export function BarChart({
                 const v = s.data[gi] ?? 0
                 const bx = gx - (series.length * barW) / 2 + si * barW
                 const on = hover === gi
+                if (v === 0) {
+                  // 0 值也要可见：基线处画最小高度色块 + 「0」标注，避免「看不见就以为没有」
+                  return (
+                    <g key={s.name}>
+                      <rect x={bx} y={y(0) - 4} width={barW - 3} height={4} rx={2}
+                        fill={s.color} opacity={0.5} stroke={on ? '#0F172A' : 'none'} strokeWidth={on ? 1 : 0}
+                        style={{ cursor: 'crosshair' }}>
+                        <title>{`${lb} · ${s.name}: 0${unit}`}</title>
+                      </rect>
+                      <text x={bx + (barW - 3) / 2} y={y(0) - 7} textAnchor="middle" fontSize={9} className="fill-slate-400">
+                        0
+                      </text>
+                    </g>
+                  )
+                }
                 return (
                   <rect key={s.name} x={bx} y={y(v)} width={barW - 3} height={plotH - (y(v) - padT)} rx={3}
                     fill={s.color} opacity={on ? 1 : 0.82} stroke={on ? '#0F172A' : 'none'} strokeWidth={on ? 1 : 0}

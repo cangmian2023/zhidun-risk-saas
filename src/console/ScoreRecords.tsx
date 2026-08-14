@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { usePageNav } from './pageNav'
 import { useScore, SCORE_PROD_LABEL, updateScore, resolveRisk, type ScoreProd, type ScoreRecord, type ScoreData } from './scoreData'
 import { PageShell } from './PageShell'
 import { Panel, StatCard, DataTable, Button, Badge, Modal } from '../components/ui'
@@ -22,6 +23,7 @@ function modelKind(m: ScoreProd): 'red' | 'green' | 'violet' {
 export default function ScoreRecordsPage() {
   const data = useScore()
   const nav = useNavigate()
+  const { goDetail } = usePageNav()
   const [q, setQ] = useState('')
   const [modelFilter, setModelFilter] = useState<'all' | ScoreProd>('all')
   const [importOpen, setImportOpen] = useState(false)
@@ -158,7 +160,7 @@ export default function ScoreRecordsPage() {
             defaultPageSize={10}
             actions={(r: any) => (
               <div className="flex items-center gap-2">
-                <Button size="sm" variant="ghost" onClick={() => nav('/console/cr/mid-cust-score?cust=' + r.custId + '&prod=' + r.model + '&back=' + encodeURIComponent('/console/sc/score-records'))}>查看</Button>
+                <Button size="sm" variant="ghost" onClick={() => goDetail('/console/cr/mid-cust-score?cust=' + r.custId + '&prod=' + r.model)}>查看</Button>
                 {r.status === 'fail' ? (
                   <Button size="sm" variant="ghost" onClick={() => retry(r.id)}>重试</Button>
                 ) : null}

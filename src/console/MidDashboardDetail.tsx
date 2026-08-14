@@ -180,7 +180,7 @@ export default function MidDashboardDetail() {
   if (!d) {
     return (
       <div className="mx-auto max-w-6xl px-4 py-10 lg:px-8">
-        <PageShell header={<DetailHeader title="页面配置详情" crumb="零售信贷风控 / 管理中心 / 页面配置" backLabel="返回列表" onBack={() => nav('/console/cm/mid-dashboard-config')} />} />
+        <PageShell header={<DetailHeader title="页面配置详情" crumb="零售信贷风控 / 管理中心 / 页面配置" backLabel="返回列表" backTo="/console/cm/mid-dashboard-config" />} />
         <div className="mt-6 rounded-xl bg-slate-50 px-4 py-10 text-center text-sm text-slate-400">未找到该页面（{id}）。</div>
       </div>
     );
@@ -198,7 +198,7 @@ export default function MidDashboardDetail() {
           style={{ flex: 1, minWidth: 220, maxWidth: 480, fontSize: 12, color: '#64748B', padding: '2px 10px' }} />
       </div>}
       crumb="零售信贷风控 / 管理中心 / 页面配置"
-      backLabel="返回列表" onBack={() => nav('/console/cm/mid-dashboard-config')}
+      backLabel="返回列表" backTo="/console/cm/mid-dashboard-config"
       flowBar={<FlowActionBar flowId={d?.flowKey} state={d?.flowState}
         onStateChange={(s) => updateDashboards((list) => list.map((pg) => pg.id === d.id ? { ...pg, flowState: s } : pg))} onSave={savePage} />}
       actions={<><Sam value="midMetrics.json" /><Sam value="midDashboards.json" /></>}

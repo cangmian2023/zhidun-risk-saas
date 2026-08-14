@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useLayoutEffect } from 'react'
 import type { ReactNode, ButtonHTMLAttributes } from 'react'
 import { createPortal } from 'react-dom'
 import { SourceTag } from '../console/SourceTag'
+import { usePageNav } from '../console/pageNav'
 
 /* ---------- Page header ---------- */
 export function PageHeader({
@@ -153,6 +154,7 @@ export function DetailHeader({
   subtitle,
   backLabel,
   onBack,
+  backTo,
   actions,
   id,
   flowBar,
@@ -163,11 +165,15 @@ export function DetailHeader({
   subtitle?: ReactNode
   backLabel?: string
   onBack?: () => void
+  backTo?: string // 统一框架兜底：未传 onBack 时，返回优先读 ?back=，否则回退到此路径
   actions?: ReactNode
   id?: string
   flowBar?: ReactNode // 需求21：流程操作行（面包屑下方，保存/流程按钮/状态标签）
   sticky?: boolean // 是否吸顶（默认吸顶；个别页面仅需 Tab 吸顶时传 false）
 }) {
+  const { back } = usePageNav()
+  // 统一返回：调用方显式 onBack > 框架自动返回（?back= → backTo → 浏览器后退）
+  const onBackResolved = onBack ?? (() => back(backTo))
   return (
     <div
       id={id}
@@ -177,10 +183,10 @@ export function DetailHeader({
     >
       {/* 第一行：返回按钮 + 面包屑 */}
       <div className="flex flex-wrap items-center gap-3">
-        {onBack && (
+        {onBackResolved && (
           <button
             type="button"
-            onClick={onBack}
+            onClick={onBackResolved}
             className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-600 transition hover:bg-slate-100"
           >
             {backLabel ?? '← 返回'}

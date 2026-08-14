@@ -1,0 +1,304 @@
+<div tabindex="0" style="outline: none;"><div class="ant-modal-content"><button type="button" aria-label="Close" class="ant-modal-close"><span class="ant-modal-close-x"><span role="img" aria-label="close" class="anticon anticon-close ant-modal-close-icon"><svg focusable="false" data-icon="close" width="1em" height="1em" fill="currentColor" aria-hidden="true" fill-rule="evenodd" viewBox="64 64 896 896"><path d="M799.86 166.31c.02 0 .04.02.08.06l57.69 57.7c.04.03.05.05.06.08a.12.12 0 010 .06c0 .03-.02.05-.06.09L569.93 512l287.7 287.7c.04.04.05.06.06.09a.12.12 0 010 .07c0 .02-.02.04-.06.08l-57.7 57.69c-.03.04-.05.05-.07.06a.12.12 0 01-.07 0c-.03 0-.05-.02-.09-.06L512 569.93l-287.7 287.7c-.04.04-.06.05-.09.06a.12.12 0 01-.07 0c-.02 0-.04-.02-.08-.06l-57.69-57.7c-.04-.03-.05-.05-.06-.07a.12.12 0 010-.07c0-.03.02-.05.06-.09L454.07 512l-287.7-287.7c-.04-.04-.05-.06-.06-.09a.12.12 0 010-.07c0-.02.02-.04.06-.08l57.7-57.69c.03-.04.05-.05.07-.06a.12.12 0 01.07 0c.03 0 .05.02.09.06L512 454.07l287.7-287.7c.04-.04.06-.05.09-.06a.12.12 0 01.07 0z"></path></svg><!----></span></span></button><div class="ant-modal-header"><div class="ant-modal-title" id="vcDialogTitle5">快照详情</div></div><div class="ant-modal-body"><div data-v-de5f5548="" class="ant-descriptions ant-descriptions-small ant-descriptions-bordered css-1p3hq3p"><!----><div class="ant-descriptions-view"><table><tbody><tr class="ant-descriptions-row"><th class="ant-descriptions-item-label" colspan="1"><span>版本</span><!----></th><td class="ant-descriptions-item-content" colspan="1"><!----><span>v1</span></td><th class="ant-descriptions-item-label" colspan="1"><span>目标</span><!----></th><td class="ant-descriptions-item-content" colspan="1"><!----><span>注册测试</span></td></tr><tr class="ant-descriptions-row"><th class="ant-descriptions-item-label" colspan="1"><span>变更说明</span><!----></th><td class="ant-descriptions-item-content" colspan="3"><!----><span>审批通过，发布模型</span></td></tr><tr class="ant-descriptions-row"><th class="ant-descriptions-item-label" colspan="1"><span>创建人</span><!----></th><td class="ant-descriptions-item-content" colspan="1"><!----><span>admin</span></td><th class="ant-descriptions-item-label" colspan="1"><span>创建时间</span><!----></th><td class="ant-descriptions-item-content" colspan="1"><!----><span>2026-07-20T11:47:22</span></td></tr></tbody></table></div></div><h4 data-v-de5f5548="" style="margin: 16px 0px 8px;">快照数据</h4><textarea data-v-de5f5548="" class="ant-input css-1p3hq3p" rows="12" readonly="" value="{
+  &quot;model&quot;: {
+    &quot;createTime&quot;: &quot;2026-07-20T11:47:07&quot;,
+    &quot;updateTime&quot;: &quot;2026-07-20T11:47:07&quot;,
+    &quot;tenantId&quot;: &quot;1&quot;,
+    &quot;tenantCode&quot;: &quot;system&quot;,
+    &quot;id&quot;: &quot;2079171240041709569&quot;,
+    &quot;modelName&quot;: &quot;注册测试&quot;,
+    &quot;modelCode&quot;: &quot;reg_test&quot;,
+    &quot;status&quot;: 1
+  },
+  &quot;policies&quot;: [
+    {
+      &quot;createTime&quot;: &quot;2026-07-20T11:47:08&quot;,
+      &quot;updateTime&quot;: &quot;2026-07-20T11:47:08&quot;,
+      &quot;id&quot;: &quot;2079171240708603905&quot;,
+      &quot;modelId&quot;: &quot;2079171240041709569&quot;,
+      &quot;policyName&quot;: &quot;账号质量评分卡&quot;,
+      &quot;policyCode&quot;: &quot;account_score&quot;,
+      &quot;policyType&quot;: 3,
+      &quot;highScore&quot;: 70,
+      &quot;medianScore&quot;: 40,
+      &quot;configJson&quot;: {
+        &quot;scoreItems&quot;: [
+          {
+            &quot;field&quot;: &quot;register_duration_seconds&quot;,
+            &quot;weight&quot;: 1,
+            &quot;ranges&quot;: [
+              {
+                &quot;min&quot;: 0,
+                &quot;max&quot;: 5,
+                &quot;score&quot;: 35
+              },
+              {
+                &quot;min&quot;: 5,
+                &quot;max&quot;: 15,
+                &quot;score&quot;: 15
+              },
+              {
+                &quot;min&quot;: 15,
+                &quot;max&quot;: 9999,
+                &quot;score&quot;: 0
+              }
+            ]
+          },
+          {
+            &quot;field&quot;: &quot;mouse_move_count&quot;,
+            &quot;weight&quot;: 0.8,
+            &quot;ranges&quot;: [
+              {
+                &quot;min&quot;: 0,
+                &quot;max&quot;: 1,
+                &quot;score&quot;: 30
+              },
+              {
+                &quot;min&quot;: 1,
+                &quot;max&quot;: 10,
+                &quot;score&quot;: 10
+              },
+              {
+                &quot;min&quot;: 10,
+                &quot;max&quot;: 99999,
+                &quot;score&quot;: 0
+              }
+            ]
+          },
+          {
+            &quot;field&quot;: &quot;keystroke_interval_variance&quot;,
+            &quot;weight&quot;: 0.7,
+            &quot;ranges&quot;: [
+              {
+                &quot;min&quot;: 0,
+                &quot;max&quot;: 0.01,
+                &quot;score&quot;: 25
+              },
+              {
+                &quot;min&quot;: 0.01,
+                &quot;max&quot;: 0.1,
+                &quot;score&quot;: 10
+              },
+              {
+                &quot;min&quot;: 0.1,
+                &quot;max&quot;: 9999,
+                &quot;score&quot;: 0
+              }
+            ]
+          },
+          {
+            &quot;field&quot;: &quot;nickname_random_score&quot;,
+            &quot;weight&quot;: 0.6,
+            &quot;ranges&quot;: [
+              {
+                &quot;min&quot;: 0,
+                &quot;max&quot;: 0.5,
+                &quot;score&quot;: 0
+              },
+              {
+                &quot;min&quot;: 0.5,
+                &quot;max&quot;: 0.8,
+                &quot;score&quot;: 15
+              },
+              {
+                &quot;min&quot;: 0.8,
+                &quot;max&quot;: 1.1,
+                &quot;score&quot;: 30
+              }
+            ]
+          },
+          {
+            &quot;field&quot;: &quot;device_id_similarity&quot;,
+            &quot;weight&quot;: 0.5,
+            &quot;ranges&quot;: [
+              {
+                &quot;min&quot;: 0,
+                &quot;max&quot;: 0.7,
+                &quot;score&quot;: 0
+              },
+              {
+                &quot;min&quot;: 0.7,
+                &quot;max&quot;: 0.95,
+                &quot;score&quot;: 15
+              },
+              {
+                &quot;min&quot;: 0.95,
+                &quot;max&quot;: 1.1,
+                &quot;score&quot;: 35
+              }
+            ]
+          }
+        ]
+      },
+      &quot;status&quot;: 1,
+      &quot;version&quot;: 1,
+      &quot;_rules&quot;: []
+    },
+    {
+      &quot;createTime&quot;: &quot;2026-07-20T11:47:08&quot;,
+      &quot;updateTime&quot;: &quot;2026-07-20T11:47:08&quot;,
+      &quot;id&quot;: &quot;2079171240679243778&quot;,
+      &quot;modelId&quot;: &quot;2079171240041709569&quot;,
+      &quot;policyName&quot;: &quot;名单匹配策略&quot;,
+      &quot;policyCode&quot;: &quot;blacklist_match&quot;,
+      &quot;policyType&quot;: 5,
+      &quot;highScore&quot;: 80,
+      &quot;medianScore&quot;: 50,
+      &quot;configJson&quot;: {
+        &quot;matches&quot;: [
+          {
+            &quot;watchlistId&quot;: 8004,
+            &quot;keyField&quot;: &quot;ip&quot;,
+            &quot;listName&quot;: &quot;IP黑名单&quot;,
+            &quot;score&quot;: 70
+          },
+          {
+            &quot;watchlistId&quot;: 8005,
+            &quot;keyField&quot;: &quot;ip&quot;,
+            &quot;listName&quot;: &quot;代理IP灰名单&quot;,
+            &quot;score&quot;: 40
+          },
+          {
+            &quot;watchlistId&quot;: 8003,
+            &quot;keyField&quot;: &quot;deviceId&quot;,
+            &quot;listName&quot;: &quot;设备黑名单&quot;,
+            &quot;score&quot;: 80
+          }
+        ]
+      },
+      &quot;status&quot;: 1,
+      &quot;version&quot;: 1,
+      &quot;_rules&quot;: []
+    },
+    {
+      &quot;createTime&quot;: &quot;2026-07-20T11:47:08&quot;,
+      &quot;updateTime&quot;: &quot;2026-07-20T11:47:08&quot;,
+      &quot;id&quot;: &quot;2079171240637300738&quot;,
+      &quot;modelId&quot;: &quot;2079171240041709569&quot;,
+      &quot;policyName&quot;: &quot;机器特征策略&quot;,
+      &quot;policyCode&quot;: &quot;machine_pattern&quot;,
+      &quot;policyType&quot;: 1,
+      &quot;highScore&quot;: 80,
+      &quot;medianScore&quot;: 50,
+      &quot;status&quot;: 1,
+      &quot;version&quot;: 1,
+      &quot;_rules&quot;: [
+        {
+          &quot;createTime&quot;: &quot;2026-07-20T11:47:08&quot;,
+          &quot;updateTime&quot;: &quot;2026-07-20T11:47:08&quot;,
+          &quot;id&quot;: &quot;2079171240796684289&quot;,
+          &quot;policyId&quot;: &quot;2079171240637300738&quot;,
+          &quot;ruleName&quot;: &quot;无人机操作轨迹&quot;,
+          &quot;conditionExpr&quot;: &quot;mouse_move_count == 0 || keystroke_interval_variance &lt; 0.01&quot;,
+          &quot;score&quot;: 60,
+          &quot;operation&quot;: &quot;ADD&quot;,
+          &quot;priority&quot;: 160,
+          &quot;status&quot;: 1
+        },
+        {
+          &quot;createTime&quot;: &quot;2026-07-20T11:47:08&quot;,
+          &quot;updateTime&quot;: &quot;2026-07-20T11:47:08&quot;,
+          &quot;id&quot;: &quot;2079171240758935553&quot;,
+          &quot;policyId&quot;: &quot;2079171240637300738&quot;,
+          &quot;ruleName&quot;: &quot;注册流程过快&quot;,
+          &quot;conditionExpr&quot;: &quot;register_duration_seconds &lt; 5&quot;,
+          &quot;score&quot;: 50,
+          &quot;operation&quot;: &quot;ADD&quot;,
+          &quot;priority&quot;: 150,
+          &quot;status&quot;: 1
+        },
+        {
+          &quot;createTime&quot;: &quot;2026-07-20T11:47:08&quot;,
+          &quot;updateTime&quot;: &quot;2026-07-20T11:47:08&quot;,
+          &quot;id&quot;: &quot;2079171240809267201&quot;,
+          &quot;policyId&quot;: &quot;2079171240637300738&quot;,
+          &quot;ruleName&quot;: &quot;UA异常&quot;,
+          &quot;conditionExpr&quot;: &quot;ua_is_bot == true || ua_is_outdated == true&quot;,
+          &quot;score&quot;: 40,
+          &quot;operation&quot;: &quot;ADD&quot;,
+          &quot;priority&quot;: 120,
+          &quot;status&quot;: 1
+        }
+      ]
+    },
+    {
+      &quot;createTime&quot;: &quot;2026-07-20T11:47:08&quot;,
+      &quot;updateTime&quot;: &quot;2026-07-20T11:47:08&quot;,
+      &quot;id&quot;: &quot;2079171240700215298&quot;,
+      &quot;modelId&quot;: &quot;2079171240041709569&quot;,
+      &quot;policyName&quot;: &quot;注册风险分级表&quot;,
+      &quot;policyCode&quot;: &quot;register_tier&quot;,
+      &quot;policyType&quot;: 4,
+      &quot;highScore&quot;: 85,
+      &quot;medianScore&quot;: 55,
+      &quot;configJson&quot;: {
+        &quot;rows&quot;: [
+          {
+            &quot;rowName&quot;: &quot;IP批量+设备农场+机器昵称-高危&quot;,
+            &quot;score&quot;: 80,
+            &quot;conditions&quot;: [
+              {
+                &quot;field&quot;: &quot;ip_register_count_1h&quot;,
+                &quot;expr&quot;: &quot;ip_register_count_1h &gt;= 10&quot;
+              },
+              {
+                &quot;field&quot;: &quot;device_register_count_24h&quot;,
+                &quot;expr&quot;: &quot;device_register_count_24h &gt;= 5&quot;
+              },
+              {
+                &quot;field&quot;: &quot;nickname_random_score&quot;,
+                &quot;expr&quot;: &quot;nickname_random_score &gt; 0.8&quot;
+              }
+            ]
+          },
+          {
+            &quot;rowName&quot;: &quot;IP批量+设备农场-高危&quot;,
+            &quot;score&quot;: 65,
+            &quot;conditions&quot;: [
+              {
+                &quot;field&quot;: &quot;ip_register_count_1h&quot;,
+                &quot;expr&quot;: &quot;ip_register_count_1h &gt;= 10&quot;
+              },
+              {
+                &quot;field&quot;: &quot;device_register_count_24h&quot;,
+                &quot;expr&quot;: &quot;device_register_count_24h &gt;= 5&quot;
+              }
+            ]
+          },
+          {
+            &quot;rowName&quot;: &quot;IP批量-中危&quot;,
+            &quot;score&quot;: 40,
+            &quot;conditions&quot;: [
+              {
+                &quot;field&quot;: &quot;ip_register_count_1h&quot;,
+                &quot;expr&quot;: &quot;ip_register_count_1h &gt;= 5&quot;
+              }
+            ]
+          },
+          {
+            &quot;rowName&quot;: &quot;设备农场-中危&quot;,
+            &quot;score&quot;: 45,
+            &quot;conditions&quot;: [
+              {
+                &quot;field&quot;: &quot;device_register_count_24h&quot;,
+                &quot;expr&quot;: &quot;device_register_count_24h &gt;= 3&quot;
+              }
+            ]
+          },
+          {
+            &quot;rowName&quot;: &quot;正常注册-低危&quot;,
+            &quot;score&quot;: 0,
+            &quot;conditions&quot;: [
+              {
+                &quot;field&quot;: &quot;ip_register_count_1h&quot;,
+                &quot;expr&quot;: &quot;ip_register_count_1h &lt; 5&quot;
+              }
+            ]
+          }
+        ]
+      },
+      &quot;status&quot;: 1,
+      &quot;version&quot;: 1,
+      &quot;_rules&quot;: []
+    }
+  ]
+}" style="font-family: monospace; font-size: 12px;"></textarea></div><!----></div></div>

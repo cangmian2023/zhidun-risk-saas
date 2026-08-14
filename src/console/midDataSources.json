@@ -1700,62 +1700,14 @@
       }
     ],
     "rows": [
-      {
-        "model": "zhicha",
-        "model_name": "智察分",
-        "rule": "近30天申贷平台数≥5",
-        "hits": 1842,
-        "rate": 11.3
-      },
-      {
-        "model": "zhicha",
-        "model_name": "智察分",
-        "rule": "设备模拟器特征命中",
-        "hits": 1320,
-        "rate": 8.1
-      },
-      {
-        "model": "zhicha",
-        "model_name": "智察分",
-        "rule": "命中外部黑灰名单",
-        "hits": 980,
-        "rate": 6
-      },
-      {
-        "model": "zhixin",
-        "model_name": "智信分",
-        "rule": "历史 M3+ 逾期≥2",
-        "hits": 760,
-        "rate": 4.7
-      },
-      {
-        "model": "zhixin",
-        "model_name": "智信分",
-        "rule": "负债收入比≥70%",
-        "hits": 1120,
-        "rate": 6.9
-      },
-      {
-        "model": "zhixin",
-        "model_name": "智信分",
-        "rule": "征信月查询≥10",
-        "hits": 640,
-        "rate": 3.9
-      },
-      {
-        "model": "zhirong",
-        "model_name": "智融分",
-        "rule": "转化意愿低且资产缺失",
-        "hits": 510,
-        "rate": 3.1
-      },
-      {
-        "model": "zhirong",
-        "model_name": "智融分",
-        "rule": "多头借贷强度高",
-        "hits": 880,
-        "rate": 5.4
-      }
+      { "model": "zhicha", "model_name": "智察分", "rule": "近30天申贷平台数≥5", "hits": 1842, "rate": 11.3 },
+      { "model": "zhicha", "model_name": "智察分", "rule": "设备模拟器特征命中", "hits": 1320, "rate": 8.1 },
+      { "model": "zhicha", "model_name": "智察分", "rule": "命中外部黑灰名单", "hits": 980, "rate": 6.0 },
+      { "model": "zhixin", "model_name": "智信分", "rule": "历史 M3+ 逾期≥2", "hits": 760, "rate": 4.7 },
+      { "model": "zhixin", "model_name": "智信分", "rule": "负债收入比≥70%", "hits": 1120, "rate": 6.9 },
+      { "model": "zhixin", "model_name": "智信分", "rule": "征信月查询≥10", "hits": 640, "rate": 3.9 },
+      { "model": "zhirong", "model_name": "智融分", "rule": "转化意愿低且资产缺失", "hits": 510, "rate": 3.1 },
+      { "model": "zhirong", "model_name": "智融分", "rule": "多头借贷强度高", "hits": 880, "rate": 5.4 }
     ],
     "status": "已接入"
   },

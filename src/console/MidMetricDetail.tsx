@@ -59,7 +59,7 @@ export default function MidMetricDetail() {
       title={draft.name || (isNew ? '新建指标' : '指标详情')}
       crumbParts={['指标库']}
       subtitle={`${draft.type === 'base' ? '基础指标' : '派生指标'}　·　分组：${draft.group ?? '-'}　·　保存即落盘`}
-      backLabel="返回列表" onBack={() => nav('/console/cm/mid-metric')}
+      backLabel="返回列表" backTo="/console/cm/mid-metric"
       flowBar={<FlowActionBar flowId={draft.flowKey} state={draft.flowState}
         onStateChange={(s) => setDraft({ ...draft, flowState: s })} onSave={save} />}
       actions={<>

@@ -13,6 +13,7 @@ import { useMidAlerts, useMidCustomers, useMidDisposeTasks, updateAlerts, update
 import { LEVEL_META, type MidAlert } from './midData';
 import { matchFlowGraph, useFlows, flowStepOf } from './flowStore';
 import FlowActionBar from './FlowActionBar';
+import { usePageNav } from './pageNav';
 
 export default function MidAlertDetail() {
   const [params] = useSearchParams();
@@ -22,6 +23,7 @@ export default function MidAlertDetail() {
   const disposeTasks = useMidDisposeTasks();
   const flows = useFlows();
   const nav = useNavigate();
+  const { goDetail } = usePageNav();
   const [, setLogTick] = useState(0); // 操作日志写入后强制刷新
 
   const a = useMemo(() => alerts.find((x) => x.alert_id === id) ?? null, [alerts, id]);
@@ -29,7 +31,7 @@ export default function MidAlertDetail() {
   if (!a) {
     return (
       <div style={{ padding: 24 }}>
-        <PageShell header={<DetailHeader title="预警详情" crumb="贷中监控 / 预警处置" backLabel="返回队列" onBack={() => nav('/console/cr/mid-alert-workbench')} />} />
+        <PageShell header={<DetailHeader title="预警详情" crumb="贷中监控 / 预警工作台" backLabel="返回队列" />} />
         <div style={{ padding: 24, color: '#94A3B8', fontSize: 13 }}>未找到该预警（{id}）。</div>
       </div>
     );
@@ -73,8 +75,8 @@ export default function MidAlertDetail() {
 
   return (
     <div style={{ padding: 24, maxWidth: 1120 }}>
-      <PageShell header={<DetailHeader title={`预警详情 · ${a.alert_id}`} crumb="贷中监控 / 预警处置" subtitle={`${a.cust_name} · ${a.alert_type}`}
-        backLabel="返回队列" onBack={() => nav('/console/cr/mid-alert-workbench')}
+      <PageShell header={<DetailHeader title={`预警详情 · ${a.alert_id}`} crumb="贷中监控 / 预警工作台" subtitle={`${a.cust_name} · ${a.alert_type}`}
+        backLabel="返回队列"
         actions={<>
           <Sam label="预警样例" value="midAlerts.json" />
           <Sam label="客户样例" value="midCustomers.json" />
@@ -93,7 +95,7 @@ export default function MidAlertDetail() {
 
       {/* 需求17：客户摘要（按 custId 匹配；「查看单客视图」按钮移入本区块）——第一位 */}
       <Panel className="mb-4" title="客户摘要" desc={cust ? <span>以客户为中心看全局 · <Sam label="样例" /> 客户号 {cust.custId}</span> : '该客户暂无档案（midCustomers.json）'}
-        actions={cust ? <Button size="sm" variant="ghost" onClick={() => nav(`/console/cr/mid-single-cust?cust=${cust.custId}&id=${a.alert_id}`)}>查看单客视图 →</Button> : undefined}>
+        actions={cust ? <Button size="sm" variant="ghost" onClick={() => goDetail(`/console/cr/mid-single-cust?cust=${cust.custId}&id=${a.alert_id}`)}>查看单客视图 →</Button> : undefined}>
         {cust ? (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0,1fr))', gap: '6px 16px', fontSize: 13 }}>
             {([

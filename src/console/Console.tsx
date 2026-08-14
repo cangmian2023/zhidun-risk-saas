@@ -49,8 +49,9 @@ import { DunAssignment, DunImport, DunChannels, DunAgencies, DunQa, DunRepayment
 import EnterpriseModule from './EnterpriseModule'
 import EnterpriseDashboard from './EnterpriseDashboard'
 import ScoreModule from './ScoreModule'
+import DecisionModule from './DecisionModule'
 import { getDashboardByKey } from './dashboardData'
-import { creditRiskMenu, scoringMenu, entMenu, dmMenu, dataGovernanceMenu, cmMenu, collectionMenu, type MenuGroup } from './menus'
+import { creditRiskMenu, scoringMenu, entMenu, dmMenu, dataGovernanceMenu, cmMenu, collectionMenu, decisionEngineMenu, type MenuGroup } from './menus'
 import SidebarMenu from './SidebarMenu'
 import { MenuIcon, type IconName } from '../components/icons'
 import { moduleSpecs } from './specs'
@@ -61,8 +62,9 @@ const subName: Record<string, string> = {
   ep: '企业风控',
   dm: '数字营销',
   dg: '数据治理',
-  cm: '管理中心',
   zz: '催收管理',
+  de: '决策引擎',
+  cm: '管理中心',
 }
 
 // 子系统（可在 banner 中一键切换）
@@ -73,6 +75,7 @@ const subsystems = [
   { key: 'dm', name: '数字营销', open: false },
   { key: 'dg', name: '数据治理', open: true },
   { key: 'zz', name: '催贷管理', open: true },
+  { key: 'de', name: '决策引擎', open: true },
   { key: 'cm', name: '管理中心', open: true },
 ]
 
@@ -91,6 +94,9 @@ export default function Console() {
   const { sub = 'cr' } = useParams()
   const loc = useLocation()
   const nav = useNavigate()
+  // 外壳子系统：侧边栏/顶部子系统条跟随「入口子系统」(from)，而非 URL 的 sub。
+  // 这样跨子系统复用详情页（如 sc 进 cr:mid-cust-score）时，外壳保持入口子系统不变。
+  const shellSub = new URLSearchParams(loc.search).get('from') || sub
 
   // 侧边栏：响应式收起 / 手动切换 / 拖拽调宽
   const COLLAPSE_BP = 1520 // 此宽度以下，展开态下列表会出现横向滚动，自动收起为图标栏
@@ -182,6 +188,7 @@ export default function Console() {
     'cr:mid-td5': 'flag',
     // 评分产品（v3 新 IA：工作台/在线评分/客户洞察/数据分析/模型管理/策略配置）
     'sc:overview': 'dashboard',
+    'sc:overview-legacy': 'dashboard',
     'sc:alert-workbench': 'bell',
     'sc:score-records': 'list',
     'sc:crowd-groups': 'users',
@@ -316,17 +323,35 @@ export default function Console() {
     'zz:agencies': 'users',
     'zz:qa': 'shield',
     'zz:repayment': 'check',
+    // 决策引擎
+    'de:overview': 'dashboard',
+    'de:model-manage': 'model',
+    'de:feature-lib': 'database',
+    'de:feature-monitor': 'pulse',
+    'de:list-lib': 'layers',
+    'de:template-market': 'grid',
+    'de:version-manage': 'clock',
+    'de:traffic-split': 'share',
+    'de:decision-replay': 'eye',
+    'de:batch-decision': 'inbox',
+    'de:monitor-board': 'monitor',
+    'de:alert-manage': 'bell',
+    'de:decision-analysis': 'analytics',
+    'de:rule-hit': 'filter',
+    'de:decision-log': 'list',
+    'de:approval-manage': 'check',
   }
   const menuIcon = (key: string): IconName => MENU_ICON[key] ?? 'dashboard'
 
   const menu: MenuGroup[] =
-    sub === 'cr' ? creditRiskMenu :
-    sub === 'sc' ? scoringMenu :
-    sub === 'ep' ? entMenu :
-    sub === 'dm' ? dmMenu :
-    sub === 'dg' ? dataGovernanceMenu :
-    sub === 'cm' ? cmMenu :
-    sub === 'zz' ? collectionMenu : []
+    shellSub === 'cr' ? creditRiskMenu :
+    shellSub === 'sc' ? scoringMenu :
+    shellSub === 'ep' ? entMenu :
+    shellSub === 'dm' ? dmMenu :
+    shellSub === 'dg' ? dataGovernanceMenu :
+    shellSub === 'zz' ? collectionMenu :
+    shellSub === 'de' ? decisionEngineMenu :
+    shellSub === 'cm' ? cmMenu : []
   const cur = (loc.pathname.split('/')[3] as string) || 'overview'
   const key = `${sub}:${cur}`
 
@@ -337,7 +362,7 @@ export default function Console() {
       ? (prod as 'zhicha' | 'zhixin' | 'zhirong')
       : null
 
-  const supported = sub === 'cr' || sub === 'sc' || sub === 'ep' || sub === 'dm' || sub === 'dg' || sub === 'cm' || sub === 'zz'
+  const supported = sub === 'cr' || sub === 'sc' || sub === 'ep' || sub === 'dm' || sub === 'dg' || sub === 'cm' || sub === 'zz' || sub === 'de'
 
   function onLogout() {
     logout()
@@ -364,7 +389,7 @@ export default function Console() {
           <span className="hidden h-5 w-px bg-slate-200 sm:block" />
           <div className="flex shrink-0 items-center gap-1 rounded-xl bg-slate-100 p-1">
             {subsystems.map((s) => {
-              const active = s.key === sub
+              const active = s.key === shellSub
               return (
                 <button
                   key={s.key}
@@ -423,13 +448,13 @@ export default function Console() {
           {!supported ? (
             collapsed ? (
               <div className="flex justify-center pt-1">
-                <span title={`${subName[sub]}（规划中）`} className="text-slate-300">
+                <span title={`${subName[shellSub]}（规划中）`} className="text-slate-300">
                   <MenuIcon name="lock" className="h-5 w-5" />
                 </span>
               </div>
             ) : (
               <div className="px-5 py-8 text-sm text-slate-400">
-                <p className="font-medium text-slate-500">{subName[sub]}（规划中）</p>
+                <p className="font-medium text-slate-500">{subName[shellSub]}（规划中）</p>
                 <p className="mt-2 leading-relaxed">
                   该子系统功能正在规划与接入中，敬请期待。您可点击顶部的子系统按钮切换至已开通的子系统。
                 </p>
@@ -438,7 +463,7 @@ export default function Console() {
           ) : collapsed ? (
             <nav className="flex flex-col items-center gap-1 px-2">
               {menu.flatMap((g) => g.items).map((it) => {
-                const to = `/console/${sub}/${it.key.split(':')[1]}`
+                const to = `/console/${shellSub}/${it.key.split(':')[1]}`
                 const active = it.key.split(':')[1] === cur
                 return (
                   <NavLink
@@ -459,7 +484,7 @@ export default function Console() {
               })}
             </nav>
           ) : (
-            <SidebarMenu menu={menu} sub={sub} cur={cur} menuIcon={menuIcon} nav={nav} />
+            <SidebarMenu menu={menu} sub={shellSub} cur={cur} menuIcon={menuIcon} nav={nav} />
           )}
         </aside>
 
@@ -589,6 +614,8 @@ export default function Console() {
               <MidDashboardPage pageKey={key} />
             ) : key.startsWith('sc:') ? (
               <ScoreModule pageKey={key} search={loc.search} />
+            ) : key.startsWith('de:') ? (
+              <DecisionModule pageKey={key} search={loc.search} />
             ) : (
               <ModulePage spec={moduleSpecs[key] ?? emptySpec(subName[sub] ?? '控制台')} />
             )}

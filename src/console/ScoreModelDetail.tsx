@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
 import {
   useScore, updateScore, SCORE_PROD_LABEL,
   type ScoreProd, type ModelMeta, type ModelVersion, type ThresholdRow,
@@ -12,7 +12,8 @@ import ModelDecisionGraph from './ModelDecisionGraph'
 import { PIPELINE_GRAPHS } from './modelGraphData'
 import FlowCanvasEditor from './FlowCanvasEditor'
 import { useFlows, getFlowById } from './flowStore'
-import { updateAlerts, midNewId, type MidAlert } from './midStore'
+import { updateAlerts, useMidAlerts, midNewId, type MidAlert } from './midStore'
+import { usePageNav } from './pageNav'
 
 const MODEL_COLOR: Record<ScoreProd, string> = {
   zhicha: '#ef4444',
@@ -39,7 +40,7 @@ function levelKind(level: string): 'red' | 'amber' | 'blue' | 'green' | 'gray' {
 export default function ScoreModelDetailPage() {
   const data = useScore()
   const [params] = useSearchParams()
-  const nav = useNavigate()
+  const { goDetail, back } = usePageNav()
   const prod = ((params.get('prod') as ScoreProd) ?? 'zhicha')
   const m = data.models.find((x) => x.prod === prod) ?? data.models[0]
   const color = MODEL_COLOR[m.prod]
@@ -271,7 +272,7 @@ export default function ScoreModelDetailPage() {
         subtitle={`${SCORE_PROD_LABEL[m.prod]} · 模型详情（基本信息 / 算法编辑 / 模型效果 / 评分阈值 / 版本日志）`}
         crumb="评分产品 / 模型管理"
         actions={
-          <Button size="sm" variant="secondary" onClick={() => nav('/console/sc/model-manage')}>← 返回模型列表</Button>
+          <Button size="sm" variant="secondary" onClick={() => back('/console/sc/model-manage')}>← 返回模型列表</Button>
         }
       />
       <div className="space-y-4">
@@ -419,8 +420,8 @@ export default function ScoreModelDetailPage() {
                   model={m}
                   thresholds={data.thresholds}
                   graph={m.decisionGraph ?? (m.prod === 'zhixin' ? PIPELINE_GRAPHS.zhixin_credit_v1 : undefined)}
-                  onJumpRules={() => nav('/console/cm/rule-hub')}
-                  onJumpStrategy={() => nav('/console/sc/model-detail?prod=' + prod + '&tab=threshold')}
+                  onJumpRules={() => goDetail('/console/cm/rule-hub')}
+                  onJumpStrategy={() => goDetail('/console/sc/model-detail?prod=' + prod + '&tab=threshold')}
                   onSaveCollisions={(rules) =>
                     updateScore((d) => ({
                       ...d,
@@ -469,7 +470,7 @@ export default function ScoreModelDetailPage() {
                 <Badge kind={PSI_KIND[ops.psiStatus]}>{ops.psi} · {ops.psiStatus}</Badge>
                 <span className="text-xs text-slate-400">PSI ≥ 0.25 触发漂移预警</span>
                 <div className="flex-1" />
-                <Button size="sm" variant="ghost" onClick={() => nav('/console/sc/model-effect')}>查看三模型对比 →</Button>
+                <Button size="sm" variant="ghost" onClick={() => goDetail('/console/sc/model-effect')}>查看三模型对比 →</Button>
               </div>
             </Panel>
             <div className="grid gap-4 lg:grid-cols-2">

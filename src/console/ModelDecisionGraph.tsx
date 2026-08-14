@@ -116,11 +116,6 @@ export default function ModelDecisionGraph({
   const isAlertEdge = (e: { from: string; to: string }) =>
     nodeMap.get(e.from)?.type === 'alert' || nodeMap.get(e.to)?.type === 'alert'
 
-  const rows = thresholds.filter((t) => t.prod === prod)
-  /* 当前用户分数落在哪个分数段（决策映射表高亮用） */
-  const hitRow = currentScore != null
-    ? rows.find((t) => { const [lo, hi] = t.range.split('-').map(Number); return currentScore >= lo && currentScore <= hi })
-    : undefined
   const effectiveRules = model.collisionRules?.length ? model.collisionRules : COLLISION_SEED[prod]
   const metaOf = (n: GNode): string[] => {
     if (n.type === 'collision' && effectiveRules.length) {
@@ -720,47 +715,6 @@ export default function ModelDecisionGraph({
               })}
             </tbody>
           </table>
-        </div>
-      </div>
-
-      {/* ============ 底部表 2：分数段 → 处置 ============ */}
-      <div className="mt-4 overflow-hidden rounded-xl border border-slate-200">
-        <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-3 py-2">
-          <div className="flex items-center gap-2 text-sm font-semibold text-slate-800">决策映射 · 输出分数如何变成处置动作<span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-normal text-slate-400">只读 · 数据来自「评分阈值」</span></div>
-          <button onClick={onJumpStrategy} className="text-xs text-blue-600 hover:underline">在规则引擎配置 →</button>
-        </div>
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="text-left text-xs text-slate-400">
-              <th className="px-3 py-2 font-medium">分数段</th>
-              <th className="px-3 py-2 font-medium">等级</th>
-              <th className="px-3 py-2 font-medium">含义</th>
-              <th className="px-3 py-2 font-medium">建议动作（阈值规则）</th>
-              <th className="px-3 py-2 font-medium">执行引擎</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((t) => {
-              const hit = hitRow?.range === t.range
-              return (
-                <tr key={t.range} className="border-t border-slate-50" style={hit ? { background: '#EFF6FF', boxShadow: 'inset 3px 0 0 #2563EB' } : undefined}>
-                  <td className="px-3 py-2 tabular-nums text-slate-700">
-                    {t.range}
-                    {hit && <span className="ml-2 rounded-full bg-blue-600 px-1.5 py-0.5 text-[10px] font-medium text-white">◀ 本客户 {currentScore} 分</span>}
-                  </td>
-                  <td className="px-3 py-2 font-semibold" style={hit ? { color: '#1D4ED8' } : { color: '#334155' }}>{t.level}</td>
-                  <td className="px-3 py-2" style={hit ? { color: '#1E40AF' } : { color: '#64748B' }}>{t.meaning}</td>
-                  <td className="px-3 py-2" style={hit ? { color: '#1E40AF', fontWeight: 600 } : { color: '#334155' }}>{t.action}</td>
-                  <td className="px-3 py-2 text-sky-500">规则引擎</td>
-                </tr>
-              )
-            })}
-            {rows.length === 0 && <tr><td colSpan={5} className="px-3 py-3 text-center text-xs text-slate-400">当前模型暂无阈值决策配置</td></tr>}
-          </tbody>
-        </table>
-        <div className="flex items-center justify-between border-t border-slate-100 bg-slate-50 px-3 py-2 text-[11px] text-slate-400">
-          <span>阈值规则与预警规则均由规则引擎子系统统一执行；链路实体均来自真实配置（scoreData.json / ruleHub.json），非示意。</span>
-          <button onClick={onJumpRules} className="ml-3 shrink-0 text-xs text-blue-600 hover:underline">在规则引擎查看全部规则 →</button>
         </div>
       </div>
     </div>

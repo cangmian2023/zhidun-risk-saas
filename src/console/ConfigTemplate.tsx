@@ -24,7 +24,7 @@ export const OUTPUT_LABEL: Record<string, string> = { api: 'API 推送', url: '�
 export const OP_LABEL: Record<string, string> = { gt: '>', gte: '≥', lt: '<', lte: '≤', eq: '=', neq: '≠', exists: '有值', contains: '包含' };
 export const COMPARE_LABEL: Record<string, string> = { lt: '低于', gt: '高于', eq: '等于' };
 export const BASELINE_LABEL: Record<string, string> = { yesterday: '昨天同期', lastWeek: '上周同期', lastMonth: '上月同期' };
-export const WTYPE_LABEL: Record<string, string> = { metric: '指标卡', line: '折线', bar: '柱状', donut: '环形', table: '明细表' };
+export const WTYPE_LABEL: Record<string, string> = { metric: '指标卡', line: '折线', bar: '柱状', donut: '环形', table: '明细表', productMetrics: '评分产品指标卡' };
 
 // ---- 数值格式化（指标预览 / 详情共用） ----
 export function fmt(v: number | string | undefined | null, precision = 0, unit = '') {
@@ -144,17 +144,19 @@ export interface ConfigDetailPageProps {
   infoCells: ReactNode; // 顶部 InfoCell 网格
   children: ReactNode; // Panels
   backLabel?: string;   // 顶部左侧返回按钮文案（与报告模板详情页一致）
-  onBack?: () => void;  // 顶部左侧返回按钮动作
+  onBack?: () => void;  // 顶部左侧返回按钮动作（显式优先）
+  backTo?: string;      // 统一框架兜底：未传 onBack 时，返回优先读 ?back=，否则回退到此路径
   flowBar?: ReactNode;  // 需求21：流程操作行（面包屑下方，保存/流程按钮/状态标签）
 }
 export function ConfigDetailPage(p: ConfigDetailPageProps) {
-  const header = p.onBack ? (
+  const header = p.onBack || p.backTo ? (
     <DetailHeader
       title={p.title}
       crumb={crumb(...p.crumbParts)}
       subtitle={p.subtitle}
       backLabel={p.backLabel ?? '返回列表'}
       onBack={p.onBack}
+      backTo={p.backTo}
       actions={p.actions}
       flowBar={p.flowBar}
     />

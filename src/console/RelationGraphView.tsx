@@ -522,8 +522,14 @@ function RelDetail({
         <KV k="类型" v={TYPE_LABEL[n.type] ?? n.type} />
         <KV k="关系" v={n.rel} />
         {n.risk && <KV k="风险等级" v={n.risk} danger={n.risk !== '正常'} />}
+        {n.riskLevel && <KV k="风险档" v={n.riskLevel} danger={n.riskLevel !== '低'} />}
         {n.phone && <KV k="联系电话" v={n.phone} />}
+        {n.idCard && <KV k="证件号" v={n.idCard} />}
         {n.openAlerts != null && <KV k="关联预警" v={`${n.openAlerts} 条`} danger={n.openAlerts > 0} />}
+        {n.ringId != null && <KV k="团伙编号" v={`#${n.ringId}`} danger={n.ringId > 0} />}
+        {n.channel && <KV k="接入渠道" v={n.channel} />}
+        {n.regCapital && <KV k="注册资本" v={n.regCapital} />}
+        {n.legalPerson && <KV k="法定代表人" v={n.legalPerson} />}
         {n.detail && <KV k="说明" v={n.detail} />}
       </div>
     )

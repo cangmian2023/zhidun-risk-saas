@@ -12,6 +12,7 @@ import { useFlows } from './flowStore';
 import FlowStateCell from './FlowStateCell';
 // 统一流程绑定层：与贷前四页（进件审核/信息核验/信用风控/欺诈识别）共用同一套实现
 import { useMinuteTick, renderCountdown, matchObjOf, flowIdOfRow, nowStamp, usePageFlow } from './flowBinding';
+import { usePageNav } from './pageNav';
 
 /* 本页流程匹配字段（需求16）：{ 流程配置字段名: 行数据键名 } */
 const ALERT_MATCH_FIELDS = { level: 'levelRaw', alert_type: 'alertTypeRaw', scene: 'scene' };
@@ -20,8 +21,9 @@ export default function MidAlertWorkbench() {
   const alerts = useMidAlerts();
   const saveStatus = useMidSaveStatus();
   useFlows(); // 订阅流程配置变更
-  const pageFlow = usePageFlow('/console/cr/mid-alert'); // 未配 flowKey 的行回落本页关联流程
+  const pageFlow = usePageFlow('/console/cr/mid-alert-workbench'); // 未配 flowKey 的行回落本页关联流程（键须与 bizFlows.pageRoutes 一致）
   const nav = useNavigate();
+  const { sub, goDetail } = usePageNav();
 
   useMinuteTick(); // 需求14：时限倒计时每分钟刷新
 
@@ -100,7 +102,7 @@ export default function MidAlertWorkbench() {
 
   return (
     <div style={{ padding: 24, maxWidth: 1360 }}>
-      <PageShell title="预警工作台" crumb="零售信贷风控 / 贷中监控 / 预警处置" subtitle="预警队列 · 点击任意一条查看详情并处置"
+      <PageShell title="预警工作台" crumb={sub === 'sc' ? '评分产品 / 工作台 / 预警工作台' : '零售信贷风控 / 贷中监控 / 预警工作台'} subtitle="预警队列 · 点击任意一条查看详情并处置"
         actions={<><Sam label="策略配置" value="midStrategy.json" /><Sam label="预警样例" value={`${alerts.length} 条`} /><Cal label="实时统计" /></>} />
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0,1fr))', gap: 12, margin: '4px 0 16px' }}>
@@ -120,9 +122,9 @@ export default function MidAlertWorkbench() {
         }>
         <DataTable columns={cols} rows={rows} empty="无匹配预警"
           clickableKey="alert_id"
-          onCellClick={(r) => nav('/console/cr/mid-alert-detail?id=' + String(r.id))}
+          onCellClick={(r) => goDetail('/console/cr/mid-alert-detail?id=' + String(r.id))}
           actions={(r) => (
-            <button type="button" onClick={() => nav('/console/cr/mid-alert-detail?id=' + String(r.id))}
+            <button type="button" onClick={() => goDetail('/console/cr/mid-alert-detail?id=' + String(r.id))}
               style={{ padding: '3px 12px', borderRadius: 6, border: '1px solid #C7D2FE', background: '#EFF6FF', color: '#1D4ED8', fontSize: 12, cursor: 'pointer' }}>查看</button>
           )} />
       </Panel>

@@ -231,9 +231,15 @@ export interface CustGraphNode {
   type: GraphNodeType
   rel: string // 关系标签
   risk?: '高危' | '关注' | '正常'
+  riskLevel?: '高' | '中' | '低' // 关系人风险等级
   openAlerts?: number // 关联预警数（高危角标）
   phone?: string // 脱敏联系方式
   detail?: string // 抽屉/清单附加描述
+  idCard?: string // 证件号（个人/联系人）
+  channel?: string // 接入渠道
+  regCapital?: string // 注册资本（企业）
+  legalPerson?: string // 法定代表人（企业）
+  ringId?: number // 团伙编号（1=主体关联团伙 / 2=介质关联群体）
 }
 export interface CustGraphEdge {
   source: string
@@ -518,8 +524,8 @@ export const SEED_CUST: CustData = {
         nodes: [
           { id: 'self', name: '张明远', type: 'self', rel: '本人' },
           // 家族
-          { id: 'spouse', name: '李芸', type: 'person', rel: '配偶', risk: '正常', phone: '139****2048', detail: '共同居住 · 紧急联系人 · 连带担保' },
-          { id: 'father', name: '张建国', type: 'person', rel: '父亲', phone: '137****7711', detail: '退休 · 紧急联系人' },
+          { id: 'spouse', name: '李芸', type: 'person', rel: '配偶', risk: '正常', riskLevel: '低', phone: '139****2048', idCard: '3301****5527', detail: '共同居住 · 紧急联系人 · 连带担保' },
+          { id: 'father', name: '张建国', type: 'person', rel: '父亲', phone: '137****7711', idCard: '3301****3310', detail: '退休 · 紧急联系人' },
           { id: 'mother', name: '王秀英', type: 'person', rel: '母亲', detail: '退休' },
           { id: 'brother', name: '张明杰', type: 'person', rel: '弟弟', risk: '关注', detail: '自由职业 · 近期查询偏多' },
           { id: 'father_in_law', name: '李国强', type: 'person', rel: '岳父', detail: '异地' },
@@ -534,13 +540,13 @@ export const SEED_CUST: CustData = {
           { id: 'acc_zfb', name: '支付宝', type: 'account', rel: '关联账户', detail: '2088****3391' },
           { id: 'acc_other', name: '招行借记卡', type: 'account', rel: '他行账户', detail: '6225****1109' },
           // 经营 / 企业
-          { id: 'emp', name: '杭州云算科技', type: 'company', rel: '任职单位', detail: '软件工程师 · 工资发放方' },
-          { id: 'biz', name: '明远网络工作室', type: 'company', rel: '经营主体', detail: '个体工商户 · 本人经营' },
-          { id: 'supplier', name: '晟达供应链', type: 'company', rel: '合作方', risk: '关注', detail: '经营往来' },
+          { id: 'emp', name: '杭州云算科技', type: 'company', rel: '任职单位', regCapital: '500 万元', legalPerson: '王海', detail: '软件工程师 · 工资发放方' },
+          { id: 'biz', name: '明远网络工作室', type: 'company', rel: '经营主体', regCapital: '10 万元', legalPerson: '张明远', detail: '个体工商户 · 本人经营' },
+          { id: 'supplier', name: '晟达供应链', type: 'company', rel: '合作方', risk: '关注', riskLevel: '中', regCapital: '200 万元', legalPerson: '赵晟', detail: '经营往来' },
           // 共债
-          { id: 'co1', name: '周敏', type: 'person', rel: '共债关联', risk: '高危', openAlerts: 2, detail: '同共债圈' },
-          { id: 'co2', name: '刘洋', type: 'person', rel: '共债关联', risk: '高危', openAlerts: 1, detail: '同共债圈' },
-          { id: 'co3', name: '林晓', type: 'person', rel: '同设备账号', risk: '高危', openAlerts: 1, detail: '共享设备' },
+          { id: 'co1', name: '周敏', type: 'person', rel: '共债关联', risk: '高危', riskLevel: '高', openAlerts: 2, ringId: 1, idCard: '3301****8819', detail: '同共债圈' },
+          { id: 'co2', name: '刘洋', type: 'person', rel: '共债关联', risk: '高危', riskLevel: '高', openAlerts: 1, ringId: 1, idCard: '3301****2245', detail: '同共债圈' },
+          { id: 'co3', name: '林晓', type: 'person', rel: '同设备账号', risk: '高危', riskLevel: '高', openAlerts: 1, ringId: 2, detail: '共享设备' },
           { id: 'org_a', name: '花呗', type: 'org', rel: '共债机构', detail: '消费信贷' },
           { id: 'org_b', name: '借呗', type: 'org', rel: '共债机构', detail: '消费信贷' },
           { id: 'org_c', name: '某消费金融', type: 'org', rel: '共债机构', risk: '关注', detail: '持牌机构' },

@@ -32,7 +32,7 @@ export default function MidDataSourceDetail() {
   if (!ds) {
     return (
       <div className="mx-auto max-w-6xl px-4 py-10 lg:px-8">
-        <PageShell header={<DetailHeader title="数据源详情" crumb="零售信贷风控 / 管理中心 / 数据源管理" backLabel="返回列表" onBack={() => nav('/console/cm/mid-data-source')} />} />
+        <PageShell header={<DetailHeader title="数据源详情" crumb="零售信贷风控 / 管理中心 / 数据源管理" backLabel="返回列表" backTo="/console/cm/mid-data-source" />} />
         <div className="mt-6 rounded-xl bg-slate-50 px-4 py-10 text-center text-sm text-slate-400">未找到该数据源（{id}）。</div>
       </div>
     );
@@ -49,7 +49,7 @@ export default function MidDataSourceDetail() {
   return (
     <ConfigDetailPage title={ds.name} crumbParts={['数据源管理']}
       subtitle={ds.desc}
-      backLabel="返回列表" onBack={() => nav('/console/cm/mid-data-source')}
+      backLabel="返回列表" backTo="/console/cm/mid-data-source"
       actions={<>
         <Sam label="详情数据" value="midDataSources.json" />
         <Button size="sm" onClick={() => nav('/console/cm/mid-data-source?edit=' + ds.id)}>编辑</Button>

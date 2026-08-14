@@ -61,7 +61,8 @@ export const scoringMenu: MenuGroup[] = [
     section: '工作台',
     items: [
       { label: '评分总览', key: 'sc:overview', keep: true, desc: '三产品评分总览与对象评分档案：并排展示智察分/智信分/智融分，支持单客分数检索与批量评分入口' },
-      { label: '预警处置', key: 'sc:alert-workbench', keep: true, desc: '复用零售信贷预警工作台：红黄灯预警任务队列，逐条核实、发起处置' },
+      { label: '评分总览·旧版', key: 'sc:overview-legacy', desc: '改造前(v2)评分总览备份预览：模型健康度 / 调用量趋势 / 风险率仪表盘 / 批量评分导入，对照 v3 新版评分总览' },
+      { label: '预警工作台', key: 'sc:alert-workbench', keep: true, desc: '复用零售信贷预警工作台：红黄灯预警任务队列，逐条核实、发起处置' },
     ],
   },
   {
@@ -306,6 +307,59 @@ export const collectionMenu: MenuGroup[] = [
 ]
 
 /* ============================================================
+ * 八、决策引擎（规则 + 模型双引擎 · 可视化决策编排与运行）
+ *   工作台 / 决策建模 / 运行管理 / 监控分析 / 审批管理
+ * ========================================================== */
+export const decisionEngineMenu: MenuGroup[] = [
+  {
+    group: '工作台',
+    section: '工作台',
+    items: [
+      { label: '决策引擎工作台', key: 'de:overview', desc: '决策引擎概览：在策决策、运行状态、调用量与近况一览，规则与模型双引擎统一入口' },
+    ],
+  },
+  {
+    group: '决策建模',
+    section: '决策建模',
+    items: [
+      { label: '模型管理', key: 'de:model-manage', desc: '决策模型全生命周期管理：模型上传、版本、发布与下线' },
+      { label: '特征库', key: 'de:feature-lib', desc: '决策特征资产管理：特征定义、加工逻辑、口径与血缘，供规则与模型引用' },
+      { label: '特征监控', key: 'de:feature-monitor', desc: '特征质量与稳定性监控：覆盖率、空值率、波动与分布漂移' },
+      { label: '名单库', key: 'de:list-lib', desc: '黑白灰名单管理：名单接入、版本生效、命中测试与导出' },
+      { label: '模板市场', key: 'de:template-market', desc: '决策策略模板市场：行业最佳实践模板，一键引用与二次编辑' },
+    ],
+  },
+  {
+    group: '运行管理',
+    section: '运行管理',
+    items: [
+      { label: '版本管理', key: 'de:version-manage', desc: '策略与模型版本管理：版本留痕、回滚与灰度上线' },
+      { label: '流量分配', key: 'de:traffic-split', desc: '决策流量分拨：按比例在版本/模型间分配线上流量做 A/B 与灰度' },
+      { label: '决策回放', key: 'de:decision-replay', desc: '历史决策回放：按批次/客户重放决策过程，定位策略差异与问题' },
+      { label: '批量决策', key: 'de:batch-decision', desc: '批量决策任务：名单上传、批量跑分、结果下载与失败重跑' },
+    ],
+  },
+  {
+    group: '监控分析',
+    section: '监控分析',
+    items: [
+      { label: '监控大盘', key: 'de:monitor-board', desc: '决策运行监控大盘：调用量、耗时、拦截率与趋势总览' },
+      { label: '告警管理', key: 'de:alert-manage', desc: '决策链路告警管理：阈值告警规则配置与告警消息处理' },
+      { label: '决策分析', key: 'de:decision-analysis', desc: '决策效果分析：通过/拒绝结构、指标贡献与客群画像' },
+      { label: '规则命中', key: 'de:rule-hit', desc: '规则命中分析：命中 TOP 规则、命中分布与规则贡献' },
+      { label: '决策日志', key: 'de:decision-log', desc: '全量决策日志明细：入参、特征、规则/模型结果与最终结论' },
+    ],
+  },
+  {
+    group: '审批管理',
+    section: '审批管理',
+    items: [
+      { label: '审批管理', key: 'de:approval-manage', desc: '策略与模型上线审批流：提交、审核、发布与操作留痕' },
+    ],
+  },
+]
+
+/* ============================================================
  * 子系统元信息 & 菜单汇总
  * ========================================================== */
 export const subNames: Record<string, string> = {
@@ -314,8 +368,9 @@ export const subNames: Record<string, string> = {
   ep: '企业风控',
   dm: '数字营销',
   dg: '数据治理',
-  cm: '管理中心',
   zz: '催贷管理',
+  de: '决策引擎',
+  cm: '管理中心',
 }
 
 export const MENU_BY_SUB: Record<string, MenuGroup[]> = {
@@ -324,8 +379,9 @@ export const MENU_BY_SUB: Record<string, MenuGroup[]> = {
   ep: entMenu,
   dm: dmMenu,
   dg: dataGovernanceMenu,
-  cm: cmMenu,
   zz: collectionMenu,
+  de: decisionEngineMenu,
+  cm: cmMenu,
 }
 
 // 详情页（不挂左侧菜单，但需可路由到「功能规划中」占位）

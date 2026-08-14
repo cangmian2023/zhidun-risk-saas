@@ -324,7 +324,7 @@ export function normalizeStrategy(input: unknown): MidStrategy {
 }
 
 // 监控页面配置（看板）
-export type WidgetType = 'metric' | 'line' | 'bar' | 'donut' | 'table';
+export type WidgetType = 'metric' | 'line' | 'bar' | 'donut' | 'table' | 'productMetrics';
 
 export interface MidWidgetFilter {
   field: string;
@@ -355,6 +355,7 @@ export interface MidWidget {
   windowSize?: 'sm' | 'md' | 'lg';  // 窗口尺寸
   remark?: string;                  // 备注
   flowKey?: string;                 // 需求23：关联业务流程 id（组件级，渲染时顶部显示流程操作行）
+  product?: string;                 // productMetrics 组件：绑定的评分产品（智信分 zhixin / 智融分 zhirong / 智查分 zhicha）
 }
 
 export interface MidPageFilter {

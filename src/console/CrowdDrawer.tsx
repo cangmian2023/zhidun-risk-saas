@@ -40,6 +40,9 @@ export function CrowdDrawer({ open, onClose, editing, customers, onSave }: {
   const members = useMemo(() => crowdMembers({ conds, logic: filter.logic }, customers), [conds, filter.logic, customers])
   const valid = crowdRuleValid(conds)
   const ruleText = useMemo(() => crowdRuleText(conds, filter.logic), [conds, filter.logic])
+  // 规则未生效（未配置/无命中）时回落到样例客户，保证预览列表不为空，便于确认字段形态
+  const matched = valid && members.length > 0
+  const previewList = matched ? members : customers.slice(0, PREVIEW_N)
 
   const save = () => {
     const n = name.trim()
@@ -80,39 +83,31 @@ export function CrowdDrawer({ open, onClose, editing, customers, onSave }: {
           </div>
         </div>
 
-        {/* 实时预览：成员数 + 前 20 条（成员数由规则返回，不可编辑） */}
+        {/* 实时预览：成员数 + 前 20 条（成员数由规则返回，不可编辑；规则未生效时回落样例客户，列表不空） */}
         <div className="rounded-xl border border-slate-200 p-3">
           <div className="mb-2 flex items-baseline gap-3">
             <span className="text-sm font-semibold text-ink-900">规则预览</span>
-            <span className="text-xs text-slate-400">成员数由规则计算返回，不可编辑</span>
-            <span className="ml-auto text-lg font-bold text-brand-600 tabular-nums">{members.length}</span>
-            <span className="text-xs text-slate-400">命中 / 共 {customers.length} 客户</span>
+            <span className="text-xs text-slate-400">{matched ? '成员数由规则计算返回，不可编辑' : '以下为样例客户（配置完整规则后展示命中结果）'}</span>
+            <span className="ml-auto text-lg font-bold text-brand-600 tabular-nums">{matched ? members.length : customers.length}</span>
+            <span className="text-xs text-slate-400">{matched ? `命中 / 共 ${customers.length} 客户` : '样例客户'}</span>
           </div>
-          {members.length ? (
-            <>
-              <div className="max-h-[300px] overflow-auto rounded-lg border border-slate-100">
-                {members.slice(0, PREVIEW_N).map((c, i) => (
-                  <div
-                    key={c?.custId ?? ''}
-                    className="flex items-center gap-2 border-b border-slate-50 px-2 py-1.5 text-xs text-slate-500 last:border-b-0 hover:bg-slate-50"
-                  >
-                    <span className="w-5 text-right text-slate-300 tabular-nums">{i + 1}</span>
-                    <span className="font-medium text-ink-900">{c?.custId ?? '—'}</span>
-                    <span>{c?.name ?? '—'}</span>
-                    <span className="text-slate-400">{c?.product ?? '—'}</span>
-                    <Badge kind={riskKindOf(c?.riskLevel)}>{(c?.riskLevel ?? '—').replace('风险', '')}</Badge>
-                    <span className="ml-auto tabular-nums">智融 {c?.scores?.zhirong?.score ?? '—'}</span>
-                  </div>
-                ))}
+          <div className="max-h-[300px] overflow-auto rounded-lg border border-slate-100">
+            {previewList.map((c, i) => (
+              <div
+                key={c?.custId ?? ''}
+                className="flex items-center gap-2 border-b border-slate-50 px-2 py-1.5 text-xs text-slate-500 last:border-b-0 hover:bg-slate-50"
+              >
+                <span className="w-5 text-right text-slate-300 tabular-nums">{i + 1}</span>
+                <span className="font-medium text-ink-900">{c?.custId ?? '—'}</span>
+                <span>{c?.name ?? '—'}</span>
+                <span className="text-slate-400">{c?.product ?? '—'}</span>
+                <Badge kind={riskKindOf(c?.riskLevel)}>{(c?.riskLevel ?? '—').replace('风险', '')}</Badge>
+                <span className="ml-auto tabular-nums">智融 {c?.scores?.zhirong?.score ?? '—'}</span>
               </div>
-              {members.length > PREVIEW_N && (
-                <div className="mt-1 text-right text-[11px] text-slate-400">仅展示前 {PREVIEW_N} 条，共命中 {members.length} 条</div>
-              )}
-            </>
-          ) : (
-            <div className="rounded-lg bg-slate-50 px-3 py-6 text-center text-xs text-slate-400">
-              {valid ? '暂无客户命中该规则' : '请先配置完整的规则条件'}
-            </div>
+            ))}
+          </div>
+          {matched && members.length > PREVIEW_N && (
+            <div className="mt-1 text-right text-[11px] text-slate-400">仅展示前 {PREVIEW_N} 条，共命中 {members.length} 条</div>
           )}
         </div>
 

@@ -3,6 +3,7 @@
 // 设计语言：科技 · 简洁 · 数据 · 算法（本地样例 JSON 驱动，三色标签标注来源）
 import { useMemo, useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { usePageNav } from './pageNav';
 import { MenuIcon, type IconName } from '../components/icons';
 import { Sam, Cal, SourceTagLegend } from './SourceTag';
 import { useMidCustomers, useMidAlerts } from './midStore';
@@ -39,6 +40,7 @@ const QUICK_GROUPS: { title: string; items: QuickItem[] }[] = [
 
 export default function RetailCreditHome() {
   const nav = useNavigate();
+  const { goDetail } = usePageNav();
   const customers = useMidCustomers();
   const alerts = useMidAlerts();
   const collection = useCollection();
@@ -93,7 +95,7 @@ export default function RetailCreditHome() {
     setFocus(false);
   };
   const goCust = (custId: string) => {
-    nav(`/console/cr/mid-single-cust?cust=${custId}`);
+    goDetail(`/console/cr/mid-single-cust?cust=${custId}`);
     setQ(''); setFocus(false); setAdvOpen(false);
   };
   const onEnter = () => {

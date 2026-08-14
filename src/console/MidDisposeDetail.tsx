@@ -1,9 +1,10 @@
 // 处置工单详情（使用域）— 读 midDisposeTasks.json 橘；实时统计 灰
 import { useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { Panel, Button, StatusTag, DetailHeader } from '../components/ui';
 import { Sam, Cal } from './SourceTag';
 import { PageShell } from './PageShell';
+import { usePageNav } from './pageNav';
 import { useMidDisposeTasks, updateDisposeTasks } from './midStore';
 import type { MidDisposeTask } from './midData';
 
@@ -24,7 +25,7 @@ export default function MidDisposeDetail() {
   const [params] = useSearchParams();
   const id = params.get('id') ?? '';
   const tasks = useMidDisposeTasks();
-  const nav = useNavigate();
+  const { goDetail } = usePageNav();
   const [note, setNote] = useState('');
   const [operator, setOperator] = useState('风控专员-当前');
 
@@ -33,7 +34,7 @@ export default function MidDisposeDetail() {
   if (!t) {
     return (
       <div style={{ padding: 24 }}>
-        <PageShell header={<DetailHeader title="工单详情" crumb="贷中监控 / 处置闭环" backLabel="返回队列" onBack={() => nav('/console/cr/mid-dispose-workbench')} />} />
+        <PageShell header={<DetailHeader title="工单详情" crumb="贷中监控 / 处置闭环" backLabel="返回队列" />} />
         <div style={{ padding: 24, color: '#94A3B8', fontSize: 13 }}>未找到该工单（{id}）。</div>
       </div>
     );
@@ -53,7 +54,7 @@ export default function MidDisposeDetail() {
   return (
     <div style={{ padding: 24, maxWidth: 1080 }}>
       <PageShell header={<DetailHeader title={`工单详情 · ${t.id}`} crumb="贷中监控 / 处置闭环" subtitle={t.custName}
-        backLabel="返回队列" onBack={() => nav('/console/cr/mid-dispose-workbench')}
+        backLabel="返回队列"
         actions={<>
           <Sam label="工单样例" value={`${tasks.length} 条`} />
           <Cal label="实时统计" />
@@ -72,8 +73,8 @@ export default function MidDisposeDetail() {
           ))}
           <div style={{ gridColumn: 'span 2' }}><StatusTag kind={STATUS_KIND[t.status]}>{t.status}</StatusTag></div>
         </div>
-        <Button size="sm" variant="ghost" onClick={() => nav(`/console/cr/mid-single-cust?cust=${t.custId}`)}>查看客户详情 →</Button>
-        <Button size="sm" variant="ghost" onClick={() => nav(`/console/cr/mid-alert-detail?id=${t.alertId}`)}>查看关联预警 →</Button>
+        <Button size="sm" variant="ghost" onClick={() => goDetail(`/console/cr/mid-single-cust?cust=${t.custId}`)}>查看客户详情 →</Button>
+        <Button size="sm" variant="ghost" onClick={() => goDetail(`/console/cr/mid-alert-detail?id=${t.alertId}`)}>查看关联预警 →</Button>
       </Panel>
 
       <Panel title="处置回填" desc="按状态流转推进闭环">

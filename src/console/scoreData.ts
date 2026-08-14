@@ -182,6 +182,11 @@ export function thresholdRows(prod: ScoreProd) {
     .sort((a, b) => a.min - b.min)
 }
 
+/** 某产品运营效果指标（覆盖率/准确率/及时率/调用量，供「评分产品指标卡」组件使用） */
+export function scoreOpsOf(prod: ScoreProd): OpsMetric | undefined {
+  return SEED_SCORE.ops.find((o) => o.prod === prod)
+}
+
 /** 距「下一档」的距离（用于概览提示）：
  *   信用/综合分（越高越好）→ 距上升一档的分数；欺诈分（越高越危险）→ 距高风险线的分数；已最优/已最高危返回 null。 */
 export function nextUpgrade(prod: ScoreProd, score: number): { toLevel: string; gap: number } | null {
