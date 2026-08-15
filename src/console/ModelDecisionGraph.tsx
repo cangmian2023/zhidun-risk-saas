@@ -11,8 +11,10 @@
  * ========================================================================= */
 import { useState, useRef, useEffect, useMemo } from 'react'
 import type { ScoreProd, ModelMeta, ThresholdRow, CollisionRule, ScoreCardFactor } from './scoreData'
-import { SCORE_PROD_LABEL, COLLISION_SEED, ZHIXIN_SCORECARD } from './scoreData'
-import { MODEL_DECISION_GRAPH, GNODE_META, NODE_W, NODE_H, type GNode, type GNodeType, type GGraph } from './modelGraphData'
+import { SCORE_PROD_LABEL, COLLISION_SEED, COLLISION_SIGNAL_FIELDS, COLLISION_OUTCOME_LABEL, collisionCondText, ZHIXIN_SCORECARD } from './scoreData'
+import type { VFilter } from './CondBuilder'
+import { CondBuilder } from './CondBuilder'
+import { MODEL_DECISION_GRAPH, GNODE_META, NODE_W, NODE_H, type GNode, type GNodeType, type GGraph, type GEdge } from './modelGraphData'
 
 /* 左侧工具条按「分层」分组，便于添加节点时按业务阶段筛选 */
 const NODE_CATEGORY: { label: string; types: GNodeType[] }[] = [
@@ -64,7 +66,7 @@ function hintTone(text?: string): string {
 
 export default function ModelDecisionGraph({
   prod, model, thresholds, onJumpRules, onJumpStrategy, onSaveCollisions, graph: graphProp,
-  nodeResults, currentScore, editable, onSaveGraph,
+  nodeResults, currentScore, editable, onSaveGraph, mainOnly,
 }: {
   prod: ScoreProd
   model: ModelMeta
@@ -73,6 +75,8 @@ export default function ModelDecisionGraph({
   onJumpStrategy: () => void
   onSaveCollisions?: (rules: CollisionRule[]) => void
   graph?: GGraph
+  /* 主线视图：仅展示 数据源 → 算法/因子 → 输出概率p+SHAP，隐藏规则集/碰撞/决策等支线节点，并自动桥接被跳过的主线连接 */
+  mainOnly?: boolean
   /* 当前用户在该节点上的实际输出（key = 节点 id），用于「节点明细」表「结果」列 */
   nodeResults?: Record<string, string>
   /* 当前用户评分：用于「决策映射」表高亮所在分数段 */
@@ -86,6 +90,38 @@ export default function ModelDecisionGraph({
   const [localGraph, setLocalGraph] = useState<GGraph | null>(null)
   const graph = localGraph ?? graphBase
   const isPipeline = !!graphProp
+
+  /* ---- 主线视图：仅保留 数据源/特征变换/模型/图谱/输出 节点，桥接被支线（规则集/碰撞/决策等）隔断的主线连接 ---- */
+  const MAIN_TYPES: GNodeType[] = ['source', 'transform', 'model', 'graph', 'output']
+  const displayGraph = useMemo<GGraph>(() => {
+    if (!mainOnly) return graph
+    const mainIds = new Set(graph.nodes.filter((n) => MAIN_TYPES.includes(n.type)).map((n) => n.id))
+    const mainNodes = graph.nodes.filter((n) => mainIds.has(n.id))
+    const kept = graph.edges.filter((e) => mainIds.has(e.from) && mainIds.has(e.to))
+    const keptKeys = new Set(kept.map((e) => `${e.from}->${e.to}`))
+    const bridgeSeen = new Set<string>()
+    const bridge: GEdge[] = []
+    for (const a of mainIds) {
+      const stack: string[] = [a]
+      const seen = new Set<string>([a])
+      while (stack.length) {
+        const cur = stack.pop()!
+        for (const e of graph.edges) {
+          if (e.from !== cur) continue
+          if (mainIds.has(e.to)) {
+            if (e.to !== a) {
+              const key = `${a}->${e.to}`
+              if (!bridgeSeen.has(key)) { bridgeSeen.add(key); bridge.push({ from: a, to: e.to }) }
+            }
+          } else if (!seen.has(e.to)) {
+            seen.add(e.to); stack.push(e.to)
+          }
+        }
+      }
+    }
+    const extra = bridge.filter((e) => !keptKeys.has(`${e.from}->${e.to}`))
+    return { ...graph, nodes: mainNodes, edges: [...kept, ...extra] }
+  }, [graph, mainOnly])
   const isEditable = editable ?? !!onSaveCollisions
   const containerRef = useRef<HTMLDivElement>(null)
   const [scale, setScale] = useState(1)
@@ -109,7 +145,7 @@ export default function ModelDecisionGraph({
   const [nodeFilter, setNodeFilter] = useState('')
   const dirty = !!localGraph || Object.keys(pos).length > 0
 
-  const nodeMap = new Map<string, GNode>(graph.nodes.map((n) => [n.id, n]))
+  const nodeMap = new Map<string, GNode>(displayGraph.nodes.map((n) => [n.id, n]))
   const ppos = (n: GNode) => pos[n.id] ?? { x: n.x, y: n.y }
   const anchorR = (n: GNode) => ({ x: ppos(n).x + NODE_W, y: ppos(n).y + NODE_H / 2 })
   const anchorL = (n: GNode) => ({ x: ppos(n).x, y: ppos(n).y + NODE_H / 2 })
@@ -119,7 +155,7 @@ export default function ModelDecisionGraph({
   const effectiveRules = model.collisionRules?.length ? model.collisionRules : COLLISION_SEED[prod]
   const metaOf = (n: GNode): string[] => {
     if (n.type === 'collision' && effectiveRules.length) {
-      return effectiveRules.map((r) => `${r.enabled ? '' : '【停用】'}${r.conflict} → ${r.result}`)
+      return effectiveRules.map((r) => `${r.enabled ? '' : '【停用】'}${collisionCondText(r.cond)} → ${r.result}`)
     }
     return n.meta ?? []
   }
@@ -131,7 +167,7 @@ export default function ModelDecisionGraph({
   const fit = () => {
     const el = containerRef.current
     if (!el) return
-    const s = Math.min(el.clientWidth / graph.width, el.clientHeight / graph.height)
+    const s = Math.min(el.clientWidth / displayGraph.width, el.clientHeight / displayGraph.height)
     setScale(+Math.min(2, Math.max(0.4, s)).toFixed(2)); setTx(0); setTy(0)
   }
   useEffect(() => {
@@ -256,23 +292,23 @@ export default function ModelDecisionGraph({
     let st: string[] = [focus]
     while (st.length) {
       const c = st.pop()!
-      graph.edges.forEach((e) => { if (e.to === c && !anc.has(e.from)) { anc.add(e.from); st.push(e.from) } })
+      displayGraph.edges.forEach((e) => { if (e.to === c && !anc.has(e.from)) { anc.add(e.from); st.push(e.from) } })
     }
     st = [focus]
     while (st.length) {
       const c = st.pop()!
-      graph.edges.forEach((e) => { if (e.from === c && !dec.has(e.to)) { dec.add(e.to); st.push(e.to) } })
+      displayGraph.edges.forEach((e) => { if (e.from === c && !dec.has(e.to)) { dec.add(e.to); st.push(e.to) } })
     }
     return new Set<string>([...anc, ...dec])
   }, [focus, graph])
   const nodeDim = (n: GNode) =>
-    focusPath ? !focusPath.has(n.id) : (hi === 'main' && n.type === 'alert') || (hi === 'branch' && n.type !== 'alert')
+    mainOnly ? false : (focusPath ? !focusPath.has(n.id) : (hi === 'main' && n.type === 'alert') || (hi === 'branch' && n.type !== 'alert'))
   const edgeDim = (e: GEdgeLocal) =>
-    focusPath ? !(focusPath.has(e.from) && focusPath.has(e.to)) : (hi === 'main' && isAlertEdge(e)) || (hi === 'branch' && !isAlertEdge(e))
+    mainOnly ? false : (focusPath ? !(focusPath.has(e.from) && focusPath.has(e.to)) : (hi === 'main' && isAlertEdge(e)) || (hi === 'branch' && !isAlertEdge(e)))
 
   /* 节点的输入（上游）/输出（下游）来源 = 边 */
-  const inputsOf = (id: string) => graph.edges.filter((e) => e.to === id).map((e) => nodeMap.get(e.from)?.title ?? e.from)
-  const outputsOf = (id: string) => graph.edges.filter((e) => e.from === id).map((e) => nodeMap.get(e.to)?.title ?? e.to)
+  const inputsOf = (id: string) => displayGraph.edges.filter((e) => e.to === id).map((e) => nodeMap.get(e.from)?.title ?? e.from)
+  const outputsOf = (id: string) => displayGraph.edges.filter((e) => e.from === id).map((e) => nodeMap.get(e.to)?.title ?? e.to)
   const toggleNode = (id: string) => setOpenNodes((prev) => { const s = new Set(prev); if (s.has(id)) s.delete(id); else s.add(id); return s })
 
   /* ---- 碰撞编辑抽屉 ---- */
@@ -280,13 +316,22 @@ export default function ModelDecisionGraph({
     setLocalRules(effectiveRules.map((r) => ({ ...r })))
     setEditingCollision(true)
   }
-  const updateRule = (id: string, key: keyof CollisionRule, val: string) =>
-    setLocalRules((rs) => rs.map((r) => (r.id === id ? { ...r, [key]: val } : r)))
+  const patchRule = (id: string, patch: Partial<CollisionRule>) =>
+    setLocalRules((rs) => rs.map((r) => (r.id === id ? { ...r, ...patch } : r)))
+  const updateCond = (id: string, cond: VFilter) => patchRule(id, { cond })
+  const updateResult = (id: string, val: string) => patchRule(id, { result: val as CollisionRule['result'] })
+  const updatePriority = (id: string, val: string) => patchRule(id, { priority: val as CollisionRule['priority'] })
   const toggleRule = (id: string) =>
     setLocalRules((rs) => rs.map((r) => (r.id === id ? { ...r, enabled: !r.enabled } : r)))
   const removeRule = (id: string) => setLocalRules((rs) => rs.filter((r) => r.id !== id))
   const addRule = () =>
-    setLocalRules((rs) => [...rs, { id: `cc-${Date.now().toString(36)}`, conflict: '', result: '', priority: '转人工', enabled: true }])
+    setLocalRules((rs) => [...rs, {
+      id: `cc-${Date.now().toString(36)}`,
+      cond: { logic: 'and', groups: [], loose: [] },
+      result: '转人工复核',
+      priority: '转人工',
+      enabled: true,
+    }])
   const saveCollision = () => { onSaveCollisions(localRules); setEditingCollision(false) }
 
   const TBtn = ({ onClick, title, children }: { onClick: () => void; title: string; children: React.ReactNode }) => (
@@ -308,7 +353,7 @@ export default function ModelDecisionGraph({
           <aside className="z-30 flex w-[188px] shrink-0 flex-col border-r border-slate-200 bg-white">
             <div className="flex items-center justify-between border-b border-slate-100 px-3 py-2">
               <span className="text-xs font-semibold text-slate-600">添加节点</span>
-              <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] text-slate-400">{graph.nodes.length} 个</span>
+              <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] text-slate-400">{displayGraph.nodes.length} 个</span>
             </div>
             <div className="px-3 pb-2 pt-2">
               <input
@@ -368,12 +413,16 @@ export default function ModelDecisionGraph({
           <span className="mr-1 text-[11px] text-slate-400">视图</span>
           <TBtn onClick={resetView} title="复位（缩放+平移归零）">复位</TBtn>
           <TBtn onClick={toggleFs} title={isFs ? '退出全屏' : '全屏'}>{isFs ? '退出全屏' : '全屏'}</TBtn>
-          <span className="mx-1 h-5 w-px bg-slate-200" />
-          {/* 高亮组 */}
-          <span className="mr-1 text-[11px] text-slate-400">高亮</span>
-          <TBtn onClick={() => { setHi('main'); setFocus(null) }} title="仅高亮主线（串行链路）">主线</TBtn>
-          <TBtn onClick={() => { setHi('branch'); setFocus(null) }} title="仅高亮支线（并行预警）">支线</TBtn>
-          <TBtn onClick={() => { setHi('all'); setFocus(null) }} title="全部显示（取消高亮）">全部</TBtn>
+          {!mainOnly && (
+            <>
+              <span className="mx-1 h-5 w-px bg-slate-200" />
+              {/* 高亮组 */}
+              <span className="mr-1 text-[11px] text-slate-400">高亮</span>
+              <TBtn onClick={() => { setHi('main'); setFocus(null) }} title="仅高亮主线（串行链路）">主线</TBtn>
+              <TBtn onClick={() => { setHi('branch'); setFocus(null) }} title="仅高亮支线（并行预警）">支线</TBtn>
+              <TBtn onClick={() => { setHi('all'); setFocus(null) }} title="全部显示（取消高亮）">全部</TBtn>
+            </>
+          )}
           {isEditable && (
             <>
               <span className="mx-1 h-5 w-px bg-slate-200" />
@@ -397,21 +446,21 @@ export default function ModelDecisionGraph({
         <div className="relative flex-1 overflow-auto">
           <div
             style={{
-              width: graph.width * scale,
-              height: graph.height * scale,
+              width: displayGraph.width * scale,
+              height: displayGraph.height * scale,
               transform: `translate(${tx}px, ${ty}px) scale(${scale})`,
               transformOrigin: 'top left',
               backgroundImage: 'radial-gradient(#E2E8F0 1px, transparent 1px)', backgroundSize: '18px 18px',
             }}
           >
             {/* 连线层 */}
-            <svg width={graph.width} height={graph.height} className="pointer-events-none absolute left-0 top-0">
+            <svg width={displayGraph.width} height={displayGraph.height} className="pointer-events-none absolute left-0 top-0">
               <defs>
                 <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
                   <path d="M0,0 L8,3 L0,6 Z" fill="#94A3B8" />
                 </marker>
               </defs>
-              {graph.edges.map((e, i) => {
+              {displayGraph.edges.map((e, i) => {
                 const a = anchorR(nodeMap.get(e.from)!)
                 const b = anchorL(nodeMap.get(e.to)!)
                 const midX = (a.x + b.x) / 2
@@ -440,7 +489,7 @@ export default function ModelDecisionGraph({
             </svg>
 
             {/* 节点层 */}
-            {graph.nodes.map((n) => {
+            {displayGraph.nodes.map((n) => {
               const meta = GNODE_META[n.type]
               const isModel = n.type === 'model'
               const isAlertNode = n.type === 'alert'
@@ -598,22 +647,27 @@ export default function ModelDecisionGraph({
                         <button onClick={() => removeRule(r.id)} className="text-xs text-rose-500 hover:underline">删除</button>
                       </div>
                     </div>
-                    <input
+                    <div className="mb-2">
+                      <div className="mb-1 text-xs text-slate-500">冲突条件（结构化：选信号源 + 操作符 + 值，可嵌套且/或）</div>
+                      <CondBuilder
+                        title=""
+                        value={r.cond}
+                        fields={COLLISION_SIGNAL_FIELDS}
+                        onChange={(c) => updateCond(r.id, c)}
+                        showLogicHint={false}
+                      />
+                    </div>
+                    <select
                       className="mb-2 w-full rounded-lg border border-slate-200 px-2 py-1.5 text-sm outline-none focus:border-brand-400"
-                      placeholder="冲突条件（如：黑灰名单命中 ∩ XGB 中风险）"
-                      value={r.conflict}
-                      onChange={(e) => updateRule(r.id, 'conflict', e.target.value)}
-                    />
-                    <input
-                      className="mb-2 w-full rounded-lg border border-slate-200 px-2 py-1.5 text-sm outline-none focus:border-brand-400"
-                      placeholder="裁决结果 / 生成的预警（如：强制拒绝，生成欺诈预警）"
                       value={r.result}
-                      onChange={(e) => updateRule(r.id, 'result', e.target.value)}
-                    />
+                      onChange={(e) => updateResult(r.id, e.target.value)}
+                    >
+                      {COLLISION_OUTCOME_LABEL.map((o) => <option key={o} value={o}>{o}</option>)}
+                    </select>
                     <select
                       className="w-full rounded-lg border border-slate-200 px-2 py-1.5 text-sm outline-none focus:border-brand-400"
                       value={r.priority}
-                      onChange={(e) => updateRule(r.id, 'priority', e.target.value)}
+                      onChange={(e) => updatePriority(r.id, e.target.value)}
                     >
                       <option value="拦截优先">优先级：拦截优先（规则/名单压过分数）</option>
                       <option value="分数优先">优先级：分数优先（模型分决定）</option>
@@ -635,13 +689,13 @@ export default function ModelDecisionGraph({
 
       {/* 图例 */}
       <div className="mt-2 flex flex-wrap items-center gap-3">
-        {(Object.keys(GNODE_META) as (keyof typeof GNODE_META)[]).map((t) => (
+        {(Object.keys(GNODE_META) as (keyof typeof GNODE_META)[]).filter((t) => !mainOnly || MAIN_TYPES.includes(t as GNodeType)).map((t) => (
           <span key={t} className="flex items-center gap-1.5 text-xs text-slate-500">
             <span className="h-2.5 w-2.5 rounded-sm" style={{ background: GNODE_META[t].color }} />
             {GNODE_META[t].label}
           </span>
         ))}
-        <span className="flex items-center gap-1.5 text-xs text-slate-500"><span className="inline-block h-0 w-5 border-t-2 border-dashed border-cyan-500" />并行预警（虚线）</span>
+        {!mainOnly && <span className="flex items-center gap-1.5 text-xs text-slate-500"><span className="inline-block h-0 w-5 border-t-2 border-dashed border-cyan-500" />并行预警（虚线）</span>}
       </div>
 
       {/* ============ 底部表 1：节点明细（表格；说明列可折叠） ============ */}
@@ -649,10 +703,10 @@ export default function ModelDecisionGraph({
         <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-3 py-2">
           <div className="text-sm font-semibold text-slate-800">节点明细 · 每个节点的说明 / 输入 / 输出</div>
           <button
-            onClick={() => setOpenNodes(openNodes.size === graph.nodes.length ? new Set() : new Set(graph.nodes.map((n) => n.id)))}
+            onClick={() => setOpenNodes(openNodes.size === displayGraph.nodes.length ? new Set() : new Set(displayGraph.nodes.map((n) => n.id)))}
             className="text-xs text-blue-600 hover:underline"
           >
-            {openNodes.size === graph.nodes.length ? '全部展开说明' : '全部收起说明'}
+            {openNodes.size === displayGraph.nodes.length ? '全部展开说明' : '全部收起说明'}
           </button>
         </div>
         <div className="max-h-[340px] overflow-auto">
@@ -668,7 +722,7 @@ export default function ModelDecisionGraph({
               </tr>
             </thead>
             <tbody>
-              {graph.nodes.map((n) => {
+              {displayGraph.nodes.map((n) => {
                 const open = openNodes.has(n.id)
                 const ins = inputsOf(n.id)
                 const outs = outputsOf(n.id)

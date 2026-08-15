@@ -7,6 +7,9 @@ import { Panel, DataTable, Badge, Button, StatCard, DetailHeader, type Column, t
 import { Sam, Cal } from './SourceTag'
 import { EditFeatureDialog, BindModelDialog, ListRecordDialog, NewListDialog } from './DecisionDialogs'
 import { useDecisionToast } from './useDecisionToast'
+import { usePageNav } from './pageNav'
+import FlowStateCell from './FlowStateCell'
+import FlowActionBar from './FlowActionBar'
 import { updateDecision } from './decisionData'
 
 /* ============================================================
@@ -28,12 +31,18 @@ export function DecisionFeatureLibPage() {
     { key: 'version', label: '版本' },
     { key: 'status', label: '状态', render: (r) => <Badge kind={r.status === '启用' ? 'green' : r.status === '禁用' ? 'gray' : 'orange'}>{r.status}</Badge> },
     { key: 'sceneTag', label: '场景标签' },
-    { key: 'linkedModels', label: '关联模型', width: '20%', render: (r) => <span className="line-clamp-1 text-xs text-slate-500">{r.linkedModels || '—'}</span> },
-    { key: 'updatedAt', label: '创建时间', width: '140px' },
+    { key: 'linkedModels', label: '关联模型', width: '18%', render: (r) => <span className="line-clamp-1 text-xs text-slate-500">{r.linkedModels || '—'}</span> },
+    { key: 'flow', label: '流程状态', render: (r) => (
+      <FlowStateCell flowId={r.flowId} state={r.flowState} onChange={(next) => {
+        updateDecision((dd) => ({ ...dd, features: dd.features.map((f) => f.id === r.id ? { ...f, flowState: next } : f) }))
+      }} />
+    ) },
+    { key: 'updatedAt', label: '创建时间', width: '130px' },
   ]
   const rows: Row[] = d.features.map((f) => ({
     id: f.id, name: f.name, code: f.code, type: f.type, dataType: f.dataType, version: f.version ?? 'v1.0.0',
     status: f.status ?? '启用', sceneTag: f.sceneTag ?? '—', linkedModels: f.linkedModels, updatedAt: f.updatedAt,
+    flowId: f.flowId, flowState: f.flowState,
   }))
   const featOf = (id: string) => d.features.find((f) => f.id === id) ?? null
 
@@ -41,7 +50,8 @@ export function DecisionFeatureLibPage() {
     <>
       <PageShell title="特征库" subtitle="决策特征资产管理：特征定义、加工逻辑、口径与血缘，供规则与模型引用" crumb="决策引擎 / 决策建模 / 特征库" actions={<Button onClick={() => toast.show('新建特征功能建设中，后台接入后可用')}>新建特征</Button>} />
       <Panel title="特征列表" actions={<Sam value="features" />}>
-        <DataTable columns={cols} rows={rows} pager defaultPageSize={10}
+        <DataTable columns={cols} rows={rows} pager defaultPageSize={10} clickableKey="name"
+          onCellClick={(r) => setEditFeat(featOf(r.id))}
           actions={(r) => (
             <div className="flex gap-3 text-sm">
               <button className="text-brand-600 hover:underline" onClick={() => setEditFeat(featOf(r.id))}>编辑</button>
@@ -121,23 +131,30 @@ export function DecisionListLibPage() {
   const [showNew, setShowNew] = useState(false)
 
   const cols: Column[] = [
-    { key: 'name', label: '名单名称', width: '18%', render: (r) => <span className="font-medium text-ink-900">{r.name}</span> },
+    { key: 'name', label: '名单名称', width: '16%', render: (r) => <span className="font-medium text-ink-900">{r.name}</span> },
     { key: 'code', label: '名单编码', render: (r) => <code className="text-slate-500">{r.code}</code> },
     { key: 'kind', label: '类型', type: 'badge' },
     { key: 'matchKey', label: '匹配键' },
     { key: 'matchStrategy', label: '匹配策略' },
     { key: 'source', label: '来源' },
-    { key: 'createdAt', label: '创建时间', width: '140px' },
+    { key: 'flow', label: '流程状态', render: (r) => (
+      <FlowStateCell flowId={r.flowId} state={r.flowState} onChange={(next) => {
+        updateDecision((dd) => ({ ...dd, lists: dd.lists.map((l) => l.id === r.id ? { ...l, flowState: next } : l) }))
+      }} />
+    ) },
+    { key: 'createdAt', label: '创建时间', width: '130px' },
   ]
   const rows: Row[] = d.lists.map((l) => ({
     id: l.id, name: l.name, code: l.code, kind: { v: l.kind, kind: LIST_KIND_TAG[l.kind] }, matchKey: l.matchKey, matchStrategy: l.matchStrategy, source: l.source, createdAt: l.createdAt,
+    flowId: l.flowId, flowState: l.flowState,
   }))
 
   return (
     <>
       <PageShell title="名单库" subtitle="黑白灰名单管理：名单接入、版本生效、命中测试与导出" crumb="决策引擎 / 决策建模 / 名单库" actions={<Button onClick={() => setShowNew(true)}>新建名单库</Button>} />
       <Panel title="名单列表" desc="黑名单直接拒绝 / 灰名单转人工 / 白名单放行" actions={<Sam value="lists" />}>
-        <DataTable columns={cols} rows={rows} pager defaultPageSize={10}
+        <DataTable columns={cols} rows={rows} pager defaultPageSize={10} clickableKey="name"
+          onCellClick={(r) => setRecList(d.lists.find((l) => l.id === r.id) ?? null)}
           actions={(r) => (
             <div className="flex gap-3 text-sm">
               <button className="text-brand-600 hover:underline" onClick={() => setRecList(d.lists.find((l) => l.id === r.id) ?? null)}>管理记录</button>
@@ -297,6 +314,11 @@ export function DecisionTemplateDetailPage({ search }: { search: string }) {
           </>
         }
       />
+
+      {/* 业务流程操作条：管理中心配置了决策引擎流程才显示，未配置则不显示 */}
+      <FlowActionBar flowId={t.flowId} state={t.flowState} onStateChange={(next) => {
+        updateDecision((dd) => ({ ...dd, templates: dd.templates.map((x) => x.id === t.id ? { ...x, flowState: next, flowStateAt: '2026-08-15' } : x) }))
+      }} />
 
       <div className="mt-4 space-y-4">
         {/* 基本信息（descriptions） */}

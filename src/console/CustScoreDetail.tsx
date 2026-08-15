@@ -1214,7 +1214,7 @@ export default function CustScoreDetail() {
                 nodeResults={nodeResults}
                 currentScore={item.score}
                 onJumpRules={() => goDetail('/console/cm/rule-hub')}
-                onJumpStrategy={() => goDetail('/console/sc/model-detail?prod=' + prod + '&tab=threshold')}
+                onJumpStrategy={() => goDetail('/console/sc/model-detail?prod=' + prod + '&tab=fusion')}
               />
             </Panel>
 

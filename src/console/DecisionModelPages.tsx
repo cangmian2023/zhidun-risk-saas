@@ -8,6 +8,9 @@ import { Sam } from './SourceTag'
 import DecisionFlowGraph from './DecisionFlowGraph'
 import DecisionFlowEditor from './DecisionFlowEditor'
 import { useDecisionToast } from './useDecisionToast'
+import { usePageNav } from './pageNav'
+import FlowStateCell from './FlowStateCell'
+import FlowActionBar from './FlowActionBar'
 
 const MODEL_COLOR: Record<string, string> = {
   评分卡: '#22c55e',
@@ -36,22 +39,29 @@ const FLOW_STATUS_TAG: Record<string, string> = {
 export function DecisionModelManagePage() {
   const d = useDecision()
   const nav = useNavigate()
+  const { goDetail } = usePageNav()
   const toast = useDecisionToast()
   const [openMore, setOpenMore] = useState<string | null>(null)
 
   const moreItems = ['发布新版本', '创建快照', '模型授权', '历史版本', '删除模型']
 
   const cols: Column[] = [
-    { key: 'name', label: '模型名称', width: '20%', render: (r) => (
-      <span className="font-medium text-brand-600 hover:underline cursor-pointer" onClick={() => nav('/console/de/model-detail?mid=' + r.id)}>{r.name}</span>
+    { key: 'name', label: '模型名称', width: '18%', render: (r) => (
+      <span className="font-medium text-brand-600">{r.name}</span>
     ) },
     { key: 'code', label: '模型编码', render: (r) => <code className="text-slate-500">{r.code}</code> },
-    { key: 'desc', label: '描述', width: '32%', render: (r) => <span className="line-clamp-1 text-xs text-slate-500">{r.desc}</span> },
+    { key: 'desc', label: '描述', width: '28%', render: (r) => <span className="line-clamp-1 text-xs text-slate-500">{r.desc}</span> },
     { key: 'status', label: '状态', type: 'badge' },
-    { key: 'createdAt', label: '创建时间', width: '160px' },
+    { key: 'flow', label: '流程状态', render: (r) => (
+      <FlowStateCell flowId={r.flowId} state={r.flowState} onChange={(next) => {
+        updateDecision((dd) => ({ ...dd, models: dd.models.map((m) => m.id === r.id ? { ...m, flowState: next } : m) }))
+      }} />
+    ) },
+    { key: 'createdAt', label: '创建时间', width: '150px' },
   ]
   const rows: Row[] = d.models.map((m) => ({
     id: m.id, name: m.name, code: m.code, desc: m.desc, status: { v: m.status, kind: MODEL_STATUS_TAG[m.status] }, createdAt: m.createdAt,
+    flowId: m.flowId, flowState: m.flowState,
   }))
 
   return (
@@ -63,11 +73,12 @@ export function DecisionModelManagePage() {
         </div>
       } />
       <Panel title="模型列表" actions={<Sam value="models" />}>
-        <DataTable columns={cols} rows={rows} pager defaultPageSize={10}
+        <DataTable columns={cols} rows={rows} pager defaultPageSize={10} clickableKey="name"
+          onCellClick={(r) => goDetail('/console/de/model-detail?mid=' + r.id)}
           actions={(r) => (
             <div className="flex items-center gap-3 text-sm">
-              <button className="text-brand-600 hover:underline" onClick={() => nav('/console/de/model-detail?mid=' + r.id)}>详情</button>
-              <button className="text-brand-600 hover:underline" onClick={() => nav('/console/de/model-detail?mid=' + r.id)}>编辑</button>
+              <button className="text-brand-600 hover:underline" onClick={() => goDetail('/console/de/model-detail?mid=' + r.id)}>详情</button>
+              <button className="text-brand-600 hover:underline" onClick={() => goDetail('/console/de/model-detail?mid=' + r.id)}>编辑</button>
               <button className="text-brand-600 hover:underline" onClick={() => nav('/console/de/model-test?mid=' + r.id)}>测试</button>
               <button className="text-slate-500 hover:underline" onClick={() => toast.show('模型已上线')}>上线</button>
               <button className="text-slate-500 hover:underline" onClick={() => toast.show('模型已下线')}>下线</button>
@@ -161,6 +172,12 @@ export function DecisionModelDetailPage({ search }: { search: string }) {
             <Button onClick={() => nav('/console/de/model-test?mid=' + model.id)}>模型测试</Button>
           </>
         }
+      />
+      {/* 业务流程操作条：管理中心配置了决策引擎流程才显示，未配置则不显示 */}
+      <FlowActionBar
+        flowId={model.flowId}
+        state={model.flowState}
+        onStateChange={(next) => updateDecision((dd) => ({ ...dd, models: dd.models.map((m) => m.id === model.id ? { ...m, flowState: next, flowStateAt: '2026-08-15' } : m) }))}
       />
       <div className="mt-4 flex gap-1 rounded-xl bg-slate-100 p-1">
         {tabs.map((t) => (

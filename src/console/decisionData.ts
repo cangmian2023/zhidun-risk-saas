@@ -16,7 +16,7 @@ export type DeModelStatus = '草稿' | '已上线' | '已下线' | '测试中';
 /** 模型类型 */
 export type DeModelType = '评分卡' | '规则集' | '决策树' | 'XGBoost' | '规则引擎' | '名单匹配';
 
-export interface DeModel {
+export interface DeModel extends DeFlowable {
   id: string;
   name: string;
   code: string;
@@ -55,6 +55,13 @@ export interface DeModelFeature {
   dataType: string;              // NUMBER / STRING / BOOLEAN
   isInput: boolean;              // 是否输入（true=输入，false=自动计算）
   desc: string;
+}
+
+/** 业务流程关联（对接管理中心 bizFlows，后台接入后填；flowId 指向 flowStore 流程 id） */
+export interface DeFlowable {
+  flowId?: string;
+  flowState?: string;
+  flowStateAt?: string;
 }
 
 /** 决策流列表项 */
@@ -96,8 +103,38 @@ export interface DeDecisionRow {
   conditions: DePolicyCondition[];
 }
 
-/** 决策流节点类型 */
-export type DeFlowNodeType = 'source' | 'feature' | 'list' | 'scorecard' | 'ruleset' | 'collision' | 'decision' | 'output' | 'subflow';
+/** 决策流节点类型（对齐 6.* 节点属性文档） */
+export type DeFlowNodeType =
+  | 'start'      // 开始节点
+  | 'end'        // 结束节点
+  | 'policy'     // 策略节点（关联策略）
+  | 'list'       // 名单匹配（关联名单库 / 匹配字段 / 匹配分数）
+  | 'condition'  // 条件节点（出边条件）
+  | 'parallel'   // 并行网关
+  | 'merge'      // 合并网关
+  | 'feature'    // 特征节点（计算特征）
+  | 'subflow';   // 子流程
+
+/** 策略节点：关联的策略 */
+export interface DeNodePolicyRef {
+  policyId: string;   // 关联策略 id
+  policyName: string; // 策略名称
+}
+
+/** 名单匹配节点：关联名单库 */
+export interface DeNodeListRef {
+  listId: string;     // 关联名单库 id
+  listName: string;   // 名单库名称
+  matchField: string; // 匹配字段（如 phone / ip / device_id）
+  matchScore: number; // 匹配分数
+}
+
+/** 特征节点：计算特征（多选，原始/外部/聚合 分组） */
+export interface DeNodeFeatureRef {
+  code: string;
+  name: string;
+  category: '原始' | '外部' | '聚合';
+}
 
 export interface DeFlowNode {
   id: string;
@@ -108,12 +145,102 @@ export interface DeFlowNode {
   badge?: string;        // 右上角小标签
   x: number;
   y: number;
+  /* ---- 6.* 文档字段级属性 ---- */
+  policy?: DeNodePolicyRef;       // 策略节点：关联策略
+  listRef?: DeNodeListRef;        // 名单匹配：关联名单库/匹配字段/匹配分数
+  features?: DeNodeFeatureRef[];  // 特征节点：计算特征
+  conditions?: DeFlowEdgeCondition[]; // 条件节点：出边条件（每条出边对应一条条件/标签）
+  subflowId?: string;             // 子流程：关联的子决策流 id
+  subflowName?: string;           // 子流程名称
+  /** 兼容旧字段：碰撞裁决规则（多条，顺序即优先级，命中冲突时取最高优先） */
+  collisionRules?: DeCollisionRule[];
+}
+
+/* ============================================================
+ * 碰撞裁决（collision 节点 · 决策引擎侧）
+ * 当多条并行支线 / 规则同时命中产生冲突时，按此逐条裁决并生成结论。
+ * 条件结构化（信号源字段 + 操作符 + 值，可序列化可执行），结果枚举化，
+ * 保存后随决策流 graph 持久化到 decisionData.json。后台按此契约实现执行引擎。
+ * ========================================================== */
+/** 标准裁决结果（枚举）——后端执行可直接映射动作 */
+export type DeCollisionOutcome =
+  | '强制拒绝'
+  | '升级高风险预警'
+  | '欺诈覆盖预警'
+  | '降为审慎授信'
+  | '取保守策略'
+  | '转人工复核'
+  | '通过放行';
+export const DE_COLLISION_OUTCOMES: DeCollisionOutcome[] = [
+  '强制拒绝',
+  '升级高风险预警',
+  '欺诈覆盖预警',
+  '降为审慎授信',
+  '取保守策略',
+  '转人工复核',
+  '通过放行',
+];
+
+/** 裁决优先级（决定多条命中时的取舍） */
+export type DeCollisionPriority = '拦截优先' | '分数优先' | '转人工';
+export const DE_COLLISION_PRIORITIES: DeCollisionPriority[] = ['拦截优先', '分数优先', '转人工'];
+
+/** 碰撞裁决可用「信号源」字段池（条件下拉用） */
+export const DE_COLLISION_SIGNAL_FIELDS: { ref: string; label: string }[] = [
+  { ref: 'blacklist', label: '外部黑灰名单' },
+  { ref: 'device_sim', label: '设备模拟器特征' },
+  { ref: 'rule_hit', label: '规则集命中' },
+  { ref: 'score_device', label: '设备风险分(0-100)' },
+  { ref: 'score_credit', label: '信用分(300-900)' },
+  { ref: 'm3_overdue', label: '历史 M3+ 逾期次数' },
+  { ref: 'address_cnt', label: '近30天收货地址数' },
+  { ref: 'order_cnt', label: '近30天订单数' },
+];
+
+/** 条件操作符 */
+export type DeCollisionOp = '>' | '>=' | '<' | '<=' | '=' | '!=' | '命中' | '未命中';
+
+/** 单条碰撞裁决规则 */
+export interface DeCollisionRule {
+  id: string;
+  /** 信号源字段 ref（来自 DE_COLLISION_SIGNAL_FIELDS） */
+  field: string;
+  /** 操作符（= / > / 命中 等） */
+  op: DeCollisionOp;
+  /** 比较值（文本或数字） */
+  value: string;
+  /** 标准裁决结果 */
+  result: DeCollisionOutcome;
+  /** 裁决优先级 */
+  priority: DeCollisionPriority;
+  /** 是否启用 */
+  enabled: boolean;
+  /** 规则说明 */
+  note?: string;
+}
+
+/** 规则 → 可读文本（节点卡 / 详情展示用） */
+export function deCollisionRuleText(r: DeCollisionRule): string {
+  const f = DE_COLLISION_SIGNAL_FIELDS.find((x) => x.ref === r.field)?.label ?? r.field;
+  return `${f} ${r.op} ${r.value} → ${r.result}`;
+}
+
+/** 条件节点「出边条件」：每条出边对应一条条件（标签 + 表达式） */
+export interface DeFlowEdgeCondition {
+  id: string;
+  label: string;    // 出边标签（如：是/否、命中/未命中、通过/拒绝）
+  expr: string;     // 条件表达式（Aviator，如 score > 60）
 }
 
 export interface DeFlowEdge {
   from: string;
   to: string;
+  /** 连线标签（如 是/否、命中 → 拒绝） */
   label?: string;
+  /** 连线条件表达式（Aviator，来自「连线属性-条件表达式」） */
+  expr?: string;
+  /** 来源节点为条件节点时对应的出边条件 id（对应节点 conditions） */
+  conditionId?: string;
   dashed?: boolean;      // 虚线 = 并行支线，不阻塞主线
   color?: string;
 }
@@ -123,6 +250,8 @@ export interface DeFlowGraph {
   height: number;
   nodes: DeFlowNode[];
   edges: DeFlowEdge[];
+  /** 子流程集合（subflow 节点引用的子决策流） */
+  subflows?: DeFlowGraph[];
 }
 
 export interface DeVersion {
@@ -185,7 +314,7 @@ export interface DeListRecord {
   createdAt: string;    // 创建时间
 }
 
-export interface DeList {
+export interface DeList extends DeFlowable {
   id: string;
   name: string;
   code: string;
@@ -202,7 +331,7 @@ export interface DeList {
 }
 
 /** 模板市场 */
-export interface DeTemplate {
+export interface DeTemplate extends DeFlowable {
   id: string;
   name: string;
   scene: string;        // 场景标签：场景/行业
@@ -246,7 +375,7 @@ export interface DeTemplateFeature {
 }
 
 /** 版本管理（运行管理） */
-export interface DeVersionManage {
+export interface DeVersionManage extends DeFlowable {
   id: string;
   name: string;
   type: string;         // 模型 / 策略 / 名单
@@ -267,7 +396,7 @@ export interface DeTrafficSplit {
 }
 
 /** 决策回放任务 */
-export interface DeReplayTask {
+export interface DeReplayTask extends DeFlowable {
   id: string;
   name: string;
   model: string;
@@ -293,7 +422,7 @@ export interface DeReplayResult {
 }
 
 /** 批量决策任务 */
-export interface DeBatchTask {
+export interface DeBatchTask extends DeFlowable {
   id: string;
   name: string;
   model: string;
@@ -332,7 +461,7 @@ export interface DeMonitor {
 export type DeAlertLevel = '紧急' | '重要' | '提示';
 export type DeAlertStatus = '待处理' | '处理中' | '已处理' | '已忽略';
 
-export interface DeAlert {
+export interface DeAlert extends DeFlowable {
   id: string;
   title: string;
   level: DeAlertLevel;
@@ -386,7 +515,7 @@ export interface DeRuleHit {
 }
 
 /** 决策日志 */
-export interface DeDecisionLog {
+export interface DeDecisionLog extends DeFlowable {
   id: string;
   requestId: string;
   time: string;
@@ -412,6 +541,10 @@ export interface DeApproval {
   applicant: string;
   approver?: string;
   applyTime: string;
+  /** 业务流程关联（对接管理中心 bizFlows，后台接入后填；flowId 指向 flowStore 中的流程 id） */
+  flowId?: string;
+  flowState?: string;
+  flowStateAt?: string;
 }
 
 /** 工作台 */
@@ -588,7 +721,12 @@ export const SEED_DECISION: DecisionData = {
           { id: 'l1', type: 'list', title: '名单匹配策略', subtitle: 'blacklist_match', badge: '名单', meta: ['命中黑名单 → 强制拒绝', '命中灰名单 → 转人工复核', '代理IP / 设备黑名单命中'], x: 508, y: 60 },
           { id: 'sc1', type: 'scorecard', title: '设备风险评分卡', subtitle: 'device_score', badge: '评分卡', meta: ['设备模拟器特征命中', '同设备关联账号数', '输出 0-100 设备风险分'], x: 752, y: 60 },
           { id: 'r1', type: 'ruleset', title: '账号质量 / 活动分级', subtitle: 'identity_quality · activity_tier', badge: '规则集', meta: ['Rule-001: 注册时长<30天 → +10', 'Rule-002: 地址聚集≥3 → +15', 'Rule-003: 当日订单数异常 → +12', 'Rule-004: 活动风险等级高 → 直接拒绝'], x: 996, y: 60 },
-          { id: 'c1', type: 'collision', title: '规则碰撞 · 冲突裁决', subtitle: '逐条规则 · 满足即触发', badge: '冲突', meta: ['黑名单命中 → 强制拒绝（覆盖分数）', '设备高风险 ∩ 地址聚集 → 拒绝', '结果冲突 → 转人工复核'], x: 1240, y: 60 },
+          { id: 'c1', type: 'collision', title: '规则碰撞 · 冲突裁决', subtitle: '逐条规则 · 满足即触发', badge: '冲突', meta: ['黑名单命中 → 强制拒绝（覆盖分数）', '设备高风险 ∩ 地址聚集 → 拒绝', '结果冲突 → 转人工复核'], x: 1240, y: 60, collisionRules: [
+              { id: 'cr-1', field: 'blacklist', op: '命中', value: '外部黑灰名单', result: '强制拒绝', priority: '拦截优先', enabled: true, note: '黑名单命中优先拦截，覆盖其他结果' },
+              { id: 'cr-2', field: 'device_sim', op: '命中', value: '设备模拟器特征', result: '升级高风险预警', priority: '拦截优先', enabled: true, note: '设备高风险，升级预警' },
+              { id: 'cr-3', field: 'score_credit', op: '<', value: '400', result: '降为审慎授信', priority: '分数优先', enabled: true, note: '信用分过低，降级授信' },
+              { id: 'cr-4', field: 'address_cnt', op: '>=', value: '3', result: '转人工复核', priority: '转人工', enabled: false, note: '地址聚集，转人工复核' },
+            ] },
           { id: 'd1', type: 'decision', title: '阈值决策', subtitle: '三段分级', badge: '决策', meta: ['0-59 通过', '60-79 人工复核', '80-100 拒绝'], x: 20, y: 360 },
           { id: 'o1', type: 'output', title: '决策输出', subtitle: 'pipeline_result', badge: '输出', meta: ['通过 / 拒绝 / 人工复核', '命中依据 source', '决策耗时 cost_ms'], x: 264, y: 360 },
         ],
@@ -950,10 +1088,10 @@ export const SEED_DECISION: DecisionData = {
 
   /* ---------- 审批 ---------- */
   approvals: [
-    { id: 'AP-1', target: '电商薅羊毛风控', targetType: '模型', action: '发布', status: '待审批', applicant: '风控运营', approver: undefined, applyTime: NOW + ' 12:12:50' },
-    { id: 'AP-2', target: '手机号黑名单', targetType: '名单', action: '上线', status: '待审批', applicant: '名单管理员', approver: undefined, applyTime: NOW + ' 11:40:00' },
-    { id: 'AP-3', target: '活动风险分级表', targetType: '策略', action: '修改', status: '已通过', applicant: '风控运营', approver: '系统管理员', applyTime: '2026-08-13' },
-    { id: 'AP-4', target: '注册测试风控', targetType: '模型', action: '上线', status: '已驳回', applicant: '算法组', approver: '系统管理员', applyTime: '2026-08-12' },
+    { id: 'AP-1', target: '电商薅羊毛风控', targetType: '模型', action: '发布', status: '待审批', applicant: '风控运营', approver: undefined, applyTime: NOW + ' 12:12:50', flowId: 'de_model_publish', flowState: 'pending', flowStateAt: NOW + ' 12:12:50' },
+    { id: 'AP-2', target: '手机号黑名单', targetType: '名单', action: '上线', status: '待审批', applicant: '名单管理员', approver: undefined, applyTime: NOW + ' 11:40:00', flowId: 'de_list_online', flowState: 'pending', flowStateAt: NOW + ' 11:40:00' },
+    { id: 'AP-3', target: '活动风险分级表', targetType: '策略', action: '修改', status: '已通过', applicant: '风控运营', approver: '系统管理员', applyTime: '2026-08-13', flowId: 'de_policy_modify', flowState: 'approved', flowStateAt: '2026-08-13' },
+    { id: 'AP-4', target: '注册测试风控', targetType: '模型', action: '上线', status: '已驳回', applicant: '算法组', approver: '系统管理员', applyTime: '2026-08-12', flowId: 'de_model_online', flowState: 'rejected', flowStateAt: '2026-08-12' },
   ],
 };
 

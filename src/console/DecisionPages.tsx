@@ -1,13 +1,16 @@
 // 决策引擎 · 工作台 + 监控分析模块页面（工作台 / 监控大盘 / 告警管理 / 决策分析 / 规则命中 / 决策日志）
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { useDecision, ALERT_LEVEL_TAG, ALERT_STATUS_TAG, DECISION_TAG } from './decisionData'
+import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useDecision, updateDecision, ALERT_LEVEL_TAG, ALERT_STATUS_TAG, DECISION_TAG } from './decisionData'
 import { PageShell } from './PageShell'
-import { Panel, StatCard, DataTable, Badge, Button, type Column, type Row } from '../components/ui'
+import { Panel, StatCard, DataTable, Badge, Button, DetailHeader, type Column, type Row } from '../components/ui'
 import { LineChart, DonutChart, BarChart } from '../components/charts'
 import { Sam, Cal, Cfg } from './SourceTag'
 import { AlertRuleDialog, NotifyChannelDialog } from './DecisionDialogs'
 import { useDecisionToast } from './useDecisionToast'
+import { usePageNav } from './pageNav'
+import FlowStateCell from './FlowStateCell'
+import FlowActionBar from './FlowActionBar'
 
 const DOT = { 稳定: '#22c55e', 注意: '#f59e0b', 异常: '#ef4444' } as const
 
@@ -176,6 +179,7 @@ export function DecisionMonitorPage() {
 export function DecisionAlertPage() {
   const d = useDecision()
   const toast = useDecisionToast()
+  const { goDetail } = usePageNav()
   const [editRule, setEditRule] = useState<string | null>(null)
   const [editChannel, setEditChannel] = useState<string | null>(null)
   const [showRule, setShowRule] = useState(false)
@@ -187,11 +191,12 @@ export function DecisionAlertPage() {
     { key: 'source', label: '触发源' },
     { key: 'status', label: '状态', type: 'badge' },
     { key: 'createdAt', label: '时间', width: '160px' },
-    { key: 'op', label: '操作', render: () => <button className="text-brand-600 hover:underline" onClick={() => toast.show('告警详情功能建设中，后台接入后可用')}>查看</button> },
+    { key: 'op', label: '操作', render: (r) => <button className="text-brand-600 hover:underline" onClick={() => goDetail('/console/de/alert-detail?id=' + r.id)}>查看</button> },
   ]
   const alertRows: Row[] = d.alerts.map((a) => ({
     id: a.id, level: { v: a.level, kind: ALERT_LEVEL_TAG[a.level] }, title: a.title, source: a.source,
     status: { v: a.status, kind: ALERT_STATUS_TAG[a.status] }, createdAt: a.createdAt,
+    flowId: a.flowId, flowState: a.flowState,
   }))
 
   const ruleCols: Column[] = [
@@ -227,7 +232,8 @@ export function DecisionAlertPage() {
         </div>
 
         <Panel title="告警记录" actions={<Sam value="alerts" />}>
-          <DataTable columns={alertCols} rows={alertRows} pager defaultPageSize={10} />
+          <DataTable columns={alertCols} rows={alertRows} pager defaultPageSize={10} clickableKey="title"
+            onCellClick={(r) => goDetail('/console/de/alert-detail?id=' + r.id)} />
         </Panel>
         <Panel title="告警规则" actions={<div className="flex items-center gap-2"><Sam value="alertRules" /><Button size="sm" onClick={() => setShowRule(true)}>新 建</Button></div>}>
           <DataTable columns={ruleCols} rows={ruleRows} pager defaultPageSize={10}
@@ -416,6 +422,7 @@ export function DecisionRuleHitPage() {
 export function DecisionLogPage() {
   const d = useDecision()
   const toast = useDecisionToast()
+  const { goDetail } = usePageNav()
   const [result, setResult] = useState('全部')
   const [modelFilter, setModelFilter] = useState('全部模型')
   const [range, setRange] = useState('')
@@ -429,8 +436,13 @@ export function DecisionLogPage() {
     { key: 'score', label: '总分', type: 'number', align: 'right' },
     { key: 'costMs', label: '耗时(ms)', type: 'number', align: 'right' },
     { key: 'decision', label: '决策结果', type: 'badge' },
-    { key: 'time', label: '创建时间', width: '180px' },
-    { key: 'op', label: '操作', render: () => <button className="text-brand-600 hover:underline" onClick={() => toast.show('日志详情功能建设中，后台接入后可用')}>查看</button> },
+    { key: 'flow', label: '流程状态', render: (r) => (
+      <FlowStateCell flowId={r.flowId} state={r.flowState} onChange={(next) => {
+        updateDecision((dd) => ({ ...dd, decisionLogs: dd.decisionLogs.map((x) => x.id === r.id ? { ...x, flowState: next } : x) }))
+      }} />
+    ) },
+    { key: 'time', label: '创建时间', width: '170px' },
+    { key: 'op', label: '操作', render: (r) => <button className="text-brand-600 hover:underline" onClick={() => goDetail('/console/de/log-detail?id=' + r.id)}>查看</button> },
   ]
   const rows: Row[] = d.decisionLogs.filter((x) =>
     (result === '全部' || x.decision === result) &&
@@ -439,6 +451,7 @@ export function DecisionLogPage() {
   ).map((x) => ({
     id: x.id, requestId: x.requestId, modelName: modelName(x.model), model: x.model, score: x.score,
     costMs: x.costMs, decision: { v: x.decision, kind: DECISION_TAG[x.decision] }, time: x.time,
+    flowId: x.flowId, flowState: x.flowState,
   }))
 
   return (
@@ -460,9 +473,171 @@ export function DecisionLogPage() {
           <Button size="sm">查 询</Button>
           <Button size="sm" variant="ghost" onClick={() => { setResult('全部'); setModelFilter('全部模型'); setRange('') }}>重 置</Button>
         </div>
-        <DataTable columns={cols} rows={rows} pager defaultPageSize={20} />
+        <DataTable columns={cols} rows={rows} pager defaultPageSize={20} clickableKey="requestId"
+          onCellClick={(r) => goDetail('/console/de/log-detail?id=' + r.id)} />
       </Panel>
       {toast.toastEl}
     </>
+  )
+}
+
+/* ============================================================
+ * 决策日志详情页（列表 → 详情 → 返回 + 业务流程关联）
+ * ========================================================== */
+export function DecisionLogDetailPage({ search }: { search: string }) {
+  const d = useDecision()
+  const { back } = usePageNav()
+  const [sp] = useSearchParams()
+  const id = sp.get('id') ?? new URLSearchParams(search).get('id') ?? ''
+  const x = d.decisionLogs.find((l) => l.id === id)
+  const modelName = (code: string) => d.models.find((m) => m.code === code)?.name ?? code
+
+  if (!x) {
+    return (
+      <>
+        <DetailHeader title="决策日志详情" crumb="决策引擎 / 监控分析 / 决策日志 / 详情" backLabel="返回列表" onBack={() => back('/console/de/decision-log')} />
+        <div className="mt-6 rounded-xl border border-slate-100 p-6 text-sm text-slate-400">未找到该日志，请返回列表。</div>
+      </>
+    )
+  }
+
+  const updateFlowState = (next: string) => {
+    updateDecision((dd) => ({ ...dd, decisionLogs: dd.decisionLogs.map((l) => l.id === x.id ? { ...l, flowState: next, flowStateAt: '2026-08-15' } : l) }))
+  }
+
+  const info: [string, string][] = [
+    ['请求 ID', x.requestId],
+    ['模型名称', modelName(x.model)],
+    ['模型编码', x.model],
+    ['决策结果', x.decision],
+    ['总分', String(x.score)],
+    ['耗时(ms)', String(x.costMs)],
+    ['渠道', x.channel],
+    ['客户', `${x.custName} (${x.custId})`],
+    ['命中依据', x.source],
+    ['创建时间', x.time],
+  ]
+
+  return (
+    <>
+      <DetailHeader
+        title="决策日志详情"
+        crumb="决策引擎 / 监控分析 / 决策日志 / 详情"
+        backLabel="返回列表"
+        onBack={() => back('/console/de/decision-log')}
+        subtitle={`${modelName(x.model)} · ${x.requestId}`}
+        actions={<Badge kind={DECISION_TAG[x.decision]}>{x.decision}</Badge>}
+      />
+
+      {/* 业务流程操作条：管理中心配置了决策引擎流程才显示，未配置则不显示 */}
+      <FlowActionBar flowId={x.flowId} state={x.flowState} onStateChange={updateFlowState} />
+
+      <div className="mt-4 space-y-4">
+        <Panel title="日志信息">
+          <div className="grid grid-cols-2 gap-x-8 gap-y-3 md:grid-cols-3">
+            {info.map(([k, v]) => (
+              <div key={k}>
+                <div className="text-xs text-slate-400">{k}</div>
+                <div className="mt-0.5 text-sm font-medium text-ink-900">{v}</div>
+              </div>
+            ))}
+          </div>
+        </Panel>
+
+        <Panel title="原始入参与命中详情" desc="入参特征、规则/模型结果与最终结论（样例示意，后台接入后由接口返回）">
+          <div className="rounded-lg bg-slate-50 px-3 py-4 text-sm text-slate-400">
+            该日志的完整入参特征、特征计算、规则命中明细与决策轨迹在此展示（后台接入后填充）。
+          </div>
+        </Panel>
+      </div>
+    </>
+  )
+}
+
+/* ============================================================
+ * 告警详情页（列表 → 详情 → 返回 + 业务流程关联）
+ * ========================================================== */
+export function DecisionAlertDetailPage({ search }: { search: string }) {
+  const d = useDecision()
+  const { back } = usePageNav()
+  const [sp] = useSearchParams()
+  const id = sp.get('id') ?? new URLSearchParams(search).get('id') ?? ''
+  const a = d.alerts.find((x) => x.id === id)
+
+  if (!a) {
+    return (
+      <>
+        <DetailHeader title="告警详情" crumb="决策引擎 / 监控分析 / 告警管理 / 详情" backLabel="返回列表" onBack={() => back('/console/de/alert-manage')} />
+        <div className="mt-6 rounded-xl border border-slate-100 p-6 text-sm text-slate-400">未找到该告警，请返回列表。</div>
+      </>
+    )
+  }
+
+  const updateFlowState = (next: string) => {
+    updateDecision((dd) => ({ ...dd, alerts: dd.alerts.map((x) => x.id === a.id ? { ...x, flowState: next, flowStateAt: '2026-08-15' } : x) }))
+  }
+
+  const info: [string, string][] = [
+    ['告警标题', a.title],
+    ['严重程度', a.level],
+    ['状态', a.status],
+    ['触发源', a.source],
+    ['处理人', a.handler || '—'],
+    ['触发时间', a.createdAt],
+  ]
+
+  return (
+    <>
+      <DetailHeader
+        title="告警详情"
+        crumb="决策引擎 / 监控分析 / 告警管理 / 详情"
+        backLabel="返回列表"
+        onBack={() => back('/console/de/alert-manage')}
+        subtitle={a.title}
+        actions={<Badge kind={ALERT_LEVEL_TAG[a.level]}>{a.level}</Badge>}
+      />
+
+      {/* 业务流程操作条：管理中心配置了决策引擎流程才显示，未配置则不显示 */}
+      <FlowActionBar flowId={a.flowId} state={a.flowState} onStateChange={updateFlowState} />
+
+      <div className="mt-4 space-y-4">
+        <Panel title="告警信息">
+          <div className="grid grid-cols-2 gap-x-8 gap-y-3 md:grid-cols-3">
+            {info.map(([k, v]) => (
+              <div key={k}>
+                <div className="text-xs text-slate-400">{k}</div>
+                <div className="mt-0.5 text-sm font-medium text-ink-900">{v}</div>
+              </div>
+            ))}
+          </div>
+          <div className="mt-4">
+            <div className="mb-1 text-xs text-slate-400">告警描述</div>
+            <p className="text-sm leading-relaxed text-slate-600">{a.desc}</p>
+          </div>
+        </Panel>
+
+        <Panel title="处置记录">
+          <div className="space-y-0">
+            <TraceLine time={a.createdAt} title={`触发告警：${a.source}`} active />
+            <TraceLine time={a.flowStateAt ?? '—'} title={a.status === '待处理' ? '等待处理中...' : `已${a.status}`} last />
+          </div>
+        </Panel>
+      </div>
+    </>
+  )
+}
+
+function TraceLine({ time, title, active, last }: { time: string; title: string; active?: boolean; last?: boolean }) {
+  return (
+    <div className="relative flex gap-3 pb-6">
+      {!last && <span className="absolute left-[7px] top-4 h-full w-px bg-slate-200" />}
+      <span className={`relative z-10 mt-1 grid h-4 w-4 shrink-0 place-items-center rounded-full ${active ? 'bg-brand-500' : 'bg-slate-300'}`}>
+        <span className="h-1.5 w-1.5 rounded-full bg-white" />
+      </span>
+      <div>
+        <div className="text-sm font-medium text-ink-900">{title}</div>
+        <div className="text-xs text-slate-400">{time}</div>
+      </div>
+    </div>
   )
 }

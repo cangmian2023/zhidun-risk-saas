@@ -5,6 +5,8 @@
 
 import { useSyncExternalStore } from 'react'
 import type { VisualCond } from './midData'
+import { VISUAL_OP_LABEL } from './midData'
+import type { VFilter } from './CondBuilder'
 
 export type ScoreProd = 'zhicha' | 'zhixin' | 'zhirong'
 
@@ -42,33 +44,144 @@ export interface ModelMeta {
   collisionRules: CollisionRule[]
   bins?: ScoreCardFactor[] // 评分卡：分箱→计分表（让分数可从原始数据算出、可验证）
   decisionGraph?: import('./modelGraphData').GGraph // 算法编辑画布：用户定制的决策图（未定制则用静态默认）
+  /* ===== 三层封装改造（2026-08-15）：Tab4 上区域 + Tab3 + Tab4 下区域 ===== */
+  scoreMap?: ScoreMapSeg[]   // Tab4 上区域：原生概率 p → 标准分 映射段（Rule A，标准化映射层）
+  riskLabels?: RiskLabel[]   // Tab3 风险标签：引用决策引擎资产的并行规则支线，产出风险标签
+  fusionRules?: FusionRule[] // Tab4 下区域：等级 × 标签 融合处置规则
 }
 
 /* 模型配置阶段的「规则碰撞 · 冲突裁决」规则：
  * 当多条规则同时命中产生冲突时，如何裁决、并由此生成什么预警。
+ * 冲突条件结构化（字段+操作符+值，可序列化、可执行），结果枚举化（不再自由文本）。
  * 这是真实可配置的模型策略，编辑后随 scoreData.json 持久化。 */
 export interface CollisionRule {
   id: string
-  conflict: string // 冲突条件描述（如「黑灰名单命中 ∩ XGB 中风险」）
-  result: string // 裁决结果 / 由此生成的预警（如「强制拒绝」「升级高风险预警」）
+  cond: VFilter // 结构化冲突条件：信号源字段 + 操作符 + 值（复用 CondBuilder 的 VFilter）
+  result: CollisionOutcome // 标准裁决结果 / 由此生成的预警（枚举，后端可直接映射动作）
   priority: '拦截优先' | '分数优先' | '转人工'
   enabled: boolean
+}
+
+/* 标准裁决结果（枚举）——原自由文本收敛为固定选项，后端执行可被映射 */
+export type CollisionOutcome =
+  | '强制拒绝'
+  | '升级高风险预警'
+  | '欺诈覆盖预警'
+  | '评分-规则冲突预警'
+  | '降为审慎授信'
+  | '取保守策略'
+  | '转人工复核'
+export const COLLISION_OUTCOME_LABEL: CollisionOutcome[] = [
+  '强制拒绝',
+  '升级高风险预警',
+  '欺诈覆盖预警',
+  '评分-规则冲突预警',
+  '降为审慎授信',
+  '取保守策略',
+  '转人工复核',
+]
+
+/* ===== 三层封装：Tab4 上区域「概率 → 标准分映射」（标准化映射层 Rule A） ===== */
+export interface ScoreMapSeg {
+  pMin: number  // 概率下界（含），0~1
+  pMax: number  // 概率上界（不含，末段取 1）
+  score: number // 映射出的对外标准分
+  level: string // 该段风险等级（低/中/高 或 A/B/C/D）
+}
+
+/* ===== 三层封装：Tab3「风险标签」（业务封装层，并行规则支线） =====
+ * 引用决策引擎资产（名单库 list:xxx / 规则集 ruleset:xxx），命中派生风险标签；
+ * 标签仅作解释信号，不影响概率与标准分，可配置是否计入 Tab4 融合处置。 */
+export interface RiskLabel {
+  id: string
+  name: string                  // 标签名称
+  refType: 'list' | 'ruleset'   // 引用资产类型
+  ref: string                   // 决策引擎资产 id（list:xxx / ruleset:xxx）
+  hit: '命中' | '未命中'         // 触发条件
+  level: '轻度' | '中度' | '重度' // 标签等级
+  ltype: '欺诈标签' | '信用标签' | '监控标签'
+  show: boolean                 // 是否对外展示
+  toFusion: boolean             // 是否计入融合处置
+  enabled: boolean
+}
+
+/* ===== 三层封装：Tab4 下区域「等级 × 标签 融合处置」 ===== */
+export interface FusionRule {
+  id: string
+  when: string        // 触发描述（如「高风险等级 + 重度欺诈标签」）
+  labelPriority: boolean // 标签优先于分数等级（命中严重标签直接拒绝，无视分数）
+  decision: '通过' | '转人工' | '拒绝' // 处置意见
+  bizFlowId?: string  // 关联业务审核/处置流程（复用管理中心 bizFlows）
+}
+
+/* 冲突裁决可用的「信号源」字段池（复用于 CondBuilder 下拉；与模型规则集/名单/分值区间同源） */
+export const COLLISION_SIGNAL_FIELDS: { ref: string; label: string }[] = [
+  { ref: 'blacklist', label: '外部黑灰名单' },
+  { ref: 'device_sim', label: '设备模拟器特征' },
+  { ref: 'rule_hit', label: '规则集命中' },
+  { ref: 'score_zhicha', label: '智察分(0-100)' },
+  { ref: 'score_zhixin', label: '智信分(300-900)' },
+  { ref: 'score_zhirong', label: '智融分(350-950)' },
+  { ref: 'm3_overdue', label: '历史 M3+ 逾期次数' },
+  { ref: 'dir', label: '负债收入比(%)' },
+  { ref: 'interest_dim', label: '兴趣维度' },
+  { ref: 'asset_dim', label: '资产维度' },
+]
+
+/* 结构化冲突条件 → 可读文本（节点卡/详情展示用） */
+export function collisionCondText(cond?: VFilter): string {
+  if (!cond) return '（未配置条件）'
+  const labelOf = (ref: string) => COLLISION_SIGNAL_FIELDS.find((f) => f.ref === ref)?.label ?? ref
+  const render = (c: VisualCond): string => {
+    const f = labelOf(c.field)
+    const op = VISUAL_OP_LABEL[c.op] ?? c.op
+    if (c.op === 'range') return `${f} ${op} ${c.value ?? ''}~${c.rangeMax ?? ''}`
+    if (c.op === 'in') return `${f} ${op} [${(c.values ?? []).join('/')}]`
+    if (c.op === 'has' || c.op === 'empty') return `${f} ${op}`
+    return `${f} ${op} ${c.value ?? ''}`
+  }
+  const parts: string[] = []
+  ;(cond.loose ?? []).forEach((c) => parts.push(render(c)))
+  ;(cond.groups ?? []).forEach((g) => {
+    const inner = (g.conds ?? []).map(render).join(g.logic === 'or' ? ' 或 ' : ' 且 ')
+    parts.push(`（${inner}）`)
+  })
+  if (!parts.length) return '（未配置条件）'
+  return parts.join(cond.logic === 'or' ? ' 或 ' : ' 且 ')
 }
 
 /* 默认碰撞裁决规则（单一来源：SEED 引用、组件回退旧数据均用它） */
 export const COLLISION_SEED: Record<ScoreProd, CollisionRule[]> = {
   zhicha: [
-    { id: 'zc-1', conflict: '命中外部黑灰名单', result: '强制拒绝（分数封顶 95，覆盖模型分）', priority: '拦截优先', enabled: true },
-    { id: 'zc-2', conflict: 'XGB 中风险(40-69) ∩ 设备模拟器特征命中', result: '升级为高风险预警，强化核验', priority: '转人工', enabled: true },
-    { id: 'zc-3', conflict: '规则集结果与模型分方向相反', result: '生成「欺诈覆盖」预警，转人工复核', priority: '拦截优先', enabled: true },
+    { id: 'zc-1', cond: { logic: 'and', groups: [], loose: [{ field: 'blacklist', op: 'eq', value: '命中' }] }, result: '强制拒绝', priority: '拦截优先', enabled: true },
+    { id: 'zc-2', cond: { logic: 'and', groups: [], loose: [
+      { field: 'device_sim', op: 'eq', value: '命中' },
+      { field: 'score_zhicha', op: 'range', value: '40', rangeMax: '69' },
+    ] }, result: '升级高风险预警', priority: '转人工', enabled: true },
+    { id: 'zc-3', cond: { logic: 'and', groups: [], loose: [
+      { field: 'rule_hit', op: 'eq', value: '拒绝' },
+      { field: 'score_zhicha', op: 'lt', value: '40' },
+    ] }, result: '欺诈覆盖预警', priority: '拦截优先', enabled: true },
   ],
   zhixin: [
-    { id: 'zx-1', conflict: '信用分 781-900(提额) ∩ 历史 M3+ 逾期≥2(拒绝)', result: '拒绝优先，生成「评分-规则冲突」预警转人工', priority: '拦截优先', enabled: true },
-    { id: 'zx-2', conflict: '负债收入比≥70% ∩ 标准额度', result: '降为审慎授信', priority: '分数优先', enabled: true },
+    { id: 'zx-1', cond: { logic: 'and', groups: [], loose: [
+      { field: 'score_zhixin', op: 'range', value: '781', rangeMax: '900' },
+      { field: 'm3_overdue', op: 'range', value: '2', rangeMax: '99' },
+    ] }, result: '评分-规则冲突预警', priority: '拦截优先', enabled: true },
+    { id: 'zx-2', cond: { logic: 'and', groups: [], loose: [
+      { field: 'dir', op: 'range', value: '70', rangeMax: '100' },
+      { field: 'score_zhixin', op: 'range', value: '661', rangeMax: '780' },
+    ] }, result: '降为审慎授信', priority: '分数优先', enabled: true },
   ],
   zhirong: [
-    { id: 'zr-1', conflict: '智察(欺诈高风险) ∩ 智融(高价值)', result: '欺诈优先拒绝，生成「欺诈覆盖高价值」预警', priority: '拦截优先', enabled: true },
-    { id: 'zr-2', conflict: '兴趣 ∩ 资产 维度冲突', result: '取保守策略，标准经营', priority: '分数优先', enabled: true },
+    { id: 'zr-1', cond: { logic: 'and', groups: [], loose: [
+      { field: 'score_zhicha', op: 'range', value: '70', rangeMax: '100' },
+      { field: 'score_zhirong', op: 'range', value: '800', rangeMax: '950' },
+    ] }, result: '欺诈覆盖预警', priority: '拦截优先', enabled: true },
+    { id: 'zr-2', cond: { logic: 'or', groups: [], loose: [
+      { field: 'interest_dim', op: 'eq', value: '冲突' },
+      { field: 'asset_dim', op: 'eq', value: '冲突' },
+    ] }, result: '取保守策略', priority: '分数优先', enabled: true },
   ],
 }
 
@@ -362,6 +475,24 @@ WEIGHTS = {
         { key: 'rule_004', name: 'Rule-004 手机号入网不足3个月', bins: [{ label: 'mobile_register_months < 3', points: 8 }] },
       ],
       collisionRules: COLLISION_SEED.zhicha.map((r) => ({ ...r })),
+      /* ===== Tab4 上区域：概率 p → 标准分 映射（智察分 0~100，欺诈越高越危险） ===== */
+      scoreMap: [
+        { pMin: 0, pMax: 0.4, score: 20, level: '低' },
+        { pMin: 0.4, pMax: 0.7, score: 55, level: '中' },
+        { pMin: 0.7, pMax: 1, score: 85, level: '高' },
+      ],
+      /* ===== Tab3 风险标签：引用决策引擎资产，命中派生欺诈标签 ===== */
+      riskLabels: [
+        { id: 'rl-zc-1', name: '黑灰名单命中', refType: 'list', ref: 'L-009', hit: '命中', level: '重度', ltype: '欺诈标签', show: true, toFusion: true, enabled: true },
+        { id: 'rl-zc-2', name: '设备群控特征', refType: 'ruleset', ref: 'P-104', hit: '命中', level: '中度', ltype: '欺诈标签', show: true, toFusion: true, enabled: true },
+        { id: 'rl-zc-3', name: '团伙欺诈关联', refType: 'list', ref: 'L-008', hit: '命中', level: '重度', ltype: '欺诈标签', show: true, toFusion: true, enabled: true },
+      ],
+      /* ===== Tab4 下区域：等级 × 标签 融合处置 ===== */
+      fusionRules: [
+        { id: 'fr-zc-1', when: '高风险等级 + 重度欺诈标签', labelPriority: true, decision: '拒绝' },
+        { id: 'fr-zc-2', when: '中风险等级 + 中度欺诈标签', labelPriority: false, decision: '转人工' },
+        { id: 'fr-zc-3', when: '低风险等级', labelPriority: false, decision: '通过' },
+      ],
     },
     {
       prod: 'zhixin',
@@ -412,6 +543,25 @@ WEIGHTS = {
       ],
       collisionRules: COLLISION_SEED.zhixin.map((r) => ({ ...r })),
       bins: ZHIXIN_SCORECARD.map((f) => ({ ...f, bins: f.bins.map((b) => ({ ...b })) })),
+      /* ===== Tab4 上区域：概率 p → 标准分 映射（智信分 300~900，越高越好） ===== */
+      scoreMap: [
+        { pMin: 0, pMax: 0.3, score: 350, level: 'D' },
+        { pMin: 0.3, pMax: 0.5, score: 560, level: 'C' },
+        { pMin: 0.5, pMax: 0.7, score: 720, level: 'B' },
+        { pMin: 0.7, pMax: 1, score: 820, level: 'A' },
+      ],
+      /* ===== Tab3 风险标签：引用决策引擎资产，命中派生信用标签 ===== */
+      riskLabels: [
+        { id: 'rl-zx-1', name: '制裁/PEP 名单命中', refType: 'list', ref: 'L-005', hit: '命中', level: '重度', ltype: '信用标签', show: true, toFusion: true, enabled: true },
+        { id: 'rl-zx-2', name: '地址聚集风险', refType: 'ruleset', ref: 'P-102', hit: '命中', level: '中度', ltype: '信用标签', show: true, toFusion: true, enabled: true },
+        { id: 'rl-zx-3', name: '中介号码关联', refType: 'list', ref: 'L-001', hit: '命中', level: '中度', ltype: '信用标签', show: false, toFusion: true, enabled: true },
+      ],
+      /* ===== Tab4 下区域：等级 × 标签 融合处置 ===== */
+      fusionRules: [
+        { id: 'fr-zx-1', when: 'D 等级 + 重度信用标签', labelPriority: true, decision: '拒绝' },
+        { id: 'fr-zx-2', when: 'C 等级 + 中度信用标签', labelPriority: false, decision: '转人工' },
+        { id: 'fr-zx-3', when: 'A/B 等级', labelPriority: false, decision: '通过' },
+      ],
     },
     {
       prod: 'zhirong',
@@ -477,6 +627,25 @@ WEIGHTS = {
         { key: 'rule_006', name: 'Rule-006 征信优质负债健康', bins: [{ label: 'overdue == 0 && util < 0.5 && dti < 0.4', points: 20 }] },
       ],
       collisionRules: COLLISION_SEED.zhirong.map((r) => ({ ...r })),
+      /* ===== Tab4 上区域：概率 p → 标准分 映射（智融分 350~950，越高越好） ===== */
+      scoreMap: [
+        { pMin: 0, pMax: 0.3, score: 400, level: 'D' },
+        { pMin: 0.3, pMax: 0.5, score: 600, level: 'C' },
+        { pMin: 0.5, pMax: 0.7, score: 760, level: 'B' },
+        { pMin: 0.7, pMax: 1, score: 850, level: 'A' },
+      ],
+      /* ===== Tab3 风险标签：引用决策引擎资产，命中派生标签 ===== */
+      riskLabels: [
+        { id: 'rl-zr-1', name: '代理IP灰名单', refType: 'list', ref: 'L-006', hit: '命中', level: '轻度', ltype: '监控标签', show: true, toFusion: false, enabled: true },
+        { id: 'rl-zr-2', name: '设备风险评分卡低分', refType: 'ruleset', ref: 'P-104', hit: '命中', level: '中度', ltype: '信用标签', show: true, toFusion: true, enabled: true },
+        { id: 'rl-zr-3', name: '黑灰名单命中', refType: 'list', ref: 'L-009', hit: '命中', level: '重度', ltype: '欺诈标签', show: true, toFusion: true, enabled: true },
+      ],
+      /* ===== Tab4 下区域：等级 × 标签 融合处置 ===== */
+      fusionRules: [
+        { id: 'fr-zr-1', when: 'D 等级 + 重度欺诈标签', labelPriority: true, decision: '拒绝' },
+        { id: 'fr-zr-2', when: 'C 等级 + 中度信用标签', labelPriority: false, decision: '转人工' },
+        { id: 'fr-zr-3', when: 'A/B 等级', labelPriority: false, decision: '通过' },
+      ],
     },
   ],
   records: [

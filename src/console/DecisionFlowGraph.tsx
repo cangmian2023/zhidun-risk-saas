@@ -1,22 +1,23 @@
 // 决策引擎 · 决策流可视化画板（只读）
-// 把模型的【决策流 / 策略树】摆出来：数据源 → 特征 → 名单/评分卡/规则集 → 碰撞裁决 → 阈值决策 → 输出。
+// 把模型的【决策流 / 策略树】摆出来：开始 → 特征 → 名单/策略/条件 → 并行/合并 → 结束，支持子流程。
 // 虚线边 = 并行支线（不阻塞主线）；点击节点弹出要点抽屉。
 import { useState, useRef, useMemo } from 'react'
 import type { DeFlowGraph, DeFlowNode, DeFlowNodeType } from './decisionData'
+import { nodeSummary } from './DecisionFlowEditor'
 
 export const FLOW_NODE_W = 224
 export const FLOW_NODE_H = 128
 
 export const FLOW_NODE_META: Record<DeFlowNodeType, { label: string; color: string }> = {
-  source: { label: '数据源', color: '#0EA5E9' },
-  feature: { label: '特征工程', color: '#8B5CF6' },
+  start: { label: '开始节点', color: '#1890ff' },
+  end: { label: '结束节点', color: '#16A34A' },
+  policy: { label: '策略节点', color: '#F59E0B' },
   list: { label: '名单匹配', color: '#E11D48' },
-  scorecard: { label: '评分卡 / 模型', color: '#334155' },
-  ruleset: { label: '规则集', color: '#F59E0B' },
-  collision: { label: '规则碰撞 · 冲突裁决', color: '#B91C1C' },
-  decision: { label: '阈值决策', color: '#475569' },
-  output: { label: '决策输出', color: '#16A34A' },
-  subflow: { label: '子流程', color: '#f59e0b' },
+  condition: { label: '条件节点', color: '#8B5CF6' },
+  parallel: { label: '并行网关', color: '#722ed1' },
+  merge: { label: '合并网关', color: '#13c2c2' },
+  feature: { label: '特征节点', color: '#0EA5E9' },
+  subflow: { label: '子流程', color: '#b54708' },
 }
 
 export default function DecisionFlowGraph({ graph }: { graph: DeFlowGraph }) {
@@ -28,7 +29,7 @@ export default function DecisionFlowGraph({ graph }: { graph: DeFlowGraph }) {
   const anchorR = (n: DeFlowNode) => ({ x: n.x + FLOW_NODE_W, y: n.y + FLOW_NODE_H / 2 })
   const anchorL = (n: DeFlowNode) => ({ x: n.x, y: n.y + FLOW_NODE_H / 2 })
   const isDashed = (e: { from: string; to: string }) =>
-    nodeMap.get(e.from)?.type === 'collision' || nodeMap.get(e.from)?.type === 'output' || !!graph.edges.find((x) => x.from === e.from && x.to === e.to)?.dashed
+    nodeMap.get(e.from)?.type === 'parallel' || !!graph.edges.find((x) => x.from === e.from && x.to === e.to)?.dashed
 
   const fit = () => {
     const el = wrapRef.current
@@ -96,7 +97,7 @@ export default function DecisionFlowGraph({ graph }: { graph: DeFlowGraph }) {
               <div className="mt-1.5 text-[13px] font-semibold leading-tight text-ink-900">{n.title}</div>
               {n.subtitle && <div className="text-[11px] text-slate-400">{n.subtitle}</div>}
               <div className="mt-1.5 space-y-0.5">
-                {(n.meta ?? []).slice(0, 3).map((m, i) => (
+                {nodeSummary(n).slice(0, 3).map((m, i) => (
                   <div key={i} className="truncate text-[11px] leading-tight text-slate-500">{m}</div>
                 ))}
               </div>
@@ -114,7 +115,7 @@ export default function DecisionFlowGraph({ graph }: { graph: DeFlowGraph }) {
           <div className="mt-2 text-sm font-semibold text-ink-900">{selected.title}</div>
           {selected.subtitle && <div className="text-xs text-slate-400">{selected.subtitle}</div>}
           <div className="mt-3 space-y-1.5">
-            {(selected.meta ?? []).map((m, i) => (
+            {nodeSummary(selected).map((m, i) => (
               <div key={i} className="rounded-lg bg-slate-50 px-2.5 py-1.5 text-xs text-slate-600">{m}</div>
             ))}
           </div>
