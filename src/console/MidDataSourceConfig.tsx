@@ -1,7 +1,7 @@
 // ① 数据源管理（底层模块 · 样例域）— 数据源由用户创建/连接/读取后保存到本地，均为样例JSON 橘；样例行 橘
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { DataTable, Button } from '../components/ui';
+import { DataTable, Button, SingleSelect } from '../components/ui';
 import type { Column, Row } from '../components/ui';
 import { Sam } from './SourceTag';
 import { useMidDataSources, updateDataSources, midNewId } from './midStore';
@@ -112,9 +112,8 @@ function Editor({ value, onChange, onRemove, isEdit }: { value: MidDataSource; o
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 10 }}>
           <label style={lbl}>数据库类型
-            <select style={inp} value={conn.dbType ?? 'mysql'} onChange={(e) => setConn({ dbType: e.target.value })}>
-              <option value="mysql">MySQL</option><option value="oracle">Oracle</option><option value="postgres">PostgreSQL</option><option value="sqlserver">SQLServer</option>
-            </select>
+            <SingleSelect label="选择数据库" value={conn.dbType ?? 'mysql'} onChange={(v) => setConn({ dbType: v })}
+              options={[{ value: 'mysql', label: 'MySQL' }, { value: 'oracle', label: 'Oracle' }, { value: 'postgres', label: 'PostgreSQL' }, { value: 'sqlserver', label: 'SQLServer' }]} />
           </label>
           <label style={lbl}>主机 (IP)<input style={inp} value={conn.host ?? ''} onChange={(e) => setConn({ host: e.target.value })} placeholder="如 10.20.30.11" /></label>
           <label style={lbl}>端口<input style={inp} value={conn.port != null ? String(conn.port) : ''} onChange={(e) => setConn({ port: e.target.value ? Number(e.target.value) : undefined })} placeholder="如 3306" /></label>
@@ -140,10 +139,10 @@ function Editor({ value, onChange, onRemove, isEdit }: { value: MidDataSource; o
               <tr key={i}>
                 <td style={td}><input style={inpSm} value={f.key} onChange={(e) => setField(i, { key: e.target.value })} /></td>
                 <td style={td}><input style={inpSm} value={f.label} onChange={(e) => setField(i, { label: e.target.value })} /></td>
-                <td style={td}><select style={inpSm} value={f.kind} onChange={(e) => setField(i, { kind: e.target.value as MidField['kind'] })}>
-                  <option value="dim">维度</option><option value="measure">度量</option></select></td>
-                <td style={td}><select style={inpSm} value={f.type} onChange={(e) => setField(i, { type: e.target.value as MidField['type'] })}>
-                  <option value="string">string</option><option value="number">number</option><option value="date">date</option></select></td>
+                <td style={td}><SingleSelect label="维度/度量" value={f.kind} onChange={(v) => setField(i, { kind: v as MidField['kind'] })}
+                  options={[{ value: 'dim', label: '维度' }, { value: 'measure', label: '度量' }]} /></td>
+                <td style={td}><SingleSelect label="类型" value={f.type} onChange={(v) => setField(i, { type: v as MidField['type'] })}
+                  options={[{ value: 'string', label: 'string' }, { value: 'number', label: 'number' }, { value: 'date', label: 'date' }]} /></td>
                 <td style={td}><input style={inpSm} value={f.unit ?? ''} onChange={(e) => setField(i, { unit: e.target.value })} /></td>
                 <td style={td}><Button size="sm" variant="ghost" onClick={() => removeField(i)}>删</Button></td>
               </tr>

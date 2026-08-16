@@ -3,7 +3,7 @@
 // ① 任务/规则引用指标库（样例 JSON 橘）；实时定级说明 灰
 import { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Button, Panel, DataTable, Drawer } from '../components/ui';
+import { Button, Panel, DataTable, Drawer, SingleSelect, SearchSelect } from '../components/ui';
 import type { Column, Row } from '../components/ui';
 import { Sam } from './SourceTag';
 import FlowStateCell from './FlowStateCell';
@@ -115,14 +115,12 @@ export default function MidMonitorConfig() {
               <FormRow label="任务名称" required><input className={fiWide} value={drawer.task.name} onChange={(e) => setTask({ name: e.target.value })} placeholder="如 全量客群日扫" /></FormRow>
               <FormRow label="描述" required><input className={fiWide} value={drawer.task.crowd} onChange={(e) => setTask({ crowd: e.target.value })} placeholder="如 在贷全量客户" /></FormRow>
               <FormRow label="业务场景" required help="任务归属的业务场景，产生预警时继承到预警记录的「触发场景」">
-                <select className={fi} value={drawer.task.scene ?? '贷中风控'} onChange={(e) => setTask({ scene: e.target.value })}>
-                  {SCENE_OPTS.map((s) => <option key={s} value={s}>{s}</option>)}
-                </select>
+                <SingleSelect label="选择场景" fullWidth value={drawer.task.scene ?? '贷中风控'} onChange={(v) => setTask({ scene: v })}
+                  options={SCENE_OPTS.map((s) => ({ value: s, label: s }))} />
               </FormRow>
               <FormRow label="监控粒度" required>
-                <select className={fi} value={drawer.task.granularity} onChange={(e) => setTask({ granularity: e.target.value as MonitorGranularity })}>
-                  {(Object.keys(GRAN_LABEL) as MonitorGranularity[]).map((g) => <option key={g} value={g}>{GRAN_LABEL[g]}</option>)}
-                </select>
+                <SingleSelect label="选择粒度" fullWidth value={drawer.task.granularity} onChange={(v) => setTask({ granularity: v as MonitorGranularity })}
+                  options={(Object.keys(GRAN_LABEL) as MonitorGranularity[]).map((g) => ({ value: g, label: GRAN_LABEL[g] }))} />
               </FormRow>
               {(drawer.task.granularity === 'week' || drawer.task.granularity === 'hour') && (
                 <FormRow label="监控时段·星期">
@@ -139,7 +137,7 @@ export default function MidMonitorConfig() {
                 </FormRow>
               )}
               <FormRow label="关联指标" required>
-                <MetricPicker metrics={metrics} value={drawer.task.metricIds} onChange={(v) => setTask({ metricIds: v })} />
+                <MetricPicker metrics={metrics} value={drawer.task.metricIds ?? []} onChange={(v) => setTask({ metricIds: v })} />
               </FormRow>
               <FormRow label="说明"><input className={fiWide} value={drawer.task.desc ?? ''} onChange={(e) => setTask({ desc: e.target.value })} placeholder="任务口径说明" /></FormRow>
             </Section>
@@ -260,20 +258,17 @@ function Switch({ on, onChange, label }: { on: boolean; onChange: (v: boolean) =
   );
 }
 
-/* 指标多选：已选显示在上方可删除；下拉带搜索筛选与分组分类 */
+/* 指标多选：已选显示在上方可删除；下拉统一走 SearchSelect（搜索 + 分组分类） */
 export function MetricPicker({ metrics, value, onChange }: {
   metrics: { id: string; name: string; group?: string }[];
   value: string[];
   onChange: (v: string[]) => void;
 }) {
-  const [open, setOpen] = useState(false);
-  const [kw, setKw] = useState('');
-  const groups = [...new Set(metrics.map((m) => m.group ?? '未分类'))];
-  const filtered = metrics.filter((m) => !kw || m.name.includes(kw) || m.id.toLowerCase().includes(kw.toLowerCase()));
   const toggle = (id: string) => onChange(value.includes(id) ? value.filter((x) => x !== id) : [...value, id]);
+  const options = metrics.map((m) => ({ value: m.id, label: m.name, group: m.group ?? '未分类' }));
+  const groups = [...new Set(metrics.map((m) => m.group ?? '未分类'))].map((g) => ({ key: g, label: g }));
   return (
     <div>
-      {/* 已选指标：显示在控件上方，可删除 */}
       {value.length > 0 && (
         <div className="flex flex-wrap gap-1.5 mb-2">
           {value.map((id) => {
@@ -287,79 +282,24 @@ export function MetricPicker({ metrics, value, onChange }: {
           })}
         </div>
       )}
-      {/* 下拉：搜索 + 分类 */}
-      <div className="relative">
-        <button type="button" onClick={() => setOpen(!open)}
-          className={`h-8 w-full px-2.5 rounded-md border text-sm bg-white flex items-center justify-between ${open ? 'border-blue-500 text-ink-900' : 'border-slate-200 text-slate-500'}`}>
-          <span className={value.length ? 'truncate' : 'text-slate-400'}>{value.length ? value.map((id) => metrics.find((x) => x.id === id)?.name ?? id).join('、') : '请选择指标'}</span>
-          <span className={`ml-1 text-xs text-slate-400 transition-transform ${open ? 'rotate-180' : ''}`}>▼</span>
-        </button>
-        {open && (
-          <>
-            <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-            <div className="absolute z-20 mt-1 w-full max-h-80 overflow-y-auto rounded-md border border-slate-200 bg-white shadow-lg p-2">
-              <input className="h-7 w-full px-2 mb-1 rounded border border-slate-200 text-xs outline-none focus:border-blue-500" placeholder="搜索指标…" value={kw} onChange={(e) => setKw(e.target.value)} />
-              {groups.map((g) => {
-                const items = filtered.filter((m) => (m.group ?? '未分类') === g);
-                if (!items.length) return null;
-                return (
-                  <div key={g} className="mb-1">
-                    <div className="px-2 py-1 text-[11px] text-slate-400">{g}</div>
-                    {items.map((m) => (
-                      <label key={m.id} className="flex items-center gap-2 px-2 py-1 text-xs text-slate-700 cursor-pointer hover:bg-slate-50 rounded">
-                        <input type="checkbox" className="accent-blue-600" checked={value.includes(m.id)} onChange={() => toggle(m.id)} />
-                        {m.name}
-                      </label>
-                    ))}
-                  </div>
-                );
-              })}
-            </div>
-          </>
-        )}
-      </div>
+      <SearchSelect multiple options={options} groups={groups} value={value} onChange={onChange}
+        placeholder="请选择指标" searchPlaceholder="搜索指标…" fullWidth />
     </div>
   );
 }
 
-/* 下拉多选（监控时段·星期 / 监控时段·小时 / 分组值 共用） */
+/* 下拉多选（监控时段·星期 / 监控时段·小时 / 分组值 共用）：统一走 SearchSelect（可筛选） */
 function MultiSelect<T extends string>({ options, value, onChange, placeholder }: {
   options: { key: T; label: string }[];
   value: T[];
   onChange: (v: T[]) => void;
   placeholder?: string;
 }) {
-  const [open, setOpen] = useState(false);
-  const all = options.length > 0 && options.every((o) => value.includes(o.key));
-  const toggle = (k: T) => onChange(value.includes(k) ? value.filter((x) => x !== k) : [...value, k]);
+  const sopts = options.map((o) => ({ value: o.key, label: o.label }))
   return (
-    <div className="relative">
-      <button type="button" onClick={() => setOpen(!open)}
-        className={`h-8 w-full px-2.5 rounded-md border text-sm text-ink-900 bg-white flex items-center justify-between ${open ? 'border-blue-500' : 'border-slate-200'}`}>
-        <span className={`truncate ${value.length ? 'text-ink-900' : 'text-slate-400'}`}>
-          {value.length ? value.map((k) => options.find((o) => o.key === k)?.label ?? k).join('、') : (placeholder ?? '请选择')}
-        </span>
-        <span className={`ml-1 shrink-0 text-xs text-slate-400 transition-transform ${open ? 'rotate-180' : ''}`}>▼</span>
-      </button>
-      {open && (
-        <>
-          <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-          <div className="absolute z-20 mt-1 w-full max-h-64 overflow-y-auto rounded-md border border-slate-200 bg-white shadow-lg p-1.5">
-            <label className="flex items-center gap-2 px-2 py-1 text-xs text-slate-600 cursor-pointer hover:bg-slate-50 rounded">
-              <input type="checkbox" className="accent-blue-600" checked={all} onChange={() => onChange(all ? [] : options.map((o) => o.key))} />
-              全选
-            </label>
-            {options.map((o) => (
-              <label key={o.key} className="flex items-center gap-2 px-2 py-1 text-xs text-slate-700 cursor-pointer hover:bg-slate-50 rounded">
-                <input type="checkbox" className="accent-blue-600" checked={value.includes(o.key)} onChange={() => toggle(o.key)} />
-                {o.label}
-              </label>
-            ))}
-          </div>
-        </>
-      )}
-    </div>
-  );
+    <SearchSelect multiple options={sopts} value={value} onChange={(v) => onChange(v as T[])}
+      placeholder={placeholder ?? '请选择'} searchPlaceholder="搜索…" fullWidth />
+  )
 }
 
 function RuleCard({ rule, onChange, onRemove, footer }: {
@@ -383,11 +323,8 @@ function RuleCard({ rule, onChange, onRemove, footer }: {
       <div className="flex items-center gap-2 mb-2">
         <span className="w-[88px] shrink-0 text-right pr-3 text-sm text-slate-500">预警类型</span>
         <div className="flex-1">
-          <select className="h-7 w-full px-1.5 rounded border border-slate-200 text-xs" value={rule.alertType ?? ''}
-            onChange={(e) => onChange({ ...rule, alertType: e.target.value })}>
-            <option value="">请选择预警类型</option>
-            {ALERT_TYPE_OPTS.map((a) => <option key={a} value={a}>{a}</option>)}
-          </select>
+          <SingleSelect label="请选择预警类型" clearable fullWidth value={rule.alertType ?? ''} onChange={(v) => onChange({ ...rule, alertType: v })}
+            options={[{ value: '', label: '请选择预警类型' }, ...ALERT_TYPE_OPTS.map((a) => ({ value: a, label: a }))]} />
         </div>
       </div>
 
@@ -418,18 +355,10 @@ function RuleCard({ rule, onChange, onRemove, footer }: {
       {/* 触发规则 */}
       <div className="flex items-center gap-2 mb-2">
         <span className="w-[88px] shrink-0 text-right pr-3 text-sm text-slate-500">触发规则</span>
-        <select className="h-7 px-1.5 rounded border border-slate-200 text-xs" value={rule.compare ?? 'lt'}
-          onChange={(e) => onChange({ ...rule, compare: e.target.value as RuleCompare })}>
-          <option value="lt">低于</option>
-          <option value="gt">高于</option>
-          <option value="eq">等于</option>
-        </select>
-        <select className="h-7 px-1.5 rounded border border-slate-200 text-xs" value={rule.baseline ?? 'yesterday'}
-          onChange={(e) => onChange({ ...rule, baseline: e.target.value as RuleBaseline })}>
-          <option value="yesterday">昨天同期</option>
-          <option value="lastWeek">上周同期</option>
-          <option value="lastMonth">上月同期</option>
-        </select>
+        <SingleSelect label="比较" width={110} value={rule.compare ?? 'lt'} onChange={(v) => onChange({ ...rule, compare: v as RuleCompare })}
+          options={[{ value: 'lt', label: '低于' }, { value: 'gt', label: '高于' }, { value: 'eq', label: '等于' }]} />
+        <SingleSelect label="基线" width={130} value={rule.baseline ?? 'yesterday'} onChange={(v) => onChange({ ...rule, baseline: v as RuleBaseline })}
+          options={[{ value: 'yesterday', label: '昨天同期' }, { value: 'lastWeek', label: '上周同期' }, { value: 'lastMonth', label: '上月同期' }]} />
         <input type="number" className="h-7 w-24 px-1.5 rounded border border-slate-200 text-xs" value={rule.threshold ?? 0}
           onChange={(e) => onChange({ ...rule, threshold: Number(e.target.value) })} placeholder="请输入" />
       </div>
@@ -437,12 +366,8 @@ function RuleCard({ rule, onChange, onRemove, footer }: {
       {/* 等级 */}
       <div className="flex items-center gap-2">
         <span className="w-[88px] shrink-0 text-right pr-3 text-sm text-slate-500">等级</span>
-        <select className="h-7 px-1.5 rounded border border-slate-200 text-xs" value={rule.level}
-          onChange={(e) => onChange({ ...rule, level: e.target.value as AlertLevel })}>
-          <option value="GREEN">绿灯</option>
-          <option value="YELLOW">黄灯</option>
-          <option value="RED">红灯</option>
-        </select>
+        <SingleSelect label="等级" width={110} value={rule.level} onChange={(v) => onChange({ ...rule, level: v as AlertLevel })}
+          options={[{ value: 'GREEN', label: '绿灯' }, { value: 'YELLOW', label: '黄灯' }, { value: 'RED', label: '红灯' }]} />
       </div>
 
       {/* 底部操作：删除 + 确认添加 / 取消 */}

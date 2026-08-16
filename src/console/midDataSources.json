@@ -1697,17 +1697,79 @@
         "label": "命中率%",
         "kind": "measure",
         "type": "number"
+      },
+      {
+        "key": "type",
+        "label": "命中类型",
+        "kind": "dim",
+        "type": "string"
       }
     ],
     "rows": [
-      { "model": "zhicha", "model_name": "智察分", "rule": "近30天申贷平台数≥5", "hits": 1842, "rate": 11.3 },
-      { "model": "zhicha", "model_name": "智察分", "rule": "设备模拟器特征命中", "hits": 1320, "rate": 8.1 },
-      { "model": "zhicha", "model_name": "智察分", "rule": "命中外部黑灰名单", "hits": 980, "rate": 6.0 },
-      { "model": "zhixin", "model_name": "智信分", "rule": "历史 M3+ 逾期≥2", "hits": 760, "rate": 4.7 },
-      { "model": "zhixin", "model_name": "智信分", "rule": "负债收入比≥70%", "hits": 1120, "rate": 6.9 },
-      { "model": "zhixin", "model_name": "智信分", "rule": "征信月查询≥10", "hits": 640, "rate": 3.9 },
-      { "model": "zhirong", "model_name": "智融分", "rule": "转化意愿低且资产缺失", "hits": 510, "rate": 3.1 },
-      { "model": "zhirong", "model_name": "智融分", "rule": "多头借贷强度高", "hits": 880, "rate": 5.4 }
+      {
+        "model": "zhicha",
+        "model_name": "智察分",
+        "rule": "近30天申贷平台数≥5",
+        "hits": 1842,
+        "rate": 11.3,
+        "type": "rule"
+      },
+      {
+        "model": "zhicha",
+        "model_name": "智察分",
+        "rule": "设备模拟器特征命中",
+        "hits": 1320,
+        "rate": 8.1,
+        "type": "rule"
+      },
+      {
+        "model": "zhicha",
+        "model_name": "智察分",
+        "rule": "命中外部黑灰名单",
+        "hits": 980,
+        "rate": 6,
+        "type": "list"
+      },
+      {
+        "model": "zhixin",
+        "model_name": "智信分",
+        "rule": "历史 M3+ 逾期≥2",
+        "hits": 760,
+        "rate": 4.7,
+        "type": "rule"
+      },
+      {
+        "model": "zhixin",
+        "model_name": "智信分",
+        "rule": "负债收入比≥70%",
+        "hits": 1120,
+        "rate": 6.9,
+        "type": "rule"
+      },
+      {
+        "model": "zhixin",
+        "model_name": "智信分",
+        "rule": "征信月查询≥10",
+        "hits": 640,
+        "rate": 3.9,
+        "type": "rule"
+      },
+      {
+        "model": "zhirong",
+        "model_name": "智融分",
+        "rule": "转化意愿低且资产缺失",
+        "hits": 510,
+        "rate": 3.1,
+        "type": "rule"
+      },
+      {
+        "model": "zhirong",
+        "model_name": "智融分",
+        "rule": "多头借贷强度高",
+        "hits": 880,
+        "rate": 5.4,
+        "type": "rule"
+      }
     ],
     "status": "已接入"
   },
@@ -2108,19 +2170,84 @@
       "query": "SELECT name, industry, risk_level, monitor_since, alerts, status FROM ent_monitor"
     },
     "fields": [
-      { "key": "name", "label": "企业名称", "kind": "dim", "type": "string" },
-      { "key": "industry", "label": "行业", "kind": "dim", "type": "string" },
-      { "key": "risk_level", "label": "风险等级", "kind": "dim", "type": "string" },
-      { "key": "monitor_since", "label": "开始监控", "kind": "dim", "type": "string" },
-      { "key": "alerts", "label": "累计预警", "kind": "measure", "type": "number" },
-      { "key": "status", "label": "状态", "kind": "dim", "type": "string" }
+      {
+        "key": "name",
+        "label": "企业名称",
+        "kind": "dim",
+        "type": "string"
+      },
+      {
+        "key": "industry",
+        "label": "行业",
+        "kind": "dim",
+        "type": "string"
+      },
+      {
+        "key": "risk_level",
+        "label": "风险等级",
+        "kind": "dim",
+        "type": "string"
+      },
+      {
+        "key": "monitor_since",
+        "label": "开始监控",
+        "kind": "dim",
+        "type": "string"
+      },
+      {
+        "key": "alerts",
+        "label": "累计预警",
+        "kind": "measure",
+        "type": "number"
+      },
+      {
+        "key": "status",
+        "label": "状态",
+        "kind": "dim",
+        "type": "string"
+      }
     ],
     "rows": [
-      { "name": "永和食品（中国）股份有限公司", "industry": "农副食品加工业", "risk_level": "中", "monitor_since": "2025-03-01", "alerts": 2, "status": "监控中" },
-      { "name": "杭州云算科技有限公司", "industry": "软件和信息技术服务业", "risk_level": "低", "monitor_since": "2025-06-15", "alerts": 1, "status": "监控中" },
-      { "name": "深圳市锐进供应链有限公司", "industry": "商务服务业", "risk_level": "高", "monitor_since": "2025-02-10", "alerts": 5, "status": "监控中" },
-      { "name": "北京华信智控科技有限公司", "industry": "专用设备制造业", "risk_level": "高", "monitor_since": "2024-11-01", "alerts": 7, "status": "监控中" },
-      { "name": "上海晨光贸易有限公司", "industry": "批发业", "risk_level": "中", "monitor_since": "2025-09-20", "alerts": 3, "status": "已暂停" }
+      {
+        "name": "永和食品（中国）股份有限公司",
+        "industry": "农副食品加工业",
+        "risk_level": "中",
+        "monitor_since": "2025-03-01",
+        "alerts": 2,
+        "status": "监控中"
+      },
+      {
+        "name": "杭州云算科技有限公司",
+        "industry": "软件和信息技术服务业",
+        "risk_level": "低",
+        "monitor_since": "2025-06-15",
+        "alerts": 1,
+        "status": "监控中"
+      },
+      {
+        "name": "深圳市锐进供应链有限公司",
+        "industry": "商务服务业",
+        "risk_level": "高",
+        "monitor_since": "2025-02-10",
+        "alerts": 5,
+        "status": "监控中"
+      },
+      {
+        "name": "北京华信智控科技有限公司",
+        "industry": "专用设备制造业",
+        "risk_level": "高",
+        "monitor_since": "2024-11-01",
+        "alerts": 7,
+        "status": "监控中"
+      },
+      {
+        "name": "上海晨光贸易有限公司",
+        "industry": "批发业",
+        "risk_level": "中",
+        "monitor_since": "2025-09-20",
+        "alerts": 3,
+        "status": "已暂停"
+      }
     ],
     "status": "已接入"
   },
@@ -2141,19 +2268,84 @@
       "query": "SELECT ent_name, category, rule_name, level, alert_date, status FROM ent_alert"
     },
     "fields": [
-      { "key": "ent_name", "label": "企业", "kind": "dim", "type": "string" },
-      { "key": "category", "label": "预警分类", "kind": "dim", "type": "string" },
-      { "key": "rule_name", "label": "命中规则", "kind": "dim", "type": "string" },
-      { "key": "level", "label": "等级", "kind": "dim", "type": "string" },
-      { "key": "alert_date", "label": "预警时间", "kind": "dim", "type": "string" },
-      { "key": "status", "label": "状态", "kind": "dim", "type": "string" }
+      {
+        "key": "ent_name",
+        "label": "企业",
+        "kind": "dim",
+        "type": "string"
+      },
+      {
+        "key": "category",
+        "label": "预警分类",
+        "kind": "dim",
+        "type": "string"
+      },
+      {
+        "key": "rule_name",
+        "label": "命中规则",
+        "kind": "dim",
+        "type": "string"
+      },
+      {
+        "key": "level",
+        "label": "等级",
+        "kind": "dim",
+        "type": "string"
+      },
+      {
+        "key": "alert_date",
+        "label": "预警时间",
+        "kind": "dim",
+        "type": "string"
+      },
+      {
+        "key": "status",
+        "label": "状态",
+        "kind": "dim",
+        "type": "string"
+      }
     ],
     "rows": [
-      { "ent_name": "深圳市锐进供应链有限公司", "category": "司法涉诉", "rule_name": "司法涉诉预警", "level": "RED", "alert_date": "2026-08-08", "status": "待处置" },
-      { "ent_name": "北京华信智控科技有限公司", "category": "司法涉诉", "rule_name": "司法涉诉预警", "level": "RED", "alert_date": "2026-08-06", "status": "核实中" },
-      { "ent_name": "永和食品（中国）股份有限公司", "category": "舆情负面", "rule_name": "舆情负面预警", "level": "YELLOW", "alert_date": "2026-08-01", "status": "已处置" },
-      { "ent_name": "上海晨光贸易有限公司", "category": "经营异常", "rule_name": "经营异常预警", "level": "RED", "alert_date": "2026-07-28", "status": "待处置" },
-      { "ent_name": "杭州云算科技有限公司", "category": "税务", "rule_name": "欠税预警", "level": "YELLOW", "alert_date": "2026-07-20", "status": "已处置" }
+      {
+        "ent_name": "深圳市锐进供应链有限公司",
+        "category": "司法涉诉",
+        "rule_name": "司法涉诉预警",
+        "level": "RED",
+        "alert_date": "2026-08-08",
+        "status": "待处置"
+      },
+      {
+        "ent_name": "北京华信智控科技有限公司",
+        "category": "司法涉诉",
+        "rule_name": "司法涉诉预警",
+        "level": "RED",
+        "alert_date": "2026-08-06",
+        "status": "核实中"
+      },
+      {
+        "ent_name": "永和食品（中国）股份有限公司",
+        "category": "舆情负面",
+        "rule_name": "舆情负面预警",
+        "level": "YELLOW",
+        "alert_date": "2026-08-01",
+        "status": "已处置"
+      },
+      {
+        "ent_name": "上海晨光贸易有限公司",
+        "category": "经营异常",
+        "rule_name": "经营异常预警",
+        "level": "RED",
+        "alert_date": "2026-07-28",
+        "status": "待处置"
+      },
+      {
+        "ent_name": "杭州云算科技有限公司",
+        "category": "税务",
+        "rule_name": "欠税预警",
+        "level": "YELLOW",
+        "alert_date": "2026-07-20",
+        "status": "已处置"
+      }
     ],
     "status": "已接入"
   },
@@ -2174,18 +2366,73 @@
       "query": "SELECT scene, result, level, status, decided_at FROM ent_decision_event"
     },
     "fields": [
-      { "key": "scene", "label": "决策场景", "kind": "dim", "type": "string" },
-      { "key": "result", "label": "结果", "kind": "dim", "type": "string" },
-      { "key": "level", "label": "等级", "kind": "dim", "type": "string" },
-      { "key": "status", "label": "状态", "kind": "dim", "type": "string" },
-      { "key": "decided_at", "label": "决策时间", "kind": "dim", "type": "string" }
+      {
+        "key": "scene",
+        "label": "决策场景",
+        "kind": "dim",
+        "type": "string"
+      },
+      {
+        "key": "result",
+        "label": "结果",
+        "kind": "dim",
+        "type": "string"
+      },
+      {
+        "key": "level",
+        "label": "等级",
+        "kind": "dim",
+        "type": "string"
+      },
+      {
+        "key": "status",
+        "label": "状态",
+        "kind": "dim",
+        "type": "string"
+      },
+      {
+        "key": "decided_at",
+        "label": "决策时间",
+        "kind": "dim",
+        "type": "string"
+      }
     ],
     "rows": [
-      { "scene": "授信审批", "result": "拒绝", "level": "高", "status": "已完成", "decided_at": "2026-08-08" },
-      { "scene": "授信审批", "result": "通过", "level": "低", "status": "已完成", "decided_at": "2026-08-02" },
-      { "scene": "尽调结论", "result": "转人工", "level": "高", "status": "待复核", "decided_at": "2026-08-09" },
-      { "scene": "预警处置", "result": "通过", "level": "低", "status": "已完成", "decided_at": "2026-07-30" },
-      { "scene": "名单命中", "result": "预警", "level": "中", "status": "复核中", "decided_at": "2026-08-05" }
+      {
+        "scene": "授信审批",
+        "result": "拒绝",
+        "level": "高",
+        "status": "已完成",
+        "decided_at": "2026-08-08"
+      },
+      {
+        "scene": "授信审批",
+        "result": "通过",
+        "level": "低",
+        "status": "已完成",
+        "decided_at": "2026-08-02"
+      },
+      {
+        "scene": "尽调结论",
+        "result": "转人工",
+        "level": "高",
+        "status": "待复核",
+        "decided_at": "2026-08-09"
+      },
+      {
+        "scene": "预警处置",
+        "result": "通过",
+        "level": "低",
+        "status": "已完成",
+        "decided_at": "2026-07-30"
+      },
+      {
+        "scene": "名单命中",
+        "result": "预警",
+        "level": "中",
+        "status": "复核中",
+        "decided_at": "2026-08-05"
+      }
     ],
     "status": "已接入"
   },
@@ -2206,17 +2453,346 @@
       "query": "SELECT name, count, status, progress, hit_risk FROM ent_due_task"
     },
     "fields": [
-      { "key": "name", "label": "任务名", "kind": "dim", "type": "string" },
-      { "key": "count", "label": "企业数", "kind": "measure", "type": "number" },
-      { "key": "status", "label": "状态", "kind": "dim", "type": "string" },
-      { "key": "progress", "label": "进度", "kind": "measure", "type": "number" },
-      { "key": "hit_risk", "label": "命中风险", "kind": "measure", "type": "number" }
+      {
+        "key": "name",
+        "label": "任务名",
+        "kind": "dim",
+        "type": "string"
+      },
+      {
+        "key": "count",
+        "label": "企业数",
+        "kind": "measure",
+        "type": "number"
+      },
+      {
+        "key": "status",
+        "label": "状态",
+        "kind": "dim",
+        "type": "string"
+      },
+      {
+        "key": "progress",
+        "label": "进度",
+        "kind": "measure",
+        "type": "number"
+      },
+      {
+        "key": "hit_risk",
+        "label": "命中风险",
+        "kind": "measure",
+        "type": "number"
+      }
     ],
     "rows": [
-      { "name": "8月对公存量客户尽调", "count": 126, "status": "进行中", "progress": 68, "hit_risk": 9 },
-      { "name": "新准入供应商风险筛查", "count": 54, "status": "已完成", "progress": 100, "hit_risk": 3 },
-      { "name": "授信到期续约尽调", "count": 87, "status": "待开始", "progress": 0, "hit_risk": 0 },
-      { "name": "园区重点企业季度复审", "count": 32, "status": "已完成", "progress": 100, "hit_risk": 4 }
+      {
+        "name": "8月对公存量客户尽调",
+        "count": 126,
+        "status": "进行中",
+        "progress": 68,
+        "hit_risk": 9
+      },
+      {
+        "name": "新准入供应商风险筛查",
+        "count": 54,
+        "status": "已完成",
+        "progress": 100,
+        "hit_risk": 3
+      },
+      {
+        "name": "授信到期续约尽调",
+        "count": 87,
+        "status": "待开始",
+        "progress": 0,
+        "hit_risk": 0
+      },
+      {
+        "name": "园区重点企业季度复审",
+        "count": 32,
+        "status": "已完成",
+        "progress": 100,
+        "hit_risk": 4
+      }
+    ],
+    "status": "已接入"
+  },
+  {
+    "id": "ds_score_customer",
+    "name": "评分客户洞察",
+    "type": "sql",
+    "category": "评分域",
+    "desc": "评分产品客户全景（三模型分 / 风险 / 价值 / 命中标签 / 客群 / 近30天行为），客户洞察看板数据源",
+    "conn": {
+      "dbType": "mysql",
+      "host": "10.20.30.41",
+      "port": 3306,
+      "database": "score_db",
+      "username": "score_ro",
+      "password": "Score@2026****",
+      "connStr": "mysql://score_ro:***@10.20.30.41:3306/score_db",
+      "query": "SELECT cust_id, cust_name, zhicha_score, zhixin_score, zhirong_score, risk_level, value_tier, hit_tags, grp, apply_30d, overdue_amt, last_alert, trend_30d FROM score_customer"
+    },
+    "fields": [
+      {
+        "key": "cust_id",
+        "label": "客户ID",
+        "kind": "dim",
+        "type": "string"
+      },
+      {
+        "key": "cust_name",
+        "label": "客户姓名",
+        "kind": "dim",
+        "type": "string"
+      },
+      {
+        "key": "zhicha_score",
+        "label": "智察分",
+        "kind": "measure",
+        "type": "number"
+      },
+      {
+        "key": "zhixin_score",
+        "label": "智信分",
+        "kind": "measure",
+        "type": "number"
+      },
+      {
+        "key": "zhirong_score",
+        "label": "智融分",
+        "kind": "measure",
+        "type": "number"
+      },
+      {
+        "key": "risk_level",
+        "label": "综合风险等级",
+        "kind": "dim",
+        "type": "string"
+      },
+      {
+        "key": "value_tier",
+        "label": "价值分层",
+        "kind": "dim",
+        "type": "string"
+      },
+      {
+        "key": "hit_tags",
+        "label": "命中标签",
+        "kind": "dim",
+        "type": "string"
+      },
+      {
+        "key": "grp",
+        "label": "所属客群",
+        "kind": "dim",
+        "type": "string"
+      },
+      {
+        "key": "apply_30d",
+        "label": "近30天申贷次数",
+        "kind": "measure",
+        "type": "number"
+      },
+      {
+        "key": "overdue_amt",
+        "label": "当前逾期金额",
+        "kind": "measure",
+        "type": "number"
+      },
+      {
+        "key": "last_alert",
+        "label": "最近预警时间",
+        "kind": "dim",
+        "type": "string"
+      },
+      {
+        "key": "trend_30d",
+        "label": "近30天风险趋势",
+        "kind": "dim",
+        "type": "string"
+      }
+    ],
+    "rows": [
+      {
+        "cust_id": "C1001",
+        "cust_name": "张伟",
+        "zhicha_score": 812,
+        "zhixin_score": 742,
+        "zhirong_score": 690,
+        "risk_level": "极低",
+        "value_tier": "高",
+        "hit_tags": "",
+        "grp": "高价值低险",
+        "apply_30d": 1,
+        "overdue_amt": 0,
+        "last_alert": "-",
+        "trend_30d": "平"
+      },
+      {
+        "cust_id": "C1002",
+        "cust_name": "李娜",
+        "zhicha_score": 733,
+        "zhixin_score": 688,
+        "zhirong_score": 651,
+        "risk_level": "低",
+        "value_tier": "高",
+        "hit_tags": "",
+        "grp": "高价值低险",
+        "apply_30d": 2,
+        "overdue_amt": 0,
+        "last_alert": "-",
+        "trend_30d": "平"
+      },
+      {
+        "cust_id": "C1003",
+        "cust_name": "王强",
+        "zhicha_score": 612,
+        "zhixin_score": 590,
+        "zhirong_score": 588,
+        "risk_level": "中",
+        "value_tier": "高",
+        "hit_tags": "负债收入比≥70%",
+        "grp": "高价值中险",
+        "apply_30d": 3,
+        "overdue_amt": 0,
+        "last_alert": "2026-07-28",
+        "trend_30d": "平"
+      },
+      {
+        "cust_id": "C1004",
+        "cust_name": "赵敏",
+        "zhicha_score": 521,
+        "zhixin_score": 503,
+        "zhirong_score": 540,
+        "risk_level": "高",
+        "value_tier": "高",
+        "hit_tags": "多头借贷强度高",
+        "grp": "高价值高风险",
+        "apply_30d": 6,
+        "overdue_amt": 12000,
+        "last_alert": "2026-08-09",
+        "trend_30d": "升"
+      },
+      {
+        "cust_id": "C1005",
+        "cust_name": "陈杰",
+        "zhicha_score": 418,
+        "zhixin_score": 432,
+        "zhirong_score": 460,
+        "risk_level": "极高",
+        "value_tier": "高",
+        "hit_tags": "命中外部黑灰名单",
+        "grp": "高价值高风险",
+        "apply_30d": 9,
+        "overdue_amt": 38000,
+        "last_alert": "2026-08-12",
+        "trend_30d": "升"
+      },
+      {
+        "cust_id": "C1006",
+        "cust_name": "刘洋",
+        "zhicha_score": 688,
+        "zhixin_score": 671,
+        "zhirong_score": 622,
+        "risk_level": "低",
+        "value_tier": "中",
+        "hit_tags": "",
+        "grp": "一般客群",
+        "apply_30d": 2,
+        "overdue_amt": 0,
+        "last_alert": "-",
+        "trend_30d": "降"
+      },
+      {
+        "cust_id": "C1007",
+        "cust_name": "孙丽",
+        "zhicha_score": 645,
+        "zhixin_score": 629,
+        "zhirong_score": 600,
+        "risk_level": "中",
+        "value_tier": "中",
+        "hit_tags": "征信月查询≥10",
+        "grp": "一般客群",
+        "apply_30d": 4,
+        "overdue_amt": 0,
+        "last_alert": "2026-07-30",
+        "trend_30d": "平"
+      },
+      {
+        "cust_id": "C1008",
+        "cust_name": "周涛",
+        "zhicha_score": 533,
+        "zhixin_score": 511,
+        "zhirong_score": 497,
+        "risk_level": "高",
+        "value_tier": "中",
+        "hit_tags": "设备模拟器特征命中",
+        "grp": "低价值高风险",
+        "apply_30d": 7,
+        "overdue_amt": 21000,
+        "last_alert": "2026-08-10",
+        "trend_30d": "升"
+      },
+      {
+        "cust_id": "C1009",
+        "cust_name": "吴静",
+        "zhicha_score": 402,
+        "zhixin_score": 388,
+        "zhirong_score": 430,
+        "risk_level": "极高",
+        "value_tier": "中",
+        "hit_tags": "近30天申贷平台数≥5",
+        "grp": "低价值高风险",
+        "apply_30d": 11,
+        "overdue_amt": 45000,
+        "last_alert": "2026-08-13",
+        "trend_30d": "升"
+      },
+      {
+        "cust_id": "C1010",
+        "cust_name": "郑凯",
+        "zhicha_score": 705,
+        "zhixin_score": 698,
+        "zhirong_score": 660,
+        "risk_level": "低",
+        "value_tier": "低",
+        "hit_tags": "",
+        "grp": "低价值低险",
+        "apply_30d": 1,
+        "overdue_amt": 0,
+        "last_alert": "-",
+        "trend_30d": "平"
+      },
+      {
+        "cust_id": "C1011",
+        "cust_name": "冯雪",
+        "zhicha_score": 658,
+        "zhixin_score": 640,
+        "zhirong_score": 615,
+        "risk_level": "中",
+        "value_tier": "低",
+        "hit_tags": "",
+        "grp": "低价值低险",
+        "apply_30d": 2,
+        "overdue_amt": 0,
+        "last_alert": "-",
+        "trend_30d": "降"
+      },
+      {
+        "cust_id": "C1012",
+        "cust_name": "何磊",
+        "zhicha_score": 556,
+        "zhixin_score": 540,
+        "zhirong_score": 523,
+        "risk_level": "高",
+        "value_tier": "低",
+        "hit_tags": "历史 M3+ 逾期≥2",
+        "grp": "低价值高风险",
+        "apply_30d": 5,
+        "overdue_amt": 16000,
+        "last_alert": "2026-08-08",
+        "trend_30d": "升"
+      }
     ],
     "status": "已接入"
   }

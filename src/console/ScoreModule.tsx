@@ -11,7 +11,6 @@ import ScoreModelDetailPage from './ScoreModelDetail'
 import ScoreDisposeFlowPage from './ScoreDisposeFlow'
 import MidAlertWorkbench from './MidAlertWorkbench'
 import MidDashboardPage from './MidDashboardPage'
-import ScoreOverviewPage from './ScoreOverview'
 
 /* 看板页：pageKey → 页面配置 key（管理中心页面配置里配置这些 key） */
 const DASHBOARD_PAGES: Record<string, string> = {
@@ -19,6 +18,7 @@ const DASHBOARD_PAGES: Record<string, string> = {
   'score-dist': 'sc:score-dist',
   'hit-analysis': 'sc:hit-analysis',
   'model-effect': 'sc:model-effect',
+  'crowd-insight': 'sc:crowd-insight',
 }
 
 export default function ScoreModule({ pageKey }: { pageKey: string; search?: string }) {
@@ -40,8 +40,6 @@ export default function ScoreModule({ pageKey }: { pageKey: string; search?: str
       return <ScoreModelDetailPage />
     case 'dispose-flow':
       return <ScoreDisposeFlowPage />
-    case 'overview-legacy':
-      return <ScoreOverviewPage />
     default:
       return <MidDashboardPage pageKey="sc:overview" crumbPrefix="评分产品" />
   }

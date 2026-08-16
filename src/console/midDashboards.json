@@ -3638,7 +3638,9 @@
         "title": "客群风险档位构成",
         "datasetId": "ds_score_dist",
         "metricId": "m_dist_total",
-        "dimensions": ["grade_name"],
+        "dimensions": [
+          "grade_name"
+        ],
         "span": 1,
         "windowSize": "sm"
       },
@@ -3647,7 +3649,11 @@
         "type": "metric",
         "title": "各模型客群规模",
         "datasetId": "ds_score_dist",
-        "metricIds": ["m_dist_zhicha", "m_dist_zhixin", "m_dist_zhirong"],
+        "metricIds": [
+          "m_dist_zhicha",
+          "m_dist_zhixin",
+          "m_dist_zhirong"
+        ],
         "span": 2,
         "windowSize": "md"
       }
@@ -3702,7 +3708,9 @@
         "title": "命中规则类型分布",
         "datasetId": "ds_score_hit",
         "metricId": "m_score_hit_cnt",
-        "dimensions": ["rule"],
+        "dimensions": [
+          "rule"
+        ],
         "span": 1,
         "windowSize": "sm"
       }
@@ -3773,7 +3781,11 @@
         "type": "metric",
         "title": "运营质量均值",
         "datasetId": "ds_score_ops",
-        "metricIds": ["m_score_ops_coverage", "m_score_ops_accuracy", "m_score_ops_timely"],
+        "metricIds": [
+          "m_score_ops_coverage",
+          "m_score_ops_accuracy",
+          "m_score_ops_timely"
+        ],
         "span": 3,
         "windowSize": "md"
       }
@@ -3982,93 +3994,123 @@
     ]
   },
   {
-    "id": "db-ent-decision-trace",
-    "key": "ep:decision-trace",
-    "name": "决策追踪详情",
-    "group": "风险事件管理",
-    "order": 202,
+    "key": "sc:crowd-insight",
+    "name": "客户洞察",
+    "group": "客户洞察",
+    "order": 1,
     "enabled": true,
-    "desc": "企业决策事件追踪：决策结果分布 / 决策场景构成 / 等级结构与事件明细",
+    "desc": "评分客户全景洞察：风险 / 价值 / 客群 / 机会与趋势，辅助决定先盯哪类客群",
+    "filters": [
+      {
+        "id": "f_risk",
+        "label": "风险等级",
+        "kind": "select",
+        "field": "risk_level"
+      },
+      {
+        "id": "f_tier",
+        "label": "价值分层",
+        "kind": "select",
+        "field": "value_tier"
+      },
+      {
+        "id": "f_grp",
+        "label": "所属客群",
+        "kind": "select",
+        "field": "grp"
+      }
+    ],
     "widgets": [
       {
         "id": "w1",
         "type": "metric",
-        "title": "决策事件数",
-        "datasetId": "ds_ent_event",
-        "metricId": "m_ent_event_cnt",
-        "span": 1,
+        "title": "客户总数",
+        "datasetId": "ds_score_customer",
+        "metricId": "m_sc_cust_cnt",
         "windowSize": "sm"
       },
       {
         "id": "w2",
         "type": "metric",
-        "title": "决策拒绝数",
-        "datasetId": "ds_ent_event",
-        "metricId": "m_ent_event_reject",
-        "span": 1,
+        "title": "高价值客户数",
+        "datasetId": "ds_score_customer",
+        "metricId": "m_sc_high_value",
         "windowSize": "sm"
       },
       {
         "id": "w3",
         "type": "metric",
-        "title": "决策转人工数",
-        "datasetId": "ds_ent_event",
-        "metricId": "m_ent_event_manual",
-        "span": 1,
+        "title": "高风险客户数",
+        "datasetId": "ds_score_customer",
+        "metricId": "m_sc_high_risk",
         "windowSize": "sm"
       },
       {
         "id": "w4",
-        "type": "donut",
-        "title": "决策结果分布",
-        "datasetId": "ds_ent_event",
-        "metricId": "m_ent_event_cnt",
-        "dimensions": [
-          "result"
-        ],
-        "span": 1,
+        "type": "metric",
+        "title": "客群分组数",
+        "datasetId": "ds_score_customer",
+        "metricId": "m_sc_group_cnt",
         "windowSize": "sm"
       },
       {
         "id": "w5",
-        "type": "bar",
-        "title": "决策场景构成",
-        "datasetId": "ds_ent_event",
-        "metricId": "m_ent_event_cnt",
+        "type": "donut",
+        "title": "风险等级分布",
+        "datasetId": "ds_score_customer",
+        "metricId": "m_sc_cust_cnt",
         "dimensions": [
-          "scene"
+          "risk_level"
         ],
-        "span": 2,
         "windowSize": "md"
       },
       {
         "id": "w6",
         "type": "bar",
-        "title": "决策等级结构",
-        "datasetId": "ds_ent_event",
-        "metricId": "m_ent_event_cnt",
+        "title": "各客群客户数",
+        "datasetId": "ds_score_customer",
+        "metricId": "m_sc_cust_cnt",
         "dimensions": [
-          "level"
+          "grp"
         ],
-        "span": 1,
-        "windowSize": "sm"
+        "windowSize": "md"
       },
       {
         "id": "w7",
-        "type": "table",
-        "title": "决策事件明细",
-        "datasetId": "ds_ent_event",
-        "metricId": "m_ent_event_cnt",
+        "type": "bar",
+        "title": "价值分层 × 风险等级",
+        "datasetId": "ds_score_customer",
+        "metricId": "m_sc_cust_cnt",
         "dimensions": [
-          "scene",
-          "result",
-          "level",
-          "status",
-          "decided_at"
+          "value_tier"
         ],
-        "span": 2,
         "windowSize": "md"
+      },
+      {
+        "id": "w8",
+        "type": "table",
+        "title": "客户明细（点击行「详情」看完整属性）",
+        "datasetId": "ds_score_customer",
+        "metricId": "m_sc_cust_cnt",
+        "dimensions": [
+          "cust_id",
+          "cust_name",
+          "zhicha_score",
+          "zhixin_score",
+          "zhirong_score",
+          "risk_level",
+          "value_tier",
+          "hit_tags",
+          "grp",
+          "apply_30d",
+          "overdue_amt",
+          "last_alert",
+          "trend_30d"
+        ],
+        "windowSize": "lg"
       }
-    ]
+    ],
+    "flowKey": "f-cust-operate",
+    "flowState": "已上线"
   }
 ]

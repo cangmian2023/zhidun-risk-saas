@@ -3,7 +3,7 @@
 // 编辑态弹窗字段对应 record/temp/08071 文档第二点，首位移入与监控任务一致的指标选择器（多选）。
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Panel, Button, Modal, DetailHeader, SearchSelect } from '../components/ui';
+import { Panel, Button, Modal, DetailHeader, SearchSelect, SingleSelect } from '../components/ui';
 import type { SearchSelectOption, SearchSelectGroup } from '../components/ui';
 import { Sam } from './SourceTag';
 import { PageShell } from './PageShell';
@@ -81,9 +81,8 @@ function WidgetEditModal({ w, metrics, flows, isNew, onClose, onSave }: {
         </Field>
         {/* 3. 时间粒度 */}
         <Field label="时间粒度">
-          <select style={inp} value={draft.timeGranularity ?? '天'} onChange={(e) => set({ timeGranularity: e.target.value })}>
-            {TIME_GRAN.map((g) => <option key={g} value={g}>{g}</option>)}
-          </select>
+          <SingleSelect label="时间粒度" fullWidth value={draft.timeGranularity ?? '天'} onChange={(v) => set({ timeGranularity: v })}
+            options={TIME_GRAN.map((g) => ({ value: g, label: g }))} />
         </Field>
         {/* 4. 图表类型 */}
         <Field label="图表类型">
@@ -118,11 +117,8 @@ function WidgetEditModal({ w, metrics, flows, isNew, onClose, onSave }: {
         </Field>
         {/* 6. 窗口尺寸 */}
         <Field label="窗口尺寸">
-          <select style={inp} value={draft.windowSize ?? 'md'} onChange={(e) => set({ windowSize: e.target.value as 'sm' | 'md' | 'lg' })}>
-            <option value="sm">小（占 1 列）</option>
-            <option value="md">中（占 2 列）</option>
-            <option value="lg">大（占整行 3 列）</option>
-          </select>
+          <SingleSelect label="窗口尺寸" fullWidth value={draft.windowSize ?? 'md'} onChange={(v) => set({ windowSize: v as 'sm' | 'md' | 'lg' })}
+            options={[{ value: 'sm', label: '小（占 1 列）' }, { value: 'md', label: '中（占 2 列）' }, { value: 'lg', label: '大（占整行 3 列）' }]} />
         </Field>
         {/* 7. 备注 */}
         <Field label="备注">

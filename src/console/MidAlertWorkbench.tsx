@@ -2,7 +2,7 @@
 // 行点击跳转预警详情页（cr:mid-alert-detail），处置动作在详情页完成
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Panel, StatCard, DataTable, Modal } from '../components/ui';
+import { Panel, StatCard, DataTable, Modal, SingleSelect } from '../components/ui';
 import type { Column, Row } from '../components/ui';
 import { Sam, Cal } from './SourceTag';
 import { PageShell } from './PageShell';
@@ -10,31 +10,14 @@ import { useMidAlerts, useMidSaveStatus, updateAlerts } from './midStore';
 import { LEVEL_META } from './midData';
 import { useFlows } from './flowStore';
 import FlowStateCell from './FlowStateCell';
-// 统一流程绑定层：与贷前四页（进件审核/信息核验/信用风控/欺诈识别）共用同一套实现
-import { useMinuteTick, renderCountdown, matchObjOf, flowIdOfRow, nowStamp, usePageFlow } from './flowBinding';
 import { usePageNav } from './pageNav';
-
-/* 本页流程匹配字段（需求16）：{ 流程配置字段名: 行数据键名 } */
-const ALERT_MATCH_FIELDS = { level: 'levelRaw', alert_type: 'alertTypeRaw', scene: 'scene' };
 
 export default function MidAlertWorkbench() {
   const alerts = useMidAlerts();
   const saveStatus = useMidSaveStatus();
   useFlows(); // 订阅流程配置变更
-  const pageFlow = usePageFlow('/console/cr/mid-alert-workbench'); // 未配 flowKey 的行回落本页关联流程（键须与 bizFlows.pageRoutes 一致）
   const nav = useNavigate();
   const { sub, goDetail } = usePageNav();
-
-  useMinuteTick(); // 需求14：时限倒计时每分钟刷新
-
-  // 节点时限倒计时：统一实现（与贷前四页完全一致）
-  const countdownOf = (r: Row): React.ReactNode =>
-    renderCountdown({
-      flowId: flowIdOfRow(r as any, pageFlow),
-      flowState: String(r.flowState ?? ''),
-      flowStateAt: String(r.flowStateAt ?? ''),
-      matchObj: matchObjOf(r as any, ALERT_MATCH_FIELDS),
-    });
 
   const [lvl, setLvl] = useState<string>('');
   const [scene, setScene] = useState<string>('');
@@ -69,7 +52,6 @@ export default function MidAlertWorkbench() {
     { key: 'rule_name', label: '命中规则', type: 'text', width: '200px' },
     { key: 'metric', label: '指标值/阈值', type: 'text', width: '100px' },
     { key: 'alert_date', label: '预警时间', type: 'text', width: '100px' },
-    { key: 'countdown', label: '时限倒计时', render: (r: Row) => countdownOf(r) },
     { key: 'flowState', label: '流程状态', fixed: 'right', tag: { kind: 'sample', value: 'midAlerts.json.flowState' }, render: (r: Row) => (
       <FlowStateCell flowId={String(r.flowKey ?? '')} state={String(r.flowState ?? '')}
         matchObj={{ level: r.levelRaw ?? '', alert_type: r.alertTypeRaw ?? '', scene: r.scene ?? '' }}
@@ -138,9 +120,7 @@ export default function MidAlertWorkbench() {
 
 function Sel({ value, onChange, opts }: { value: string; onChange: (v: string) => void; opts: { v: string; l: string }[] }) {
   return (
-    <select value={value} onChange={(e) => onChange(e.target.value)} style={{ padding: '4px 8px', borderRadius: 6, border: '1px solid #E2E8F0', fontSize: 12, background: '#fff' }}>
-      {opts.map((o) => <option key={o.v} value={o.v}>{o.l}</option>)}
-    </select>
+    <SingleSelect label="选择" value={value} onChange={onChange} options={opts.map((o) => ({ value: o.v, label: o.l }))} />
   );
 }
 

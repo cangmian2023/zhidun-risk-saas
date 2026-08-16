@@ -3,19 +3,43 @@
 // 右侧：决策表 - 行条件配置（可折叠行：行名/得分/条件列表，支持复制/删除/添加行/保存）
 import { useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { useDecision, updateDecision, type DeDecisionRow, type DePolicyCondition } from './decisionData'
-import { DetailHeader, Button } from '../components/ui'
+import { useDecision, updateDecision, DE_CONDITION_OPS, buildConditionExpr, type DeDecisionRow, type DePolicyCondition, type DeModelFeature } from './decisionData'
+import { DetailHeader, Button, SingleSelect } from '../components/ui'
 import { Sam } from './SourceTag'
 import { useDecisionToast } from './useDecisionToast'
 
-function PolicyRowCard({ row, index, open, onToggle, onChange, onCopy, onDelete }: {
+function PolicyRowCard({ row, index, open, onToggle, onChange, onCopy, onDelete, featureList }: {
   row: DeDecisionRow; index: number; open: boolean; onToggle: () => void;
   onChange: (row: DeDecisionRow) => void; onCopy: () => void; onDelete: () => void;
+  /** 模型特征库：条件字段的候选池（标准化选择，替代手敲） */
+  featureList: DeModelFeature[];
 }) {
   const setScore = (v: number) => onChange({ ...row, score: v })
   const setCond = (i: number, c: DePolicyCondition) => {
     const conditions = row.conditions.map((x, j) => (j === i ? c : x))
     onChange({ ...row, conditions })
+  }
+  /** 选字段：从特征库选择并自动刷新操作符/值 */
+  const pickField = (i: number, code: string) => {
+    const feat = featureList.find((f) => f.code === code)
+    const c = row.conditions[i]
+    const next = {
+      ...c,
+      field: code,
+      fieldName: feat?.name ?? '',
+      op: feat ? DE_CONDITION_OPS[feat.dataType]?.[0] ?? '=' : '=',
+      value: c.value ?? '',
+      expr: feat && c.value ? buildConditionExpr(code, DE_CONDITION_OPS[feat.dataType]?.[0] ?? '=', c.value) : c.expr ?? '',
+    }
+    setCond(i, next)
+  }
+  const pickOp = (i: number, op: string) => {
+    const c = row.conditions[i]
+    setCond(i, { ...c, op, expr: c.value ? buildConditionExpr(c.field, op, c.value) : c.expr })
+  }
+  const pickValue = (i: number, value: string) => {
+    const c = row.conditions[i]
+    setCond(i, { ...c, value, expr: c.op ? buildConditionExpr(c.field, c.op, value) : c.expr })
   }
   const addCond = () => onChange({ ...row, conditions: [...row.conditions, { field: '', expr: '' }] })
   const delCond = (i: number) => onChange({ ...row, conditions: row.conditions.filter((_, j) => j !== i) })
@@ -48,16 +72,33 @@ function PolicyRowCard({ row, index, open, onToggle, onChange, onCopy, onDelete 
                 className="h-8 w-24 rounded-lg border border-slate-200 px-2 text-sm focus:border-brand-300 focus:outline-none" />
             </label>
           </div>
+
+          {/* 条件列表：标准化「字段 / 操作符 / 值」编辑器，表达式自动拼装 */}
           <div className="space-y-2">
-            {row.conditions.map((c, i) => (
-              <div key={i} className="flex items-center gap-2">
-                <input value={c.field} onChange={(e) => setCond(i, { ...c, field: e.target.value })} placeholder="字段"
-                  className="h-8 w-32 rounded-lg border border-slate-200 px-2 text-sm focus:border-brand-300 focus:outline-none" />
-                <input value={c.expr} onChange={(e) => setCond(i, { ...c, expr: e.target.value })} placeholder="表达式 如: age > 30"
-                  className="h-8 flex-1 rounded-lg border border-slate-200 px-2 font-mono text-sm focus:border-brand-300 focus:outline-none" />
-                <button className="text-rose-600 hover:underline" onClick={() => delCond(i)}>−</button>
-              </div>
-            ))}
+            {row.conditions.map((c, i) => {
+              const feat = featureList.find((f) => f.code === c.field)
+              const ops = DE_CONDITION_OPS[feat?.dataType ?? 'STRING'] ?? ['=', '!=']
+              const isBool = feat?.dataType === 'BOOLEAN'
+              return (
+                <div key={i} className="flex items-center gap-2">
+                  <SingleSelect label="字段…（从特征库选择）" clearable width={176} value={c.field} onChange={(v) => pickField(i, v)}
+                    options={[{ value: '', label: '字段…（从特征库选择）' }, ...featureList.map((f) => ({ value: f.code, label: `${f.name}（${f.code}）· ${f.category}` }))]} />
+                  <SingleSelect label="操作符" width={80} value={c.op ?? (ops[0] ?? '=')} onChange={(v) => pickOp(i, v)}
+                    options={ops.map((o) => ({ value: o, label: o }))} />
+                  {isBool ? (
+                    <SingleSelect label="值…" clearable width={96} value={c.value ?? ''} onChange={(v) => pickValue(i, v)}
+                      options={[{ value: '', label: '值…' }, { value: 'true', label: '是' }, { value: 'false', label: '否' }]} />
+                  ) : (
+                    <input value={c.value ?? ''} placeholder="值"
+                      onChange={(e) => pickValue(i, e.target.value)}
+                      className="h-8 w-32 rounded-lg border border-slate-200 px-2 text-sm focus:border-brand-300 focus:outline-none" />
+                  )}
+                  <code className="flex-1 truncate rounded bg-slate-50 px-2 py-1.5 font-mono text-xs text-slate-500">{c.expr || '—'}</code>
+                  <button className="text-rose-600 hover:underline" onClick={() => delCond(i)}>−</button>
+                </div>
+              )
+            })}
+            {row.conditions.length === 0 && <div className="rounded border border-dashed border-slate-200 px-2 py-2 text-center text-xs text-slate-400">暂无条件，点击下方新增</div>}
             <Button size="sm" variant="ghost" onClick={addCond}>+ 条件</Button>
           </div>
         </div>
@@ -160,6 +201,7 @@ export default function DecisionPolicyEditPage({ search }: { search: string }) {
             <div className="space-y-3 p-4">
               {rows.map((row, i) => (
                 <PolicyRowCard key={i} row={row} index={i} open={isRowOpen(i)}
+                  featureList={model.featureList}
                   onToggle={() => toggleRow(i)}
                   onChange={(r) => setRows((prev) => prev.map((x, j) => (j === i ? r : x)))}
                   onCopy={() => setRows((prev) => [...prev.slice(0, i + 1), { ...row, name: row.name + '-副本' }, ...prev.slice(i + 1)])}

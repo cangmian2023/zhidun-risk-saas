@@ -22,18 +22,21 @@ export default function FlowStateCell({ flowId, state, onChange, buttonOnly = fa
   const [confirm, setConfirm] = useState<{ f: FlowItem; step: FlowStep } | null>(null)
   if (!f) return <span style={{ color: '#CBD5E1' }}>—</span>
   if (!steps.length) return <span style={{ color: '#CBD5E1' }}>—</span> // 方案B：无匹配流程
-  const { state: st, step } = flowStepOf({ flowSteps: steps, flowState: state })
-  const sc = step?.color ?? stepColorOf(st)
+  const { state: st, matched } = flowStepOf({ flowSteps: steps, flowState: state })
+  const act = matched.filter((s) => s.next && onChange)
+  const sc = matched[0]?.color ?? stepColorOf(st)
 
   if (buttonOnly) {
-    // 操作列模式：只显示「当前可执行操作」按钮（终态无按钮）
-    if (!step?.next || !onChange) return <span style={{ color: '#CBD5E1' }}>—</span>
+    // 操作列模式：只显示「当前可执行操作」按钮（终态无按钮；同状态多动作全列出）
+    if (!act.length) return <span style={{ color: '#CBD5E1' }}>—</span>
     return (
       <>
-        <button type="button" onClick={() => setConfirm({ f, step })}
-          style={{ fontSize: 11, padding: '3px 10px', borderRadius: 4, border: 'none', cursor: 'pointer', background: '#2563EB', color: '#fff' }}>
-          {step.action}
-        </button>
+        {act.map((s) => (
+          <button key={s.action} type="button" onClick={() => setConfirm({ f, step: s })}
+            style={{ fontSize: 11, padding: '3px 10px', borderRadius: 4, border: 'none', cursor: 'pointer', background: s.action.includes('驳回') ? '#DC2626' : '#2563EB', color: '#fff', marginRight: 4 }}>
+            {s.action}
+          </button>
+        ))}
         <FlowConfirmModal
           open={confirm != null}
           flowName={name || f.name}
@@ -41,7 +44,7 @@ export default function FlowStateCell({ flowId, state, onChange, buttonOnly = fa
           from={confirm ? flowStepOf({ flowSteps: steps, flowState: state }).state : ''}
           to={confirm?.step.next ?? ''}
           onClose={() => setConfirm(null)}
-          onConfirm={() => { if (confirm) onChange(confirm.step.next!); setConfirm(null) }}
+          onConfirm={() => { if (confirm && onChange) onChange(confirm.step.next!); setConfirm(null) }}
         />
       </>
     )
@@ -51,12 +54,12 @@ export default function FlowStateCell({ flowId, state, onChange, buttonOnly = fa
     <>
       <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 6, padding: '2px 6px', whiteSpace: 'nowrap' }}>
         <span style={{ fontSize: 12, fontWeight: 600, color: sc }}>{st}</span>
-        {step?.next && onChange && (
-          <button type="button" onClick={() => setConfirm({ f, step })}
-            style={{ fontSize: 11, padding: '1px 9px', borderRadius: 4, border: 'none', cursor: 'pointer', background: '#2563EB', color: '#fff' }}>
-            {step.action}
+        {act.map((s) => (
+          <button key={s.action} type="button" onClick={() => setConfirm({ f, step: s })}
+            style={{ fontSize: 11, padding: '1px 9px', borderRadius: 4, border: 'none', cursor: 'pointer', background: s.action.includes('驳回') ? '#DC2626' : '#2563EB', color: '#fff' }}>
+            {s.action}
           </button>
-        )}
+        ))}
       </div>
       <FlowConfirmModal
         open={confirm != null}
@@ -65,7 +68,7 @@ export default function FlowStateCell({ flowId, state, onChange, buttonOnly = fa
         from={confirm ? flowStepOf({ flowSteps: steps, flowState: state }).state : ''}
         to={confirm?.step.next ?? ''}
         onClose={() => setConfirm(null)}
-        onConfirm={() => { if (confirm) onChange(confirm.step.next!); setConfirm(null) }}
+        onConfirm={() => { if (confirm && onChange) onChange(confirm.step.next!); setConfirm(null) }}
       />
     </>
   )

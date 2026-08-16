@@ -273,6 +273,8 @@ export function DecisionFlowEditPage({ search }: { search: string }) {
         <DecisionFlowEditor
           flow={flow.graph}
           flowName={flow.name}
+          policyOptions={model.policies.map((p) => ({ id: p.id, name: p.name, code: p.code, type: p.type }))}
+          listOptions={d.lists.map((l) => ({ id: l.id, name: l.name, type: l.kind }))}
           onRenameFlow={(v) => updateDecision((dd) => ({ ...dd, models: dd.models.map((m) => m.id === model.id ? { ...m, flows: m.flows.map((f) => (f.id === flow.id ? { ...f, name: v } : f)) } : m) }))}
           onSave={(g) => { handleSave(g); toast.show('已保存决策流') }}
           onPublish={(g) => { handleSave(g); toast.show('决策流已发布') }}

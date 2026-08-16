@@ -42,9 +42,9 @@ export function usePageNav() {
     nav(`${p}?${merged.toString()}`)
   }
 
-  /** 详情页返回：优先 ?back=，否则回退路径，最后浏览器后退 */
+  /** 详情页返回：优先 ?back=，防闭环（back 指向自身时改用 fallback），否则回退路径，最后浏览器后退 */
   function back(fallback?: string) {
-    if (backParam) {
+    if (backParam && backParam !== currentPath) {
       nav(backParam)
       return
     }

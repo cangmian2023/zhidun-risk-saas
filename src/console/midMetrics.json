@@ -3632,7 +3632,11 @@
     "field": "name",
     "agg": "count",
     "filters": [
-      { "field": "risk_level", "op": "eq", "value": "高" }
+      {
+        "field": "risk_level",
+        "op": "eq",
+        "value": "高"
+      }
     ],
     "unit": "家",
     "precision": 0,
@@ -3647,7 +3651,11 @@
     "field": "name",
     "agg": "count",
     "filters": [
-      { "field": "risk_level", "op": "eq", "value": "中" }
+      {
+        "field": "risk_level",
+        "op": "eq",
+        "value": "中"
+      }
     ],
     "unit": "家",
     "precision": 0,
@@ -3674,7 +3682,11 @@
     "field": "ent_name",
     "agg": "count",
     "filters": [
-      { "field": "level", "op": "eq", "value": "RED" }
+      {
+        "field": "level",
+        "op": "eq",
+        "value": "RED"
+      }
     ],
     "unit": "条",
     "precision": 0,
@@ -3689,7 +3701,11 @@
     "field": "ent_name",
     "agg": "count",
     "filters": [
-      { "field": "level", "op": "eq", "value": "YELLOW" }
+      {
+        "field": "level",
+        "op": "eq",
+        "value": "YELLOW"
+      }
     ],
     "unit": "条",
     "precision": 0,
@@ -3716,7 +3732,11 @@
     "field": "scene",
     "agg": "count",
     "filters": [
-      { "field": "result", "op": "eq", "value": "拒绝" }
+      {
+        "field": "result",
+        "op": "eq",
+        "value": "拒绝"
+      }
     ],
     "unit": "件",
     "precision": 0,
@@ -3731,7 +3751,11 @@
     "field": "scene",
     "agg": "count",
     "filters": [
-      { "field": "result", "op": "eq", "value": "转人工" }
+      {
+        "field": "result",
+        "op": "eq",
+        "value": "转人工"
+      }
     ],
     "unit": "件",
     "precision": 0,
@@ -3758,6 +3782,115 @@
     "field": "hit_risk",
     "agg": "sum",
     "unit": "家",
+    "precision": 0,
+    "enabled": true
+  },
+  {
+    "id": "m_sc_cust_cnt",
+    "name": "客户总数",
+    "group": "评分客户",
+    "dataSourceId": "ds_score_customer",
+    "type": "base",
+    "field": "cust_id",
+    "agg": "count",
+    "precision": 0,
+    "enabled": true
+  },
+  {
+    "id": "m_sc_high_value",
+    "name": "高价值客户数",
+    "group": "评分客户",
+    "dataSourceId": "ds_score_customer",
+    "type": "base",
+    "field": "cust_id",
+    "agg": "count",
+    "filters": [
+      {
+        "field": "value_tier",
+        "op": "eq",
+        "value": "高"
+      }
+    ],
+    "precision": 0,
+    "enabled": true
+  },
+  {
+    "id": "m_sc_high_risk",
+    "name": "高风险客户数",
+    "group": "评分客户",
+    "dataSourceId": "ds_score_customer",
+    "type": "base",
+    "field": "cust_id",
+    "agg": "count",
+    "filters": [
+      {
+        "field": "risk_level",
+        "op": "contains",
+        "value": "高"
+      }
+    ],
+    "precision": 0,
+    "enabled": true
+  },
+  {
+    "id": "m_sc_group_cnt",
+    "name": "客群分组数",
+    "group": "评分客户",
+    "dataSourceId": "ds_score_customer",
+    "type": "base",
+    "field": "grp",
+    "agg": "distinct",
+    "precision": 0,
+    "enabled": true
+  },
+  {
+    "id": "m_hit_total",
+    "name": "总命中次数",
+    "group": "命中分析",
+    "dataSourceId": "ds_score_hit",
+    "type": "base",
+    "field": "hits",
+    "agg": "sum",
+    "precision": 0,
+    "enabled": true
+  },
+  {
+    "id": "m_hit_model",
+    "name": "涉及模型数",
+    "group": "命中分析",
+    "dataSourceId": "ds_score_hit",
+    "type": "base",
+    "field": "model",
+    "agg": "distinct",
+    "precision": 0,
+    "enabled": true
+  },
+  {
+    "id": "m_hit_rule",
+    "name": "命中规则数",
+    "group": "命中分析",
+    "dataSourceId": "ds_score_hit",
+    "type": "base",
+    "field": "rule",
+    "agg": "count",
+    "precision": 0,
+    "enabled": true
+  },
+  {
+    "id": "m_hit_list",
+    "name": "名单命中次数",
+    "group": "命中分析",
+    "dataSourceId": "ds_score_hit",
+    "type": "base",
+    "field": "hits",
+    "agg": "sum",
+    "filters": [
+      {
+        "field": "type",
+        "op": "contains",
+        "value": "list"
+      }
+    ],
     "precision": 0,
     "enabled": true
   }

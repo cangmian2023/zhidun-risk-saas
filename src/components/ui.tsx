@@ -117,6 +117,7 @@ export function StatCard({
   deltaType,
   hint,
   accent = 'brand',
+  extra,
 }: {
   label: string
   value: string
@@ -124,6 +125,7 @@ export function StatCard({
   deltaType?: 'up' | 'down' | 'flat'
   hint?: ReactNode
   accent?: 'brand' | 'cyan' | 'violet' | 'amber' | 'emerald' | 'rose'
+  extra?: ReactNode
 }) {
   const accents: Record<string, string> = {
     brand: 'text-brand-600',
@@ -137,7 +139,7 @@ export function StatCard({
     deltaType === 'up' ? 'text-emerald-600' : deltaType === 'down' ? 'text-rose-600' : 'text-slate-400'
   return (
     <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-card">
-      <p className="text-sm text-slate-500">{label}</p>
+      <p className="flex items-center gap-1.5 text-sm text-slate-500">{label}{extra}</p>
       <p className={`mt-2 text-3xl font-bold tabular-nums ${accents[accent]}`}>{value}</p>
       <div className="mt-1.5 flex items-center gap-2 text-xs">
         {delta && <span className={`font-medium ${deltaColor}`}>{delta}</span>}
@@ -340,6 +342,11 @@ export function DataTable({
   pager = false,
   defaultPageSize = 20,
   pageSizeOptions = [10, 20, 50, 100],
+  exportable = false,
+  exportName = '导出',
+  selectable = false,
+  selected = [],
+  onSelectChange,
 }: {
   columns: Column[]
   rows: Row[]
@@ -350,6 +357,11 @@ export function DataTable({
   pager?: boolean
   defaultPageSize?: number
   pageSizeOptions?: number[]
+  exportable?: boolean
+  exportName?: string
+  selectable?: boolean
+  selected?: string[]
+  onSelectChange?: (ids: string[]) => void
 }) {
   const [page, setPage] = useState(1);
   const [ps, setPs] = useState<number>(defaultPageSize);
@@ -365,12 +377,53 @@ export function DataTable({
   const view = pager ? rows.slice((curPage - 1) * ps, curPage * ps) : rows;
   useEffect(() => { setPage(1); }, [rows, ps]); // 数据或每页条数变化时回到第一页
 
+  // 多选（P1 批量操作）：当前页全选 / 单行勾选
+  const pageIds = view.map((r) => r.id);
+  const allOn = selectable && pageIds.length > 0 && pageIds.every((id) => selected.includes(id));
+  const toggleAll = () => {
+    if (!onSelectChange) return;
+    onSelectChange(allOn ? selected.filter((id) => !pageIds.includes(id)) : Array.from(new Set([...selected, ...pageIds])));
+  };
+  const toggleOne = (id: string) => {
+    if (!onSelectChange) return;
+    onSelectChange(selected.includes(id) ? selected.filter((x) => x !== id) : [...selected, id]);
+  };
+
+  const doExport = () => {
+    const esc = (v: unknown) => {
+      const s = v == null ? '' : (typeof v === 'object' && v !== null && 'v' in (v as Record<string, unknown>) ? String((v as { v: unknown }).v) : String(v));
+      return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+    };
+    const head = columns.map((c) => esc(c.label)).join(',');
+    const lines = rows.map((r) => columns.map((c) => esc(r[c.key])).join(','));
+    const csv = '\ufeff' + [head, ...lines].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `${exportName}-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  };
+
   return (
     <div>
+      {exportable && total > 0 && (
+        <div className="mb-2 flex justify-end">
+          <button type="button" onClick={doExport}
+            style={{ fontSize: 12, padding: '4px 12px', borderRadius: 6, border: '1px solid #C7D2FE', background: '#EFF6FF', color: '#1D4ED8', cursor: 'pointer' }}>
+            ⬇ 导出 CSV
+          </button>
+        </div>
+      )}
       <div className="overflow-x-auto">
         <table className="w-full border-collapse text-sm">
           <thead>
             <tr className="border-b border-slate-200 text-left text-xs font-medium uppercase tracking-wide text-slate-400">
+              {selectable && (
+                <th className="whitespace-nowrap px-3 py-3 bg-white" style={{ width: 40 }}>
+                  <input type="checkbox" checked={allOn} onChange={toggleAll} className="accent-blue-600" />
+                </th>
+              )}
               {columns.map((c, i) => (
                 <th
                   key={c.key}
@@ -391,13 +444,18 @@ export function DataTable({
           <tbody>
             {view.length === 0 ? (
               <tr>
-                <td colSpan={columns.length + (actions ? 1 : 0)} className="px-3 py-10 text-center text-sm text-slate-400">
+                <td colSpan={columns.length + (actions ? 1 : 0) + (selectable ? 1 : 0)} className="px-3 py-10 text-center text-sm text-slate-400">
                   {empty}
                 </td>
               </tr>
             ) : (
               view.map((r) => (
                 <tr key={r.id} className="group border-b border-slate-50 transition hover:bg-slate-50/60">
+                  {selectable && (
+                    <td className="whitespace-nowrap px-3 py-3 bg-white group-hover:bg-slate-50/60">
+                      <input type="checkbox" checked={selected.includes(r.id)} onChange={() => toggleOne(r.id)} className="accent-blue-600" />
+                    </td>
+                  )}
                   {columns.map((c, i) => {
                     const clickable = !!clickableKey && c.key === clickableKey
                     return (
@@ -437,7 +495,7 @@ export function DataTable({
           <div className="flex items-center gap-2">
             <span>每页显示</span>
             <select value={ps} onChange={(e) => setPs(Number(e.target.value))}
-              style={{ height: 30, border: '1px solid #CBD5E1', borderRadius: 6, padding: '0 6px', fontSize: 12, background: '#fff' }}>
+              style={{ height: 28, borderRadius: 6, border: '1px solid #E2E8F0', padding: '0 6px', fontSize: 12, color: '#334155', background: '#fff', cursor: 'pointer', outline: 'none' }}>
               {pageSizeOptions.map((o) => <option key={o} value={o}>{o} 行</option>)}
             </select>
             <span>共 {total} 条</span>
@@ -676,6 +734,9 @@ export interface SearchSelectProps {
   width?: number | string
   exclusiveValues?: string[] // 选中其中之一即清空其余（如「全产品」互斥）
   portal?: boolean // 浮层渲染到 body（fixed 定位），避免在 Modal 等 overflow 容器内被裁剪
+  clearable?: boolean // 单选可清除（清空为 ''）
+  categoryMode?: 'chips' | 'sidebar' // 有分组时分类按钮呈现：顶部胶囊(chips) / 左侧栏(sidebar)
+  showCategory?: boolean // 是否显示分类筛选（默认有分组即显示）
 }
 export function SearchSelect({
   options,
@@ -685,16 +746,20 @@ export function SearchSelect({
   groups,
   pinned = [],
   placeholder = '请选择',
-  searchPlaceholder = '搜索…',
+  searchPlaceholder = '输入关键字筛选…',
   emptyText = '无匹配项',
   disabled = false,
   fullWidth = false,
   width,
   exclusiveValues = [],
   portal = false,
+  clearable = false,
+  categoryMode = 'chips',
+  showCategory = true,
 }: SearchSelectProps) {
   const [open, setOpen] = useState(false)
   const [q, setQ] = useState('')
+  const [cat, setCat] = useState<string>('__all__')
   const ref = useRef<HTMLDivElement>(null)
   const panelRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
@@ -705,7 +770,7 @@ export function SearchSelect({
     document.addEventListener('mousedown', onDocClick)
     return () => document.removeEventListener('mousedown', onDocClick)
   }, [])
-  useEffect(() => { if (!open) setQ('') }, [open])
+  useEffect(() => { if (!open) { setQ(''); setCat('__all__') } }, [open])
 
   const labelOf = (v: string) => options.find((o) => o.value === v)?.label ?? v
   const isSel = (v: string) => (multiple ? (value as string[]).includes(v) : value === v)
@@ -734,11 +799,16 @@ export function SearchSelect({
   }
 
   const ql = q.trim().toLowerCase()
-  const matchOpt = (o: SearchSelectOption) => !ql || o.label.toLowerCase().includes(ql)
+  const matchOpt = (o: SearchSelectOption) => !ql || o.label.toLowerCase().includes(ql) || (o.group?.toLowerCase().includes(ql) ?? false)
   const usedGroups = (groups && groups.length ? groups : Array.from(new Set(options.map((o) => o.group).filter(Boolean) as string[])).map((k) => ({ key: k, label: k })))
+  const hasGroup = usedGroups.length > 0
+  const visibleGroups = hasGroup && showCategory && cat !== '__all__' ? usedGroups.filter((g) => g.key === cat) : usedGroups
+  const visibleOptions = (o: SearchSelectOption) => matchOpt(o) && (!hasGroup || cat === '__all__' || o.group === cat)
   const totalMatch =
-    pinned.filter(matchOpt).length +
-    usedGroups.reduce((n, g) => n + options.filter((o) => o.group === g.key && matchOpt(o)).length, 0)
+    pinned.filter(visibleOptions).length +
+    (!hasGroup
+      ? options.filter(visibleOptions).length
+      : usedGroups.reduce((n, g) => n + options.filter((o) => o.group === g.key && visibleOptions(o)).length, 0))
 
   let trigger: ReactNode
   if (multiple) {
@@ -750,32 +820,27 @@ export function SearchSelect({
       ))
     else trigger = <span className="text-brand-700">{`已选 ${arr.length} 项`}</span>
   } else {
-    trigger = value ? <span>{labelOf(value as string)}</span> : <span className="text-slate-400">{placeholder}</span>
+    trigger = value ? <span className="truncate">{labelOf(value as string)}</span> : <span className="truncate text-slate-400">{placeholder}</span>
   }
 
   const rect = ref.current?.getBoundingClientRect()
-  const panelBody = (
-    <>
-      <div className="border-b border-slate-100 p-2">
-        <input
-          autoFocus
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          placeholder={searchPlaceholder}
-          className="w-full rounded-lg border border-slate-200 px-2.5 py-1.5 text-sm outline-none focus:border-brand-400"
-        />
-      </div>
-      <div className="max-h-64 overflow-y-auto p-1.5">
-        {pinned.length > 0 && (
-          <div className="mb-1">
-            {pinned.map((p) => (
-              <Row key={p.value} opt={p} checked={isSel(p.value)} onToggle={() => toggle(p.value)} multiple={multiple} />
-            ))}
-            <div className="my-1 border-t border-slate-100" />
-          </div>
-        )}
-        {usedGroups.map((g) => {
-          const gOpts = options.filter((o) => o.group === g.key && matchOpt(o))
+  const listBody = (
+    <div className="min-h-0 flex-1 overflow-y-auto px-1.5 py-1">
+      {pinned.filter(visibleOptions).length > 0 && (
+        <div className="mb-1">
+          {pinned.filter(visibleOptions).map((p) => (
+            <Row key={p.value} opt={p} checked={isSel(p.value)} onToggle={() => toggle(p.value)} multiple={multiple} />
+          ))}
+          <div className="my-1 border-t border-slate-100" />
+        </div>
+      )}
+      {!hasGroup ? (
+        options.filter(visibleOptions).map((o) => (
+          <Row key={o.value} opt={o} checked={isSel(o.value)} onToggle={() => toggle(o.value)} multiple={multiple} />
+        ))
+      ) : (
+        visibleGroups.map((g) => {
+          const gOpts = options.filter((o) => o.group === g.key && visibleOptions(o))
           if (gOpts.length === 0) return null
           const allOn = gOpts.every((o) => isSel(o.value))
           const someOn = gOpts.some((o) => isSel(o.value))
@@ -800,8 +865,40 @@ export function SearchSelect({
               ))}
             </div>
           )
-        })}
-        {totalMatch === 0 && <div className="px-2 py-6 text-center text-sm text-slate-400">{emptyText}</div>}
+        })
+      )}
+      {totalMatch === 0 && <div className="px-2 py-8 text-center text-sm text-slate-400">{emptyText}</div>}
+    </div>
+  )
+  const categoryBar = hasGroup && showCategory && categoryMode !== 'sidebar' && (
+    <div className="flex flex-wrap gap-1.5 border-b border-slate-100 bg-slate-50/60 p-2">
+      <button type="button" onClick={() => setCat('__all__')} className={`rounded-full px-2.5 py-1 text-xs font-medium transition ${cat === '__all__' ? 'bg-brand-600 text-white' : 'bg-white text-slate-500 ring-1 ring-slate-200 hover:bg-slate-100'}`}>全部</button>
+      {usedGroups.map((g) => (
+        <button key={g.key} type="button" onClick={() => setCat(g.key)} className={`rounded-full px-2.5 py-1 text-xs font-medium transition ${cat === g.key ? 'bg-brand-600 text-white' : 'bg-white text-slate-500 ring-1 ring-slate-200 hover:bg-slate-100'}`}>{g.label}</button>
+      ))}
+    </div>
+  )
+  const sidebar = categoryMode === 'sidebar' && hasGroup && showCategory && (
+    <div className="w-32 shrink-0 overflow-y-auto border-r border-slate-100 bg-slate-50/60 p-2">
+      <button type="button" onClick={() => setCat('__all__')} className={`mb-1 block w-full rounded-lg px-2 py-1.5 text-left text-xs font-medium transition ${cat === '__all__' ? 'bg-brand-600 text-white' : 'text-slate-500 hover:bg-white'}`}>全部</button>
+      {usedGroups.map((g) => (
+        <button key={g.key} type="button" onClick={() => setCat(g.key)} className={`mb-1 block w-full rounded-lg px-2 py-1.5 text-left text-xs font-medium transition ${cat === g.key ? 'bg-brand-600 text-white' : 'text-slate-500 hover:bg-white'}`}>{g.label}</button>
+      ))}
+    </div>
+  )
+
+  const panelInner = (
+    <div className="flex max-h-[60vh] min-h-[220px] flex-col">
+      <div className="border-b border-slate-100 p-2.5">
+        <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 focus-within:border-brand-400">
+          <span className="text-sm text-slate-400">🔍</span>
+          <input autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder={searchPlaceholder} className="w-full bg-transparent text-sm outline-none placeholder:text-slate-400" />
+        </div>
+      </div>
+      {categoryBar}
+      <div className="flex min-h-0 flex-1">
+        {sidebar}
+        {listBody}
       </div>
       {multiple && (
         <div className="flex items-center justify-between border-t border-slate-100 px-3 py-2 text-xs text-slate-500">
@@ -809,7 +906,12 @@ export function SearchSelect({
           <button type="button" className="text-slate-400 hover:text-slate-600" onClick={() => onChange([])}>清空</button>
         </div>
       )}
-    </>
+      {!multiple && clearable && (
+        <div className="border-t border-slate-100 px-3 py-2">
+          <button type="button" className="w-full rounded-lg px-2 py-1.5 text-left text-xs text-slate-400 hover:bg-slate-50" onClick={() => { onChange(''); setOpen(false) }}>清除选择</button>
+        </div>
+      )}
+    </div>
   )
 
   return (
@@ -825,19 +927,22 @@ export function SearchSelect({
         } ${disabled ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}
       >
         <span className="flex flex-1 flex-wrap items-center gap-1 overflow-hidden">{trigger}</span>
+        {!multiple && clearable && !!value && (
+          <span role="button" onClick={(e) => { e.stopPropagation(); onChange('') }} className="pointer-events-auto ml-1 text-xs text-slate-400 hover:text-slate-600">✕</span>
+        )}
         <span className="pointer-events-none ml-1 text-xs text-slate-400">▾</span>
       </button>
       {open && (
         portal && ref.current ? (
           createPortal(
-            <div ref={panelRef} style={{ position: 'fixed', left: rect?.left ?? 0, top: (rect?.bottom ?? 0) + 4, width: rect?.width ?? 240, zIndex: 999, maxHeight: '70vh' }} className="overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-xl">
-              {panelBody}
+            <div ref={panelRef} style={{ position: 'fixed', left: rect?.left ?? 0, top: (rect?.bottom ?? 0) + 4, width: rect?.width ?? 260, zIndex: 999, maxHeight: '70vh' }} className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
+              {panelInner}
             </div>,
             document.body,
           )
         ) : (
-          <div ref={panelRef} className="absolute z-50 mt-1 w-full overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl">
-            {panelBody}
+          <div ref={panelRef} className="absolute z-50 mt-1.5 w-full min-w-[240px] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
+            {panelInner}
           </div>
         )
       )}
@@ -870,6 +975,9 @@ export function SingleSelect({
   onChange,
   clearable = false,
   fullWidth = false,
+  width,
+  disabled = false,
+  portal = false,
 }: {
   label: string
   options: SelectOption[]
@@ -877,64 +985,24 @@ export function SingleSelect({
   onChange: (v: string) => void
   clearable?: boolean
   fullWidth?: boolean
+  width?: number | string
+  disabled?: boolean
+  portal?: boolean
 }) {
-  const [open, setOpen] = useState(false)
-  const ref = useRef<HTMLDivElement>(null)
-  useEffect(() => {
-    function onDocClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
-    }
-    document.addEventListener('mousedown', onDocClick)
-    return () => document.removeEventListener('mousedown', onDocClick)
-  }, [])
-  const selected = options.find((o) => o.value === value)
+  const sopts: SearchSelectOption[] = options.map((o) => ({ value: o.value, label: o.label }))
   return (
-    <div className={`relative ${fullWidth ? 'w-full' : ''}`} ref={ref}>
-      <button
-        type="button"
-        onClick={() => setOpen((o) => !o)}
-        className={`flex h-9 items-center gap-1.5 rounded-lg border pr-8 pl-3 text-sm transition ${
-          value
-            ? 'border-brand-200 bg-brand-50 text-brand-700'
-            : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
-        } ${fullWidth ? 'w-full justify-between' : ''}`}
-      >
-        <span className="truncate">{selected ? selected.label : label}</span>
-        <span className="pointer-events-none absolute right-3 text-xs text-slate-400">▾</span>
-      </button>
-      {open && (
-        <div className={`absolute z-50 mt-1 rounded-xl border border-slate-200 bg-white p-2 shadow-xl ${fullWidth ? 'w-full' : 'w-44'}`}>
-          {clearable && (
-            <button
-              type="button"
-              onClick={() => {
-                onChange('')
-                setOpen(false)
-              }}
-              className="mb-1 w-full rounded-lg px-2 py-1.5 text-left text-xs text-slate-400 hover:bg-slate-50"
-            >
-              清除筛选
-            </button>
-          )}
-          {options.map((o) => (
-            <button
-              key={o.value}
-              type="button"
-              onClick={() => {
-                onChange(o.value)
-                setOpen(false)
-              }}
-              className={`flex w-full items-center justify-between rounded-lg px-2 py-1.5 text-left text-sm transition hover:bg-slate-50 ${
-                value === o.value ? 'text-brand-700' : 'text-slate-600'
-              }`}
-            >
-              <span>{o.label}</span>
-              {value === o.value && <span className="text-brand-600">✓</span>}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
+    <SearchSelect
+      options={sopts}
+      value={value}
+      onChange={(v) => onChange(v as string)}
+      placeholder={label}
+      clearable={clearable}
+      fullWidth={fullWidth}
+      width={width}
+      disabled={disabled}
+      searchPlaceholder="输入关键字筛选…"
+      portal={portal}
+    />
   )
 }
 

@@ -9,6 +9,7 @@
  * 生成的 SQL 同步写入 value.sql。
  */
 import { useState, useMemo } from 'react';
+import { SingleSelect } from '../components/ui';
 import { Sam, Cal } from './SourceTag';
 import {
   type MidMetric, type MidDataSource,
@@ -285,9 +286,8 @@ function CustomMetricEditor({ units, allFields, labelOf, format, molecular, onCh
         <span style={{ color: '#94A3B8', fontSize: 12 }} title="表达式帮助">?</span>
         <span style={{ width: 1, height: 16, background: '#E2E8F0' }} />
         {/* 数值显示方式：无名字下拉（3.14） */}
-        <select style={{ ...inpSm, width: 130 }} value={format} onChange={(e) => setFmt(e.target.value as any)}>
-          {FORMAT_OPTS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-        </select>
+        <SingleSelect label="显示方式" width={130} value={format} onChange={(v) => setFmt(v as any)}
+          options={FORMAT_OPTS.map((o) => ({ value: o.value, label: o.label }))} />
         <span style={{ width: 1, height: 16, background: '#E2E8F0' }} />
         {/* 按分子属性查看 */}
         <label style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 12, color: '#475569', cursor: 'pointer' }}>
@@ -369,14 +369,12 @@ export function VisualSqlEditor({ value, sources, onChange }: {
                 <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end', marginBottom: 8, flexWrap: 'wrap', background: '#F8FAFF', border: '1px solid #DBEAFE', borderRadius: 8, padding: '8px 10px' }}>
                   <span style={letterBadge}>{EVENT_LETTERS[i] ?? i + 1}</span>
                   <label style={{ ...lbl, minWidth: 240, flex: 1 }}>字段
-                    <select style={inpSm} value={e.field} onChange={(ev) => setEvents(events.map((x, k) => k === i ? { ...x, field: ev.target.value } : x))}>
-                      {allFields.map((x) => <option key={x.ref} value={x.ref}>{x.label}</option>)}
-                    </select>
+                    <SingleSelect label="字段" fullWidth value={e.field} onChange={(v) => setEvents(events.map((x, k) => k === i ? { ...x, field: v } : x))}
+                      options={allFields.map((x) => ({ value: x.ref, label: x.label }))} />
                   </label>
                   <label style={{ ...lbl, minWidth: 160 }}>聚合方式
-                    <select style={inpSm} value={e.agg} onChange={(ev) => setEvents(events.map((x, k) => k === i ? { ...x, agg: ev.target.value as VisualAggOp } : x))}>
-                      {(Object.keys(VISUAL_AGG_LABEL) as VisualAggOp[]).map((a) => <option key={a} value={a}>{VISUAL_AGG_LABEL[a]}</option>)}
-                    </select>
+                    <SingleSelect label="聚合方式" fullWidth value={e.agg} onChange={(v) => setEvents(events.map((x, k) => k === i ? { ...x, agg: v as VisualAggOp } : x))}
+                      options={(Object.keys(VISUAL_AGG_LABEL) as VisualAggOp[]).map((a) => ({ value: a, label: VISUAL_AGG_LABEL[a] }))} />
                   </label>
                   <button type="button" onClick={() => setFieldFltsOpen((o) => ({ ...o, [i]: !o[i] }))}
                     style={{ border: `1px solid ${fieldFltsOpen[i] ? '#93C5FD' : '#E2E8F0'}`, background: fieldFltsOpen[i] ? '#DBEAFE' : '#fff', color: fieldFltsOpen[i] ? '#1D4ED8' : '#64748B', borderRadius: 6, padding: '4px 10px', fontSize: 12, cursor: 'pointer' }}>
@@ -474,21 +472,17 @@ export function VisualSqlEditor({ value, sources, onChange }: {
         </div>
         <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', alignItems: 'flex-end' }}>
           <label style={{ ...lbl, minWidth: 110 }}>粒度
-            <select style={inpSm} value={vs.timeGran ?? '按天'} onChange={(e) => set({ timeGran: e.target.value })}>
-              {TIMEGRAN_OPTS.map((s) => <option key={s} value={s}>{s}</option>)}
-            </select>
+            <SingleSelect label="粒度" fullWidth value={vs.timeGran ?? '按天'} onChange={(v) => set({ timeGran: v })}
+              options={TIMEGRAN_OPTS.map((s) => ({ value: s, label: s }))} />
           </label>
           <label style={{ ...lbl, minWidth: 110 }}>范围类型
-            <select style={inpSm} value={tr.mode} onChange={(e) => setTr({ mode: e.target.value as 'dynamic' | 'static' })}>
-              <option value="dynamic">动态时间</option>
-              <option value="static">静态时间</option>
-            </select>
+            <SingleSelect label="范围类型" fullWidth value={tr.mode} onChange={(v) => setTr({ mode: v as 'dynamic' | 'static' })}
+              options={[{ value: 'dynamic', label: '动态时间' }, { value: 'static', label: '静态时间' }]} />
           </label>
           {tr.mode === 'dynamic' ? (
             <label style={{ ...lbl, minWidth: 130 }}>动态范围
-              <select style={inpSm} value={tr.dynamic ?? '近 7 天'} onChange={(e) => setTr({ dynamic: e.target.value })}>
-                {DYNAMIC_OPTS.map((s) => <option key={s} value={s}>{s}</option>)}
-              </select>
+              <SingleSelect label="动态范围" fullWidth value={tr.dynamic ?? '近 7 天'} onChange={(v) => setTr({ dynamic: v })}
+                options={DYNAMIC_OPTS.map((s) => ({ value: s, label: s }))} />
             </label>
           ) : (
             <label style={{ ...lbl, minWidth: 300 }}>静态起止
@@ -503,13 +497,10 @@ export function VisualSqlEditor({ value, sources, onChange }: {
         {/* 对比 */}
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', marginTop: 10 }}>
           <span style={{ fontSize: 12, color: '#475569' }}>对比：</span>
-          <select style={inpSm} value={tr.compare?.enabled ? (tr.compare.mode ?? 'prev') : 'none'}
-            onChange={(e) => {
-              const m = e.target.value;
+          <SingleSelect label="对比" value={tr.compare?.enabled ? (tr.compare.mode ?? 'prev') : 'none'} onChange={(v) => {
+              const m = v;
               setTr({ compare: { enabled: m !== 'none', mode: m as any, start: tr.compare?.start, end: tr.compare?.end } });
-            }}>
-            {COMPARE_OPTS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-          </select>
+            }} options={COMPARE_OPTS.map((o) => ({ value: o.value, label: o.label }))} />
           {tr.compare?.enabled && tr.compare.mode === 'custom' && (
             <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
               <input type="date" style={inpSm} value={tr.compare?.start ?? ''} onChange={(e) => setTr({ compare: { ...tr.compare!, start: e.target.value } })} />

@@ -1,7 +1,7 @@
 // 指标编辑器（内联，无弹窗）— 三步：选择数据源 → SQL编辑器 → 可视化预览
 // 数据源/字段为 样例JSON 橘（midDataSources.json · 用户连接中台落本地）；实时计算 灰
 import { useState } from 'react';
-import { Button, Badge } from '../components/ui';
+import { Button, Badge, SingleSelect } from '../components/ui';
 import { Sam, Cal } from './SourceTag';
 import {
   type MidMetric, type MetricType, type AggOp, type MidDataSource, type VizSample,
@@ -114,10 +114,8 @@ export function MetricEditor({ value, metrics, sources, onChange, onRemove, sour
           <label style={lbl}>指标名称 <Sam value="midMetrics.json.name" /><input style={inp} value={value.name} onChange={(e) => set({ name: e.target.value })} placeholder="如 在贷余额" /></label>
           <GroupSelect value={value.group ?? ''} groups={Array.from(new Set(metrics.map((m) => m.group).filter(Boolean) as string[]))} onChange={(g) => set({ group: g })} />
           <label style={lbl}>类型 <Sam value="midMetrics.json.type" />
-            <select style={inp} value={value.type} onChange={(e) => set({ type: e.target.value as MetricType })}>
-              <option value="base">基础指标（统计字段）</option>
-              <option value="derived">派生指标（公式）</option>
-            </select>
+            <SingleSelect label="类型" fullWidth value={value.type} onChange={(v) => set({ type: v as MetricType })}
+              options={[{ value: 'base', label: '基础指标（统计字段）' }, { value: 'derived', label: '派生指标（公式）' }]} />
           </label>
           <label style={lbl}>单位 <Sam value="midMetrics.json.unit" /><input style={inp} value={value.unit ?? ''} onChange={(e) => set({ unit: e.target.value })} placeholder="元 / % / 次" /></label>
           <label style={lbl}>精度 <Sam value="midMetrics.json.precision" /><input style={inp} type="number" value={value.precision ?? 0} onChange={(e) => set({ precision: Number(e.target.value) })} /></label>
@@ -271,14 +269,14 @@ function GroupSelect({ value, groups, onChange }: { value: string; groups: strin
   }
   return (
     <label style={lbl}>分组 <Sam value="midMetrics.json.group" />
-      <select style={inp} value={value} onChange={(e) => {
-        if (e.target.value === '__new__') { setCreating(true); }
-        else onChange(e.target.value);
-      }}>
-        {!groups.includes(value) && value && <option value={value}>{value}</option>}
-        {groups.map((g) => <option key={g} value={g}>{g}</option>)}
-        <option value="__new__">＋ 新建分组…</option>
-      </select>
+      <SingleSelect label="分组" fullWidth value={value} onChange={(v) => {
+        if (v === '__new__') { setCreating(true); }
+        else onChange(v);
+      }} options={[
+        ...(!groups.includes(value) && value ? [{ value, label: value }] : []),
+        ...groups.map((g) => ({ value: g, label: g })),
+        { value: '__new__', label: '＋ 新建分组…' },
+      ]} />
     </label>
   );
 }

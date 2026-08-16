@@ -259,7 +259,7 @@ export const VERIFY_ITEM_CATALOG: { name: string; cat: string }[] = SEED_VERIFY_
 /* ---------- P0-03 动作库 SEED：处置动作模板（参数化） ---------- */
 export const SEED_ACTION_LIB: ActionItem[] = [
   { id: 'A1', name: '拒绝', target: '信贷系统', notifyTo: '申请渠道', needApprove: false, extra: '拒绝授信并返回原因码', desc: '硬拒绝，无审批' },
-  { id: 'A2', name: '转人工复核', target: '工单中心', notifyTo: '风控专员-张三', needApprove: false, extra: '生成复核工单，24h 内处理', desc: '命中不明时转人工' },
+  { id: 'A2', name: '转人工复核', target: '预警处置工作台', notifyTo: '风控专员-张三', needApprove: false, extra: '转人工复核，24h 内处理', desc: '命中不明时转人工' },
   { id: 'A3', name: '告警提示', target: '预警平台', notifyTo: '风控主管-王芳', needApprove: false, extra: '推送告警消息并留痕', desc: '低危事件仅提示' },
   { id: 'A4', name: '加入灰名单', target: '名单中心', notifyTo: '风控组', needApprove: true, extra: '写入灰名单，观察期 90 天', desc: '需要主管审批' },
   { id: 'A5', name: '加入黑名单', target: '名单中心', notifyTo: '风控主管-王芳', needApprove: true, extra: '写入黑名单，全渠道拦截', desc: '强风险，需审批' },

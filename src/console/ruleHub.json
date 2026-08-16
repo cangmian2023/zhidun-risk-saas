@@ -3440,10 +3440,10 @@
   {
    "id": "A2",
    "name": "转人工复核",
-   "target": "工单中心",
+   "target": "预警处置工作台",
    "notifyTo": "风控专员-张三",
    "needApprove": false,
-   "extra": "生成复核工单，24h 内处理",
+   "extra": "转人工复核，24h 内处理",
    "desc": "命中不明时转人工"
   },
   {

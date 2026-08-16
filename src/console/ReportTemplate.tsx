@@ -802,16 +802,15 @@ export default function ReportTemplateConfig() {
           <td style={{ ...tdStyle, fontWeight: 500, color: '#374151', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', position: 'sticky', left: 88, zIndex: 2, background: rowBg, boxShadow: '1px 0 0 #E5E7EB' }}>{tf.name}</td>
           {grouped && (
             <td style={tdStyle}>
-              <select disabled={!canEdit || !rowOn} value={effGroup(tf.group)} onChange={(e) => patchDsField(s.id, realIdx, (f) => ({ ...f, group: e.target.value || undefined }))} style={{ ...inpSm, width: '100%', fontSize: 11 }}>
-                {dsGroups.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
-              </select>
+              <SingleSelect label="选择分组" clearable fullWidth disabled={!canEdit || !rowOn} value={effGroup(tf.group)} onChange={(v) => patchDsField(s.id, realIdx, (f) => ({ ...f, group: v || undefined }))}
+                options={dsGroups.map((g) => ({ value: g.id, label: g.name }))} />
             </td>
           )}
           <td style={tdStyle}><input disabled={!canEdit || !rowOn} value={tf.label ?? ''} onChange={(e) => patchDsField(s.id, realIdx, (f) => ({ ...f, label: e.target.value }))} placeholder={tf.name} style={{ ...inpSm, width: '100%', fontSize: 12 }} /></td>
           <td style={{ ...tdStyle, color: '#6B7280' }}>{tf.type}</td>
-          <td style={tdStyle}><select disabled={!canEdit || !rowOn} value={tf.container ?? recommendDbContainer(tf.type)} onChange={(e) => patchDsField(s.id, realIdx, (f) => ({ ...f, container: e.target.value as RenderContainer }))} style={{ ...inpSm, width: '100%', fontSize: 11 }} >{containerOptions(recommendDbContainer(tf.type)).map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}</select></td>
-          <td style={tdStyle}><select disabled={!canEdit || !rowOn} value={tf.maskRule ?? 'none'} onChange={(e) => patchDsField(s.id, realIdx, (f) => ({ ...f, maskRule: e.target.value as MaskRule }))} style={{ ...inpSm, width: '100%', fontSize: 11 }} >{Object.entries(MASK_RULE_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></td>
-          <td style={tdStyle}><select disabled={!canEdit || !rowOn} value={(tf.exempt ?? false) ? 'yes' : 'no'} onChange={(e) => patchDsField(s.id, realIdx, (f) => ({ ...f, exempt: e.target.value === 'yes' }))} style={{ ...inpSm, width: '100%', fontSize: 11 }} ><option value="no">不可以</option><option value="yes">可以</option></select></td>
+          <td style={tdStyle}><SingleSelect label="容器" fullWidth disabled={!canEdit || !rowOn} value={tf.container ?? recommendDbContainer(tf.type)} onChange={(v) => patchDsField(s.id, realIdx, (f) => ({ ...f, container: v as RenderContainer }))} options={containerOptions(recommendDbContainer(tf.type))} /></td>
+          <td style={tdStyle}><SingleSelect label="掩码" fullWidth disabled={!canEdit || !rowOn} value={tf.maskRule ?? 'none'} onChange={(v) => patchDsField(s.id, realIdx, (f) => ({ ...f, maskRule: v as MaskRule }))} options={Object.entries(MASK_RULE_LABEL).map(([k, v]) => ({ value: k, label: v }))} /></td>
+          <td style={tdStyle}><SingleSelect label="可豁免" fullWidth disabled={!canEdit || !rowOn} value={(tf.exempt ?? false) ? 'yes' : 'no'} onChange={(v) => patchDsField(s.id, realIdx, (f) => ({ ...f, exempt: v === 'yes' }))} options={[{ value: 'no', label: '不可以' }, { value: 'yes', label: '可以' }]} /></td>
           <td style={tdStyle}>
             <button disabled={!canEdit || !rowOn} onClick={() => setCondEdit({ kind: 'ds', sId: s.id, index: realIdx, name: tf.name })} style={{ ...miniBtn, fontSize: 11, ...((tf.conditions?.length ?? 0) > 0 ? { borderColor: SEL, color: SEL } : {}) }}>{tf.conditions?.length ? `已配 ${tf.conditions.length} 条` : '配置条件'}</button>
           </td>
@@ -831,19 +830,18 @@ export default function ReportTemplateConfig() {
           <td style={{ ...tdStyle, position: 'sticky', left: 88, zIndex: 2, background: rowBg, boxShadow: '1px 0 0 #E5E7EB' }}><input disabled={!canEdit || !rowOn} value={o.key} onChange={(e) => patchApiOutput(s.id, realIdx, (x) => ({ ...x, key: e.target.value }))} placeholder="字段 key" style={{ ...inpSm, width: '100%', fontSize: 12 }} /></td>
           {grouped && (
             <td style={tdStyle}>
-              <select disabled={!canEdit || !rowOn} value={effGroup(o.group)} onChange={(e) => patchApiOutput(s.id, realIdx, (x) => ({ ...x, group: e.target.value || undefined }))} style={{ ...inpSm, width: '100%', fontSize: 11 }}>
-                {apiGroups.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
-              </select>
+              <SingleSelect label="选择分组" clearable fullWidth disabled={!canEdit || !rowOn} value={effGroup(o.group)} onChange={(v) => patchApiOutput(s.id, realIdx, (x) => ({ ...x, group: v || undefined }))}
+                options={apiGroups.map((g) => ({ value: g.id, label: g.name }))} />
             </td>
           )}
           <td style={tdStyle}><input disabled={!canEdit || !rowOn} value={o.label ?? ''} onChange={(e) => patchApiOutput(s.id, realIdx, (x) => ({ ...x, label: e.target.value }))} placeholder={o.key} style={{ ...inpSm, width: '100%', fontSize: 12 }} /></td>
-          <td style={tdStyle}><select disabled={!canEdit || !rowOn} value={o.type} onChange={(e) => { const t = e.target.value as ApiFieldType; patchApiOutput(s.id, realIdx, (x) => ({ ...x, type: t, container: defaultContainer(t) })) }} style={{ ...inpSm, width: '100%', fontSize: 11 }} >{Object.entries(API_FIELD_TYPE_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></td>
-          <td style={tdStyle}><select disabled={!canEdit || !rowOn} value={o.container ?? defaultContainer(o.type)} onChange={(e) => patchApiOutput(s.id, realIdx, (x) => ({ ...x, container: e.target.value as RenderContainer }))} style={{ ...inpSm, width: '100%', fontSize: 11 }} >{containerOptions(defaultContainer(o.type)).map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}</select></td>
+          <td style={tdStyle}><SingleSelect label="类型" fullWidth disabled={!canEdit || !rowOn} value={o.type} onChange={(v) => { const t = v as ApiFieldType; patchApiOutput(s.id, realIdx, (x) => ({ ...x, type: t, container: defaultContainer(t) })) }} options={Object.entries(API_FIELD_TYPE_LABEL).map(([k, v]) => ({ value: k, label: v }))} /></td>
+          <td style={tdStyle}><SingleSelect label="容器" fullWidth disabled={!canEdit || !rowOn} value={o.container ?? defaultContainer(o.type)} onChange={(v) => patchApiOutput(s.id, realIdx, (x) => ({ ...x, container: v as RenderContainer }))} options={containerOptions(defaultContainer(o.type))} /></td>
           <td style={tdStyle}>
             <button disabled={!canEdit || !rowOn} onClick={() => setCondEdit({ kind: 'api', sId: s.id, index: realIdx, name: o.key })} style={{ ...miniBtn, fontSize: 11, ...((o.conditions?.length ?? 0) > 0 ? { borderColor: SEL, color: SEL } : {}) }}>{o.conditions?.length ? `已配 ${o.conditions.length} 条` : '配置条件'}</button>
           </td>
           <td style={tdStyle}><input type="number" disabled={!canEdit || !rowOn} value={cardDeduct ? -(o.scorePoints ?? 0) : (o.scorePoints ?? 0)} onChange={(e) => patchApiOutput(s.id, realIdx, (x) => ({ ...x, scorePoints: Math.abs(+e.target.value) || 0 }))} style={{ ...numSm, width: '100%', fontSize: 12, ...(cardDeduct ? { color: '#DC2626' } : {}) }} /></td>
-          <td style={tdStyle}><select disabled={!canEdit || !rowOn} value={(o.exempt ?? false) ? 'yes' : 'no'} onChange={(e) => patchApiOutput(s.id, realIdx, (x) => ({ ...x, exempt: e.target.value === 'yes' }))} style={{ ...inpSm, width: '100%', fontSize: 11 }} ><option value="no">不可以</option><option value="yes">可以</option></select></td>
+          <td style={tdStyle}><SingleSelect label="可豁免" fullWidth disabled={!canEdit || !rowOn} value={(o.exempt ?? false) ? 'yes' : 'no'} onChange={(v) => patchApiOutput(s.id, realIdx, (x) => ({ ...x, exempt: v === 'yes' }))} options={[{ value: 'no', label: '不可以' }, { value: 'yes', label: '可以' }]} /></td>
           <td style={tdStyle}>{canEdit && <button disabled={!rowOn} onClick={() => delApiOutput(s.id, realIdx)} style={{ ...miniBtn, color: '#DC2626', width: 28, padding: '2px 0' }}>×</button>}</td>
           <td style={{ ...tdStyle, width: 10, padding: '5px 0' }} />
         </tr>
@@ -1101,9 +1099,9 @@ export default function ReportTemplateConfig() {
                           <td style={{ ...tdStyle, position: 'sticky', left: 40, zIndex: 2, background: rowBg }}><input type="checkbox"  disabled={!canEdit} checked={f.visible} onChange={(e) => patchField(s.id, f.id, (x) => ({ ...x, visible: e.target.checked }))} style={{ width: 16, cursor: canEdit ? 'pointer' : 'not-allowed' }} /></td>
                           <td style={{ ...tdStyle, fontWeight: 500, color: '#374151', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', position: 'sticky', left: 88, zIndex: 2, background: rowBg, boxShadow: '1px 0 0 #E5E7EB' }}>{f.name}</td>
                           <td style={tdStyle}><input disabled={!canEdit || !rowOn} type="number" value={f.weight ?? 0} onChange={(e) => patchField(s.id, f.id, (x) => ({ ...x, weight: +e.target.value || 0 }))}  style={{ ...inpSm, width: '100%', fontSize: 12 }} /></td>
-                          <td style={tdStyle}><select disabled={!canEdit || !rowOn} value={f.severity ?? 'mid'} onChange={(e) => patchField(s.id, f.id, (x) => ({ ...x, severity: e.target.value as Severity }))} style={{ ...inpSm, width: '100%', fontSize: 11 }} >{Object.entries(SEVERITY_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></td>
+                          <td style={tdStyle}><SingleSelect label="严重度" fullWidth disabled={!canEdit || !rowOn} value={f.severity ?? 'mid'} onChange={(v) => patchField(s.id, f.id, (x) => ({ ...x, severity: v as Severity }))} options={Object.entries(SEVERITY_LABEL).map(([k, v]) => ({ value: k, label: v }))} /></td>
                           <td style={tdStyle}><input type="checkbox" disabled={!canEdit || !rowOn} checked={f.hitReject ?? false} onChange={(e) => patchField(s.id, f.id, (x) => ({ ...x, hitReject: e.target.checked }))}  style={{ width: 16, cursor: canEdit ? 'pointer' : 'not-allowed' }} /></td>
-                          <td style={tdStyle}><select disabled={!canEdit || !rowOn} value={(f.exempt ?? false) ? 'yes' : 'no'} onChange={(e) => patchField(s.id, f.id, (x) => ({ ...x, exempt: e.target.value === 'yes' }))} style={{ ...inpSm, width: '100%', fontSize: 11 }} ><option value="no">不可以</option><option value="yes">可以</option></select></td>
+                          <td style={tdStyle}><SingleSelect label="可豁免" fullWidth disabled={!canEdit || !rowOn} value={(f.exempt ?? false) ? 'yes' : 'no'} onChange={(v) => patchField(s.id, f.id, (x) => ({ ...x, exempt: v === 'yes' }))} options={[{ value: 'no', label: '不可以' }, { value: 'yes', label: '可以' }]} /></td>
                           <td style={tdStyle}>
                             <button disabled={!canEdit || !rowOn} onClick={() => setCondEdit({ kind: 'rule', sId: s.id, fid: f.id, name: f.name })} style={{ ...miniBtn, fontSize: 11, ...((f.conditions?.length ?? 0) > 0 ? { borderColor: SEL, color: SEL } : {}) }}>{f.conditions?.length ? `已配 ${f.conditions.length} 条` : '配置条件'}</button>
                           </td>
@@ -1372,7 +1370,7 @@ export default function ReportTemplateConfig() {
                     <div>
                       <div style={{ fontSize: 12, color: '#6B7280', fontWeight: 600, marginBottom: 6 }}>① 配置数据库连接（IP / 端口 / 账号 / 库 / 表）</div>
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 10 }}>
-                        <Field label="数据库类型"><select disabled={!canEdit} value={s.ds?.dbType ?? 'MySQL'} onChange={(e) => patchDs(s.id, (d) => ({ ...d, dbType: e.target.value }))} style={inp}>{DB_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}</select></Field>
+                        <Field label="数据库类型"><SingleSelect label="数据库类型" fullWidth disabled={!canEdit} value={s.ds?.dbType ?? 'MySQL'} onChange={(v) => patchDs(s.id, (d) => ({ ...d, dbType: v }))} options={DB_TYPES.map((t) => ({ value: t, label: t }))} /></Field>
                         <Field label="IP 地址"><input disabled={!canEdit} value={s.ds?.ip ?? ''} onChange={(e) => patchDs(s.id, (d) => ({ ...d, ip: e.target.value }))} placeholder="如 10.0.12.5" style={inp} /></Field>
                         <Field label="端口"><input disabled={!canEdit} value={s.ds?.port ?? ''} onChange={(e) => patchDs(s.id, (d) => ({ ...d, port: e.target.value }))} placeholder="3306" style={inp} /></Field>
                         <Field label="用户名"><input disabled={!canEdit} value={s.ds?.username ?? ''} onChange={(e) => patchDs(s.id, (d) => ({ ...d, username: e.target.value }))} style={inp} /></Field>
@@ -1390,9 +1388,8 @@ export default function ReportTemplateConfig() {
                     <div>
                       {/* ① 请求栏：方法 + 地址（Postman 风格） */}
                       <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 12 }}>
-                        <select disabled={!canEdit} value={s.api?.method ?? 'POST'} onChange={(e) => patchApi(s.id, (a) => ({ ...a, method: e.target.value as ApiMethod }))} style={{ ...inp, width: 110, flex: '0 0 auto', fontWeight: 600 }}>
-                          {(['GET', 'POST', 'PUT', 'PATCH', 'DELETE'] as ApiMethod[]).map((m) => <option key={m} value={m}>{m}</option>)}
-                        </select>
+                        <SingleSelect label="方法" width={110} disabled={!canEdit} value={s.api?.method ?? 'POST'} onChange={(v) => patchApi(s.id, (a) => ({ ...a, method: v as ApiMethod }))}
+                          options={(['GET', 'POST', 'PUT', 'PATCH', 'DELETE'] as ApiMethod[]).map((m) => ({ value: m, label: m }))} />
                         <input disabled={!canEdit} value={s.api?.url ?? ''} onChange={(e) => patchApi(s.id, (a) => ({ ...a, url: e.target.value }))} placeholder="https://api.xxx.com/v1/score" style={{ ...inp, flex: 1 }} />
                       </div>
 
@@ -1638,10 +1635,8 @@ export default function ReportTemplateConfig() {
                         <input type="number" disabled={!canEdit} value={g.maxScore} onChange={(e) => patchGrade(i, (x) => ({ ...x, maxScore: +e.target.value }))} style={numSm} />
                       </td>
                       <td className="px-2 py-2">
-                        <select disabled={!canEdit} value={g.autoResult} onChange={(e) => patchGrade(i, (x) => ({ ...x, autoResult: e.target.value as AutoResult }))}
-                          style={{ ...inpSm, fontWeight: 600, color: AUTO_RESULT_COLOR[g.autoResult] }}>
-                          {AUTO_RESULT_LIST.map((r) => <option key={r} value={r}>{r}</option>)}
-                        </select>
+                        <SingleSelect label="自动结果" disabled={!canEdit} value={g.autoResult} onChange={(v) => patchGrade(i, (x) => ({ ...x, autoResult: v as AutoResult }))}
+                          options={AUTO_RESULT_LIST.map((r) => ({ value: r, label: r }))} />
                       </td>
                       <td className="px-2 py-2"><input type="color" disabled={!canEdit} value={g.color} onChange={(e) => patchGrade(i, (x) => ({ ...x, color: e.target.value }))} style={{ width: 32, height: 28, border: 'none', background: 'none' }} /></td>
                       <td className="px-2 py-2"><input disabled={!canEdit} value={g.description} onChange={(e) => patchGrade(i, (x) => ({ ...x, description: e.target.value }))} style={inpSm} /></td>
@@ -1688,22 +1683,16 @@ export default function ReportTemplateConfig() {
                             <div style={{ fontSize: 11, color: '#9CA3AF' }}>{r.sectionName}</div>
                           </td>
                           <td className="px-2 py-2">
-                            <select disabled={!canEdit} value={r.trigger} onChange={(e) => patchSpecial(r.id, (x) => ({ ...x, trigger: e.target.value as SpecialRuleTrigger }))} style={{ ...inpSm, width: '100%' }}>
-                              {(['hit', 'miss'] as SpecialRuleTrigger[]).map((t) => <option key={t} value={t}>{SPECIAL_TRIGGER_LABEL[t]}</option>)}
-                            </select>
+                            <SingleSelect label="触发" fullWidth disabled={!canEdit} value={r.trigger} onChange={(v) => patchSpecial(r.id, (x) => ({ ...x, trigger: v as SpecialRuleTrigger }))}
+                              options={(['hit', 'miss'] as SpecialRuleTrigger[]).map((t) => ({ value: t, label: SPECIAL_TRIGGER_LABEL[t] }))} />
                           </td>
                           <td className="px-2 py-2">
-                            <select disabled={!canEdit} value={r.autoResult} onChange={(e) => patchSpecial(r.id, (x) => ({ ...x, autoResult: e.target.value as AutoResult }))}
-                              style={{ ...inpSm, width: '100%', fontWeight: 600, color: AUTO_RESULT_COLOR[r.autoResult] }}>
-                              {AUTO_RESULT_LIST.map((a) => <option key={a} value={a}>{a}</option>)}
-                            </select>
+                            <SingleSelect label="自动结果" fullWidth disabled={!canEdit} value={r.autoResult} onChange={(v) => patchSpecial(r.id, (x) => ({ ...x, autoResult: v as AutoResult }))}
+                              options={AUTO_RESULT_LIST.map((a) => ({ value: a, label: a }))} />
                           </td>
                           <td className="px-2 py-2">
-                            <select disabled={!canEdit} value={r.priority} onChange={(e) => patchSpecial(r.id, (x) => ({ ...x, priority: e.target.value as SpecialRulePriority }))}
-                              title={SPECIAL_PRIORITY_HINT[r.priority]}
-                              style={{ ...inpSm, width: '100%', fontWeight: 600, color: r.priority === 'decisive' ? '#B91C1C' : '#B45309' }}>
-                              {(['decisive', 'warning'] as SpecialRulePriority[]).map((p) => <option key={p} value={p}>{SPECIAL_PRIORITY_LABEL[p]}</option>)}
-                            </select>
+                            <SingleSelect label="优先级" fullWidth disabled={!canEdit} value={r.priority} onChange={(v) => patchSpecial(r.id, (x) => ({ ...x, priority: v as SpecialRulePriority }))}
+                              options={(['decisive', 'warning'] as SpecialRulePriority[]).map((p) => ({ value: p, label: SPECIAL_PRIORITY_LABEL[p] }))} />
                           </td>
                           <td className="px-2 py-2"><input disabled={!canEdit} value={r.note ?? ''} onChange={(e) => patchSpecial(r.id, (x) => ({ ...x, note: e.target.value }))} placeholder="补充说明（选填）" style={{ ...inpSm, width: '100%' }} /></td>
                           <td className="px-2 py-2">{canEdit && <button onClick={() => delSpecial(r.id)} style={{ ...miniBtn, color: '#DC2626', borderColor: '#FECACA' }}>删除</button>}</td>
@@ -1973,24 +1962,19 @@ const ConditionModal = ({ open, title, conditions, fieldOptions, ops, valueOptio
         {list.map((c, i) => (
           <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 0', borderBottom: '1px dashed #EEF2F7', flexWrap: 'wrap' }}>
             <span style={{ fontSize: 12, color: '#9CA3AF', width: 18 }}>{i + 1}</span>
-            <select value={c.field} onChange={(e) => update(i, { field: e.target.value })} style={{ ...inpSm, width: 120, fontSize: 11 }}>
-              {fieldOptions.map((o) => <option key={o} value={o}>{o}</option>)}
-            </select>
-            <select value={c.op} onChange={(e) => update(i, { op: e.target.value as FieldCondType })} style={{ ...inpSm, width: 96, fontSize: 11 }}>
-              {ops.map((o) => <option key={o} value={o}>{FIELD_COND_LABEL[o]}</option>)}
-            </select>
+            <SingleSelect label="字段" width={120} value={c.field} onChange={(v) => update(i, { field: v })}
+              options={fieldOptions.map((o) => ({ value: o, label: o }))} />
+            <SingleSelect label="条件" width={96} value={c.op} onChange={(v) => update(i, { op: v as FieldCondType })}
+              options={ops.map((o) => ({ value: o, label: FIELD_COND_LABEL[o] }))} />
             {valueOptions && valueOptions.length > 0 && !valueDisabled(c.op) ? (
-              <select value={c.value ?? ''} onChange={(e) => update(i, { value: e.target.value })} style={{ ...inpSm, width: 120, fontSize: 11 }}>
-                {(c.value && !valueOptions.includes(c.value) ? [c.value, ...valueOptions] : valueOptions).map((o) => <option key={o} value={o}>{o}</option>)}
-              </select>
+              <SingleSelect label="值" width={120} clearable value={c.value ?? ''} onChange={(v) => update(i, { value: v })}
+                options={(c.value && !valueOptions.includes(c.value) ? [c.value, ...valueOptions] : valueOptions).map((o) => ({ value: o, label: o }))} />
             ) : (
               <input value={c.value ?? ''} disabled={valueDisabled(c.op)} onChange={(e) => update(i, { value: e.target.value })} placeholder="值" style={{ ...inpSm, width: 90, fontSize: 11, opacity: valueDisabled(c.op) ? 0.5 : 1 }} />
             )}
             {i < list.length - 1 && (
-              <select value={c.logic} onChange={(e) => update(i, { logic: e.target.value as 'and' | 'or' })} style={{ ...inpSm, width: 56, fontSize: 11 }}>
-                <option value="and">且</option>
-                <option value="or">或</option>
-              </select>
+              <SingleSelect label="且/或" width={56} value={c.logic} onChange={(v) => update(i, { logic: v as 'and' | 'or' })}
+                options={[{ value: 'and', label: '且' }, { value: 'or', label: '或' }]} />
             )}
             <button onClick={() => remove(i)} style={{ ...miniBtn, color: '#DC2626', borderColor: '#FECACA', padding: '2px 8px' }}>删除</button>
           </div>

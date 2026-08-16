@@ -11,7 +11,7 @@
  * ========================================================== */
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { PageHeader, Panel, Button, Badge, StatusTag, Modal } from '../components/ui'
+import { PageHeader, Panel, Button, Badge, StatusTag, Modal, SingleSelect } from '../components/ui'
 import {
   loadDashboards,
   saveDashboards,
@@ -515,9 +515,8 @@ function WidgetEditor({
       <div className="grid gap-3 sm:grid-cols-2">
         <label className="block text-xs text-slate-500">
           图表类型
-          <select style={{ ...sel, width: '100%', marginTop: 6 }} value={widget.type} onChange={(e) => onChange({ type: e.target.value as WidgetType })}>
-            {WIDGET_TYPES.map((t) => <option key={t} value={t}>{WIDGET_META[t].label}</option>)}
-          </select>
+          <SingleSelect label="选择图表类型" fullWidth value={widget.type} onChange={(v) => onChange({ type: v as WidgetType })}
+            options={WIDGET_TYPES.map((t) => ({ value: t, label: WIDGET_META[t].label }))} />
         </label>
         <label className="block text-xs text-slate-500">
           组件标题
@@ -528,13 +527,10 @@ function WidgetEditor({
       {/* 数据集 */}
       <label className="mt-3 block text-xs text-slate-500">
         数据集（数据来源）<span className="text-rose-600">*</span>
-        <select style={{ ...sel, width: '100%', marginTop: 6, borderColor: widget.datasetId ? undefined : '#DC2626' }} value={widget.datasetId} onChange={(e) => {
-          const nd = datasets.find((d) => d.id === e.target.value)
-          onChange({ datasetId: e.target.value, title: widget.title || nd?.name || '', dimensions: [], measures: nd ? defaultWidget(widget.type, nd).measures : [] })
-        }}>
-          <option value="">请选择数据集</option>
-          {datasets.map((d) => <option key={d.id} value={d.id}>{d.name}{d.source === 'builtin' ? '（内置）' : d.source === 'api' ? '（接口）' : '（SQL）'}</option>)}
-        </select>
+        <SingleSelect label="请选择数据集" clearable fullWidth value={widget.datasetId} onChange={(v) => {
+          const nd = datasets.find((d) => d.id === v)
+          onChange({ datasetId: v, title: widget.title || nd?.name || '', dimensions: [], measures: nd ? defaultWidget(widget.type, nd).measures : [] })
+        }} options={[{ value: '', label: '请选择数据集' }, ...datasets.map((d) => ({ value: d.id, label: d.name + (d.source === 'builtin' ? '（内置）' : d.source === 'api' ? '（接口）' : '（SQL）') }))]} />
       </label>
 
       {!ds && <p className="mt-2 text-xs text-slate-400">请先选择数据集，再配置维度与度量。</p>}
@@ -573,13 +569,10 @@ function WidgetEditor({
             <div className="space-y-2">
               {widget.measures.map((mm, mi) => (
                 <div key={mm.id} className="flex flex-wrap items-center gap-2">
-                  <select style={{ ...sel, width: 180 }} value={mm.field} onChange={(e) => setMeasure(mi, { field: e.target.value })}>
-                    <option value="*">（全部记录）</option>
-                    {measureFields.map((f) => <option key={f.key} value={f.key}>{f.label}{f.unit ? `(${f.unit})` : ''}</option>)}
-                  </select>
-                  <select style={{ ...sel, width: 130 }} value={mm.agg} onChange={(e) => setMeasure(mi, { agg: e.target.value as WidgetMeasure['agg'] })}>
-                    {Object.entries(AGG_META).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
-                  </select>
+                  <SingleSelect label="度量字段" width={180} value={mm.field} onChange={(v) => setMeasure(mi, { field: v })}
+                    options={[{ value: '*', label: '（全部记录）' }, ...measureFields.map((f) => ({ value: f.key, label: f.label + (f.unit ? `(${f.unit})` : '') }))]} />
+                  <SingleSelect label="聚合方式" width={130} value={mm.agg} onChange={(v) => setMeasure(mi, { agg: v as WidgetMeasure['agg'] })}
+                    options={Object.entries(AGG_META).map(([k, v]) => ({ value: k, label: v.label }))} />
                   <input style={{ ...inp, width: 150 }} value={mm.alias ?? ''} placeholder="别名（可选）" onChange={(e) => setMeasure(mi, { alias: e.target.value })} />
                   <button className="rounded-md px-2 py-1 text-xs text-rose-600 hover:bg-rose-50" onClick={() => removeMeasure(mi)}>移除</button>
                 </div>
@@ -597,12 +590,10 @@ function WidgetEditor({
             <div className="space-y-2">
               {widget.filters.map((ff, fi) => (
                 <div key={ff.id} className="flex flex-wrap items-center gap-2">
-                  <select style={{ ...sel, width: 160 }} value={ff.field} onChange={(e) => setFilter(fi, { field: e.target.value })}>
-                    {allFields.map((f) => <option key={f.key} value={f.key}>{f.label}</option>)}
-                  </select>
-                  <select style={{ ...sel, width: 130 }} value={ff.op} onChange={(e) => setFilter(fi, { op: e.target.value as WidgetFilter['op'] })}>
-                    {Object.entries(OP_META).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
-                  </select>
+                  <SingleSelect label="筛选字段" width={160} value={ff.field} onChange={(v) => setFilter(fi, { field: v })}
+                    options={allFields.map((f) => ({ value: f.key, label: f.label }))} />
+                  <SingleSelect label="筛选条件" width={130} value={ff.op} onChange={(v) => setFilter(fi, { op: v as WidgetFilter['op'] })}
+                    options={Object.entries(OP_META).map(([k, v]) => ({ value: k, label: v.label }))} />
                   <input style={{ ...inp, width: 160 }} value={ff.value} placeholder={OP_META[ff.op].needsValue ? '值' : '无需值'} disabled={!OP_META[ff.op].needsValue} onChange={(e) => setFilter(fi, { value: e.target.value })} />
                   <button className="rounded-md px-2 py-1 text-xs text-rose-600 hover:bg-rose-50" onClick={() => removeFilter(fi)}>移除</button>
                 </div>
@@ -615,10 +606,8 @@ function WidgetEditor({
             {(widget.type === 'line' || widget.type === 'bar' || widget.type === 'donut') && (
               <label className="flex items-center gap-2 text-xs text-slate-500">
                 宽度
-                <select style={{ ...sel, width: 100 }} value={String(widget.span ?? 1)} onChange={(e) => onChange({ span: Number(e.target.value) === 2 ? 2 : 1 })}>
-                  <option value="1">半宽</option>
-                  <option value="2">全宽</option>
-                </select>
+                <SingleSelect label="宽度" width={100} value={String(widget.span ?? 1)} onChange={(v) => onChange({ span: Number(v) === 2 ? 2 : 1 })}
+                  options={[{ value: '1', label: '半宽' }, { value: '2', label: '全宽' }]} />
               </label>
             )}
             {widget.type === 'table' && (
@@ -675,10 +664,8 @@ function DatasetModal({ onCancel, onSave }: { onCancel: () => void; onSave: (ds:
               <input style={{ ...inp, width: '100%', marginTop: 6, borderColor: name.trim() ? undefined : '#DC2626' }} value={name} onChange={(e) => setName(e.target.value)} placeholder="如：信贷审批流水" />
             </label>
             <label className="block text-xs text-slate-500">数据来源
-              <select style={{ ...sel, width: '100%', marginTop: 6 }} value={source} onChange={(e) => setSource(e.target.value as 'api' | 'sql')}>
-                <option value="api">接口 API</option>
-                <option value="sql">SQL 查询</option>
-              </select>
+              <SingleSelect label="数据来源" fullWidth value={source} onChange={(v) => setSource(v as 'api' | 'sql')}
+                options={[{ value: 'api', label: '接口 API' }, { value: 'sql', label: 'SQL 查询' }]} />
             </label>
             <label className="block text-xs text-slate-500 sm:col-span-2">
               {source === 'api' ? '接口地址' : 'SQL 语句'}
@@ -699,15 +686,10 @@ function DatasetModal({ onCancel, onSave }: { onCancel: () => void; onSave: (ds:
                 <div key={i} className="flex flex-wrap items-center gap-2">
                   <input style={{ ...inp, width: 130 }} value={f.label} placeholder="标签" onChange={(e) => setField(i, { label: e.target.value })} />
                   <input style={{ ...inp, width: 120 }} value={f.key} placeholder="字段名" onChange={(e) => setField(i, { key: e.target.value })} />
-                  <select style={{ ...sel, width: 100 }} value={f.kind} onChange={(e) => setField(i, { kind: e.target.value as DatasetField['kind'] })}>
-                    <option value="dim">维度</option>
-                    <option value="measure">度量</option>
-                  </select>
-                  <select style={{ ...sel, width: 100 }} value={f.type} onChange={(e) => setField(i, { type: e.target.value as DatasetField['type'] })}>
-                    <option value="string">文本</option>
-                    <option value="number">数值</option>
-                    <option value="date">日期</option>
-                  </select>
+                  <SingleSelect label="维度/度量" width={100} value={f.kind} onChange={(v) => setField(i, { kind: v as DatasetField['kind'] })}
+                    options={[{ value: 'dim', label: '维度' }, { value: 'measure', label: '度量' }]} />
+                  <SingleSelect label="类型" width={100} value={f.type} onChange={(v) => setField(i, { type: v as DatasetField['type'] })}
+                    options={[{ value: 'string', label: '文本' }, { value: 'number', label: '数值' }, { value: 'date', label: '日期' }]} />
                   <input style={{ ...inp, width: 80 }} value={f.unit ?? ''} placeholder="单位" onChange={(e) => setField(i, { unit: e.target.value })} />
                   <button className="rounded-md px-2 py-1 text-xs text-rose-600 hover:bg-rose-50" onClick={() => removeField(i)}>移除</button>
                 </div>

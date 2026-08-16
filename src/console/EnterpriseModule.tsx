@@ -3,11 +3,12 @@
  * 复用：企业档案（QiyePages）、数据看板模板（MidDashboardPage）。
  */
 import { QiyeSearch, QiyeProfile } from './QiyePages';
+import { EntGraphDetail, EntCreditReport, EntVerifyReport } from './EntReportPages';
 import {
   EntQuickSearch, EntRiskProfile, EntBatchDue, EntBatchDueDetail, EntMonitorList,
-  EntDecisionEvents, EntReviewOrders,
+  EntDecisionEvents, EntDecisionTraceDetail,
   EntModelList, EntModelDetail, EntListManage, EntDataSource,
-  EntAlertRule, EntAlertWorkbench, EntArchive,
+  EntAlertRule, EntAlertWorkbench, EntArchive, EntOperateLog, EntTodoCenter, EntSyncTask,
 } from './EnterprisePages';
 
 export default function EnterpriseModule({ pageKey }: { pageKey: string }) {
@@ -25,8 +26,8 @@ export default function EnterpriseModule({ pageKey }: { pageKey: string }) {
       return <EntMonitorList />;
     case 'decision-events':
       return <EntDecisionEvents />;
-    case 'review-order':
-      return <EntReviewOrders />;
+    case 'decision-trace':
+      return <EntDecisionTraceDetail />;
     case 'model-list':
       // 带 model 参数 → 模型详情；否则模型列表
       return new URLSearchParams(window.location.search).get('model') ? <EntModelDetail /> : <EntModelList />;
@@ -40,6 +41,18 @@ export default function EnterpriseModule({ pageKey }: { pageKey: string }) {
       return <EntAlertWorkbench />;
     case 'archive':
       return <EntArchive />;
+    case 'operate-log':
+      return <EntOperateLog />;
+    case 'todo-center':
+      return <EntTodoCenter />;
+    case 'sync-task':
+      return <EntSyncTask />;
+    case 'ent-graph-detail':
+      return <EntGraphDetail />;
+    case 'ent-credit-detail':
+      return <EntCreditReport />;
+    case 'ent-verify-detail':
+      return <EntVerifyReport />;
     default:
       return <QiyeSearch />;
   }

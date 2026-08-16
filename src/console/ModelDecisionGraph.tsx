@@ -10,6 +10,7 @@
  * 纯前端、零依赖。
  * ========================================================================= */
 import { useState, useRef, useEffect, useMemo } from 'react'
+import { SingleSelect } from '../components/ui'
 import type { ScoreProd, ModelMeta, ThresholdRow, CollisionRule, ScoreCardFactor } from './scoreData'
 import { SCORE_PROD_LABEL, COLLISION_SEED, COLLISION_SIGNAL_FIELDS, COLLISION_OUTCOME_LABEL, collisionCondText, ZHIXIN_SCORECARD } from './scoreData'
 import type { VFilter } from './CondBuilder'
@@ -66,7 +67,7 @@ function hintTone(text?: string): string {
 
 export default function ModelDecisionGraph({
   prod, model, thresholds, onJumpRules, onJumpStrategy, onSaveCollisions, graph: graphProp,
-  nodeResults, currentScore, editable, onSaveGraph, mainOnly,
+  nodeResults, currentScore, editable, onSaveGraph, mainOnly, hideNodeTable,
 }: {
   prod: ScoreProd
   model: ModelMeta
@@ -77,6 +78,8 @@ export default function ModelDecisionGraph({
   graph?: GGraph
   /* 主线视图：仅展示 数据源 → 算法/因子 → 输出概率p+SHAP，隐藏规则集/碰撞/决策等支线节点，并自动桥接被跳过的主线连接 */
   mainOnly?: boolean
+  /* 是否隐藏底部「节点明细」表（得分详情的「模型算法」面板用，模型管理-算法编辑保留） */
+  hideNodeTable?: boolean
   /* 当前用户在该节点上的实际输出（key = 节点 id），用于「节点明细」表「结果」列 */
   nodeResults?: Record<string, string>
   /* 当前用户评分：用于「决策映射」表高亮所在分数段 */
@@ -270,18 +273,28 @@ export default function ModelDecisionGraph({
       window.removeEventListener('mouseup', onUp)
       setDragging(false)
       if (d && !d.moved) {
-        if (editMode && linkMode) {
-          if (!linkFrom) setLinkFrom(d.id)
-          else if (linkFrom !== d.id) { addEdge(linkFrom, d.id); setLinkMode(false); setLinkFrom(null) }
-          else setLinkFrom(null)
+        // 连线：linkFrom 已设（圆点 / 连线模式）且点了另一个节点 → 完成连线
+        if (linkFrom && linkFrom !== d.id) {
+          addEdge(linkFrom, d.id)
+          setLinkFrom(null); setLinkMode(false); setSelected(null); setFocus(null)
+        } else if (editMode && linkMode && !linkFrom) {
+          setLinkFrom(d.id)
         } else {
           setSelected(nodeMap.get(d.id) ?? null); setFocus(d.id)
+          if (linkFrom === d.id) setLinkFrom(null)
         }
       }
       dragRef.current = null
     }
     window.addEventListener('mousemove', onMove)
     window.addEventListener('mouseup', onUp)
+  }
+
+  /* 点节点右侧圆点：自动进入可编辑并开始连线（无需先开「编辑画布/连线模式」） */
+  const beginLink = (n: GNode) => {
+    if (!isEditable) return
+    if (!editMode) setEditMode(true)
+    setLinkFrom(n.id); setSelected(n); setFocus(null)
   }
 
   /* ---- 高亮 / 聚焦 计算 ---- */
@@ -501,10 +514,22 @@ export default function ModelDecisionGraph({
               return (
                 <div
                   key={n.id}
-                  className={`absolute flex flex-col overflow-hidden rounded-xl border bg-white shadow-sm transition-opacity ${dim ? 'opacity-20' : 'opacity-100'} ${isCollision ? 'cursor-grab hover:border-rose-400 hover:ring-2 hover:ring-rose-200 active:cursor-grabbing' : 'cursor-grab hover:border-slate-400 hover:ring-2 hover:ring-slate-200 active:cursor-grabbing'}`}
+                  className={`group absolute flex flex-col overflow-visible rounded-xl border bg-white shadow-sm transition-opacity ${dim ? 'opacity-20' : 'opacity-100'} ${isCollision ? 'cursor-grab hover:border-rose-400 hover:ring-2 hover:ring-rose-200 active:cursor-grabbing' : 'cursor-grab hover:border-slate-400 hover:ring-2 hover:ring-slate-200 active:cursor-grabbing'}`}
                   style={{ left: cp.x, top: cp.y, width: NODE_W, height: NODE_H, ...(isAlertNode ? { borderStyle: 'dashed', borderColor: '#0891B2' } : {}) }}
                   onMouseDown={(e) => startDrag(e, n)}
                 >
+                  {/* 右侧连接点：hover 显示，点圆点开始连线（仅可编辑态） */}
+                  {isEditable && (
+                    <div
+                      onMouseDown={(e) => { e.stopPropagation(); beginLink(n) }}
+                      onClick={(e) => e.stopPropagation()}
+                      title="从此节点开始连线"
+                      className="absolute -right-2 top-1/2 z-20 grid h-4 w-4 -translate-y-1/2 cursor-crosshair place-items-center rounded-full border-2 border-cyan-500 bg-white text-[10px] leading-none text-cyan-600 opacity-0 transition group-hover:opacity-100 hover:scale-125 hover:bg-cyan-50"
+                      style={{ boxShadow: '0 1px 3px rgba(0,0,0,.15)' }}
+                    >
+                      ●
+                    </div>
+                  )}
                   <div className="flex shrink-0 items-center justify-between rounded-t-xl px-3 py-1.5" style={{ background: headerBg }}>
                     <span className="text-xs font-semibold text-white">{n.title}</span>
                     <span className="flex items-center gap-1.5">
@@ -657,22 +682,10 @@ export default function ModelDecisionGraph({
                         showLogicHint={false}
                       />
                     </div>
-                    <select
-                      className="mb-2 w-full rounded-lg border border-slate-200 px-2 py-1.5 text-sm outline-none focus:border-brand-400"
-                      value={r.result}
-                      onChange={(e) => updateResult(r.id, e.target.value)}
-                    >
-                      {COLLISION_OUTCOME_LABEL.map((o) => <option key={o} value={o}>{o}</option>)}
-                    </select>
-                    <select
-                      className="w-full rounded-lg border border-slate-200 px-2 py-1.5 text-sm outline-none focus:border-brand-400"
-                      value={r.priority}
-                      onChange={(e) => updatePriority(r.id, e.target.value)}
-                    >
-                      <option value="拦截优先">优先级：拦截优先（规则/名单压过分数）</option>
-                      <option value="分数优先">优先级：分数优先（模型分决定）</option>
-                      <option value="转人工">优先级：转人工复核</option>
-                    </select>
+                    <SingleSelect label="裁决结果" fullWidth value={r.result} onChange={(v) => updateResult(r.id, v)}
+                      options={COLLISION_OUTCOME_LABEL.map((o) => ({ value: o, label: o }))} />
+                    <SingleSelect label="优先级" fullWidth value={r.priority} onChange={(v) => updatePriority(r.id, v)}
+                      options={[{ value: '拦截优先', label: '优先级：拦截优先（规则/名单压过分数）' }, { value: '分数优先', label: '优先级：分数优先（模型分决定）' }, { value: '转人工', label: '优先级：转人工复核' }]} />
                   </div>
                 ))}
                 {localRules.length === 0 && <div className="rounded-lg border border-dashed border-slate-200 px-3 py-6 text-center text-xs text-slate-400">暂无冲突裁决规则，点击下方新增。</div>}
@@ -699,6 +712,7 @@ export default function ModelDecisionGraph({
       </div>
 
       {/* ============ 底部表 1：节点明细（表格；说明列可折叠） ============ */}
+      {!hideNodeTable && (
       <div className="mt-4 overflow-hidden rounded-xl border border-slate-200">
         <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-3 py-2">
           <div className="text-sm font-semibold text-slate-800">节点明细 · 每个节点的说明 / 输入 / 输出</div>
@@ -771,6 +785,7 @@ export default function ModelDecisionGraph({
           </table>
         </div>
       </div>
+      )}
     </div>
   )
 }

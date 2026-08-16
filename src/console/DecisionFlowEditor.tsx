@@ -1,8 +1,6 @@
-// 决策引擎 · 决策流编辑器（可视化决策编排）
-// 左侧节点面板拖拽添加节点 → 画布自由排布 → 右侧属性面板编辑。
-// 与样例交互一致：开始/结束/策略/名单匹配/条件/并行网关/合并网关/特征/子流程。
 import { useState, useRef, useEffect, useCallback } from 'react'
-import type { DeFlowGraph, DeFlowNode, DeFlowNodeType, DeNodeFeatureRef } from './decisionData'
+import { SingleSelect } from '../components/ui'
+import type { DeFlowGraph, DeFlowNode, DeFlowNodeType } from './decisionData'
 
 const NODE_W = 212
 const NODE_H = 116
@@ -48,9 +46,11 @@ export function nodeSummary(n: DeFlowNode): string[] {
   return n.meta ?? []
 }
 
-function NodeCard({ n, selected, onMouseDown, onRename }: {
+function NodeCard({ n, selected, onMouseDown, onRename, linkActive, onLinkPointDown }: {
   n: DeFlowNode; selected: boolean; onMouseDown: (e: React.MouseEvent) => void;
   onRename: (v: string) => void;
+  linkActive: boolean;
+  onLinkPointDown: (e: React.MouseEvent) => void;
 }) {
   const def = NODE_DEFS.find((x) => x.type === n.type) ?? NODE_DEFS[0]
   const icon = def.icon || '●'
@@ -58,8 +58,8 @@ function NodeCard({ n, selected, onMouseDown, onRename }: {
   return (
     <div
       onMouseDown={onMouseDown}
-      className="absolute select-none rounded-xl border bg-white shadow-card transition hover:shadow-lg"
-      style={{ left: n.x, top: n.y, width: NODE_W, height: NODE_H, borderColor: `${def.color}33`, borderTopWidth: 3, borderTopColor: def.color, outline: selected ? `2px solid ${def.color}` : undefined, cursor: 'grab' }}
+      className="absolute select-none rounded-xl border bg-white shadow-card transition hover:shadow-lg group"
+      style={{ left: n.x, top: n.y, width: NODE_W, height: NODE_H, borderColor: `${def.color}33`, borderTopWidth: 3, borderTopColor: def.color, outline: selected || linkActive ? `2px solid ${def.color}` : undefined, cursor: 'grab' }}
     >
       <div className="flex items-center gap-2 p-2">
         <span className="grid h-7 w-7 shrink-0 place-items-center rounded-md text-sm font-bold text-white" style={{ background: def.color }}>{icon}</span>
@@ -84,6 +84,16 @@ function NodeCard({ n, selected, onMouseDown, onRename }: {
           </div>
         </div>
       )}
+      {/* 右侧连接点：hover 显示，鼠标按下开始连线 */}
+      <div
+        onMouseDown={(e) => { e.stopPropagation(); onLinkPointDown(e) }}
+        onClick={(e) => e.stopPropagation()}
+        title="从此节点开始连线"
+        className="absolute -right-2 top-1/2 grid h-4 w-4 -translate-y-1/2 cursor-crosshair place-items-center rounded-full border-2 border-cyan-500 bg-white text-[10px] leading-none text-cyan-600 opacity-0 transition group-hover:opacity-100 hover:scale-125 hover:bg-cyan-50"
+        style={{ boxShadow: '0 1px 3px rgba(0,0,0,.15)' }}
+      >
+        ●
+      </div>
     </div>
   )
 }
@@ -109,9 +119,10 @@ export default function DecisionFlowEditor({ flow, onSave, onPublish, flowName, 
   /* 节点拖拽：位置覆盖（原始坐标），未拖动则回退 graph 的 x/y */
   const [pos, setPos] = useState<Record<string, { x: number; y: number }>>({})
   const dragRef = useRef<{ id: string; sx: number; sy: number; px: number; py: number; moved: boolean } | null>(null)
-  /* 连线模式 */
-  const [linkMode, setLinkMode] = useState(false)
+  /* 连线起点（点节点右侧圆点 / 工具栏 → 进入连线） */
   const [linkFrom, setLinkFrom] = useState<string | null>(null)
+  /* 连线预览（鼠标移动时的动态曲线，画布坐标） */
+  const [linkPreview, setLinkPreview] = useState<{ x: number; y: number } | null>(null)
   const canvasRef = useRef<HTMLDivElement>(null)
   const wrapRef = useRef<HTMLDivElement>(null)
   const [isFs, setIsFs] = useState(false)
@@ -164,6 +175,15 @@ export default function DecisionFlowEditor({ flow, onSave, onPublish, flowName, 
     })
   }
 
+  /* 开始连线：点节点右侧圆点触发 */
+  const beginLink = (n: DeFlowNode) => {
+    setLinkFrom(n.id)
+    setSelected(n.id); setSelectedEdge(null)
+    // 起点右侧中点
+    const p = nodePos(n.id)
+    setLinkPreview({ x: p.x + NODE_W, y: p.y + NODE_H / 2 })
+  }
+
   /* 节点拖拽：区分「拖拽」与「点击查看/编辑」 */
   const startDrag = (e: React.MouseEvent, n: DeFlowNode) => {
     if (e.button !== 0) return
@@ -183,17 +203,14 @@ export default function DecisionFlowEditor({ flow, onSave, onPublish, flowName, 
       window.removeEventListener('mousemove', onMove)
       window.removeEventListener('mouseup', onUp)
       if (d && !d.moved) {
-        if (linkMode) {
-          if (!linkFrom) { setLinkFrom(d.id); setSelected(d.id); setSelectedEdge(null) }
-          else if (linkFrom !== d.id) {
-            connect(linkFrom, d.id)
-            setLinkMode(false); setLinkFrom(null); setSelected(null)
-            // 新连线追加到末尾，选中它以编辑连线属性
-            setSelectedEdge(g.edges.length)
-          }
-          else setLinkFrom(null)
+        // 节点点击处理：连线起点已设 → 点目标节点完成连线；否则选中节点
+        if (linkFrom && linkFrom !== d.id) {
+          connect(linkFrom, d.id)
+          setLinkFrom(null); setLinkPreview(null); setSelected(null); setSelectedEdge(g.edges.length)
         } else {
           setSelected(d.id); setSelectedEdge(null)
+          // 取消同一节点的连线
+          if (linkFrom === d.id) { setLinkFrom(null); setLinkPreview(null) }
         }
       }
       dragRef.current = null
@@ -201,6 +218,28 @@ export default function DecisionFlowEditor({ flow, onSave, onPublish, flowName, 
     window.addEventListener('mousemove', onMove)
     window.addEventListener('mouseup', onUp)
   }
+
+  /* 连线预览：window mousemove 跟踪鼠标位置 → 画布坐标 */
+  useEffect(() => {
+    if (!linkFrom) return
+    const onMv = (ev: MouseEvent) => {
+      // 画布坐标：从 clientX/Y 减去 canvasRef 偏移 + tx/ty，再除以 scale
+      const canvas = canvasRef.current
+      if (!canvas) return
+      const rect = canvas.getBoundingClientRect()
+      const cx = ev.clientX - rect.left + canvas.scrollLeft
+      const cy = ev.clientY - rect.top + canvas.scrollTop
+      const x = (cx - tx) / scale
+      const y = (cy - ty) / scale
+      setLinkPreview({ x, y })
+    }
+    const onKey = (ev: KeyboardEvent) => {
+      if (ev.key === 'Escape') { setLinkFrom(null); setLinkPreview(null) }
+    }
+    window.addEventListener('mousemove', onMv)
+    window.addEventListener('keydown', onKey)
+    return () => { window.removeEventListener('mousemove', onMv); window.removeEventListener('keydown', onKey) }
+  }, [linkFrom, scale, tx, ty])
 
   const TBtn = ({ onClick, title, children, active }: { onClick: () => void; title: string; children: React.ReactNode; active?: boolean }) => (
     <button onClick={onClick} title={title}
@@ -239,6 +278,12 @@ export default function DecisionFlowEditor({ flow, onSave, onPublish, flowName, 
   const edgeA = (id: string) => { const p = nodePos(id); return { x: p.x + NODE_W, y: p.y + NODE_H / 2 } }
   const edgeB = (id: string) => { const p = nodePos(id); return { x: p.x, y: p.y + NODE_H / 2 } }
 
+  /* 取消连线（点击画布空白） */
+  const onCanvasClick = () => {
+    if (linkFrom) { setLinkFrom(null); setLinkPreview(null) }
+    setSelected(null); setSelectedEdge(null)
+  }
+
   return (
     <div ref={wrapRef} className="flex h-[calc(100vh-120px)] min-h-[520px] flex-col overflow-hidden rounded-xl border border-slate-100 bg-white">
       {/* 顶部工具条：流名称 + 保存/发布 */}
@@ -274,13 +319,11 @@ export default function DecisionFlowEditor({ flow, onSave, onPublish, flowName, 
         <span className="mr-1 text-[11px] text-slate-400">视图</span>
         <TBtn onClick={resetView} title="复位（缩放+平移归零）">复位</TBtn>
         <TBtn onClick={toggleFs} title={isFs ? '退出全屏' : '全屏'}>{isFs ? '退出全屏' : '全屏'}</TBtn>
-        <span className="mx-1 h-5 w-px bg-slate-200" />
-        <span className="mr-1 text-[11px] text-slate-400">编辑</span>
-        <TBtn onClick={() => { setLinkMode((v) => !v); setLinkFrom(null) }} title="进入连线模式后，先点起点节点、再点终点节点即可连接" active={linkMode}>
-          {linkMode ? (linkFrom ? '连线中… 点终点 ✓' : '连线模式（开启）') : '连线模式'}
-        </TBtn>
-        <span className="ml-2 text-[11px] text-slate-300">
-          {linkMode ? (linkFrom ? '连线中 · 点击终点节点完成连线' : '连线模式 · 点击起点节点') : '拖拽节点可调整位置 · 点击节点查看属性 · 用工具条或滚轮缩放'}
+        <span className="mx-2 h-5 w-px bg-slate-200" />
+        <span className="text-[11px] text-cyan-600">
+          {linkFrom
+            ? <>连线中：<span className="font-medium">{g.nodes.find((n) => n.id === linkFrom)?.title ?? '起点'}</span> → 点击目标节点完成连线（按 <kbd className="rounded bg-slate-100 px-1">Esc</kbd> 取消）</>
+            : '悬停节点 → 右侧 ● 圆点 → 起连线（拖拽节点调整位置）'}
         </span>
       </div>
 
@@ -303,7 +346,8 @@ export default function DecisionFlowEditor({ flow, onSave, onPublish, flowName, 
 
         {/* 中部画布（滚动视口；Ctrl/Cmd+滚轮缩放） */}
         <div ref={canvasRef} className="relative flex-1 overflow-auto bg-slate-50/40"
-          onWheel={(e) => { if (e.ctrlKey || e.metaKey) { e.preventDefault(); zoom(e.deltaY < 0 ? 0.1 : -0.1) } }}>
+          onWheel={(e) => { if (e.ctrlKey || e.metaKey) { e.preventDefault(); zoom(e.deltaY < 0 ? 0.1 : -0.1) } }}
+          onClick={onCanvasClick}>
 
           <div
             style={{
@@ -318,6 +362,9 @@ export default function DecisionFlowEditor({ flow, onSave, onPublish, flowName, 
               <defs>
                 <marker id="de-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
                   <path d="M0,0 L10,5 L0,10 z" fill="#94a3b8" />
+                </marker>
+                <marker id="de-arrow-active" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                  <path d="M0,0 L10,5 L0,10 z" fill="#0891b2" />
                 </marker>
               </defs>
               {g.edges.map((e, i) => {
@@ -334,18 +381,27 @@ export default function DecisionFlowEditor({ flow, onSave, onPublish, flowName, 
                     {/* 命中区域（加宽，便于点击选中连线） */}
                     <path d={d} fill="none" stroke="transparent" strokeWidth={14} className="cursor-pointer" style={{ pointerEvents: 'stroke' }}
                       onClick={(ev) => { ev.stopPropagation(); setSelectedEdge(i); setSelected(null) }} />
-                    <path d={d} fill="none" stroke={active ? '#6366f1' : '#94a3b8'} strokeWidth={active ? 2.5 : 1.5} strokeDasharray={e.dashed ? '5 4' : undefined} markerEnd="url(#de-arrow)" />
+                    <path d={d} fill="none" stroke={active ? '#6366f1' : '#94a3b8'} strokeWidth={active ? 2.5 : 1.5} strokeDasharray={e.dashed ? '5 4' : undefined} markerEnd={active ? 'url(#de-arrow-active)' : 'url(#de-arrow)'} />
                     {e.label && <text x={mx} y={(a.y + b.y) / 2 - 6} textAnchor="middle" fontSize="11" fill={active ? '#6366f1' : '#94a3b8'}>{e.label}</text>}
                   </g>
                 )
               })}
+              {/* 连线预览：从起点到鼠标当前位置 */}
+              {linkFrom && linkPreview && (() => {
+                const a = edgeA(linkFrom)
+                const mx = (a.x + linkPreview.x) / 2
+                const d = `M ${a.x} ${a.y} C ${mx} ${a.y}, ${mx} ${linkPreview.y}, ${linkPreview.x} ${linkPreview.y}`
+                return <path d={d} fill="none" stroke="#0891b2" strokeWidth={2} strokeDasharray="6 4" markerEnd="url(#de-arrow-active)" />
+              })()}
             </svg>
             {g.nodes.map((n) => {
               const cp = nodePos(n.id)
               return (
                 <NodeCard key={n.id} n={{ ...n, x: cp.x, y: cp.y }} selected={selected === n.id}
+                  linkActive={linkFrom === n.id}
                   onMouseDown={(e) => startDrag(e, n)}
                   onRename={(v) => setG((prev) => ({ ...prev, nodes: prev.nodes.map((x) => x.id === n.id ? { ...x, title: v } : x) }))}
+                  onLinkPointDown={() => beginLink(n)}
                 />
               )
             })}
@@ -406,16 +462,10 @@ export default function DecisionFlowEditor({ flow, onSave, onPublish, flowName, 
                 {sel.type === 'policy' && (
                   <div>
                     <label className="mb-1 block text-xs text-slate-400">关联策略</label>
-                    <select
-                      value={sel.policy?.policyId ?? ''}
-                      onChange={(e) => {
-                        const opt = policyOptions.find((p) => p.id === e.target.value)
+                    <SingleSelect label="请选择策略" clearable fullWidth value={sel.policy?.policyId ?? ''} onChange={(v) => {
+                        const opt = policyOptions.find((p) => p.id === v)
                         patchNodeField({ policy: opt ? { policyId: opt.id, policyName: opt.name } : undefined })
-                      }}
-                      className="w-full rounded-lg border border-slate-200 px-2.5 py-1.5 text-sm focus:border-brand-300 focus:outline-none">
-                      <option value="">请选择策略</option>
-                      {policyOptions.map((p) => <option key={p.id} value={p.id}>{p.name}（{p.type}）</option>)}
-                    </select>
+                      }} options={[{ value: '', label: '请选择策略' }, ...policyOptions.map((p) => ({ value: p.id, label: `${p.name}（${p.type}）` }))]} />
                   </div>
                 )}
 
@@ -424,24 +474,16 @@ export default function DecisionFlowEditor({ flow, onSave, onPublish, flowName, 
                   <>
                     <div>
                       <label className="mb-1 block text-xs text-slate-400">关联名单库</label>
-                      <select
-                        value={sel.listRef?.listId ?? ''}
-                        onChange={(e) => {
-                          const opt = listOptions.find((l) => l.id === e.target.value)
+                      <SingleSelect label="请选择名单库" clearable fullWidth value={sel.listRef?.listId ?? ''} onChange={(v) => {
+                          const opt = listOptions.find((l) => l.id === v)
                           patchNodeField({ listRef: { listId: opt?.id ?? '', listName: opt?.name ?? '', matchField: sel.listRef?.matchField ?? 'phone', matchScore: sel.listRef?.matchScore ?? 0 } })
-                        }}
-                        className="w-full rounded-lg border border-slate-200 px-2.5 py-1.5 text-sm focus:border-brand-300 focus:outline-none">
-                        <option value="">请选择名单库</option>
-                        {listOptions.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
-                      </select>
+                        }} options={[{ value: '', label: '请选择名单库' }, ...listOptions.map((l) => ({ value: l.id, label: l.name }))]} />
                     </div>
                     <div>
                       <label className="mb-1 block text-xs text-slate-400">匹配字段</label>
-                      <select value={sel.listRef?.matchField ?? 'phone'}
-                        onChange={(e) => patchNodeField({ listRef: { listId: sel.listRef?.listId ?? '', listName: sel.listRef?.listName ?? '', matchField: e.target.value, matchScore: sel.listRef?.matchScore ?? 0 } })}
-                        className="w-full rounded-lg border border-slate-200 px-2.5 py-1.5 text-sm focus:border-brand-300 focus:outline-none">
-                        {['phone', 'ip', 'device_id', 'id_card', 'address'].map((f) => <option key={f} value={f}>{f}</option>)}
-                      </select>
+                      <SingleSelect label="匹配字段" fullWidth value={sel.listRef?.matchField ?? 'phone'}
+                        onChange={(v) => patchNodeField({ listRef: { listId: sel.listRef?.listId ?? '', listName: sel.listRef?.listName ?? '', matchField: v, matchScore: sel.listRef?.matchScore ?? 0 } })}
+                        options={['phone', 'ip', 'device_id', 'id_card', 'address'].map((f) => ({ value: f, label: f }))} />
                     </div>
                     <div>
                       <label className="mb-1 block text-xs text-slate-400">匹配分数</label>
@@ -527,7 +569,12 @@ export default function DecisionFlowEditor({ flow, onSave, onPublish, flowName, 
           ) : (
             <div className="py-10 text-center text-xs text-slate-400">
               <p className="mb-1 text-lg">◈</p>
-              点击节点或连线查看属性
+              <div className="mb-2">点击节点或连线查看属性</div>
+              <div className="mt-3 rounded-lg border border-cyan-200 bg-cyan-50/50 px-2 py-2 text-[11px] text-cyan-700">
+                <span className="font-medium">连线方法：</span><br />
+                1. 鼠标悬停节点 → 出现<span className="mx-1 inline-block h-3 w-3 rounded-full border-2 border-cyan-500 bg-white align-middle" />右侧圆点<br />
+                2. 按住圆点拖到目标节点 / 点圆点后点目标节点
+              </div>
             </div>
           )}
         </div>

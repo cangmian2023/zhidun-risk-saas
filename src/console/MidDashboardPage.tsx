@@ -1,7 +1,7 @@
 // ⑤ 监控看板（使用域）— 读页面样例 midDashboards.json 橘；数据源样例 橘；实时计算 灰
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Panel, StatCard, DataTable, RightDrawer } from '../components/ui';
+import { Panel, StatCard, DataTable, RightDrawer, SingleSelect, Button } from '../components/ui';
 import type { Column, Row } from '../components/ui';
 import { LineChart, BarChart, DonutChart } from '../components/charts';
 import { Sam, Cal } from './SourceTag';
@@ -22,6 +22,7 @@ const DATA_FLOW_MAP: Record<string, string> = {
   ds_loan: 'f-loan-collect',
   ds_sql_demo: 'f-loan-collect',
   ds_customer: 'f-cust-operate',
+  ds_score_customer: 'f-cust-operate',
   ds_behavior: 'f-behavior-promote',
   ds_api_demo: 'f-credit-check',
   ds_event: 'f-event-analyze',
@@ -43,6 +44,13 @@ export default function MidDashboardPage({ pageKey, crumbPrefix }: { pageKey: st
   const [dlWidget, setDlWidget] = useState<MidWidget | null>(null);
   const [dlOpen, setDlOpen] = useState(false);
   const [dlRow, setDlRow] = useState<number | null>(null);
+  // 看板刷新策略（P1）：实时态势大屏 30 秒 / 其余看板 5 分钟自动刷新 + 手动刷新
+  const [lastRefresh, setLastRefresh] = useState(() => new Date().toLocaleTimeString('zh-CN', { hour12: false }));
+  const refreshMs = String(pageKey).includes('realtime') ? 30000 : 300000;
+  useEffect(() => {
+    const t = setInterval(() => setLastRefresh(new Date().toLocaleTimeString('zh-CN', { hour12: false })), refreshMs);
+    return () => clearInterval(t);
+  }, [refreshMs]);
 
   if (!page) {
     return <div style={{ padding: 24 }}><PageShell title="监控看板" crumb="零售信贷风控 / 贷中监控" subtitle="暂无页面配置" /></div>;
@@ -99,7 +107,13 @@ export default function MidDashboardPage({ pageKey, crumbPrefix }: { pageKey: st
   return (
     <div style={{ padding: 24, maxWidth: 1280 }}>
       <PageShell title={page.name} crumb={`${crumbPrefix ?? '零售信贷风控 / 贷中监控'} / ${page.group}`} subtitle={page.desc}
-        actions={<><Sam label="页面配置" value="midDashboards.json" /><Sam label="样例数据" value={`${pageDs.reduce((a, s) => a + (s.rows?.length || 0), 0)} 行`} /><Cal label="实时计算" /></>} />
+        actions={<>
+          <Sam label="页面配置" value="midDashboards.json" />
+          <Sam label="样例数据" value={`${pageDs.reduce((a, s) => a + (s.rows?.length || 0), 0)} 行`} />
+          <Cal label="实时计算" />
+          <span style={{ fontSize: 12, color: '#64748B' }}>{String(pageKey).includes('realtime') ? '30 秒自动刷新' : '5 分钟自动刷新'} · 最后刷新 {lastRefresh}</span>
+          <Button size="sm" variant="secondary" onClick={() => setLastRefresh(new Date().toLocaleTimeString('zh-CN', { hour12: false }))}>刷新</Button>
+        </>} />
 
       {/* 交叉筛选条 */}
       {page.filters && page.filters.length > 0 && (
@@ -114,7 +128,7 @@ export default function MidDashboardPage({ pageKey, crumbPrefix }: { pageKey: st
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 16, alignItems: 'stretch' }}>
         {page.widgets.map((w) => (
           <div key={w.id} style={{ gridColumn: `span ${widgetColSpan(w)}`, height: '100%' }}>
-            <WidgetView w={w} ds={dsById(w.datasetId)} metric={metricById(w.metricId ?? w.metricIds?.[0] ?? '')} metrics={metrics} rows={widgetRows(w)} onDrill={() => drillTo(w)} onDetail={() => openDetail(w)} nav={nav} />
+            <WidgetView w={w} ds={dsById(w.datasetId)} metric={metricById(w.metricId ?? w.metricIds?.[0] ?? '')} metrics={metrics} rows={widgetRows(w)} onDrill={() => drillTo(w)} onDetail={() => openDetail(w)} nav={nav} custBack={custBack} />
           </div>
         ))}
       </div>
@@ -172,9 +186,10 @@ function widgetChartH(w: MidWidget): number {
   return w.windowSize === 'lg' ? 300 : w.windowSize === 'sm' ? 170 : 240;
 }
 
-export function WidgetView({ w, ds, metric, metrics, rows, onDrill, nav, onEdit, onDelete, onDetail }: {
+export function WidgetView({ w, ds, metric, metrics, rows, onDrill, nav, custBack, onEdit, onDelete, onDetail }: {
   w: MidWidget; ds?: MidDataSource; metric?: MidMetric; metrics: MidMetric[];
-  rows: Record<string, unknown>[]; onDrill: () => void; nav: (p: string) => void; onEdit?: () => void; onDelete?: () => void;
+  rows: Record<string, unknown>[]; onDrill: () => void; nav: (p: string) => void; custBack?: string | null;
+  onEdit?: () => void; onDelete?: () => void;
   onDetail?: (rowIndex?: number) => void; // 需求11：查看详情 → 子页面
 }) {
   const H = widgetChartH(w);
@@ -322,10 +337,8 @@ function FilterControl({ f, rows, value, onChange }: { f: MidPageFilter; rows: R
     return (
       <label style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: 12, color: '#475569', minWidth: 140 }}>
         {f.label}
-        <select style={inp} value={value ?? ''} onChange={(e) => onChange(e.target.value)}>
-          <option value="">全部</option>
-          {opts.map((o) => <option key={o} value={o}>{LEVEL_META[o]?.label ?? o}</option>)}
-        </select>
+        <SingleSelect label="全部" clearable fullWidth value={value ?? ''} onChange={onChange}
+          options={[{ value: '', label: '全部' }, ...opts.map((o) => ({ value: o, label: LEVEL_META[o]?.label ?? o }))]} />
       </label>
     );
   }

@@ -47,12 +47,14 @@ export function stepColorOf(st: string): string {
   if (st.includes('已')) return '#059669'
   return '#94A3B8'
 }
-/** 取流程当前状态与操作步（自定义 flowSteps 优先，缺省用上线审核状态机） */
+/** 取流程当前状态与操作步（自定义 flowSteps 优先，缺省用上线审核状态机）
+ *  matched：当前状态可执行的全部操作步（同状态支持多个动作，如「复核中」可 通过/驳回），供多按钮渲染 */
 export function flowStepOf(f: { flowSteps?: FlowStep[]; flowState?: string }) {
   const steps = f.flowSteps?.length ? f.flowSteps : DEFAULT_FLOW_STEPS
   const state = f.flowState ?? steps[0]?.state ?? ''
-  const step = steps.find((s) => s.state === state)
-  return { steps, state, step }
+  const matched = steps.filter((s) => s.state === state)
+  const step = matched[0]
+  return { steps, state, step, matched }
 }
 
 /* ---------- 需求16：一条业务流程配置 → 多条具体流程（flowGraph），运行时按对象字段匹配 ----------

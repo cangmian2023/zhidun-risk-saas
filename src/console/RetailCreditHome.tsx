@@ -5,6 +5,7 @@ import { useMemo, useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usePageNav } from './pageNav';
 import { MenuIcon, type IconName } from '../components/icons';
+import { SingleSelect } from '../components/ui';
 import { Sam, Cal, SourceTagLegend } from './SourceTag';
 import { useMidCustomers, useMidAlerts } from './midStore';
 import { useCollection } from './collectionData';
@@ -241,18 +242,16 @@ export default function RetailCreditHome() {
               </label>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 <label style={{ fontSize: 12, color: '#64748B' }}>风险等级
-                  <select value={advLevel} onChange={(e) => setAdvLevel(e.target.value)} style={{ marginTop: 4, width: '100%', border: '1px solid #E5E7EB', borderRadius: 8, padding: '9px 12px', fontSize: 14, outline: 'none', color: '#0F172A', background: '#fff' }}>
-                    <option value="">全部</option>
-                    <option value="高风险">高风险</option>
-                    <option value="中风险">中风险</option>
-                    <option value="低风险">低风险</option>
-                  </select>
+                  <div style={{ marginTop: 4 }}>
+                    <SingleSelect label="全部" clearable fullWidth value={advLevel} onChange={setAdvLevel}
+                      options={[{ value: '', label: '全部' }, { value: '高风险', label: '高风险' }, { value: '中风险', label: '中风险' }, { value: '低风险', label: '低风险' }]} />
+                  </div>
                 </label>
                 <label style={{ fontSize: 12, color: '#64748B' }}>产品
-                  <select value={advProduct} onChange={(e) => setAdvProduct(e.target.value)} style={{ marginTop: 4, width: '100%', border: '1px solid #E5E7EB', borderRadius: 8, padding: '9px 12px', fontSize: 14, outline: 'none', color: '#0F172A', background: '#fff' }}>
-                    <option value="">全部</option>
-                    {products.map((p) => <option key={p} value={p}>{p}</option>)}
-                  </select>
+                  <div style={{ marginTop: 4 }}>
+                    <SingleSelect label="全部" clearable fullWidth value={advProduct} onChange={setAdvProduct}
+                      options={[{ value: '', label: '全部' }, ...products.map((p) => ({ value: p, label: p }))]} />
+                  </div>
                 </label>
               </div>
             </div>

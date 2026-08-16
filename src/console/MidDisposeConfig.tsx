@@ -2,7 +2,7 @@
 // ① 处置策略样例 JSON 橘；按等级路由 灰
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Button, Panel, DataTable, Modal } from '../components/ui';
+import { Button, Panel, DataTable, Modal, SingleSelect } from '../components/ui';
 import type { Column, Row } from '../components/ui';
 import { Sam } from './SourceTag';
 import FlowStateCell from './FlowStateCell';
@@ -102,26 +102,22 @@ export function Editor({ value, onChange, onRemove }: { value: MidDispose; onCha
       <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
         <label style={lbl}>策略名称<input style={inp} value={value.name} onChange={(e) => set({ name: e.target.value })} /></label>
         <label style={lbl}>触发等级
-          <select style={sel} value={value.triggerLevel} onChange={(e) => set({ triggerLevel: e.target.value as AlertLevel })}>
-            {(Object.keys(LEVEL_META) as AlertLevel[]).map((l) => <option key={l} value={l}>{LEVEL_META[l].label}</option>)}
-          </select>
+          <SingleSelect label="触发等级" fullWidth value={value.triggerLevel} onChange={(v) => set({ triggerLevel: v as AlertLevel })}
+            options={(Object.keys(LEVEL_META) as AlertLevel[]).map((l) => ({ value: l, label: LEVEL_META[l].label }))} />
         </label>
         <label style={lbl}>动作
-          <select style={sel} value={value.action} onChange={(e) => set({ action: e.target.value })}>
-            {DISPOSE_ACTIONS.map((a) => <option key={a} value={a}>{a}</option>)}
-          </select>
+          <SingleSelect label="动作" fullWidth value={value.action} onChange={(v) => set({ action: v })}
+            options={DISPOSE_ACTIONS.map((a) => ({ value: a, label: a }))} />
         </label>
       </div>
       <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
         <label style={lbl}>对接系统
-          <select style={sel} value={value.targetSystem} onChange={(e) => set({ targetSystem: e.target.value })}>
-            {DISPOSE_SYSTEMS.map((s) => <option key={s} value={s}>{s}</option>)}
-          </select>
+          <SingleSelect label="对接系统" fullWidth value={value.targetSystem} onChange={(v) => set({ targetSystem: v })}
+            options={DISPOSE_SYSTEMS.map((s) => ({ value: s, label: s }))} />
         </label>
         <label style={lbl}>分派角色
-          <select style={sel} value={value.assignTo} onChange={(e) => set({ assignTo: e.target.value })}>
-            {DISPOSE_ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
-          </select>
+          <SingleSelect label="分派角色" fullWidth value={value.assignTo} onChange={(v) => set({ assignTo: v })}
+            options={DISPOSE_ROLES.map((r) => ({ value: r, label: r }))} />
         </label>
         <label style={lbl}>等级预览
           <span style={{ display: 'flex', alignItems: 'center', height: 34 }}>

@@ -5,12 +5,13 @@
  * 样式：复用 PageShell / Panel / DataTable / StatCard / charts + 来源三色标签
  */
 import { useMemo, useState } from 'react';
-import { Panel, StatCard, DataTable, Button, Badge } from '../components/ui';
+import { Panel, StatCard, DataTable, Button, Badge, SingleSelect } from '../components/ui';
 import type { Column, Row } from '../components/ui';
 import { DonutChart } from '../components/charts';
 import { Sam, Cal } from './SourceTag';
 import { PageShell } from './PageShell';
-import { useDunData, updateDunData, dunNewId, type DunAgency } from './dunData';
+import { useDunData, updateDunData, dunNewId, type DunAgency, type DunWaiver } from './dunData';
+import FlowStateCell from './FlowStateCell';
 
 const CRUMB = '零售信贷风控 / 催贷管理';
 const money = (n: number) => `¥${n.toLocaleString()}`;
@@ -83,14 +84,10 @@ export function DunImport() {
 
       <Panel title="新建导入任务" desc="选择数据源与同步模式后执行导入（演示环境为模拟导入，写入导入日志）">
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-          <select style={inp} value={source} onChange={(e) => setSource(e.target.value as 'API 自动对接' | 'Excel 手动导案')}>
-            <option value="API 自动对接">API 自动对接</option>
-            <option value="Excel 手动导案">Excel 手动导案</option>
-          </select>
-          <select style={inp} value={mode} onChange={(e) => setMode(e.target.value as '批量' | '增量')}>
-            <option value="增量">增量同步</option>
-            <option value="批量">批量导入</option>
-          </select>
+          <SingleSelect label="选择数据源" value={source} onChange={(v) => setSource(v as 'API 自动对接' | 'Excel 手动导案')}
+            options={[{ value: 'API 自动对接', label: 'API 自动对接' }, { value: 'Excel 手动导案', label: 'Excel 手动导案' }]} />
+          <SingleSelect label="选择同步模式" value={mode} onChange={(v) => setMode(v as '批量' | '增量')}
+            options={[{ value: '增量', label: '增量同步' }, { value: '批量', label: '批量导入' }]} />
           <Button size="sm" onClick={run}>执行导入</Button>
           <span style={{ fontSize: 12, color: '#94A3B8' }}>对接：信贷核心系统 API · 字段映射（客户号/产品/应还日/逾期天数/逾期金额）</span>
         </div>
@@ -306,7 +303,8 @@ export function DunRepayment() {
   const totalRepay = d.repayments.reduce((a, r) => a + r.amount, 0);
   const totalWaiver = d.waivers.filter((w) => w.status === '已通过').reduce((a, w) => a + w.amount, 0);
   const pendingWaiver = d.waivers.filter((w) => w.status === '审批中').length;
-  const approve = (id: string, to: '已通过' | '已驳回') => updateDunData((dd) => ({ ...dd, waivers: dd.waivers.map((w) => w.id === id ? { ...w, status: to } : w) }));
+  /* 减免审批流转：操作按钮由管理中心业务流程「减免审批流程」(f-dun-waiver) 配置驱动 */
+  const setWaiverFlow = (id: string, next: string) => updateDunData((dd) => ({ ...dd, waivers: dd.waivers.map((w) => w.id === id ? { ...w, status: next as DunWaiver['status'] } : w) }));
 
   const rpCols: Column[] = [
     { key: 'caseId', label: '案件', type: 'text', width: '140px' },
@@ -348,12 +346,12 @@ export function DunRepayment() {
         <DataTable columns={rpCols} rows={rpRows} empty="暂无回款" pager defaultPageSize={10} />
       </Panel>
 
-      <Panel title="减免审批" desc={<span>多级审批流 · <Sam value="dunData.json.waivers" /></span>}>
+      <Panel title="减免审批" desc={<span>审批流由管理中心业务流程配置驱动 · <Sam value="dunData.json.waivers" /></span>}>
         <DataTable columns={wvCols} rows={wvRows} empty="暂无减免" pager defaultPageSize={10}
           actions={(r) => {
             const w = d.waivers.find((x) => x.id === r.id);
-            if (w && w.status === '审批中') return (<><Button size="sm" variant="secondary" onClick={() => approve(w.id, '已通过')}>通过</Button><Button size="sm" onClick={() => approve(w.id, '已驳回')}>驳回</Button></>);
-            return <span style={{ fontSize: 12, color: '#94A3B8' }}>—</span>;
+            if (!w) return <span style={{ fontSize: 12, color: '#94A3B8' }}>—</span>;
+            return <FlowStateCell flowId="f-dun-waiver" state={w.status} buttonOnly onChange={(next) => setWaiverFlow(w.id, next)} />;
           }} />
       </Panel>
     </div>

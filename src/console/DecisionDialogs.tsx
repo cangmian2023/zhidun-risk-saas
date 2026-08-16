@@ -1,7 +1,7 @@
 // 决策引擎 · 弹窗组件（名单记录 / 新建名单库 / 编辑特征 / 关联模型 / 创建回放 / 创建批量决策 / 告警规则 / 通知渠道 / 审批）
 import { useState } from 'react'
 import { useDecision, updateDecision, type DeList, type DeFeature, type DeExternalApi, type DeListRecord, type DeAlertRule, type DeNotifyChannel } from './decisionData'
-import { Modal, Button, DataTable, StatCard, RightDrawer, type Column, type Row } from '../components/ui'
+import { Modal, Button, DataTable, StatCard, RightDrawer, SingleSelect, SelectField, type Column, type Row } from '../components/ui'
 
 const FIELD = 'mb-4'
 
@@ -111,21 +111,18 @@ export function NewListDialog({ open, onClose }: { open: boolean; onClose: () =>
       </div>
       <div className={FIELD}>
         <Label required>名单类型</Label>
-        <select value={kind} onChange={(e) => setKind(e.target.value as DeList['kind'])} className={inputCls()}>
-          <option>黑名单</option><option>灰名单</option><option>白名单</option>
-        </select>
+        <SingleSelect label="选择名单类型" fullWidth value={kind} onChange={(v) => setKind(v as DeList['kind'])}
+          options={[{ value: '黑名单', label: '黑名单' }, { value: '灰名单', label: '灰名单' }, { value: '白名单', label: '白名单' }]} />
       </div>
       <div className={FIELD}>
         <Label required>匹配键</Label>
-        <select value={matchKey} onChange={(e) => setMatchKey(e.target.value)} className={inputCls()}>
-          {['手机号', '身份证', 'IP', '设备ID', '地址', '城市', '姓名'].map((k) => <option key={k}>{k}</option>)}
-        </select>
+        <SingleSelect label="选择匹配键" fullWidth value={matchKey} onChange={setMatchKey}
+          options={['手机号', '身份证', 'IP', '设备ID', '地址', '城市', '姓名'].map((k) => ({ value: k, label: k }))} />
       </div>
       <div className={FIELD}>
         <Label required>匹配策略</Label>
-        <select value={strategy} onChange={(e) => setStrategy(e.target.value)} className={inputCls()}>
-          <option>精确匹配</option><option>模糊匹配</option><option>正则匹配</option>
-        </select>
+        <SingleSelect label="选择匹配策略" fullWidth value={strategy} onChange={setStrategy}
+          options={[{ value: '精确匹配', label: '精确匹配' }, { value: '模糊匹配', label: '模糊匹配' }, { value: '正则匹配', label: '正则匹配' }]} />
       </div>
     </Modal>
   )
@@ -174,9 +171,8 @@ export function EditFeatureDialog({ feature, open, onClose }: { feature: DeFeatu
       </div>
       <div className={FIELD}>
         <Label required>数据类型</Label>
-        <select value={dataType} onChange={(e) => setDataType(e.target.value)} className={inputCls()}>
-          <option>NUMBER</option><option>STRING</option><option>BOOLEAN</option>
-        </select>
+        <SingleSelect label="选择数据类型" fullWidth value={dataType} onChange={setDataType}
+          options={[{ value: 'NUMBER', label: 'NUMBER' }, { value: 'STRING', label: 'STRING' }, { value: 'BOOLEAN', label: 'BOOLEAN' }]} />
       </div>
 
       {isExternal && (
@@ -196,9 +192,8 @@ export function EditFeatureDialog({ feature, open, onClose }: { feature: DeFeatu
           {mode === 'DATASOURCE' ? (
             <div className={FIELD}>
               <Label required>数据源</Label>
-              <select value={datasource} onChange={(e) => setDatasource(e.target.value)} className={inputCls()}>
-                <option>91001</option><option>91002</option><option>91003</option>
-              </select>
+              <SingleSelect label="选择数据源" fullWidth value={datasource} onChange={setDatasource}
+                options={[{ value: '91001', label: '91001' }, { value: '91002', label: '91002' }, { value: '91003', label: '91003' }]} />
             </div>
           ) : (
             <div className={FIELD}>
@@ -348,16 +343,13 @@ export function CreateReplayDialog({ open, onClose, onCreate }: { open: boolean;
       </div>
       <div className={FIELD}>
         <Label required>模型</Label>
-        <select value={model} onChange={(e) => setModel(e.target.value)} className={inputCls()}>
-          <option value="">选择模型</option>
-          {d.models.map((m) => <option key={m.id} value={m.code}>{m.name}</option>)}
-        </select>
+        <SingleSelect label="选择模型" clearable fullWidth value={model} onChange={setModel}
+          options={[{ value: '', label: '选择模型' }, ...d.models.map((m) => ({ value: m.code, label: m.name }))]} />
       </div>
       <div className={FIELD}>
         <Label>数据源类型</Label>
-        <select value={source} onChange={(e) => setSource(e.target.value)} className={inputCls()}>
-          <option>历史决策日志</option><option>事件数据仓库</option>
-        </select>
+        <SingleSelect label="数据源类型" fullWidth value={source} onChange={setSource}
+          options={[{ value: '历史决策日志', label: '历史决策日志' }, { value: '事件数据仓库', label: '事件数据仓库' }]} />
       </div>
       <div className={FIELD}>
         <Label>目标版本</Label>
@@ -400,10 +392,8 @@ export function CreateBatchDialog({ open, onClose, onCreate }: { open: boolean; 
       </div>
       <div className={FIELD}>
         <Label required>模型</Label>
-        <select value={model} onChange={(e) => setModel(e.target.value)} className={inputCls()}>
-          <option value="">选择模型</option>
-          {d.models.map((m) => <option key={m.id} value={m.code}>{m.name}</option>)}
-        </select>
+        <SingleSelect label="选择模型" clearable fullWidth value={model} onChange={setModel}
+          options={[{ value: '', label: '选择模型' }, ...d.models.map((m) => ({ value: m.code, label: m.name }))]} />
       </div>
       <div className={FIELD}>
         <Label>目标版本</Label>
@@ -426,7 +416,7 @@ export function CreateBatchDialog({ open, onClose, onCreate }: { open: boolean; 
 /* ============================================================
  * 告警规则编辑弹窗
  * ========================================================== */
-export function AlertRuleDialog({ rule, open, onClose }: { rule: DeAlertRule | null; open: boolean; onClose: () => void }) {
+export function AlertRuleDialog({ rule, open, onClose, onConfirm }: { rule: DeAlertRule | null; open: boolean; onClose: () => void; onConfirm?: (data: { id: string; name: string; metricType: string; condition: string; threshold: number; level: string }) => void }) {
   const [name, setName] = useState(rule?.name ?? '')
   const [metricType, setMetricType] = useState(rule?.metricType ?? '通过率')
   const [scope, setScope] = useState('模型')
@@ -437,29 +427,29 @@ export function AlertRuleDialog({ rule, open, onClose }: { rule: DeAlertRule | n
 
   return (
     <Modal open={open} onClose={onClose} title={rule ? '编辑告警规则' : '新建告警规则'} width="max-w-lg"
-      footer={<><Button variant="ghost" onClick={onClose}>取 消</Button><Button onClick={onClose}>确 定</Button></>}>
+      footer={<>
+        <Button variant="ghost" onClick={onClose}>取 消</Button>
+        <Button onClick={() => { onConfirm?.({ id: rule?.id ?? `R${Date.now().toString(36)}`, name, metricType, condition: cond, threshold, level }); onClose() }}>确 定</Button>
+      </>}>
       <div className={FIELD}>
         <Label required>规则名称</Label>
         <input value={name} onChange={(e) => setName(e.target.value)} placeholder="输入规则名称" className={inputCls()} />
       </div>
       <div className={FIELD}>
         <Label required>指标类型</Label>
-        <select value={metricType} onChange={(e) => setMetricType(e.target.value)} className={inputCls()}>
-          {['通过率', '拒绝率', '耗时', '错误率', '命中量'].map((x) => <option key={x}>{x}</option>)}
-        </select>
+        <SingleSelect label="指标类型" fullWidth value={metricType} onChange={setMetricType}
+          options={['通过率', '拒绝率', '耗时', '错误率', '命中量'].map((x) => ({ value: x, label: x }))} />
       </div>
       <div className={FIELD}>
         <Label>指标范围</Label>
-        <select value={scope} onChange={(e) => setScope(e.target.value)} className={inputCls()}>
-          <option>模型</option><option>策略</option><option>全局</option>
-        </select>
+        <SingleSelect label="指标范围" fullWidth value={scope} onChange={setScope}
+          options={[{ value: '模型', label: '模型' }, { value: '策略', label: '策略' }, { value: '全局', label: '全局' }]} />
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div className={FIELD}>
           <Label required>条件</Label>
-          <select value={cond} onChange={(e) => setCond(e.target.value)} className={inputCls()}>
-            <option>大于</option><option>小于</option><option>等于</option>
-          </select>
+          <SingleSelect label="条件" fullWidth value={cond} onChange={setCond}
+            options={[{ value: '大于', label: '大于' }, { value: '小于', label: '小于' }, { value: '等于', label: '等于' }]} />
         </div>
         <div className={FIELD}>
           <Label required>阈值</Label>
@@ -468,9 +458,8 @@ export function AlertRuleDialog({ rule, open, onClose }: { rule: DeAlertRule | n
       </div>
       <div className={FIELD}>
         <Label required>严重程度</Label>
-        <select value={level} onChange={(e) => setLevel(e.target.value)} className={inputCls()}>
-          <option>严重</option><option>警告</option><option>提示</option>
-        </select>
+        <SingleSelect label="严重程度" fullWidth value={level} onChange={setLevel}
+          options={[{ value: '严重', label: '严重' }, { value: '警告', label: '警告' }, { value: '提示', label: '提示' }]} />
       </div>
       <div className={FIELD}>
         <Label>冷却时间(分)</Label>
@@ -478,7 +467,7 @@ export function AlertRuleDialog({ rule, open, onClose }: { rule: DeAlertRule | n
       </div>
       <div className={FIELD}>
         <Label>通知渠道</Label>
-        <select className={inputCls()}><option>选择通知渠道</option><option>短信</option><option>邮件</option><option>Webhook</option></select>
+        <SelectField label="选择通知渠道" options={[{ value: '', label: '选择通知渠道' }, { value: '短信', label: '短信' }, { value: '邮件', label: '邮件' }, { value: 'Webhook', label: 'Webhook' }]} />
       </div>
     </Modal>
   )
@@ -487,27 +476,29 @@ export function AlertRuleDialog({ rule, open, onClose }: { rule: DeAlertRule | n
 /* ============================================================
  * 通知渠道编辑弹窗
  * ========================================================== */
-export function NotifyChannelDialog({ channel, open, onClose }: { channel: DeNotifyChannel | null; open: boolean; onClose: () => void }) {
+export function NotifyChannelDialog({ channel, open, onClose, onConfirm }: { channel: DeNotifyChannel | null; open: boolean; onClose: () => void; onConfirm?: (data: { id: string; name: string; type: string; target: string }) => void }) {
   const [name, setName] = useState(channel?.name ?? '')
   const [type, setType] = useState(channel?.type ?? 'Webhook')
-  const [url, setUrl] = useState('')
+  const [target, setTarget] = useState('')
 
   return (
     <Modal open={open} onClose={onClose} title={channel ? '编辑通知渠道' : '新建通知渠道'} width="max-w-lg"
-      footer={<><Button variant="ghost" onClick={onClose}>取 消</Button><Button onClick={onClose}>确 定</Button></>}>
+      footer={<>
+        <Button variant="ghost" onClick={onClose}>取 消</Button>
+        <Button onClick={() => { onConfirm?.({ id: channel?.id ?? `C${Date.now().toString(36)}`, name, type, target }); onClose() }}>确 定</Button>
+      </>}>
       <div className={FIELD}>
         <Label required>渠道名称</Label>
         <input value={name} onChange={(e) => setName(e.target.value)} placeholder="输入渠道名称" className={inputCls()} />
       </div>
       <div className={FIELD}>
         <Label required>渠道类型</Label>
-        <select value={type} onChange={(e) => setType(e.target.value)} className={inputCls()}>
-          <option>Webhook</option><option>短信</option><option>邮件</option><option>企业微信</option>
-        </select>
+        <SingleSelect label="渠道类型" fullWidth value={type} onChange={setType}
+          options={[{ value: 'Webhook', label: 'Webhook' }, { value: '短信', label: '短信' }, { value: '邮件', label: '邮件' }, { value: '企业微信', label: '企业微信' }]} />
       </div>
       <div className={FIELD}>
-        <Label required>Webhook URL</Label>
-        <input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://..." className={inputCls()} />
+        <Label required>接收人/群</Label>
+        <input value={target} onChange={(e) => setTarget(e.target.value)} placeholder="如：运营群 / 风控值班组 / https://..." className={inputCls()} />
       </div>
     </Modal>
   )
@@ -516,11 +507,14 @@ export function NotifyChannelDialog({ channel, open, onClose }: { channel: DeNot
 /* ============================================================
  * 审批通过弹窗
  * ========================================================== */
-export function ApproveDialog({ approval, open, onClose }: { approval: { target: string } | null; open: boolean; onClose: () => void }) {
+export function ApproveDialog({ approval, open, onClose, onConfirm }: { approval: { target: string; id?: string } | null; open: boolean; onClose: () => void; onConfirm?: (data: { id: string; comment: string }) => void }) {
   const [comment, setComment] = useState('')
   return (
     <Modal open={open} onClose={onClose} title="审批通过" width="max-w-md"
-      footer={<><Button variant="ghost" onClick={onClose}>取 消</Button><Button onClick={onClose}>确 定</Button></>}>
+      footer={<>
+        <Button variant="ghost" onClick={onClose}>取 消</Button>
+        <Button onClick={() => { onConfirm?.({ id: approval?.id ?? '', comment }); onClose() }}>确 定</Button>
+      </>}>
       <p className="mb-3 text-sm text-slate-600">
         确认通过后，模型「{approval?.target ?? ''}」的发布操作将立即执行。
       </p>

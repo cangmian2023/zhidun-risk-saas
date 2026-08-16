@@ -7,6 +7,7 @@
  * - 纯前端实现，无第三方依赖；数据结构见 reportTemplateData.ts 的 FlowGraph
  * ========================================================================= */
 import { useRef, useState, useEffect } from 'react'
+import { SingleSelect } from '../components/ui'
 import {
   FlowGraph, FlowGraphNode, FlowGraphEdge, FlowNodeType, ReviewResult,
   FLOW_NODE_TYPE_LABEL, FLOW_NODE_TYPE_COLOR, ReviewRole, REVIEW_ROLES,
@@ -213,14 +214,11 @@ export default function FlowCanvasEditor({ graph, onChange, readOnly, statusEnum
                 )}
                 {(graph.match ?? []).map((m, i) => (
                   <div key={i} style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 4, flexWrap: 'wrap' }}>
-                    <select value={m.field} onChange={(e) => {
+                    <SingleSelect label="选择字段" clearable width={150} value={m.field} onChange={(v) => {
                       const arr = [...(graph.match ?? [])]
-                      arr[i] = { ...arr[i], field: e.target.value }
+                      arr[i] = { ...arr[i], field: v }
                       onChange({ ...graph, match: arr })
-                    }} style={{ ...inp, width: 150 }}>
-                      <option value="">选择字段</option>
-                      {matchFieldOptions.map((o) => <option key={o.field} value={o.field}>{o.label}</option>)}
-                    </select>
+                    }} options={[{ value: '', label: '选择字段' }, ...matchFieldOptions.map((o) => ({ value: o.field, label: o.label }))]} />
                     <input value={m.value} placeholder="值（如 RED / 负债激增，逗号分隔多选）"
                       onChange={(e) => {
                         const arr = [...(graph.match ?? [])]
@@ -401,15 +399,16 @@ export default function FlowCanvasEditor({ graph, onChange, readOnly, statusEnum
                         <label style={{ fontSize: 12, color: '#6B7280' }}>按钮名称（运行时操作按钮文案）
                           <input disabled={readOnly} value={n.buttonName ?? ''} onChange={(e) => patchNode(n.id, { buttonName: e.target.value })} placeholder={n.label || '缺省同节点标题'} style={{ ...inp, marginTop: 4 }} />
                         </label>
-                        <label style={{ fontSize: 12, color: '#6B7280' }}>时限倒计时（分钟，空 = 不限制）
+                        <label style={{ fontSize: 12, color: '#6B7280' }}>节点时限（分钟，空 = 不限制）
                           <input type="number" min={0} disabled={readOnly} value={n.timeLimit ?? ''}
                             onChange={(e) => patchNode(n.id, { timeLimit: e.target.value === '' ? undefined : Math.max(0, Number(e.target.value)) })}
                             placeholder="如 30 / 120" style={{ ...inp, marginTop: 4 }} />
                         </label>
                         <label style={{ fontSize: 12, color: '#6B7280' }}>经办角色
-                          <select disabled={readOnly} value={n.role} onChange={(e) => patchNode(n.id, { role: e.target.value as ReviewRole })} style={{ ...inp, marginTop: 4 }}>
-                            {REVIEW_ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
-                          </select>
+                          <div style={{ marginTop: 4 }}>
+                            <SingleSelect label="选择角色" fullWidth disabled={readOnly} value={n.role} onChange={(v) => patchNode(n.id, { role: v as ReviewRole })}
+                              options={REVIEW_ROLES.map((r) => ({ value: r, label: r }))} />
+                          </div>
                         </label>
                         <label style={{ fontSize: 12, color: '#6B7280' }}>附注
                           <input disabled={readOnly} value={n.note ?? ''} onChange={(e) => patchNode(n.id, { note: e.target.value })} placeholder="选填" style={{ ...inp, marginTop: 4 }} />
@@ -535,12 +534,10 @@ export default function FlowCanvasEditor({ graph, onChange, readOnly, statusEnum
                     <input disabled={readOnly} value={selectedEdge.label ?? ''} onChange={(e) => patchEdge(selectedEdge.id, { label: e.target.value })} placeholder="如：通过 / 拒绝 / 退回" style={{ ...inp, marginTop: 4 }} />
                   </label>
                   <label style={{ fontSize: 12, color: '#6B7280' }}>流转条件（if）—— 起点审批结果等于此值时走该线；无条件则作为兜底
-                    <select disabled={readOnly} value={selectedEdge.result ?? ''} onChange={(e) => patchEdge(selectedEdge.id, { result: e.target.value || undefined })} style={{ ...inp, marginTop: 4 }}>
-                      <option value="">无条件（兜底）</option>
-                      {REVIEW_RESULTS.map((r) => (
-                        <option key={r} value={r}>审批结果 = {r}</option>
-                      ))}
-                    </select>
+                    <div style={{ marginTop: 4 }}>
+                      <SingleSelect label="无条件（兜底）" clearable fullWidth disabled={readOnly} value={selectedEdge.result ?? ''} onChange={(v) => patchEdge(selectedEdge.id, { result: v || undefined })}
+                        options={[{ value: '', label: '无条件（兜底）' }, ...REVIEW_RESULTS.map((r) => ({ value: r, label: `审批结果 = ${r}` }))]} />
+                    </div>
                     <span style={{ display: 'block', fontSize: 11, color: '#9CA3AF', marginTop: 3 }}>例：复审节点出两条线 —— 「通过」条件线 → 下一审核节点；「拒绝」条件线 → 结束（拒绝）。运行时按审批结果选线。</span>
                   </label>
                   {!readOnly && (

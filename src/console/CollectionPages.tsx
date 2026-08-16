@@ -3,7 +3,7 @@
  * 数据：collectionData.json 样例橘 Sam（用户运行时创建/编辑落本地）；实时统计 灰 Cal。
  */
 import { useMemo, useState } from 'react';
-import { Panel, StatCard, DataTable, Button, Badge, StatusTag, DetailHeader } from '../components/ui';
+import { SingleSelect, Panel, StatCard, DataTable, Button, Badge, StatusTag, DetailHeader } from '../components/ui';
 import type { Column, Row } from '../components/ui';
 import { LineChart, BarChart, DonutChart } from '../components/charts';
 import { Sam, Cal } from './SourceTag';
@@ -154,18 +154,12 @@ export function CollectionCases() {
       <Panel title="案件队列" desc={<span>筛选后共 <b>{filtered.length}</b> 条 · <Cal label="实时过滤" /></span>}
         actions={
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-            <select style={inp} value={stage} onChange={(e) => setStage(e.target.value)}>
-              <option value="">全部阶段</option>
-              {STAGE_ORDER.map((s) => <option key={s} value={s}>{STAGE_META[s].label}</option>)}
-            </select>
-            <select style={inp} value={status} onChange={(e) => setStatus(e.target.value)}>
-              <option value="">全部状态</option>
-              {Object.keys(STATUS_KIND).map((s) => <option key={s} value={s}>{s}</option>)}
-            </select>
-            <select style={inp} value={owner} onChange={(e) => setOwner(e.target.value)}>
-              <option value="">全部催收员</option>
-              {owners.map((o) => <option key={o} value={o}>{o}</option>)}
-            </select>
+            <SingleSelect label="全部阶段" clearable value={stage} onChange={setStage}
+              options={[{ value: '', label: '全部阶段' }, ...STAGE_ORDER.map((s) => ({ value: s, label: STAGE_META[s].label }))]} />
+            <SingleSelect label="全部状态" clearable value={status} onChange={setStatus}
+              options={[{ value: '', label: '全部状态' }, ...Object.keys(STATUS_KIND).map((s) => ({ value: s, label: s }))]} />
+            <SingleSelect label="全部催收员" clearable value={owner} onChange={setOwner}
+              options={[{ value: '', label: '全部催收员' }, ...owners.map((o) => ({ value: o, label: o }))]} />
           </div>
         }>
         <DataTable columns={cols} rows={rows} empty="无匹配案件" clickableKey="id"

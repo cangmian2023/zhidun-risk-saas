@@ -92,8 +92,30 @@ export interface DePolicy {
 
 /** 决策表行条件 */
 export interface DePolicyCondition {
-  field: string;   // 字段
-  expr: string;    // 表达式，如 coupon_value >= 100
+  field: string;   // 字段（关联特征库 featureList.code）
+  expr: string;    // 标准化表达式，如 coupon_value >= 100（由 field/op/value 拼装）
+  /** 标准化条件字段：操作符（值比较运算符，来自特征库类型） */
+  op?: string;
+  /** 标准化条件字段：值（与特征库 dataType 对应） */
+  value?: string;
+  /** 字段名称快照（编辑展示用） */
+  fieldName?: string;
+}
+
+/** 条件操作符候选（按特征库 dataType 过滤可用集） */
+export const DE_CONDITION_OPS: Record<string, string[]> = {
+  NUMBER: ['>', '>=', '<', '<=', '=', '!='],
+  BOOLEAN: ['=', '!='],
+  STRING: ['=', '!=', '包含', '不包含'],
+  DATETIME: ['>=', '<', '='],
+}
+
+/** 生成标准化表达式 */
+export function buildConditionExpr(field: string, op: string, value: string): string {
+  const v = op === '包含' ? `'${value}'` : op === '不包含' ? `!${value}` : /^\d+(\.\d+)?$/.test(value) ? value : `'${value}'`
+  if (op === '包含') return `contains(${field}, '${value}')`
+  if (op === '不包含') return `!contains(${field}, '${value}')`
+  return `${field} ${op} ${v}`
 }
 
 /** 决策表行 */
@@ -530,7 +552,7 @@ export interface DeDecisionLog extends DeFlowable {
 }
 
 /** 审批 */
-export type DeApprovalStatus = '待审批' | '已通过' | '已驳回' | '已转交';
+export type DeApprovalStatus = '待审批' | '审批中' | '已通过' | '已驳回' | '已转交';
 
 export interface DeApproval {
   id: string;
@@ -640,20 +662,21 @@ export const SEED_DECISION: DecisionData = {
           reviewThreshold: 50,
           rows: [
             { name: '高面值+新号+无消费-高危', score: 70, conditions: [
-              { field: 'coupon_value', expr: 'coupon_value >= 100' },
-              { field: 'account_age_hours', expr: 'account_age_hours < 24' },
-              { field: 'history_order_count', expr: 'history_order_count == 0' },
+              { field: 'coupon_value', fieldName: '优惠券面值', op: '>=', value: '100', expr: 'coupon_value >= 100' },
+              { field: 'account_age_hours', fieldName: '账号注册小时数', op: '<', value: '24', expr: 'account_age_hours < 24' },
+              { field: 'history_order_count', fieldName: '历史订单数', op: '=', value: '0', expr: 'history_order_count = 0' },
             ] },
             { name: '高面值+低消费-中危', score: 45, conditions: [
-              { field: 'coupon_value', expr: 'coupon_value >= 100' },
-              { field: 'history_order_count', expr: 'history_order_count < 3' },
+              { field: 'coupon_value', fieldName: '优惠券面值', op: '>=', value: '100', expr: 'coupon_value >= 100' },
+              { field: 'history_order_count', fieldName: '历史订单数', op: '<', value: '3', expr: 'history_order_count < 3' },
             ] },
             { name: '中面值+新号-关注', score: 30, conditions: [
-              { field: 'coupon_value', expr: 'coupon_value >= 30 && coupon_value < 100' },
-              { field: 'account_age_hours', expr: 'account_age_hours < 24' },
+              { field: 'coupon_value', fieldName: '优惠券面值', op: '>=', value: '30', expr: 'coupon_value >= 30' },
+              { field: 'coupon_value', fieldName: '优惠券面值', op: '<', value: '100', expr: 'coupon_value < 100' },
+              { field: 'account_age_hours', fieldName: '账号注册小时数', op: '<', value: '24', expr: 'account_age_hours < 24' },
             ] },
             { name: '低面值-低危', score: 5, conditions: [
-              { field: 'coupon_value', expr: 'coupon_value < 30' },
+              { field: 'coupon_value', fieldName: '优惠券面值', op: '<', value: '30', expr: 'coupon_value < 30' },
             ] },
           ],
         },
@@ -689,58 +712,249 @@ export const SEED_DECISION: DecisionData = {
       flows: [
         {
           id: 'DF-1',
-          name: '1',
+          name: '电商薅羊毛主流程',
           code: 'ecommerce_hair_flow_1',
+          status: '已发布',
+          version: 2,
+          updatedAt: '2026-07-30T06:52:07',
+          graph: {
+            width: 1760,
+            height: 520,
+            nodes: [
+              { id: 'start', type: 'start', title: '开始', subtitle: 'start', x: 40, y: 200 },
+              { id: 'f1', type: 'feature', title: '特征加工', subtitle: 'feature_transform', badge: '特征', features: [
+                { code: 'phone_is_virtual', name: '是否虚拟号', category: '外部' },
+                { code: 'account_age_hours', name: '账号注册小时数', category: '原始' },
+                { code: 'coupon_value', name: '优惠券面值', category: '原始' },
+                { code: 'ip_user_count_1h', name: '同IP1小时账号数', category: '聚合' },
+              ], x: 300, y: 200 },
+              { id: 'l1', type: 'list', title: '名单匹配', subtitle: 'blacklist_match', badge: '名单', listRef: { listId: 'L-001', listName: '电商黑名单', matchField: 'phone', matchScore: 80 }, x: 560, y: 200 },
+              { id: 'p1', type: 'policy', title: '账号质量策略', subtitle: 'identity_quality', badge: '策略', policy: { policyId: 'P-105', policyName: '账号质量策略' }, x: 820, y: 200 },
+              { id: 'c1', type: 'condition', title: '风险等级判定', subtitle: 'risk_tier', badge: '条件', conditions: [
+                { id: 'cd-1', label: '命中', expr: 'score >= 60' },
+                { id: 'cd-2', label: '未命中', expr: 'score < 60' },
+              ], x: 1080, y: 200 },
+              { id: 'par1', type: 'parallel', title: '并行分发', subtitle: 'parallel', x: 1340, y: 60 },
+              { id: 'p2', type: 'policy', title: '设备评分卡', subtitle: 'device_score', badge: '策略', policy: { policyId: 'P-104', policyName: '设备风险评分卡' }, x: 1340, y: 260 },
+              { id: 'sub1', type: 'subflow', title: '地址聚集子流程', subtitle: 'address_check', badge: '子流程', subflowId: 'SF-1', subflowName: '地址聚集子流程', x: 1340, y: 420 },
+              { id: 'mg1', type: 'merge', title: '合并汇流', subtitle: 'merge', x: 1620, y: 200 },
+              { id: 'end', type: 'end', title: '结束', subtitle: 'end', x: 1620, y: 400 },
+            ],
+            edges: [
+              { from: 'start', to: 'f1' },
+              { from: 'f1', to: 'l1' },
+              { from: 'l1', to: 'p1', label: '未命中', expr: 'blacklist_hit == false' },
+              { from: 'l1', to: 'end', label: '命中', expr: 'blacklist_hit == true' },
+              { from: 'p1', to: 'c1' },
+              { from: 'c1', to: 'par1', label: '命中', expr: 'score >= 60', conditionId: 'cd-1' },
+              { from: 'c1', to: 'end', label: '未命中', expr: 'score < 60', conditionId: 'cd-2' },
+              { from: 'par1', to: 'p2', dashed: true },
+              { from: 'par1', to: 'sub1', dashed: true },
+              { from: 'p2', to: 'mg1' },
+              { from: 'sub1', to: 'mg1' },
+              { from: 'mg1', to: 'end' },
+            ],
+            subflows: [
+              {
+                width: 800, height: 260,
+                nodes: [
+                  { id: 'sf-start', type: 'start', title: '地址子流程开始', x: 40, y: 100 },
+                  { id: 'sf-f', type: 'feature', title: '地址聚集特征', features: [{ code: 'address_user_count_7d', name: '同地址7日账号数', category: '聚合' }, { code: 'address_is_empty_box', name: '是否空包号地址', category: '外部' }], x: 260, y: 100 },
+                  { id: 'sf-c', type: 'condition', title: '聚集判定', conditions: [{ id: 'sfc-1', label: '聚集', expr: 'address_user_count_7d >= 5' }, { id: 'sfc-2', label: '正常', expr: 'address_user_count_7d < 5' }], x: 480, y: 100 },
+                  { id: 'sf-end', type: 'end', title: '返回主流程', x: 260, y: 220 },
+                ],
+                edges: [
+                  { from: 'sf-start', to: 'sf-f' },
+                  { from: 'sf-f', to: 'sf-c' },
+                  { from: 'sf-c', to: 'sf-end', label: '聚集', expr: 'address_user_count_7d >= 5', conditionId: 'sfc-1' },
+                  { from: 'sf-c', to: 'sf-end', label: '正常', expr: 'address_user_count_7d < 5', conditionId: 'sfc-2' },
+                ],
+              },
+            ],
+          },
+        },
+        {
+          id: 'DF-3',
+          name: '活动分级支流程',
+          code: 'activity_tier_flow',
           status: '草稿',
           version: 1,
           updatedAt: '2026-07-30T06:52:07',
           graph: {
-            width: 1440,
-            height: 560,
+            width: 720,
+            height: 260,
             nodes: [
-              { id: 'start', type: 'source', title: '开始', subtitle: 'start', x: 40, y: 20 },
-              { id: 'w1', type: 'list', title: 'watchlist', subtitle: '名单匹配', meta: ['手机号/IP/地址命中黑名单 → 拒绝'], x: 40, y: 180 },
-              { id: 'p1', type: 'ruleset', title: '策略节点', subtitle: 'activity_tier', meta: ['活动风险分级：高/中/低'], x: 220, y: 20 },
-              { id: 'end', type: 'output', title: '结束', subtitle: 'end', x: 220, y: 180 },
+              { id: 'astart', type: 'start', title: '开始', x: 40, y: 100 },
+              { id: 'ap1', type: 'policy', title: '活动分级策略', policy: { policyId: 'P-101', policyName: '活动风险分级表' }, x: 260, y: 100 },
+              { id: 'aend', type: 'end', title: '结束', x: 480, y: 100 },
             ],
             edges: [
-              { from: 'start', to: 'w1' },
-              { from: 'start', to: 'p1' },
-              { from: 'p1', to: 'end' },
-              { from: 'w1', to: 'end' },
+              { from: 'astart', to: 'ap1' },
+              { from: 'ap1', to: 'aend' },
             ],
           },
         },
       ],
-      flow: {
-        width: 1440,
-        height: 560,
-        nodes: [
-          { id: 's1', type: 'source', title: '进件 / 订单原始字段', subtitle: '标准化输入', meta: ['用户ID / 手机号 / 设备ID', '收货地址 / 订单信息 / 活动ID'], x: 20, y: 60 },
-          { id: 'f1', type: 'feature', title: '特征工程 · 画像加工', subtitle: 'feature_transform', badge: '衍生', meta: ['user_age 注册时长', 'address_cnt 近30天收货地址数', 'order_cnt 近30天订单数', 'device_score 设备风险评分'], x: 264, y: 60 },
-          { id: 'l1', type: 'list', title: '名单匹配策略', subtitle: 'blacklist_match', badge: '名单', meta: ['命中黑名单 → 强制拒绝', '命中灰名单 → 转人工复核', '代理IP / 设备黑名单命中'], x: 508, y: 60 },
-          { id: 'sc1', type: 'scorecard', title: '设备风险评分卡', subtitle: 'device_score', badge: '评分卡', meta: ['设备模拟器特征命中', '同设备关联账号数', '输出 0-100 设备风险分'], x: 752, y: 60 },
-          { id: 'r1', type: 'ruleset', title: '账号质量 / 活动分级', subtitle: 'identity_quality · activity_tier', badge: '规则集', meta: ['Rule-001: 注册时长<30天 → +10', 'Rule-002: 地址聚集≥3 → +15', 'Rule-003: 当日订单数异常 → +12', 'Rule-004: 活动风险等级高 → 直接拒绝'], x: 996, y: 60 },
-          { id: 'c1', type: 'collision', title: '规则碰撞 · 冲突裁决', subtitle: '逐条规则 · 满足即触发', badge: '冲突', meta: ['黑名单命中 → 强制拒绝（覆盖分数）', '设备高风险 ∩ 地址聚集 → 拒绝', '结果冲突 → 转人工复核'], x: 1240, y: 60, collisionRules: [
-              { id: 'cr-1', field: 'blacklist', op: '命中', value: '外部黑灰名单', result: '强制拒绝', priority: '拦截优先', enabled: true, note: '黑名单命中优先拦截，覆盖其他结果' },
-              { id: 'cr-2', field: 'device_sim', op: '命中', value: '设备模拟器特征', result: '升级高风险预警', priority: '拦截优先', enabled: true, note: '设备高风险，升级预警' },
-              { id: 'cr-3', field: 'score_credit', op: '<', value: '400', result: '降为审慎授信', priority: '分数优先', enabled: true, note: '信用分过低，降级授信' },
-              { id: 'cr-4', field: 'address_cnt', op: '>=', value: '3', result: '转人工复核', priority: '转人工', enabled: false, note: '地址聚集，转人工复核' },
-            ] },
-          { id: 'd1', type: 'decision', title: '阈值决策', subtitle: '三段分级', badge: '决策', meta: ['0-59 通过', '60-79 人工复核', '80-100 拒绝'], x: 20, y: 360 },
-          { id: 'o1', type: 'output', title: '决策输出', subtitle: 'pipeline_result', badge: '输出', meta: ['通过 / 拒绝 / 人工复核', '命中依据 source', '决策耗时 cost_ms'], x: 264, y: 360 },
-        ],
-        edges: [
-          { from: 's1', to: 'f1' },
-          { from: 'f1', to: 'l1' },
-          { from: 'l1', to: 'sc1' },
-          { from: 'sc1', to: 'r1' },
-          { from: 'r1', to: 'c1' },
-          { from: 'c1', to: 'd1', dashed: true },
-          { from: 'd1', to: 'o1' },
-          { from: 'c1', to: 'o1' },
-        ],
-      },
+    },
+    {
+      id: 'M-003',
+      name: '交易反欺诈风控',
+      code: 'trade_fraud',
+      desc: '适用于互金/支付交易反欺诈，覆盖金额异常、名单匹配、交易分级、行为异常、设备环境评分等多维度策略',
+      status: '已上线',
+      type: '规则引擎',
+      version: 'v1.5.0',
+      creator: '风控运营',
+      updatedAt: NOW + ' 07:45',
+      createdAt: '2026-07-20',
+      policies: [
+        { id: 'P-301', name: '交易金额分级表', code: 'amount_tier', type: '决策表', updatedAt: '2026-07-20' },
+        { id: 'P-302', name: '行为异常策略', code: 'behavior_anomaly', type: '规则集', updatedAt: '2026-07-20' },
+        { id: 'P-303', name: '设备环境评分卡', code: 'device_env', type: '评分卡', updatedAt: '2026-07-20' },
+      ],
+      features: ['trade_amount', 'device_score', 'ip_risk', 'm3_overdue', 'debt_income_ratio'],
+      versions: [
+        { version: 'v1.5.0', date: NOW + ' 07:45', note: '接入行为异常规则集，拦截率提升 4pp', current: true },
+      ],
+      headerNo: 8,
+      approvalStatus: '已通过',
+      featureList: [
+        { code: 'trade_amount', name: '交易金额', category: '原始', dataType: 'NUMBER', isInput: true, desc: '本次交易金额(元)' },
+        { code: 'device_score', name: '设备风险评分', category: '外部', dataType: 'NUMBER', isInput: false, desc: '设备环境风险 0-100' },
+        { code: 'ip_risk', name: 'IP风险画像', category: '外部', dataType: 'NUMBER', isInput: false, desc: 'IP风险等级 0-5' },
+        { code: 'm3_overdue', name: '历史M3+逾期次数', category: '外部', dataType: 'NUMBER', isInput: false, desc: '历史M3+逾期次数' },
+        { code: 'debt_income_ratio', name: '负债收入比', category: '聚合', dataType: 'NUMBER', isInput: false, desc: '月负债/月收入比' },
+        { code: 'phone', name: '手机号', category: '原始', dataType: 'STRING', isInput: true, desc: '交易账号手机号，用于名单匹配' },
+        { code: 'id_card', name: '身份证号', category: '原始', dataType: 'STRING', isInput: true, desc: '实名认证身份证，用于名单匹配' },
+      ],
+      flows: [
+        {
+          id: 'DF-4',
+          name: '交易风控主流程',
+          code: 'trade_fraud_flow_1',
+          status: '已发布',
+          version: 2,
+          updatedAt: NOW + ' 07:45',
+          graph: {
+            width: 1600,
+            height: 440,
+            nodes: [
+              { id: 'tstart', type: 'start', title: '开始', x: 40, y: 180 },
+              { id: 'tf1', type: 'feature', title: '交易特征加工', features: [
+                { code: 'trade_amount', name: '交易金额', category: '原始' },
+                { code: 'device_score', name: '设备风险评分', category: '外部' },
+                { code: 'ip_risk', name: 'IP风险画像', category: '外部' },
+              ], x: 300, y: 180 },
+              { id: 'tl1', type: 'list', title: '交易名单匹配', listRef: { listId: 'L-003', listName: '交易黑名单', matchField: 'phone', matchScore: 100 }, x: 560, y: 180 },
+              { id: 'tp1', type: 'policy', title: '金额分级策略', policy: { policyId: 'P-301', policyName: '交易金额分级表' }, x: 820, y: 180 },
+              { id: 'tc1', type: 'condition', title: '金额风险判定', conditions: [{ id: 'tcd-1', label: '大额', expr: 'trade_amount >= 50000' }, { id: 'tcd-2', label: '常规', expr: 'trade_amount < 50000' }], x: 1080, y: 180 },
+              { id: 'tpar', type: 'parallel', title: '并行复核', x: 1340, y: 40 },
+              { id: 'tp2', type: 'policy', title: '行为异常策略', policy: { policyId: 'P-302', policyName: '行为异常策略' }, x: 1340, y: 240 },
+              { id: 'tsub', type: 'subflow', title: '设备环境子流程', subflowId: 'SF-2', subflowName: '设备环境子流程', x: 1340, y: 400 },
+              { id: 'tmg', type: 'merge', title: '合并汇流', x: 1620, y: 200 },
+              { id: 'tend', type: 'end', title: '结束', x: 1620, y: 380 },
+            ],
+            edges: [
+              { from: 'tstart', to: 'tf1' },
+              { from: 'tf1', to: 'tl1' },
+              { from: 'tl1', to: 'tp1', label: '未命中', expr: 'blacklist_hit == false' },
+              { from: 'tl1', to: 'tend', label: '命中', expr: 'blacklist_hit == true' },
+              { from: 'tp1', to: 'tc1' },
+              { from: 'tc1', to: 'tpar', label: '大额', expr: 'trade_amount >= 50000', conditionId: 'tcd-1' },
+              { from: 'tc1', to: 'tend', label: '常规', expr: 'trade_amount < 50000', conditionId: 'tcd-2' },
+              { from: 'tpar', to: 'tp2', dashed: true },
+              { from: 'tpar', to: 'tsub', dashed: true },
+              { from: 'tp2', to: 'tmg' },
+              { from: 'tsub', to: 'tmg' },
+              { from: 'tmg', to: 'tend' },
+            ],
+            subflows: [
+              {
+                width: 780, height: 240,
+                nodes: [
+                  { id: 'tsf-s', type: 'start', title: '设备环境开始', x: 40, y: 100 },
+                  { id: 'tsf-p', type: 'policy', title: '设备环境评分', policy: { policyId: 'P-303', policyName: '设备环境评分卡' }, x: 260, y: 100 },
+                  { id: 'tsf-c', type: 'condition', title: '设备风险判定', conditions: [{ id: 'tsfc-1', label: '高风险', expr: 'device_score >= 70' }, { id: 'tsfc-2', label: '正常', expr: 'device_score < 70' }], x: 480, y: 100 },
+                  { id: 'tsf-e', type: 'end', title: '返回主流程', x: 260, y: 220 },
+                ],
+                edges: [
+                  { from: 'tsf-s', to: 'tsf-p' },
+                  { from: 'tsf-p', to: 'tsf-c' },
+                  { from: 'tsf-c', to: 'tsf-e', label: '高风险', expr: 'device_score >= 70', conditionId: 'tsfc-1' },
+                  { from: 'tsf-c', to: 'tsf-e', label: '正常', expr: 'device_score < 70', conditionId: 'tsfc-2' },
+                ],
+              },
+            ],
+          },
+        },
+      ],
+    },
+    {
+      id: 'M-004',
+      name: '账号登录风控',
+      code: 'account_login',
+      desc: '通用账号登录风控，覆盖暴力破解、名单匹配、登录决策树、环境评分等多维度策略',
+      status: '测试中',
+      type: '决策树',
+      version: 'v1.0.0',
+      creator: '算法组',
+      updatedAt: NOW + ' 06:50',
+      createdAt: '2026-07-30',
+      policies: [
+        { id: 'P-401', name: '登录环境评分卡', code: 'login_env', type: '评分卡', updatedAt: '2026-07-30' },
+        { id: 'P-402', name: '暴力破解策略', code: 'brute_force', type: '规则引擎', updatedAt: '2026-07-30' },
+      ],
+      features: ['login_cnt_1h', 'device_score', 'ip_risk', 'captcha_pass'],
+      versions: [
+        { version: 'v1.0.0', date: NOW + ' 06:50', note: '初版登录风控，待灰度', current: true },
+      ],
+      headerNo: 2,
+      approvalStatus: '草稿',
+      featureList: [
+        { code: 'login_cnt_1h', name: '1小时内登录失败次数', category: '聚合', dataType: 'NUMBER', isInput: false, desc: '同账号1小时内登录失败次数' },
+        { code: 'device_score', name: '设备风险评分', category: '外部', dataType: 'NUMBER', isInput: false, desc: '设备环境风险 0-100' },
+        { code: 'ip_risk', name: 'IP风险画像', category: '外部', dataType: 'NUMBER', isInput: false, desc: 'IP风险等级 0-5' },
+        { code: 'captcha_pass', name: '验证码是否通过', category: '原始', dataType: 'BOOLEAN', isInput: true, desc: '图形/短信验证码是否通过' },
+        { code: 'account', name: '登录账号', category: '原始', dataType: 'STRING', isInput: true, desc: '登录账号，用于名单匹配' },
+      ],
+      flows: [
+        {
+          id: 'DF-5',
+          name: '登录风控主流程',
+          code: 'account_login_flow_1',
+          status: '测试中',
+          version: 1,
+          updatedAt: NOW + ' 06:50',
+          graph: {
+            width: 1240,
+            height: 360,
+            nodes: [
+              { id: 'gstart', type: 'start', title: '开始', x: 40, y: 140 },
+              { id: 'gf1', type: 'feature', title: '登录特征加工', features: [
+                { code: 'login_cnt_1h', name: '1小时内登录失败次数', category: '聚合' },
+                { code: 'device_score', name: '设备风险评分', category: '外部' },
+                { code: 'ip_risk', name: 'IP风险画像', category: '外部' },
+                { code: 'captcha_pass', name: '验证码是否通过', category: '原始' },
+              ], x: 300, y: 140 },
+              { id: 'gl1', type: 'list', title: '账号名单匹配', listRef: { listId: 'L-004', listName: '账号黑名单', matchField: 'account', matchScore: 85 }, x: 560, y: 140 },
+              { id: 'gc1', type: 'condition', title: '暴力破解判定', conditions: [{ id: 'gcd-1', label: '疑似爆破', expr: 'login_cnt_1h >= 5' }, { id: 'gcd-2', label: '正常', expr: 'login_cnt_1h < 5' }], x: 820, y: 140 },
+              { id: 'gp1', type: 'policy', title: '登录环境评分', policy: { policyId: 'P-401', policyName: '登录环境评分卡' }, x: 820, y: 300 },
+              { id: 'gmg', type: 'merge', title: '合并', x: 1080, y: 140 },
+              { id: 'gend', type: 'end', title: '结束', x: 1080, y: 300 },
+            ],
+            edges: [
+              { from: 'gstart', to: 'gf1' },
+              { from: 'gf1', to: 'gl1' },
+              { from: 'gl1', to: 'gc1', label: '未命中', expr: 'blacklist_hit == false' },
+              { from: 'gl1', to: 'gend', label: '命中', expr: 'blacklist_hit == true' },
+              { from: 'gc1', to: 'gp1', label: '疑似爆破', expr: 'login_cnt_1h >= 5', conditionId: 'gcd-1' },
+              { from: 'gc1', to: 'gmg', label: '正常', expr: 'login_cnt_1h < 5', conditionId: 'gcd-2' },
+              { from: 'gp1', to: 'gmg' },
+              { from: 'gmg', to: 'gend' },
+            ],
+          },
+        },
+      ],
     },
     {
       id: 'M-002',
@@ -773,50 +987,40 @@ export const SEED_DECISION: DecisionData = {
       flows: [
         {
           id: 'DF-2',
-          name: '注册风控流',
+          name: '注册风控主流程',
           code: 'register_test_flow_1',
           status: '草稿',
           version: 1,
           updatedAt: NOW + ' 08:30',
           graph: {
-            width: 1200,
-            height: 360,
+            width: 1480,
+            height: 440,
             nodes: [
-              { id: 'start', type: 'source', title: '开始', subtitle: 'start', x: 40, y: 40 },
-              { id: 'l1', type: 'list', title: '名单匹配', subtitle: 'blacklist_match', meta: ['手机号/IP命中 → 拒绝'], x: 40, y: 180 },
-              { id: 'm1', type: 'scorecard', title: '反注册模型', subtitle: 'register_test', meta: ['XGBoost · 输出风险分'], x: 240, y: 40 },
-              { id: 'd1', type: 'decision', title: '阈值决策', subtitle: '三段分级', meta: ['0-59 通过 / 80+ 拒绝'], x: 440, y: 40 },
-              { id: 'end', type: 'output', title: '结束', subtitle: 'end', x: 440, y: 180 },
+              { id: 'rstart', type: 'start', title: '开始', subtitle: 'start', x: 40, y: 180 },
+              { id: 'rf1', type: 'feature', title: '注册特征加工', features: [
+                { code: 'reg_cnt', name: '当日注册数', category: '聚合' },
+                { code: 'device_score', name: '设备风险评分', category: '外部' },
+                { code: 'ip_risk', name: 'IP风险画像', category: '外部' },
+                { code: 'email_domain', name: '邮箱域名风险', category: '原始' },
+              ], x: 300, y: 180 },
+              { id: 'rl1', type: 'list', title: '名单匹配', listRef: { listId: 'L-002', listName: '注册黑名单', matchField: 'phone', matchScore: 90 }, x: 560, y: 180 },
+              { id: 'rp1', type: 'policy', title: '注册分级策略', policy: { policyId: 'P-201', policyName: '注册分级策略' }, x: 820, y: 180 },
+              { id: 'rc1', type: 'condition', title: '注册风险分级', conditions: [{ id: 'rcd-1', label: '高危', expr: 'risk_score >= 80' }, { id: 'rcd-2', label: '中危', expr: 'risk_score >= 60' }, { id: 'rcd-3', label: '低危', expr: 'risk_score < 60' }], x: 1080, y: 180 },
+              { id: 'rend', type: 'end', title: '结束', subtitle: 'end', x: 1320, y: 180 },
             ],
             edges: [
-              { from: 'start', to: 'l1' },
-              { from: 'start', to: 'm1' },
-              { from: 'm1', to: 'd1' },
-              { from: 'd1', to: 'end' },
-              { from: 'l1', to: 'end' },
+              { from: 'rstart', to: 'rf1' },
+              { from: 'rf1', to: 'rl1' },
+              { from: 'rl1', to: 'rp1', label: '未命中', expr: 'blacklist_hit == false' },
+              { from: 'rl1', to: 'rend', label: '命中', expr: 'blacklist_hit == true' },
+              { from: 'rp1', to: 'rc1' },
+              { from: 'rc1', to: 'rend', label: '高危', expr: 'risk_score >= 80', conditionId: 'rcd-1' },
+              { from: 'rc1', to: 'rend', label: '中危', expr: 'risk_score >= 60', conditionId: 'rcd-2' },
+              { from: 'rc1', to: 'rend', label: '低危', expr: 'risk_score < 60', conditionId: 'rcd-3' },
             ],
           },
         },
       ],
-      flow: {
-        width: 1440,
-        height: 440,
-        nodes: [
-          { id: 's1', type: 'source', title: '注册请求原始字段', subtitle: '标准化输入', meta: ['手机号 / 设备ID / IP', '邮箱 / 注册渠道'], x: 20, y: 40 },
-          { id: 'f1', type: 'feature', title: '特征加工', subtitle: 'feature_transform', badge: '衍生', meta: ['reg_cnt 当日注册数', 'device_score 设备风险', 'ip_risk IP风险画像', 'email_domain 邮箱域名风险'], x: 264, y: 40 },
-          { id: 'l1', type: 'list', title: '名单匹配', subtitle: 'blacklist_match', badge: '名单', meta: ['手机号黑名单命中 → 拒绝'], x: 508, y: 40 },
-          { id: 'm1', type: 'scorecard', title: 'XGBoost 反注册模型', subtitle: 'register_test', badge: 'XGBoost', meta: ['输入 4 维特征', '输出 0-100 风险分'], x: 752, y: 40 },
-          { id: 'd1', type: 'decision', title: '阈值决策', subtitle: '三段分级', badge: '决策', meta: ['0-59 通过', '60-79 人工复核', '80-100 拒绝'], x: 996, y: 40 },
-          { id: 'o1', type: 'output', title: '决策输出', subtitle: 'pipeline_result', badge: '输出', meta: ['通过 / 拒绝 / 人工复核'], x: 1240, y: 40 },
-        ],
-        edges: [
-          { from: 's1', to: 'f1' },
-          { from: 'f1', to: 'l1' },
-          { from: 'l1', to: 'm1' },
-          { from: 'm1', to: 'd1' },
-          { from: 'd1', to: 'o1' },
-        ],
-      },
     },
   ],
 
@@ -1088,10 +1292,10 @@ export const SEED_DECISION: DecisionData = {
 
   /* ---------- 审批 ---------- */
   approvals: [
-    { id: 'AP-1', target: '电商薅羊毛风控', targetType: '模型', action: '发布', status: '待审批', applicant: '风控运营', approver: undefined, applyTime: NOW + ' 12:12:50', flowId: 'de_model_publish', flowState: 'pending', flowStateAt: NOW + ' 12:12:50' },
-    { id: 'AP-2', target: '手机号黑名单', targetType: '名单', action: '上线', status: '待审批', applicant: '名单管理员', approver: undefined, applyTime: NOW + ' 11:40:00', flowId: 'de_list_online', flowState: 'pending', flowStateAt: NOW + ' 11:40:00' },
-    { id: 'AP-3', target: '活动风险分级表', targetType: '策略', action: '修改', status: '已通过', applicant: '风控运营', approver: '系统管理员', applyTime: '2026-08-13', flowId: 'de_policy_modify', flowState: 'approved', flowStateAt: '2026-08-13' },
-    { id: 'AP-4', target: '注册测试风控', targetType: '模型', action: '上线', status: '已驳回', applicant: '算法组', approver: '系统管理员', applyTime: '2026-08-12', flowId: 'de_model_online', flowState: 'rejected', flowStateAt: '2026-08-12' },
+    { id: 'AP-1', target: '电商薅羊毛风控', targetType: '模型', action: '发布', status: '待审批', applicant: '风控运营', approver: undefined, applyTime: NOW + ' 12:12:50', flowId: 'f-de-approve', flowState: '待审批', flowStateAt: NOW + ' 12:12:50' },
+    { id: 'AP-2', target: '手机号黑名单', targetType: '名单', action: '上线', status: '待审批', applicant: '名单管理员', approver: undefined, applyTime: NOW + ' 11:40:00', flowId: 'f-de-approve', flowState: '待审批', flowStateAt: NOW + ' 11:40:00' },
+    { id: 'AP-3', target: '活动风险分级表', targetType: '策略', action: '修改', status: '已通过', applicant: '风控运营', approver: '系统管理员', applyTime: '2026-08-13', flowId: 'f-de-approve', flowState: '已通过', flowStateAt: '2026-08-13' },
+    { id: 'AP-4', target: '注册测试风控', targetType: '模型', action: '上线', status: '已驳回', applicant: '算法组', approver: '系统管理员', applyTime: '2026-08-12', flowId: 'f-de-approve', flowState: '已驳回', flowStateAt: '2026-08-12' },
   ],
 };
 

@@ -2699,5 +2699,40 @@ export const SEED_DASHBOARDS: MidDashboardPage[] = [
         }
       }
     ]
-  }
+  },
+  {
+    key: 'sc:crowd-insight', name: '客户洞察', group: '客户洞察', order: 1, enabled: true,
+    desc: '评分客户全景洞察：风险 / 价值 / 客群 / 机会与趋势，辅助决定先盯哪类客群',
+    filters: [
+      { id: 'f_risk', label: '风险等级', kind: 'select', field: 'risk_level' },
+      { id: 'f_tier', label: '价值分层', kind: 'select', field: 'value_tier' },
+      { id: 'f_grp', label: '所属客群', kind: 'select', field: 'grp' },
+    ],
+    widgets: [
+      { id: 'w1', type: 'metric', title: '客户总数', datasetId: 'ds_score_customer', metricId: 'm_sc_cust_cnt', windowSize: 'sm' },
+      { id: 'w2', type: 'metric', title: '高价值客户数', datasetId: 'ds_score_customer', metricId: 'm_sc_high_value', windowSize: 'sm' },
+      { id: 'w3', type: 'metric', title: '高风险客户数', datasetId: 'ds_score_customer', metricId: 'm_sc_high_risk', windowSize: 'sm' },
+      { id: 'w4', type: 'metric', title: '客群分组数', datasetId: 'ds_score_customer', metricId: 'm_sc_group_cnt', windowSize: 'sm' },
+      { id: 'w5', type: 'donut', title: '风险等级分布', datasetId: 'ds_score_customer', metricId: 'm_sc_cust_cnt', dimensions: ['risk_level'], windowSize: 'md' },
+      { id: 'w6', type: 'bar', title: '各客群客户数', datasetId: 'ds_score_customer', metricId: 'm_sc_cust_cnt', dimensions: ['grp'], windowSize: 'md' },
+      { id: 'w7', type: 'bar', title: '价值分层 × 风险等级', datasetId: 'ds_score_customer', metricId: 'm_sc_cust_cnt', dimensions: ['value_tier'], windowSize: 'md' },
+      { id: 'w8', type: 'table', title: '客户明细（点击行「详情」看完整属性）', datasetId: 'ds_score_customer', metricId: 'm_sc_cust_cnt', dimensions: ['cust_id', 'cust_name', 'zhicha_score', 'zhixin_score', 'zhirong_score', 'risk_level', 'value_tier', 'hit_tags', 'grp', 'apply_30d', 'overdue_amt', 'last_alert', 'trend_30d'], windowSize: 'lg' },
+    ],
+    flowKey: 'f-cust-operate', flowState: '已上线',
+  },
+  {
+    key: 'sc:hit-analysis', name: '命中分析', group: '数据分析', order: 2, enabled: true,
+    desc: '三模型规则命中与名单命中分析：命中量 / 来源构成 / 高危规则',
+    widgets: [
+      { id: 'w1', type: 'metric', title: '总命中次数', datasetId: 'ds_score_hit', metricId: 'm_hit_total', windowSize: 'sm' },
+      { id: 'w2', type: 'metric', title: '涉及模型数', datasetId: 'ds_score_hit', metricId: 'm_hit_model', windowSize: 'sm' },
+      { id: 'w3', type: 'metric', title: '命中规则数', datasetId: 'ds_score_hit', metricId: 'm_hit_rule', windowSize: 'sm' },
+      { id: 'w4', type: 'metric', title: '名单命中次数', datasetId: 'ds_score_hit', metricId: 'm_hit_list', windowSize: 'sm' },
+      { id: 'w5', type: 'bar', title: '各模型命中数', datasetId: 'ds_score_hit', metricId: 'm_hit_total', dimensions: ['model_name'], windowSize: 'md' },
+      { id: 'w6', type: 'donut', title: '命中来源构成（规则 / 名单）', datasetId: 'ds_score_hit', metricId: 'm_hit_total', dimensions: ['type'], windowSize: 'md' },
+      { id: 'w7', type: 'table', title: '规则命中明细', datasetId: 'ds_score_hit', metricId: 'm_hit_total', dimensions: ['rule', 'model_name', 'hits', 'rate', 'type'], windowSize: 'lg' },
+    ],
+    flowKey: 'f-score-dispose', flowState: '已上线',
+  },
+
 ];

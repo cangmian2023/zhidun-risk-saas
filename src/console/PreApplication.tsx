@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState, useEffect, Fragment } from 'react'
-import { PageHeader, DetailHeader, Panel, Badge, DecisionTag, StatusTag, Drawer, Modal, Button, StatCard, SingleSelect, ProgressBar, type SelectOption, type BadgeVal } from '../components/ui'
+import { PageHeader, DetailHeader, Panel, Badge, DecisionTag, StatusTag, Drawer, Modal, Button, StatCard, SingleSelect, ProgressBar, SearchSelect, type SelectOption, type BadgeVal } from '../components/ui'
 import { ScoreBar } from '../components/scoreBar'
 import {
   getPreApps,
@@ -520,49 +520,10 @@ function MultiSelect({
   selected: Set<string>
   onChange: (s: Set<string>) => void
 }) {
-  const [open, setOpen] = useState(false)
-  const ref = useRef<HTMLDivElement>(null)
-  useEffect(() => {
-    function h(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
-    }
-    document.addEventListener('mousedown', h)
-    return () => document.removeEventListener('mousedown', h)
-  }, [])
-  function toggle(o: string) {
-    const s = new Set(selected)
-    s.has(o) ? s.delete(o) : s.add(o)
-    onChange(s)
-  }
+  const sopts = options.map((o) => ({ value: o, label: o }))
   return (
-    <div className="relative" ref={ref}>
-      <button
-        type="button"
-        onClick={() => setOpen((o) => !o)}
-        className={`flex items-center gap-1 rounded-lg border px-3 py-2 text-sm transition ${
-          selected.size ? 'border-brand-200 bg-brand-50 text-brand-700' : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
-        }`}
-      >
-        {label}
-        {selected.size > 0 && <span className="rounded-full bg-brand-600 px-1.5 text-xs text-white">{selected.size}</span>}
-        <span className="text-slate-400">▾</span>
-      </button>
-      {open && (
-        <div className="absolute z-50 mt-1 max-h-64 w-48 overflow-auto rounded-xl border border-slate-200 bg-white p-2 shadow-xl">
-          {options.map((o) => (
-            <label key={o} className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 text-sm hover:bg-slate-50">
-              <input type="checkbox" className="accent-brand-600" checked={selected.has(o)} onChange={() => toggle(o)} />
-              <span className="text-slate-600">{o}</span>
-            </label>
-          ))}
-          {selected.size > 0 && (
-            <button onClick={() => onChange(new Set())} className="mt-1 w-full rounded-lg bg-slate-50 px-2 py-1 text-xs text-slate-500 hover:bg-slate-100">
-              清空
-            </button>
-          )}
-        </div>
-      )}
-    </div>
+    <SearchSelect multiple options={sopts} value={Array.from(selected)} onChange={(v) => onChange(new Set(v as string[]))}
+      placeholder={label} searchPlaceholder="搜索…" />
   )
 }
 
@@ -1727,18 +1688,8 @@ function ReviewRecordModal({
           </div>
           <div>
             <p className="mb-2 text-xs text-slate-400">动作类型</p>
-            <select
-              value={action}
-              onChange={(e) => setAction(e.target.value)}
-              className="h-9 w-full rounded-lg border border-slate-200 px-3 text-sm outline-none focus:border-brand-300"
-            >
-              <option>补充材料请求</option>
-              <option>材料提交</option>
-              <option>电话核实</option>
-              <option>提交结论</option>
-              <option>转主管</option>
-              <option>备注</option>
-            </select>
+            <SingleSelect label="选择动作" fullWidth value={action} onChange={setAction}
+              options={[{ value: '补充材料请求', label: '补充材料请求' }, { value: '材料提交', label: '材料提交' }, { value: '电话核实', label: '电话核实' }, { value: '提交结论', label: '提交结论' }, { value: '转主管', label: '转主管' }, { value: '备注', label: '备注' }]} />
           </div>
         </div>
         <div>

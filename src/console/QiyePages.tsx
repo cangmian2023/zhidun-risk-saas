@@ -12,6 +12,7 @@ import { Sam, Cal } from './SourceTag';
 import { PageShell } from './PageShell';
 import { useQiyeData, toggleFollow, type QiyeProfile, type QiyeCountItem } from './qiyeData';
 import { useEnterpriseData } from './enterpriseData';
+import { usePageNav } from './pageNav';
 
 const CRUMB = '企业风控 / 企业档案';
 
@@ -41,7 +42,18 @@ export function QiyeSearch() {
     );
   }, [kw, d.enterprises]);
 
-  const open = (e: QiyeProfile) => { qiyeSelectedKeyNo = e.keyNo; nav('/console/ep/qiye-profile'); };
+  const open = (e: QiyeProfile) => { qiyeSelectedKeyNo = e.keyNo; recordRecent(e.name, e.keyNo); nav('/console/ep/qiye-profile'); };
+
+  // 近期查询历史（localStorage 本地缓存，最多 8 条，快捷直达画像）
+  const RECENT_KEY = 'ep-recent-qiye';
+  const [recent, setRecent] = useState<{ name: string; keyNo: string }[]>(() => {
+    try { return JSON.parse(localStorage.getItem(RECENT_KEY) ?? '[]'); } catch { return []; }
+  });
+  const recordRecent = (name: string, keyNo: string) => {
+    const next = [{ name, keyNo }, ...recent.filter((r) => r.keyNo !== keyNo)].slice(0, 8);
+    setRecent(next);
+    try { localStorage.setItem(RECENT_KEY, JSON.stringify(next)); } catch { /* ignore */ }
+  };
 
   return (
     <div style={{ padding: 24, maxWidth: 1360 }}>
@@ -58,6 +70,18 @@ export function QiyeSearch() {
           />
           <span style={{ fontSize: 12, color: '#94A3B8' }}>命中 {list.length} 家</span>
         </div>
+        {recent.length > 0 && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', marginTop: 10 }}>
+            <span style={{ fontSize: 12, color: '#94A3B8' }}>近期查询：</span>
+            {recent.map((r) => (
+              <button key={r.keyNo} type="button"
+                onClick={() => { const e = d.enterprises.find((x) => x.keyNo === r.keyNo); if (e) open(e); }}
+                style={{ fontSize: 12, padding: '3px 10px', borderRadius: 999, border: '1px solid #E2E8F0', background: '#F8FAFC', color: '#334155', cursor: 'pointer' }}>
+                {r.name}
+              </button>
+            ))}
+          </div>
+        )}
       </Panel>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(420px, 1fr))', gap: 12, marginTop: 16 }}>
@@ -117,10 +141,45 @@ export function QiyeProfile() {
   const init =
     (qiyeSelectedName ? d.enterprises.find((e) => e.name === qiyeSelectedName) : undefined) ??
     (qiyeSelectedKeyNo ? d.enterprises.find((e) => e.keyNo === qiyeSelectedKeyNo) : undefined);
-  const [cur, setCur] = useState<QiyeProfile>(init ?? d.enterprises[0]);
+  const [cur, setCur] = useState<QiyeProfile | undefined>(init);
   const [tab, setTab] = useState<Tab>('风险画像');
+  const [q, setQ] = useState('');
+  const nav = useNavigate();
+  const { back } = usePageNav();
 
-  if (!cur) return <div style={{ padding: 24 }}>暂无企业档案</div>;
+  if (!cur) {
+    const ql = q.trim().toLowerCase();
+    const hits = ql
+      ? d.enterprises.filter((e) => e.name.toLowerCase().includes(ql) || e.creditCode.includes(ql) || e.keyNo.includes(ql))
+      : [];
+    return (
+      <div style={{ padding: 24 }}>
+        <PageShell title="企业档案" crumb={CRUMB}
+          subtitle="输入企业名称 / 统一社会信用代码直达单企业风险画像"
+          actions={<Button size="sm" variant="secondary" onClick={() => back('/console/ep/qiye-search')}>← 返回查询</Button>} />
+        <Panel title="直达企业画像" desc={<span>共 <b>{d.enterprises.length}</b> 家在档企业 · <Cal label="实时汇总" /></span>}>
+          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="输入企业名称 / 统一社会信用代码 / 唯一标识"
+            style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid #E2E8F0', fontSize: 13, outline: 'none' }} />
+        </Panel>
+        {hits.length > 0 && (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))', gap: 12, marginTop: 16 }}>
+            {hits.map((e) => (
+              <button key={e.keyNo} type="button" onClick={() => { setCur(e); }}
+                style={{ textAlign: 'left', border: '1px solid #E2E8F0', borderRadius: 12, padding: 14, background: '#fff', cursor: 'pointer' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span style={{ fontSize: 15, fontWeight: 700, color: '#0F172A' }}>{e.name}</span>
+                  <Badge kind={STATUS_KIND[e.status]}>{e.status}</Badge>
+                </div>
+                <div style={{ fontSize: 12, color: '#475569', marginTop: 6 }}>行业：{e.industry} · 法定代表人：{e.legalPerson}</div>
+                <div style={{ fontSize: 12, color: '#94A3B8', marginTop: 4 }}>统一社会信用代码：{e.creditCode}</div>
+              </button>
+            ))}
+          </div>
+        )}
+        {ql && hits.length === 0 && <div style={{ padding: 24, color: '#94A3B8', fontSize: 13 }}>未检索到匹配企业。</div>}
+      </div>
+    );
+  }
 
   // ---- 基本信息表格 ----
   const shCols: Column[] = [
@@ -220,7 +279,13 @@ export function QiyeProfile() {
   return (
     <div style={{ padding: 24, maxWidth: 1360 }}>
       <PageShell title="企业档案" crumb={`${CRUMB} / ${cur.name}`} subtitle="企业工商档案：工商信息、股东与主要人员、对外投资与分支、司法与经营风险、经营信息、企业发展与知识产权全维度画像"
-        actions={<><Sam label="企业样例" value="qiyeData.json" /><Cal label="实时统计" /></>} />
+        actions={<>
+          <Sam label="企业样例" value="qiyeData.json" /><Cal label="实时统计" />
+          <Button size="sm" variant="secondary" onClick={() => nav('/console/ep/ent-graph-detail')}>关联图谱</Button>
+          <Button size="sm" variant="secondary" onClick={() => nav('/console/ep/ent-credit-detail')}>信用报告</Button>
+          <Button size="sm" variant="secondary" onClick={() => nav('/console/ep/ent-verify-detail')}>核验报告</Button>
+          <Button size="sm" variant="secondary" onClick={() => back('/console/ep/qiye-search')}>← 返回</Button>
+        </>} />
 
       {/* 头部卡片 */}
       <div style={{ border: '1px solid #E2E8F0', borderRadius: 12, padding: 16, background: '#fff', marginBottom: 12 }}>

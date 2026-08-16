@@ -1,20 +1,20 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import {
-  useScore, updateScore, SCORE_PROD_LABEL,
-  type ScoreProd, type ModelMeta, type ModelVersion, type ThresholdRow,
-  type ScoreMapSeg, type RiskLabel, type FusionRule,
+  useScore, updateScore, SCORE_PROD_LABEL, simulateFusion,
+  type ScoreProd, type ModelMeta, type ModelVersion,
+  type ProbScoreSeg, type ScoreLevelSeg, type RiskTagConfig, type FusionStrategy,
+  type LevelDefaultDecision, type RiskLabel, type FusionRule,
 } from './scoreData'
 import { useDecision } from './decisionData'
 import { PageShell } from './PageShell'
-import { Panel, Button, Badge, DataTable, Modal, type Column, type Row } from '../components/ui'
+import { SingleSelect, Panel, Button, Badge, DataTable, Modal, RightDrawer, type Column, type Row } from '../components/ui'
 import { Sam, Cfg, Cal } from './SourceTag'
 import { LineChart } from '../components/charts'
 import ModelDecisionGraph from './ModelDecisionGraph'
 import { PIPELINE_GRAPHS } from './modelGraphData'
 import FlowCanvasEditor from './FlowCanvasEditor'
 import { useFlows, getFlowById } from './flowStore'
-import { updateAlerts, useMidAlerts, midNewId, type MidAlert } from './midStore'
 import { usePageNav } from './pageNav'
 
 const MODEL_COLOR: Record<ScoreProd, string> = {
@@ -32,6 +32,51 @@ const DETAIL_TABS: { key: DetailTab; label: string }[] = [
   { key: 'fusion', label: '处置策略' },
   { key: 'effect', label: '模型效果' },
 ]
+
+/** 风险等级编码 → 短名（与融合规则列表徽标、风险等级分段保持一致）。 */
+const LV_SHORT: Record<string, string> = { ALL: '全部等级', VLOW: '极低', LOW: '低', MID: '中', HIGH: '高', VHIGH: '极高' }
+const lvShort = (code: string) => LV_SHORT[code] ?? code
+
+/** 可搜索筛选的规则集下拉（判定依据仅可选规则集，输入即过滤）。 */
+function RuleSetSelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const decision = useDecision()
+  const [q, setQ] = useState('')
+  const [open, setOpen] = useState(false)
+  const flat = decision.models.flatMap((dm) => dm.policies.map((p) => ({ id: p.id, name: p.name })))
+  const sel = flat.find((o) => o.id === value)
+  const groups = decision.models
+    .map((dm) => ({ dm, ps: dm.policies.filter((p) => !q || p.name.includes(q) || dm.name.includes(q)) }))
+    .filter((g) => g.ps.length)
+  return (
+    <div className="relative">
+      <input
+        value={open ? q : (sel?.name ?? '')}
+        onFocus={() => { setOpen(true); setQ('') }}
+        onChange={(e) => { setQ(e.target.value); setOpen(true) }}
+        onBlur={() => setTimeout(() => setOpen(false), 120)}
+        placeholder="输入名称搜索规则集…"
+        className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm outline-none focus:border-brand-400"
+      />
+      {open && (
+        <div className="absolute z-50 mt-1 max-h-56 w-full overflow-y-auto rounded-lg border border-slate-200 bg-white py-1 shadow-lg">
+          {groups.length ? groups.map(({ dm, ps }) => (
+            <div key={dm.id}>
+              <div className="bg-slate-50 px-3 py-1 text-xs text-slate-400">规则集 · {dm.name}</div>
+              {ps.map((p) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  onMouseDown={(e) => { e.preventDefault(); onChange(p.id); setOpen(false); setQ('') }}
+                  className={`block w-full px-3 py-1.5 text-left text-sm hover:bg-brand-50 ${p.id === value ? 'text-brand-600' : 'text-slate-700'}`}
+                >{p.name}</button>
+              ))}
+            </div>
+          )) : <div className="px-3 py-2 text-xs text-slate-400">无匹配规则集</div>}
+        </div>
+      )}
+    </div>
+  )
+}
 
 function levelKind(level: string): 'red' | 'amber' | 'blue' | 'green' | 'gray' {
   if (level.includes('低') || level === 'A') return 'green'
@@ -149,170 +194,181 @@ export default function ScoreModelDetailPage() {
 
   const current = m.versions.find((v) => v.current)
 
-  /* ---------- Tab3 规则风险：引用决策引擎资产，命中派生标签 ---------- */
-  const labels = m.riskLabels ?? []
+  /* ---------- Tab3 风险标签：全局配置 + 标签明细（引用决策引擎资产，并行支线，不影响分数） ---------- */
+  const tags = m.riskLabels ?? []
+  const tagCfg = m.riskTagConfig ?? { tagSwitch: true, conflictStrategy: 'keep-all', defaultTagOpen: true }
+  const saveTagCfg = (next: RiskTagConfig) =>
+    updateScore((d) => ({ ...d, models: d.models.map((mm) => (mm.prod === prod ? { ...mm, riskTagConfig: next } : mm)) }))
   const [rlNewOpen, setRlNewOpen] = useState(false)
-  const [rlDraft, setRlDraft] = useState<Partial<RiskLabel>>({ name: '', refType: 'list', ref: '', hit: '命中', level: '中度', ltype: '欺诈标签', show: true, toFusion: true, enabled: true })
+  const [tagCfgOpen, setTagCfgOpen] = useState(false)
+  const [rlDraft, setRlDraft] = useState<Partial<RiskLabel>>({
+    name: '', tagCode: '', tagLevel: '中度风险', refType: 'ruleset', ref: '',
+    collisionCondition: 'single', joinFusion: true, isRiskMonitorTag: false, tagDesc: '', enabled: true,
+  })
   const saveLabels = (next: RiskLabel[]) =>
     updateScore((d) => ({ ...d, models: d.models.map((mm) => (mm.prod === prod ? { ...mm, riskLabels: next } : mm)) }))
-  const rlToggle = (id: string) => saveLabels(labels.map((l) => (l.id === id ? { ...l, enabled: !l.enabled } : l)))
-  const rlRemove = (id: string) => saveLabels(labels.filter((l) => l.id !== id))
+  const rlToggle = (id: string) => saveLabels(tags.map((l) => (l.id === id ? { ...l, enabled: !l.enabled } : l)))
+  const rlRemove = (id: string) => saveLabels(tags.filter((l) => l.id !== id))
+  const rlMove = (id: string, dir: -1 | 1) => {
+    const idx = tags.findIndex((l) => l.id === id); const ni = idx + dir
+    if (idx < 0 || ni < 0 || ni >= tags.length) return
+    const next = [...tags]; const a = next[idx]; next[idx] = next[ni]; next[ni] = a
+    next.forEach((l, i) => (l.tagSort = i + 1)); saveLabels(next)
+  }
   const rlConfirm = () => {
     if (!rlDraft.name?.trim() || !rlDraft.ref) return
-    saveLabels([...labels, { id: `rl-${Date.now().toString(36)}`, name: rlDraft.name.trim(), refType: rlDraft.refType as 'list' | 'ruleset', ref: rlDraft.ref, hit: (rlDraft.hit as '命中' | '未命中') ?? '命中', level: (rlDraft.level as '轻度' | '中度' | '重度') ?? '中度', ltype: (rlDraft.ltype as RiskLabel['ltype']) ?? '欺诈标签', show: rlDraft.show ?? true, toFusion: rlDraft.toFusion ?? true, enabled: true }])
+    const sort = tags.length ? Math.max(...tags.map((l) => l.tagSort)) + 1 : 1
+    const code = (rlDraft.tagCode?.trim() || `TAG_${prod.slice(0, 2).toUpperCase()}_${(tags.length + 1).toString().padStart(3, '0')}`).toUpperCase()
+    saveLabels([...tags, {
+      id: `rl-${Date.now().toString(36)}`, tagSort: sort, tagCode: code, name: rlDraft.name.trim(),
+      tagLevel: (rlDraft.tagLevel as RiskLabel['tagLevel']) ?? '中度风险',
+      refType: (rlDraft.refType as 'list' | 'ruleset') ?? 'ruleset', ref: rlDraft.ref,
+      collisionCondition: (rlDraft.collisionCondition as 'single' | 'all') ?? 'single',
+      joinFusion: rlDraft.joinFusion ?? true, isRiskMonitorTag: rlDraft.isRiskMonitorTag ?? false,
+      tagDesc: rlDraft.tagDesc ?? '', enabled: true,
+    }])
     setRlNewOpen(false)
-    setRlDraft({ name: '', refType: 'list', ref: '', hit: '命中', level: '中度', ltype: '欺诈标签', show: true, toFusion: true, enabled: true })
+    setRlDraft({ name: '', tagCode: '', tagLevel: '中度风险', refType: 'ruleset', ref: '', collisionCondition: 'single', joinFusion: true, isRiskMonitorTag: false, tagDesc: '', enabled: true })
+  }
+  /* Tab3 模块3：实时输出预览（风险标签对外统一结构） */
+  const tagPreview = tagCfg.tagSwitch
+    ? tags.filter((l) => l.enabled).map((l) => ({ tag_code: l.tagCode, tag_name: l.name, tag_level: l.tagLevel, is_monitor_tag: l.isRiskMonitorTag, join_fusion: l.joinFusion, tag_desc: l.tagDesc }))
+    : []
+
+  /* ---------- Tab4 区块A：融合处置策略全局配置 ---------- */
+  const strat = m.fusionStrategy ?? { strategyName: '', priorityMode: 'tag-first', defaultDecision: '转人工', strategyStatus: true, validStart: '', validEnd: '', strategyVersion: '', updateUser: '', updateTime: '' }
+  const [stratOpen, setStratOpen] = useState(false)
+  const [probMapOpen, setProbMapOpen] = useState(false)
+  const [levelMapOpen, setLevelMapOpen] = useState(false)
+  const [rlPreviewOpen, setRlPreviewOpen] = useState(false)
+  const saveStrat = (next: FusionStrategy) =>
+    updateScore((d) => ({ ...d, models: d.models.map((mm) => (mm.prod === prod ? { ...mm, fusionStrategy: next } : mm)) }))
+  const [stratName, setStratName] = useState(strat.strategyName)
+  const [stratPriority, setStratPriority] = useState<FusionStrategy['priorityMode']>(strat.priorityMode)
+  const [stratDefault, setStratDefault] = useState<FusionStrategy['defaultDecision']>(strat.defaultDecision)
+  const [stratStatus, setStratStatus] = useState(strat.strategyStatus)
+  const [stratStart, setStratStart] = useState(strat.validStart)
+  const [stratEnd, setStratEnd] = useState(strat.validEnd)
+  const saveStratMeta = () => {
+    const now = new Date().toLocaleString('zh-CN', { hour12: false })
+    const nextVer = strat.strategyVersion ? strat.strategyVersion : `V1.0`
+    saveStrat({ strategyName: stratName.trim() || `${SCORE_PROD_LABEL[prod]}处置策略`, priorityMode: stratPriority, defaultDecision: stratDefault, strategyStatus: stratStatus, validStart: stratStart, validEnd: stratEnd, strategyVersion: nextVer, updateUser: 'admin', updateTime: now })
   }
 
-  /* ---------- Tab4 上区域：概率 → 标准分 映射 ---------- */
-  const scoreMap = m.scoreMap ?? []
-  const saveMap = (next: ScoreMapSeg[]) =>
-    updateScore((d) => ({ ...d, models: d.models.map((mm) => (mm.prod === prod ? { ...mm, scoreMap: next } : mm)) }))
-  const mapEdit = (i: number, k: keyof ScoreMapSeg, v: number) =>
-    saveMap(scoreMap.map((s, idx) => (idx === i ? { ...s, [k]: v } : s)))
+  /* ---------- Tab4 区块B：概率 p → 标准分 映射（分段表 / 线性公式） ---------- */
+  const scoreMapMode = m.scoreMapMode ?? 'segment'
+  const saveScoreMapMode = (mode: 'segment' | 'formula') =>
+    updateScore((d) => ({ ...d, models: d.models.map((mm) => (mm.prod === prod ? { ...mm, scoreMapMode: mode } : mm)) }))
+  const probScoreMap = m.probScoreMap ?? []
+  const saveProbMap = (next: ProbScoreSeg[]) =>
+    updateScore((d) => ({ ...d, models: d.models.map((mm) => (mm.prod === prod ? { ...mm, probScoreMap: next } : mm)) }))
+  const probEdit = (i: number, k: keyof ProbScoreSeg, v: number | string) =>
+    saveProbMap(probScoreMap.map((s, idx) => (idx === i ? { ...s, [k]: v } : s)))
+  const probAdd = () => saveProbMap([...probScoreMap, { probMin: 0, probMax: 1, standardScore: 0, remark: '' }])
+  const probDel = (i: number) => saveProbMap(probScoreMap.filter((_, idx) => idx !== i))
+  const [formulaText, setFormulaText] = useState(m.scoreFormula ?? 'standard_score = Round(predict_prob * 100)')
+  const saveFormula = () => updateScore((d) => ({ ...d, models: d.models.map((mm) => (mm.prod === prod ? { ...mm, scoreFormula: formulaText } : mm)) }))
+  const [probPreviewVal, setProbPreviewVal] = useState('0.5')
+  const probPreview = (() => {
+    const p = Number(probPreviewVal)
+    if (scoreMapMode === 'formula' && (m.scoreFormula ?? formulaText)) {
+      try { const Round = (x: number) => Math.round(x); const expr = (m.scoreFormula ?? formulaText).split('=').slice(1).join('='); const v = Number(new Function('predict_prob', 'Round', `return (${expr})`)(p, Round)); return isFinite(v) ? v : 0 } catch { return 0 }
+    }
+    const seg = probScoreMap.find((s) => p >= s.probMin && p < (s.probMax === 1 ? 1.0001 : s.probMax))
+    return seg?.standardScore ?? probScoreMap[probScoreMap.length - 1]?.standardScore ?? 0
+  })()
 
-  /* ---------- Tab4 下区域：等级 × 标签 融合处置 ---------- */
-  const fusions = m.fusionRules ?? []
-  const levelOptions = Array.from(new Set(scoreMap.map((s) => s.level)))
-  const saveFusion = (next: FusionRule[]) =>
+  /* ---------- Tab4 区块C：标准分 → 风险等级 分段 ---------- */
+  const scoreLevelMap = m.scoreLevelMap ?? []
+  const saveLevelMap = (next: ScoreLevelSeg[]) =>
+    updateScore((d) => ({ ...d, models: d.models.map((mm) => (mm.prod === prod ? { ...mm, scoreLevelMap: next } : mm)) }))
+  const levelEdit = (i: number, k: keyof ScoreLevelSeg, v: number | string) => {
+    const oldCode = scoreLevelMap[i]?.levelCode
+    saveLevelMap(scoreLevelMap.map((s, idx) => (idx === i ? { ...s, [k]: v } : s)))
+    if (k === 'levelCode' && v !== oldCode) {
+      saveLevelDecisions(levelDecisions.map((d) => (d.level === oldCode ? { ...d, level: String(v) } : d)))
+    }
+  }
+  const levelAdd = () => {
+    const newCode = 'LV' + (scoreLevelMap.length + 1)
+    saveLevelMap([...scoreLevelMap, { scoreMin: 0, scoreMax: 100, levelCode: newCode, levelName: '' }])
+    saveLevelDecisions([...levelDecisions, { level: newCode, decision: '通过', processId: '' }])
+  }
+  const levelDel = (i: number) => {
+    const code = scoreLevelMap[i]?.levelCode
+    saveLevelMap(scoreLevelMap.filter((_, idx) => idx !== i))
+    saveLevelDecisions(levelDecisions.filter((d) => d.level !== code))
+  }
+
+  /* ---------- Tab4 等级默认处置映射表（兜底） ---------- */
+  const levelDecisions = m.levelDefaultDecision ?? []
+  const saveLevelDecisions = (next: LevelDefaultDecision[]) =>
+    updateScore((d) => ({ ...d, models: d.models.map((mm) => (mm.prod === prod ? { ...mm, levelDefaultDecision: next } : mm)) }))
+  const ldEdit = (i: number, k: keyof LevelDefaultDecision, v: string) =>
+    saveLevelDecisions(levelDecisions.map((s, idx) => (idx === i ? { ...s, [k]: v } : s)))
+
+  /* ---------- Tab4 区块D：融合处置规则（等级 + 标签） ---------- */
+  const fus = m.fusionRules ?? []
+  const saveFus = (next: FusionRule[]) =>
     updateScore((d) => ({ ...d, models: d.models.map((mm) => (mm.prod === prod ? { ...mm, fusionRules: next } : mm)) }))
-  const [fuBizOpen, setFuBizOpen] = useState<string | null>(null)
-  const [fuBizId, setFuBizId] = useState('')
+  const fuToggle = (id: string) => saveFus(fus.map((f) => (f.id === id ? { ...f, isActive: !f.isActive } : f)))
+  const fuRemove = (id: string) => saveFus(fus.filter((f) => f.id !== id))
+  const fuMove = (id: string, dir: -1 | 1) => {
+    const idx = fus.findIndex((f) => f.id === id); const ni = idx + dir
+    if (idx < 0 || ni < 0 || ni >= fus.length) return
+    const next = [...fus]; const a = next[idx]; next[idx] = next[ni]; next[ni] = a
+    next.forEach((f, i) => (f.ruleSort = i + 1)); saveFus(next)
+  }
   const [fuNewOpen, setFuNewOpen] = useState(false)
-  const [scoreConvOpen, setScoreConvOpen] = useState(false)
-  const [fuDraft, setFuDraft] = useState({ level: '', label: '', when: '', labelPriority: false, decision: '通过' as FusionRule['decision'], bizFlowId: '' })
+  const [fuEditId, setFuEditId] = useState<string | null>(null)
+  const [fuDraft, setFuDraft] = useState<Partial<FusionRule>>({
+    baseRiskLevel: [], matchTagList: [], matchMode: 'any', finalDecision: '通过', processId: '', outputRemark: '', isActive: true,
+  })
+  const openFuAdd = () => { setFuEditId(null); setFuDraft({ baseRiskLevel: [], matchTagList: [], matchMode: 'any', finalDecision: '通过', processId: '', outputRemark: '', isActive: true }); setFuNewOpen(true) }
+  const openFuEdit = (id: string) => {
+    const f = fus.find((x) => x.id === id); if (!f) return
+    setFuEditId(id)
+    setFuDraft({ baseRiskLevel: f.baseRiskLevel, matchTagList: f.matchTagList, matchMode: f.matchMode, finalDecision: f.finalDecision, processId: f.processId ?? '', outputRemark: f.outputRemark, isActive: f.isActive })
+    setFuNewOpen(true)
+  }
   const fuConfirm = () => {
-    const when = [fuDraft.level, fuDraft.label].filter(Boolean).join(' + ')
-    if (!when) return
-    saveFusion([...fusions, { id: `fr-${Date.now().toString(36)}`, when, labelPriority: fuDraft.labelPriority, decision: fuDraft.decision, bizFlowId: fuDraft.bizFlowId || undefined }])
-    setFuNewOpen(false)
+    if (!fuDraft.baseRiskLevel) return
+    const patch = {
+      baseRiskLevel: fuDraft.baseRiskLevel ?? [],
+      matchTagList: fuDraft.matchTagList ?? [],
+      matchMode: (fuDraft.matchMode as 'all' | 'any') ?? 'any',
+      finalDecision: (fuDraft.finalDecision as '通过' | '转人工' | '拒绝') ?? '通过',
+      processId: fuDraft.processId || undefined,
+      outputRemark: fuDraft.outputRemark ?? '',
+    }
+    if (fuEditId) {
+      saveFus(fus.map((f) => (f.id === fuEditId ? { ...f, ...patch } : f)))
+    } else {
+      const sort = fus.length ? Math.max(...fus.map((f) => f.ruleSort)) + 1 : 1
+      saveFus([...fus, { id: `fr-${Date.now().toString(36)}`, ruleSort: sort, ...patch, isActive: true }])
+    }
+    setFuNewOpen(false); setFuEditId(null)
+    setFuDraft({ baseRiskLevel: [], matchTagList: [], matchMode: 'any', finalDecision: '通过', processId: '', outputRemark: '', isActive: true })
   }
 
-  /* ---------- 评分阈值（本模型）：分值分区 + 关联预警处置流程 ---------- */
+  /* ---------- Tab4 全链路模拟调试 ---------- */
+  const [simOpen, setSimOpen] = useState(false)
+  const [simProb, setSimProb] = useState('0.5')
+  const [simTags, setSimTags] = useState<string[]>([])
+  /* 切换模型时同步全局策略本地编辑态 */
+  useEffect(() => {
+    setStratName(strat.strategyName)
+    setStratPriority(strat.priorityMode)
+    setStratDefault(strat.defaultDecision)
+    setStratStatus(strat.strategyStatus)
+    setStratStart(strat.validStart)
+    setStratEnd(strat.validEnd)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [prod])
+
+  /* ---------- 业务流程库（融合处置关联） ---------- */
   const flows = useFlows()
   const flowName = (id?: string) => flows.find((f) => f.id === id)?.name ?? '未关联'
-  const [thEditId, setThEditId] = useState<string | null>(null)
-  const [thAction, setThAction] = useState('')
-  const [thBizOpen, setThBizOpen] = useState<string | null>(null) // 正在选流程的阈值 id
-  const [thBizId, setThBizId] = useState('')
-  const [thSelId, setThSelId] = useState<string | null>(null) // 选中查看处置流程的阈值
-  const [thNewOpen, setThNewOpen] = useState(false)
-  const [thDraft, setThDraft] = useState({ range: '', level: '', meaning: '', action: '', bizFlowId: '' })
-  const thKey = (t: ThresholdRow) => `${t.prod}|${t.range}|${t.level}`
-  const thRows: Row[] = data.thresholds
-    .filter((t) => t.prod === prod)
-    .map((t) => ({
-      id: thKey(t), range: t.range, level: { v: t.level, kind: levelKind(t.level) },
-      meaning: t.meaning, action: t.action, bizFlowId: t.bizFlowId ?? '',
-    }))
-  const thCols: Column[] = [
-    { key: 'range', label: '分数区间', width: '150px' },
-    { key: 'level', label: '等级', type: 'badge', badgeKind: 'gray', width: '90px' },
-    { key: 'meaning', label: '含义', width: '200px' },
-    {
-      key: 'bizFlow', label: '预警处置流程', width: '200px',
-      render: (r: Row) => {
-        const id = r.id as string
-        const cur = (r.bizFlowId as string) || ''
-        if (thBizOpen === id) {
-          return (
-            <select value={thBizId} onChange={(e) => {
-              const v = e.target.value
-              setThBizId(v)
-              updateScore((d) => ({ ...d, thresholds: d.thresholds.map((t) => (thKey(t) === id ? { ...t, bizFlowId: v } : t)) }))
-              setThBizOpen(null)
-            }}
-              className="w-full rounded border border-slate-200 px-2 py-1 text-sm outline-none focus:border-brand-400">
-              <option value="">未关联</option>
-              {flows.map((f) => <option key={f.id} value={f.id}>{f.name}</option>)}
-            </select>
-          )
-        }
-        return (
-          <button className="text-left text-sm text-brand-600 hover:underline" onClick={() => { setThBizOpen(id); setThBizId(cur) }}>
-            {cur ? flowName(cur) : '＋ 关联流程'}
-          </button>
-        )
-      },
-    },
-    {
-      key: 'action', label: '建议动作',
-      render: (r: Row) => {
-        const id = r.id as string
-        if (thEditId === id) {
-          return (
-            <div className="flex items-center gap-2">
-              <input value={thAction} onChange={(e) => setThAction(e.target.value)}
-                className="w-40 rounded border border-slate-200 px-2 py-1 text-sm outline-none focus:border-brand-400" />
-              <Button size="sm" variant="primary" onClick={() => {
-                updateScore((d) => ({ ...d, thresholds: d.thresholds.map((t) => (thKey(t) === id ? { ...t, action: thAction } : t)) }))
-                setThEditId(null)
-              }}>保存</Button>
-              <Button size="sm" variant="ghost" onClick={() => setThEditId(null)}>取消</Button>
-            </div>
-          )
-        }
-        return (
-          <div className="flex items-center gap-2">
-            <span className="text-sm">{r.action as string}</span>
-            <Button size="sm" variant="ghost" onClick={() => {
-              const [p, range, level] = id.split('|')
-              const t = data.thresholds.find((x) => x.prod === p && x.range === range && x.level === level)!
-              setThAction(t.action); setThEditId(id)
-            }}>编辑</Button>
-          </div>
-        )
-      },
-    },
-    {
-      key: 'flowPrev', label: '处置流程', width: '96px',
-      render: (r: Row) => {
-        const t = data.thresholds.find((x) => thKey(x) === r.id)
-        if (!t?.bizFlowId) return <span className="text-xs text-slate-300">—</span>
-        return <Button size="sm" variant="ghost" onClick={() => setThSelId(r.id as string)}>查看</Button>
-      },
-    },
-  ]
-  const confirmThNew = () => {
-    const range = thDraft.range.trim(); const level = thDraft.level.trim()
-    if (!range || !level) return
-    updateScore((d) => ({ ...d, thresholds: [...d.thresholds, { prod, range, level, meaning: thDraft.meaning.trim(), action: thDraft.action.trim(), bizFlowId: thDraft.bizFlowId || undefined }] }))
-    setThNewOpen(false)
-  }
-  const selThreshold = data.thresholds.find((t) => thKey(t) === thSelId) ?? null
-  const selFlow = selThreshold?.bizFlowId ? getFlowById(selThreshold.bizFlowId) : undefined
-
-  /* ---------- 关联预警（预警平台 midAlerts，模型管理仅作编辑入口） ---------- */
-  const PROD_SCENE: Record<ScoreProd, string> = { zhicha: '反欺诈监测', zhixin: '贷中风控', zhirong: '贷后催收' }
-  const midAlerts = useMidAlerts()
-  const relatedAlerts = midAlerts.filter((a) => a.scene === PROD_SCENE[prod])
-  const [alOpen, setAlOpen] = useState(false)
-  const [alForm, setAlForm] = useState({ cust_name: '', alert_type: '负债激增', level: 'RED' as MidAlert['level'], rule_name: '', metric_value: 0, threshold: 0, flowKey: '' })
-  const addAlert = () => {
-    const today = new Date().toISOString().slice(0, 10)
-    updateAlerts((list) => [...list, {
-      alert_id: midNewId('AL'), cust_id: 'C' + String(Math.floor(Math.random() * 9000) + 1000),
-      cust_name: alForm.cust_name || '未知客户', scene: PROD_SCENE[prod], alert_type: alForm.alert_type,
-      level: alForm.level, alert_date: today, rule_name: alForm.rule_name || '自定义规则',
-      metric_value: Number(alForm.metric_value) || 0, threshold: Number(alForm.threshold) || 0,
-      flowKey: alForm.flowKey || undefined,
-    }])
-    setAlForm({ cust_name: '', alert_type: '负债激增', level: 'RED', rule_name: '', metric_value: 0, threshold: 0, flowKey: '' })
-    setAlOpen(false)
-  }
-  const alCols: Column[] = [
-    { key: 'alert_id', label: '预警编号', width: '130px' },
-    { key: 'cust_name', label: '客户', width: '110px' },
-    { key: 'alert_type', label: '类型', width: '130px' },
-    { key: 'level', label: '等级', type: 'badge', badgeKind: 'gray', width: '90px' },
-    { key: 'rule_name', label: '命中规则' },
-    { key: 'flowState', label: '处置状态', width: '130px' },
-  ]
-  const alRows: Row[] = relatedAlerts.map((a) => ({
-    id: a.alert_id, alert_id: a.alert_id, cust_name: a.cust_name, alert_type: a.alert_type,
-    level: { v: a.level === 'RED' ? '红' : a.level === 'YELLOW' ? '黄' : '机会', kind: a.level === 'RED' ? 'red' : a.level === 'YELLOW' ? 'amber' : 'blue' },
-    rule_name: a.rule_name, flowState: a.flowState ?? '—',
-  }))
 
   /* ---------- 模型效果（本模型） ---------- */
   const ops = data.ops.find((x) => x.prod === prod)!
@@ -509,54 +565,113 @@ export default function ScoreModelDetailPage() {
         )}
 
         {tab === 'risklabel' && (
-          /* ===== Tab3 规则风险（独立并行规则支线） ===== */
+          /* ===== Tab3 风险标签（独立并行规则支线，不影响分数） ===== */
           <div className="space-y-4">
+            {/* 模块1：全局配置（默认收起，显示概要） */}
             <Panel
-              title={`规则风险 · 输出标签 · ${SCORE_PROD_LABEL[prod]}`}
-              desc="每条规则风险 = 输出一个风险标签（名称 + 类型）。引用决策引擎已配置的名单库 / 规则集，配置命中条件即生成该标签；标签独立支线运行，不参与概率计算、不影响标准分数，供处置策略（Tab4）融合使用。"
-              actions={
-                <>
-                  <Cfg value="scoreData.json" />
-                  <Button size="sm" variant="primary" onClick={() => setRlNewOpen(true)}>新增规则风险</Button>
-                </>
-              }
+              title="风险标签配置"
+              desc="控制整套并行标签支线的运行模式、冲突处理与空命中策略。标签与 Tab2 模型推理完全并行，不参与概率计算、不改变标准分。"
+              actions={<div className="flex items-center gap-2"><Cfg value="scoreData.json" /><Button size="sm" variant="ghost" onClick={() => setTagCfgOpen((v) => !v)}>{tagCfgOpen ? '收起' : '展开配置'}</Button></div>}
+            >
+              {tagCfgOpen ? (
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="flex items-center justify-between rounded-lg border border-slate-100 px-3 py-2">
+                  <div>
+                    <div className="text-sm font-medium text-slate-700">标签支线总开关</div>
+                    <div className="text-xs text-slate-400">关闭后整套并行标签逻辑停摆，无任何标签输出</div>
+                  </div>
+                  <button onClick={() => saveTagCfg({ ...tagCfg, tagSwitch: !tagCfg.tagSwitch })}
+                    className={`relative h-6 w-11 shrink-0 rounded-full transition ${tagCfg.tagSwitch ? 'bg-brand-500' : 'bg-slate-300'}`}>
+                    <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition-all ${tagCfg.tagSwitch ? 'left-[22px]' : 'left-0.5'}`} />
+                  </button>
+                </div>
+                <div className="flex items-center justify-between rounded-lg border border-slate-100 px-3 py-2">
+                  <div>
+                    <div className="text-sm font-medium text-slate-700">空命中默认标签</div>
+                    <div className="text-xs text-slate-400">无任何规则命中时，输出「无风险信号」空标签</div>
+                  </div>
+                  <button onClick={() => saveTagCfg({ ...tagCfg, defaultTagOpen: !tagCfg.defaultTagOpen })}
+                    className={`relative h-6 w-11 shrink-0 rounded-full transition ${tagCfg.defaultTagOpen ? 'bg-brand-500' : 'bg-slate-300'}`}>
+                    <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition-all ${tagCfg.defaultTagOpen ? 'left-[22px]' : 'left-0.5'}`} />
+                  </button>
+                </div>
+                <div className="rounded-lg border border-slate-100 px-3 py-2">
+                  <div className="text-sm font-medium text-slate-700">多标签命中冲突策略</div>
+                  <div className="mt-2 flex gap-2">
+                    <button onClick={() => saveTagCfg({ ...tagCfg, conflictStrategy: 'keep-all' })}
+                      className={`rounded px-3 py-1 text-sm ${tagCfg.conflictStrategy === 'keep-all' ? 'bg-brand-50 text-brand-600' : 'bg-slate-50 text-slate-500'}`}>全部保留多标签</button>
+                    <button onClick={() => saveTagCfg({ ...tagCfg, conflictStrategy: 'keep-highest' })}
+                      className={`rounded px-3 py-1 text-sm ${tagCfg.conflictStrategy === 'keep-highest' ? 'bg-brand-50 text-brand-600' : 'bg-slate-50 text-slate-500'}`}>只保留最高优先级</button>
+                  </div>
+                </div>
+                <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50 px-3 py-2">
+                  <div className="text-sm font-medium text-slate-700">运行模式（只读）</div>
+                  <div className="mt-1 text-xs text-slate-500">并行独立执行，不影响模型概率与分数</div>
+                </div>
+              </div>
+              ) : (
+                <div className="flex flex-wrap items-center gap-x-6 gap-y-1 text-sm text-slate-500">
+                  <span>标签支线：<b className={tagCfg.tagSwitch ? 'text-emerald-600' : 'text-slate-400'}>{tagCfg.tagSwitch ? '已开启' : '已关闭'}</b></span>
+                  <span>空命中默认标签：<b className={tagCfg.defaultTagOpen ? 'text-emerald-600' : 'text-slate-400'}>{tagCfg.defaultTagOpen ? '开' : '关'}</b></span>
+                  <span>冲突策略：{tagCfg.conflictStrategy === 'keep-all' ? '全部保留多标签' : '只保留最高优先级'}</span>
+                  <span>运行模式：并行独立执行</span>
+                </div>
+              )}
+            </Panel>
+
+            {/* 模块2：标签明细配置列表 */}
+            <Panel
+              title="标签明细"
+              desc="每一条风险标签 = 一套独立规则碰撞条件。引用已配置的名单库 / 规则集（不可新建），命中即派生标签；标签仅作解释信号与融合决策输入，不参与分数计算。"
+              actions={<div className="flex items-center gap-2"><Button size="sm" variant="secondary" onClick={() => setRlPreviewOpen(true)}>查看实时输出预览</Button><Button size="sm" variant="primary" onClick={() => setRlNewOpen(true)}>新增标签</Button></div>}
             >
               <div className="mb-3 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-700">
-                ⚠️ 规则风险仅作解释信号（用于融合决策、离线监控），≠ 最终审批结果；部分监控规则风险可设为「不计入融合处置」仅用于离线分析。
+                ⚠️ 标签 ≠ 最终审批结论：决策型标签（计入融合）参与 Tab4 审批；监控型标签（不计入融合）仅用于模型 PSI/KS 监控与样本调优。
               </div>
               <DataTable
                 columns={[
-                  { key: 'name', label: '输出标签', width: '170px' },
-                  { key: 'ref', label: '引用资产' },
-                  { key: 'hit', label: '触发', width: '90px' },
-                  { key: 'level', label: '等级', type: 'badge', badgeKind: 'gray', width: '90px' },
-                  { key: 'ltype', label: '类型', width: '110px' },
-                  { key: 'show', label: '对外展示', width: '90px', render: (r: Row) => (r.show ? <Badge kind="green">是</Badge> : <Badge kind="gray">否</Badge>) },
-                  { key: 'toFusion', label: '计入融合', width: '90px', render: (r: Row) => (r.toFusion ? <Badge kind="blue">是</Badge> : <Badge kind="gray">否</Badge>) },
-                  { key: 'enabled', label: '启用', width: '90px', render: (r: Row) => (
-                    <button onClick={() => rlToggle(r.id as string)} className={r.enabled ? 'text-emerald-600 hover:underline' : 'text-slate-400 hover:underline'}>
-                      {r.enabled ? '已启用' : '已停用'}
-                    </button>
+                  { key: 'tagSort', label: '排序', width: '72px', render: (r: Row) => (
+                    <div className="flex items-center gap-1">
+                      <button className="text-xs text-slate-400 hover:text-brand-600" onClick={() => rlMove(r.id as string, -1)}>↑</button>
+                      <span className="text-sm tabular-nums">{r.tagSort as number}</span>
+                      <button className="text-xs text-slate-400 hover:text-brand-600" onClick={() => rlMove(r.id as string, 1)}>↓</button>
+                    </div>
+                  ) },
+                  { key: 'tagCode', label: '标签编码', width: '130px' },
+                  { key: 'name', label: '风险标签', width: '160px' },
+                  { key: 'tagLevel', label: '等级', type: 'badge', width: '90px' },
+                  { key: 'refType', label: '对象类型', width: '110px' },
+                  { key: 'ref', label: '判定依据' },
+                  { key: 'collision', label: '触发条件', width: '130px' },
+                  { key: 'joinFusion', label: '计入融合', width: '90px', render: (r: Row) => (r.joinFusion ? <Badge kind="blue">是</Badge> : <Badge kind="gray">否</Badge>) },
+                  { key: 'monitor', label: '监控样本', width: '90px', render: (r: Row) => (r.monitor ? <Badge kind="violet">是</Badge> : <Badge kind="gray">否</Badge>) },
+                  { key: 'tagDesc', label: '风险描述', render: (r: Row) => <span className="text-xs text-slate-500">{r.tagDesc as string}</span> },
+                  { key: 'enabled', label: '状态', width: '90px', render: (r: Row) => (
+                    <button onClick={() => rlToggle(r.id as string)} className={r.enabled ? 'text-emerald-600 hover:underline' : 'text-slate-400 hover:underline'}>{r.enabled ? '已启用' : '已停用'}</button>
                   ) },
                   { key: 'op', label: '操作', width: '80px', render: (r: Row) => <Button size="sm" variant="ghost" onClick={() => rlRemove(r.id as string)}>删除</Button> },
                 ]}
-                rows={labels.map((l) => ({
-                  id: l.id, name: l.name, ref: `${l.refType === 'list' ? '名单库' : '规则集'} · ${refLabel(l.refType, l.ref)}`,
-                  hit: l.hit, level: { v: l.level, kind: l.level === '重度' ? 'red' : l.level === '中度' ? 'amber' : 'blue' },
-                  ltype: l.ltype, show: l.show, toFusion: l.toFusion, enabled: l.enabled,
+                rows={tags.map((l) => ({
+                  id: l.id, tagSort: l.tagSort, tagCode: l.tagCode, name: l.name,
+                  tagLevel: { v: l.tagLevel, kind: l.tagLevel === '重度风险' ? 'red' : l.tagLevel === '中度风险' ? 'amber' : l.tagLevel === '轻度风险' ? 'blue' : 'gray' },
+                  refType: l.refType === 'list' ? '公共名单库' : '公共规则集',
+                  ref: refLabel(l.refType, l.ref),
+                  collision: l.collisionCondition === 'single' ? '单条件命中' : '多规则同时命中',
+                  joinFusion: l.joinFusion, monitor: l.isRiskMonitorTag, tagDesc: l.tagDesc, enabled: l.enabled,
                 }))}
-                empty="暂无规则风险"
+                empty="暂无风险标签，点击「新增标签」配置一条并行规则支线"
                 pager
                 defaultPageSize={10}
               />
             </Panel>
+
           </div>
         )}
 
         {tab === 'effect' && (
           /* ===== 模型效果（本模型） ===== */
           <>
-            <Panel title="模型效果" desc={`${SCORE_PROD_LABEL[prod]} · 运营效果指标与 6 个月趋势（单模型视角；三模型横向对比见「模型效果」页）`} actions={<><Cal /><Sam value="scoreData.json" /></>}>
+            <Panel title="模型效果" desc={`${SCORE_PROD_LABEL[prod]} · 运营效果指标与 6 个月趋势（单模型视角；三模型横向对比见「模型效果」页）`} actions={<div className="flex items-center gap-2"><Cal /><Sam value="scoreData.json" /></div>}>
               <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
                 <div><div className="text-xs text-slate-400">评分覆盖率</div><div className="text-2xl font-bold tabular-nums" style={{ color }}>{ops.coverage}%</div></div>
                 <div><div className="text-xs text-slate-400">预警准确率</div><div className="text-2xl font-bold tabular-nums" style={{ color }}>{ops.accuracy}%</div></div>
@@ -592,115 +707,221 @@ export default function ScoreModelDetailPage() {
 
         {tab === 'fusion' && (
           <div className="space-y-4">
-            {/* ===== 主角：处置映射表（规则/分数 → 策略 → 处置） ===== */}
+            {/* ===== 区块A：全局策略基础配置 ===== */}
             <Panel
-              title={`处置策略 · ${SCORE_PROD_LABEL[prod]}`}
-              desc="一张表说清「触发条件 → 处置意见 → 业务流程」：命中规则风险或落到某分数等级，就对应一个处置动作。新增一条即新增一条映射；命中严重规则风险可设「标签优先」直接拒绝，无视分数。"
-              actions={
-                <>
-                  <Cfg value="scoreData.json" />
-                  <Button size="sm" variant="primary" onClick={() => { setFuDraft({ level: '', label: '', when: '', labelPriority: false, decision: '通过', bizFlowId: '' }); setFuNewOpen(true) }}>新增处置映射</Button>
-                  <Button size="sm" variant="secondary" onClick={() => setScoreConvOpen((v) => !v)}>{scoreConvOpen ? '收起分数换算' : '展开分数换算'}</Button>
-                </>
-              }
+              title="处置策略配置"
+              desc="融合处置策略全局配置：优先级模式决定「标签」与「分数」谁说了算；兜底处置在模型异常、特征缺失、无法计算时生效。"
+              actions={<div className="flex items-center gap-2"><Cfg value="scoreData.json" /><Button size="sm" variant="ghost" onClick={() => setStratOpen((v) => !v)}>{stratOpen ? '收起' : '展开配置'}</Button></div>}
             >
-              <div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-1 rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-500">
-                <span className="font-medium text-slate-600">配置步骤：</span>
-                <span>① Tab3 规则风险新增标签</span>
-                <span className="text-slate-300">→</span>
-                <span>② 点「新增处置映射」</span>
-                <span className="text-slate-300">→</span>
-                <span>③ 选分数等级 / 规则风险标签</span>
-                <span className="text-slate-300">→</span>
-                <span>④ 选处置意见、关联业务流程</span>
-              </div>
-              <DataTable
-                columns={[
-                  { key: 'when', label: '触发条件（分数等级 + 规则风险标签）', width: '300px' },
-                  { key: 'labelPriority', label: '标签优先', width: '120px', render: (r: Row) => (
-                    <button onClick={() => saveFusion(fusions.map((f) => (f.id === r.id ? { ...f, labelPriority: !f.labelPriority } : f)))} className={r.labelPriority ? 'text-rose-600 hover:underline' : 'text-slate-400 hover:underline'}>
-                      {r.labelPriority ? '是（无视分数）' : '否（按分数）'}
-                    </button>
-                  ) },
-                  { key: 'decision', label: '处置意见', width: '100px', render: (r: Row) => <Badge kind={r.decision === '拒绝' ? 'red' : r.decision === '转人工' ? 'amber' : 'green'}>{r.decision as string}</Badge> },
-                  { key: 'bizFlow', label: '关联业务流程', width: '200px', render: (r: Row) => {
-                    const id = r.id as string
-                    const cur = (r.bizFlowId as string) || ''
-                    if (fuBizOpen === id) {
-                      return (
-                        <select value={fuBizId} onChange={(e) => { const v = e.target.value; setFuBizId(v); saveFusion(fusions.map((f) => (f.id === id ? { ...f, bizFlowId: v || undefined } : f))); setFuBizOpen(null) }}
-                          className="w-full rounded border border-slate-200 px-2 py-1 text-sm outline-none focus:border-brand-400">
-                          <option value="">未关联</option>
-                          {flows.map((f) => <option key={f.id} value={f.id}>{f.name}</option>)}
-                        </select>
-                      )
-                    }
-                    return <button className="text-left text-sm text-brand-600 hover:underline" onClick={() => { setFuBizOpen(id); setFuBizId(cur) }}>{cur ? flowName(cur) : '＋ 关联流程'}</button>
-                  } },
-                  { key: 'op', label: '操作', width: '80px', render: (r: Row) => <Button size="sm" variant="ghost" onClick={() => saveFusion(fusions.filter((f) => f.id !== r.id))}>删除</Button> },
-                ]}
-                rows={fusions.map((f) => ({ id: f.id, when: f.when, labelPriority: f.labelPriority, decision: f.decision, bizFlowId: f.bizFlowId ?? '' }))}
-                empty="暂无处置映射，点击「新增处置映射」配置一条「触发条件 → 处置意见 → 业务流程」"
-                pager
-                defaultPageSize={10}
-              />
-              <div className="mt-2 text-xs text-slate-400">处置映射即「规则风险(Tab3) / 分数等级 → 处置策略 → 处置动作」的对应关系表；标签优先 = 命中严重规则风险直接拒绝，无视分数等级。</div>
-
-              {/* ===== 可折叠：分数换算（概率 → 标准分 → 等级） ===== */}
-              {scoreConvOpen && (
-                <div className="mt-4 space-y-4 rounded-lg border border-dashed border-slate-200 bg-slate-50/60 p-4">
-                  <div className="mb-2 text-sm font-medium text-slate-700">分数换算：原生概率 → 标准分 → 风险等级</div>
-                  <div className="rounded-lg bg-white px-3 py-2 text-xs text-slate-500">
-                    链路：原生预测概率 p ∈ [0,1] →（下方映射规则）→ 对外标准分 →（阈值分段）→ 风险等级。修改映射无需重新训练模型。
+              {stratOpen ? (
+              <>
+              <div className="grid gap-4 md:grid-cols-2">
+                <label className="block">
+                  <span className="mb-1 block text-xs text-slate-400">策略名称</span>
+                  <input value={stratName} onChange={(e) => setStratName(e.target.value)} placeholder={`${SCORE_PROD_LABEL[prod]}处置策略`} className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm outline-none focus:border-brand-400" />
+                </label>
+                <div>
+                  <span className="mb-1 block text-xs text-slate-400">优先级模式（全局生效）</span>
+                  <div className="flex gap-2">
+                    <button onClick={() => setStratPriority('tag-first')} className={`rounded px-3 py-1.5 text-sm ${stratPriority === 'tag-first' ? 'bg-brand-50 text-brand-600' : 'bg-slate-50 text-slate-500'}`}>标签优先（强规则拦截）</button>
+                    <button onClick={() => setStratPriority('score-first')} className={`rounded px-3 py-1.5 text-sm ${stratPriority === 'score-first' ? 'bg-brand-50 text-brand-600' : 'bg-slate-50 text-slate-500'}`}>分数优先</button>
                   </div>
-                  <div className="overflow-hidden rounded-lg border border-slate-200">
+                </div>
+                <label className="block">
+                  <span className="mb-1 block text-xs text-slate-400">兜底处置</span>
+                  <SingleSelect label="兜底处置" fullWidth value={stratDefault} onChange={(v) => setStratDefault(v as FusionStrategy['defaultDecision'])} options={[
+                    { value: '通过', label: '通过' },
+                    { value: '转人工', label: '转人工审核' },
+                    { value: '拒绝', label: '直接拒绝' },
+                  ]} />
+                </label>
+                <div className="flex items-center justify-between rounded-lg border border-slate-100 px-3 py-2">
+                  <div><div className="text-sm font-medium text-slate-700">策略启停</div><div className="text-xs text-slate-400">停用后整体处置策略不生效</div></div>
+                  <button onClick={() => setStratStatus(!stratStatus)} className={`relative h-6 w-11 shrink-0 rounded-full transition ${stratStatus ? 'bg-brand-500' : 'bg-slate-300'}`}><span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition-all ${stratStatus ? 'left-[22px]' : 'left-0.5'}`} /></button>
+                </div>
+                <label className="block">
+                  <span className="mb-1 block text-xs text-slate-400">生效起（定时切换）</span>
+                  <input type="datetime-local" value={stratStart} onChange={(e) => setStratStart(e.target.value)} className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm outline-none focus:border-brand-400" />
+                </label>
+                <label className="block">
+                  <span className="mb-1 block text-xs text-slate-400">生效止（可空）</span>
+                  <input type="datetime-local" value={stratEnd} onChange={(e) => setStratEnd(e.target.value)} className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm outline-none focus:border-brand-400" />
+                </label>
+              </div>
+              <div className="mt-3 flex flex-wrap gap-x-6 gap-y-1 rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-500">
+                <span>策略版本：{strat.strategyVersion || '—'}</span>
+                <span>更新人：{strat.updateUser || '—'}</span>
+                <span>更新时间：{strat.updateTime || '—'}</span>
+              </div>
+              <div className="mt-3 flex justify-end">
+                <Button size="sm" variant="primary" onClick={saveStratMeta}>保存策略</Button>
+              </div>
+              </>
+              ) : (
+                <div className="flex flex-wrap items-center gap-x-6 gap-y-1 text-sm text-slate-500">
+                  <span>策略：<b className="text-slate-700">{stratName || `${SCORE_PROD_LABEL[prod]}处置策略`}</b></span>
+                  <span>优先级：<b className="text-slate-700">{stratPriority === 'tag-first' ? '标签优先' : '分数优先'}</b></span>
+                  <span>兜底处置：<b className="text-slate-700">{stratDefault}</b></span>
+                  <span>状态：<b className={stratStatus ? 'text-emerald-600' : 'text-slate-400'}>{stratStatus ? '启用' : '停用'}</b></span>
+                </div>
+              )}
+            </Panel>
+
+            {/* ===== 区块B：概率 p → 标准分 映射 ===== */}
+            <Panel
+              title="概率映射"
+              desc="原生预测概率 predict_prob(0~1) → 对外标准分。两种映射方式二选一，修改映射无需重新训练模型。"
+              actions={<div className="flex items-center gap-2"><Cfg value="scoreData.json" /><Cal /><Button size="sm" variant="ghost" onClick={() => setProbMapOpen((v) => !v)}>{probMapOpen ? '收起' : '展开'}</Button></div>}
+            >
+              {probMapOpen ? (
+              <div className="space-y-3">
+              <div className="mb-3 flex items-center gap-3">
+                <span className="text-xs text-slate-500">映射方式：</span>
+                <button onClick={() => saveScoreMapMode('segment')} className={`rounded px-3 py-1 text-sm ${scoreMapMode === 'segment' ? 'bg-brand-50 text-brand-600' : 'bg-slate-50 text-slate-500'}`}>分段映射表</button>
+                <button onClick={() => saveScoreMapMode('formula')} className={`rounded px-3 py-1 text-sm ${scoreMapMode === 'formula' ? 'bg-brand-50 text-brand-600' : 'bg-slate-50 text-slate-500'}`}>线性公式</button>
+              </div>
+              {scoreMapMode === 'segment' ? (
+                <>
+                <div className="overflow-hidden rounded-lg border border-slate-200">
+                  <div className="overflow-x-auto">
                     <table className="w-full text-sm">
-                      <thead className="bg-slate-50 text-xs text-slate-500">
-                        <tr>
-                          <th className="px-3 py-2 text-left">概率下界</th>
-                          <th className="px-3 py-2 text-left">概率上界</th>
-                          <th className="px-3 py-2 text-left">映射标准分</th>
-                          <th className="px-3 py-2 text-left">风险等级</th>
-                        </tr>
-                      </thead>
+                      <thead className="bg-slate-50 text-xs text-slate-500"><tr><th className="px-3 py-2 text-left">prob 下界(含)</th><th className="px-3 py-2 text-left">prob 上界(不含)</th><th className="px-3 py-2 text-left">标准分</th><th className="px-3 py-2 text-left">备注</th><th className="px-3 py-2 text-left">操作</th></tr></thead>
                       <tbody>
-                        {scoreMap.map((s, i) => (
+                        {probScoreMap.map((s, i) => (
                           <tr key={i} className="border-t border-slate-100">
-                            <td className="px-3 py-1.5"><input className="w-20 rounded border border-slate-200 px-2 py-1 text-sm outline-none focus:border-brand-400" type="number" step="0.01" value={s.pMin} onChange={(e) => mapEdit(i, 'pMin', Number(e.target.value))} /></td>
-                            <td className="px-3 py-1.5"><input className="w-20 rounded border border-slate-200 px-2 py-1 text-sm outline-none focus:border-brand-400" type="number" step="0.01" value={s.pMax} onChange={(e) => mapEdit(i, 'pMax', Number(e.target.value))} /></td>
-                            <td className="px-3 py-1.5"><input className="w-24 rounded border border-slate-200 px-2 py-1 text-sm outline-none focus:border-brand-400" type="number" value={s.score} onChange={(e) => mapEdit(i, 'score', Number(e.target.value))} /></td>
-                            <td className="px-3 py-1.5"><input className="w-20 rounded border border-slate-200 px-2 py-1 text-sm outline-none focus:border-brand-400" value={s.level} onChange={(e) => mapEdit(i, 'level', e.target.value)} /></td>
+                            <td className="px-3 py-1.5"><input type="number" step="0.01" value={s.probMin} onChange={(e) => probEdit(i, 'probMin', Number(e.target.value))} className="w-20 rounded border border-slate-200 px-2 py-1 text-sm outline-none focus:border-brand-400" /></td>
+                            <td className="px-3 py-1.5"><input type="number" step="0.01" value={s.probMax} onChange={(e) => probEdit(i, 'probMax', Number(e.target.value))} className="w-20 rounded border border-slate-200 px-2 py-1 text-sm outline-none focus:border-brand-400" /></td>
+                            <td className="px-3 py-1.5"><input type="number" value={s.standardScore} onChange={(e) => probEdit(i, 'standardScore', Number(e.target.value))} className="w-24 rounded border border-slate-200 px-2 py-1 text-sm outline-none focus:border-brand-400" /></td>
+                            <td className="px-3 py-1.5"><input value={s.remark ?? ''} onChange={(e) => probEdit(i, 'remark', e.target.value)} className="w-32 rounded border border-slate-200 px-2 py-1 text-sm outline-none focus:border-brand-400" /></td>
+                            <td className="px-3 py-1.5"><button className="text-xs text-rose-500 hover:underline" onClick={() => probDel(i)}>删除</button></td>
                           </tr>
                         ))}
                       </tbody>
                     </table>
                   </div>
-                  <DataTable columns={thCols} rows={thRows} empty="暂无阈值" pager defaultPageSize={10} />
-                  {selFlow?.flowGraphs?.[0] && (
-                    <div className="mt-4 rounded-lg border border-slate-200 bg-white p-3">
-                      <div className="mb-2 flex items-center justify-between">
-                        <span className="text-sm font-medium text-slate-700">处置流程预览：{selFlow.name}</span>
-                        <Button size="sm" variant="ghost" onClick={() => setThSelId(null)}>收起</Button>
-                      </div>
-                      <FlowCanvasEditor graph={selFlow.flowGraphs[0]} readOnly />
-                    </div>
-                  )}
+                  <div className="border-t border-slate-100 px-3 py-2">
+                    <Button size="sm" variant="ghost" onClick={probAdd}>＋ 新增分段</Button>
+                  </div>
+                </div>
+                </>
+              ) : (
+                <>
+                  <label className="block">
+                    <span className="mb-1 block text-xs text-slate-400">公式配置：standard_score = f(predict_prob)</span>
+                    <input value={formulaText} onChange={(e) => setFormulaText(e.target.value)} className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm outline-none focus:border-brand-400" />
+                  </label>
+                  <Button size="sm" variant="ghost" className="mt-2" onClick={saveFormula}>保存公式</Button>
+                </>
+              )}
+              <div className="mt-3 flex items-center gap-3 rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-500">
+                <span>预览：</span>
+                <input type="number" step="0.01" min="0" max="1" value={probPreviewVal} onChange={(e) => setProbPreviewVal(e.target.value)} className="w-24 rounded border border-slate-200 px-2 py-1 text-sm outline-none focus:border-brand-400" />
+                <span>→ 标准分</span>
+                <span className="font-semibold text-brand-600">{probPreview}</span>
+              </div>
+              </div>
+              ) : (
+                <div className="flex flex-wrap items-center gap-x-6 gap-y-1 text-sm text-slate-500">
+                  <span>映射方式：<b className="text-slate-700">{scoreMapMode === 'segment' ? '分段映射表' : '线性公式'}</b></span>
+                  <span>分段数：<b className="text-slate-700">{probScoreMap.length}</b></span>
+                  {scoreMapMode === 'segment'
+                    ? <span>各段概率区间→标准分：{probScoreMap.map((s) => `${s.probMin}~${s.probMax === 1 ? '1' : s.probMax}→${s.standardScore}`).join('；')}</span>
+                    : <span>公式：{m.scoreFormula ?? formulaText}</span>}
                 </div>
               )}
             </Panel>
 
+            {/* ===== 风险等级：标准分 → 等级（兜底处置统一由融合规则揭露） ===== */}
             <Panel
-              title="关联预警（预警平台）"
-              desc={`本模型的预警统一来源于预警平台 midAlerts（场景：${PROD_SCENE[prod]}），模型管理仅作编辑入口`}
-              actions={
-                <>
-                  <Cfg value="midAlerts.json" />
-                  <Button size="sm" variant="primary" onClick={() => setAlOpen(true)}>新增预警</Button>
-                </>
-              }
+              title="风险等级"
+              desc="标准分区间 → 风险等级：把模型标准分切成若干风险档（分段与等级一一对应，不丢档）。"
+              actions={<div className="flex items-center gap-2"><Cfg value="scoreData.json" /><Cal /><Button size="sm" variant="ghost" onClick={() => setLevelMapOpen((v) => !v)}>{levelMapOpen ? '收起' : '展开'}</Button></div>}
             >
-              <DataTable columns={alCols} rows={alRows} empty="暂无关联预警" pager defaultPageSize={10} />
+              {levelMapOpen ? (
+              <div className="space-y-3">
+                <div className="overflow-hidden rounded-lg border border-slate-200">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead className="bg-slate-50 text-xs text-slate-500"><tr><th className="px-3 py-2 text-left">分数下界(含)</th><th className="px-3 py-2 text-left">分数上界(含)</th><th className="px-3 py-2 text-left">风险等级编码</th><th className="px-3 py-2 text-left">风险等级名称</th><th className="px-3 py-2 text-left">操作</th></tr></thead>
+                      <tbody>
+                        {scoreLevelMap.map((s, i) => (
+                          <tr key={i} className="border-t border-slate-100">
+                            <td className="px-3 py-1.5"><input type="number" value={s.scoreMin} onChange={(e) => levelEdit(i, 'scoreMin', Number(e.target.value))} className="w-24 rounded border border-slate-200 px-2 py-1 text-sm outline-none focus:border-brand-400" /></td>
+                            <td className="px-3 py-1.5"><input type="number" value={s.scoreMax} onChange={(e) => levelEdit(i, 'scoreMax', Number(e.target.value))} className="w-24 rounded border border-slate-200 px-2 py-1 text-sm outline-none focus:border-brand-400" /></td>
+                            <td className="px-3 py-1.5"><input value={s.levelCode} onChange={(e) => levelEdit(i, 'levelCode', e.target.value)} className="w-24 rounded border border-slate-200 px-2 py-1 text-sm outline-none focus:border-brand-400" /></td>
+                            <td className="px-3 py-1.5"><input value={s.levelName} onChange={(e) => levelEdit(i, 'levelName', e.target.value)} className="w-40 rounded border border-slate-200 px-2 py-1 text-sm outline-none focus:border-brand-400" /></td>
+                            <td className="px-3 py-1.5"><button className="text-xs text-rose-500 hover:underline" onClick={() => levelDel(i)}>删除</button></td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <div className="border-t border-slate-100 px-3 py-2">
+                    <Button size="sm" variant="ghost" onClick={levelAdd}>＋ 新增分段</Button>
+                  </div>
+                </div>
+              </div>
+              ) : (
+                <div className="flex flex-wrap items-center gap-x-6 gap-y-1 text-sm text-slate-500">
+                  {scoreLevelMap.map((s) => (
+                    <span key={s.levelCode}>分值 {s.scoreMin}~{s.scoreMax} → <b className="text-slate-700">{s.levelName}</b></span>
+                  ))}
+                </div>
+              )}
             </Panel>
+
+            {/* ===== 区块D：融合处置规则（等级 + 标签） ===== */}
+            <Panel
+              title="融合处置规则"
+              desc="基础风险等级 + 命中标签 → 最终处置。规则从上至下依次匹配，命中即终止；可调整顺序、启停、编辑或删除。"
+              actions={<div className="flex items-center gap-2"><Cfg value="scoreData.json" /><Button size="sm" variant="secondary" onClick={() => setSimOpen(true)}>全链路模拟调试</Button><Button size="sm" variant="primary" onClick={openFuAdd}>新增融合规则</Button></div>}
+            >
+              <div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-1 rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-500">
+                <span className="font-medium text-slate-600">配置步骤：</span>
+                <span>① 选择风险等级（可多选）</span>
+                <span className="text-slate-300">→</span>
+                <span>② 选择标签 + 标签要求</span>
+                <span className="text-slate-300">→</span>
+                <span>③ 审核结果、关联业务流程</span>
+              </div>
+              <DataTable
+                columns={[
+                  { key: 'ruleSort', label: '排序', width: '88px', render: (r: Row) => (
+                    <div className="flex items-center gap-1">
+                      <button className="text-xs text-slate-400 hover:text-brand-600" onClick={() => fuMove(r.id as string, -1)}>↑</button>
+                      <span className="text-sm tabular-nums">{r.ruleSort as number}</span>
+                      <button className="text-xs text-slate-400 hover:text-brand-600" onClick={() => fuMove(r.id as string, 1)}>↓</button>
+                    </div>
+                  ) },
+                  { key: 'baseRiskLevel', label: '适配基础等级', width: '150px', render: (r: Row) => (
+                    <div className="flex flex-wrap gap-1">{(r.baseRiskLevel as string[]).map((lv) => <Badge key={lv} kind={lv === 'HIGH' || lv === 'VHIGH' ? 'red' : lv === 'MID' ? 'amber' : lv === 'VLOW' || lv === 'LOW' ? 'green' : 'gray'}>{lv === 'ALL' ? '全部' : lv === 'VLOW' ? '极低' : lv === 'LOW' ? '低' : lv === 'MID' ? '中' : lv === 'HIGH' ? '高' : '极高'}</Badge>)}</div>
+                  ) },
+                  { key: 'matchTagList', label: '引用标签 + 匹配方式', render: (r: Row) => {
+                    const codes = r.matchTagList as string[]
+                    if (!codes.length) return <span className="text-xs text-slate-400">仅看等级（无标签条件）</span>
+                    const names = codes.map((c) => tags.find((t) => t.tagCode === c)?.name ?? c).join('、')
+                    return <span className="text-sm">{names} <span className="text-xs text-slate-400">（{r.matchMode === 'all' ? '全部命中' : '任意命中'}）</span></span>
+                  } },
+                  { key: 'finalDecision', label: '处置意见', width: '100px', render: (r: Row) => <Badge kind={r.finalDecision === '拒绝' ? 'red' : r.finalDecision === '转人工' ? 'amber' : 'green'}>{r.finalDecision as string}</Badge> },
+                  { key: 'processId', label: '关联业务流程', width: '200px', render: (r: Row) => <span className="text-sm">{flowName(r.processId as string)}</span> },
+                  { key: 'outputRemark', label: '处置说明', render: (r: Row) => <span className="text-xs text-slate-500">{r.outputRemark as string}</span> },
+                  { key: 'isActive', label: '状态', width: '90px', render: (r: Row) => (
+                    <button onClick={() => fuToggle(r.id as string)} className={r.isActive ? 'text-emerald-600 hover:underline' : 'text-slate-400 hover:underline'}>{r.isActive ? '已启用' : '已停用'}</button>
+                  ) },
+                  { key: 'op', label: '操作', width: '120px', render: (r: Row) => (
+                    <div className="flex items-center gap-2">
+                      <Button size="sm" variant="ghost" onClick={() => openFuEdit(r.id as string)}>编辑</Button>
+                      <button className="text-xs text-rose-500 hover:underline" onClick={() => fuRemove(r.id as string)}>删除</button>
+                    </div>
+                  ) },
+                ]}
+                rows={fus.map((f) => ({ id: f.id, ruleSort: f.ruleSort, baseRiskLevel: f.baseRiskLevel, matchTagList: f.matchTagList, matchMode: f.matchMode, finalDecision: f.finalDecision, processId: f.processId ?? '', outputRemark: f.outputRemark, isActive: f.isActive }))}
+                empty="暂无融合规则，点击「新增融合规则」配置「等级 + 标签 → 处置」"
+                pager
+                defaultPageSize={10}
+              />
+            </Panel>
+
           </div>
         )}
       </div>
@@ -759,108 +980,62 @@ export default function ScoreModelDetailPage() {
         </div>
       </Modal>
 
-      {/* ===== 新增阈值 Modal ===== */}
-      <Modal open={thNewOpen} onClose={() => setThNewOpen(false)} title={`新增阈值 · ${SCORE_PROD_LABEL[prod]}`}>
-        <div className="space-y-3">
-          <label className="block">
-            <span className="mb-1 block text-xs text-slate-400">分数区间（如 0-40 / 41-69）</span>
-            <input value={thDraft.range} onChange={(e) => setThDraft({ ...thDraft, range: e.target.value })} placeholder="0-40"
-              className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm outline-none focus:border-brand-400" />
-          </label>
-          <label className="block">
-            <span className="mb-1 block text-xs text-slate-400">等级（如 高 / 中 / 低 或 A-E）</span>
-            <input value={thDraft.level} onChange={(e) => setThDraft({ ...thDraft, level: e.target.value })} placeholder="高"
-              className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm outline-none focus:border-brand-400" />
-          </label>
-          <label className="block">
-            <span className="mb-1 block text-xs text-slate-400">含义</span>
-            <input value={thDraft.meaning} onChange={(e) => setThDraft({ ...thDraft, meaning: e.target.value })} placeholder="欺诈风险极高，直接拒绝"
-              className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm outline-none focus:border-brand-400" />
-          </label>
-          <label className="block">
-            <span className="mb-1 block text-xs text-slate-400">建议动作</span>
-            <input value={thDraft.action} onChange={(e) => setThDraft({ ...thDraft, action: e.target.value })} placeholder="拒绝 / 审慎授信 / 标准额度"
-              className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm outline-none focus:border-brand-400" />
-          </label>
-          <label className="block">
-            <span className="mb-1 block text-xs text-slate-400">关联预警处置流程（可选）</span>
-            <select value={thDraft.bizFlowId} onChange={(e) => setThDraft({ ...thDraft, bizFlowId: e.target.value })}
-              className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm outline-none focus:border-brand-400">
-              <option value="">未关联</option>
-              {flows.map((f) => <option key={f.id} value={f.id}>{f.name}</option>)}
-            </select>
-          </label>
-        </div>
-        <div className="mt-4 flex justify-end gap-2">
-          <Button size="sm" variant="ghost" onClick={() => setThNewOpen(false)}>取消</Button>
-          <Button size="sm" variant="primary" onClick={confirmThNew}>确认新增</Button>
-        </div>
-      </Modal>
+      {/* ===== 新增阈值 Modal（已随评分类改造移除：阈值逻辑并入 Tab4 区块C + 等级默认处置表） ===== */}
 
       {/* ===== 新增规则风险 Modal（引用决策引擎资产） ===== */}
-      <Modal open={rlNewOpen} onClose={() => setRlNewOpen(false)} title={`新增规则风险 · ${SCORE_PROD_LABEL[prod]}`}>
+      <Modal open={rlNewOpen} onClose={() => setRlNewOpen(false)} title={`新增风险标签 · ${SCORE_PROD_LABEL[prod]}`}>
         <div className="space-y-3">
-          <label className="block">
-            <span className="mb-1 block text-xs text-slate-400">规则风险名称</span>
-            <input value={rlDraft.name ?? ''} onChange={(e) => setRlDraft({ ...rlDraft, name: e.target.value })} placeholder="如 黑灰名单命中"
-              className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm outline-none focus:border-brand-400" />
-          </label>
           <div className="grid grid-cols-2 gap-3">
             <label className="block">
-              <span className="mb-1 block text-xs text-slate-400">引用资产类型</span>
-              <select value={rlDraft.refType ?? 'list'} onChange={(e) => setRlDraft({ ...rlDraft, refType: e.target.value as 'list' | 'ruleset', ref: '' })}
-                className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm outline-none focus:border-brand-400">
-                <option value="list">名单库</option>
-                <option value="ruleset">规则集</option>
-              </select>
+              <span className="mb-1 block text-xs text-slate-400">风险标签</span>
+              <input value={rlDraft.name ?? ''} onChange={(e) => setRlDraft({ ...rlDraft, name: e.target.value })} placeholder="如 黑灰名单命中"
+                className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm outline-none focus:border-brand-400" />
             </label>
             <label className="block">
-              <span className="mb-1 block text-xs text-slate-400">引用资产（决策引擎）</span>
-              <select value={rlDraft.ref ?? ''} onChange={(e) => setRlDraft({ ...rlDraft, ref: e.target.value })}
-                className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm outline-none focus:border-brand-400">
-                <option value="">请选择</option>
-                {(rlDraft.refType === 'list' ? decision.lists : decision.models.flatMap((dm) => dm.policies)).map((x) => (
-                  <option key={x.id} value={x.id}>{x.id} · {x.name}</option>
-                ))}
-              </select>
+              <span className="mb-1 block text-xs text-slate-400">标签编码（系统自动生成）</span>
+              <input value={rlDraft.tagCode ?? ''} onChange={(e) => setRlDraft({ ...rlDraft, tagCode: e.target.value })} placeholder={`自动生成 TAG_${prod.slice(0, 2).toUpperCase()}_xxx`}
+                className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm outline-none focus:border-brand-400" />
             </label>
           </div>
           <div className="grid grid-cols-2 gap-3">
-            <label className="block">
-              <span className="mb-1 block text-xs text-slate-400">触发条件</span>
-              <select value={rlDraft.hit ?? '命中'} onChange={(e) => setRlDraft({ ...rlDraft, hit: e.target.value as '命中' | '未命中' })}
-                className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm outline-none focus:border-brand-400">
-                <option value="命中">命中</option>
-                <option value="未命中">未命中</option>
-              </select>
-            </label>
             <label className="block">
               <span className="mb-1 block text-xs text-slate-400">标签等级</span>
-              <select value={rlDraft.level ?? '中度'} onChange={(e) => setRlDraft({ ...rlDraft, level: e.target.value as RiskLabel['level'] })}
-                className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm outline-none focus:border-brand-400">
-                <option value="轻度">轻度</option>
-                <option value="中度">中度</option>
-                <option value="重度">重度</option>
-              </select>
+              <SingleSelect label="标签等级" fullWidth portal value={rlDraft.tagLevel ?? '中度风险'} onChange={(v) => setRlDraft({ ...rlDraft, tagLevel: v as RiskLabel['tagLevel'] })} options={[
+                { value: '重度风险', label: '重度风险' },
+                { value: '中度风险', label: '中度风险' },
+                { value: '轻度风险', label: '轻度风险' },
+                { value: '监控信号', label: '监控信号' },
+              ]} />
             </label>
           </div>
           <label className="block">
-            <span className="mb-1 block text-xs text-slate-400">标签类型</span>
-            <select value={rlDraft.ltype ?? '欺诈标签'} onChange={(e) => setRlDraft({ ...rlDraft, ltype: e.target.value as RiskLabel['ltype'] })}
-              className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm outline-none focus:border-brand-400">
-              <option value="欺诈标签">欺诈标签</option>
-              <option value="信用标签">信用标签</option>
-              <option value="监控标签">监控标签</option>
-            </select>
+            <span className="mb-1 block text-xs text-slate-400">判定依据（仅可选规则集，输入名称即可搜索筛选）</span>
+            <RuleSetSelect value={rlDraft.ref ?? ''} onChange={(v) => setRlDraft({ ...rlDraft, ref: v, refType: 'ruleset' })} />
           </label>
-          <div className="flex gap-6">
+          <label className="block">
+            <span className="mb-1 block text-xs text-slate-400">触发条件</span>
+            <SingleSelect label="触发条件" fullWidth portal value={rlDraft.collisionCondition ?? 'single'} onChange={(v) => setRlDraft({ ...rlDraft, collisionCondition: v as 'single' | 'all' })} options={[
+              { value: 'single', label: '规则命中即生成标签' },
+              { value: 'all', label: '多规则同时命中才生成标签' },
+            ]} />
+          </label>
+          <label className="block">
+            <span className="mb-1 block text-xs text-slate-400">风险描述 / 业务解释</span>
+            <textarea value={rlDraft.tagDesc ?? ''} onChange={(e) => setRlDraft({ ...rlDraft, tagDesc: e.target.value })} placeholder="用于对外报告、合规解释、人工复核提示"
+              className="h-20 w-full resize-none rounded-lg border border-slate-200 p-3 text-sm outline-none focus:border-brand-400" />
+          </label>
+          <div className="flex flex-wrap gap-6">
             <label className="flex items-center gap-2 text-sm text-slate-600">
-              <input type="checkbox" checked={rlDraft.show ?? true} onChange={(e) => setRlDraft({ ...rlDraft, show: e.target.checked })} /> 对外展示
+              <input type="checkbox" checked={rlDraft.joinFusion ?? true} onChange={(e) => setRlDraft({ ...rlDraft, joinFusion: e.target.checked })} /> 计入融合处置
             </label>
             <label className="flex items-center gap-2 text-sm text-slate-600">
-              <input type="checkbox" checked={rlDraft.toFusion ?? true} onChange={(e) => setRlDraft({ ...rlDraft, toFusion: e.target.checked })} /> 计入融合处置
+              <input type="checkbox" checked={rlDraft.isRiskMonitorTag ?? false} onChange={(e) => setRlDraft({ ...rlDraft, isRiskMonitorTag: e.target.checked })} /> 纳入自动化监控样本
+            </label>
+            <label className="flex items-center gap-2 text-sm text-slate-600">
+              <input type="checkbox" checked={rlDraft.enabled ?? true} onChange={(e) => setRlDraft({ ...rlDraft, enabled: e.target.checked })} /> 启用
             </label>
           </div>
+          <div className="text-xs text-slate-400">排序保存后自动按当前最大序号 +1；命中即派生该标签，标签不参与概率与标准分计算。</div>
           <div className="flex justify-end gap-2 pt-1">
             <Button size="sm" variant="ghost" onClick={() => setRlNewOpen(false)}>取消</Button>
             <Button size="sm" variant="primary" onClick={rlConfirm}>确认新增</Button>
@@ -868,108 +1043,175 @@ export default function ScoreModelDetailPage() {
         </div>
       </Modal>
 
-      {/* ===== 新增融合处置规则 Modal ===== */}
-      <Modal open={fuNewOpen} onClose={() => setFuNewOpen(false)} title={`新增融合处置规则 · ${SCORE_PROD_LABEL[prod]}`}>
+      {/* ===== 实时输出预览 Modal（风险标签对外统一结构） ===== */}
+      <Modal open={rlPreviewOpen} onClose={() => setRlPreviewOpen(false)} title={`实时输出预览 · ${SCORE_PROD_LABEL[prod]}`}>
         <div className="space-y-3">
-          <div className="grid grid-cols-2 gap-3">
-            <label className="block">
-              <span className="mb-1 block text-xs text-slate-400">分数等级（可选）</span>
-              <select value={fuDraft.level} onChange={(e) => setFuDraft({ ...fuDraft, level: e.target.value })}
-                className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm outline-none focus:border-brand-400">
-                <option value="">任意等级</option>
-                {levelOptions.map((lv) => <option key={lv} value={lv}>{lv}</option>)}
-              </select>
-            </label>
-            <label className="block">
-              <span className="mb-1 block text-xs text-slate-400">规则风险标签（来自 Tab3，可选）</span>
-              <select value={fuDraft.label} onChange={(e) => setFuDraft({ ...fuDraft, label: e.target.value })}
-                className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm outline-none focus:border-brand-400">
-                <option value="">任意标签</option>
-                {labels.filter((l) => l.toFusion).map((l) => <option key={l.id} value={l.name}>{l.name}（{l.ltype}）</option>)}
-              </select>
-            </label>
-          </div>
-          <div className="text-xs text-slate-400">至少选一项；选「任意」即不限定该项。触发条件会自动生成为「等级 + 标签」文本（如「高风险 + 黑灰名单命中」），保存后可在表格查看。</div>
-          <label className="flex items-center gap-2 text-sm text-slate-600">
-            <input type="checkbox" checked={fuDraft.labelPriority} onChange={(e) => setFuDraft({ ...fuDraft, labelPriority: e.target.checked })} /> 标签优先级高于分数等级（命中严重标签直接拒绝，无视分数）
-          </label>
-          <div className="grid grid-cols-2 gap-3">
-            <label className="block">
-              <span className="mb-1 block text-xs text-slate-400">处置意见</span>
-              <select value={fuDraft.decision} onChange={(e) => setFuDraft({ ...fuDraft, decision: e.target.value as FusionRule['decision'] })}
-                className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm outline-none focus:border-brand-400">
-                <option value="通过">通过</option>
-                <option value="转人工">转人工</option>
-                <option value="拒绝">拒绝</option>
-              </select>
-            </label>
-            <label className="block">
-              <span className="mb-1 block text-xs text-slate-400">关联业务流程（可选）</span>
-              <select value={fuDraft.bizFlowId} onChange={(e) => setFuDraft({ ...fuDraft, bizFlowId: e.target.value })}
-                className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm outline-none focus:border-brand-400">
-                <option value="">未关联</option>
-                {flows.map((f) => <option key={f.id} value={f.id}>{f.name}</option>)}
-              </select>
-            </label>
-          </div>
-          <div className="flex justify-end gap-2 pt-1">
-            <Button size="sm" variant="ghost" onClick={() => setFuNewOpen(false)}>取消</Button>
-            <Button size="sm" variant="primary" onClick={fuConfirm}>确认新增</Button>
+          <div className="text-xs text-slate-500">当前模型最终产出的风险标签数组，结构对标同盾对外 API，供前端对接、调试使用。</div>
+          <pre className="max-h-80 overflow-auto rounded-lg bg-slate-900 p-3 text-xs leading-relaxed text-slate-100">{JSON.stringify(tagPreview, null, 2)}</pre>
+          {!tagCfg.tagSwitch && <div className="text-xs text-amber-600">标签支线已关闭，当前无标签输出。</div>}
+          <div className="flex justify-end">
+            <Button size="sm" variant="ghost" onClick={() => setRlPreviewOpen(false)}>关闭</Button>
           </div>
         </div>
       </Modal>
 
-      {/* ===== 新增关联预警 Modal（写入 midAlerts 预警平台） ===== */}
-      <Modal open={alOpen} onClose={() => setAlOpen(false)} title={`新增关联预警 · ${SCORE_PROD_LABEL[prod]}`}>
+      {/* ===== 新增 / 编辑 融合处置规则 Modal（小白友好版） ===== */}
+      <RightDrawer open={fuNewOpen} onClose={() => { setFuNewOpen(false); setFuEditId(null) }} title={`${fuEditId ? '编辑' : '新增'}融合处置规则`} width={560}>
+        <div className="space-y-4">
+          <div className="rounded-lg bg-brand-50 px-3 py-2 text-xs leading-relaxed text-brand-700">
+            这条规则用来决定：<b>满足什么条件的客户，系统该给「通过 / 转人工 / 拒绝」</b>。规则从上往下匹配，先命中谁就用谁。
+          </div>
+
+          {/* 审核结果 + 启用（置顶同一行） */}
+          <div className="flex flex-wrap items-end gap-4">
+            <label className="block flex-1 min-w-[200px]">
+              <span className="mb-1 block text-sm font-medium text-slate-700">审核结果</span>
+              <SingleSelect label="审核结果" fullWidth portal value={fuDraft.finalDecision} onChange={(v) => setFuDraft({ ...fuDraft, finalDecision: v as FusionRule['finalDecision'] })} options={[
+                { value: '通过', label: '通过' },
+                { value: '转人工', label: '转人工' },
+                { value: '拒绝', label: '拒绝' },
+              ]} />
+            </label>
+            <label className="flex items-center gap-2 pb-1.5 text-sm text-slate-600">
+              <input type="checkbox" checked={fuDraft.isActive ?? true} onChange={(e) => setFuDraft({ ...fuDraft, isActive: e.target.checked })} /> 启用
+            </label>
+          </div>
+
+          <label className="block">
+            <span className="mb-1 block text-sm font-medium text-slate-700">关联业务流程</span>
+            <SingleSelect label="关联业务流程" fullWidth portal value={fuDraft.processId ?? ''} onChange={(v) => setFuDraft({ ...fuDraft, processId: v })} options={[
+              { value: '', label: '未关联' },
+              ...flows.map((f) => ({ value: f.id, label: f.name })),
+            ]} />
+          </label>
+
+          {/* 选择风险等级（跟随模型风险等级分段，实时） */}
+          <div>
+            <div className="mb-1 text-sm font-medium text-slate-700">选择风险等级（客户分数落在哪个区间）</div>
+            <span className="mb-2 block text-xs text-slate-400">可多选；都不选 = 适用于所有等级</span>
+            <div className="flex flex-wrap gap-2">
+              {scoreLevelMap.map((s) => {
+                const code = s.levelCode
+                const checked = (fuDraft.baseRiskLevel ?? []).includes(code)
+                return (
+                  <button key={code} type="button" onClick={() => {
+                    const cur = fuDraft.baseRiskLevel ?? []
+                    setFuDraft({ ...fuDraft, baseRiskLevel: checked ? cur.filter((x) => x !== code) : [...cur, code] })
+                  }}
+                    className={`rounded-full px-3 py-1 text-sm ${checked ? 'bg-brand-50 text-brand-600 ring-1 ring-brand-200' : 'bg-slate-50 text-slate-500'}`}>
+                    {lvShort(code) || s.levelName || code}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* 选择标签 + 标签要求（同一区块，标签与规则风险联动） */}
+          <div className="space-y-3 rounded-lg border border-slate-100 p-3">
+            <div>
+              <div className="mb-1 text-sm font-medium text-slate-700">选择标签（可留空）</div>
+              <span className="mb-2 block text-xs text-slate-400">从「规则风险」页已配置的标签里选；不选 = 只看等级，不考虑标签</span>
+              {tags.length ? (
+                <div className="space-y-2">
+                  {(['重度风险', '中度风险', '轻度风险', '监控信号'] as const).map((lv) => {
+                    const group = tags.filter((t) => t.tagLevel === lv)
+                    if (!group.length) return null
+                    return (
+                      <div key={lv} className="flex flex-wrap items-center gap-2">
+                        <span className="w-14 shrink-0 text-xs text-slate-400">{lv}</span>
+                        {group.map((l) => {
+                          const checked = (fuDraft.matchTagList ?? []).includes(l.tagCode)
+                          return (
+                            <button key={l.id} type="button" onClick={() => {
+                              const cur = fuDraft.matchTagList ?? []
+                              setFuDraft({ ...fuDraft, matchTagList: checked ? cur.filter((c) => c !== l.tagCode) : [...cur, l.tagCode] })
+                            }}
+                              className={`rounded-full px-3 py-1 text-sm ${checked ? 'bg-violet-50 text-violet-700 ring-1 ring-violet-200' : 'bg-slate-50 text-slate-500'}`}>
+                              {l.name}
+                            </button>
+                          )
+                        })}
+                      </div>
+                    )
+                  })}
+                </div>
+              ) : <span className="text-xs text-slate-400">暂无标签，请先到「规则风险」页新增</span>}
+            </div>
+            <div>
+              <div className="mb-1 text-sm font-medium text-slate-700">标签要求</div>
+              <span className="mb-2 block text-xs text-slate-400">{(fuDraft.matchTagList ?? []).length ? '选了标签时生效' : '未选标签，此步自动忽略'}</span>
+              <div className="flex gap-2">
+                <button type="button" onClick={() => setFuDraft({ ...fuDraft, matchMode: 'any' })} className={`rounded px-3 py-1 text-sm ${fuDraft.matchMode !== 'all' ? 'bg-brand-50 text-brand-600' : 'bg-slate-50 text-slate-500'}`}>命中任意一个即可</button>
+                <button type="button" onClick={() => setFuDraft({ ...fuDraft, matchMode: 'all' })} className={`rounded px-3 py-1 text-sm ${fuDraft.matchMode === 'all' ? 'bg-brand-50 text-brand-600' : 'bg-slate-50 text-slate-500'}`}>必须全部命中</button>
+              </div>
+            </div>
+          </div>
+
+          <label className="block">
+            <span className="mb-1 block text-sm font-medium text-slate-700">处置说明（选填）</span>
+            <textarea value={fuDraft.outputRemark ?? ''} onChange={(e) => setFuDraft({ ...fuDraft, outputRemark: e.target.value })} placeholder="接口返回、审核页面展示的处置说明"
+              className="h-16 w-full resize-none rounded-lg border border-slate-200 p-3 text-sm outline-none focus:border-brand-400" />
+          </label>
+
+          <div className="rounded-lg bg-slate-900 px-3 py-2 text-xs leading-relaxed text-slate-100">
+            {(() => {
+              const lvNames = (fuDraft.baseRiskLevel ?? []).map((lv) => lvShort(lv)).join('、') || '全部等级'
+              const tagNames = (fuDraft.matchTagList ?? []).map((c) => tags.find((t) => t.tagCode === c)?.name ?? c).join('、')
+              const hasTags = (fuDraft.matchTagList ?? []).length > 0
+              const modeTxt = hasTags ? (fuDraft.matchMode === 'all' ? '且须全部命中' : '且命中任意一个') : ''
+              const flowTxt = flowName(fuDraft.processId)
+              return `规则预览：当客户属于【${lvNames}】${ hasTags ? `${modeTxt}【${tagNames}】` : '' } → 系统给【${fuDraft.finalDecision ?? '通过'}】${ flowTxt && flowTxt !== '未关联' ? `，转【${flowTxt}】` : '' }`
+            })()}
+          </div>
+
+          <div className="flex justify-end gap-2 pt-1">
+            <Button size="sm" variant="ghost" onClick={() => { setFuNewOpen(false); setFuEditId(null) }}>取消</Button>
+            <Button size="sm" variant="primary" onClick={fuConfirm}>{fuEditId ? '保存修改' : '确认新增'}</Button>
+            </div>
+          </div>
+      </RightDrawer>
+
+      {/* ===== 全链路模拟调试 Modal ===== */}
+      <Modal open={simOpen} onClose={() => setSimOpen(false)} title={`全链路模拟调试 · ${SCORE_PROD_LABEL[prod]}`}>
         <div className="space-y-3">
+          <div className="text-xs text-slate-500">输入预测概率、勾选命中标签，一键算出标准分 / 风险等级 / 命中规则 / 最终处置。</div>
           <label className="block">
-            <span className="text-sm text-slate-500">客户名称</span>
-            <input value={alForm.cust_name} onChange={(e) => setAlForm((f) => ({ ...f, cust_name: e.target.value }))} placeholder="如 张*明"
-              className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand-400" />
+            <span className="mb-1 block text-xs text-slate-400">模拟预测概率（0~1）</span>
+            <input type="number" step="0.01" min="0" max="1" value={simProb} onChange={(e) => setSimProb(e.target.value)}
+              className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm outline-none focus:border-brand-400" />
           </label>
-          <label className="block">
-            <span className="text-sm text-slate-500">预警类型</span>
-            <input value={alForm.alert_type} onChange={(e) => setAlForm((f) => ({ ...f, alert_type: e.target.value }))} placeholder="如 负债激增 / 多头借贷 / 司法涉诉"
-              className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand-400" />
-          </label>
-          <div className="grid grid-cols-2 gap-3">
-            <label className="block">
-              <span className="text-sm text-slate-500">等级</span>
-              <select value={alForm.level} onChange={(e) => setAlForm((f) => ({ ...f, level: e.target.value as MidAlert['level'] }))} className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand-400">
-                <option value="RED">红（高风险）</option>
-                <option value="YELLOW">黄（关注）</option>
-                <option value="OPPORTUNITY">机会（营销）</option>
-              </select>
-            </label>
-            <label className="block">
-              <span className="text-sm text-slate-500">关联处置流程</span>
-              <select value={alForm.flowKey} onChange={(e) => setAlForm((f) => ({ ...f, flowKey: e.target.value }))} className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand-400">
-                <option value="">未关联</option>
-                {flows.map((f) => <option key={f.id} value={f.id}>{f.name}</option>)}
-              </select>
-            </label>
+          <div>
+            <span className="mb-1 block text-xs text-slate-400">模拟命中标签</span>
+            <div className="flex flex-wrap gap-2">
+              {tags.length ? tags.map((l) => {
+                const checked = simTags.includes(l.tagCode)
+                return (
+                  <button key={l.id} onClick={() => setSimTags(checked ? simTags.filter((c) => c !== l.tagCode) : [...simTags, l.tagCode])}
+                    className={`rounded-full px-3 py-1 text-sm ${checked ? 'bg-violet-50 text-violet-700 ring-1 ring-violet-200' : 'bg-slate-50 text-slate-500'}`}>
+                    {l.tagCode} · {l.name}
+                  </button>
+                )
+              }) : <span className="text-xs text-slate-400">暂无标签</span>}
+            </div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <label className="block">
-              <span className="text-sm text-slate-500">指标值</span>
-              <input type="number" value={alForm.metric_value} onChange={(e) => setAlForm((f) => ({ ...f, metric_value: Number(e.target.value) }))} className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand-400" />
-            </label>
-            <label className="block">
-              <span className="text-sm text-slate-500">阈值</span>
-              <input type="number" value={alForm.threshold} onChange={(e) => setAlForm((f) => ({ ...f, threshold: Number(e.target.value) }))} className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand-400" />
-            </label>
-          </div>
-          <label className="block">
-            <span className="text-sm text-slate-500">命中规则</span>
-            <input value={alForm.rule_name} onChange={(e) => setAlForm((f) => ({ ...f, rule_name: e.target.value }))} placeholder="如 近30天新增贷款≥3笔"
-              className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand-400" />
-          </label>
-          <div className="flex justify-end gap-2 pt-2">
-            <Button variant="ghost" onClick={() => setAlOpen(false)}>取消</Button>
-            <Button variant="primary" onClick={addAlert}>确认新增</Button>
+          {(() => {
+            const r = simulateFusion(m, Number(simProb), simTags)
+            return (
+              <div className="space-y-2 rounded-lg bg-slate-900 p-3 text-xs leading-relaxed text-slate-100">
+                <div>映射标准分：<span className="font-semibold text-emerald-300">{r.standardScore}</span></div>
+                <div>基础风险等级：<span className="font-semibold text-amber-300">{r.riskLevel}（{r.riskLevelName}）</span></div>
+                <div>命中融合规则：<span className="font-semibold text-sky-300">{r.matchedRule ? `${r.matchedRule.id} · ${r.matchedRule.outputRemark}` : '无（按处置策略兜底）'}</span></div>
+                <div>最终处置：<span className={`font-semibold ${r.decision === '拒绝' ? 'text-rose-300' : r.decision === '转人工' ? 'text-amber-300' : 'text-emerald-300'}`}>{r.decision}</span> ｜ 流程：{flowName(r.processId)}</div>
+                <div className="text-slate-400">说明：{r.remark}</div>
+              </div>
+            )
+          })()}
+          <div className="flex justify-end gap-2 pt-1">
+            <Button size="sm" variant="ghost" onClick={() => setSimOpen(false)}>关闭</Button>
           </div>
         </div>
       </Modal>
+
     </>
   )
 }

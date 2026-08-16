@@ -2135,7 +2135,7 @@
   {
     "id": "f-ent-alert",
     "name": "企业预警处置流程",
-    "desc": "企业风控·预警处置工作台统一流程：按预警等级（红灯/黄灯）匹配具体处置流程，列表显示「时限倒计时」与「流程状态」列，状态沿流程流转（参照贷中预警处置流程架构）",
+    "desc": "企业风控·预警处置工作台统一流程：按预警等级（红灯/黄灯）匹配具体处置流程，列表显示「流程状态」列，状态沿流程流转（参照贷中预警处置流程架构）",
     "pageRoutes": [
       "/console/ep/alert-workbench"
     ],
@@ -2152,11 +2152,36 @@
           }
         ],
         "flowSteps": [
-          { "state": "预警确认中", "action": "确认", "next": "风险研判中", "color": "#DC2626" },
-          { "state": "风险研判中", "action": "研判", "next": "处置执行中", "color": "#DC2626" },
-          { "state": "处置执行中", "action": "执行处置", "next": "效果跟踪中", "color": "#F59E0B" },
-          { "state": "效果跟踪中", "action": "跟踪评估", "next": "已结案", "color": "#059669" },
-          { "state": "已结案", "action": "", "next": "", "color": "#059669" }
+          {
+            "state": "预警确认中",
+            "action": "确认",
+            "next": "风险研判中",
+            "color": "#DC2626"
+          },
+          {
+            "state": "风险研判中",
+            "action": "研判",
+            "next": "处置执行中",
+            "color": "#DC2626"
+          },
+          {
+            "state": "处置执行中",
+            "action": "执行处置",
+            "next": "效果跟踪中",
+            "color": "#F59E0B"
+          },
+          {
+            "state": "效果跟踪中",
+            "action": "跟踪评估",
+            "next": "已结案",
+            "color": "#059669"
+          },
+          {
+            "state": "已结案",
+            "action": "",
+            "next": "",
+            "color": "#059669"
+          }
         ],
         "nodes": [
           {
@@ -2167,8 +2192,12 @@
             "y": 140,
             "showButton": false,
             "checkItems": [],
-            "results": ["确认"],
-            "resultStates": { "确认": "风险研判中" },
+            "results": [
+              "确认"
+            ],
+            "resultStates": {
+              "确认": "风险研判中"
+            },
             "timeLimit": 24
           },
           {
@@ -2179,10 +2208,20 @@
             "y": 140,
             "role": "风控专员",
             "buttonName": "研判",
-            "checkItems": ["预警真实性与影响评估"],
-            "results": ["通过"],
-            "opinionPresets": { "通过": ["风险研判完成，进入处置执行"] },
-            "resultStates": { "通过": "处置执行中" },
+            "checkItems": [
+              "预警真实性与影响评估"
+            ],
+            "results": [
+              "通过"
+            ],
+            "opinionPresets": {
+              "通过": [
+                "风险研判完成，进入处置执行"
+              ]
+            },
+            "resultStates": {
+              "通过": "处置执行中"
+            },
             "timeLimit": 48
           },
           {
@@ -2193,10 +2232,20 @@
             "y": 140,
             "role": "风控主管",
             "buttonName": "执行处置",
-            "checkItems": ["处置方案确认与执行"],
-            "results": ["通过"],
-            "opinionPresets": { "通过": ["处置执行完成"] },
-            "resultStates": { "通过": "效果跟踪中" },
+            "checkItems": [
+              "处置方案确认与执行"
+            ],
+            "results": [
+              "通过"
+            ],
+            "opinionPresets": {
+              "通过": [
+                "处置执行完成"
+              ]
+            },
+            "resultStates": {
+              "通过": "效果跟踪中"
+            },
             "timeLimit": 72
           },
           {
@@ -2207,10 +2256,20 @@
             "y": 140,
             "role": "风控专员",
             "buttonName": "跟踪评估",
-            "checkItems": ["处置效果复核"],
-            "results": ["通过"],
-            "opinionPresets": { "通过": ["处置效果达标，结案"] },
-            "resultStates": { "通过": "已结案" },
+            "checkItems": [
+              "处置效果复核"
+            ],
+            "results": [
+              "通过"
+            ],
+            "opinionPresets": {
+              "通过": [
+                "处置效果达标，结案"
+              ]
+            },
+            "resultStates": {
+              "通过": "已结案"
+            },
             "timeLimit": 168
           },
           {
@@ -2226,10 +2285,30 @@
           }
         ],
         "edges": [
-          { "id": "e1", "from": "n_0", "to": "n_1", "result": "确认" },
-          { "id": "e2", "from": "n_1", "to": "n_2", "result": "通过" },
-          { "id": "e3", "from": "n_2", "to": "n_3", "result": "通过" },
-          { "id": "e4", "from": "n_3", "to": "n_4", "result": "通过" }
+          {
+            "id": "e1",
+            "from": "n_0",
+            "to": "n_1",
+            "result": "确认"
+          },
+          {
+            "id": "e2",
+            "from": "n_1",
+            "to": "n_2",
+            "result": "通过"
+          },
+          {
+            "id": "e3",
+            "from": "n_2",
+            "to": "n_3",
+            "result": "通过"
+          },
+          {
+            "id": "e4",
+            "from": "n_3",
+            "to": "n_4",
+            "result": "通过"
+          }
         ]
       },
       {
@@ -2241,9 +2320,24 @@
           }
         ],
         "flowSteps": [
-          { "state": "预警确认中", "action": "确认", "next": "风险研判中", "color": "#D97706" },
-          { "state": "风险研判中", "action": "研判", "next": "已结案", "color": "#059669" },
-          { "state": "已结案", "action": "", "next": "", "color": "#059669" }
+          {
+            "state": "预警确认中",
+            "action": "确认",
+            "next": "风险研判中",
+            "color": "#D97706"
+          },
+          {
+            "state": "风险研判中",
+            "action": "研判",
+            "next": "已结案",
+            "color": "#059669"
+          },
+          {
+            "state": "已结案",
+            "action": "",
+            "next": "",
+            "color": "#059669"
+          }
         ],
         "nodes": [
           {
@@ -2254,8 +2348,12 @@
             "y": 140,
             "showButton": false,
             "checkItems": [],
-            "results": ["确认"],
-            "resultStates": { "确认": "风险研判中" },
+            "results": [
+              "确认"
+            ],
+            "resultStates": {
+              "确认": "风险研判中"
+            },
             "timeLimit": 48
           },
           {
@@ -2266,10 +2364,20 @@
             "y": 140,
             "role": "风控专员",
             "buttonName": "研判",
-            "checkItems": ["预警研判"],
-            "results": ["通过"],
-            "opinionPresets": { "通过": ["研判完成，结案"] },
-            "resultStates": { "通过": "已结案" },
+            "checkItems": [
+              "预警研判"
+            ],
+            "results": [
+              "通过"
+            ],
+            "opinionPresets": {
+              "通过": [
+                "研判完成，结案"
+              ]
+            },
+            "resultStates": {
+              "通过": "已结案"
+            },
             "timeLimit": 72
           },
           {
@@ -2285,9 +2393,678 @@
           }
         ],
         "edges": [
-          { "id": "e1", "from": "n_0", "to": "n_1", "result": "确认" },
-          { "id": "e2", "from": "n_1", "to": "n_2", "result": "通过" }
+          {
+            "id": "e1",
+            "from": "n_0",
+            "to": "n_1",
+            "result": "确认"
+          },
+          {
+            "id": "e2",
+            "from": "n_1",
+            "to": "n_2",
+            "result": "通过"
+          }
         ]
+      }
+    ]
+  },
+  {
+    "id": "f-ent-decision",
+    "name": "企业决策复核流程",
+    "desc": "企业风控·决策事件列表统一流程：待复核→复核中→已复核/已驳回，状态沿流程流转（由管理中心业务流程配置驱动，状态写回决策事件）",
+    "pageRoutes": [
+      "/console/ep/decision-events"
+    ],
+    "pageNames": [
+      "决策事件列表"
+    ],
+    "flowGraphs": [
+      {
+        "name": "决策复核流程",
+        "match": [],
+        "flowSteps": [
+          {
+            "state": "待复核",
+            "action": "受理",
+            "next": "复核中",
+            "color": "#DC2626"
+          },
+          {
+            "state": "复核中",
+            "action": "复核",
+            "next": "已复核",
+            "color": "#D97706"
+          },
+          {
+            "state": "已复核",
+            "action": "",
+            "next": "",
+            "color": "#059669"
+          },
+          {
+            "state": "已驳回",
+            "action": "",
+            "next": "",
+            "color": "#94A3B8"
+          }
+        ],
+        "nodes": [
+          {
+            "id": "n_0",
+            "type": "start",
+            "label": "待复核",
+            "x": 40,
+            "y": 140,
+            "showButton": false,
+            "checkItems": [],
+            "results": [
+              "受理"
+            ],
+            "resultStates": {
+              "受理": "复核中"
+            },
+            "timeLimit": 24
+          },
+          {
+            "id": "n_1",
+            "type": "normal",
+            "label": "复核中",
+            "x": 280,
+            "y": 140,
+            "role": "风控主管",
+            "buttonName": "复核",
+            "checkItems": [
+              "复核决策依据与命中规则"
+            ],
+            "results": [
+              "复核通过",
+              "复核驳回"
+            ],
+            "opinionPresets": {
+              "复核通过": [
+                "复核通过，同意原决策"
+              ],
+              "复核驳回": [
+                "复核驳回，重新评估"
+              ]
+            },
+            "resultStates": {
+              "复核通过": "已复核",
+              "复核驳回": "已驳回"
+            },
+            "timeLimit": 48
+          },
+          {
+            "id": "n_2",
+            "type": "end",
+            "label": "已复核",
+            "x": 560,
+            "y": 80,
+            "showButton": false,
+            "checkItems": [],
+            "results": [],
+            "opinionPresets": {}
+          },
+          {
+            "id": "n_3",
+            "type": "end",
+            "label": "已驳回",
+            "x": 560,
+            "y": 200,
+            "showButton": false,
+            "checkItems": [],
+            "results": [],
+            "opinionPresets": {}
+          }
+        ],
+        "edges": [
+          {
+            "id": "e1",
+            "from": "n_0",
+            "to": "n_1",
+            "result": "受理"
+          },
+          {
+            "id": "e2",
+            "from": "n_1",
+            "to": "n_2",
+            "result": "复核通过"
+          },
+          {
+            "id": "e3",
+            "from": "n_1",
+            "to": "n_3",
+            "result": "复核驳回"
+          }
+        ]
+      }
+    ],
+    "flowSteps": [
+      {
+        "state": "待复核",
+        "action": "提交复核",
+        "next": "复核中"
+      },
+      {
+        "state": "复核中",
+        "action": "复核通过",
+        "next": "已复核"
+      },
+      {
+        "state": "复核中",
+        "action": "驳回",
+        "next": "已驳回"
+      },
+      {
+        "state": "已驳回",
+        "action": "重新提交复核",
+        "next": "待复核"
+      },
+      {
+        "state": "已复核",
+        "action": "",
+        "next": ""
+      }
+    ]
+  },
+  {
+    "id": "f-ent-monitor",
+    "name": "企业监控名单流程",
+    "desc": "存量企业监控名单统一流程：监控中↔已暂停，状态由管理中心业务流程配置驱动",
+    "pageRoutes": [
+      "/console/ep/monitor-list"
+    ],
+    "pageNames": [
+      "存量企业监控名单"
+    ],
+    "flowGraphs": [
+      {
+        "name": "监控名单状态",
+        "match": [],
+        "flowSteps": [
+          {
+            "state": "监控中",
+            "action": "暂停",
+            "next": "已暂停",
+            "color": "#2563EB"
+          },
+          {
+            "state": "已暂停",
+            "action": "恢复",
+            "next": "监控中",
+            "color": "#0891B2"
+          }
+        ],
+        "nodes": [
+          {
+            "id": "n_0",
+            "type": "start",
+            "label": "监控中",
+            "x": 40,
+            "y": 140,
+            "showButton": false,
+            "checkItems": [],
+            "results": [
+              "暂停"
+            ],
+            "resultStates": {
+              "暂停": "已暂停"
+            },
+            "timeLimit": 0
+          },
+          {
+            "id": "n_1",
+            "type": "end",
+            "label": "已暂停",
+            "x": 320,
+            "y": 140,
+            "role": "风控专员",
+            "buttonName": "恢复",
+            "checkItems": [],
+            "results": [
+              "恢复"
+            ],
+            "resultStates": {
+              "恢复": "监控中"
+            },
+            "timeLimit": 0
+          }
+        ],
+        "edges": [
+          {
+            "id": "e1",
+            "from": "n_0",
+            "to": "n_1",
+            "result": "暂停"
+          },
+          {
+            "id": "e2",
+            "from": "n_1",
+            "to": "n_0",
+            "result": "恢复"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "f-ent-list",
+    "name": "企业名单管理流程",
+    "desc": "黑白灰名单管理统一流程：生效↔失效，状态由管理中心业务流程配置驱动",
+    "pageRoutes": [
+      "/console/ep/list-manage"
+    ],
+    "pageNames": [
+      "名单管理（黑白灰名单）"
+    ],
+    "flowGraphs": [
+      {
+        "name": "名单状态",
+        "match": [],
+        "flowSteps": [
+          {
+            "state": "生效",
+            "action": "失效",
+            "next": "失效",
+            "color": "#059669"
+          },
+          {
+            "state": "失效",
+            "action": "恢复",
+            "next": "生效",
+            "color": "#94A3B8"
+          }
+        ],
+        "nodes": [
+          {
+            "id": "n_0",
+            "type": "start",
+            "label": "生效",
+            "x": 40,
+            "y": 140,
+            "showButton": false,
+            "checkItems": [],
+            "results": [
+              "失效"
+            ],
+            "resultStates": {
+              "失效": "失效"
+            },
+            "timeLimit": 0
+          },
+          {
+            "id": "n_1",
+            "type": "end",
+            "label": "失效",
+            "x": 320,
+            "y": 140,
+            "role": "风控专员",
+            "buttonName": "恢复",
+            "checkItems": [],
+            "results": [
+              "恢复"
+            ],
+            "resultStates": {
+              "恢复": "生效"
+            },
+            "timeLimit": 0
+          }
+        ],
+        "edges": [
+          {
+            "id": "e1",
+            "from": "n_0",
+            "to": "n_1",
+            "result": "失效"
+          },
+          {
+            "id": "e2",
+            "from": "n_1",
+            "to": "n_0",
+            "result": "恢复"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "f-de-approve",
+    "name": "决策引擎上线审批流程",
+    "desc": "决策引擎·审批管理统一流程：待审批→提交审批→审批中→审批通过/驳回，驳回可重新提交（由管理中心业务流程配置驱动）",
+    "flowGraphs": [
+      {
+        "name": "决策引擎上线审批流程",
+        "match": [],
+        "flowSteps": [
+          {
+            "state": "待审批",
+            "action": "提交审批",
+            "next": "审批中",
+            "color": "#D97706"
+          },
+          {
+            "state": "审批中",
+            "action": "审批通过",
+            "next": "已通过",
+            "color": "#D97706"
+          },
+          {
+            "state": "审批中",
+            "action": "驳回",
+            "next": "已驳回",
+            "color": "#D97706"
+          },
+          {
+            "state": "已驳回",
+            "action": "重新提交审批",
+            "next": "待审批",
+            "color": "#2563EB"
+          },
+          {
+            "state": "已通过",
+            "action": "",
+            "next": "",
+            "color": "#059669"
+          }
+        ],
+        "nodes": [
+          {
+            "id": "n_0",
+            "type": "start",
+            "label": "待审批",
+            "x": 40,
+            "y": 140,
+            "showButton": false,
+            "checkItems": [],
+            "results": [
+              "提交审批"
+            ],
+            "resultStates": {
+              "提交审批": "审批中"
+            }
+          },
+          {
+            "id": "n_1",
+            "type": "normal",
+            "label": "审批中",
+            "x": 280,
+            "y": 80,
+            "role": "审批人",
+            "buttonName": "审批通过",
+            "checkItems": [],
+            "results": [
+              "审批通过",
+              "驳回"
+            ],
+            "resultStates": {
+              "审批通过": "已通过",
+              "驳回": "已驳回"
+            },
+            "opinionPresets": {}
+          },
+          {
+            "id": "n_2",
+            "type": "normal",
+            "label": "审批中",
+            "x": 280,
+            "y": 180,
+            "role": "审批人",
+            "buttonName": "驳回",
+            "checkItems": [],
+            "results": [
+              "审批通过",
+              "驳回"
+            ],
+            "resultStates": {
+              "审批通过": "已通过",
+              "驳回": "已驳回"
+            },
+            "opinionPresets": {}
+          },
+          {
+            "id": "n_3",
+            "type": "normal",
+            "label": "已驳回",
+            "x": 280,
+            "y": 280,
+            "role": "审批人",
+            "buttonName": "重新提交审批",
+            "checkItems": [],
+            "results": [
+              "重新提交审批"
+            ],
+            "resultStates": {
+              "重新提交审批": "待审批"
+            },
+            "opinionPresets": {}
+          },
+          {
+            "id": "n_end0",
+            "type": "end",
+            "label": "已通过",
+            "x": 560,
+            "y": 80,
+            "showButton": false,
+            "checkItems": [],
+            "results": [],
+            "opinionPresets": {}
+          }
+        ],
+        "edges": [
+          {
+            "id": "e1",
+            "from": "n_0",
+            "to": "n_1",
+            "result": "提交审批"
+          },
+          {
+            "id": "e2",
+            "from": "n_1",
+            "to": "n_end0",
+            "result": "审批通过"
+          },
+          {
+            "id": "e3",
+            "from": "n_1",
+            "to": "n_0",
+            "result": "驳回"
+          },
+          {
+            "id": "e4",
+            "from": "n_2",
+            "to": "n_end0",
+            "result": "审批通过"
+          },
+          {
+            "id": "e5",
+            "from": "n_2",
+            "to": "n_0",
+            "result": "驳回"
+          },
+          {
+            "id": "e6",
+            "from": "n_3",
+            "to": "n_0",
+            "result": "重新提交审批"
+          }
+        ]
+      }
+    ],
+    "flowSteps": [
+      {
+        "state": "待审批",
+        "action": "提交审批",
+        "next": "审批中"
+      },
+      {
+        "state": "审批中",
+        "action": "审批通过",
+        "next": "已通过"
+      },
+      {
+        "state": "审批中",
+        "action": "驳回",
+        "next": "已驳回"
+      },
+      {
+        "state": "已驳回",
+        "action": "重新提交审批",
+        "next": "待审批"
+      },
+      {
+        "state": "已通过",
+        "action": "",
+        "next": ""
+      }
+    ]
+  },
+  {
+    "id": "f-dun-waiver",
+    "name": "减免审批流程",
+    "desc": "催收·协商减免审批统一流程：审批中→审批通过/驳回，驳回可重新提交审批（由管理中心业务流程配置驱动）",
+    "flowGraphs": [
+      {
+        "name": "减免审批流程",
+        "match": [],
+        "flowSteps": [
+          {
+            "state": "审批中",
+            "action": "审批通过",
+            "next": "已通过",
+            "color": "#D97706"
+          },
+          {
+            "state": "审批中",
+            "action": "驳回",
+            "next": "已驳回",
+            "color": "#D97706"
+          },
+          {
+            "state": "已驳回",
+            "action": "重新提交审批",
+            "next": "审批中",
+            "color": "#2563EB"
+          },
+          {
+            "state": "已通过",
+            "action": "",
+            "next": "",
+            "color": "#059669"
+          }
+        ],
+        "nodes": [
+          {
+            "id": "n_0",
+            "type": "start",
+            "label": "审批中",
+            "x": 40,
+            "y": 140,
+            "showButton": false,
+            "checkItems": [],
+            "results": [
+              "审批通过"
+            ],
+            "resultStates": {
+              "审批通过": "已通过"
+            }
+          },
+          {
+            "id": "n_1",
+            "type": "normal",
+            "label": "审批中",
+            "x": 280,
+            "y": 80,
+            "role": "审批人",
+            "buttonName": "驳回",
+            "checkItems": [],
+            "results": [
+              "审批通过",
+              "驳回"
+            ],
+            "resultStates": {
+              "审批通过": "已通过",
+              "驳回": "已驳回"
+            },
+            "opinionPresets": {}
+          },
+          {
+            "id": "n_2",
+            "type": "normal",
+            "label": "已驳回",
+            "x": 280,
+            "y": 180,
+            "role": "审批人",
+            "buttonName": "重新提交审批",
+            "checkItems": [],
+            "results": [
+              "重新提交审批"
+            ],
+            "resultStates": {
+              "重新提交审批": "审批中"
+            },
+            "opinionPresets": {}
+          },
+          {
+            "id": "n_end0",
+            "type": "end",
+            "label": "已通过",
+            "x": 560,
+            "y": 80,
+            "showButton": false,
+            "checkItems": [],
+            "results": [],
+            "opinionPresets": {}
+          }
+        ],
+        "edges": [
+          {
+            "id": "e1",
+            "from": "n_0",
+            "to": "n_1",
+            "result": "审批通过"
+          },
+          {
+            "id": "e2",
+            "from": "n_1",
+            "to": "n_end0",
+            "result": "审批通过"
+          },
+          {
+            "id": "e3",
+            "from": "n_1",
+            "to": "n_0",
+            "result": "驳回"
+          },
+          {
+            "id": "e4",
+            "from": "n_2",
+            "to": "n_0",
+            "result": "重新提交审批"
+          }
+        ]
+      }
+    ],
+    "flowSteps": [
+      {
+        "state": "审批中",
+        "action": "审批通过",
+        "next": "已通过"
+      },
+      {
+        "state": "审批中",
+        "action": "驳回",
+        "next": "已驳回"
+      },
+      {
+        "state": "已驳回",
+        "action": "重新提交审批",
+        "next": "审批中"
+      },
+      {
+        "state": "已通过",
+        "action": "",
+        "next": ""
       }
     ]
   }

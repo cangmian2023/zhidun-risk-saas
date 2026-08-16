@@ -3,6 +3,7 @@
  * 结构：顶层且/或（组间）+ 未分组条件(loose) 或 条件组(groups)；生成括号化逻辑由调用方消费。
  */
 import type { ReactNode } from 'react';
+import { SingleSelect } from '../components/ui';
 import type { VisualCond, VisualFilterOp } from './midData';
 import { VISUAL_OP_LABEL } from './midData';
 
@@ -44,13 +45,10 @@ function CondRow({ cond, fields, onPatch, onRemove, indent }: {
   const inCandidates = ['中国', '美国', '日本', '韩国', '其他'];
   return (
     <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 6, flexWrap: 'wrap', paddingLeft: indent ? 16 : 0 }}>
-      <select style={inpSm} value={cond.field} onChange={(e) => onPatch({ ...cond, field: e.target.value })}>
-        <option value="">选择字段</option>
-        {fields.map((x) => <option key={x.ref} value={x.ref}>{x.label}</option>)}
-      </select>
-      <select style={inpSm} value={cond.op} onChange={(e) => onPatch({ ...cond, op: e.target.value as VisualFilterOp })}>
-        {(Object.keys(VISUAL_OP_LABEL) as VisualFilterOp[]).map((op) => <option key={op} value={op}>{VISUAL_OP_LABEL[op]}</option>)}
-      </select>
+      <SingleSelect label="选择字段" clearable width={150} value={cond.field} onChange={(v) => onPatch({ ...cond, field: v })}
+        options={[{ value: '', label: '选择字段' }, ...fields.map((x) => ({ value: x.ref, label: x.label }))]} />
+      <SingleSelect label="操作符" width={110} value={cond.op} onChange={(v) => onPatch({ ...cond, op: v as VisualFilterOp })}
+        options={(Object.keys(VISUAL_OP_LABEL) as VisualFilterOp[]).map((op) => ({ value: op, label: VISUAL_OP_LABEL[op] }))} />
       {hasVal && (
         <input style={{ ...inpSm, width: 160 }} value={cond.value ?? ''} placeholder="输入值"
           onChange={(e) => onPatch({ ...cond, value: e.target.value })} />

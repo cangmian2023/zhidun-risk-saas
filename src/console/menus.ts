@@ -61,7 +61,6 @@ export const scoringMenu: MenuGroup[] = [
     section: '工作台',
     items: [
       { label: '评分总览', key: 'sc:overview', keep: true, desc: '三产品评分总览与对象评分档案：并排展示智察分/智信分/智融分，支持单客分数检索与批量评分入口' },
-      { label: '评分总览·旧版', key: 'sc:overview-legacy', desc: '改造前(v2)评分总览备份预览：模型健康度 / 调用量趋势 / 风险率仪表盘 / 批量评分导入，对照 v3 新版评分总览' },
       { label: '预警工作台', key: 'sc:alert-workbench', keep: true, desc: '复用零售信贷预警工作台：红黄灯预警任务队列，逐条核实、发起处置' },
     ],
   },
@@ -76,6 +75,7 @@ export const scoringMenu: MenuGroup[] = [
     group: '客户洞察',
     section: '客户洞察',
     items: [
+      { label: '客户洞察', key: 'sc:crowd-insight', desc: '评分客户全景洞察看板（配置驱动）：风险/价值/客群/机会与趋势 KPI，客户明细列表（点击行看完整属性），辅助决定先盯哪类客群' },
       { label: '客户分组', key: 'sc:crowd-groups', desc: '按风险/价值/行为等维度定义客群分组；点击分组进入客户列表（新页面）' },
     ],
   },
@@ -107,6 +107,8 @@ export const entMenu: MenuGroup[] = [
     items: [
       { label: '风险总览大盘', key: 'ep:overview', desc: '企业风控核心监控指标总览：企业总数 / 风险分布 / 预警 / 尽调任务 / 决策事件', keep: true },
       { label: '实时态势大屏', key: 'ep:overview-realtime', desc: '实时态势大屏：企业风险事件、司法涉诉、舆情、名单命中实时滚动', keep: true },
+      { label: '风险待办中心', key: 'ep:todo-center', desc: '聚合待复核决策 / 待处置预警 / 进行中尽调 / 本月到期名单，一处看全、点击直达处理', keep: true },
+      { label: '操作变更日志', key: 'ep:operate-log', desc: '名单 / 预警规则 / 监控名单 / 批量尽调等写操作变更追溯，按模块筛选、支持导出', keep: true },
     ],
   },
   {
@@ -114,6 +116,7 @@ export const entMenu: MenuGroup[] = [
     section: '企业风险尽调中心',
     items: [
       { label: '企业一键风险查询', key: 'ep:qiye-search', desc: '按企业名称 / 行业 / 法定代表人 / 唯一标识一键查询企业全维度风险；点击「查看档案」进入企业风险画像详情', keep: true },
+      { label: '单企业风险画像', key: 'ep:qiye-profile', desc: '输入企业名称 / 统一社会信用代码直达单企业全维度风险画像（工商、股东、司法、经营、知识产权）', keep: true },
     ],
   },
   {
@@ -138,20 +141,6 @@ export const entMenu: MenuGroup[] = [
     ],
   },
   {
-    group: '决策追踪详情',
-    section: '风险事件管理',
-    items: [
-      { label: '决策追踪详情', key: 'ep:decision-trace', desc: '决策追踪详情：决策过程全链路还原，指标 / 规则 / 模型 / 结论', keep: true },
-    ],
-  },
-  {
-    group: '人工复核工单',
-    section: '风险事件管理',
-    items: [
-      { label: '人工复核工单', key: 'ep:review-order', desc: '需人工复核的决策工单：待复核 / 复核中 / 已复核队列', keep: true },
-    ],
-  },
-  {
     group: '模型列表',
     section: '模型管理中心',
     items: [
@@ -170,6 +159,7 @@ export const entMenu: MenuGroup[] = [
     section: '数据源市场与管理',
     items: [
       { label: '数据源市场与管理', key: 'ep:datasource', desc: '企业数据源市场：工商 / 司法 / 税务 / 征信 / 舆情 / 关联等数据源接入与管理', keep: true },
+      { label: '数据同步任务', key: 'ep:sync-task', desc: '各数据源同步周期、上次同步时间与失败企业清单，支持手动触发同步', keep: true },
     ],
   },
   {

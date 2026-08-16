@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { SingleSelect } from '../components/ui'
 import {
   DECISION_SCORE_VARS,
   formulaText,
@@ -90,16 +91,11 @@ export default function FormulaEditor({ formula, vars = DECISION_SCORE_VARS, can
               style={{ width: 34, height: 34, borderRadius: '50%', border: `1px solid ${t.op === '-' ? '#DC2626' : '#047857'}`, color: t.op === '-' ? '#DC2626' : '#047857', fontWeight: 700, background: '#fff', cursor: 'pointer' }}>
               {t.op}
             </button>
-            <select value={t.kind} disabled={!canEdit} onChange={(e) => update(i, { kind: e.target.value as 'var' | 'const' })} style={{ ...inp, width: 90 }}>
-              <option value="var">变量</option>
-              <option value="const">常数</option>
-            </select>
+            <SingleSelect label="类型" width={90} disabled={!canEdit} value={t.kind} onChange={(v) => update(i, { kind: v as 'var' | 'const' })}
+              options={[{ value: 'var', label: '变量' }, { value: 'const', label: '常数' }]} />
             {t.kind === 'var' ? (
-              <select value={t.varId} disabled={!canEdit} onChange={(e) => update(i, { varId: e.target.value })} style={{ ...inp, minWidth: 200 }}>
-                {vars.map((v) => (
-                  <option key={v.id} value={v.id}>{v.label}{v.rangeHint ? `（${v.rangeHint}）` : ''}</option>
-                ))}
-              </select>
+              <SingleSelect label="选择变量" width={200} disabled={!canEdit} value={t.varId} onChange={(v) => update(i, { varId: v })}
+                options={vars.map((v) => ({ value: v.id, label: v.label + (v.rangeHint ? `（${v.rangeHint}）` : '') }))} />
             ) : (
               <input type="number" value={t.constVal ?? 0} disabled={!canEdit} onChange={(e) => update(i, { constVal: +e.target.value })} style={{ ...inp, width: 110 }} placeholder="常数" />
             )}

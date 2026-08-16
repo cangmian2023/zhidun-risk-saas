@@ -2,12 +2,12 @@
  * 统一流程绑定层（全子系统唯一入口 · 页面关联版）
  * ----------------------------------------------------------------------------
  * 目标：管理中心「业务流程配置」里关联了页面之后，**所有**关联页面的列表与详情
- *      都自动显示同一套东西（流程状态列 / 时限倒计时列 / 详情流程操作条）。
+ *      都自动显示同一套东西（流程状态列 / 详情流程操作条）。
  *      以后改这里一处，四个贷前页面 + 预警工作台 + 后续新页面全部同步生效。
  *
  * 三个统一出口：
  *   1) useFlowBinding(pageRoute)        —— 页面路由 → 该页关联的业务流程（配置作者维护）
- *   2) flowColumns({...})               —— 列表页统一列（时限倒计时 + 流程状态，含操作按钮）
+ *   2) flowColumns({...})               —— 列表页统一列（流程状态，含操作按钮）
  *   3) <FlowBar />                      —— 详情页统一流程操作条（复用 FlowActionBar）
  *
  * 设计要点：
@@ -16,13 +16,13 @@
  *   - 每条数据的流程状态独立存在自己的样例 JSON（flowState / flowStateAt），per-object；
  *   - 匹配不到流程 → 统一显示「—」（方案B），不报错、不显示假按钮。
  *
- * 数据来源边界：流程定义=🔵Cfg（配置作者）｜每行 flowState=🟠Sam（使用域作者）｜倒计时=⚪Cal。
+ * 数据来源边界：流程定义=🔵Cfg（配置作者）｜每行 flowState=🟠Sam（使用域作者）。
  * ========================================================================== */
-import { useEffect, useState, type ReactNode } from 'react'
+import { type ReactNode } from 'react'
 import {
-  useFlows, flowStepOf, matchFlowGraph, nodeTimeLimitOf,
-  getFlowsByPage, getFlowById, type FlowItem,
+  useFlows, getFlowsByPage, DEFAULT_FLOW_STEPS, type FlowItem, type FlowStep,
 } from './flowStore'
+import { SingleSelect } from '../components/ui'
 import FlowStateCell from './FlowStateCell'
 import FlowActionBar from './FlowActionBar'
 
@@ -67,51 +67,7 @@ export function matchObjOf(row: Record<string, unknown>, matchFields?: Record<st
 }
 
 /* ---------------------------------------------------------------------------
- * 2. 时限倒计时（统一实现，原先只在预警工作台内联）
- * ------------------------------------------------------------------------- */
-
-/** 每分钟触发一次重渲染（倒计时用）。 */
-export function useMinuteTick() {
-  const [, setTick] = useState(0)
-  useEffect(() => {
-    const t = setInterval(() => setTick((x) => x + 1), 60000)
-    return () => clearInterval(t)
-  }, [])
-}
-
-const DASH = <span style={{ color: '#94A3B8' }}>—</span>
-
-/** 节点时限倒计时文本：无时限 / 终态 / 未记录进入时间 → 「—」；超时红字。
- *  传 flowId（推荐）时内部按 id 取流程；也兼容直接传 flow 对象。 */
-export function renderCountdown(opts: {
-  flowId?: string
-  flow?: FlowItem
-  flowState?: string
-  flowStateAt?: string
-  matchObj?: Record<string, unknown>
-}): ReactNode {
-  const { flowId, flowState, flowStateAt, matchObj } = opts
-  const flow = opts.flow ?? (flowId ? getFlowById(flowId) : undefined)
-  const { graph, steps } = matchFlowGraph(flow, matchObj ?? {})
-  if (!flow || !steps.length || !flowStateAt) return DASH
-  const { step } = flowStepOf({ flowSteps: steps, flowState: flowState ?? '' })
-  if (!step?.next) return DASH // 终态无倒计时
-  const tl = nodeTimeLimitOf(graph, flowState ?? '')
-  if (!tl) return DASH
-  const remain = new Date(String(flowStateAt)).getTime() + tl * 60000 - Date.now()
-  if (remain <= 0) return <span style={{ color: '#DC2626', fontWeight: 600 }}>已超时</span>
-  const h = Math.floor(remain / 3600000)
-  const m = Math.floor((remain % 3600000) / 60000)
-  const color = remain < 30 * 60000 ? '#DC2626' : remain < 120 * 60000 ? '#D97706' : '#475569'
-  return (
-    <span style={{ color, fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>
-      {h > 0 ? `${h}小时${m}分` : `${m}分钟`}
-    </span>
-  )
-}
-
-/* ---------------------------------------------------------------------------
- * 3. 列表页统一列（时限倒计时 + 流程状态）
+ * 2. 列表页统一列（流程状态）
  * ------------------------------------------------------------------------- */
 
 /** 通用列定义（结构与 components/ui 的 Column 兼容，避免本文件反向依赖 ui 类型） */
@@ -135,8 +91,6 @@ export interface FlowColumnsOpts {
   onStateChange: (row: any, next: string, at: string) => void
   /** 样例 JSON 文件名（用于流程状态列的数据来源标签） */
   sampleFile?: string
-  /** 是否显示时限倒计时列（默认显示；流程未配 timeLimit 时该列自然显示「—」） */
-  showCountdown?: boolean
 }
 
 /** 现在时间戳（与既有样例 JSON 的 flowStateAt 格式一致：YYYY-MM-DD HH:mm:ss） */
@@ -147,22 +101,11 @@ export const nowStamp = () => new Date().toISOString().slice(0, 19).replace('T',
  * 用法：`const cols = [...业务列, ...flowColumns({ pageRoute, pageFlow, matchFields, onStateChange })]`
  */
 export function flowColumns(opts: FlowColumnsOpts): FlowColumnDef[] {
-  const { pageFlow, matchFields, onStateChange, sampleFile, showCountdown = true } = opts
+  const { pageFlow, matchFields, onStateChange, sampleFile } = opts
   const cols: FlowColumnDef[] = []
 
-  if (showCountdown) {
-    cols.push({
-      key: '__flowCountdown',
-      label: '时限倒计时',
-      width: '110px',
-      render: (r: any) => renderCountdown({
-        flowId: flowIdOfRow(r, pageFlow),
-        flowState: String(r.flowState ?? ''),
-        flowStateAt: String(r.flowStateAt ?? ''),
-        matchObj: matchObjOf(r, matchFields),
-      }),
-    })
-  }
+  // 配置驱动：页面未关联业务流程（管理中心未配）→ 不输出任何流程列，列表自然不显示
+  if (!pageFlow) return cols
 
   cols.push({
     key: '__flowState',
@@ -183,8 +126,33 @@ export function flowColumns(opts: FlowColumnsOpts): FlowColumnDef[] {
   return cols
 }
 
+/**
+ * 列表页「流程状态」筛选：仅当页面关联了业务流程时显示（未关联自动隐藏，与流程列同进退）。
+ * 选项来自流程定义（自定义 flowSteps / 各流程图的 flowSteps / 默认状态机），按配置顺序去重。
+ * 用法：`<FlowStateFilter pageRoute={route} value={fs} onChange={setFs} />`，页面再按 `row.flowState === fs` 过滤。
+ */
+export function FlowStateFilter({ pageRoute, value, onChange, label = '全部流程状态' }: {
+  pageRoute: string | string[]
+  value: string
+  onChange: (v: string) => void
+  label?: string
+}) {
+  const pageFlow = usePageFlow(pageRoute)
+  if (!pageFlow) return null
+  const states: string[] = []
+  const push = (s?: string) => { if (s && !states.includes(s)) states.push(s) }
+  ;(pageFlow.flowSteps ?? []).forEach((s) => push(s.state))
+  ;(pageFlow.flowGraphs ?? []).forEach((g) => (g.flowSteps ?? []).forEach((s) => push(s.state)))
+  if (!states.length) (DEFAULT_FLOW_STEPS as FlowStep[]).forEach((s) => push(s.state))
+  if (!states.length) return null
+  return (
+    <SingleSelect label={label} clearable value={value} onChange={onChange}
+      options={[{ value: '', label }, ...states.map((s) => ({ value: s, label: s }))]} />
+  )
+}
+
 /* ---------------------------------------------------------------------------
- * 4. 详情页统一流程操作条
+ * 3. 详情页统一流程操作条
  * ------------------------------------------------------------------------- */
 
 /**

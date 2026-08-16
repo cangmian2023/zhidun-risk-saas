@@ -1,11 +1,11 @@
 // 决策引擎 · 运行管理 + 审批管理模块页面（版本管理 / 流量分配 / 决策回放 / 回放结果 / 批量决策 / 审批管理）
 import { useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { useDecision, updateDecision, TASK_STATUS_TAG, APPROVAL_STATUS_TAG, DECISION_TAG } from './decisionData'
+import { useDecision, updateDecision, TASK_STATUS_TAG, APPROVAL_STATUS_TAG, DECISION_TAG, type DeApprovalStatus } from './decisionData'
 import { PageShell } from './PageShell'
 import { Panel, DataTable, Badge, Button, StatCard, DetailHeader, type Column, type Row } from '../components/ui'
 import { Sam, Cal } from './SourceTag'
-import { CreateReplayDialog, CreateBatchDialog, SnapshotDetailDialog, ApproveDialog, ApprovalDetailDrawer } from './DecisionDialogs'
+import { CreateReplayDialog, CreateBatchDialog, SnapshotDetailDialog, ApprovalDetailDrawer } from './DecisionDialogs'
 import { useDecisionToast } from './useDecisionToast'
 import { usePageNav } from './pageNav'
 import FlowStateCell from './FlowStateCell'
@@ -117,6 +117,7 @@ export function DecisionReplayPage() {
   const d = useDecision()
   const nav = useNavigate()
   const { goDetail } = usePageNav()
+  const toast = useDecisionToast()
   const [showCreate, setShowCreate] = useState(false)
 
   const cols: Column[] = [
@@ -157,7 +158,31 @@ export function DecisionReplayPage() {
           )}
         />
       </Panel>
-      <CreateReplayDialog open={showCreate} onClose={() => setShowCreate(false)} onCreate={() => {}} />
+      <CreateReplayDialog
+        open={showCreate}
+        onClose={() => setShowCreate(false)}
+        onCreate={(data) => {
+          updateDecision((dd) => ({
+            ...dd,
+            replays: [...dd.replays, {
+              id: `RP${Date.now().toString(36)}`,
+              name: data.name || `回放任务${dd.replays.length + 1}`,
+              model: data.model,
+              targetVersion: data.targetVer,
+              status: '执行中',
+              progress: 0,
+              total: 1000,
+              done: 0,
+              creator: 'admin',
+              createdAt: new Date().toISOString().slice(0, 16).replace('T', ' '),
+              flowId: '',
+              flowState: '未配置',
+            }],
+          }))
+          toast.show('回放任务已创建')
+        }}
+      />
+      {toast.toastEl}
     </>
   )
 }
@@ -212,10 +237,10 @@ export function DecisionReplayResultPage({ search }: { search: string }) {
 
       {/* 回放统计概览 */}
       <div className="mt-4 grid grid-cols-2 gap-4 md:grid-cols-4">
-        <StatCard label="总样本数" value={rows0.length} accent="brand" />
-        <StatCard label="有变化" value={changedCnt} accent="rose" />
-        <StatCard label="无变化" value={unchangedCnt} accent="emerald" />
-        <StatCard label="变化率" value={`${changedCnt && rows0.length ? ((changedCnt / rows0.length) * 100).toFixed(1) : '0.0'}%`} accent="amber" />
+        <StatCard label="总样本数" value={rows0.length} accent="brand" extra={<Cal value="replayResults" />} />
+        <StatCard label="有变化" value={changedCnt} accent="rose" extra={<Cal value="replayResults" />} />
+        <StatCard label="无变化" value={unchangedCnt} accent="emerald" extra={<Cal value="replayResults" />} />
+        <StatCard label="变化率" value={`${changedCnt && rows0.length ? ((changedCnt / rows0.length) * 100).toFixed(1) : '0.0'}%`} accent="amber" extra={<Cal value="replayResults" />} />
       </div>
 
       {/* 回放任务信息 */}
@@ -232,8 +257,8 @@ export function DecisionReplayResultPage({ search }: { search: string }) {
         </div>
       </Panel>
 
-      {/* 新旧决策对比（变更矩阵） */}
-      <Panel title="新旧决策对比" className="mt-4" desc="统计旧版本 → 新版本的决策结果变化流向（示例）">
+      {/* 新旧决策对比（变更矩阵，从 replayResults 真实计算） */}
+      <Panel title="新旧决策对比" className="mt-4" actions={<Cal value="replayResults" />} desc="统计旧版本 → 新版本的决策结果变化流向">
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <div>
             <div className="mb-2 text-xs font-medium text-slate-400">决策变化矩阵</div>
@@ -247,36 +272,32 @@ export function DecisionReplayResultPage({ search }: { search: string }) {
                 </tr>
               </thead>
               <tbody className="text-slate-600">
-                <tr className="border-b border-slate-50">
-                  <td className="py-2 pr-2 font-medium">通过</td>
-                  <td className="py-2 pr-2"><Badge kind="green">2</Badge></td>
-                  <td className="py-2 pr-2"><Badge kind="red">1</Badge></td>
-                  <td className="py-2">0</td>
-                </tr>
-                <tr className="border-b border-slate-50">
-                  <td className="py-2 pr-2 font-medium">拒绝</td>
-                  <td className="py-2 pr-2">0</td>
-                  <td className="py-2 pr-2"><Badge kind="green">1</Badge></td>
-                  <td className="py-2">0</td>
-                </tr>
-                <tr>
-                  <td className="py-2 pr-2 font-medium">人工复核</td>
-                  <td className="py-2 pr-2">0</td>
-                  <td className="py-2 pr-2"><Badge kind="red">1</Badge></td>
-                  <td className="py-2">0</td>
-                </tr>
+                {(['通过', '拒绝', '人工复核'] as const).map((old) => {
+                  const newCols = ['通过', '拒绝', '人工复核'] as const
+                  const row = newCols.map((nw) => rows0.filter((r) => r.oldDecision === old && r.newDecision === nw).length)
+                  return (
+                    <tr key={old} className="border-b border-slate-50">
+                      <td className="py-2 pr-2 font-medium">{old}</td>
+                      {row.map((v, i) => (
+                        <td key={i} className="py-2 pr-2">
+                          {v > 0 ? <Badge kind={newCols[i] === old ? 'green' : 'red'}>{v}</Badge> : <span className="text-slate-300">0</span>}
+                        </td>
+                      ))}
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
           </div>
           <div>
-            <div className="mb-2 text-xs font-medium text-slate-400">重点变化（示例）</div>
+            <div className="mb-2 text-xs font-medium text-slate-400">重点变化</div>
             <div className="space-y-2">
-              <div className="rounded-lg bg-rose-50 px-3 py-2 text-xs text-rose-700">
-                <span className="font-medium">REQ-202608140001</span>：旧「通过」→ 新「拒绝」，评分 82 → 91（新版本拦截增强）
-              </div>
-              <div className="rounded-lg bg-rose-50 px-3 py-2 text-xs text-rose-700">
-                <span className="font-medium">REQ-202608140004</span>：旧「人工复核」→ 新「拒绝」，评分 63 → 78（命中地址聚集策略）
-              </div>
+              {rows0.filter((r) => r.changed === 1).slice(0, 4).map((r) => (
+                <div key={r.requestId} className="rounded-lg bg-rose-50 px-3 py-2 text-xs text-rose-700">
+                  <span className="font-medium">{r.requestId}</span>：旧「{r.oldDecision}」→ 新「{r.newDecision}」，评分 {r.oldScore} → {r.newScore}（差异 {r.scoreDiff}）
+                </div>
+              ))}
+              {changedCnt === 0 && <div className="rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-400">本回放无决策变化</div>}
             </div>
           </div>
         </div>
@@ -343,12 +364,35 @@ export function DecisionBatchPage() {
             <div className="flex gap-3 text-sm">
               <button className="text-brand-600 hover:underline" onClick={() => goDetail('/console/de/batch-detail?id=' + r.id)}>查看结果</button>
               <button className="text-slate-500 hover:underline" onClick={() => toast.show('已开始下载结果')}>下载结果</button>
-              <button className="text-rose-600 hover:underline" onClick={() => toast.show('已取消该任务')}>取消任务</button>
+              <button className="text-rose-600 hover:underline" onClick={() => { updateDecision((dd) => ({ ...dd, batchTasks: dd.batchTasks.map((b) => b.id === r.id ? { ...b, status: '失败' } : b) })); toast.show('已取消该任务') }}>取消任务</button>
             </div>
           )}
         />
       </Panel>
-      <CreateBatchDialog open={showCreate} onClose={() => setShowCreate(false)} onCreate={() => {}} />
+      <CreateBatchDialog
+        open={showCreate}
+        onClose={() => setShowCreate(false)}
+        onCreate={(data) => {
+          updateDecision((dd) => ({
+            ...dd,
+            batchTasks: [...dd.batchTasks, {
+              id: `BT${Date.now().toString(36)}`,
+              name: data.name || `批量任务${dd.batchTasks.length + 1}`,
+              model: data.model,
+              status: '执行中',
+              progress: 0,
+              done: 0,
+              total: 1000,
+              resultDist: '通过 0% / 拒绝 0%',
+              creator: 'admin',
+              createdAt: new Date().toISOString().slice(0, 16).replace('T', ' '),
+              flowId: '',
+              flowState: '未配置',
+            }],
+          }))
+          toast.show('批量任务已创建')
+        }}
+      />
       {toast.toastEl}
     </>
   )
@@ -362,7 +406,6 @@ export function DecisionApprovalPage() {
   const toast = useDecisionToast()
   const { goDetail } = usePageNav()
   const [tab, setTab] = useState<'pending' | 'all'>('pending')
-  const [approveId, setApproveId] = useState<string | null>(null)
 
   const list = tab === 'pending' ? d.approvals.filter((a) => a.status === '待审批') : d.approvals
 
@@ -373,7 +416,7 @@ export function DecisionApprovalPage() {
     { key: 'status', label: '状态', type: 'badge' },
     { key: 'flow', label: '流程状态', render: (r) => (
       <FlowStateCell flowId={r.flowId} state={r.flowState} onChange={(next) => {
-        updateDecision((dd) => ({ ...dd, approvals: dd.approvals.map((a) => a.id === r.id ? { ...a, flowState: next } : a) }))
+        updateDecision((dd) => ({ ...dd, approvals: dd.approvals.map((a) => a.id === r.id ? { ...a, flowState: next, status: next as DeApprovalStatus } : a) }))
       }} />
     ) },
     { key: 'applicant', label: '申请人' },
@@ -394,10 +437,10 @@ export function DecisionApprovalPage() {
       <PageShell title="审批管理" subtitle="策略与模型上线审批流：提交、审核、发布与操作留痕" crumb="决策引擎 / 审批管理 / 审批管理" />
       <div className="space-y-4">
         <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-          <StatCard label="待审批" value={pending} hint="件" accent="rose" />
-          <StatCard label="本月通过率" value="75.0%" accent="emerald" />
-          <StatCard label="平均审批时长" value="6.5" hint="小时" accent="brand" />
-          <StatCard label="本月总量" value={monthTotal} accent="violet" />
+          <StatCard label="待审批" value={pending} hint="件" accent="rose" extra={<Cal value="approvals" />} />
+          <StatCard label="本月通过率" value={`${monthTotal ? ((d.approvals.filter((a) => a.status === '已通过').length / monthTotal) * 100).toFixed(1) : '0'}%`} accent="emerald" extra={<Cal value="approvals" />} />
+          <StatCard label="平均审批时长" value="6.5" hint="小时（样例）" accent="brand" extra={<Cal value="approvals" />} />
+          <StatCard label="本月总量" value={monthTotal} accent="violet" extra={<Cal value="approvals" />} />
         </div>
         <Panel title="审批管理" actions={
           <div className="flex gap-1 rounded-lg bg-slate-100 p-1">
@@ -411,15 +454,12 @@ export function DecisionApprovalPage() {
               <div className="flex gap-3 text-sm">
                 <button className="text-brand-600 hover:underline" onClick={() => goDetail('/console/de/approval-detail?id=' + r.id)}>详情</button>
                 <button className="text-slate-500 hover:underline" onClick={() => toast.show('转交功能建设中，后台接入后可用')}>转交</button>
-                <button className="text-emerald-600 hover:underline" onClick={() => setApproveId(r.id)}>通过</button>
-                <button className="text-rose-600 hover:underline" onClick={() => toast.show('已驳回')}>驳回</button>
                 <button className="text-amber-600 hover:underline" onClick={() => toast.show('已发送催办提醒')}>催办</button>
               </div>
             )}
           />
         </Panel>
       </div>
-      <ApproveDialog open={!!approveId} onClose={() => setApproveId(null)} approval={(() => { const a = d.approvals.find((x) => x.id === approveId); return a ? { target: a.target } : null })()} />
       {toast.toastEl}
     </>
   )
@@ -445,7 +485,7 @@ export function DecisionApprovalDetailPage({ search }: { search: string }) {
   }
 
   const updateFlowState = (next: string) => {
-    updateDecision((dd) => ({ ...dd, approvals: dd.approvals.map((x) => x.id === a.id ? { ...x, flowState: next, flowStateAt: '2026-08-15' } : x) }))
+    updateDecision((dd) => ({ ...dd, approvals: dd.approvals.map((x) => x.id === a.id ? { ...x, flowState: next, flowStateAt: '2026-08-15', status: next as DeApprovalStatus } : x) }))
   }
 
   return (

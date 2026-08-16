@@ -260,7 +260,7 @@ export function ReportModuleList({ cfg }: { cfg: ReportModuleCfg }) {
                   <th style={headStyle(C.score, null)} className="border-b border-slate-200 bg-slate-50 px-3 py-3 text-right font-medium">得分</th>
                   <th style={headStyle(C.sys, null)} className="border-b border-slate-200 bg-slate-50 px-3 py-3 text-center font-medium">自动审核</th>
                   <th style={headStyle(C.time, null)} className="border-b border-slate-200 bg-slate-50 px-3 py-3 text-left font-medium">申请时间</th>
-                  <th style={headStyle(C.flowState, 'right', C.op)} className="border-b border-slate-200 bg-slate-50 px-3 py-3 text-center font-medium">流程状态<Sam f="流程状态" /></th>
+                  {pageFlow && <th style={headStyle(C.flowState, 'right', C.op)} className="border-b border-slate-200 bg-slate-50 px-3 py-3 text-center font-medium">流程状态<Sam f="流程状态" /></th>}
                   <th style={headStyle(C.op, 'right', 0)} className="border-b border-slate-200 bg-slate-50 px-3 py-3 pr-[22px] text-left font-medium">操作</th>
                 </tr>
               </thead>
@@ -290,14 +290,16 @@ export function ReportModuleList({ cfg }: { cfg: ReportModuleCfg }) {
                         <Cal f="matchGrade" v={r.segResult} />
                       </td>
                       <td style={bodyStyle(C.time, null)} className="whitespace-nowrap px-3 py-3 tabular-nums text-slate-500">{r.auditTime}</td>
-                      <td style={bodyStyle(C.flowState, 'right', C.op)} className="whitespace-nowrap bg-white px-3 py-3 text-center group-hover:bg-slate-50/60">
-                        <FlowStateCell
-                          flowId={flowIdOfRow(r, pageFlow)}
-                          state={String(r.flowState ?? '')}
-                          matchObj={matchObjOf(r as any)}
-                          onChange={(next) => updateReportRows(cfg.saveFile, (rs) => rs.map((x) => x.id === r.id ? { ...x, flowState: next, flowStateAt: nowStamp() } : x))}
-                        />
-                      </td>
+                      {pageFlow && (
+                        <td style={bodyStyle(C.flowState, 'right', C.op)} className="whitespace-nowrap bg-white px-3 py-3 text-center group-hover:bg-slate-50/60">
+                          <FlowStateCell
+                            flowId={flowIdOfRow(r, pageFlow)}
+                            state={String(r.flowState ?? '')}
+                            matchObj={matchObjOf(r as any)}
+                            onChange={(next) => updateReportRows(cfg.saveFile, (rs) => rs.map((x) => x.id === r.id ? { ...x, flowState: next, flowStateAt: nowStamp() } : x))}
+                          />
+                        </td>
+                      )}
                       <td style={bodyStyle(C.op, 'right', 0)} className="whitespace-nowrap bg-white px-3 py-3 pr-[22px] text-left group-hover:bg-slate-50/60">
                         <div className="flex flex-wrap items-center justify-start gap-3">
                           <button type="button" onClick={() => goReport(r)} className="whitespace-nowrap text-xs font-medium text-brand-600 hover:underline">查看</button>
@@ -307,7 +309,7 @@ export function ReportModuleList({ cfg }: { cfg: ReportModuleCfg }) {
                   )
                 })}
                 {pageRows.length === 0 && (
-                  <tr><td colSpan={10} className="whitespace-nowrap px-3 py-10 text-center text-sm text-slate-400">暂无符合条件的核验记录</td></tr>
+                  <tr><td colSpan={pageFlow ? 10 : 9} className="whitespace-nowrap px-3 py-10 text-center text-sm text-slate-400">暂无符合条件的核验记录</td></tr>
                 )}
               </tbody>
             </table>

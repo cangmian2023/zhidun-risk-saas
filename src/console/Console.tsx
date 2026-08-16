@@ -26,7 +26,6 @@ import MidDashboardConfig from './MidDashboardConfig'
 import MidAlertWorkbench from './MidAlertWorkbench'
 import { CustProfile } from './CustProfile'
 import CustScoreDetail from './CustScoreDetail'
-import MidDisposeWorkbench from './MidDisposeWorkbench'
 import MidDataSourceDetail from './MidDataSourceDetail'
 import MidMetricDetail from './MidMetricDetail'
 import MidStrategyDetail from './MidStrategyDetail'
@@ -188,7 +187,6 @@ export default function Console() {
     'cr:mid-td5': 'flag',
     // 评分产品（v3 新 IA：工作台/在线评分/客户洞察/数据分析/模型管理/策略配置）
     'sc:overview': 'dashboard',
-    'sc:overview-legacy': 'dashboard',
     'sc:alert-workbench': 'bell',
     'sc:score-records': 'list',
     'sc:crowd-groups': 'users',
@@ -212,8 +210,6 @@ export default function Console() {
     'ep:batch-due': 'stack',
     'ep:monitor-list': 'users',
     'ep:decision-events': 'report',
-    'ep:decision-trace': 'analytics',
-    'ep:review-order': 'inbox',
     'ep:model-list': 'model',
     'ep:list-manage': 'plug',
     'ep:datasource': 'database',
@@ -309,7 +305,6 @@ export default function Console() {
     // 贷中监控使用域（v3）
     'cr:mid-overview': 'chart',
     'cr:mid-alert-workbench': 'zoom',
-    'cr:mid-dispose-workbench': 'work_flow',
     'cr:mid-single-cust': 'id',
     'cr:mid-single-cust-2': 'id',
     // 催贷管理（6 大模块重新规划）
@@ -354,6 +349,14 @@ export default function Console() {
     shellSub === 'cm' ? cmMenu : []
   const cur = (loc.pathname.split('/')[3] as string) || 'overview'
   const key = `${sub}:${cur}`
+
+  // 详情页高亮回退：详情路由段（如 model-detail / mid-cust-score）不在菜单里，
+  // 用 back 参数（入口列表页完整 URL）取出其路由段作为高亮项，
+  // 这样「列表 → 详情」左侧菜单选中态不丢失。列表页自身命中则直接用 cur。
+  const backParamUrl = new URLSearchParams(loc.search).get('back') || ''
+  const backCur = backParamUrl ? (backParamUrl.split('?')[0].split('/')[3] || '') : ''
+  const menuLeafKeys = menu.flatMap((g) => g.items).map((i) => i.key.split(':')[1])
+  const activeCur = menuLeafKeys.includes(cur) ? cur : (backCur && menuLeafKeys.includes(backCur) ? backCur : cur)
 
   const isQuery = cur.endsWith('-query')
   const prod = cur.split('-')[0]
@@ -464,7 +467,7 @@ export default function Console() {
             <nav className="flex flex-col items-center gap-1 px-2">
               {menu.flatMap((g) => g.items).map((it) => {
                 const to = `/console/${shellSub}/${it.key.split(':')[1]}`
-                const active = it.key.split(':')[1] === cur
+                const active = it.key.split(':')[1] === activeCur
                 return (
                   <NavLink
                     key={it.key}
@@ -484,7 +487,7 @@ export default function Console() {
               })}
             </nav>
           ) : (
-            <SidebarMenu menu={menu} sub={shellSub} cur={cur} menuIcon={menuIcon} nav={nav} />
+            <SidebarMenu menu={menu} sub={shellSub} cur={activeCur} menuIcon={menuIcon} nav={nav} />
           )}
         </aside>
 
@@ -580,7 +583,7 @@ export default function Console() {
               <DunQa />
             ) : key === 'zz:repayment' ? (
               <DunRepayment />
-            ) : key === 'ep:overview' || key === 'ep:overview-realtime' || key === 'ep:decision-trace' ? (
+            ) : key === 'ep:overview' || key === 'ep:overview-realtime' ? (
               <EnterpriseDashboard key={key} pageKey={key} />
             ) : key.startsWith('ep:') ? (
               <EnterpriseModule pageKey={key} />
@@ -590,8 +593,6 @@ export default function Console() {
               <MidDashboardPage pageKey={key} />
             ) : key === 'cr:mid-alert-workbench' ? (
               <MidAlertWorkbench />
-            ) : key === 'cr:mid-dispose-workbench' ? (
-              <MidDisposeWorkbench />
             ) : key === 'cr:mid-cust-score' ? (
               <CustScoreDetail />
             ) : key === 'cr:mid-single-cust' ? (

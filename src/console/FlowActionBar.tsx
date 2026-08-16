@@ -36,10 +36,11 @@ export default function FlowActionBar({ flowId, state, onStateChange, onSave, sa
         </button>
       )}
       {f && steps.length > 0 && (() => {
-        const { state: st, step } = flowStepOf({ flowSteps: steps, flowState: state })
-        const sc = step?.color ?? stepColorOf(st)
+        const { state: st, matched } = flowStepOf({ flowSteps: steps, flowState: state })
+        const sc = matched[0]?.color ?? stepColorOf(st)
         // 需求3：节点时限标签（读 FlowGraphNode.timeLimit，节点属性配置）——放本行最末尾
         const tl = nodeTimeLimitOf(graph, state)
+        const act = matched.filter((s) => s.next && onStateChange)
         return (
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: '#fff', border: '1px solid #E2E8F0', borderRadius: 8, padding: '3px 8px' }}>
             <span style={{ fontSize: 12, color: '#64748B' }}>{name || f.name}</span>
@@ -47,12 +48,12 @@ export default function FlowActionBar({ flowId, state, onStateChange, onSave, sa
               <span style={{ width: 6, height: 6, borderRadius: '50%', background: sc, display: 'inline-block' }} />
               {st}
             </span>
-            {step?.next && onStateChange && (
-              <button type="button" onClick={() => setConfirm({ f, step })}
-                style={{ height: 22, padding: '0 12px', fontSize: 12, borderRadius: 6, border: 'none', cursor: 'pointer', background: '#2563EB', color: '#fff', fontWeight: 500 }}>
-                {step.action}
+            {act.map((s) => (
+              <button key={s.action} type="button" onClick={() => setConfirm({ f, step: s })}
+                style={{ height: 22, padding: '0 12px', fontSize: 12, borderRadius: 6, border: 'none', cursor: 'pointer', background: s.action.includes('驳回') ? '#DC2626' : '#2563EB', color: '#fff', fontWeight: 500 }}>
+                {s.action}
               </button>
-            )}
+            ))}
             {tl != null && (
               <span style={{ fontSize: 12, fontWeight: 600, color: '#B45309', background: '#FEF3C7', border: '1px solid #FDE68A', borderRadius: 10, padding: '1px 9px', whiteSpace: 'nowrap' }}>
                 节点时限 {tl} 分钟

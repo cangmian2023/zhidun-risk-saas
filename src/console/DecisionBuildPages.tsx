@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useDecision, LIST_KIND_TAG, type DeFeature, type DeList } from './decisionData'
 import { PageShell } from './PageShell'
-import { Panel, DataTable, Badge, Button, StatCard, DetailHeader, type Column, type Row } from '../components/ui'
+import { Panel, DataTable, Badge, Button, StatCard, DetailHeader, SingleSelect, type Column, type Row } from '../components/ui'
 import { Sam, Cal } from './SourceTag'
 import { EditFeatureDialog, BindModelDialog, ListRecordDialog, NewListDialog } from './DecisionDialogs'
 import { useDecisionToast } from './useDecisionToast'
@@ -196,16 +196,10 @@ export function DecisionTemplateMarketPage() {
         <div className="flex flex-wrap items-center gap-2">
           <input value={kw} onChange={(e) => setKw(e.target.value)} placeholder="搜索模板"
             className="h-9 w-44 rounded-lg border border-slate-200 px-3 text-sm focus:border-brand-300 focus:outline-none" />
-          <select value={industry} onChange={(e) => setIndustry(e.target.value)}
-            className="h-9 rounded-lg border border-slate-200 px-2 text-sm text-slate-600 focus:outline-none">
-            <option value="">全部行业</option>
-            {industries.map((s) => <option key={s} value={s}>{s}</option>)}
-          </select>
-          <select value={scene} onChange={(e) => setScene(e.target.value)}
-            className="h-9 rounded-lg border border-slate-200 px-2 text-sm text-slate-600 focus:outline-none">
-            <option value="">全部场景</option>
-            {scenes.map((s) => <option key={s} value={s}>{s}</option>)}
-          </select>
+          <SingleSelect label="全部行业" clearable value={industry} onChange={setIndustry}
+            options={[{ value: '', label: '全部行业' }, ...industries.map((s) => ({ value: s, label: s }))]} />
+          <SingleSelect label="全部场景" clearable value={scene} onChange={setScene}
+            options={[{ value: '', label: '全部场景' }, ...scenes.map((s) => ({ value: s, label: s }))]} />
         </div>
       }>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4">
@@ -302,11 +296,8 @@ export function DecisionTemplateDetailPage({ search }: { search: string }) {
         backTo="/console/de/template-market"
         actions={
           <>
-            <select value={ver} onChange={(e) => setVer(e.target.value)}
-              className="h-8 w-16 rounded-lg border border-slate-200 px-1 text-sm text-slate-600 focus:outline-none">
-              <option value="v1">v1</option>
-              <option value="v2">v2</option>
-            </select>
+            <SingleSelect label="版本" width={80} value={ver} onChange={setVer}
+              options={[{ value: 'v1', label: 'v1' }, { value: 'v2', label: 'v2' }]} />
             <Button onClick={() => toast.show('已引用模板「' + t.name + '」，可在模型管理中查看')}>使用此模板</Button>
             <Button variant="secondary" onClick={() => toast.show('已发布新版本，可在版本管理中查看')}>发布新版本</Button>
             <Button variant="secondary" onClick={() => toast.show('模板已下线')}>下 线</Button>

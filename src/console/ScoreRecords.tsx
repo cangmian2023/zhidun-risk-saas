@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { usePageNav } from './pageNav'
 import { useScore, SCORE_PROD_LABEL, updateScore, resolveRisk, type ScoreProd, type ScoreRecord, type ScoreData } from './scoreData'
 import { PageShell } from './PageShell'
-import { Panel, StatCard, DataTable, Button, Badge, Modal } from '../components/ui'
+import { Panel, StatCard, DataTable, Button, Badge, Modal, SingleSelect } from '../components/ui'
 import { Sam } from './SourceTag'
 
 // 等级与风险结论统一从 scoreData 的 resolveRisk 查（单一数据源，与阈值配置一致）
@@ -77,13 +77,17 @@ export default function ScoreRecordsPage() {
     { key: 'score', label: '分数', type: 'score' as const },
     {
       key: 'level',
-      label: '等级 / 风险结论',
-      render: (r: any) => (
-        <div>
-          <Badge kind={levelKind(r.level)}>{r.level}</Badge>
-          {r.action ? <div className="mt-1 text-[11px] leading-tight text-slate-400">{r.action}</div> : null}
+      label: '风险等级',
+      render: (r: any) => <Badge kind={levelKind(r.level)}>{r.level}</Badge>,
+    },
+    {
+      key: 'tags',
+      label: '风险标签',
+      render: (r: any) => r.hitLabels && r.hitLabels.length ? (
+        <div className="flex flex-wrap gap-1">
+          {r.hitLabels.map((t: string) => <Badge key={t} kind="amber">{t}</Badge>)}
         </div>
-      ),
+      ) : <span className="text-xs text-slate-300">未命中</span>,
     },
     { key: 'source', label: '来源' },
     {
@@ -107,7 +111,7 @@ export default function ScoreRecordsPage() {
       model: r.model,
       score: r.score,
       level: risk?.level ?? '—',
-      action: risk?.action ?? '',
+      hitLabels: r.hitLabels ?? [],
       source: r.source,
       status: r.status,
     }
@@ -127,16 +131,8 @@ export default function ScoreRecordsPage() {
         {/* 筛选栏 */}
         <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-slate-100 bg-white p-4 shadow-card">
           <span className="text-sm text-slate-500">模型</span>
-          <select
-            value={modelFilter}
-            onChange={(e) => setModelFilter(e.target.value as 'all' | ScoreProd)}
-            className="h-9 rounded-lg border border-slate-200 bg-white px-3 text-sm text-ink-900 outline-none focus:border-brand-400"
-          >
-            <option value="all">全部</option>
-            <option value="zhicha">智察分</option>
-            <option value="zhixin">智信分</option>
-            <option value="zhirong">智融分</option>
-          </select>
+          <SingleSelect label="全部模型" clearable value={modelFilter} onChange={(v) => setModelFilter(v as 'all' | ScoreProd)}
+            options={[{ value: 'all', label: '全部' }, { value: 'zhicha', label: '智察分' }, { value: 'zhixin', label: '智信分' }, { value: 'zhirong', label: '智融分' }]} />
           <span className="text-sm text-slate-500">搜索</span>
           <input
             value={q}

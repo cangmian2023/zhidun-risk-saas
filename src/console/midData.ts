@@ -705,6 +705,51 @@ export const SEED_DATA_SOURCES: MidDataSource[] = [
   ],
   'status': 'connected'
 },
+  // 评分客户洞察（客户洞察看板数据源）
+  {
+    id: 'ds_score_customer',
+    name: '评分客户洞察',
+    type: 'sql',
+    category: '评分域',
+    desc: '评分产品客户全景（三模型分 / 风险 / 价值 / 命中标签 / 客群 / 近30天行为），客户洞察看板数据源',
+    conn: {
+      dbType: 'mysql', host: '10.20.30.41', port: 3306, database: 'score_db',
+      username: 'score_ro', password: 'Score@2026****',
+      connStr: 'mysql://score_ro:***@10.20.30.41:3306/score_db',
+      query: 'SELECT cust_id, cust_name, zhicha_score, zhixin_score, zhirong_score, risk_level, value_tier, hit_tags, grp, apply_30d, overdue_amt, last_alert, trend_30d FROM score_customer',
+    },
+    fields: [
+      { key: 'cust_id', label: '客户ID', kind: 'dim', type: 'string' },
+      { key: 'cust_name', label: '客户姓名', kind: 'dim', type: 'string' },
+      { key: 'zhicha_score', label: '智察分', kind: 'measure', type: 'number' },
+      { key: 'zhixin_score', label: '智信分', kind: 'measure', type: 'number' },
+      { key: 'zhirong_score', label: '智融分', kind: 'measure', type: 'number' },
+      { key: 'risk_level', label: '综合风险等级', kind: 'dim', type: 'string' },
+      { key: 'value_tier', label: '价值分层', kind: 'dim', type: 'string' },
+      { key: 'hit_tags', label: '命中标签', kind: 'dim', type: 'string' },
+      { key: 'grp', label: '所属客群', kind: 'dim', type: 'string' },
+      { key: 'apply_30d', label: '近30天申贷次数', kind: 'measure', type: 'number' },
+      { key: 'overdue_amt', label: '当前逾期金额', kind: 'measure', type: 'number' },
+      { key: 'last_alert', label: '最近预警时间', kind: 'dim', type: 'string' },
+      { key: 'trend_30d', label: '近30天风险趋势', kind: 'dim', type: 'string' },
+    ],
+    rows: [
+      { cust_id: 'C1001', cust_name: '张伟', zhicha_score: 812, zhixin_score: 742, zhirong_score: 690, risk_level: '极低', value_tier: '高', hit_tags: '', grp: '高价值低险', apply_30d: 1, overdue_amt: 0, last_alert: '-', trend_30d: '平' },
+      { cust_id: 'C1002', cust_name: '李娜', zhicha_score: 733, zhixin_score: 688, zhirong_score: 651, risk_level: '低', value_tier: '高', hit_tags: '', grp: '高价值低险', apply_30d: 2, overdue_amt: 0, last_alert: '-', trend_30d: '平' },
+      { cust_id: 'C1003', cust_name: '王强', zhicha_score: 612, zhixin_score: 590, zhirong_score: 588, risk_level: '中', value_tier: '高', hit_tags: '负债收入比≥70%', grp: '高价值中险', apply_30d: 3, overdue_amt: 0, last_alert: '2026-07-28', trend_30d: '平' },
+      { cust_id: 'C1004', cust_name: '赵敏', zhicha_score: 521, zhixin_score: 503, zhirong_score: 540, risk_level: '高', value_tier: '高', hit_tags: '多头借贷强度高', grp: '高价值高风险', apply_30d: 6, overdue_amt: 12000, last_alert: '2026-08-09', trend_30d: '升' },
+      { cust_id: 'C1005', cust_name: '陈杰', zhicha_score: 418, zhixin_score: 432, zhirong_score: 460, risk_level: '极高', value_tier: '高', hit_tags: '命中外部黑灰名单', grp: '高价值高风险', apply_30d: 9, overdue_amt: 38000, last_alert: '2026-08-12', trend_30d: '升' },
+      { cust_id: 'C1006', cust_name: '刘洋', zhicha_score: 688, zhixin_score: 671, zhirong_score: 622, risk_level: '低', value_tier: '中', hit_tags: '', grp: '一般客群', apply_30d: 2, overdue_amt: 0, last_alert: '-', trend_30d: '降' },
+      { cust_id: 'C1007', cust_name: '孙丽', zhicha_score: 645, zhixin_score: 629, zhirong_score: 600, risk_level: '中', value_tier: '中', hit_tags: '征信月查询≥10', grp: '一般客群', apply_30d: 4, overdue_amt: 0, last_alert: '2026-07-30', trend_30d: '平' },
+      { cust_id: 'C1008', cust_name: '周涛', zhicha_score: 533, zhixin_score: 511, zhirong_score: 497, risk_level: '高', value_tier: '中', hit_tags: '设备模拟器特征命中', grp: '低价值高风险', apply_30d: 7, overdue_amt: 21000, last_alert: '2026-08-10', trend_30d: '升' },
+      { cust_id: 'C1009', cust_name: '吴静', zhicha_score: 402, zhixin_score: 388, zhirong_score: 430, risk_level: '极高', value_tier: '中', hit_tags: '近30天申贷平台数≥5', grp: '低价值高风险', apply_30d: 11, overdue_amt: 45000, last_alert: '2026-08-13', trend_30d: '升' },
+      { cust_id: 'C1010', cust_name: '郑凯', zhicha_score: 705, zhixin_score: 698, zhirong_score: 660, risk_level: '低', value_tier: '低', hit_tags: '', grp: '低价值低险', apply_30d: 1, overdue_amt: 0, last_alert: '-', trend_30d: '平' },
+      { cust_id: 'C1011', cust_name: '冯雪', zhicha_score: 658, zhixin_score: 640, zhirong_score: 615, risk_level: '中', value_tier: '低', hit_tags: '', grp: '低价值低险', apply_30d: 2, overdue_amt: 0, last_alert: '-', trend_30d: '降' },
+      { cust_id: 'C1012', cust_name: '何磊', zhicha_score: 556, zhixin_score: 540, zhirong_score: 523, risk_level: '高', value_tier: '低', hit_tags: '历史 M3+ 逾期≥2', grp: '低价值高风险', apply_30d: 5, overdue_amt: 16000, last_alert: '2026-08-08', trend_30d: '升' },
+    ],
+    status: '已接入',
+  },
+
 ];
 
 export const SEED_METRICS: MidMetric[] = [
@@ -918,6 +963,14 @@ export const SEED_METRICS: MidMetric[] = [
   {'id': 'm_pre_pass_rate', 'name': '进件通过率', 'group': '贷前', 'dataSourceId': 'ds_pre_apply', 'type': 'derived', 'formula': 'm_pre_pass_cnt / m_pre_in_cnt * 100', 'unit': '%', 'precision': 1, 'enabled': true, 'desc': '通过数/进件量'},
   {'id': 'm_pre_fraud_cnt', 'name': '欺诈命中件数', 'group': '贷前', 'dataSourceId': 'ds_pre_apply', 'type': 'base', 'field': 'apply_id', 'agg': 'count', 'filters': [{'field': 'fraud_hit', 'op': 'eq', 'value': '是'}], 'unit': '件', 'precision': 0, 'enabled': true, 'desc': '欺诈命中=是的进件数'},
   {'id': 'm_pre_fraud_rate', 'name': '欺诈命中率', 'group': '贷前', 'dataSourceId': 'ds_pre_apply', 'type': 'derived', 'formula': 'm_pre_fraud_cnt / m_pre_in_cnt * 100', 'unit': '%', 'precision': 1, 'enabled': true, 'desc': '欺诈命中件数/进件量'},
+  { id: 'm_sc_cust_cnt', name: '客户总数', group: '评分客户', dataSourceId: 'ds_score_customer', type: 'base', field: 'cust_id', agg: 'count', precision: 0, enabled: true },
+  { id: 'm_sc_high_value', name: '高价值客户数', group: '评分客户', dataSourceId: 'ds_score_customer', type: 'base', field: 'cust_id', agg: 'count', filters: [{ field: 'value_tier', op: 'eq', value: '高' }], precision: 0, enabled: true },
+  { id: 'm_sc_high_risk', name: '高风险客户数', group: '评分客户', dataSourceId: 'ds_score_customer', type: 'base', field: 'cust_id', agg: 'count', filters: [{ field: 'risk_level', op: 'contains', value: '高' }], precision: 0, enabled: true },
+  { id: 'm_sc_group_cnt', name: '客群分组数', group: '评分客户', dataSourceId: 'ds_score_customer', type: 'base', field: 'grp', agg: 'distinct', precision: 0, enabled: true },
+  { id: 'm_hit_total', name: '总命中次数', group: '命中分析', dataSourceId: 'ds_score_hit', type: 'base', field: 'hits', agg: 'sum', precision: 0, enabled: true },
+  { id: 'm_hit_model', name: '涉及模型数', group: '命中分析', dataSourceId: 'ds_score_hit', type: 'base', field: 'model', agg: 'distinct', precision: 0, enabled: true },
+  { id: 'm_hit_rule', name: '命中规则数', group: '命中分析', dataSourceId: 'ds_score_hit', type: 'base', field: 'rule', agg: 'count', precision: 0, enabled: true },
+  { id: 'm_hit_list', name: '名单命中次数', group: '命中分析', dataSourceId: 'ds_score_hit', type: 'base', field: 'hits', agg: 'sum', filters: [{ field: 'type', op: 'contains', value: 'list' }], precision: 0, enabled: true },
 ];
 
 /* ---------- 监控任务详情要原样展示的「事件分析配置」（逐字照搬 record/temp/event，常量直渲，不依赖磁盘 JSON，保证与文档一致） ---------- */

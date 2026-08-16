@@ -1,11 +1,30 @@
 /* 企业风控子系统 · 数据层
  * 持久化复用 /api/load-mid /api/save-mid；首启动 SEED 自动落盘（橘 Sam）。
- * 覆盖业务：尽调任务 / 存量监控名单 / 决策事件 / 复核工单 / 名单管理 / 数据源 / 预警规则 / 企业预警。
+ * 覆盖业务：尽调任务 / 存量监控名单 / 决策事件（含复核流程）/ 名单管理 / 数据源 / 预警规则 / 企业预警。
  */
 
 import { useSyncExternalStore } from 'react';
 
 /* ---------- 类型 ---------- */
+
+/** 流程操作留痕（P0 合规：谁、何时、做了什么、意见） */
+export interface FlowLog {
+  at: string;        // 操作时间 YYYY-MM-DD HH:mm:ss
+  action: string;    // 操作动作（如 提交复核 / 复核通过 / 驳回）
+  operator: string;  // 操作人
+  opinion?: string;  // 操作意见（可选）
+}
+
+/** 全局操作变更日志（P1：名单/规则/监控/尽调等写操作追溯） */
+export interface OpLog {
+  at: string;        // 操作时间
+  module: string;    // 模块：名单管理 / 预警规则 / 监控名单 / 批量尽调
+  type: string;      // 操作类型：新增 / 启停 / 复制 / 暂停 / 恢复 / 自动移除 / 新建任务
+  target: string;    // 操作对象（企业名 / 规则名 / 任务名）
+  operator: string;  // 操作人
+  detail?: string;   // 变更说明
+}
+
 export interface DueTask {
   id: string;
   name: string;           // 任务名
@@ -17,6 +36,7 @@ export interface DueTask {
   startedAt: string;
   finishedAt?: string;
   createdBy: string;
+  flowLogs?: FlowLog[];   // 流程操作留痕
 }
 
 export interface MonitorEnt {
@@ -28,6 +48,7 @@ export interface MonitorEnt {
   alerts: number;         // 累计预警数
   lastAlert: string;      // 最近预警时间
   status: '监控中' | '已移除' | '已暂停';
+  flowLogs?: FlowLog[];   // 监控状态变更留痕
 }
 
 export interface DecisionEvent {
@@ -43,20 +64,12 @@ export interface DecisionEvent {
   decidedAt: string;
   operator: string;
   rules: string[];        // 命中规则
-}
-
-export interface ReviewOrder {
-  id: string;
-  eventId: string;
-  entName: string;
-  reason: string;         // 复核原因
-  level: '高' | '中' | '低';
-  status: '待复核' | '复核中' | '已复核' | '已驳回';
-  assignee: string;
-  createdAt: string;
-  conclusion?: string;
-  reviewer?: string;
-  reviewedAt?: string;
+  /* 统一流程绑定（与预警处置工作台同一套架构）：复核流程状态由 f-ent-decision 驱动，状态写回本行 */
+  flowKey?: string;
+  flowState?: string;
+  flowStateAt?: string;
+  reviewConclusion?: string;
+  flowLogs?: FlowLog[];   // 复核流程操作留痕
 }
 
 export interface ListEnt {
@@ -68,6 +81,9 @@ export interface ListEnt {
   addedAt: string;
   operator: string;
   status: '生效' | '失效';
+  expireAt?: string;      // 有效期截止（YYYY-MM-DD，空=永久名单）
+  autoExpire?: boolean;   // 到期自动移除（临时名单）
+  flowLogs?: FlowLog[];   // 名单状态变更留痕
 }
 
 export interface EntDataSource {
@@ -106,6 +122,7 @@ export interface EntAlert {
   flowKey?: string;
   flowState?: string;
   flowStateAt?: string;
+  flowLogs?: FlowLog[];   // 处置流程操作留痕
 }
 
 export interface EntModel {
@@ -128,18 +145,18 @@ export interface EnterpriseData {
   dueTasks: DueTask[];
   monitorList: MonitorEnt[];
   decisionEvents: DecisionEvent[];
-  reviewOrders: ReviewOrder[];
   listEnts: ListEnt[];
   dataSources: EntDataSource[];
   alertRules: EntAlertRule[];
   alerts: EntAlert[];
   models: EntModel[];
+  opLogs: OpLog[];        // 全局操作变更日志（新在前）
 }
 
 /* ---------- SEED ---------- */
 export const SEED_ENTERPRISE: EnterpriseData = {
   dueTasks: [
-    { id: 'DT-2608-01', name: '8月对公存量客户尽调', count: 126, source: '接口导入', status: '进行中', progress: 68, hitRisk: 9, startedAt: '2026-08-11 09:00', createdBy: '系统管理员' },
+    { id: 'DT-2608-01', name: '8月对公存量客户尽调', count: 126, source: '接口导入', status: '进行中', progress: 68, hitRisk: 9, startedAt: '2026-08-11 09:00', createdBy: '系统管理员', flowLogs: [{ at: '2026-08-11 09:00:00', action: '任务启动', operator: '系统管理员' }] },
     { id: 'DT-2608-02', name: '新准入供应商风险筛查', count: 54, source: '上传名单', status: '已完成', progress: 100, hitRisk: 3, startedAt: '2026-08-09 14:30', finishedAt: '2026-08-10 10:12', createdBy: '张三' },
     { id: 'DT-2608-03', name: '授信到期续约尽调', count: 87, source: '接口导入', status: '待开始', progress: 0, hitRisk: 0, startedAt: '2026-08-12 08:00', createdBy: '李四' },
     { id: 'DT-2607-04', name: '园区重点企业季度复审', count: 32, source: '手工录入', status: '已完成', progress: 100, hitRisk: 4, startedAt: '2026-07-28 09:00', finishedAt: '2026-07-30 16:00', createdBy: '王五' },
@@ -153,23 +170,17 @@ export const SEED_ENTERPRISE: EnterpriseData = {
     { keyNo: 'e5', name: '上海晨光贸易有限公司', industry: '批发业', riskLevel: '中', monitorSince: '2025-09-20', alerts: 3, lastAlert: '2026-07-28', status: '已暂停' },
   ],
   decisionEvents: [
-    { id: 'DE-2608-101', entKeyNo: 'e3', entName: '深圳市锐进供应链有限公司', scene: '授信审批', score: 482, scoreModel: '企业违约分', result: '拒绝', level: '高', status: '已完成', decidedAt: '2026-08-08 11:20', operator: '风控系统', rules: ['司法涉诉≥3', '欠税公告命中', '经营异常'] },
-    { id: 'DE-2608-102', entKeyNo: 'e1', entName: '永和食品（中国）股份有限公司', scene: '授信审批', score: 762, scoreModel: '企业违约分', result: '通过', level: '低', status: '已完成', decidedAt: '2026-08-02 15:40', operator: '风控系统', rules: ['无重大司法风险', '财务稳健'] },
-    { id: 'DE-2608-103', entKeyNo: 'e4', entName: '北京华信智控科技有限公司', scene: '尽调结论', score: 555, scoreModel: '企业欺诈分', result: '转人工', level: '高', status: '待复核', decidedAt: '2026-08-09 09:10', operator: '尽调引擎', rules: ['关联企业风险', '股权冻结'] },
-    { id: 'DE-2608-104', entKeyNo: 'e2', entName: '杭州云算科技有限公司', scene: '预警处置', score: 801, scoreModel: '企业违约分', result: '通过', level: '低', status: '已完成', decidedAt: '2026-07-30 10:00', operator: '风控系统', rules: ['高新技术企业', '无经营异常'] },
-    { id: 'DE-2608-105', entKeyNo: 'e5', entName: '上海晨光贸易有限公司', scene: '名单命中', score: 610, scoreModel: '企业违约分', result: '预警', level: '中', status: '复核中', decidedAt: '2026-08-05 14:00', operator: '名单引擎', rules: ['灰名单命中', '经营异常'] },
-  ],
-  reviewOrders: [
-    { id: 'RO-2608-01', eventId: 'DE-2608-103', entName: '北京华信智控科技有限公司', reason: '模型输出「转人工」：关联企业风险 + 股权冻结，需人工研判授信', level: '高', status: '待复核', assignee: '风控主管', createdAt: '2026-08-09 09:10' },
-    { id: 'RO-2608-02', eventId: 'DE-2608-105', entName: '上海晨光贸易有限公司', reason: '灰名单命中且经营异常，需确认名单规则与实际情况', level: '中', status: '复核中', assignee: '张三', createdAt: '2026-08-05 14:00' },
-    { id: 'RO-2608-03', eventId: 'DE-2608-106', entName: '广州联诚物流有限公司', reason: '黑名单关联企业命中，需人工复核关联真实性', level: '高', status: '待复核', assignee: '李四', createdAt: '2026-08-07 16:30' },
-    { id: 'RO-2608-04', eventId: 'DE-2608-107', entName: '成都明远机械有限公司', reason: '税务欠税公告命中，需确认金额与处置', level: '中', status: '已复核', assignee: '王五', createdAt: '2026-08-01 11:00', conclusion: '欠税金额较小，建议暂缓授信观察', reviewer: '王五', reviewedAt: '2026-08-02 09:30' },
+    { id: 'DE-2608-101', entKeyNo: 'e3', entName: '深圳市锐进供应链有限公司', scene: '授信审批', score: 482, scoreModel: '企业违约分', result: '拒绝', level: '高', status: '已完成', decidedAt: '2026-08-08 11:20', operator: '风控系统', rules: ['司法涉诉≥3', '欠税公告命中', '经营异常'], flowKey: 'f-ent-decision', flowState: '已复核', flowStateAt: '2026-08-08 11:20:00' },
+    { id: 'DE-2608-102', entKeyNo: 'e1', entName: '永和食品（中国）股份有限公司', scene: '授信审批', score: 762, scoreModel: '企业违约分', result: '通过', level: '低', status: '已完成', decidedAt: '2026-08-02 15:40', operator: '风控系统', rules: ['无重大司法风险', '财务稳健'], flowKey: 'f-ent-decision', flowState: '已复核', flowStateAt: '2026-08-02 15:40:00' },
+    { id: 'DE-2608-103', entKeyNo: 'e4', entName: '北京华信智控科技有限公司', scene: '尽调结论', score: 555, scoreModel: '企业欺诈分', result: '转人工', level: '高', status: '待复核', decidedAt: '2026-08-09 09:10', operator: '尽调引擎', rules: ['关联企业风险', '股权冻结'], flowKey: 'f-ent-decision', flowState: '待复核', flowStateAt: '2026-08-09 09:10:00', flowLogs: [{ at: '2026-08-09 09:10:00', action: '系统提交复核', operator: '尽调引擎' }] },
+    { id: 'DE-2608-104', entKeyNo: 'e2', entName: '杭州云算科技有限公司', scene: '预警处置', score: 801, scoreModel: '企业违约分', result: '通过', level: '低', status: '已完成', decidedAt: '2026-07-30 10:00', operator: '风控系统', rules: ['高新技术企业', '无经营异常'], flowKey: 'f-ent-decision', flowState: '已复核', flowStateAt: '2026-07-30 10:00:00' },
+    { id: 'DE-2608-105', entKeyNo: 'e5', entName: '上海晨光贸易有限公司', scene: '名单命中', score: 610, scoreModel: '企业违约分', result: '预警', level: '中', status: '复核中', decidedAt: '2026-08-05 14:00', operator: '名单引擎', rules: ['灰名单命中', '经营异常'], flowKey: 'f-ent-decision', flowState: '复核中', flowStateAt: '2026-08-05 14:00:00' },
   ],
   listEnts: [
     { id: 'LB-01', name: '广州联诚物流有限公司', list: 'black', reason: '重大司法涉诉 + 空壳特征', source: '尽调命中', addedAt: '2026-07-15', operator: '张三', status: '生效' },
-    { id: 'LB-02', name: '上海晨光贸易有限公司', list: 'gray', reason: '经营异常，需持续观察', source: '规则命中', addedAt: '2026-08-01', operator: '李四', status: '生效' },
+    { id: 'LB-02', name: '上海晨光贸易有限公司', list: 'gray', reason: '经营异常，需持续观察', source: '规则命中', addedAt: '2026-08-01', operator: '李四', status: '生效', expireAt: '2026-08-31', autoExpire: true },
     { id: 'LB-03', name: '杭州云算科技有限公司', list: 'white', reason: '核心优质客户', source: '手工添加', addedAt: '2026-06-20', operator: '王五', status: '生效' },
-    { id: 'LB-04', name: '成都明远机械有限公司', list: 'gray', reason: '税务异常待确认', source: '尽调命中', addedAt: '2026-08-03', operator: '张三', status: '生效' },
+    { id: 'LB-04', name: '成都明远机械有限公司', list: 'gray', reason: '税务异常待确认', source: '尽调命中', addedAt: '2026-08-03', operator: '张三', status: '生效', expireAt: '2026-08-20', autoExpire: true },
     { id: 'LB-05', name: '北京华信智控科技有限公司', list: 'black', reason: '股权冻结 + 关联风险', source: '模型命中', addedAt: '2026-08-08', operator: '李四', status: '生效' },
   ],
   dataSources: [
@@ -191,7 +202,7 @@ export const SEED_ENTERPRISE: EnterpriseData = {
   ],
   alerts: [
     { id: 'EA-001', entKeyNo: 'e3', entName: '深圳市锐进供应链有限公司', ruleId: 'ER-01', ruleName: '司法涉诉预警', category: '司法涉诉', level: 'RED', alert_date: '2026-08-08 11:20', detail: '新增被执行案件1起，涉案金额 730 万', status: '待处置', flowKey: 'f-ent-alert', flowState: '预警确认中', flowStateAt: '2026-08-08 11:20:00' },
-    { id: 'EA-002', entKeyNo: 'e4', entName: '北京华信智控科技有限公司', ruleId: 'ER-01', ruleName: '司法涉诉预警', category: '司法涉诉', level: 'RED', alert_date: '2026-08-06 09:00', detail: '新增股权冻结，关联企业风险上升', status: '核实中', flowKey: 'f-ent-alert', flowState: '风险研判中', flowStateAt: '2026-08-06 09:00:00' },
+    { id: 'EA-002', entKeyNo: 'e4', entName: '北京华信智控科技有限公司', ruleId: 'ER-01', ruleName: '司法涉诉预警', category: '司法涉诉', level: 'RED', alert_date: '2026-08-06 09:00', detail: '新增股权冻结，关联企业风险上升', status: '核实中', flowKey: 'f-ent-alert', flowState: '风险研判中', flowStateAt: '2026-08-06 09:00:00', flowLogs: [{ at: '2026-08-06 09:00:00', action: '预警确认', operator: '风控系统', opinion: '股权冻结，进入风险研判' }] },
     { id: 'EA-003', entKeyNo: 'e1', entName: '永和食品（中国）股份有限公司', ruleId: 'ER-03', ruleName: '舆情负面预警', category: '舆情负面', level: 'YELLOW', alert_date: '2026-08-01 14:30', detail: '个别负面舆情报道，影响有限', status: '已处置', flowKey: 'f-ent-alert', flowState: '已结案', flowStateAt: '2026-08-02 10:00:00' },
     { id: 'EA-004', entKeyNo: 'e5', entName: '上海晨光贸易有限公司', ruleId: 'ER-02', ruleName: '经营异常预警', category: '经营异常', level: 'RED', alert_date: '2026-07-28 10:00', detail: '被列入经营异常名录（未按期年报）', status: '待处置', flowKey: 'f-ent-alert', flowState: '预警确认中', flowStateAt: '2026-07-28 10:00:00' },
     { id: 'EA-005', entKeyNo: 'e2', entName: '杭州云算科技有限公司', ruleId: 'ER-06', ruleName: '欠税预警', category: '税务', level: 'YELLOW', alert_date: '2026-07-20 09:00', detail: '小额欠税公告，金额 3.2 万', status: '已处置', flowKey: 'f-ent-alert', flowState: '已结案', flowStateAt: '2026-07-21 09:00:00' },
@@ -274,6 +285,12 @@ export const SEED_ENTERPRISE: EnterpriseData = {
       ] },
     },
   ],
+  opLogs: [
+    { at: '2026-08-16 10:24:00', module: '名单管理', type: '新增', target: '深圳市锐进供应链有限公司', operator: '当前用户', detail: '加入灰名单（临时名单，到期自动移除）' },
+    { at: '2026-08-16 10:20:00', module: '预警规则', type: '启停', target: '财务恶化预警', operator: '当前用户', detail: '停用' },
+    { at: '2026-08-16 09:58:00', module: '监控名单', type: '暂停', target: '上海晨光贸易有限公司', operator: '当前用户', detail: '暂停监控' },
+    { at: '2026-08-16 09:40:00', module: '批量尽调', type: '新建任务', target: '8月对公存量客户尽调', operator: '当前用户', detail: '接口导入 126 家企业' },
+  ],
 };
 
 /* ---------- store ---------- */
@@ -311,12 +328,12 @@ async function bootstrap() {
       ...(s.dueTasks ? { dueTasks: s.dueTasks } : {}),
       ...(s.monitorList ? { monitorList: s.monitorList } : {}),
       ...(s.decisionEvents ? { decisionEvents: s.decisionEvents } : {}),
-      ...(s.reviewOrders ? { reviewOrders: s.reviewOrders } : {}),
       ...(s.listEnts ? { listEnts: s.listEnts } : {}),
       ...(s.dataSources ? { dataSources: s.dataSources } : {}),
       ...(s.alertRules ? { alertRules: s.alertRules } : {}),
       ...(s.alerts ? { alerts: s.alerts } : {}),
       ...(s.models ? { models: s.models } : {}),
+      ...(s.opLogs ? { opLogs: s.opLogs } : {}),
     };
   } else {
     saveOne(FILES.ent, data);
@@ -334,6 +351,16 @@ function useSnap<T>(sel: () => T): T {
 }
 
 export function useEnterpriseData(): EnterpriseData { return useSnap(() => data); }
+/** 当前时间戳（与 flowStateAt 格式一致 YYYY-MM-DD HH:mm:ss） */
+export const nowTime = () => new Date().toISOString().slice(0, 19).replace('T', ' ');
+/** 追加一条流程操作日志（自动带时间/操作人；opinion 可选） */
+export function appendLog(logs: FlowLog[] | undefined, action: string, operator = '当前用户', opinion?: string): FlowLog[] {
+  return [...(logs ?? []), { at: nowTime(), action, operator, ...(opinion ? { opinion } : {}) }];
+}
+/** 追加一条全局操作变更日志（新在前，最多保留 200 条） */
+export function appendOpLog(logs: OpLog[] | undefined, op: Omit<OpLog, 'at' | 'operator'>, operator = '当前用户'): OpLog[] {
+  return [{ at: nowTime(), operator, ...op }, ...(logs ?? [])].slice(0, 200);
+}
 export function useEnterpriseSaveStatus(): 'ok' | 'error' | null {
   useSyncExternalStore(
     (l) => { statusListeners.add(l); return () => { statusListeners.delete(l); }; },

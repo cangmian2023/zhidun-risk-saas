@@ -1,7 +1,7 @@
 // ④ 监控页面配置（管理中心）— 页面样例JSON 橘；组件关联指标库/数据源（样例） 橘；实时渲染 灰
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Button, Modal } from '../components/ui';
+import { Button, Modal, SingleSelect } from '../components/ui';
 import type { Column, Row } from '../components/ui';
 import { Sam } from './SourceTag';
 import { useMidDashboards, updateDashboards, useMidMetrics, useMidDataSources, midNewId } from './midStore';
@@ -169,24 +169,19 @@ export function Editor({ value, metrics, sources, onChange, onRemove }: {
               <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'flex-start' }}>
                 <label style={lbl}>标题<input style={inpSm} value={w.title} onChange={(e) => setWidget(i, { title: e.target.value })} /></label>
                 <label style={lbl}>类型
-                  <select style={inpSm} value={w.type} onChange={(e) => setWidget(i, { type: e.target.value as WidgetType })}>
-                    {(Object.keys(WTYPE_LABEL) as WidgetType[]).map((t) => <option key={t} value={t}>{WTYPE_LABEL[t]}</option>)}
-                  </select>
+                  <SingleSelect label="选择类型" value={w.type} onChange={(v) => setWidget(i, { type: v as WidgetType })}
+                    options={(Object.keys(WTYPE_LABEL) as WidgetType[]).map((t) => ({ value: t, label: WTYPE_LABEL[t] }))} />
                 </label>
                 {w.type === 'productMetrics' ? (
                   <label style={lbl}>评分产品
-                    <select style={inpSm} value={w.product ?? 'zhixin'} onChange={(e) => setWidget(i, { product: e.target.value })}>
-                      <option value="zhixin">智信分</option>
-                      <option value="zhirong">智融分</option>
-                      <option value="zhicha">智查分</option>
-                    </select>
+                    <SingleSelect label="选择产品" value={w.product ?? 'zhixin'} onChange={(v) => setWidget(i, { product: v })}
+                      options={[{ value: 'zhixin', label: '智信分' }, { value: 'zhirong', label: '智融分' }, { value: 'zhicha', label: '智查分' }]} />
                   </label>
                 ) : (
                   <>
                 <label style={lbl}>数据集（数据源）
-                  <select style={inpSm} value={w.datasetId} onChange={(e) => setWidget(i, { datasetId: e.target.value })}>
-                    {sources.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-                  </select>
+                  <SingleSelect label="选择数据集" value={w.datasetId} onChange={(v) => setWidget(i, { datasetId: v })}
+                    options={sources.map((s) => ({ value: s.id, label: s.name }))} />
                 </label>
                 <label style={lbl}>
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>监控指标 <Sam label="读指标库" value="midMetrics.json" /></span>
@@ -196,9 +191,8 @@ export function Editor({ value, metrics, sources, onChange, onRemove }: {
                   </>
                 )}
                 <label style={lbl}>跨列
-                  <select style={inpSm} value={w.span ?? 1} onChange={(e) => setWidget(i, { span: Number(e.target.value) as 1 | 2 })}>
-                    <option value={1}>1 列</option><option value={2}>2 列</option>
-                  </select>
+                  <SingleSelect label="跨列" value={String(w.span ?? 1)} onChange={(v) => setWidget(i, { span: Number(v) as 1 | 2 })}
+                    options={[{ value: '1', label: '1 列' }, { value: '2', label: '2 列' }]} />
                 </label>
                 <Button size="sm" variant="ghost" onClick={() => removeWidget(i)}>删除</Button>
               </div>
