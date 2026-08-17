@@ -1,0 +1,37 @@
+{
+  "histShareholders": [
+    { "id": 1, "name": "叶薇薇", "type": "-", "ratio": "-", "subRatio": "11.86万人民币", "paidRatio": "-", "firstDate": "2012-06-11", "exitDate": "2017-04-25" },
+    { "id": 2, "name": "张一鸣", "type": "历史股权出质", "ratio": "-", "subRatio": "988.14万人民币", "paidRatio": "-", "firstDate": "-", "exitDate": "-" },
+    { "id": 3, "name": "王振东", "type": "-", "ratio": "-", "subRatio": "4.5万人民币", "paidRatio": "-", "firstDate": "2015-01-30", "exitDate": "-" },
+    { "id": 4, "name": "肖金梅", "type": "-", "ratio": "-", "subRatio": "0.1万人民币", "paidRatio": "-", "firstDate": "-", "exitDate": "-" },
+    { "id": 5, "name": "王琼", "type": "-", "ratio": "-", "subRatio": "20万人民币", "paidRatio": "-", "firstDate": "-", "exitDate": "-" }
+  ],
+  "histInvests": [
+    { "id": 1, "name": "北京微梦创科网络技术有限公司", "status": "存续", "legal": "曹增辉", "capital": "1000万人民币", "amount": "-", "ratio": "-", "date": "2010-04-19", "exitDate": "2018-06-30", "industry": "信息传输、软件和信息技术服务业", "area": "北京市海淀区" },
+    { "id": 2, "name": "上海合合信息科技股份有限公司", "status": "存续", "legal": "镇立新", "capital": "9000万人民币", "amount": "-", "ratio": "-", "date": "2006-08-03", "exitDate": "-", "industry": "科学研究和技术服务业", "area": "上海市徐汇区" },
+    { "id": 3, "name": "天津银联网络技术有限公司", "status": "注销", "legal": "王振东", "capital": "500万人民币", "amount": "-", "ratio": "-", "date": "2014-02-21", "exitDate": "2020-09-15", "industry": "租赁和商务服务业", "area": "天津市滨海新区" }
+  ],
+  "histPersons": [
+    { "id": 1, "name": "张一鸣", "position": "创始人 / 原法定代表人", "inDate": "2012-03-09", "outDate": "2022-05-07", "intro": "公司创始人，曾任法定代表人、执行董事。" },
+    { "id": 2, "name": "梁汝波", "position": "原董事", "inDate": "2016-08-01", "outDate": "2021-05-20", "intro": "曾任公司董事。" },
+    { "id": 3, "name": "周晶晶", "position": "原监事", "inDate": "2015-03-12", "outDate": "2019-11-08", "intro": "曾任公司监事。" }
+  ],
+  "histChanges": [
+    { "id": 1, "date": "2013-10-18", "item": "住所", "before": "北京市海淀区中关村东路18号1号楼c805室", "after": "北京市海淀区知春路甲48号2号楼10A室" },
+    { "id": 2, "date": "2014-07-02", "item": "注册资本", "before": "金额：100 单位：万元 币种：人民币", "after": "金额：1000 单位：万元 币种：人民币" },
+    { "id": 3, "date": "2016-12-01", "item": "名称", "before": "北京字节跳动科技有限公司", "after": "北京字节跳动网络技术有限公司" }
+  ],
+  "investAreaStat": [
+    { "id": 1, "name": "北京", "count": 9 },
+    { "id": 2, "name": "上海", "count": 3 },
+    { "id": 3, "name": "浙江", "count": 3 },
+    { "id": 4, "name": "福建", "count": 3 },
+    { "id": 5, "name": "天津", "count": 2 }
+  ],
+  "investIndustryStat": [
+    { "id": 1, "name": "科学研究和技术服务业", "count": 16 },
+    { "id": 2, "name": "信息传输、软件和信息技术服务业", "count": 9 },
+    { "id": 3, "name": "租赁和商务服务业", "count": 3 },
+    { "id": 4, "name": "文化、体育和娱乐业", "count": 1 }
+  ]
+}

@@ -100,56 +100,68 @@ export const scoringMenu: MenuGroup[] = [
 /* ============================================================
  * 三、企业风控
  * ========================================================== */
+/* 企业风控子系统（v3 重建）· 三大中心
+ * 风控中心（fk-*）｜ 尽调中心（jd-*）｜ 企业档案（arc-*）
+ * 页面全部来自 record/qixin 的「风控 -」「尽调 -」「企业档案 -」快照，1:1 复刻。
+ */
 export const entMenu: MenuGroup[] = [
+  /* ---------------- 风控中心 ---------------- */
   {
-    group: '企业一键风险查询',
-    section: '企业风险尽调中心',
+    group: '风险监控',
+    section: '风控中心',
     items: [
-      { label: '企业一键风险查询', key: 'ep:qiye-search', desc: '按企业名称 / 行业 / 法定代表人 / 唯一标识一键查询企业全维度风险；点击「查看档案」进入企业风险画像详情', keep: true },
+      { label: '风险预警', key: 'ep:fk-risk-warning', desc: '企业风险预警：已同步企业 3 个月监控动态、剩余额度，预警列表含添加监控 / 解读 / 风险详情 / 案件串联', keep: true },
+      { label: '监控列表', key: 'ep:fk-monitor-list', desc: '存量企业监控名单：名单内企业持续监控，风险变化即预警', keep: true },
+      { label: '统计看板', key: 'ep:fk-stats', desc: '风控统计看板：AI 风险报告 / 企业风险排名 / 企业风险动态 / 其他统计多维图表', keep: true },
+      { label: '风险地图', key: 'ep:fk-map', desc: '风险地图：按时间维度展示企业风险地理分布', keep: true },
+      { label: '监控管理', key: 'ep:fk-monitor-manage', desc: '监控规则与订阅管理：国内 / 境外企业、外部供应链、关键词、微信公众号等监控规则', keep: true },
     ],
   },
   {
-    group: '批量尽调任务',
-    section: '企业风险尽调中心',
+    group: '体检与年检',
+    section: '风控中心',
     items: [
-      { label: '批量尽调任务', key: 'ep:batch-due', desc: '批量尽调任务：上传企业名单批量查询风险，创建任务、监控任务状态与命中结果，点击查看进入任务详情', keep: true },
+      { label: '定期体检', key: 'ep:fk-health-check', desc: '目标企业定期体检：按风险类型 / 维度对比体检日与对比日变化，可设置体检项', keep: true },
+      { label: '账户年检', key: 'ep:fk-account-yearly', desc: '账户年检：目标客群年检，查看股东 / 工商登记 / 历史股东等公示信息通过情况', keep: true },
     ],
   },
   {
-    group: '存量企业监控名单',
-    section: '企业风险尽调中心',
+    group: '合规与排查',
+    section: '风控中心',
     items: [
-      { label: '存量企业监控名单', key: 'ep:monitor-list', desc: '存量企业监控名单：名单内企业持续监控，风险变化即预警', keep: true },
+      { label: '监管合规', key: 'ep:fk-regulatory', desc: '监管合规：按范围 / 主体 / 判决机构 / 违规类型查询企业合规情况', keep: true },
+      { label: '利益排查', key: 'ep:fk-interest', desc: '合作方利益排查：上传员工 / 企业名单，识别疑似利益冲突企业与人员', keep: true },
+      { label: '黑名单', key: 'ep:fk-blacklist', desc: '黑名单排查 / 内部黑名单 / 历史黑名单：企业黑名单来源说明与排查', keep: true },
+      { label: '员工列表', key: 'ep:fk-employee', desc: '员工信息管理：维护员工电话、关联企业，用于合作方利益排查（上限 2000 名）', keep: true },
+      { label: '财产线索', key: 'ep:fk-property', desc: '财产线索：查企业线索信息、扩大主体、资产状况（股权 / 涉诉 / 动产 / 不动产 / 无形资产）', keep: true },
     ],
   },
+  /* ---------------- 尽调中心 ---------------- */
   {
-    group: '风险驾驶舱',
-    section: '风险监控',
+    group: '尽职调查',
+    section: '尽调中心',
     items: [
-      { label: '风险总览大盘', key: 'ep:overview', desc: '企业风控核心监控指标总览：企业总数 / 风险分布 / 预警 / 尽调任务 / 决策事件', keep: true },
-      { label: '实时态势大屏', key: 'ep:overview-realtime', desc: '实时态势大屏：企业风险事件、司法涉诉、舆情、名单命中实时滚动', keep: true },
+      { label: '企业尽调', key: 'ep:jd-company', desc: '企业尽调：智能分析合作方资质风险，常规 / 批量筛查与筛查设置', keep: true },
+      { label: '批量尽调', key: 'ep:jd-batch', desc: '批量尽调：查企业 / 查人员 / 选择指标 / 模板，批量企业画像分析', keep: true },
+      { label: '关系尽调', key: 'ep:jd-relation', desc: '关系尽调：集中排查 AI / 组与组排查 / 关联方识别（含识别结果）', keep: true },
+      { label: '人员尽调', key: 'ep:jd-person', desc: '人员尽调：查人员风险，进入人员详情（基本信息 / 历史 / 风险 / 专利 / 关联企业 / 个人图谱）', keep: true },
+      { label: '报告中心', key: 'ep:jd-report', desc: '尽调报告中心：获取尽调报告、报告记录、自定义报告与模板选择', keep: true },
     ],
   },
+  /* ---------------- 企业档案 ---------------- */
   {
-    group: '风险预警与决策中心',
-    section: '风险预警与决策中心',
+    group: '企业档案',
+    section: '企业档案',
     items: [
-      { label: '预警处置工作台', key: 'ep:alert-workbench', desc: '企业预警处置工作台：预警队列逐条核实、发起处置（复用零售信贷预警工作台，数据换成企业）', keep: true },
-      { label: '决策事件列表', key: 'ep:decision-events', desc: '企业授信 / 尽调 / 风控决策事件列表，可追踪决策过程', keep: true },
-    ],
-  },
-  {
-    group: '模型管理',
-    section: '模型管理中心',
-    items: [
-      { label: '模型管理', key: 'ep:model-list', desc: '企业风控模型列表：企业违约分 / 欺诈分 / 关联风险模型，点击进入模型详情', keep: true },
-    ],
-  },
-  {
-    group: '规划中',
-    section: '规划中',
-    items: [
-      { label: '操作变更日志', key: 'ep:operate-log', desc: '操作变更日志：需求尚未明确，整体规划中', keep: true },
+      { label: '基本信息', key: 'ep:arc-basic', desc: '企业基本工商信息档案', keep: true },
+      { label: '历史信息', key: 'ep:arc-history', desc: '企业历史变更 / 历史工商信息', keep: true },
+      { label: '司法风险', key: 'ep:arc-legal', desc: '企业司法涉诉风险信息', keep: true },
+      { label: '新闻舆情', key: 'ep:arc-news', desc: '企业新闻与舆情信息', keep: true },
+      { label: '经营信息', key: 'ep:arc-operate', desc: '企业经营维度信息', keep: true },
+      { label: '经营风险', key: 'ep:arc-oprisk', desc: '企业经营风险信息', keep: true },
+      { label: '集团信息', key: 'ep:arc-group', desc: '企业集团与股权关系信息（含查看图谱）', keep: true },
+      { label: '企业图谱', key: 'ep:arc-graph', desc: '企业图谱中心：股权结构 / 穿透 / 受益所有人 / 关系 / 链图 / 控制人 / 关联方认定 / 十大受益人', keep: true },
+      { label: '财产信息', key: 'ep:arc-property', desc: '企业财产信息（与风控「财产线索」同源）', keep: true },
     ],
   },
 ]

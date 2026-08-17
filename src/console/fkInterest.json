@@ -1,0 +1,7 @@
+{
+  "items": [
+    { "id": 1, "name": "刘延峰", "no": "00001", "tag": "销售部", "note": "-", "conflictCount": 2, "conflictNames": "乐视网信息技术（北京）股份有限公司", "reason": "持股任职、电话关联" },
+    { "id": 2, "name": "王敏", "no": "00002", "tag": "市场部", "note": "-", "conflictCount": 1, "conflictNames": "北京微梦创科网络技术有限公司", "reason": "电话关联" },
+    { "id": 3, "name": "李强", "no": "00003", "tag": "采购部", "note": "亲属持股", "conflictCount": 3, "conflictNames": "深圳市腾讯计算机系统有限公司", "reason": "持股任职" }
+  ]
+}

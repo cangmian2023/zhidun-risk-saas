@@ -1,0 +1,70 @@
+{
+  "monitorCount": 16,
+  "globalWarningTotal": 248,
+  "updateTime": "2026-08-17 15:40",
+  "mapViewBox": { "w": 1000, "h": 760 },
+  "cities": [
+    { "name": "北京", "x": 720, "y": 250, "level": "high", "enterprise": "抖音有限公司", "count": 4 },
+    { "name": "上海", "x": 805, "y": 375, "level": "high", "enterprise": "上海寻梦信息技术有限公司", "count": 3 },
+    { "name": "深圳", "x": 720, "y": 510, "level": "mid", "enterprise": "深圳市腾讯计算机系统有限公司", "count": 2 },
+    { "name": "广州", "x": 700, "y": 525, "level": "mid", "enterprise": "广州唯品会电子商务有限公司", "count": 1 },
+    { "name": "成都", "x": 520, "y": 405, "level": "mid", "enterprise": "成都 pictures 有限公司", "count": 1 },
+    { "name": "西安", "x": 600, "y": 330, "level": "low", "enterprise": "西安迈科金属国际集团", "count": 1 },
+    { "name": "武汉", "x": 700, "y": 395, "level": "mid", "enterprise": "武汉斗鱼鱼乐网络科技", "count": 1 },
+    { "name": "杭州", "x": 792, "y": 392, "level": "high", "enterprise": "阿里巴巴(中国)有限公司", "count": 2 },
+    { "name": "沈阳", "x": 828, "y": 210, "level": "low", "enterprise": "沈阳机床(集团)有限责任公司", "count": 1 },
+    { "name": "乌鲁木齐", "x": 250, "y": 240, "level": "low", "enterprise": "新疆大全新能源股份有限公司", "count": 1 },
+    { "name": "拉萨", "x": 340, "y": 430, "level": "low", "enterprise": "西藏天路股份有限公司", "count": 1 },
+    { "name": "昆明", "x": 520, "y": 505, "level": "low", "enterprise": "云南白药集团股份有限公司", "count": 1 },
+    { "name": "重庆", "x": 580, "y": 425, "level": "mid", "enterprise": "重庆小康工业集团", "count": 1 },
+    { "name": "郑州", "x": 700, "y": 345, "level": "mid", "enterprise": "郑州宇通客车股份有限公司", "count": 1 },
+    { "name": "南京", "x": 778, "y": 360, "level": "low", "enterprise": "苏宁易购集团股份有限公司", "count": 1 },
+    { "name": "长沙", "x": 700, "y": 445, "level": "low", "enterprise": "三一集团有限公司", "count": 1 }
+  ],
+  "timeDist": {
+    "today": { "label": "今日", "warningTotal": 28, "points": [
+      { "name": "北京", "x": 720, "y": 250, "level": "high", "count": 2 },
+      { "name": "上海", "x": 805, "y": 375, "level": "high", "count": 1 },
+      { "name": "杭州", "x": 792, "y": 392, "level": "mid", "count": 1 },
+      { "name": "深圳", "x": 720, "y": 510, "level": "mid", "count": 1 },
+      { "name": "广州", "x": 700, "y": 525, "level": "low", "count": 1 },
+      { "name": "武汉", "x": 700, "y": 395, "level": "low", "count": 1 }
+    ] },
+    "7d": { "label": "最近7天", "warningTotal": 142, "points": [
+      { "name": "北京", "x": 720, "y": 250, "level": "high", "count": 9 },
+      { "name": "上海", "x": 805, "y": 375, "level": "high", "count": 7 },
+      { "name": "杭州", "x": 792, "y": 392, "level": "high", "count": 5 },
+      { "name": "深圳", "x": 720, "y": 510, "level": "mid", "count": 4 },
+      { "name": "广州", "x": 700, "y": 525, "level": "mid", "count": 3 },
+      { "name": "成都", "x": 520, "y": 405, "level": "mid", "count": 2 },
+      { "name": "武汉", "x": 700, "y": 395, "level": "mid", "count": 2 },
+      { "name": "重庆", "x": 580, "y": 425, "level": "low", "count": 2 },
+      { "name": "郑州", "x": 700, "y": 345, "level": "low", "count": 1 },
+      { "name": "南京", "x": 778, "y": 360, "level": "low", "count": 1 }
+    ] },
+    "30d": { "label": "最近30天", "warningTotal": 248, "points": [
+      { "name": "北京", "x": 720, "y": 250, "level": "high", "count": 18 },
+      { "name": "上海", "x": 805, "y": 375, "level": "high", "count": 14 },
+      { "name": "杭州", "x": 792, "y": 392, "level": "high", "count": 11 },
+      { "name": "深圳", "x": 720, "y": 510, "level": "mid", "count": 9 },
+      { "name": "广州", "x": 700, "y": 525, "level": "mid", "count": 7 },
+      { "name": "成都", "x": 520, "y": 405, "level": "mid", "count": 5 },
+      { "name": "武汉", "x": 700, "y": 395, "level": "mid", "count": 5 },
+      { "name": "重庆", "x": 580, "y": 425, "level": "mid", "count": 4 },
+      { "name": "西安", "x": 600, "y": 330, "level": "low", "count": 3 },
+      { "name": "郑州", "x": 700, "y": 345, "level": "low", "count": 3 },
+      { "name": "南京", "x": 778, "y": 360, "level": "low", "count": 2 },
+      { "name": "沈阳", "x": 828, "y": 210, "level": "low", "count": 2 },
+      { "name": "长沙", "x": 700, "y": 445, "level": "low", "count": 2 },
+      { "name": "昆明", "x": 520, "y": 505, "level": "low", "count": 1 },
+      { "name": "乌鲁木齐", "x": 250, "y": 240, "level": "low", "count": 1 },
+      { "name": "拉萨", "x": 340, "y": 430, "level": "low", "count": 1 }
+    ] }
+  },
+  "levelMeta": {
+    "high": { "color": "#DC2626", "label": "高风险" },
+    "mid": { "color": "#F59E0B", "label": "中风险" },
+    "low": { "color": "#10B981", "label": "低风险" },
+    "micro": { "color": "#94A3B8", "label": "轻微风险" }
+  }
+}

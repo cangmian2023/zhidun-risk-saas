@@ -1,0 +1,53 @@
+{
+  "monitorCount": 16,
+  "aiReports": [
+    { "id": 1, "type": "日报", "role": "通用角色", "title": "企业风险 AI 日报（2026-08-17）", "genTime": "2026-08-17 08:00", "op": "查看" },
+    { "id": 2, "type": "周报", "role": "信贷风控", "title": "信贷客户风险周报（2026-08-第3周）", "genTime": "2026-08-16 09:30", "op": "查看" },
+    { "id": 3, "type": "月报", "role": "客户经理", "title": "监控企业风险月报（2026-07）", "genTime": "2026-08-01 10:00", "op": "查看" },
+    { "id": 4, "type": "季报", "role": "通用角色", "title": "企业风险季度研判报告（2026-Q2）", "genTime": "2026-07-05 14:20", "op": "查看" },
+    { "id": 5, "type": "日报", "role": "信贷风控", "title": "企业风险 AI 日报（2026-08-16）", "genTime": "2026-08-16 08:00", "op": "查看" }
+  ],
+  "reportTrend": {
+    "labels": ["08-11", "08-12", "08-13", "08-14", "08-15", "08-16", "08-17"],
+    "series": [
+      { "name": "生成报告数", "color": "#2563EB", "data": [3, 4, 2, 5, 4, 5, 5] },
+      { "name": "触发风险条目", "color": "#DC2626", "data": [12, 18, 9, 22, 17, 25, 28] }
+    ]
+  },
+  "rank": [
+    { "id": 1, "name": "抖音有限公司", "score": 92, "owner": "信贷风控部", "tag": "高关注", "total": 34, "high": 12, "mid": 14, "low": 6, "micro": 2, "daily": 0 },
+    { "id": 2, "name": "北京首都国际机场", "score": 88, "owner": "客户经理-王敏", "tag": "民航", "total": 27, "high": 9, "mid": 11, "low": 5, "micro": 2, "daily": 1 },
+    { "id": 3, "name": "Tesla, Inc.", "score": 81, "owner": "信贷风控部", "tag": "境外", "total": 21, "high": 7, "mid": 9, "low": 4, "micro": 1, "daily": 0 },
+    { "id": 4, "name": "深圳市腾讯计算机系统有限公司", "score": 76, "owner": "客户经理-李强", "tag": "科技", "total": 19, "high": 5, "mid": 8, "low": 5, "micro": 1, "daily": 0 },
+    { "id": 5, "name": "北京微梦创科网络技术有限公司", "score": 70, "owner": "信贷风控部", "tag": "互联网", "total": 15, "high": 4, "mid": 6, "low": 4, "micro": 1, "daily": 0 },
+    { "id": 6, "name": "乐视网信息技术（北京）股份有限公司", "score": 64, "owner": "客户经理-王敏", "tag": "退市风险", "total": 12, "high": 6, "mid": 4, "low": 2, "micro": 0, "daily": 0 }
+  ],
+  "dynamic": [
+    { "id": 1, "name": "抖音有限公司", "score": 92, "owner": "信贷风控部", "tag": "高关注", "total": 34, "high": 12, "mid": 14, "low": 6, "micro": 2, "daily": 0 },
+    { "id": 2, "name": "北京首都国际机场", "score": 88, "owner": "客户经理-王敏", "tag": "民航", "total": 27, "high": 9, "mid": 11, "low": 5, "micro": 2, "daily": 1 },
+    { "id": 3, "name": "Tesla, Inc.", "score": 81, "owner": "信贷风控部", "tag": "境外", "total": 21, "high": 7, "mid": 9, "low": 4, "micro": 1, "daily": 0 },
+    { "id": 4, "name": "深圳市腾讯计算机系统有限公司", "score": 76, "owner": "客户经理-李强", "tag": "科技", "total": 19, "high": 5, "mid": 8, "low": 5, "micro": 1, "daily": 0 }
+  ],
+  "period": [
+    { "id": 1, "cycle": "今日", "monitored": 16, "riskSubjects": 4, "total": 28, "high": 9, "genTime": "2026-08-17 15:40", "role": "通用角色", "op": "查看" },
+    { "id": 2, "cycle": "本周", "monitored": 16, "riskSubjects": 9, "total": 142, "high": 41, "genTime": "2026-08-17 08:00", "role": "通用角色", "op": "查看" },
+    { "id": 3, "cycle": "本月", "monitored": 16, "riskSubjects": 13, "total": 568, "high": 162, "genTime": "2026-08-01 08:00", "role": "信贷风控", "op": "查看" },
+    { "id": 4, "cycle": "本季", "monitored": 16, "riskSubjects": 15, "total": 1893, "high": 521, "genTime": "2026-07-01 08:00", "role": "客户经理", "op": "查看" }
+  ],
+  "periodTrend": {
+    "labels": ["第1周", "第2周", "第3周", "第4周"],
+    "series": [
+      { "name": "风险总数", "color": "#2563EB", "data": [320, 415, 388, 470] },
+      { "name": "高风险数量", "color": "#DC2626", "data": [98, 132, 121, 158] }
+    ]
+  },
+  "region": [
+    { "id": 1, "country": "中国", "high": 120, "mid": 85, "low": 40, "micro": 5, "daily": 3, "ratio": "72.4%" },
+    { "id": 2, "country": "美国", "high": 22, "mid": 18, "low": 9, "micro": 1, "daily": 1, "ratio": "13.1%" },
+    { "id": 3, "country": "新加坡", "high": 8, "mid": 6, "low": 3, "micro": 0, "daily": 0, "ratio": "5.0%" },
+    { "id": 4, "country": "中国香港", "high": 6, "mid": 5, "low": 2, "micro": 0, "daily": 0, "ratio": "4.0%" },
+    { "id": 5, "country": "德国", "high": 4, "mid": 3, "low": 1, "micro": 0, "daily": 0, "ratio": "2.5%" },
+    { "id": 6, "country": "日本", "high": 3, "mid": 2, "low": 1, "micro": 0, "daily": 0, "ratio": "2.0%" },
+    { "id": 7, "country": "其他", "high": 2, "mid": 2, "low": 1, "micro": 0, "daily": 0, "ratio": "1.0%" }
+  ]
+}
