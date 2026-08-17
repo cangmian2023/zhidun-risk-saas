@@ -42,8 +42,21 @@ const CONTROLLERS = [
   { id: 'k3', group: '腾讯控股有限公司', person: '马化腾', type: '自然人', ratio: '8.39%' },
 ]
 
+// 集团下钻：成员企业（样例，取自「集团户 - 详情」快照：主体企业 南京沃德凯斯投资资产管理集团，全部企业 57,349）
+const MEMBERS = [
+  { id: 'mb1', name: '江苏鑫弘合新能源开发溧阳有限公司', level: '2级', industry: '研究和试验发展', region: '江苏常州溧阳', ratio: '60.00%', reg: '10,000万元人民币', found: '2018-08-21' },
+  { id: 'mb2', name: '南京金铭文化艺术品投资合伙企业（有限合伙）', level: '—', industry: '商务服务业', region: '江苏南京鼓楼', ratio: '11.40%', reg: '422.2223万元人民币', found: '2016-10-14' },
+  { id: 'mb3', name: '南京千钰文化艺术品投资合伙企业（有限合伙）', level: '—', industry: '商务服务业', region: '江苏南京鼓楼', ratio: '11.14%', reg: '400万元人民币', found: '2016-09-06' },
+  { id: 'mb4', name: '南京华梦文化艺术品投资合伙企业（有限合伙）', level: '—', industry: '商务服务业', region: '江苏南京鼓楼', ratio: '—', reg: '333.3334万元人民币', found: '2016-07-25' },
+  { id: 'mb5', name: '南京帝古文化艺术品投资合伙企业（有限合伙）', level: '—', industry: '商务服务业', region: '江苏南京鼓楼', ratio: '—', reg: '311.1111万元人民币', found: '2016-08-18' },
+  { id: 'mb6', name: '上海弘顺益文化工作室', level: '1级', industry: '资本市场服务', region: '上海松江', ratio: '100.00%', reg: '50万元人民币', found: '2018-10-22' },
+  { id: 'mb7', name: '南京永玺文化艺术品投资合伙企业（有限合伙）', level: '—', industry: '商务服务业', region: '江苏南京鼓楼', ratio: '—', reg: '245万元人民币', found: '2016-07-27' },
+  { id: 'mb8', name: '南京金铭四一六七号文化艺术品投资合伙企业（有限合伙）', level: '—', industry: '商务服务业', region: '江苏南京鼓楼', ratio: '6.00%', reg: '211.1111万元人民币', found: '2016-10-09' },
+]
+
 export default function DmGroupAccount() {
   const [tab, setTab] = useState(TABS[1])
+  const [selGroup, setSelGroup] = useState<string | null>(null)
   const data = GROUPS[tab]
   return (
     <div style={{ padding: 24, maxWidth: 1360, margin: '0 auto' }}>
@@ -96,9 +109,49 @@ export default function DmGroupAccount() {
               { key: 'controller', label: '实际控制人' },
               { key: 'assets', label: '资产规模', align: 'right' },
               { key: 'region', label: '注册地' },
+              {
+                key: 'op',
+                label: '操作',
+                render: (r) => (
+                  <button
+                    onClick={() => setSelGroup(r.name as string)}
+                    className="cursor-pointer text-brand-600 hover:underline"
+                  >
+                    查看
+                  </button>
+                ),
+              },
             ]}
             rows={data ?? []}
             pager
+          />
+        </Panel>
+      )}
+
+      {selGroup && (
+        <Panel
+          title={`集团详情 · ${selGroup}`}
+          desc={<Sam label="成员企业" value={`${MEMBERS.length}`} />}
+          actions={<button onClick={() => setSelGroup(null)} className="text-xs text-slate-400 hover:text-slate-600">收起</button>}
+        >
+          <div className="mb-4 flex flex-wrap gap-2 text-xs">
+            <span className="rounded-md bg-slate-100 px-2 py-1 text-slate-600">主体企业：{selGroup}</span>
+            <span className="rounded-md bg-slate-100 px-2 py-1 text-slate-600">全部企业（57,349）</span>
+            <span className="rounded-md bg-slate-100 px-2 py-1 text-slate-600">核心企业（0）</span>
+          </div>
+          <DataTable
+            columns={[
+              { key: 'name', label: '公司名称', width: '320px', fixed: 'left' },
+              { key: 'level', label: '成员级别(实控人)' },
+              { key: 'industry', label: '行业' },
+              { key: 'region', label: '地区' },
+              { key: 'ratio', label: '实控人控股比例', align: 'right' },
+              { key: 'reg', label: '注册资本', align: 'right' },
+              { key: 'found', label: '成立时间', type: 'date' },
+            ]}
+            rows={MEMBERS}
+            pager
+            pageSizeOptions={[10, 20]}
           />
         </Panel>
       )}

@@ -13,6 +13,11 @@ import DmRuralRevive from './DmRuralRevive'
 import DmGroupAccount from './DmGroupAccount'
 import DmIndustryReport from './DmIndustryReport'
 import DmRating from './DmRating'
+import DmFullSearch from './DmFullSearch'
+import DmRegionalBiz from './DmRegionalBiz'
+import DmMapProspect from './DmMapProspect'
+import DmCompanyLib from './DmCompanyLib'
+import DmSupplyChain from './DmSupplyChain'
 
 function emptySpec(crumb: string) {
   return {
@@ -39,6 +44,16 @@ export default function DmModule({ pageKey }: { pageKey: string }) {
       return <DmIndustryReport />
     case 'rating':
       return <DmRating />
+    case 'full-search':
+      return <DmFullSearch />
+    case 'regional-biz':
+      return <DmRegionalBiz />
+    case 'map-prospect':
+      return <DmMapProspect />
+    case 'company-lib':
+      return <DmCompanyLib />
+    case 'supply-chain':
+      return <DmSupplyChain />
     default:
       return <ModulePage spec={moduleSpecs[pageKey] ?? emptySpec(subNames['dm'] ?? '数字营销')} />
   }
