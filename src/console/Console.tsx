@@ -47,6 +47,7 @@ import EventAnalysis from './EventAnalysis'
 import { CollectionOverview, CollectionCases, CollectionStrategy, CollectionRecords } from './CollectionPages'
 import { DunAssignment, DunImport, DunChannels, DunAgencies, DunQa, DunRepayment } from './DunPages'
 import EnterpriseModule from './EnterpriseModule'
+import EnterpriseDashboard from './EnterpriseDashboard'
 import ScoreModule from './ScoreModule'
 import DecisionModule from './DecisionModule'
 import DmModule from './DmModule'
@@ -625,7 +626,7 @@ export default function Console() {
             ) : key === 'zz:repayment' ? (
               <DunRepayment />
             ) : key === 'ep:overview' || key === 'ep:overview-realtime' ? (
-              <EnterpriseModule key={key} pageKey="ep:fk-stats" />
+              <EnterpriseDashboard key={key} pageKey={key} />
             ) : key.startsWith('ep:') ? (
               <EnterpriseModule pageKey={key} />
             ) : key === 'cr:overview' ? (

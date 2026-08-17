@@ -18,6 +18,15 @@ import DmRegionalBiz from './DmRegionalBiz'
 import DmMapProspect from './DmMapProspect'
 import DmCompanyLib from './DmCompanyLib'
 import DmSupplyChain from './DmSupplyChain'
+import DmTechFin from './DmTechFin'
+import DmIndustryFin from './DmIndustryFin'
+import DmParkFin from './DmParkFin'
+import DmGreenFin from './DmGreenFin'
+import DmMarketList from './DmMarketList'
+import DmMarketLead from './DmMarketLead'
+import DmMarketBoard from './DmMarketBoard'
+import DmExistBiz from './DmExistBiz'
+import DmCrowdAnalysis from './DmCrowdAnalysis'
 
 function emptySpec(crumb: string) {
   return {
@@ -54,6 +63,24 @@ export default function DmModule({ pageKey }: { pageKey: string }) {
       return <DmCompanyLib />
     case 'supply-chain':
       return <DmSupplyChain />
+    case 'techfin':
+      return <DmTechFin />
+    case 'industry-fin':
+      return <DmIndustryFin />
+    case 'park-fin':
+      return <DmParkFin />
+    case 'green-fin':
+      return <DmGreenFin />
+    case 'market-list':
+      return <DmMarketList />
+    case 'market-lead':
+      return <DmMarketLead />
+    case 'market-board':
+      return <DmMarketBoard />
+    case 'exist-biz':
+      return <DmExistBiz />
+    case 'crowd-analysis':
+      return <DmCrowdAnalysis />
     default:
       return <ModulePage spec={moduleSpecs[pageKey] ?? emptySpec(subNames['dm'] ?? '数字营销')} />
   }
