@@ -31,6 +31,7 @@ import MidMetricDetail from './MidMetricDetail'
 import MidStrategyDetail from './MidStrategyDetail'
 import MidDashboardDetail from './MidDashboardDetail'
 import MidBizFlowConfig from './MidBizFlowConfig'
+import CmAlertConfig from './CmAlertConfig'
 import MidAlertDetail from './MidAlertDetail'
 import MidDisposeDetail from './MidDisposeDetail'
 import RetailCreditHome from './RetailCreditHome'
@@ -49,6 +50,7 @@ import EnterpriseModule from './EnterpriseModule'
 import EnterpriseDashboard from './EnterpriseDashboard'
 import ScoreModule from './ScoreModule'
 import DecisionModule from './DecisionModule'
+import DmModule from './DmModule'
 import { getDashboardByKey } from './dashboardData'
 import { creditRiskMenu, scoringMenu, entMenu, dmMenu, dataGovernanceMenu, cmMenu, collectionMenu, decisionEngineMenu, type MenuGroup } from './menus'
 import SidebarMenu from './SidebarMenu'
@@ -71,7 +73,7 @@ const subsystems = [
   { key: 'cr', name: '零售信贷风控', open: true },
   { key: 'sc', name: '评分产品', open: true },
   { key: 'ep', name: '企业风控', open: true },
-  { key: 'dm', name: '数字营销', open: false },
+  { key: 'dm', name: '数字营销', open: true },
   { key: 'dg', name: '数据治理', open: true },
   { key: 'zz', name: '催贷管理', open: true },
   { key: 'de', name: '决策引擎', open: true },
@@ -206,54 +208,75 @@ export default function Console() {
     'ep:overview': 'dashboard',
     'ep:overview-realtime': 'monitor',
     'ep:qiye-search': 'search',
-    'ep:qiye-profile': 'id',
     'ep:batch-due': 'stack',
     'ep:monitor-list': 'users',
     'ep:decision-events': 'report',
     'ep:model-list': 'model',
-    'ep:list-manage': 'plug',
-    'ep:datasource': 'database',
-    'ep:alert-rule': 'alert',
     'ep:alert-workbench': 'bell',
     'ep:archive': 'id',
-    // 数字营销
-    'dm:overview': 'dashboard',
-    'dm:radar-query': 'search',
-    'dm:radar-batch': 'stack',
-    'dm:radar-model': 'model',
-    'dm:radar-model-custom': 'model',
-    'dm:radar-eval': 'analytics',
-    'dm:radar-tag': 'tag',
-    'dm:radar-tag-config': 'filter',
-    'dm:radar-bill-query': 'bars',
-    'dm:radar-bill-hit': 'grid',
-    'dm:radar-bill': 'id',
-    'dm:herald-task': 'plug',
-    'dm:herald-task-create': 'flag',
-    'dm:herald-crowd': 'users',
-    'dm:herald-crowd-preview': 'eye',
-    'dm:herald-crowd-save': 'cloud',
-    'dm:herald-sms': 'link',
-    'dm:herald-aicall': 'braces',
-    'dm:herald-complaint': 'plug',
-    'dm:herald-effect': 'chart',
-    'dm:herald-funnel': 'filter',
-    'dm:herald-ab': 'check',
-    'dm:rta-query': 'cloud',
-    'dm:rta-media': 'link',
-    'dm:rta-media-test': 'zoom',
-    'dm:rta-concurrency': 'gauge',
-    'dm:rta-model': 'model',
-    'dm:rta-model-custom': 'model',
-    'dm:rta-eval': 'analytics',
-    'dm:rta-bill-query': 'bars',
-    'dm:rta-bill-year': 'id',
-    'dm:rta-bill': 'plug',
-    'dm:rta-strategy': 'sliders',
-    'dm:rta-strategy-effect': 'chart',
-    'dm:rta-strategy-tune': 'wrench',
-    'dm:herald-task-detail': 'eye',
-    'dm:rta-detail': 'cloud',
+    // 数字营销（新 IA：潜客挖掘 / 专题营销 / 营销管理 / 存客管理 / 金融工具）
+    'dm:ai-marketing': 'pulse',
+    'dm:full-search': 'search',
+    'dm:regional-biz': 'zoom',
+    'dm:regional-ai': 'pulse',
+    'dm:regional-company': 'stack',
+    'dm:regional-relate': 'share',
+    'dm:map-prospect': 'zoom',
+    'dm:grid-marketing': 'grid',
+    'dm:company-lib': 'database',
+    'dm:company-lib-list': 'list',
+    'dm:group-account': 'layers',
+    'dm:group-soe': 'flag',
+    'dm:group-foreign': 'cloud',
+    'dm:group-central': 'flag',
+    'dm:group-actual': 'id',
+    'dm:group-inst': 'layers',
+    'dm:group-private': 'cube',
+    'dm:group-detail': 'id',
+    'dm:tender': 'report',
+    'dm:supply-chain': 'link',
+    'dm:techfin': 'model',
+    'dm:techfin-lib': 'database',
+    'dm:industry-fin': 'cube',
+    'dm:park-fin': 'layers',
+    'dm:park-list': 'list',
+    'dm:park-portrait': 'pie',
+    'dm:park-detail': 'eye',
+    'dm:park-clue': 'zoom',
+    'dm:green-fin': 'trend',
+    'dm:rural-revive': 'pulse',
+    'dm:market-list': 'list',
+    'dm:market-list-detail': 'eye',
+    'dm:market-list-board': 'dashboard',
+    'dm:market-lead': 'bell',
+    'dm:market-board': 'dashboard',
+    'dm:exist-biz': 'cube',
+    'dm:crowd-analysis': 'users',
+    'dm:pevc': 'stack',
+    'dm:pevc-event': 'trend',
+    'dm:pevc-org': 'database',
+    'dm:pevc-fund': 'stack',
+    'dm:pevc-history-share': 'clock',
+    'dm:pevc-invest-out': 'share',
+    'dm:pevc-shareholder': 'id',
+    'dm:listing': 'chart',
+    'dm:bond': 'bars',
+    'dm:rating': 'tag',
+    'dm:rating-history': 'clock',
+    'dm:peer-analysis': 'share',
+    'dm:peer-detail': 'eye',
+    'dm:industry-report': 'report',
+    'dm:fin-law': 'audit',
+    // 企业档案（共享详情）
+    'dm:ent-basic': 'id',
+    'dm:ent-operate': 'cube',
+    'dm:ent-legal': 'shield',
+    'dm:ent-history': 'clock',
+    'dm:ent-news': 'bell',
+    'dm:ent-operate-risk': 'alert',
+    'dm:ent-property': 'layers',
+    'dm:ent-group': 'layers',
+    'dm:ent-graph': 'share',
     // 管理中心（原公共模块）
     'cm:overview': 'dashboard',
     'cm:user-list': 'users',
@@ -545,6 +568,8 @@ export default function Console() {
               <MidBizFlowConfig />
             ) : key === 'cm:mid-dispose-strategy' ? (
               <MidDisposeConfig />
+            ) : key === 'cm:alert-config' ? (
+              <CmAlertConfig />
             ) : key === 'cm:event-analysis' ? (
               <EventAnalysis />
             ) : key === 'dg:meta-event' ? (
@@ -617,6 +642,8 @@ export default function Console() {
               <ScoreModule pageKey={key} search={loc.search} />
             ) : key.startsWith('de:') ? (
               <DecisionModule pageKey={key} search={loc.search} />
+            ) : key.startsWith('dm:') ? (
+              <DmModule pageKey={key} />
             ) : (
               <ModulePage spec={moduleSpecs[key] ?? emptySpec(subName[sub] ?? '控制台')} />
             )}

@@ -3067,5 +3067,119 @@
         "next": ""
       }
     ]
+  },
+  {
+    "id": "f-ep-verify",
+    "domain": "ep",
+    "name": "企业风险数据核验",
+    "desc": "批量尽调命中风险企业的数据核验流程：待核验 → 核验中 → 已核验；由管理中心业务流程配置驱动，详情页预警项操作列挂接",
+    "suggestionText": "",
+    "passNeedConfirm": true,
+    "passConfirmRole": "核验员",
+    "rejectAllowRecheck": true,
+    "recheckSubmitRole": "复核员",
+    "recheckApproveRole": "风控主管",
+    "manualSuggestRole": "核验员",
+    "manualApproveRole": "风控主管",
+    "pageNames": [
+      "批量尽调任务详情"
+    ],
+    "pageRoutes": [
+      "/console/ep/batch-due-detail"
+    ],
+    "flowGraphs": [
+      {
+        "name": "企业风险数据核验",
+        "match": [],
+        "nodes": [
+          {
+            "id": "n0",
+            "type": "start",
+            "label": "待核验",
+            "x": 40,
+            "y": 140,
+            "showButton": false,
+            "checkItems": [],
+            "results": [
+              "核验"
+            ],
+            "resultStates": {
+              "核验": "核验中"
+            }
+          },
+          {
+            "id": "n1",
+            "type": "normal",
+            "label": "核验中",
+            "x": 300,
+            "y": 140,
+            "role": "核验员",
+            "buttonName": "完成",
+            "checkItems": [
+              "核对预警数据源一致性",
+              "确认风险信号真实性",
+              "复核命中规则口径"
+            ],
+            "results": [
+              "完成"
+            ],
+            "opinionPresets": {
+              "完成": [
+                "数据已核验，结论一致"
+              ]
+            },
+            "resultStates": {
+              "完成": "已核验"
+            }
+          },
+          {
+            "id": "n2",
+            "type": "end",
+            "label": "已核验",
+            "x": 560,
+            "y": 140,
+            "showButton": false,
+            "checkItems": [],
+            "results": [],
+            "opinionPresets": {}
+          }
+        ],
+        "edges": [
+          {
+            "id": "e1",
+            "from": "n0",
+            "to": "n1",
+            "result": "核验"
+          },
+          {
+            "id": "e2",
+            "from": "n1",
+            "to": "n2",
+            "result": "完成"
+          }
+        ]
+      }
+    ],
+    "flowState": "已上线",
+    "flowSteps": [
+      {
+        "state": "待核验",
+        "action": "核验",
+        "next": "核验中",
+        "color": "#D97706"
+      },
+      {
+        "state": "核验中",
+        "action": "完成",
+        "next": "已核验",
+        "color": "#2563EB"
+      },
+      {
+        "state": "已核验",
+        "action": "",
+        "next": "",
+        "color": "#059669"
+      }
+    ]
   }
 ]

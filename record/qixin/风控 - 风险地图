@@ -1,0 +1,194 @@
+<div data-v-d6e97efc="" class="enterprise-monitor-map"><div class="map-header"><div class="map-header-left"><div class="map-header-left-item-title">企业数量: 16家</div></div> <div class="map-header-right"><div data-v-60b4f090="" class="filter-content flex flex-center"><div data-v-afe25b0e="" data-v-60b4f090="" class="ui-dropdown-date-fast-select" value="2026-08-10,2026-08-17"><div data-v-afe25b0e="" class="qxb-select-horizontal" necessary="" value="-7"><!----><div class="qxb-expand select-horizontal-content" necessary="" value="-7"><div class="expand-content" style="height: 23px;"><div class="text"><!----><div class="select-content"><!----><div label="0" class="select-content-tab" zgclickable="true" zghook="1"><span>今日</span></div><div label="-7" class="select-content-tab active" zgclickable="true" zghook="1"><span>最近7天</span></div><div label="-30" class="select-content-tab" zgclickable="true" zghook="1"><span>最近30天</span></div></div></div></div><span class="ellipsis" style="display: none;">...</span><span class="expand-button primary" zgclickable="true" zghook="1" style="height: 36px; display: none;">
+    更多
+    <i class="el-icon-arrow-down icon up"></i></span></div></div> <div data-v-29c2b999="" data-v-0dda9adb="" data-v-afe25b0e="" class="filter-item ui-popper ui-popper-hidden" zgclickable="true" zghook="1"><div data-v-28f3c86a="" data-v-0dda9adb="" class="ui-filter-trigger" data-v-29c2b999=""><!----> <label data-v-28f3c86a="" role="radio" tabindex="0" class="el-radio" zgclickable="true" zghook="1"><span class="el-radio__input"><span class="el-radio__inner"></span><input type="radio" aria-hidden="true" tabindex="-1" autocomplete="off" class="el-radio__original" value="true"></span><span class="el-radio__label">true</span></label> <!----> <div data-v-28f3c86a="" class="ui-filter-trigger-title" zgclickable="true" zghook="1">自定义</div> <svg data-v-28f3c86a="" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12" fill="none" class="icon-clear" zgclickable="true" zghook="1"><path data-v-28f3c86a="" fill-rule="evenodd" clip-rule="evenodd" d="M10.2708 2.11425C9.23538 1.07888 7.94014 0.54125 6.38501 0.5C4.82989 0.54125 3.53509 1.07888 2.49926 2.11425C1.46388 3.14963 0.92626 4.44488 0.88501 6C0.92626 7.55513 1.46388 8.84992 2.49926 9.88575C3.53463 10.9211 4.82989 11.4587 6.38501 11.5C7.94014 11.4587 9.23493 10.9211 10.2708 9.88575C11.3061 8.85038 11.8438 7.55513 11.885 6C11.8438 4.44488 11.3061 3.15008 10.2708 2.11425ZM5.10815 4.05931L6.38506 5.33623L7.66198 4.05931C7.76006 3.96123 7.87281 3.91173 7.99931 3.91173C8.12467 3.91092 8.24478 3.96202 8.33115 4.05289C8.42202 4.13926 8.47312 4.25937 8.47231 4.38473C8.47231 4.51123 8.42281 4.62398 8.32473 4.72206L7.04781 5.99898L8.32473 7.27589C8.44417 7.39433 8.4889 7.56881 8.44115 7.7301C8.40537 7.89273 8.27836 8.01974 8.11573 8.05552C7.95449 8.10297 7.78023 8.05808 7.66198 7.93864L6.38506 6.66173L5.10815 7.93864C5.01006 8.03673 4.89731 8.08623 4.77081 8.08623C4.64545 8.08703 4.52534 8.03594 4.43898 7.94506C4.3481 7.8587 4.29701 7.73859 4.29781 7.61323C4.29781 7.48673 4.34731 7.37398 4.4454 7.27589L5.72231 5.99898L4.4454 4.72206C4.34731 4.62398 4.29781 4.51123 4.29781 4.38473C4.29701 4.25937 4.3481 4.13926 4.43898 4.05289C4.52534 3.96202 4.64545 3.91092 4.77081 3.91173C4.89879 3.91233 5.02085 3.96573 5.10815 4.05931Z" fill="#5382FF"></path></svg> <svg data-v-28f3c86a="" xmlns="http://www.w3.org/2000/svg" width="12" height="13" viewBox="0 0 12 13" fill="none" class="icon-down-arrow"><path data-v-28f3c86a="" d="M6.15902 8.56572C6.07902 8.67239 5.91902 8.67239 5.83902 8.56572L3.23902 5.09905C3.14014 4.96721 3.23421 4.77905 3.39902 4.77905L8.59902 4.77905C8.76383 4.77905 8.85791 4.96721 8.75902 5.09905L6.15902 8.56572Z" fill="#76788B"></path></svg></div> <div data-v-29c2b999="" class="el-popper ui-popper-dropdown" style="display: none;"><div data-v-bdb8b47e="" data-v-0dda9adb="" class="ui-date-range-panel"><div data-v-bdb8b47e="" class="ui-date-range-panel-sidebar"><div data-v-bdb8b47e="" class="ui-date-range-panel-shortcut" zgclickable="true" zghook="1">
+      今天
+    </div><div data-v-bdb8b47e="" class="ui-date-range-panel-shortcut" zgclickable="true" zghook="1">
+      昨天
+    </div><div data-v-bdb8b47e="" class="ui-date-range-panel-shortcut" zgclickable="true" zghook="1">
+      最近7天
+    </div><div data-v-bdb8b47e="" class="ui-date-range-panel-shortcut" zgclickable="true" zghook="1">
+      最近30天
+    </div><div data-v-bdb8b47e="" class="ui-date-range-panel-shortcut" zgclickable="true" zghook="1">
+      最近3个月
+    </div></div> <div data-v-bdb8b47e="" class="ui-date-range-panel-body has-shortcuts"><!----> <div data-v-bdb8b47e="" class="ui-date-range-panel-content"><div data-v-bdb8b47e="" class="ui-date-range-panel-date-table-wrap"><div data-v-bdb8b47e="" class="el-date-range-picker__header"><button data-v-bdb8b47e="" type="button" class="el-picker-panel__icon-btn el-icon-d-arrow-left" zgclickable="true" zghook="1"></button> <button data-v-bdb8b47e="" type="button" class="el-picker-panel__icon-btn el-icon-arrow-left" zgclickable="true" zghook="1"></button> <button data-v-bdb8b47e="" type="button" disabled="disabled" class="el-picker-panel__icon-btn el-icon-d-arrow-right is-disabled" zgclickable="true" zghook="1"></button> <button data-v-bdb8b47e="" type="button" disabled="disabled" class="el-picker-panel__icon-btn el-icon-arrow-right is-disabled" zgclickable="true" zghook="1"></button> <div data-v-bdb8b47e="">2026 年 8 月</div></div> <table data-v-bdb8b47e="" cellspacing="0" cellpadding="0" class="el-date-table" zgclickable="true" zghook="1"><tbody><tr><!----> <th>日</th><th>一</th><th>二</th><th>三</th><th>四</th><th>五</th><th>六</th></tr> <tr class="el-date-table__row"><td class="prev-month"><div><span>
+            26
+          </span></div></td><td class="prev-month"><div><span>
+            27
+          </span></div></td><td class="prev-month"><div><span>
+            28
+          </span></div></td><td class="prev-month"><div><span>
+            29
+          </span></div></td><td class="prev-month"><div><span>
+            30
+          </span></div></td><td class="prev-month"><div><span>
+            31
+          </span></div></td><td class="available"><div><span>
+            1
+          </span></div></td></tr><tr class="el-date-table__row"><td class="available"><div><span>
+            2
+          </span></div></td><td class="available"><div><span>
+            3
+          </span></div></td><td class="available"><div><span>
+            4
+          </span></div></td><td class="available"><div><span>
+            5
+          </span></div></td><td class="available"><div><span>
+            6
+          </span></div></td><td class="available"><div><span>
+            7
+          </span></div></td><td class="available"><div><span>
+            8
+          </span></div></td></tr><tr class="el-date-table__row"><td class="available"><div><span>
+            9
+          </span></div></td><td class="available"><div><span>
+            10
+          </span></div></td><td class="available"><div><span>
+            11
+          </span></div></td><td class="available"><div><span>
+            12
+          </span></div></td><td class="available"><div><span>
+            13
+          </span></div></td><td class="available"><div><span>
+            14
+          </span></div></td><td class="available"><div><span>
+            15
+          </span></div></td></tr><tr class="el-date-table__row"><td class="available"><div><span>
+            16
+          </span></div></td><td class="available today"><div><span>
+            17
+          </span></div></td><td class="available"><div><span>
+            18
+          </span></div></td><td class="available"><div><span>
+            19
+          </span></div></td><td class="available"><div><span>
+            20
+          </span></div></td><td class="available"><div><span>
+            21
+          </span></div></td><td class="available"><div><span>
+            22
+          </span></div></td></tr><tr class="el-date-table__row"><td class="available"><div><span>
+            23
+          </span></div></td><td class="available"><div><span>
+            24
+          </span></div></td><td class="available"><div><span>
+            25
+          </span></div></td><td class="available"><div><span>
+            26
+          </span></div></td><td class="available"><div><span>
+            27
+          </span></div></td><td class="available"><div><span>
+            28
+          </span></div></td><td class="available"><div><span>
+            29
+          </span></div></td></tr><tr class="el-date-table__row"><td class="available"><div><span>
+            30
+          </span></div></td><td class="available"><div><span>
+            31
+          </span></div></td><td class="next-month"><div><span>
+            1
+          </span></div></td><td class="next-month"><div><span>
+            2
+          </span></div></td><td class="next-month"><div><span>
+            3
+          </span></div></td><td class="next-month"><div><span>
+            4
+          </span></div></td><td class="next-month"><div><span>
+            5
+          </span></div></td></tr></tbody></table></div> <div data-v-bdb8b47e="" class="ui-date-range-panel-date-table-wrap"><div data-v-bdb8b47e="" class="el-date-range-picker__header"><button data-v-bdb8b47e="" type="button" disabled="disabled" class="el-picker-panel__icon-btn el-icon-d-arrow-left is-disabled" zgclickable="true" zghook="1"></button> <button data-v-bdb8b47e="" type="button" disabled="disabled" class="el-picker-panel__icon-btn el-icon-arrow-left is-disabled" zgclickable="true" zghook="1"></button> <button data-v-bdb8b47e="" type="button" class="el-picker-panel__icon-btn el-icon-d-arrow-right" zgclickable="true" zghook="1"></button> <button data-v-bdb8b47e="" type="button" class="el-picker-panel__icon-btn el-icon-arrow-right" zgclickable="true" zghook="1"></button> <div data-v-bdb8b47e="">2026 年 9 月</div></div> <table data-v-bdb8b47e="" cellspacing="0" cellpadding="0" class="el-date-table" zgclickable="true" zghook="1"><tbody><tr><!----> <th>日</th><th>一</th><th>二</th><th>三</th><th>四</th><th>五</th><th>六</th></tr> <tr class="el-date-table__row"><td class="prev-month"><div><span>
+            30
+          </span></div></td><td class="prev-month"><div><span>
+            31
+          </span></div></td><td class="available"><div><span>
+            1
+          </span></div></td><td class="available"><div><span>
+            2
+          </span></div></td><td class="available"><div><span>
+            3
+          </span></div></td><td class="available"><div><span>
+            4
+          </span></div></td><td class="available"><div><span>
+            5
+          </span></div></td></tr><tr class="el-date-table__row"><td class="available"><div><span>
+            6
+          </span></div></td><td class="available"><div><span>
+            7
+          </span></div></td><td class="available"><div><span>
+            8
+          </span></div></td><td class="available"><div><span>
+            9
+          </span></div></td><td class="available"><div><span>
+            10
+          </span></div></td><td class="available"><div><span>
+            11
+          </span></div></td><td class="available"><div><span>
+            12
+          </span></div></td></tr><tr class="el-date-table__row"><td class="available"><div><span>
+            13
+          </span></div></td><td class="available"><div><span>
+            14
+          </span></div></td><td class="available"><div><span>
+            15
+          </span></div></td><td class="available"><div><span>
+            16
+          </span></div></td><td class="available"><div><span>
+            17
+          </span></div></td><td class="available"><div><span>
+            18
+          </span></div></td><td class="available"><div><span>
+            19
+          </span></div></td></tr><tr class="el-date-table__row"><td class="available"><div><span>
+            20
+          </span></div></td><td class="available"><div><span>
+            21
+          </span></div></td><td class="available"><div><span>
+            22
+          </span></div></td><td class="available"><div><span>
+            23
+          </span></div></td><td class="available"><div><span>
+            24
+          </span></div></td><td class="available"><div><span>
+            25
+          </span></div></td><td class="available"><div><span>
+            26
+          </span></div></td></tr><tr class="el-date-table__row"><td class="available"><div><span>
+            27
+          </span></div></td><td class="available"><div><span>
+            28
+          </span></div></td><td class="available"><div><span>
+            29
+          </span></div></td><td class="available"><div><span>
+            30
+          </span></div></td><td class="next-month"><div><span>
+            1
+          </span></div></td><td class="next-month"><div><span>
+            2
+          </span></div></td><td class="next-month"><div><span>
+            3
+          </span></div></td></tr><tr class="el-date-table__row"><td class="next-month"><div><span>
+            4
+          </span></div></td><td class="next-month"><div><span>
+            5
+          </span></div></td><td class="next-month"><div><span>
+            6
+          </span></div></td><td class="next-month"><div><span>
+            7
+          </span></div></td><td class="next-month"><div><span>
+            8
+          </span></div></td><td class="next-month"><div><span>
+            9
+          </span></div></td><td class="next-month"><div><span>
+            10
+          </span></div></td></tr></tbody></table></div></div></div></div></div></div></div> <div data-v-60b4f090="" class="br"></div> <div data-v-4ee61ffb="" data-v-60b4f090="" class="risk-type-cascader filter-content-select-wrapper"><div data-v-29c2b999="" data-v-4ee61ffb="" class="ui-popper ui-popper-hidden" zgclickable="true" zghook="1"><div data-v-5167cef1="" data-v-4ee61ffb="" class="el-select select-trigger el-select--mini" zgclickable="true" zghook="2" size="mini" multiple="multiple" clearable="" collapse-tags="" data-v-29c2b999=""><div class="el-select__tags" style="width: 100%; max-width: 118px;"><!----><!----><!----></div><div class="el-input el-input--mini el-input--suffix"><!----><input type="text" readonly="readonly" autocomplete="off" placeholder="风险类型" class="el-input__inner"><!----><span class="el-input__suffix"><span class="el-input__suffix-inner"><i class="el-select__caret el-input__icon el-icon-arrow-up"></i><!----><!----><!----><!----><!----></span><!----></span><!----><!----></div><div class="el-select-dropdown el-popper is-multiple" style="display: none; min-width: 150px;"><div class="el-scrollbar" style="display: none;"><div class="el-select-dropdown__wrap el-scrollbar__wrap" style="margin-bottom: -6px; margin-right: -6px;"><ul class="el-scrollbar__view el-select-dropdown__list"></ul></div><div class="el-scrollbar__bar is-horizontal"><div class="el-scrollbar__thumb" style="transform: translateX(0%);"></div></div><div class="el-scrollbar__bar is-vertical"><div class="el-scrollbar__thumb" style="transform: translateY(0%);"></div></div></div><p class="el-select-dropdown__empty">
+          无数据
+        </p></div></div> </div></div> <div data-v-94ae7afc="" data-v-60b4f090="" class="risk-level-select filter-content-select-wrapper"><div data-v-29c2b999="" data-v-94ae7afc="" class="ui-popper ui-popper-hidden" zgclickable="true" zghook="1"><div data-v-5167cef1="" data-v-94ae7afc="" class="el-select select-trigger el-select--mini" zgclickable="true" zghook="1" size="mini" multiple="multiple" clearable="" collapse-tags="" data-v-29c2b999=""><div class="el-select__tags" style="width: 100%; max-width: 118px;"><!----><!----><!----></div><div class="el-input el-input--mini el-input--suffix"><!----><input type="text" readonly="readonly" autocomplete="off" placeholder="风险等级" class="el-input__inner"><!----><span class="el-input__suffix"><span class="el-input__suffix-inner"><i class="el-select__caret el-input__icon el-icon-arrow-up"></i><!----><!----><!----><!----><!----></span><!----></span><!----><!----></div><div class="el-select-dropdown el-popper is-multiple" style="display: none; min-width: 150px;"><div class="el-scrollbar" style="display: none;"><div class="el-select-dropdown__wrap el-scrollbar__wrap" style="margin-bottom: -6px; margin-right: -6px;"><ul class="el-scrollbar__view el-select-dropdown__list"></ul></div><div class="el-scrollbar__bar is-horizontal"><div class="el-scrollbar__thumb" style="transform: translateX(0%);"></div></div><div class="el-scrollbar__bar is-vertical"><div class="el-scrollbar__thumb" style="transform: translateY(0%);"></div></div></div><p class="el-select-dropdown__empty">
+          无数据
+        </p></div></div> <div data-v-29c2b999="" class="el-popper ui-popper-dropdown" style="display: none;"><div data-v-1e09a623="" data-v-7646f690="" data-v-94ae7afc="" class="ui-cascader-panel-search"><!----> <div data-v-1e09a623=""><div data-v-aa3bd20c="" data-v-7646f690="" class="ui-panel el-cascader-panel" data-v-1e09a623=""><div data-v-0742b576="" class="el-cascader-menu el-scrollbar" role="menu" id="cascader-menu-5493-0"><div class="el-cascader-menu__wrap el-scrollbar__wrap" style="margin-bottom: -6px; margin-right: -6px;"><ul class="el-scrollbar__view el-cascader-menu__list"><!----> <li data-v-1ff6fbc0="" data-v-0742b576="" role="menuitem" id="cascader-menu-5493-0-0" tabindex="-1" class="el-cascader-node" zgclickable="true" zghook="1"><label data-v-1ff6fbc0="" class="el-checkbox" zgclickable="true" zghook="1"><span class="el-checkbox__input"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value=""></span><!----></label> <!----> <span data-v-1ff6fbc0="" title="高风险" class="el-cascader-node__label" zgclickable="true" zghook="1">高风险</span> <!----></li><li data-v-1ff6fbc0="" data-v-0742b576="" role="menuitem" id="cascader-menu-5493-0-1" tabindex="-1" class="el-cascader-node" zgclickable="true" zghook="1"><label data-v-1ff6fbc0="" class="el-checkbox" zgclickable="true" zghook="1"><span class="el-checkbox__input"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value=""></span><!----></label> <!----> <span data-v-1ff6fbc0="" title="中风险" class="el-cascader-node__label" zgclickable="true" zghook="1">中风险</span> <!----></li><li data-v-1ff6fbc0="" data-v-0742b576="" role="menuitem" id="cascader-menu-5493-0-2" tabindex="-1" class="el-cascader-node" zgclickable="true" zghook="1"><label data-v-1ff6fbc0="" class="el-checkbox" zgclickable="true" zghook="1"><span class="el-checkbox__input"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value=""></span><!----></label> <!----> <span data-v-1ff6fbc0="" title="低风险" class="el-cascader-node__label" zgclickable="true" zghook="1">低风险</span> <!----></li><li data-v-1ff6fbc0="" data-v-0742b576="" role="menuitem" id="cascader-menu-5493-0-3" tabindex="-1" class="el-cascader-node" zgclickable="true" zghook="1"><label data-v-1ff6fbc0="" class="el-checkbox" zgclickable="true" zghook="1"><span class="el-checkbox__input"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value=""></span><!----></label> <!----> <span data-v-1ff6fbc0="" title="轻微风险" class="el-cascader-node__label" zgclickable="true" zghook="1">轻微风险</span> <!----></li><li data-v-1ff6fbc0="" data-v-0742b576="" role="menuitem" id="cascader-menu-5493-0-4" tabindex="-1" class="el-cascader-node" zgclickable="true" zghook="1"><label data-v-1ff6fbc0="" class="el-checkbox" zgclickable="true" zghook="1"><span class="el-checkbox__input"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value=""></span><!----></label> <!----> <span data-v-1ff6fbc0="" title="日常资讯" class="el-cascader-node__label" zgclickable="true" zghook="1">日常资讯</span> <!----></li></ul></div><div class="el-scrollbar__bar is-horizontal"><div class="el-scrollbar__thumb" style="transform: translateX(0%);"></div></div><div class="el-scrollbar__bar is-vertical"><div class="el-scrollbar__thumb" style="transform: translateY(0%);"></div></div></div></div></div></div></div></div></div> <div data-v-29c2b999="" data-v-2db0f5e4="" data-v-7e86a7ee="" data-v-60b4f090="" class="app-dep-and-user-cascader-group filter-content-select-wrapper ui-popper ui-popper-hidden" zgclickable="true" zghook="1" dropdown-class="search-park-group"><div data-v-5167cef1="" data-v-2db0f5e4="" class="el-select select-trigger el-select--mini" zgclickable="true" zghook="1" multiple="multiple" clearable="" collapse-tags="" size="mini" data-v-29c2b999=""><div class="el-select__tags" style="width: 100%; max-width: 118px;"><!----><!----><!----></div><div class="el-input el-input--mini el-input--suffix"><!----><input type="text" readonly="readonly" autocomplete="off" placeholder="负责人/部门" class="el-input__inner"><!----><span class="el-input__suffix"><span class="el-input__suffix-inner"><i class="el-select__caret el-input__icon el-icon-arrow-up"></i><!----><!----><!----><!----><!----></span><!----></span><!----><!----></div><div class="el-select-dropdown el-popper is-multiple" style="display: none; min-width: 150px;"><div class="el-scrollbar" style="display: none;"><div class="el-select-dropdown__wrap el-scrollbar__wrap" style="margin-bottom: -6px; margin-right: -6px;"><ul class="el-scrollbar__view el-select-dropdown__list"></ul></div><div class="el-scrollbar__bar is-horizontal"><div class="el-scrollbar__thumb" style="transform: translateX(0%);"></div></div><div class="el-scrollbar__bar is-vertical"><div class="el-scrollbar__thumb" style="transform: translateY(0%);"></div></div></div><p class="el-select-dropdown__empty">
+          无数据
+        </p></div></div> </div> <div data-v-0c08be11="" data-v-60b4f090="" class="tag-group-cascader filter-content-select-wrapper"><div data-v-29c2b999="" data-v-0c08be11="" class="ui-popper ui-popper-hidden" zgclickable="true" zghook="1" style="width: 150px;"><div data-v-5167cef1="" data-v-0c08be11="" class="el-select select-trigger el-select--mini" zgclickable="true" zghook="2" size="mini" multiple="multiple" clearable="" collapse-tags="" data-v-29c2b999=""><div class="el-select__tags" style="width: 100%; max-width: 118px;"><!----><!----><!----></div><div class="el-input el-input--mini el-input--suffix"><!----><input type="text" readonly="readonly" autocomplete="off" placeholder="标签" class="el-input__inner"><!----><span class="el-input__suffix"><span class="el-input__suffix-inner"><i class="el-select__caret el-input__icon el-icon-arrow-up"></i><!----><!----><!----><!----><!----></span><!----></span><!----><!----></div><div class="el-select-dropdown el-popper is-multiple" style="display: none; min-width: 150px;"><div class="el-scrollbar" style="display: none;"><div class="el-select-dropdown__wrap el-scrollbar__wrap" style="margin-bottom: -6px; margin-right: -6px;"><ul class="el-scrollbar__view el-select-dropdown__list"></ul></div><div class="el-scrollbar__bar is-horizontal"><div class="el-scrollbar__thumb" style="transform: translateX(0%);"></div></div><div class="el-scrollbar__bar is-vertical"><div class="el-scrollbar__thumb" style="transform: translateY(0%);"></div></div></div><p class="el-select-dropdown__empty">
+          无数据
+        </p></div></div> </div></div></div></div></div> <div id="map-content"><div class="map-content" style="height: calc(-88px + 100vh);"><div class="map-content-title">
+        截止2026-08-17日 15:40，<span>
+          当前全球风险预警共计 <span class="title-span">3</span> 条</span><div class="el-loading-mask" zghook="-2" style="display: none;"><div class="el-loading-spinner"><svg viewBox="25 25 50 50" class="circular"><circle cx="50" cy="50" r="20" fill="none" class="path"></circle></svg><!----></div></div></div> <div class="map-mode-checkbox-group"><div role="group" aria-label="checkbox-group" class="el-checkbox-group"><label class="el-checkbox is-disabled is-checked"><span class="el-checkbox__input is-disabled is-checked"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" disabled="disabled" class="el-checkbox__original" value="risk"></span><span class="el-checkbox__label">风险预警分布<!----></span></label> <label class="el-checkbox"><span class="el-checkbox__input"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value="enterprise"></span><span class="el-checkbox__label">监控企业分布<!----></span></label></div></div> <div class="el-vue-amap-container" extraoptions="[object Object]" id="amap"><div class="el-vue-amap amap-container" id="amap-vue" style="position: relative; background: rgb(235, 235, 242);"><object style="display: block; position: absolute; top: 0; left: 0; height: 100%; width: 100%; overflow: hidden; pointer-events: none; z-index: -1;" type="text/html" data="about:blank"></object><div class="amap-maps"><div class="amap-drags" style=""><div class="amap-layers" style="transform: translateZ(0px);"><div class="amap-markers" style="position: absolute; z-index: 120; top: 415px; left: 665px;"><div class="amap-marker" style="top: 64px; left: 65px; z-index: 100; transform: rotate(0deg); transform-origin: -20px 20px; display: block;"><div class="amap-marker-content" style="opacity: 1;"><div class="risk-event-marker event-level-2">
+        <div class="risk-event-marker-icon"><i class="iconfont icon_baoyu"></i></div>
+        <div class="risk-event-marker-text"><span class="risk-event-marker-text-span">暴雨</span></div>
+      </div></div></div><div class="amap-marker" style="top: -29px; left: 63px; z-index: 101; transform: rotate(0deg); transform-origin: 0px 0px; display: block;"><div class="amap-marker-content" style="opacity: 1;"><div class="marker-level-1  "><div class="marker-level-1-text">1</div></div></div></div><div class="amap-marker" style="top: 84px; left: 45px; z-index: 101; transform: rotate(0deg); transform-origin: 0px 0px; display: block;"><div class="amap-marker-content" style="opacity: 1;"><div class="marker-level-1  "><div class="marker-level-1-text">1</div></div></div></div></div><canvas class="amap-layer" width="1330" height="831" style="position: absolute; z-index: 0; top: 0px; left: 0px; display: block; height: 831px; width: 1330px;"></canvas><canvas class="amap-labels" draggable="false" width="1330" height="831" style="position: absolute; z-index: 99; height: 831px; width: 1330px; top: 0px; left: 0px;"></canvas></div><div class="amap-overlays" style=""></div></div></div><div style="display: none;"></div><div class="amap-controls"></div><a class="amap-logo"><img src="https://webapi.amap.com/theme/v1.3/logo@1x.png"></a><div class="amap-copyright" style="display: none; visibility: hidden;"><!--v1.4.16--> © 2026 AutoNavi <span class="amap-mcode">- GS(2023)4677号</span></div></div> <!----><!----><!----> <!----> <!----> <!----> <!----></div> <div class="map-tool-bar"><div class="bar-btn" zgclickable="true" zghook="1"><i class="iconfont icon_download"></i></div> <div class="bar-btn" zgclickable="true" zghook="1"><i class="iconfont icon_quanping"></i></div> <div class="bar-btn" zgclickable="true" zghook="1"><i class="iconfont icon_a-"></i></div> <div class="bar-btn" zgclickable="true" zghook="1"><i class="iconfont icon_a--"></i></div></div> <!----> <!----></div> <!----> <div class="map-risk-event-list" style="display: none;"><div class="risk-event-list-header flex flex-center justify-content-between"><!----> <i class="iconfont icon_close1 flex-shrink-0 flex-grow-0" zgclickable="true" zghook="1"></i></div> <div class="map-risk-event-list-content"><!---->  <div class="qxb-empty"><div class="qxb-empty_img"><img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxjaXJjbGUgY3g9IjUwIiBjeT0iNTAiIHI9IjUwIiBmaWxsPSJ1cmwoI3BhaW50MF9saW5lYXIpIi8+CjxtYXNrIGlkPSJtYXNrMCIgbWFzay10eXBlPSJhbHBoYSIgbWFza1VuaXRzPSJ1c2VyU3BhY2VPblVzZSIgeD0iMCIgeT0iMCIgd2lkdGg9IjEwMCIgaGVpZ2h0PSIxMDAiPgo8Y2lyY2xlIGN4PSI1MCIgY3k9IjUwIiByPSI1MCIgZmlsbD0id2hpdGUiLz4KPC9tYXNrPgo8ZyBtYXNrPSJ1cmwoI21hc2swKSI+CjxyZWN0IHg9IjUwIiB5PSI4NSIgd2lkdGg9IjQiIGhlaWdodD0iMTAiIGZpbGw9IiNGNEY1RkMiLz4KPHJlY3Qgb3BhY2l0eT0iMC42IiB4PSI4IiB5PSI5NS40IiB3aWR0aD0iMy42IiBoZWlnaHQ9Ijk3LjIiIHJ4PSIxLjgiIHRyYW5zZm9ybT0icm90YXRlKC05MCA4IDk1LjQpIiBmaWxsPSIjNzY3ODhCIi8+CjxnIGZpbHRlcj0idXJsKCNmaWx0ZXIwX2QpIj4KPHJlY3QgeD0iMjkuNTk5NiIgeT0iMzMiIHdpZHRoPSI0NS42IiBoZWlnaHQ9IjE4IiByeD0iMi40IiBmaWxsPSIjRjRGNUZDIi8+CjxyZWN0IHg9IjI5LjU5OTYiIHk9IjU1LjgiIHdpZHRoPSI0NS42IiBoZWlnaHQ9IjE4IiByeD0iMi40IiBmaWxsPSIjRjRGNUZDIi8+CjxyZWN0IHg9IjI2IiB5PSIyMSIgd2lkdGg9IjUyLjgiIGhlaWdodD0iMTgiIHJ4PSIyLjQiIGZpbGw9IiNERERGRUIiLz4KPHJlY3QgeD0iNTYiIHk9IjI4LjIiIHdpZHRoPSIxOCIgaGVpZ2h0PSIzLjYiIHJ4PSIxLjgiIGZpbGw9InVybCgjcGFpbnQxX2xpbmVhcikiLz4KPGNpcmNsZSBjeD0iMzIuNTk5OCIgY3k9IjMwIiByPSIxLjgiIGZpbGw9IiNGNEY1RkMiLz4KPGNpcmNsZSBjeD0iMzguNTk5OCIgY3k9IjMwIiByPSIxLjgiIGZpbGw9InVybCgjcGFpbnQyX2xpbmVhcikiLz4KPGNpcmNsZSBjeD0iNDQuNTk5OCIgY3k9IjMwIiByPSIxLjgiIGZpbGw9InVybCgjcGFpbnQzX2xpbmVhcikiLz4KPHJlY3QgeD0iMjYiIHk9IjQzLjgiIHdpZHRoPSI1Mi44IiBoZWlnaHQ9IjE4IiByeD0iMi40IiBmaWxsPSIjRERERkVCIi8+CjxyZWN0IHg9IjU2IiB5PSI1MSIgd2lkdGg9IjE4IiBoZWlnaHQ9IjMuNiIgcng9IjEuOCIgZmlsbD0idXJsKCNwYWludDRfbGluZWFyKSIvPgo8Y2lyY2xlIGN4PSIzMi41OTk4IiBjeT0iNTIuOCIgcj0iMS44IiBmaWxsPSJ1cmwoI3BhaW50NV9saW5lYXIpIi8+CjxjaXJjbGUgY3g9IjM4LjU5OTgiIGN5PSI1Mi44IiByPSIxLjgiIGZpbGw9InVybCgjcGFpbnQ2X2xpbmVhcikiLz4KPGNpcmNsZSBjeD0iNDQuNTk5OCIgY3k9IjUyLjgiIHI9IjEuOCIgZmlsbD0idXJsKCNwYWludDdfbGluZWFyKSIvPgo8cmVjdCB4PSIyNiIgeT0iNjciIHdpZHRoPSI1Mi44IiBoZWlnaHQ9IjE4IiByeD0iMi40IiBmaWxsPSIjRERERkVCIi8+CjxyZWN0IHg9IjQwIiB5PSI4OSIgd2lkdGg9IjI0IiBoZWlnaHQ9IjcuMiIgcng9IjEuMiIgZmlsbD0iI0Y0RjVGQyIvPgo8cmVjdCB4PSI1NiIgeT0iNzMuOCIgd2lkdGg9IjE4IiBoZWlnaHQ9IjMuNiIgcng9IjEuOCIgZmlsbD0idXJsKCNwYWludDhfbGluZWFyKSIvPgo8Y2lyY2xlIGN4PSIzMi41OTk4IiBjeT0iNzUuNiIgcj0iMS44IiBmaWxsPSJ1cmwoI3BhaW50OV9saW5lYXIpIi8+CjxjaXJjbGUgY3g9IjM4LjU5OTgiIGN5PSI3NS42IiByPSIxLjgiIGZpbGw9InVybCgjcGFpbnQxMF9saW5lYXIpIi8+CjxjaXJjbGUgY3g9IjQ0LjU5OTgiIGN5PSI3NS42IiByPSIxLjgiIGZpbGw9InVybCgjcGFpbnQxMV9saW5lYXIpIi8+CjwvZz4KPGNpcmNsZSBjeD0iMjEiIGN5PSIyNCIgcj0iMTciIGZpbGw9InVybCgjcGFpbnQxMl9saW5lYXIpIiBzdHJva2U9IiNGNEY1RkMiIHN0cm9rZS13aWR0aD0iMyIvPgo8L2c+CjxkZWZzPgo8ZmlsdGVyIGlkPSJmaWx0ZXIwX2QiIHg9IjIyIiB5PSIyMSIgd2lkdGg9IjYwLjgiIGhlaWdodD0iODMuMiIgZmlsdGVyVW5pdHM9InVzZXJTcGFjZU9uVXNlIiBjb2xvci1pbnRlcnBvbGF0aW9uLWZpbHRlcnM9InNSR0IiPgo8ZmVGbG9vZCBmbG9vZC1vcGFjaXR5PSIwIiByZXN1bHQ9IkJhY2tncm91bmRJbWFnZUZpeCIvPgo8ZmVDb2xvck1hdHJpeCBpbj0iU291cmNlQWxwaGEiIHR5cGU9Im1hdHJpeCIgdmFsdWVzPSIwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAwIDAgMCAxMjcgMCIgcmVzdWx0PSJoYXJkQWxwaGEiLz4KPGZlT2Zmc2V0IGR5PSI0Ii8+CjxmZUdhdXNzaWFuQmx1ciBzdGREZXZpYXRpb249IjIiLz4KPGZlQ29sb3JNYXRyaXggdHlwZT0ibWF0cml4IiB2YWx1ZXM9IjAgMCAwIDAgMC4zMjkxNjcgMCAwIDAgMCAwLjMyOTE2NyAwIDAgMCAwIDAuMzI5MTY3IDAgMCAwIDAuMTUgMCIvPgo8ZmVCbGVuZCBtb2RlPSJub3JtYWwiIGluMj0iQmFja2dyb3VuZEltYWdlRml4IiByZXN1bHQ9ImVmZmVjdDFfZHJvcFNoYWRvdyIvPgo8ZmVCbGVuZCBtb2RlPSJub3JtYWwiIGluPSJTb3VyY2VHcmFwaGljIiBpbjI9ImVmZmVjdDFfZHJvcFNoYWRvdyIgcmVzdWx0PSJzaGFwZSIvPgo8L2ZpbHRlcj4KPGxpbmVhckdyYWRpZW50IGlkPSJwYWludDBfbGluZWFyIiB4MT0iNTAiIHkxPSIwIiB4Mj0iNTAiIHkyPSIxMDAiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KPHN0b3Agc3RvcC1jb2xvcj0iI0IzQjVDNSIvPgo8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNDRENFRDgiLz4KPC9saW5lYXJHcmFkaWVudD4KPGxpbmVhckdyYWRpZW50IGlkPSJwYWludDFfbGluZWFyIiB4MT0iNjUiIHkxPSIyOC4yIiB4Mj0iNjUiIHkyPSIzMS44IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CjxzdG9wIHN0b3AtY29sb3I9IiNCM0I1QzUiLz4KPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjQ0RDRUQ4Ii8+CjwvbGluZWFyR3JhZGllbnQ+CjxsaW5lYXJHcmFkaWVudCBpZD0icGFpbnQyX2xpbmVhciIgeDE9IjM4LjU5OTgiIHkxPSIyOC4yIiB4Mj0iMzguNTk5OCIgeTI9IjMxLjgiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KPHN0b3Agc3RvcC1jb2xvcj0iI0IzQjVDNSIvPgo8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNDRENFRDgiLz4KPC9saW5lYXJHcmFkaWVudD4KPGxpbmVhckdyYWRpZW50IGlkPSJwYWludDNfbGluZWFyIiB4MT0iNDQuNTk5OCIgeTE9IjI4LjIiIHgyPSI0NC41OTk4IiB5Mj0iMzEuOCIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgo8c3RvcCBzdG9wLWNvbG9yPSIjQjNCNUM1Ii8+CjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iI0NEQ0VEOCIvPgo8L2xpbmVhckdyYWRpZW50Pgo8bGluZWFyR3JhZGllbnQgaWQ9InBhaW50NF9saW5lYXIiIHgxPSI2NSIgeTE9IjUxIiB4Mj0iNjUiIHkyPSI1NC42IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CjxzdG9wIHN0b3AtY29sb3I9IiNCM0I1QzUiLz4KPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjQ0RDRUQ4Ii8+CjwvbGluZWFyR3JhZGllbnQ+CjxsaW5lYXJHcmFkaWVudCBpZD0icGFpbnQ1X2xpbmVhciIgeDE9IjMyLjU5OTgiIHkxPSI1MSIgeDI9IjMyLjU5OTgiIHkyPSI1NC42IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CjxzdG9wIHN0b3AtY29sb3I9IiNCM0I1QzUiLz4KPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjQ0RDRUQ4Ii8+CjwvbGluZWFyR3JhZGllbnQ+CjxsaW5lYXJHcmFkaWVudCBpZD0icGFpbnQ2X2xpbmVhciIgeDE9IjM4LjU5OTgiIHkxPSI1MSIgeDI9IjM4LjU5OTgiIHkyPSI1NC42IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CjxzdG9wIHN0b3AtY29sb3I9IiNCM0I1QzUiLz4KPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjQ0RDRUQ4Ii8+CjwvbGluZWFyR3JhZGllbnQ+CjxsaW5lYXJHcmFkaWVudCBpZD0icGFpbnQ3X2xpbmVhciIgeDE9IjQ0LjU5OTgiIHkxPSI1MSIgeDI9IjQ0LjU5OTgiIHkyPSI1NC42IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CjxzdG9wIHN0b3AtY29sb3I9IiNCM0I1QzUiLz4KPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjQ0RDRUQ4Ii8+CjwvbGluZWFyR3JhZGllbnQ+CjxsaW5lYXJHcmFkaWVudCBpZD0icGFpbnQ4X2xpbmVhciIgeDE9IjY1IiB5MT0iNzMuOCIgeDI9IjY1IiB5Mj0iNzcuNCIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgo8c3RvcCBzdG9wLWNvbG9yPSIjQjNCNUM1Ii8+CjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iI0NEQ0VEOCIvPgo8L2xpbmVhckdyYWRpZW50Pgo8bGluZWFyR3JhZGllbnQgaWQ9InBhaW50OV9saW5lYXIiIHgxPSIzMi41OTk4IiB5MT0iNzMuOCIgeDI9IjMyLjU5OTgiIHkyPSI3Ny40IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CjxzdG9wIHN0b3AtY29sb3I9IiNCM0I1QzUiLz4KPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjQ0RDRUQ4Ii8+CjwvbGluZWFyR3JhZGllbnQ+CjxsaW5lYXJHcmFkaWVudCBpZD0icGFpbnQxMF9saW5lYXIiIHgxPSIzOC41OTk4IiB5MT0iNzMuOCIgeDI9IjM4LjU5OTgiIHkyPSI3Ny40IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CjxzdG9wIHN0b3AtY29sb3I9IiNCM0I1QzUiLz4KPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjQ0RDRUQ4Ii8+CjwvbGluZWFyR3JhZGllbnQ+CjxsaW5lYXJHcmFkaWVudCBpZD0icGFpbnQxMV9saW5lYXIiIHgxPSI0NC41OTk4IiB5MT0iNzMuOCIgeDI9IjQ0LjU5OTgiIHkyPSI3Ny40IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CjxzdG9wIHN0b3AtY29sb3I9IiNCM0I1QzUiLz4KPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjQ0RDRUQ4Ii8+CjwvbGluZWFyR3JhZGllbnQ+CjxsaW5lYXJHcmFkaWVudCBpZD0icGFpbnQxMl9saW5lYXIiIHgxPSIyNCIgeTE9IjY3LjQwNzciIHgyPSIxMSIgeTI9IjEuOTA3NzEiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KPHN0b3Agc3RvcC1jb2xvcj0id2hpdGUiLz4KPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSJ3aGl0ZSIgc3RvcC1vcGFjaXR5PSIwIi8+CjwvbGluZWFyR3JhZGllbnQ+CjwvZGVmcz4KPC9zdmc+Cg=="></div><p class="qxb-empty_description"><span>暂无数据<!----></span></p></div></div> <div class="pagination-wrapper"><!----></div></div> <!----></div></div>

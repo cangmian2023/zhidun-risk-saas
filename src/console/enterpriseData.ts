@@ -1,6 +1,6 @@
 /* 企业风控子系统 · 数据层
  * 持久化复用 /api/load-mid /api/save-mid；首启动 SEED 自动落盘（橘 Sam）。
- * 覆盖业务：尽调任务 / 存量监控名单 / 决策事件（含复核流程）/ 名单管理 / 数据源 / 预警规则 / 企业预警。
+ * 覆盖业务：尽调任务 / 存量监控名单 / 决策事件（含复核流程）/ 预警规则 / 企业预警。
  */
 
 import { useSyncExternalStore } from 'react';
@@ -72,31 +72,6 @@ export interface DecisionEvent {
   flowLogs?: FlowLog[];   // 复核流程操作留痕
 }
 
-export interface ListEnt {
-  id: string;
-  name: string;
-  list: 'black' | 'white' | 'gray';
-  reason: string;
-  source: string;
-  addedAt: string;
-  operator: string;
-  status: '生效' | '失效';
-  expireAt?: string;      // 有效期截止（YYYY-MM-DD，空=永久名单）
-  autoExpire?: boolean;   // 到期自动移除（临时名单）
-  flowLogs?: FlowLog[];   // 名单状态变更留痕
-}
-
-export interface EntDataSource {
-  id: string;
-  name: string;
-  category: string;       // 工商 / 司法 / 税务 / 征信 / 舆情 / 关联
-  desc: string;
-  status: '已接入' | '未接入' | '测试中';
-  vendor: string;
-  cost?: string;
-  updatedAt: string;
-}
-
 export interface EntAlertRule {
   id: string;
   name: string;
@@ -123,6 +98,9 @@ export interface EntAlert {
   flowState?: string;
   flowStateAt?: string;
   flowLogs?: FlowLog[];   // 处置流程操作留痕
+  /* 数据核验流程（由管理中心「企业风险数据核验」业务流程驱动，独立于处置流程） */
+  verifyState?: string;   // 核验状态：待核验 / 核验中 / 已核验
+  verifyStateAt?: string;
 }
 
 export interface EntModel {
@@ -145,8 +123,6 @@ export interface EnterpriseData {
   dueTasks: DueTask[];
   monitorList: MonitorEnt[];
   decisionEvents: DecisionEvent[];
-  listEnts: ListEnt[];
-  dataSources: EntDataSource[];
   alertRules: EntAlertRule[];
   alerts: EntAlert[];
   models: EntModel[];
@@ -175,22 +151,6 @@ export const SEED_ENTERPRISE: EnterpriseData = {
     { id: 'DE-2608-103', entKeyNo: 'e4', entName: '北京华信智控科技有限公司', scene: '尽调结论', score: 555, scoreModel: '企业欺诈分', result: '转人工', level: '高', status: '待复核', decidedAt: '2026-08-09 09:10', operator: '尽调引擎', rules: ['关联企业风险', '股权冻结'], flowKey: 'f-ent-decision', flowState: '待复核', flowStateAt: '2026-08-09 09:10:00', flowLogs: [{ at: '2026-08-09 09:10:00', action: '系统提交复核', operator: '尽调引擎' }] },
     { id: 'DE-2608-104', entKeyNo: 'e2', entName: '杭州云算科技有限公司', scene: '预警处置', score: 801, scoreModel: '企业违约分', result: '通过', level: '低', status: '已完成', decidedAt: '2026-07-30 10:00', operator: '风控系统', rules: ['高新技术企业', '无经营异常'], flowKey: 'f-ent-decision', flowState: '已复核', flowStateAt: '2026-07-30 10:00:00' },
     { id: 'DE-2608-105', entKeyNo: 'e5', entName: '上海晨光贸易有限公司', scene: '名单命中', score: 610, scoreModel: '企业违约分', result: '预警', level: '中', status: '复核中', decidedAt: '2026-08-05 14:00', operator: '名单引擎', rules: ['灰名单命中', '经营异常'], flowKey: 'f-ent-decision', flowState: '复核中', flowStateAt: '2026-08-05 14:00:00' },
-  ],
-  listEnts: [
-    { id: 'LB-01', name: '广州联诚物流有限公司', list: 'black', reason: '重大司法涉诉 + 空壳特征', source: '尽调命中', addedAt: '2026-07-15', operator: '张三', status: '生效' },
-    { id: 'LB-02', name: '上海晨光贸易有限公司', list: 'gray', reason: '经营异常，需持续观察', source: '规则命中', addedAt: '2026-08-01', operator: '李四', status: '生效', expireAt: '2026-08-31', autoExpire: true },
-    { id: 'LB-03', name: '杭州云算科技有限公司', list: 'white', reason: '核心优质客户', source: '手工添加', addedAt: '2026-06-20', operator: '王五', status: '生效' },
-    { id: 'LB-04', name: '成都明远机械有限公司', list: 'gray', reason: '税务异常待确认', source: '尽调命中', addedAt: '2026-08-03', operator: '张三', status: '生效', expireAt: '2026-08-20', autoExpire: true },
-    { id: 'LB-05', name: '北京华信智控科技有限公司', list: 'black', reason: '股权冻结 + 关联风险', source: '模型命中', addedAt: '2026-08-08', operator: '李四', status: '生效' },
-  ],
-  dataSources: [
-    { id: 'ES-01', name: '企业工商数据', category: '工商', desc: '工商注册、股东、主要人员、对外投资、变更记录', status: '已接入', vendor: '工商总局 / 企查查', updatedAt: '2026-08-01' },
-    { id: 'ES-02', name: '司法涉诉数据', category: '司法', desc: '裁判文书、立案、开庭、执行、失信被执行人', status: '已接入', vendor: '中国裁判文书网', updatedAt: '2026-08-01' },
-    { id: 'ES-03', name: '税务数据', category: '税务', desc: '欠税公告、纳税信用等级、税务异常', status: '已接入', vendor: '税务部门', updatedAt: '2026-07-28' },
-    { id: 'ES-04', name: '征信数据', category: '征信', desc: '企业征信报告、信贷记录、授信情况', status: '测试中', vendor: '人行征信', updatedAt: '2026-07-30' },
-    { id: 'ES-05', name: '舆情数据', category: '舆情', desc: '新闻舆情、负面报道、社交媒体', status: '已接入', vendor: '舆情监测', updatedAt: '2026-08-05' },
-    { id: 'ES-06', name: '关联图谱数据', category: '关联', desc: '股权关联、投资关联、人员关联、担保关联', status: '已接入', vendor: '内部图谱引擎', updatedAt: '2026-08-01' },
-    { id: 'ES-07', name: '财务数据', category: '财务', desc: '财报、审计报告、经营数据', status: '未接入', vendor: '—', updatedAt: '2026-08-06' },
   ],
   alertRules: [
     { id: 'ER-01', name: '司法涉诉预警', category: '司法涉诉', condition: '新增诉讼/被执行≥1 或 涉案金额≥500万', level: '高', action: '立即核实，暂停授信', enabled: true },
@@ -328,8 +288,6 @@ async function bootstrap() {
       ...(s.dueTasks ? { dueTasks: s.dueTasks } : {}),
       ...(s.monitorList ? { monitorList: s.monitorList } : {}),
       ...(s.decisionEvents ? { decisionEvents: s.decisionEvents } : {}),
-      ...(s.listEnts ? { listEnts: s.listEnts } : {}),
-      ...(s.dataSources ? { dataSources: s.dataSources } : {}),
       ...(s.alertRules ? { alertRules: s.alertRules } : {}),
       ...(s.alerts ? { alerts: s.alerts } : {}),
       ...(s.models ? { models: s.models } : {}),
@@ -372,5 +330,16 @@ export function updateEnterpriseData(fn: (d: EnterpriseData) => EnterpriseData) 
   data = fn(data);
   emit();
   saveOne(FILES.ent, data);
+}
+/** 更新单条企业预警的「数据核验」状态（企业风险数据核验流程，独立于处置流程） */
+export function updateAlertVerify(entName: string, alertId: string, next: string, at: string) {
+  updateEnterpriseData((d) => ({
+    ...d,
+    alerts: d.alerts.map((a) =>
+      a.id === alertId && a.entName === entName
+        ? { ...a, verifyState: next, verifyStateAt: at }
+        : a,
+    ),
+  }));
 }
 export function entNewId(p: string) { return `${p}-${Date.now().toString(36)}`; }

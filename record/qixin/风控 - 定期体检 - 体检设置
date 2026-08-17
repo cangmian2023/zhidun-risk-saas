@@ -1,0 +1,54 @@
+<div data-v-1f4a1ce8="" class="modal-content"><div data-v-1f4a1ce8="" class="modal-header"><button data-v-1f4a1ce8="" type="button" data-dismiss="modal" class="close"><span data-v-1f4a1ce8="" aria-hidden="true">×</span></button> <h4 data-v-1f4a1ce8="" class="modal-title">体检设置</h4></div> <div data-v-1f4a1ce8="" class="modal-body"><div data-v-1f4a1ce8="" class="card-title"><i data-v-1f4a1ce8="" class="iconfont icon_zuhouyujing icon-color warning"></i>
+          严重事件
+          <span data-v-1f4a1ce8="">（拖动可以排序）</span></div> <div data-v-1f4a1ce8=""><span data-v-1f4a1ce8="" class="card-group"><div data-v-1f4a1ce8="" class="item font-12 warning" zgclickable="true" zghook="1">
+              经营状态<!----></div><div data-v-1f4a1ce8="" class="item font-12 warning" zgclickable="true" zghook="1">
+              经营期限<!----></div><div data-v-1f4a1ce8="" class="item font-12 warning" zgclickable="true" zghook="1">
+              法定代表人变更<!----></div><div data-v-1f4a1ce8="" class="item font-12 warning" zgclickable="true" zghook="1">
+              股东变更<!----></div><div data-v-1f4a1ce8="" class="item font-12 warning" zgclickable="true" zghook="1">
+              受益人变更<!----></div><div data-v-1f4a1ce8="" class="item font-12 warning" zgclickable="true" zghook="1">
+              实际控制人变更<!----></div><div data-v-1f4a1ce8="" class="item font-12 warning" zgclickable="true" zghook="1">
+              立案信息（被告/被上诉人/被执行人）<!----></div><div data-v-1f4a1ce8="" class="item font-12 warning" zgclickable="true" zghook="1">
+              开庭公告（被告/被上诉人）<!----></div><div data-v-1f4a1ce8="" class="item font-12 warning" zgclickable="true" zghook="1">
+              裁判文书（被告/被上诉人）<!----></div><div data-v-1f4a1ce8="" class="item font-12 warning" zgclickable="true" zghook="1">
+              裁判文书（败诉）<!----></div><div data-v-1f4a1ce8="" class="item font-12 warning" zgclickable="true" zghook="1">
+              裁判文书（重点关注案由）<span data-v-1f4a1ce8="" class="edit-icon warning"><span data-v-1f4a1ce8="" class="warning iconfont icon_Material-Design-48px"></span></span></div><div data-v-1f4a1ce8="" class="item font-12 warning" zgclickable="true" zghook="1">
+              裁判文书（涉诉金额）<!----></div><div data-v-1f4a1ce8="" class="item font-12 warning" zgclickable="true" zghook="1">
+              被执行人次数<!----></div><div data-v-1f4a1ce8="" class="item font-12 warning" zgclickable="true" zghook="1">
+              被执行人执行标的<!----></div><div data-v-1f4a1ce8="" class="item font-12 warning" zgclickable="true" zghook="1">
+              失信被执行人<!----></div><div data-v-1f4a1ce8="" class="item font-12 warning" zgclickable="true" zghook="1">
+              限制高消费<!----></div><div data-v-1f4a1ce8="" class="item font-12 warning" zgclickable="true" zghook="1">
+              终本案件<!----></div><div data-v-1f4a1ce8="" class="item font-12 warning" zgclickable="true" zghook="1">
+              股权冻结数额<!----></div><div data-v-1f4a1ce8="" class="item font-12 warning" zgclickable="true" zghook="1">
+              经营异常<!----></div><div data-v-1f4a1ce8="" class="item font-12 warning" zgclickable="true" zghook="1">
+              严重违法失信<!----></div><div data-v-1f4a1ce8="" class="item font-12 warning" zgclickable="true" zghook="1">
+              行政处罚<!----></div><div data-v-1f4a1ce8="" class="item font-12 warning" zgclickable="true" zghook="1">
+              违法违规建设<!----></div><div data-v-1f4a1ce8="" class="item font-12 warning" zgclickable="true" zghook="1">
+              环保处罚<!----></div><div data-v-1f4a1ce8="" class="item font-12 warning" zgclickable="true" zghook="1">
+              破产案件<!----></div><div data-v-1f4a1ce8="" class="item font-12 warning" zgclickable="true" zghook="1">
+              强制清算<!----></div><div data-v-1f4a1ce8="" class="item font-12 warning" zgclickable="true" zghook="1">
+              清算信息<!----></div><div data-v-1f4a1ce8="" class="item font-12 warning" zgclickable="true" zghook="1">
+              欠税信息<!----></div><div data-v-1f4a1ce8="" class="item font-12 warning" zgclickable="true" zghook="1">
+              重大税收违法<!----></div><div data-v-1f4a1ce8="" class="item font-12 warning" zgclickable="true" zghook="1">
+              非正常户<!----></div><div data-v-1f4a1ce8="" class="item font-12 warning" zgclickable="true" zghook="1">
+              简易注销<!----></div><div data-v-1f4a1ce8="" class="item font-12 warning" zgclickable="true" zghook="1">
+              涉嫌冒用他人身份登记信息<!----></div></span></div> <div data-v-1f4a1ce8="" class="card-title"><i data-v-1f4a1ce8="" class="iconfont icon_zuhouyujing icon-color follow"></i>
+          异常事件
+          <span data-v-1f4a1ce8="">（拖动可以排序）</span></div> <div data-v-1f4a1ce8=""><span data-v-1f4a1ce8="" class="card-group"><div data-v-1f4a1ce8="" class="item font-12 follow" zgclickable="true" zghook="1">
+              注册资本<!----></div><div data-v-1f4a1ce8="" class="item font-12 follow" zgclickable="true" zghook="1">
+              参保人数<!----></div><div data-v-1f4a1ce8="" class="item font-12 follow" zgclickable="true" zghook="1">
+              经营地址变更<!----></div><div data-v-1f4a1ce8="" class="item font-12 follow" zgclickable="true" zghook="1">
+              经营范围变更<!----></div><div data-v-1f4a1ce8="" class="item font-12 follow" zgclickable="true" zghook="1">
+              动产抵押<!----></div><div data-v-1f4a1ce8="" class="item font-12 follow" zgclickable="true" zghook="1">
+              负面舆情<!----></div></span></div> <div data-v-1f4a1ce8="" class="card-title"><i data-v-1f4a1ce8="" class="iconfont icon_zuhouyujing icon-color tip"></i>
+          一般事件
+          <span data-v-1f4a1ce8="">（拖动可以排序）</span></div> <div data-v-1f4a1ce8=""><span data-v-1f4a1ce8="" class="card-group"><div data-v-1f4a1ce8="" class="item font-12 tip" zgclickable="true" zghook="1">
+              董监高变更<!----></div><div data-v-1f4a1ce8="" class="item font-12 tip" zgclickable="true" zghook="1">
+              分支机构<!----></div><div data-v-1f4a1ce8="" class="item font-12 tip" zgclickable="true" zghook="1">
+              立案信息（原告/上诉人/申请执行人）<!----></div><div data-v-1f4a1ce8="" class="item font-12 tip" zgclickable="true" zghook="1">
+              开庭公告（原告/上诉人）<!----></div><div data-v-1f4a1ce8="" class="item font-12 tip" zgclickable="true" zghook="1">
+              裁判文书（原告/上诉人）<!----></div><div data-v-1f4a1ce8="" class="item font-12 tip" zgclickable="true" zghook="1">
+              裁判文书（胜诉）<!----></div><div data-v-1f4a1ce8="" class="item font-12 tip" zgclickable="true" zghook="1">
+              股权出质（出质人）<!----></div><div data-v-1f4a1ce8="" class="item font-12 tip" zgclickable="true" zghook="1">
+              股权出质（质权人）<!----></div></span></div> <div data-v-1f4a1ce8="" class="card-title"><i data-v-1f4a1ce8="" class="iconfont icon_zuhouyujing icon-color lock"></i>
+          未启用
+          <span data-v-1f4a1ce8="">（拖动可以排序）</span></div> <div data-v-1f4a1ce8=""><span data-v-1f4a1ce8="" class="card-group"></span></div></div> <div data-v-1f4a1ce8="" class="modal-footer"><button data-v-1f4a1ce8="" type="button" data-dismiss="modal" class="btn btn-normal">取 消</button> <button data-v-1f4a1ce8="" type="button" class="btn btn-primary" zgclickable="true" zghook="1">确 定</button></div></div>

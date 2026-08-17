@@ -6,7 +6,7 @@ export const portalSubsystems = [
   { key: 'cr', name: '零售信贷风控', desc: '覆盖消费金融、现金贷、小微经营贷等业务的贷前审核与贷中监控。', color: 'from-rose-500 to-orange-500', open: true },
   { key: 'sc', name: '评分产品', desc: '智察分、智信分、智融分三类评分模型产品。', color: 'from-violet-500 to-fuchsia-500', open: true },
   { key: 'ep', name: '企业风控', desc: '面向企业客户的贷前核验、信用评估与关联图谱。', color: 'from-sky-500 to-cyan-500', open: false },
-  { key: 'dm', name: '数字营销', desc: '猎客雷达、猎客信使、RTA 服务等营销获客工具。', color: 'from-emerald-500 to-teal-500', open: false },
+  { key: 'dm', name: '数字营销', desc: '潜客挖掘、专题营销、营销管理、存客管理与金融工具，覆盖对公客群洞察与商机转化。', color: 'from-emerald-500 to-teal-500', open: true },
   { key: 'dg', name: '数据治理', desc: '数据底座与元数据治理：元事件、属性、维度表、虚拟属性/事件与埋点定义。', color: 'from-indigo-500 to-blue-500', open: true },
   { key: 'zz', name: '催贷管理', desc: '智能催收（催贷）子系统：案件资产全生命周期、合规触达、委外监管、AI 质检、协商回款与催收 BI 看板。', color: 'from-amber-500 to-red-500', open: true },
   { key: 'cm', name: '管理中心', desc: '跨子系统共用的用户、配置、看板与帮助能力。', color: 'from-slate-500 to-slate-700', open: true },
@@ -102,21 +102,10 @@ export const scoringMenu: MenuGroup[] = [
  * ========================================================== */
 export const entMenu: MenuGroup[] = [
   {
-    group: '风险驾驶舱',
-    section: '首页',
-    items: [
-      { label: '风险总览大盘', key: 'ep:overview', desc: '企业风控核心监控指标总览：企业总数 / 风险分布 / 预警 / 尽调任务 / 决策事件', keep: true },
-      { label: '实时态势大屏', key: 'ep:overview-realtime', desc: '实时态势大屏：企业风险事件、司法涉诉、舆情、名单命中实时滚动', keep: true },
-      { label: '风险待办中心', key: 'ep:todo-center', desc: '聚合待复核决策 / 待处置预警 / 进行中尽调 / 本月到期名单，一处看全、点击直达处理', keep: true },
-      { label: '操作变更日志', key: 'ep:operate-log', desc: '名单 / 预警规则 / 监控名单 / 批量尽调等写操作变更追溯，按模块筛选、支持导出', keep: true },
-    ],
-  },
-  {
     group: '企业一键风险查询',
     section: '企业风险尽调中心',
     items: [
       { label: '企业一键风险查询', key: 'ep:qiye-search', desc: '按企业名称 / 行业 / 法定代表人 / 唯一标识一键查询企业全维度风险；点击「查看档案」进入企业风险画像详情', keep: true },
-      { label: '单企业风险画像', key: 'ep:qiye-profile', desc: '输入企业名称 / 统一社会信用代码直达单企业全维度风险画像（工商、股东、司法、经营、知识产权）', keep: true },
     ],
   },
   {
@@ -134,46 +123,33 @@ export const entMenu: MenuGroup[] = [
     ],
   },
   {
-    group: '决策事件列表',
-    section: '风险事件管理',
+    group: '风险驾驶舱',
+    section: '风险监控',
     items: [
+      { label: '风险总览大盘', key: 'ep:overview', desc: '企业风控核心监控指标总览：企业总数 / 风险分布 / 预警 / 尽调任务 / 决策事件', keep: true },
+      { label: '实时态势大屏', key: 'ep:overview-realtime', desc: '实时态势大屏：企业风险事件、司法涉诉、舆情、名单命中实时滚动', keep: true },
+    ],
+  },
+  {
+    group: '风险预警与决策中心',
+    section: '风险预警与决策中心',
+    items: [
+      { label: '预警处置工作台', key: 'ep:alert-workbench', desc: '企业预警处置工作台：预警队列逐条核实、发起处置（复用零售信贷预警工作台，数据换成企业）', keep: true },
       { label: '决策事件列表', key: 'ep:decision-events', desc: '企业授信 / 尽调 / 风控决策事件列表，可追踪决策过程', keep: true },
     ],
   },
   {
-    group: '模型列表',
+    group: '模型管理',
     section: '模型管理中心',
     items: [
-      { label: '模型列表', key: 'ep:model-list', desc: '企业风控模型列表：企业违约分 / 欺诈分 / 关联风险模型，点击进入模型详情', keep: true },
+      { label: '模型管理', key: 'ep:model-list', desc: '企业风控模型列表：企业违约分 / 欺诈分 / 关联风险模型，点击进入模型详情', keep: true },
     ],
   },
   {
-    group: '名单管理',
-    section: '名单管理',
+    group: '规划中',
+    section: '规划中',
     items: [
-      { label: '名单管理（黑白灰名单）', key: 'ep:list-manage', desc: '企业黑白灰名单管理：黑名单拦截、白名单放行、灰名单预警', keep: true },
-    ],
-  },
-  {
-    group: '数据源市场',
-    section: '数据源市场与管理',
-    items: [
-      { label: '数据源市场与管理', key: 'ep:datasource', desc: '企业数据源市场：工商 / 司法 / 税务 / 征信 / 舆情 / 关联等数据源接入与管理', keep: true },
-      { label: '数据同步任务', key: 'ep:sync-task', desc: '各数据源同步周期、上次同步时间与失败企业清单，支持手动触发同步', keep: true },
-    ],
-  },
-  {
-    group: '预警规则配置',
-    section: '风险预警中心',
-    items: [
-      { label: '预警规则配置', key: 'ep:alert-rule', desc: '企业风险预警规则配置：司法涉诉 / 经营异常 / 舆情负面 / 财务恶化等预警规则', keep: true },
-    ],
-  },
-  {
-    group: '预警处置工作台',
-    section: '风险预警中心',
-    items: [
-      { label: '预警处置工作台', key: 'ep:alert-workbench', desc: '企业预警处置工作台：预警队列逐条核实、发起处置（内容数据换成企业）', keep: true },
+      { label: '操作变更日志', key: 'ep:operate-log', desc: '操作变更日志：需求尚未明确，整体规划中', keep: true },
     ],
   },
 ]
@@ -182,54 +158,60 @@ export const entMenu: MenuGroup[] = [
  * 四、数字营销
  * ========================================================== */
 export const dmMenu: MenuGroup[] = [
-  { group: '工作台', items: [{ label: '概览看板', key: 'dm:overview', desc: '展示数字营销核心指标的实时概览看板' }] },
   {
-    group: '猎客雷达',
+    group: '潜客挖掘',
+    section: '潜客挖掘',
     items: [
-      { label: '响应分查询', key: 'dm:radar-query', desc: '展示所有猎客雷达查询记录，支持按业务场景、响应分区间筛选' },
-      { label: '批量', key: 'dm:radar-batch', desc: '支持 WEB 页面批量上传、API 批量查询' },
-      { label: '标准模型', key: 'dm:radar-model', desc: '展示系统预置的标准响应模型' },
-      { label: '定制模型', key: 'dm:radar-model-custom', desc: '管理客户定制的响应模型（注册未申请、授信未支用、结清未复贷等）' },
-      { label: '模型效果评估', key: 'dm:radar-eval', desc: '展示各模型的响应率、转化率、lift 曲线' },
-      { label: '策略标签', key: 'dm:radar-tag', desc: '展示系统生成的策略标签（高响应、中响应、低响应、高风险、低风险）' },
-      { label: '标签规则', key: 'dm:radar-tag-config', desc: '配置策略标签的生成规则、阈值' },
-      { label: '查询计费', key: 'dm:radar-bill-query', desc: '展示按查询次数的猎客雷达计费明细' },
-      { label: '查得计费', key: 'dm:radar-bill-hit', desc: '展示按查得次数的猎客雷达计费明细' },
-      { label: '账单', key: 'dm:radar-bill', desc: '展示猎客雷达月度账单、充值记录' },
+      { label: 'AI营销', key: 'dm:ai-marketing', keep: true, desc: 'AI 驱动的一站式智能营销工作台：营销洞察、智能推荐与一键触达' },
+      { label: '全维搜索', key: 'dm:full-search', desc: '企业/人物/商标/专利/舆情等全维度一站式检索，支持组合筛选与导出' },
+      { label: '区域商机', key: 'dm:regional-biz', desc: '按行政区划挖掘区域企业商机，含 AI 触达、公司商机与关联营销' },
+      { label: '地图拓客', key: 'dm:map-prospect', desc: '基于地图的地理化拓客：圈选区域、周边企业批量获取与画像' },
+      { label: '网格营销', key: 'dm:grid-marketing', keep: true, desc: '网格化责任片区管理：片区客户分布、商机跟进与业绩看板' },
+      { label: '企业库', key: 'dm:company-lib', desc: '全量企业名录库：多维筛选、企业详情与批量收藏' },
+      { label: '集团户', key: 'dm:group-account', keep: true, desc: '集团客户管理：国企/央企/民营/外资/机构集团及实际控制人视图' },
+      { label: '招投标', key: 'dm:tender', desc: '招投标信息检索与商机挖掘（资料待补充）' },
+      { label: '供应链', key: 'dm:supply-chain', desc: '产业链上下游企业挖掘与供应链金融商机识别' },
     ],
   },
   {
-    group: '猎客信使',
+    group: '专题营销',
+    section: '专题营销',
     items: [
-      { label: '触达任务', key: 'dm:herald-task', desc: '展示所有触达任务，支持按触达方式、任务状态筛选' },
-      { label: '触达任务管理', key: 'dm:herald-task-create', desc: '创建触达任务，选择目标客群、触达方式、发送时间' },
-      { label: '客群', key: 'dm:herald-crowd', desc: '基于模型和标签组合筛选目标客群' },
-      { label: '客群', key: 'dm:herald-crowd-preview', desc: '预览筛选后的客群规模、特征分布' },
-      { label: '客群保存页', key: 'dm:herald-crowd-save', desc: '保存常用客群配置，支持复用' },
-      { label: '短信通道', key: 'dm:herald-sms', desc: '配置短信通道、签名、模板、发送策略' },
-      { label: 'AI外呼', key: 'dm:herald-aicall', desc: '配置 AI 外呼话术、语音、挂机短信、拨打策略' },
-      { label: '投诉黑名单', key: 'dm:herald-complaint', desc: '管理投诉黑名单、号码归属地剔除规则' },
-      { label: '触达效果', key: 'dm:herald-effect', desc: '展示触达成功率、转化率、ROI 等指标' },
-      { label: '转化漏斗', key: 'dm:herald-funnel', desc: '展示从触达到转化的完整漏斗' },
-      { label: 'A/B测试', key: 'dm:herald-ab', desc: '对比不同话术/模板/时段的触达效果' },
+      { label: '科创金融', key: 'dm:techfin', desc: '科创企业专属金融服务：科创企业库与资质画像' },
+      { label: '产业金融', key: 'dm:industry-fin', desc: '聚焦重点产业的链式营销与客群洞察' },
+      { label: '园区金融', key: 'dm:park-fin', desc: '产业园区客群拓展：园区列表、开发区画像与商机线索' },
+      { label: '绿色金融', key: 'dm:green-fin', desc: '绿色金融客群：绿色企业认定与碳账户营销' },
+      { label: '乡村振兴', key: 'dm:rural-revive', keep: true, desc: '乡村振兴客群：涉农企业、新型农业经营主体与惠农金融' },
     ],
   },
   {
-    group: 'RTA服务',
+    group: '营销管理',
+    section: '营销管理',
     items: [
-      { label: 'RTA请求', key: 'dm:rta-query', desc: '展示所有 RTA 请求记录，支持按媒体渠道、业务场景、响应分筛选' },
-      { label: '媒体渠道', key: 'dm:rta-media', desc: '配置广点通、巨量引擎等媒体的对接参数' },
-      { label: '媒体直联测试', key: 'dm:rta-media-test', desc: '测试媒体直联的连通性、响应速度' },
-      { label: '高并发', key: 'dm:rta-concurrency', desc: '配置 RTA 服务的并发限制、熔断策略' },
-      { label: '标准模型', key: 'dm:rta-model', desc: '展示系统预置的标准响应模型' },
-      { label: '定制模型', key: 'dm:rta-model-custom', desc: '管理客户定制的 RTA 模型（点击未注册、注册未申请、申请未授信等）' },
-      { label: '模型效果评估', key: 'dm:rta-eval', desc: '展示各模型的响应率、转化率、lift 曲线' },
-      { label: '查询计费', key: 'dm:rta-bill-query', desc: '展示按查询次数的 RTA 计费明细' },
-      { label: '包年计费', key: 'dm:rta-bill-year', desc: '管理 RTA 包年计费合同、到期提醒' },
-      { label: '账单', key: 'dm:rta-bill', desc: '展示 RTA 月度账单、充值记录' },
-      { label: '投放策略', key: 'dm:rta-strategy', desc: '配置不同响应分区间的投放策略（投放/不投放/溢价）' },
-      { label: '策略效果', key: 'dm:rta-strategy-effect', desc: '分析不同投放策略的转化效果、成本' },
-      { label: '策略优化', key: 'dm:rta-strategy-tune', desc: '基于数据给出 RTA 投放策略优化建议' },
+      { label: '营销名单', key: 'dm:market-list', desc: '营销目标名单管理：名单生成、分发与转化追踪' },
+      { label: '营销线索', key: 'dm:market-lead', desc: '营销线索池：线索采集、打分与分配跟进' },
+      { label: '营销看板', key: 'dm:market-board', desc: '营销核心指标实时看板：触达、转化与 ROI' },
+    ],
+  },
+  {
+    group: '存客管理',
+    section: '存客管理',
+    items: [
+      { label: '存客商机', key: 'dm:exist-biz', desc: '存量客户交叉销售与向上销售商机挖掘' },
+      { label: '客群分析', key: 'dm:crowd-analysis', desc: '存量客群分层与价值/流失/潜力分析' },
+    ],
+  },
+  {
+    group: '金融工具',
+    section: '金融工具',
+    items: [
+      { label: 'PE/VC', key: 'dm:pevc', desc: '私募股权与创投：投融资事件、投资机构与基金路径' },
+      { label: '上市数据', key: 'dm:listing', desc: '上市公司财务、股东与资本运作数据' },
+      { label: '债券数据', key: 'dm:bond', desc: '债券发行、存续期与违约风险数据' },
+      { label: '主体评级', key: 'dm:rating', desc: '企业主体信用评级与评级迁移' },
+      { label: '同业分析', key: 'dm:peer-analysis', desc: '同业机构对标与竞争格局分析' },
+      { label: '行业研报', key: 'dm:industry-report', keep: true, desc: '行业研究报告库：检索、订阅与解读' },
+      { label: '金融法规', key: 'dm:fin-law', desc: '金融法律法规与监管文件库（内容待核对）' },
     ],
   },
 ]
@@ -269,6 +251,7 @@ export const cmMenu: MenuGroup[] = [
   { group: '指标库', items: [{ label: '指标库', key: 'cm:mid-metric', keep: true, desc: '定义可复用指标（基础 + 派生公式），被监控策略、看板组件引用' }] },
   { group: '监控任务', items: [{ label: '监控任务', key: 'cm:mid-strategy', keep: true, desc: '配置监控任务（对谁、何时、算哪些指标）；预警规则在任务详情中配置' }] },
   { group: '处置策略', items: [{ label: '处置策略', key: 'cm:mid-dispose-strategy', keep: true, desc: '配置自动处置策略（如自动降额、自动冻结），按预警等级路由' }] },
+  { group: '预警配置', items: [{ label: '统一预警配置', key: 'cm:alert-config', keep: true, desc: '跨子系统统一配置预警规则：企业风控 / 评分产品 / 零售信贷 / 数字营销' }] },
   { group: '页面配置', items: [{ label: '页面配置', key: 'cm:mid-dashboard-config', keep: true, desc: '配置监控看板页面与可视化组件，保存为 midDashboards.json 配置文件后，由贷中监测按配置加载渲染对应组件' }] },
   { group: '业务流程', items: [{ label: '业务流程配置', key: 'cm:biz-flow', keep: true, desc: '按业务域配置审核操作流程（画布编辑节点与流转），实时生效于对应审核页操作按钮' }] },
 ]
