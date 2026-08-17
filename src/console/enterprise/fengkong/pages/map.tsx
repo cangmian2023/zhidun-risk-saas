@@ -2,7 +2,7 @@
 // SVG 简易中国地图 + 热力点；时间维度切换 今日/最近7天/最近30天；风险预警分布 / 监控企业分布
 // 数据：本地样例 fkMap.json（橘 Sam）
 import { useState } from 'react'
-import { EpPage, EpCard, EpStat, useSample, Sam } from '../epCommon'
+import { EpPage, EpCard, EpStat, useSample, Sam } from '../../epCommon'
 import type { Row, Column } from '../../../../components/ui'
 
 type MapData = typeof seed

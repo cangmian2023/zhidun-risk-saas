@@ -1,7 +1,7 @@
 // 风控中心 · 员工列表（fk-employee）· 1:1 复刻「风控 - 员工列表」
 // 数据：本地样例 fkEmployee.json（橘 Sam）
 import { useState } from 'react'
-import { EpPage, EpCard, EpTag, EpBtn, EpDrawer, DataTable, useSample, Sam } from '../epCommon'
+import { EpPage, EpCard, EpTag, EpBtn, EpDrawer, DataTable, useSample, Sam } from '../../epCommon'
 import type { Row } from '../../../../components/ui'
 
 type Emp = { id: string; name: string; no: string; tag: string; phone: string; related: number }

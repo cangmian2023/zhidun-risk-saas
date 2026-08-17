@@ -3,7 +3,7 @@
 // 主要人员 tabs：工商公示/历史工商主要人员
 // 数据：本地样例 fkYearly.json（橘 Sam）
 import { useState } from 'react'
-import { EpPage, EpCard, EpStat, EpTag, EpBtn, EpDrawer, DataTable, useSample, Sam } from '../epCommon'
+import { EpPage, EpCard, EpStat, EpTag, EpBtn, EpDrawer, DataTable, useSample, Sam } from '../../epCommon'
 import type { Row, Column } from '../../../../components/ui'
 import seedJson from '../../../fkYearly.json'
 

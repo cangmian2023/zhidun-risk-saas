@@ -2,7 +2,7 @@
 // 子快照「风控 - 定期体检 - 体检设置」→ 设置抽屉（严重/异常/一般/未启用 四组，可拖动排序）
 // 数据：本地样例 fkHealth.json（橘 Sam）
 import { useState } from 'react'
-import { EpPage, EpCard, EpStat, EpTag, EpBtn, EpDrawer, DataTable, useSample, Sam } from '../epCommon'
+import { EpPage, EpCard, EpStat, EpTag, EpBtn, EpDrawer, DataTable, useSample, Sam } from '../../epCommon'
 import type { Row, Column } from '../../../../components/ui'
 import seedJson from '../../../fkHealth.json'
 

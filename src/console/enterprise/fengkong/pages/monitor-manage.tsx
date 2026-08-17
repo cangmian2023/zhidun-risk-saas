@@ -2,7 +2,7 @@
 // Tabs: 监控规则 / 订阅管理；「监控管理 - 详情」用抽屉渲染（规则表单 + 维度表）
 // 数据：本地样例 fkMonManage.json（橘 Sam）
 import { useState } from 'react'
-import { EpPage, EpCard, EpTag, EpBtn, EpDrawer, DataTable, useSample, Sam } from '../epCommon'
+import { EpPage, EpCard, EpTag, EpBtn, EpDrawer, DataTable, useSample, Sam } from '../../epCommon'
 import type { Row, Column } from '../../../../components/ui'
 
 type MonData = typeof seed

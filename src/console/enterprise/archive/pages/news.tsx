@@ -1,7 +1,7 @@
 // 企业档案 · 新闻舆情（arc-news）· 1:1 复刻「企业档案 - 新闻舆情」
 // 数据：本地样例 arcNews.json（橘 Sam）
 import { useState } from 'react'
-import { EpPage, EpCard, EpTag, EpBtn, useSample, Sam } from '../epCommon'
+import { EpPage, EpCard, EpTag, EpBtn, useSample, Sam } from '../../epCommon'
 import type { Row } from '../../../../components/ui'
 
 const seed = {

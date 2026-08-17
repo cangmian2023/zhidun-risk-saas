@@ -1,7 +1,7 @@
 // 企业档案 · 历史信息（arc-history）· 1:1 复刻「企业档案 - 历史信息」
 // 数据：本地样例 arcHistory.json（橘 Sam）
 import { useState } from 'react'
-import { EpPage, EpCard, EpStat, EpTag, EpBtn, DataTable, useSample, Sam } from '../epCommon'
+import { EpPage, EpCard, EpStat, EpTag, EpBtn, DataTable, useSample, Sam } from '../../epCommon'
 import type { Row, Column } from '../../../../components/ui'
 
 const seed = {

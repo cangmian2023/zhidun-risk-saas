@@ -203,16 +203,33 @@ export default function Console() {
     'cm:mid-metric-detail': 'trend',
     'cm:mid-strategy-detail': 'code',
     'cm:mid-dashboard-detail': 'monitor',
-    // 企业风控
-    'ep:overview': 'dashboard',
-    'ep:overview-realtime': 'monitor',
-    'ep:qiye-search': 'search',
-    'ep:batch-due': 'stack',
-    'ep:monitor-list': 'users',
-    'ep:decision-events': 'report',
-    'ep:model-list': 'model',
-    'ep:alert-workbench': 'bell',
-    'ep:archive': 'id',
+    // 企业风控（v3 重建：菜单 1:1 来自原产品「风控子系统目录」「尽调目录」）
+    // 风险监控
+    'ep:fk-risk-warning': 'bell',
+    'ep:fk-monitor-list': 'monitor',
+    'ep:fk-stats': 'dashboard',
+    'ep:fk-map': 'zoom',
+    'ep:fk-monitor-manage': 'work_flow',
+    // 风险管理
+    'ep:fk-health-check': 'gauge',
+    'ep:fk-account-yearly': 'clock',
+    'ep:fk-property': 'cube',
+    'ep:fk-blacklist': 'flag',
+    // 内控合规
+    'ep:fk-interest': 'share',
+    'ep:fk-employee': 'users',
+    'ep:fk-regulatory': 'shield',
+    // 企业尽调
+    'ep:jd-company': 'search',
+    'ep:jd-batch': 'stack',
+    'ep:jd-relation': 'link',
+    'ep:jd-person': 'id',
+    // 尽调报告
+    'ep:jd-report': 'report',
+    // 受益所有人
+    'ep:jd-beneficiary': 'layers',
+    // 企业档案（详情内页，不在左侧菜单）
+    'ep:archive': 'database',
     // 数字营销（新 IA：潜客挖掘 / 专题营销 / 营销管理 / 存客管理 / 金融工具）
     'dm:ai-marketing': 'pulse',
     'dm:full-search': 'search',

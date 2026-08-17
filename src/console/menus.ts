@@ -100,15 +100,18 @@ export const scoringMenu: MenuGroup[] = [
 /* ============================================================
  * 三、企业风控
  * ========================================================== */
-/* 企业风控子系统（v3 重建）· 三大中心
- * 风控中心（fk-*）｜ 尽调中心（jd-*）｜ 企业档案（arc-*）
- * 页面全部来自 record/qixin 的「风控 -」「尽调 -」「企业档案 -」快照，1:1 复刻。
+/* 企业风控子系统（v3 重建）
+ * 菜单结构 1:1 来自 record/qixin 的两份原产品目录快照：
+ *   ①「风控子系统目录」→ 风险监控 / 风险管理 / 内控合规（共 12 项）
+ *   ②「尽调目录」      → 企业尽调 / 尽调报告 / 受益所有人（共 6 项）
+ * 分区名、菜单名、排列顺序均与原产品一致，未增删。
+ * 「企业档案」系列页面在原产品中属于尽调结果的详情内页，不出现在左侧菜单，故不挂。
  */
 export const entMenu: MenuGroup[] = [
-  /* ---------------- 风控中心 ---------------- */
+  /* ============ 来源：风控子系统目录 ============ */
   {
     group: '风险监控',
-    section: '风控中心',
+    section: '风险监控',
     items: [
       { label: '风险预警', key: 'ep:fk-risk-warning', desc: '企业风险预警：已同步企业 3 个月监控动态、剩余额度，预警列表含添加监控 / 解读 / 风险详情 / 案件串联', keep: true },
       { label: '监控列表', key: 'ep:fk-monitor-list', desc: '存量企业监控名单：名单内企业持续监控，风险变化即预警', keep: true },
@@ -118,50 +121,47 @@ export const entMenu: MenuGroup[] = [
     ],
   },
   {
-    group: '体检与年检',
-    section: '风控中心',
+    group: '风险管理',
+    section: '风险管理',
     items: [
       { label: '定期体检', key: 'ep:fk-health-check', desc: '目标企业定期体检：按风险类型 / 维度对比体检日与对比日变化，可设置体检项', keep: true },
       { label: '账户年检', key: 'ep:fk-account-yearly', desc: '账户年检：目标客群年检，查看股东 / 工商登记 / 历史股东等公示信息通过情况', keep: true },
-    ],
-  },
-  {
-    group: '合规与排查',
-    section: '风控中心',
-    items: [
-      { label: '监管合规', key: 'ep:fk-regulatory', desc: '监管合规：按范围 / 主体 / 判决机构 / 违规类型查询企业合规情况', keep: true },
-      { label: '利益排查', key: 'ep:fk-interest', desc: '合作方利益排查：上传员工 / 企业名单，识别疑似利益冲突企业与人员', keep: true },
-      { label: '黑名单', key: 'ep:fk-blacklist', desc: '黑名单排查 / 内部黑名单 / 历史黑名单：企业黑名单来源说明与排查', keep: true },
-      { label: '员工列表', key: 'ep:fk-employee', desc: '员工信息管理：维护员工电话、关联企业，用于合作方利益排查（上限 2000 名）', keep: true },
       { label: '财产线索', key: 'ep:fk-property', desc: '财产线索：查企业线索信息、扩大主体、资产状况（股权 / 涉诉 / 动产 / 不动产 / 无形资产）', keep: true },
+      { label: '黑名单', key: 'ep:fk-blacklist', desc: '黑名单排查 / 内部黑名单 / 历史黑名单：企业黑名单来源说明与排查', keep: true },
     ],
   },
-  /* ---------------- 尽调中心 ---------------- */
   {
-    group: '尽职调查',
-    section: '尽调中心',
+    group: '内控合规',
+    section: '内控合规',
+    items: [
+      { label: '利益排查', key: 'ep:fk-interest', desc: '合作方利益排查：上传员工 / 企业名单，识别疑似利益冲突企业与人员', keep: true },
+      { label: '员工列表', key: 'ep:fk-employee', desc: '员工信息管理：维护员工电话、关联企业，用于合作方利益排查（上限 2000 名）', keep: true },
+      { label: '监管合规', key: 'ep:fk-regulatory', desc: '监管合规：按范围 / 主体 / 判决机构 / 违规类型查询企业合规情况', keep: true },
+    ],
+  },
+  /* ============ 来源：尽调目录 ============ */
+  {
+    group: '企业尽调',
+    section: '企业尽调',
     items: [
       { label: '企业尽调', key: 'ep:jd-company', desc: '企业尽调：智能分析合作方资质风险，常规 / 批量筛查与筛查设置', keep: true },
       { label: '批量尽调', key: 'ep:jd-batch', desc: '批量尽调：查企业 / 查人员 / 选择指标 / 模板，批量企业画像分析', keep: true },
       { label: '关系尽调', key: 'ep:jd-relation', desc: '关系尽调：集中排查 AI / 组与组排查 / 关联方识别（含识别结果）', keep: true },
       { label: '人员尽调', key: 'ep:jd-person', desc: '人员尽调：查人员风险，进入人员详情（基本信息 / 历史 / 风险 / 专利 / 关联企业 / 个人图谱）', keep: true },
+    ],
+  },
+  {
+    group: '尽调报告',
+    section: '尽调报告',
+    items: [
       { label: '报告中心', key: 'ep:jd-report', desc: '尽调报告中心：获取尽调报告、报告记录、自定义报告与模板选择', keep: true },
     ],
   },
-  /* ---------------- 企业档案 ---------------- */
   {
-    group: '企业档案',
-    section: '企业档案',
+    group: '受益所有人',
+    section: '受益所有人',
     items: [
-      { label: '基本信息', key: 'ep:arc-basic', desc: '企业基本工商信息档案', keep: true },
-      { label: '历史信息', key: 'ep:arc-history', desc: '企业历史变更 / 历史工商信息', keep: true },
-      { label: '司法风险', key: 'ep:arc-legal', desc: '企业司法涉诉风险信息', keep: true },
-      { label: '新闻舆情', key: 'ep:arc-news', desc: '企业新闻与舆情信息', keep: true },
-      { label: '经营信息', key: 'ep:arc-operate', desc: '企业经营维度信息', keep: true },
-      { label: '经营风险', key: 'ep:arc-oprisk', desc: '企业经营风险信息', keep: true },
-      { label: '集团信息', key: 'ep:arc-group', desc: '企业集团与股权关系信息（含查看图谱）', keep: true },
-      { label: '企业图谱', key: 'ep:arc-graph', desc: '企业图谱中心：股权结构 / 穿透 / 受益所有人 / 关系 / 链图 / 控制人 / 关联方认定 / 十大受益人', keep: true },
-      { label: '财产信息', key: 'ep:arc-property', desc: '企业财产信息（与风控「财产线索」同源）', keep: true },
+      { label: '受益所有人', key: 'ep:jd-beneficiary', desc: '受益所有人识别：企业受益所有人穿透、认定依据与十大受益人', keep: true },
     ],
   },
 ]

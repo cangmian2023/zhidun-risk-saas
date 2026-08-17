@@ -1,7 +1,7 @@
 // 企业档案 · 司法风险（arc-legal）· 1:1 复刻「企业档案 - 司法风险」
 // 数据：本地样例 arcLegal.json（橘 Sam）
 import { useState } from 'react'
-import { EpPage, EpCard, EpStat, EpTag, EpBtn, DataTable, useSample, Sam } from '../epCommon'
+import { EpPage, EpCard, EpStat, EpTag, EpBtn, DataTable, useSample, Sam } from '../../epCommon'
 import type { Row, Column } from '../../../../components/ui'
 
 const seed = {

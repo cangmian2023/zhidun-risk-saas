@@ -2,7 +2,7 @@
 // 折叠子快照：风控 - 风险预警 - 添加监控 / - 解读 / - 风险和推送设置 / - 风险详情 / - 风险详情 - 案件串联（均为抽屉）
 // 数据：本地样例 fkRisk.json（橘 Sam）
 import { useState } from 'react'
-import { EpPage, EpCard, EpStat, EpTag, EpBtn, EpDrawer, DataTable, useSample, Sam } from '../epCommon'
+import { EpPage, EpCard, EpStat, EpTag, EpBtn, EpDrawer, DataTable, useSample, Sam } from '../../epCommon'
 import type { Row, Column } from '../../../../components/ui'
 import seedJson from '../../../fkRisk.json'
 

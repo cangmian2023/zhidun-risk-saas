@@ -5,6 +5,7 @@ import React, { useEffect, useRef, useState, type ReactNode } from 'react'
 import { PageShell } from '../PageShell'
 import { Sam, Cfg, Cal, type SourceKind } from '../SourceTag'
 import { DataTable, Panel } from '../../components/ui'
+import { entMenu } from '../menus'
 
 export { DataTable, Panel }
 
@@ -230,11 +231,16 @@ export function EpDrawer({ open, onClose, title, width = 560, children }: {
 
 /* ---------------- 占位（未建页面） ---------------- */
 export function EpPlaceholder({ name }: { name: string }) {
+  // name 形如 fk-blacklist；到菜单里取中文名与业务说明，占位页也显示人话
+  const item = entMenu.flatMap((g) => g.items).find((i) => i.key === `ep:${name}`)
+  const title = item?.label ?? name
   return (
-    <EpPage title={name}>
+    <EpPage title={title}>
       <div style={{ padding: 60, textAlign: 'center', color: '#94A3B8' }}>
-        <div style={{ fontSize: 14 }}>「{name}」页面建设中</div>
-        <div style={{ marginTop: 6, fontSize: 12 }}>该页面已在菜单登记，后续批次实现</div>
+        <div style={{ fontSize: 14, color: '#64748B' }}>「{title}」页面建设中</div>
+        {item?.desc && (
+          <div style={{ marginTop: 10, fontSize: 12, maxWidth: 620, margin: '10px auto 0', lineHeight: 1.7 }}>{item.desc}</div>
+        )}
       </div>
     </EpPage>
   )

@@ -2,7 +2,7 @@
 // 子快照「风控 - 监控列表 - 风险详情」（0KB，内容与「风控 - 风险预警 - 风险详情」同源）→ 抽屉渲染
 // 数据：本地样例 fkMonitor.json（橘 Sam）
 import { useState } from 'react'
-import { EpPage, EpCard, EpStat, EpTag, EpBtn, EpDrawer, DataTable, useSample, Sam } from '../epCommon'
+import { EpPage, EpCard, EpStat, EpTag, EpBtn, EpDrawer, DataTable, useSample, Sam } from '../../epCommon'
 import type { Row, Column } from '../../../../components/ui'
 
 type Company = {

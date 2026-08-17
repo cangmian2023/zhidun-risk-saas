@@ -2,7 +2,7 @@
 // Tabs: AI 风险报告 / 企业风险排名 / 企业风险动态 / 其他统计
 // 数据：本地样例 fkStats.json（橘 Sam）
 import { useState } from 'react'
-import { EpPage, EpCard, EpStat, EpTag, EpBtn, DataTable, useSample, Sam } from '../epCommon'
+import { EpPage, EpCard, EpStat, EpTag, EpBtn, DataTable, useSample, Sam } from '../../epCommon'
 import type { Row, Column } from '../../../../components/ui'
 import { LineChart, BarChart } from '../../../../components/charts'
 

@@ -1,7 +1,7 @@
 // 风控中心 · 利益排查（fk-interest）· 1:1 复刻「风控 - 利益排查」
 // 数据：本地样例 fkInterest.json（橘 Sam）
 import { useState } from 'react'
-import { EpPage, EpCard, EpTag, EpBtn, DataTable, useSample, Sam } from '../epCommon'
+import { EpPage, EpCard, EpTag, EpBtn, DataTable, useSample, Sam } from '../../epCommon'
 import type { Row } from '../../../../components/ui'
 
 type Item = {
