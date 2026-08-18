@@ -1,389 +1,517 @@
-import { useState } from 'react'
-import { PageShell } from './PageShell'
-import { Panel, DataTable } from '../components/ui'
-import { Sam } from './SourceTag'
+import { useEffect, useRef, useState } from 'react';
+import { PageShell } from './PageShell';
+import { loadQixinPageFromHtml, QixinPage } from './qixinRuntime';
 
-type Row = Record<string, unknown>
+/* 地图拓客 · 按截图 1:1 手写 React 复刻
+ * 左侧：Tab 条 + 搜索面板；右侧：大地图区 + 右上角结果浮层
+ * 点「点击查看」→ 右侧抽屉：Shadow DOM 加载「营销 -  地图拓客 - 图上企业.html」（原站点击企业后的弹出结果）
+ * 地图区当前为占位底图（网格），需接入高德 JS API Key 后替换为真地图
+ */
 
-const toggleCls =
-  'rounded-md border border-slate-200 bg-white px-2.5 py-1 text-xs text-slate-600 transition hover:border-brand-300'
+const RANGE_OPTIONS = ['1km', '3km', '5km', '10km'];
+const HISTORY = ['上海合合信息科技股份有限公司'];
 
-const OptGroup = ({
-  label,
-  options,
-}: {
-  label: string
-  options: string[]
-}) => {
-  const [active, setActive] = useState<string[]>([])
-  const toggle = (o: string) =>
-    setActive((prev) =>
-      prev.includes(o) ? prev.filter((x) => x !== o) : [...prev, o]
-    )
-  return (
-    <div>
-      <div className="mb-2 text-xs font-medium text-ink-900">{label}</div>
-      <div className="flex flex-wrap gap-2">
-        {options.map((o) => (
-          <button
-            key={o}
-            type="button"
-            className={toggleCls}
-            style={
-              active.includes(o)
-                ? { borderColor: '#6366f1', color: '#4338ca' }
-                : undefined
-            }
-            onClick={() => toggle(o)}
-          >
-            {o}
-          </button>
-        ))}
-      </div>
-    </div>
-  )
-}
+// 右侧弹窗补丁：隐藏原完整页壳（顶部导航 + 左侧菜单），只留企业详情内容区
+const DETAIL_PATCH = `
+.header-wrapper{display:none !important;}
+.menu-wrapper{display:none !important;}
+.basic-layout{padding:0 !important;height:100% !important;}
+.layout-main, .el-main, [class*="main"]{margin-left:0 !important;padding:0 !important;}
+.qxb-container__header{display:none !important;}
+`;
 
 export default function DmMapProspect() {
-  const columns = [
-    { key: 'name', label: '企业名称', fixed: 'left' as const },
-    {
-      key: 'near',
-      label: '最近中心距离',
-      align: 'right' as const,
-      render: (row: Row) => (row.near as string),
-    },
-    {
-      key: 'far',
-      label: '最远中心距离',
-      align: 'right' as const,
-      render: (row: Row) => (row.far as string),
-    },
-    {
-      key: 'mk',
-      label: '营销',
-      align: 'center' as const,
-      render: (row: Row) => (row.mk as string),
-    },
-    {
-      key: 'fav',
-      label: '关注',
-      align: 'center' as const,
-      render: (row: Row) => (row.fav as string),
-    },
-  ]
+  const [tab, setTab] = useState<'standard' | 'precise' | 'custom'>('standard');
+  const [subTab, setSubTab] = useState<'around' | 'street'>('around');
+  const [range, setRange] = useState('1km');
+  const [keyword, setKeyword] = useState('');
+  const [showHistory, setShowHistory] = useState(false);
 
-  const rows: Row[] = [
-    {
-      name: '上海合合信息科技股份有限公司',
-      near: '0.3km',
-      far: '1.2km',
-      mk: '可营销',
-      fav: '已关注',
-    },
-    {
-      name: '上海协度电子科技有限公司',
-      near: '0.8km',
-      far: '2.1km',
-      mk: '可营销',
-      fav: '未关注',
-    },
-    {
-      name: '泰克科技(中国)有限公司',
-      near: '1.5km',
-      far: '3.4km',
-      mk: '可营销',
-      fav: '未关注',
-    },
-    {
-      name: '晨星半导体股份有限公司',
-      near: '2.2km',
-      far: '4.0km',
-      mk: '待补充',
-      fav: '已关注',
-    },
-    {
-      name: '上海瀚讯信息技术股份有限公司',
-      near: '2.6km',
-      far: '4.3km',
-      mk: '可营销',
-      fav: '未关注',
-    },
-    {
-      name: '上海智臻智能网络科技股份有限公司',
-      near: '3.1km',
-      far: '4.7km',
-      mk: '可营销',
-      fav: '未关注',
-    },
-    {
-      name: '上海微创软件股份有限公司',
-      near: '3.8km',
-      far: '4.9km',
-      mk: '待补充',
-      fav: '未关注',
-    },
-  ]
+  const mapWrapRef = useRef<HTMLDivElement>(null);
+  const [mapH, setMapH] = useState(600);
+
+  // 右侧抽屉（企业详情弹窗）
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [detail, setDetail] = useState<QixinPage | null>(null);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const detailHostRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const onResize = () => {
+      if (mapWrapRef.current) setMapH(mapWrapRef.current.clientHeight);
+    };
+    onResize();
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+
+  const openDetail = () => {
+    setDrawerOpen(true);
+    if (!detail && !detailLoading) {
+      setDetailLoading(true);
+      loadQixinPageFromHtml('营销 -  地图拓客 - 图上企业.html', DETAIL_PATCH)
+        .then((p) => setDetail(p))
+        .catch((e) => console.error('loadQixinPageFromHtml error:', e))
+        .finally(() => setDetailLoading(false));
+    }
+  };
+
+  useEffect(() => {
+    const el = detailHostRef.current;
+    if (!el || !detail) return;
+    const root = el.shadowRoot || el.attachShadow({ mode: 'open' });
+    root.innerHTML = '';
+    const style = document.createElement('style');
+    style.textContent = detail.css;
+    const body = document.createElement('div');
+    body.style.height = '100%';
+    body.innerHTML = detail.html;
+    root.append(style, body);
+  }, [detail]);
+
+  const onSearch = () => {
+    // TODO: 接入高德搜索 API
+    console.log('search', { range, keyword, tab, subTab });
+  };
 
   return (
-    <div style={{ padding: 24, maxWidth: 1360, margin: '0 auto' }}>
-      <PageShell
-        title="地图拓客"
-        crumb="数字营销 / 潜客挖掘"
-        subtitle="基于地图的地理化拓客：圈选区域、周边企业批量获取与画像"
-      />
-
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[280px_1fr]">
-        {/* 左栏：筛选条件 */}
-        <Panel title="筛选条件" desc={<span className="text-xs text-slate-500">圈选中心与多维过滤条件</span>}>
-          <div className="flex flex-col gap-5">
-            <OptGroup
-              label="成立时间"
-              options={[
-                '过去30天',
-                '成立1年内',
-                '成立1-5年',
-                '成立5-10年',
-                '成立10-15年',
-                '成立15年以上',
-              ]}
-            />
-            <OptGroup
-              label="所在行业"
-              options={[
-                '农、林、牧、渔业',
-                '采矿业',
-                '制造业',
-                '电力、热力、燃气及水生产和供应业',
-                '建筑业',
-                '批发和零售业',
-                '交通运输、仓储和邮政业',
-                '住宿和餐饮业',
-                '信息传输、软件和信息技术服务业',
-                '金融业',
-                '房地产业',
-                '租赁和商务服务业',
-                '科学研究和技术服务业',
-                '水利、环境和公共设施管理业',
-                '居民服务、修理和其他服务业',
-                '教育',
-                '卫生和社会工作',
-                '文化、体育和娱乐业',
-                '公共管理、社会保障和社会组织',
-                '国际组织',
-              ]}
-            />
-            <OptGroup
-              label="注册资本"
-              options={[
-                '0万 - 100万',
-                '100万 - 200万',
-                '200万 - 500万',
-                '500万 - 1000万',
-                '1000万以上',
-              ]}
-            />
-            <OptGroup
-              label="经营状态"
-              options={[
-                '存续',
-                '注销',
-                '吊销',
-                '撤销',
-                '迁出',
-                '设立中',
-                '清算中',
-                '停业',
-                '其他',
-              ]}
-            />
-            <OptGroup
-              label="启信分"
-              options={[
-                '200 - 400分',
-                '401 - 500分',
-                '501 - 600分',
-                '601 - 700分',
-                '700分以上',
-              ]}
-            />
-            <OptGroup
-              label="企业规模"
-              options={[
-                '小微企业',
-                '中型企业',
-                '大型企业',
-                '规模以上企业',
-                '规模以上服务业企业',
-                '规模以上工业企业',
-              ]}
-            />
-            <OptGroup
-              label="资质标签"
-              options={[
-                '牛羚企业',
-                '雏鹰企业',
-                '隐形冠军',
-                '高新企业',
-                '科技型中小企业',
-                '专精特新企业',
-                '科技小巨人企业',
-                '创新型中小企业',
-                '专精特新小巨人',
-                '科技型企业',
-              ]}
-            />
-            <OptGroup
-              label="企业类型"
-              options={[
-                '国有企业',
-                '有限责任公司',
-                '股份有限公司',
-                '私营企业',
-                '港、澳、台商投资企业',
-                '外商投资企业',
-                '个体工商户',
-              ]}
-            />
-            <OptGroup
-              label="上市信息"
-              options={[
-                'A股上市',
-                '新三板',
-                '上交所',
-                '深交所',
-                '科创板',
-                '创业版',
-                '中概股',
-              ]}
-            />
-            <OptGroup
-              label="参保人数"
-              options={[
-                '少于50人',
-                '50-99人',
-                '100-499人',
-                '500-999人',
-                '1000-4999人',
-                '5000-9999人',
-                '多于10000人',
-              ]}
-            />
-            <OptGroup
-              label="手机号码"
-              options={['有手机号码', '无手机号码']}
-            />
-            <OptGroup
-              label="座机号码"
-              options={['有座机号码', '无座机号码']}
-            />
-            <OptGroup
-              label="空号过滤"
-              options={['正常号码', '不可用或无号码']}
-            />
-            <OptGroup
-              label="进出口信息"
-              options={['有进出口信息', '无进出口信息']}
-            />
-            <OptGroup
-              label="距离范围"
-              options={[
-                '范围：1km',
-                '范围：2km',
-                '范围：3km',
-                '范围：4km',
-                '范围：5km',
-              ]}
-            />
-
-            <div className="mt-1 rounded-md border border-slate-200 bg-slate-50 px-3 py-2">
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-slate-500">已选</span>
-                <span className="rounded-full bg-brand-50 px-2 py-0.5 text-xs text-brand-700">
-                  上海
-                </span>
-              </div>
-              <div className="mt-1.5 text-sm text-ink-900">
-                找到 <span className="font-semibold">16,883</span> 条相关结果
-              </div>
-              <div className="mt-2 text-xs text-slate-500">
-                圈选中心：<span className="text-ink-900">上海</span>
-                （上海合合信息科技股份有限公司）
-              </div>
-            </div>
-          </div>
-        </Panel>
-
-        {/* 右栏：地图 + 企业表 */}
-        <div className="flex flex-col gap-6">
-          {/* 装饰地图 */}
-          <div
-            className="relative h-80 rounded-lg border border-slate-200 bg-slate-50 overflow-hidden"
-            style={{
-              backgroundImage:
-                'linear-gradient(#e2e8f0 1px,transparent 1px),linear-gradient(90deg,#e2e8f0 1px,transparent 1px)',
-              backgroundSize: '32px 32px',
-            }}
-          >
-            {/* 中心 pin */}
-            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-              <div className="flex flex-col items-center">
-                <div className="rounded-full bg-brand-500 px-3 py-1 text-xs font-medium text-white shadow-md">
-                  上海（中心）
-                </div>
-                <div className="mt-1 h-3 w-3 -translate-x-0.5 rotate-45 bg-brand-500" />
-              </div>
-            </div>
-            {/* 卫星点 */}
-            <div className="absolute left-[38%] top-[30%]">
-              <div className="flex flex-col items-center">
-                <div className="rounded-full border border-brand-300 bg-white px-2 py-0.5 text-xs text-ink-900 shadow-sm">
-                  合合信息
-                </div>
-              </div>
-            </div>
-            <div className="absolute left-[64%] top-[44%]">
-              <div className="flex flex-col items-center">
-                <div className="rounded-full border border-brand-300 bg-white px-2 py-0.5 text-xs text-ink-900 shadow-sm">
-                  协度电子
-                </div>
-              </div>
-            </div>
-            <div className="absolute left-[52%] top-[66%]">
-              <div className="flex flex-col items-center">
-                <div className="rounded-full border border-brand-300 bg-white px-2 py-0.5 text-xs text-ink-900 shadow-sm">
-                  泰克科技
-                </div>
-              </div>
-            </div>
-            <div className="absolute bottom-2 right-2 rounded bg-white/80 px-2 py-1 text-[11px] text-slate-500">
-              地图为示意图，真实环境为地理底图（高德/百度）
-            </div>
+    <>
+      <PageShell title="地图拓客" subtitle="基于地图的地理化拓客：圈选区域、周边企业批量获取与画像" legend={false} />
+      <div className="mp-root" ref={mapWrapRef}>
+        {/* 左侧面板 */}
+        <aside className="mp-panel">
+          {/* 顶部 Tab */}
+          <div className="mp-top-tabs">
+            {([
+              { k: 'standard' as const, l: '标准模式' },
+              { k: 'precise' as const, l: '精准搜索' },
+              { k: 'custom' as const, l: '自定义区域模式' },
+            ]).map((t) => (
+              <button
+                key={t.k}
+                className={`mp-top-tab ${tab === t.k ? 'active' : ''}`}
+                onClick={() => setTab(t.k)}
+              >
+                {t.l}
+              </button>
+            ))}
           </div>
 
-          {/* 图上企业 */}
-          <Panel
-            title="图上企业"
-            desc={
-              <span className="flex flex-wrap items-center gap-2">
-                <Sam label="图上企业" value="16883" />
-                <span className="text-xs text-slate-500">
-                  圈选中心：上海 · 共 16,883 家企业
-                </span>
+          {/* 子 Tab */}
+          <div className="mp-sub-tabs">
+            <button
+              className={`mp-sub-tab ${subTab === 'around' ? 'active' : ''}`}
+              onClick={() => setSubTab('around')}
+            >
+              搜周边
+            </button>
+            <button
+              className={`mp-sub-tab ${subTab === 'street' ? 'active' : ''}`}
+              onClick={() => setSubTab('street')}
+            >
+              搜街道
+            </button>
+          </div>
+
+          {/* 搜索区 */}
+          <div className="mp-search-body">
+            <div className="mp-row">
+              <div className="mp-range">
+                <label>范围：</label>
+                <select value={range} onChange={(e) => setRange(e.target.value)}>
+                  {RANGE_OPTIONS.map((r) => (
+                    <option key={r} value={r}>{r}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="mp-input-wrap">
+                <input
+                  type="text"
+                  placeholder="上海合合信息科技股份有限公司"
+                  value={keyword}
+                  onChange={(e) => setKeyword(e.target.value)}
+                  onFocus={() => setShowHistory(true)}
+                />
+                {showHistory && HISTORY.length > 0 && (
+                  <div className="mp-history">
+                    {HISTORY.map((h) => (
+                      <div
+                        key={h}
+                        className="mp-history-item"
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          setKeyword(h);
+                          setShowHistory(false);
+                        }}
+                      >
+                        {h}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="mp-hint">
+              历史搜索：
+              <span
+                className="mp-hint-link"
+                onClick={() => {
+                  setKeyword(HISTORY[0]);
+                }}
+              >
+                {HISTORY[0]}
               </span>
-            }
-          >
-            <DataTable
-              columns={columns}
-              rows={rows}
-              pager
-              pageSizeOptions={[10, 20]}
-              exportable
-              exportName="图上企业"
-            />
-          </Panel>
+            </div>
+
+            <button className="mp-search-btn" onClick={onSearch}>
+              <span className="mp-icon">🔍</span> 搜索
+            </button>
+          </div>
+        </aside>
+
+        {/* 右侧地图区 */}
+        <div className="mp-map-area">
+          {/* 占位底图：网格线，接入高德后替换为 <div id="amap-container" /> */}
+          <div className="mp-map-placeholder" style={{ height: mapH }}>
+            <div className="mp-map-grid" />
+            <div className="mp-map-label">地图区域（接入高德 JS API Key 后显示真实瓦片）</div>
+            {/* 地图中心标记 */}
+            <div className="mp-map-pin">
+              <div className="mp-pin-dot" />
+              <div className="mp-pin-pulse" />
+            </div>
+            {/* 范围圈 */}
+            <div className="mp-radius-ring" />
+          </div>
+
+          {/* 右上角结果浮层 */}
+          <div className="mp-result-float">
+            <div className="mp-result-text">
+              当前位置下共找到<span className="mp-result-num">16885</span>家企业
+            </div>
+            <button className="mp-result-btn" onClick={openDetail}>点击查看</button>
+          </div>
         </div>
       </div>
-    </div>
-  )
+
+      {/* 右侧抽屉：企业详情弹窗 */}
+      {drawerOpen && (
+        <div className="mp-drawer-mask" onClick={() => setDrawerOpen(false)}>
+          <div className="mp-drawer" onClick={(e) => e.stopPropagation()}>
+            <button className="mp-drawer-close" onClick={() => setDrawerOpen(false)}>×</button>
+            <div className="mp-drawer-body" ref={detailHostRef}>
+              {detailLoading && <div className="mp-drawer-loading">加载中…</div>}
+            </div>
+          </div>
+        </div>
+      )}
+
+      <style>{`
+        .mp-root {
+          display: flex;
+          width: 100%;
+          height: calc(100vh - 56px);
+          background: #f5f7fa;
+          overflow: hidden;
+        }
+        .mp-panel {
+          width: 340px;
+          flex-shrink: 0;
+          background: #fff;
+          border-right: 1px solid #e4e7ed;
+          display: flex;
+          flex-direction: column;
+          overflow-y: auto;
+        }
+        .mp-top-tabs {
+          display: flex;
+          border-bottom: 1px solid #e4e7ed;
+          background: #fff;
+        }
+        .mp-top-tab {
+          flex: 1;
+          padding: 14px 0;
+          font-size: 14px;
+          color: #606266;
+          background: #fff;
+          border: none;
+          border-bottom: 2px solid transparent;
+          cursor: pointer;
+          transition: all .2s;
+        }
+        .mp-top-tab:hover { color: #409eff; }
+        .mp-top-tab.active {
+          color: #409eff;
+          border-bottom-color: #409eff;
+          font-weight: 600;
+        }
+        .mp-sub-tabs {
+          display: flex;
+          padding: 12px 16px 0;
+          gap: 16px;
+        }
+        .mp-sub-tab {
+          padding: 6px 0;
+          font-size: 13px;
+          color: #909399;
+          background: transparent;
+          border: none;
+          border-bottom: 2px solid transparent;
+          cursor: pointer;
+        }
+        .mp-sub-tab.active {
+          color: #303133;
+          border-bottom-color: #303133;
+          font-weight: 600;
+        }
+        .mp-search-body {
+          padding: 16px;
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+        }
+        .mp-row {
+          display: flex;
+          gap: 8px;
+          align-items: center;
+        }
+        .mp-range {
+          display: flex;
+          align-items: center;
+          gap: 4px;
+          font-size: 13px;
+          color: #606266;
+          white-space: nowrap;
+        }
+        .mp-range select {
+          padding: 6px 8px;
+          border: 1px solid #dcdfe6;
+          border-radius: 4px;
+          font-size: 13px;
+          color: #606266;
+          background: #fff;
+          cursor: pointer;
+        }
+        .mp-input-wrap {
+          flex: 1;
+          position: relative;
+        }
+        .mp-input-wrap input {
+          width: 100%;
+          padding: 8px 12px;
+          border: 1px solid #dcdfe6;
+          border-radius: 4px;
+          font-size: 13px;
+          color: #303133;
+          outline: none;
+          box-sizing: border-box;
+        }
+        .mp-input-wrap input:focus { border-color: #409eff; }
+        .mp-history {
+          position: absolute;
+          top: 100%;
+          left: 0; right: 0;
+          background: #fff;
+          border: 1px solid #e4e7ed;
+          border-radius: 4px;
+          box-shadow: 0 4px 12px rgba(0,0,0,.08);
+          z-index: 100;
+          margin-top: 4px;
+          overflow: hidden;
+        }
+        .mp-history-item {
+          padding: 8px 12px;
+          font-size: 13px;
+          color: #606266;
+          cursor: pointer;
+        }
+        .mp-history-item:hover { background: #f5f7fa; color: #409eff; }
+        .mp-hint {
+          font-size: 12px;
+          color: #909399;
+        }
+        .mp-hint-link {
+          color: #409eff;
+          cursor: pointer;
+          text-decoration: none;
+        }
+        .mp-hint-link:hover { text-decoration: underline; }
+        .mp-search-btn {
+          width: 100%;
+          padding: 12px 0;
+          background: #ffc300;
+          color: #fff;
+          font-size: 15px;
+          font-weight: 600;
+          border: none;
+          border-radius: 4px;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 6px;
+          transition: background .2s;
+        }
+        .mp-search-btn:hover { background: #e6b000; }
+        .mp-icon { font-size: 14px; }
+
+        .mp-map-area {
+          flex: 1;
+          position: relative;
+          overflow: hidden;
+          background: #fcfcf7;
+        }
+        .mp-map-placeholder {
+          width: 100%;
+          position: relative;
+          background: #f0f2f5;
+          overflow: hidden;
+        }
+        .mp-map-grid {
+          position: absolute;
+          inset: 0;
+          background-image:
+            linear-gradient(rgba(200,200,200,.15) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(200,200,200,.15) 1px, transparent 1px);
+          background-size: 40px 40px;
+        }
+        .mp-map-label {
+          position: absolute;
+          top: 50%; left: 50%;
+          transform: translate(-50%, -50%);
+          color: #909399;
+          font-size: 14px;
+          background: rgba(255,255,255,.85);
+          padding: 10px 18px;
+          border-radius: 6px;
+          border: 1px dashed #c0c4cc;
+          pointer-events: none;
+        }
+        .mp-map-pin {
+          position: absolute;
+          top: 50%; left: 50%;
+          transform: translate(-50%, -50%);
+          width: 20px; height: 20px;
+        }
+        .mp-pin-dot {
+          width: 12px; height: 12px;
+          background: #409eff;
+          border-radius: 50%;
+          border: 2px solid #fff;
+          box-shadow: 0 2px 8px rgba(64,158,255,.5);
+          position: absolute;
+          top: 4px; left: 4px;
+        }
+        .mp-pin-pulse {
+          width: 20px; height: 20px;
+          border-radius: 50%;
+          background: rgba(64,158,255,.25);
+          position: absolute;
+          animation: mpPulse 2s infinite;
+        }
+        @keyframes mpPulse {
+          0% { transform: scale(1); opacity: .6; }
+          100% { transform: scale(2.5); opacity: 0; }
+        }
+        .mp-radius-ring {
+          position: absolute;
+          top: 50%; left: 50%;
+          transform: translate(-50%, -50%);
+          width: 180px; height: 180px;
+          border: 2px solid rgba(64,158,255,.35);
+          border-radius: 50%;
+          background: rgba(64,158,255,.06);
+          pointer-events: none;
+        }
+
+        .mp-result-float {
+          position: absolute;
+          top: 16px; right: 16px;
+          background: #fff;
+          border-radius: 6px;
+          box-shadow: 0 4px 16px rgba(0,0,0,.1);
+          padding: 14px 18px;
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+          align-items: center;
+          min-width: 200px;
+          z-index: 10;
+        }
+        .mp-result-text {
+          font-size: 13px;
+          color: #303133;
+          white-space: nowrap;
+        }
+        .mp-result-num {
+          color: #f56c6c;
+          font-weight: 700;
+          margin: 0 3px;
+        }
+        .mp-result-btn {
+          padding: 7px 18px;
+          background: #fff;
+          color: #409eff;
+          font-size: 13px;
+          border: 1px solid #409eff;
+          border-radius: 4px;
+          cursor: pointer;
+          transition: all .2s;
+        }
+        .mp-result-btn:hover {
+          background: #409eff;
+          color: #fff;
+        }
+
+        /* 右侧抽屉 */
+        .mp-drawer-mask {
+          position: fixed;
+          inset: 0;
+          background: rgba(0,0,0,.25);
+          z-index: 1000;
+          display: flex;
+          justify-content: flex-end;
+          animation: mpMaskIn .2s ease;
+        }
+        @keyframes mpMaskIn { from { opacity: 0; } to { opacity: 1; } }
+        .mp-drawer {
+          position: relative;
+          width: min(820px, 72vw);
+          height: 100%;
+          background: #fff;
+          box-shadow: -4px 0 24px rgba(0,0,0,.15);
+          overflow: hidden;
+          animation: mpDrawerIn .28s cubic-bezier(.4,0,.2,1);
+        }
+        @keyframes mpDrawerIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+        .mp-drawer-close {
+          position: absolute;
+          top: 12px; right: 16px;
+          width: 32px; height: 32px;
+          border: none;
+          background: rgba(0,0,0,.04);
+          border-radius: 50%;
+          font-size: 22px;
+          line-height: 1;
+          color: #606266;
+          cursor: pointer;
+          z-index: 10;
+          transition: all .2s;
+        }
+        .mp-drawer-close:hover { background: rgba(0,0,0,.1); color: #303133; }
+        .mp-drawer-body {
+          width: 100%;
+          height: 100%;
+          overflow: auto;
+        }
+        .mp-drawer-loading {
+          padding: 40px;
+          text-align: center;
+          color: #909399;
+          font-size: 14px;
+        }
+      `}</style>
+    </>
+  );
 }

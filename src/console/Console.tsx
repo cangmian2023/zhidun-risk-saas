@@ -294,6 +294,9 @@ export default function Console() {
     'dm:ent-property': 'layers',
     'dm:ent-group': 'layers',
     'dm:ent-graph': 'share',
+    // 档案备份页（qixin 快照 1:1 原样复刻）
+    'dm:ent-archive': 'id',
+    'dm:person-archive': 'user',
     // 管理中心（原公共模块）
     'cm:overview': 'dashboard',
     'cm:user-list': 'users',

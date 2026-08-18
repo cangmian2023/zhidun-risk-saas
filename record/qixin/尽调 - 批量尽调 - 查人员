@@ -1,11 +1,247 @@
-<div data-v-06bfa54a="" data-v-d6e97efc="" class="search-batch-layout"><div data-v-06bfa54a="" class="batch-search-layout-header-tab" style="top: 42px;"><div data-v-06bfa54a="" class="el-tabs el-tabs--top"><div class="el-tabs__header is-top"><div class="el-tabs__nav-wrap is-top"><div class="el-tabs__nav-scroll"><div role="tablist" class="el-tabs__nav is-top" style="transform: translateX(0px);"><div class="el-tabs__active-bar is-top" style="width: 0px; transform: translateX(84px);"></div><div id="tab-batch-search-company" aria-controls="pane-batch-search-company" role="tab" tabindex="-1" class="el-tabs__item is-top" zgclickable="true" zghook="1">查企业</div><div id="tab-batch-search-person" aria-controls="pane-batch-search-person" role="tab" tabindex="-1" class="el-tabs__item is-top" zgclickable="true" zghook="1">查人员</div></div></div></div></div><div class="el-tabs__content"><div data-v-06bfa54a="" role="tabpanel" aria-hidden="true" id="pane-batch-search-company" aria-labelledby="tab-batch-search-company" class="el-tab-pane" style="display: none;"></div> <div data-v-06bfa54a="" role="tabpanel" aria-hidden="true" id="pane-batch-search-person" aria-labelledby="tab-batch-search-person" class="el-tab-pane" style="display: none;"></div></div></div></div> <div data-v-06bfa54a="" class="placeholder"></div> <div data-v-cb03128e="" data-v-06bfa54a=""><!----> <div data-v-cb03128e="" class="batch-container bg-white global-sider-margin-container"><div data-v-cb03128e="" style="padding: 20px;"><div data-v-cb03128e="" class="upload-note-box padding-1x margin-b-1x"><div data-v-cb03128e=""><span data-v-cb03128e="" class="bold-title">准备Excel文件</span> <a data-v-cb03128e="" href="/template/person.xlsx" class="view-sample">查看样例</a></div> <div data-v-cb03128e="" class="margin-t-1x"><i data-v-cb03128e="" class="far fa-check-circle"></i>
+<div data-v-1acf0f67="" id="content" class="page-content" style="min-height: calc(-42px + 100vh);"><div data-v-06bfa54a="" data-v-d6e97efc="" class="search-batch-layout"><div data-v-06bfa54a="" class="batch-search-layout-header-tab" style="top: 42px;"><div data-v-06bfa54a="" class="el-tabs el-tabs--top"><div class="el-tabs__header is-top"><div class="el-tabs__nav-wrap is-top"><div class="el-tabs__nav-scroll"><div role="tablist" class="el-tabs__nav is-top" style="transform: translateX(0px);"><div class="el-tabs__active-bar is-top" style="width: 0px; transform: translateX(84px);"></div><div id="tab-batch-search-company" aria-controls="pane-batch-search-company" role="tab" tabindex="-1" class="el-tabs__item is-top" zgclickable="true" zghook="1">查企业</div><div id="tab-batch-search-person" aria-controls="pane-batch-search-person" role="tab" tabindex="-1" class="el-tabs__item is-top" zgclickable="true" zghook="1">查人员</div></div></div></div></div><div class="el-tabs__content"><div data-v-06bfa54a="" role="tabpanel" aria-hidden="true" id="pane-batch-search-company" aria-labelledby="tab-batch-search-company" class="el-tab-pane" style="display: none;"></div> <div data-v-06bfa54a="" role="tabpanel" aria-hidden="true" id="pane-batch-search-person" aria-labelledby="tab-batch-search-person" class="el-tab-pane" style="display: none;"></div></div></div></div> <div data-v-06bfa54a="" class="placeholder"></div> <div data-v-cb03128e="" data-v-06bfa54a=""><!----> <div data-v-cb03128e="" class="batch-container bg-white global-sider-margin-container"><div data-v-cb03128e="" style="padding: 20px;"><div data-v-cb03128e="" class="upload-note-box padding-1x margin-b-1x"><div data-v-cb03128e=""><span data-v-cb03128e="" class="bold-title">准备Excel文件</span> <a data-v-cb03128e="" href="/template/person.xlsx" class="view-sample">查看样例</a></div> <div data-v-cb03128e="" class="margin-t-1x"><i data-v-cb03128e="" class="far fa-check-circle"></i>
           支持最多1000条信息
           <i data-v-cb03128e="" class="far fa-check-circle margin-l-1x"></i>
           智能去重保证精确
-        </div> <div data-v-cb03128e=""><div data-v-7e14df64="" data-v-cb03128e=""><!----> <!----> <!----> <div data-v-7e14df64="" class="file-uploader-outter"><div data-v-7e14df64="" id="file-uploader" class="font-14" style="color: rgb(122, 128, 143); margin-top: 10px; background-color: rgb(255, 255, 255); display: inline-block; padding: 2px 5px;"><span data-v-7e14df64="" class="iconfont icon_wenjian file-icon"></span> <span data-v-7e14df64="" title="启信慧眼-风险信息20260817154715HzDCt5.xlsx" class="text-overflow font-primary" style="width: 166.312px;">启信慧眼-风险信息20260817154715HzDCt5.xlsx</span> <i data-v-7e14df64="" class="fas fa-times-circle circle-icon" zgclickable="true" zghook="1"></i></div> <a data-v-7e14df64="" class="btn btn-primary w-100" style="bottom: 40px; position: relative; float: right; overflow: hidden; width: 140px;"><i data-v-7e14df64="" class="iconfont icon_upload_new margin-r-0-3x"></i>
+        </div> <div data-v-cb03128e=""><div data-v-7e14df64="" data-v-cb03128e=""><!----> <!----> <!----> <div data-v-7e14df64="" class="file-uploader-outter"><div data-v-7e14df64="" id="file-uploader" class="font-14" style="color: rgb(122, 128, 143); margin-top: 10px; background-color: rgb(255, 255, 255); display: inline-block; padding: 2px 5px;"><span data-v-7e14df64="" class="iconfont icon_wenjian file-icon"></span> <span data-v-7e14df64="" title="person.xlsx" class="text-overflow font-primary" style="width: 80.1084px;">person.xlsx</span> <i data-v-7e14df64="" class="fas fa-times-circle circle-icon" zgclickable="true" zghook="1"></i></div> <a data-v-7e14df64="" class="btn btn-primary w-100" style="bottom: 40px; position: relative; float: right; overflow: hidden; width: 140px;"><i data-v-7e14df64="" class="iconfont icon_upload_new margin-r-0-3x"></i>
       重新上传
       <input data-v-7e14df64="" placeholder="" type="file" name="files[]" accept=".xlsx,.xls" class="file-uploader-input" zghook="-1"></a></div></div></div></div> <span data-v-cb03128e="" class="qxb-typography qxb-typography-dark">
         上传成功，共匹配查询到
-        <span data-v-cb03128e="" class="qxb-typography qxb-typography-primary">0</span> 个人员，未匹配到 <span data-v-cb03128e="" class="qxb-typography qxb-typography-error">2</span> 个人员，人员姓名为空
+        <span data-v-cb03128e="" class="qxb-typography qxb-typography-primary">4</span> 个人员，未匹配到 <span data-v-cb03128e="" class="qxb-typography qxb-typography-error">0</span> 个人员，人员姓名为空
         <span data-v-cb03128e="" class="qxb-typography qxb-typography-error">0</span> 条数据
-        <a data-v-cb03128e="" href="javascript:;" zgclickable="true" zghook="1">修改未匹配的人员</a></span></div><div class="el-loading-mask" style="display: none;" zghook="-2"><div class="el-loading-spinner"><svg viewBox="25 25 50 50" class="circular"><circle cx="50" cy="50" r="20" fill="none" class="path"></circle></svg><!----></div></div></div> <div data-v-cb03128e="" class="batch-container bg-white global-sider-margin-container" style=""><div data-v-cb03128e="" style="padding: 20px;"><div data-v-cb03128e="" class="padding-b-1x font-f2 clearfix"><div data-v-cb03128e="" class="pull-left"><label data-v-cb03128e="" class="el-checkbox"><span class="el-checkbox__input"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value=""></span><span class="el-checkbox__label">全选<!----></span></label></div> <div data-v-cb03128e="" class="pull-right"><button data-v-cb03128e="" title="导出" class="btn btn-default margin-r-1x" zgclickable="true" zghook="1"><i data-v-cb03128e="" class="iconfont icon_download"></i> 导出</button> <button data-v-cb03128e="" title="导出" class="btn btn-default" zgclickable="true" zghook="1"><i data-v-cb03128e="" class="iconfont icon_download"></i> 全部导出</button></div></div> <div data-v-cb03128e="" class="row-person"><div data-v-cb03128e="" class="app-people-item-wrapper flex-center-between"><div class="people-info-container flex"><div class="check-box"><label class="el-checkbox is-disabled"><span class="el-checkbox__input is-disabled"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" disabled="disabled" class="el-checkbox__original" value=""></span><!----></label></div> <div data-v-ad553d7c="" class="avatar"><span data-v-ad553d7c="" class="extra-large-logo person">1</span></div> <div class="info-list"><div class="name"><span>1</span></div> <!----> <!----> <!----> <!----></div> <!----></div></div><div data-v-cb03128e="" class="app-people-item-wrapper flex-center-between"><div class="people-info-container flex"><div class="check-box"><label class="el-checkbox is-disabled"><span class="el-checkbox__input is-disabled"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" disabled="disabled" class="el-checkbox__original" value=""></span><!----></label></div> <div data-v-ad553d7c="" class="avatar"><span data-v-ad553d7c="" class="extra-large-logo person">2</span></div> <div class="info-list"><div class="name"><span>2</span></div> <!----> <!----> <!----> <!----></div> <!----></div></div></div> <!----></div></div></div></div>
+        <!----></span></div><div class="el-loading-mask" zghook="-2" style="display: none;"><div class="el-loading-spinner"><svg viewBox="25 25 50 50" class="circular"><circle cx="50" cy="50" r="20" fill="none" class="path"></circle></svg><!----></div></div></div> <div data-v-cb03128e="" class="batch-container bg-white global-sider-margin-container" style=""><div data-v-cb03128e="" style="padding: 20px;"><div data-v-cb03128e="" class="padding-b-1x font-f2 clearfix"><div data-v-cb03128e="" class="pull-left"><label data-v-cb03128e="" class="el-checkbox"><span class="el-checkbox__input"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value=""></span><span class="el-checkbox__label">全选<!----></span></label></div> <div data-v-cb03128e="" class="pull-right"><button data-v-cb03128e="" title="导出" class="btn btn-default margin-r-1x" zgclickable="true" zghook="1"><i data-v-cb03128e="" class="iconfont icon_download"></i> 导出</button> <button data-v-cb03128e="" title="导出" class="btn btn-default" zgclickable="true" zghook="1"><i data-v-cb03128e="" class="iconfont icon_download"></i> 全部导出</button></div></div> <div data-v-cb03128e="" class="row-person"><div data-v-cb03128e="" class="app-people-item-wrapper flex-center-between"><div class="people-info-container flex"><div class="check-box"><label class="el-checkbox"><span class="el-checkbox__input"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value=""></span><!----></label></div> <div data-v-ad553d7c="" class="avatar"><img data-v-ad553d7c="" src="http://qxb-img.oss-cn-hangzhou.aliyuncs.com/bdbkprofile/5e22284e5c61bd552151492c6e352a33.png" class="extra-large-logo img-clear"></div> <div class="info-list"><div class="name"><div data-v-0972f39d="" class="app-name-link bold" zgclickable="true" zghook="1"><div data-v-04983e94="" data-v-0972f39d="" class="name-wrapper"><!----> <!----> <span data-v-04983e94=""><a data-v-04983e94="" href="javascript:;" rel="noopener noreferrer" zgclickable="true" zghook="1"><span data-v-04983e94="" class="app-name-span">吴孟</span></a> <!----> </span> <span data-v-04983e94="" style="display: none;"><span data-v-04983e94=""><a data-v-04983e94="" href="javascript:;" rel="noopener noreferrer" zgclickable="true" zghook="1"><span data-v-04983e94="" class="app-name-span">吴孟</span></a></span> <span data-v-04983e94="" style="display: none;"><a data-v-04983e94="" href="javascript:;" rel="noopener noreferrer" zgclickable="true" zghook="1"><span data-v-04983e94="" class="app-name-span">吴孟</span></a> <span data-v-04983e94="" class="app-name-span" style="display: none;">吴孟</span></span></span></div></div></div> <div class="info-detail flex"><label>合作伙伴：</label> <div class="context"><span>
+            赵凯
+            <span>、</span></span><span>
+            贾跃亭
+            <span>、</span></span><span>
+            邓伟
+            <span>、</span></span><span>
+            刘秋萍
+            <span>、</span></span><span>
+            贾跃芳
+            <span>、</span></span><span>
+            李晋
+            <span>、</span></span><span>
+            刘丰选
+            <span>、</span></span><span>
+            徐展春
+            <span>、</span></span><span>
+            张昭
+            <span>、</span></span><span>
+            隋伟
+            <span>、</span></span><span>
+            刘延峰
+            <span>、</span></span><span>
+            毛丙龙
+            <span>、</span></span><span>
+            李洪涛
+            <span>、</span></span><span>
+            张胤
+            <span>、</span></span><span>
+            刘淑青
+            <span>、</span></span><span>
+            张巍
+            <span>、</span></span><span>
+            梁军
+            <span>、</span></span><span>
+            贾跃民
+            <span>、</span></span><span>
+            张海亮
+            <span>、</span></span><span>
+            高飞
+            <!----></span></div></div> <div class="info-detail flex"><label>担任法定代表人的企业</label> <div class="context"><span>
+            乐视控股（北京）有限公司
+            <span>、</span></span><span>
+            乐视汽车（北京）有限公司
+            <span>、</span></span><span>
+            北京百乐文化传媒有限公司
+            <!----></span></div></div> <div class="info-detail flex"><label>担任股东的企业：</label> <div class="context"><span>
+            北京东方车云信息技术有限公司
+            <span>、</span></span><span>
+            乐为互联投资管理（北京）有限公司
+            <span>、</span></span><span>
+            北京锦阳资产管理中心（有限合伙）
+            <!----></span></div></div> <div class="info-detail flex"><label>担任高管的企业：</label> <div class="context"><span>
+            乐视网信息技术（北京）股份有限公司
+            <span>、</span></span><span>
+            乐视控股（北京）有限公司
+            <span>、</span></span><span>
+            乐融致新电子科技（天津）有限公司
+            <!----></span></div></div></div> <div data-v-764737b6="" class="card" style="display: none;"><button data-v-764737b6="" type="button" data-event-name="人员信息查询-监控" class="btn btn-default margin-r-1x" zgclickable="true" zghook="1"><i data-v-764737b6="" class="iconfont icon_download1"></i> 监控
+  </button></div></div></div><div data-v-cb03128e="" class="app-people-item-wrapper flex-center-between"><div class="people-info-container flex"><div class="check-box"><label class="el-checkbox"><span class="el-checkbox__input"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value=""></span><!----></label></div> <div data-v-ad553d7c="" class="avatar"><img data-v-ad553d7c="" src="https://qxb-celebrity-logo-url.oss-cn-hangzhou.aliyuncs.com/OriginalUrl/d50fafe0aa0f8956d95490d96801ecf6.jpg" class="extra-large-logo img-clear"></div> <div class="info-list"><div class="name"><div data-v-0972f39d="" class="app-name-link bold" zgclickable="true" zghook="1"><div data-v-04983e94="" data-v-0972f39d="" class="name-wrapper"><!----> <!----> <span data-v-04983e94=""><a data-v-04983e94="" href="javascript:;" rel="noopener noreferrer" zgclickable="true" zghook="1"><span data-v-04983e94="" class="app-name-span">雷军</span></a> <!----> </span> <span data-v-04983e94="" style="display: none;"><span data-v-04983e94=""><a data-v-04983e94="" href="javascript:;" rel="noopener noreferrer" zgclickable="true" zghook="1"><span data-v-04983e94="" class="app-name-span">雷军</span></a></span> <span data-v-04983e94="" style="display: none;"><a data-v-04983e94="" href="javascript:;" rel="noopener noreferrer" zgclickable="true" zghook="1"><span data-v-04983e94="" class="app-name-span">雷军</span></a> <span data-v-04983e94="" class="app-name-span" style="display: none;">雷军</span></span></span></div></div></div> <div class="info-detail flex"><label>合作伙伴：</label> <div class="context"><span>
+            刘德
+            <span>、</span></span><span>
+            王川
+            <span>、</span></span><span>
+            孙谦
+            <span>、</span></span><span>
+            邹涛
+            <span>、</span></span><span>
+            洪锋
+            <span>、</span></span><span>
+            CHEWSHOUZI
+            <span>、</span></span><span>
+            林斌
+            <span>、</span></span><span>
+            马文静
+            <span>、</span></span><span>
+            刘芹
+            <span>、</span></span><span>
+            刘伟
+            <span>、</span></span><span>
+            黎万强
+            <span>、</span></span><span>
+            彭博
+            <span>、</span></span><span>
+            求伟芹
+            <span>、</span></span><span>
+            林世伟
+            <span>、</span></span><span>
+            张彤
+            <span>、</span></span><span>
+            曹莉平
+            <span>、</span></span><span>
+            求伯君
+            <span>、</span></span><span>
+            卢伟冰
+            <span>、</span></span><span>
+            周受资
+            <span>、</span></span><span>
+            龚道军
+            <!----></span></div></div> <div class="info-detail flex"><label>担任法定代表人的企业</label> <div class="context"><span>
+            小米科技有限责任公司
+            <span>、</span></span><span>
+            天津金星创业投资有限公司
+            <span>、</span></span><span>
+            广东小米科技有限责任公司
+            <!----></span></div></div> <div class="info-detail flex"><label>担任股东的企业：</label> <div class="context"><span>
+            小米科技有限责任公司
+            <span>、</span></span><span>
+            广州华多网络科技有限公司
+            <span>、</span></span><span>
+            北京口袋时尚科技有限公司
+            <!----></span></div></div> <div class="info-detail flex"><label>担任高管的企业：</label> <div class="context"><span>
+            小米科技有限责任公司
+            <span>、</span></span><span>
+            拉卡拉支付股份有限公司
+            <span>、</span></span><span>
+            小米通讯技术有限公司
+            <!----></span></div></div></div> <div data-v-764737b6="" class="card" style="display: none;"><button data-v-764737b6="" type="button" data-event-name="人员信息查询-监控" class="btn btn-default margin-r-1x" zgclickable="true" zghook="1"><i data-v-764737b6="" class="iconfont icon_download1"></i> 监控
+  </button></div></div></div><div data-v-cb03128e="" class="app-people-item-wrapper flex-center-between"><div class="people-info-container flex"><div class="check-box"><label class="el-checkbox"><span class="el-checkbox__input"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value=""></span><!----></label></div> <div data-v-ad553d7c="" class="avatar"><img data-v-ad553d7c="" src="http://qxb-img.oss-cn-hangzhou.aliyuncs.com/36ke/598de5870204ee3d3e2b8e61ba8128cc.jpg" class="extra-large-logo img-clear"></div> <div class="info-list"><div class="name"><div data-v-0972f39d="" class="app-name-link bold" zgclickable="true" zghook="1"><div data-v-04983e94="" data-v-0972f39d="" class="name-wrapper"><!----> <!----> <span data-v-04983e94=""><a data-v-04983e94="" href="javascript:;" rel="noopener noreferrer" zgclickable="true" zghook="1"><span data-v-04983e94="" class="app-name-span">贾跃亭</span></a> <!----> </span> <span data-v-04983e94="" style="display: none;"><span data-v-04983e94=""><a data-v-04983e94="" href="javascript:;" rel="noopener noreferrer" zgclickable="true" zghook="1"><span data-v-04983e94="" class="app-name-span">贾跃亭</span></a></span> <span data-v-04983e94="" style="display: none;"><a data-v-04983e94="" href="javascript:;" rel="noopener noreferrer" zgclickable="true" zghook="1"><span data-v-04983e94="" class="app-name-span">贾跃亭</span></a> <span data-v-04983e94="" class="app-name-span" style="display: none;">贾跃亭</span></span></span></div></div></div> <div class="info-detail flex"><label>合作伙伴：</label> <div class="context"><span>
+            邓伟
+            <span>、</span></span><span>
+            吴孟
+            <span>、</span></span><span>
+            赵凯
+            <span>、</span></span><span>
+            贾跃芳
+            <span>、</span></span><span>
+            刘弘
+            <span>、</span></span><span>
+            段炜
+            <span>、</span></span><span>
+            张榕
+            <span>、</span></span><span>
+            张昭
+            <span>、</span></span><span>
+            隋伟
+            <span>、</span></span><span>
+            高飞
+            <span>、</span></span><span>
+            吉佩玲
+            <span>、</span></span><span>
+            刘淑青
+            <span>、</span></span><span>
+            刘延峰
+            <span>、</span></span><span>
+            刘纲
+            <span>、</span></span><span>
+            李宇浩
+            <span>、</span></span><span>
+            张巍
+            <span>、</span></span><span>
+            贾跃民
+            <span>、</span></span><span>
+            汪蕾
+            <span>、</span></span><span>
+            毛丙龙
+            <span>、</span></span><span>
+            万秀丽
+            <!----></span></div></div> <div class="info-detail flex"><label>担任法定代表人的企业</label> <div class="context"><span>
+            乐视网信息技术（北京）股份有限公司
+            <span>、</span></span><span>
+            乐视控股（北京）有限公司
+            <span>、</span></span><span>
+            乐视影业（北京）有限公司
+            <!----></span></div></div> <div class="info-detail flex"><label>担任股东的企业：</label> <div class="context"><span>
+            乐视网信息技术（北京）股份有限公司
+            <span>、</span></span><span>
+            乐视控股（北京）有限公司
+            <span>、</span></span><span>
+            北京百乐文化传媒有限公司
+            <!----></span></div></div> <div class="info-detail flex"><label>担任高管的企业：</label> <div class="context"><span>
+            乐视网信息技术（北京）股份有限公司
+            <span>、</span></span><span>
+            乐视控股（北京）有限公司
+            <span>、</span></span><span>
+            乐视影业（北京）有限公司
+            <!----></span></div></div></div> <div data-v-764737b6="" class="card" style="display: none;"><button data-v-764737b6="" type="button" data-event-name="人员信息查询-监控" class="btn btn-default margin-r-1x" zgclickable="true" zghook="1"><i data-v-764737b6="" class="iconfont icon_download1"></i> 监控
+  </button></div></div></div><div data-v-cb03128e="" class="app-people-item-wrapper flex-center-between"><div class="people-info-container flex"><div class="check-box"><label class="el-checkbox"><span class="el-checkbox__input"><span class="el-checkbox__inner"></span><input type="checkbox" aria-hidden="false" class="el-checkbox__original" value=""></span><!----></label></div> <div data-v-ad553d7c="" class="avatar"><img data-v-ad553d7c="" src="http://qxb-img.oss-cn-hangzhou.aliyuncs.com/36ke/2ad6f6821ae5cc051cf803955f73cda1.jpg" class="extra-large-logo img-clear"></div> <div class="info-list"><div class="name"><div data-v-0972f39d="" class="app-name-link bold" zgclickable="true" zghook="1"><div data-v-04983e94="" data-v-0972f39d="" class="name-wrapper"><!----> <!----> <span data-v-04983e94=""><a data-v-04983e94="" href="javascript:;" rel="noopener noreferrer" zgclickable="true" zghook="1"><span data-v-04983e94="" class="app-name-span">董明珠</span></a> <!----> </span> <span data-v-04983e94="" style="display: none;"><span data-v-04983e94=""><a data-v-04983e94="" href="javascript:;" rel="noopener noreferrer" zgclickable="true" zghook="1"><span data-v-04983e94="" class="app-name-span">董明珠</span></a></span> <span data-v-04983e94="" style="display: none;"><a data-v-04983e94="" href="javascript:;" rel="noopener noreferrer" zgclickable="true" zghook="1"><span data-v-04983e94="" class="app-name-span">董明珠</span></a> <span data-v-04983e94="" class="app-name-span" style="display: none;">董明珠</span></span></span></div></div></div> <div class="info-detail flex"><label>合作伙伴：</label> <div class="context"><span>
+            刘炎姿
+            <span>、</span></span><span>
+            方祥建
+            <span>、</span></span><span>
+            廖建雄
+            <span>、</span></span><span>
+            望靖东
+            <span>、</span></span><span>
+            庄培
+            <span>、</span></span><span>
+            黄辉
+            <span>、</span></span><span>
+            文辉
+            <span>、</span></span><span>
+            谭建明
+            <span>、</span></span><span>
+            刘俊
+            <span>、</span></span><span>
+            朱江洪
+            <span>、</span></span><span>
+            许勇
+            <span>、</span></span><span>
+            钟成堡
+            <span>、</span></span><span>
+            张龙
+            <span>、</span></span><span>
+            张伟
+            <span>、</span></span><span>
+            黄家海
+            <span>、</span></span><span>
+            谢东波
+            <span>、</span></span><span>
+            陈达光
+            <span>、</span></span><span>
+            王晓彬
+            <span>、</span></span><span>
+            雷卫东
+            <span>、</span></span><span>
+            赵志伟
+            <!----></span></div></div> <div class="info-detail flex"><label>担任法定代表人的企业</label> <div class="context"><span>
+            珠海格力电器股份有限公司
+            <span>、</span></span><span>
+            珠海格力集团有限公司
+            <span>、</span></span><span>
+            珠海格力集团财务有限责任公司
+            <!----></span></div></div> <div class="info-detail flex"><label>担任股东的企业：</label> <div class="context"><span>
+            珠海格力电器股份有限公司
+            <span>、</span></span><span>
+            格力钛新能源股份有限公司
+            <span>、</span></span><span>
+            金蝶國際軟件集團有限公司
+            <!----></span></div></div> <div class="info-detail flex"><label>担任高管的企业：</label> <div class="context"><span>
+            珠海格力电器股份有限公司
+            <span>、</span></span><span>
+            珠海格力集团有限公司
+            <span>、</span></span><span>
+            格力钛新能源股份有限公司
+            <!----></span></div></div></div> <div data-v-764737b6="" class="card" style="display: none;"><button data-v-764737b6="" type="button" data-event-name="人员信息查询-监控" class="btn btn-default margin-r-1x" zgclickable="true" zghook="1"><i data-v-764737b6="" class="iconfont icon_download1"></i> 监控
+  </button></div></div></div></div> <div data-v-cb03128e="" class="padding-t-1x clearfix"><!----></div></div></div></div></div> <div data-v-d6e97efc="" data-v-1acf0f67="" id="ent-micro-container" style="display: none;"></div> <div data-v-627dc438="" data-v-d6e97efc="" data-v-1acf0f67=""></div></div>
