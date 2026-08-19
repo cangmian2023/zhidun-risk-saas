@@ -38,3 +38,10 @@ Thumbs.db
 *.tsbuildinfo
 vite.config.js
 vite.config.d.ts
+
+# runtime noise & throwaway scripts (kept local, not committed)
+debug.log
+_devlog.txt
+shot.mjs
+tmp/
+record/qixin/html文件菜单分组清单 - 副本.md
