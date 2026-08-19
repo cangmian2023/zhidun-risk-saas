@@ -1,0 +1,46 @@
+{
+  "pageTitle": "企业尽调",
+  "tabs": [
+    { "key": "normal", "label": "常规筛查" },
+    { "key": "ai", "label": "AI 尽调助手", "badge": "beta" }
+  ],
+  "activeTab": "normal",
+  "normal": {
+    "title": "一键筛查合作方资质风险",
+    "placeholder": "请输入企业名称/统一社会信用代码",
+    "defaultConfig": "默认配置",
+    "screenBtn": "筛查",
+    "trySearchPrefix": "试着搜索：",
+    "trySearch": [
+      { "name": "广州博鳌纵横网络科技有限公司" },
+      { "name": "中经汇通电子商务有限公司" }
+    ],
+    "historyTitle": "历史筛查",
+    "batchDownload": "批量下载",
+    "more": "更多",
+    "failTag": "不通过",
+    "history": [
+      { "id": 1, "name": "广州博鳌纵横网络科技有限公司", "time": "2026-08-19 22:22", "result": "fail" },
+      { "id": 2, "name": "乐视网信息技术（北京）股份有限公司", "time": "2026-08-19 22:17", "result": "fail" },
+      { "id": 3, "name": "广州博鳌纵横网络科技有限公司", "time": "2026-08-19 21:21", "result": "fail" }
+    ]
+  },
+  "ai": {
+    "title": "智能分析合作方资质风险",
+    "placeholder": "输入您的尽调需求。使用 @企业名称 选择企业",
+    "defaultConfig": "默认配置",
+    "prompts": [
+      { "label": "从供应商准入角度分析：", "mention": "@乐视网信息技术（北京）股份有限公司" },
+      { "label": "从客户授信角度分析：", "mention": "@广州粤信科技有限公司" }
+    ],
+    "historyTitle": "历史会话",
+    "history": [
+      { "id": 1, "title": "供应商准入视角下的乐视分析", "time": "2026-08-17 18:12" },
+      { "id": 2, "title": "分析乐视供应商准入", "time": "2026-08-17 15:52" }
+    ]
+  },
+  "topActions": {
+    "batchScreen": "批量筛查",
+    "settings": "筛查设置"
+  }
+}

@@ -222,7 +222,9 @@ export default function Console() {
     'ep:fk-regulatory': 'shield',
     // 企业尽调
     'ep:jd-company': 'search',
+    'ep:jd-company-result': 'search',
     'ep:jd-batch': 'stack',
+    'ep:jd-batch-result': 'stack',
     'ep:jd-relation': 'link',
     'ep:jd-person': 'id',
     // 尽调报告

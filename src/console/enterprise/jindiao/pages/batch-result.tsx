@@ -1,0 +1,706 @@
+// 尽调中心 · 批量尽调结果页（jd-batch-result）· 查企业 / 查人员 Tab
+// 数据：本地样例 jdBatchResult.json（橘 Sam）
+import { useEffect, useState } from 'react'
+import { EpPage, EpCard, EpBtn, DataTable, useSample, Sam } from '../../epCommon'
+import { Modal } from '../../../components/ui'
+
+type TreeItem = { key: string; label: string; checked: boolean }
+type FilterGroup = {
+  key: string
+  title: string
+  options: string[]
+  dropdowns?: boolean
+}
+type Data = {
+  pageTitle: string
+  tabs: { key: string; label: string }[]
+  activeTab: string
+  left: {
+    tabs: string[]
+    active: string
+    searchPlaceholder: string
+    selectAll: string
+    total: number
+    settings: string
+    saveTemplate: string
+    tree: TreeItem[]
+    collapse: string
+  }
+  filters: {
+    title: string
+    common: { title: string; items: { label: string; type: string }[] }
+    groups: FilterGroup[]
+    collapse: string
+  }
+  toolbar: {
+    selectedText: string
+    delete: string
+    edit: string
+    portrait: string
+    market: string
+    distribute: string
+    addToCustomer: string
+    exportAll: string
+    exportCount: number
+  }
+  table: {
+    columns: { key: string; label: string }[]
+    rows: Record<string, string | number>[]
+  }
+  footer: { selectedIndicator: string; selectedEnterprise: string; fullscreen: string }
+  uploadModal: {
+    title: string
+    steps: string[]
+    step1: { title: string; desc: string }
+    step2: { title: string; desc: string }
+    step3: { title: string; desc: string }
+    downloadTemplate: string
+    uploadFile: string
+    start: string
+    next: string
+    prev: string
+  }
+}
+
+const seed: Data = {
+  pageTitle: '批量尽调结果',
+  tabs: [
+    { key: 'enterprise', label: '查企业' },
+    { key: 'person', label: '查人员' },
+  ],
+  activeTab: 'enterprise',
+  left: {
+    tabs: ['选择指标', '我的模板', '精选模板'],
+    active: '选择指标',
+    searchPlaceholder: '请输入指标名称',
+    selectAll: '全选',
+    total: 203,
+    settings: '设置',
+    saveTemplate: '存为模板',
+    tree: [
+      { key: 'business', label: '工商信息', checked: true },
+      { key: 'qixin', label: '启信指数', checked: false },
+      { key: 'relation', label: '企业关系', checked: false },
+      { key: 'judicial', label: '司法风险', checked: false },
+      { key: 'operation', label: '经营风险', checked: false },
+      { key: 'operInfo', label: '经营信息', checked: false },
+      { key: 'ip', label: '知识产权', checked: false },
+      { key: 'history', label: '历史信息', checked: false },
+    ],
+    collapse: '收起',
+  },
+  filters: {
+    title: '高级筛选',
+    common: { title: '常用筛选', items: [{ label: '省份地区', type: 'select' }, { label: '所在行业', type: 'select' }] },
+    groups: [
+      { key: 'establish', title: '成立年限', options: ['不限', '1-5年', '5-10年', '10-15年', '1年以上', '3年以上', '5年以上', '10年以上', '15年以上', '自定义'] },
+      { key: 'regCapital', title: '注册资本', options: ['不限', '0万-100万', '100万-200万', '200万-500万', '500万-1000万', '1000万以上', '自定义'] },
+      { key: 'status', title: '经营状态', options: ['不限', '存续', '注销', '吊销', '撤销', '迁出', '设立中', '清算中', '停业', '其他'] },
+      { key: 'concept', title: '概念标签', options: ['资本背景', '企业规模', '机构类型'], dropdowns: true },
+      { key: 'risk', title: '风险信息', options: ['经营异常', '股权出质', '招投标', '债券违约', '应收账款质押', '应收账款转让', '融资租赁', '其他动产融资', '简易注销', '减资公告', '开庭公告', '裁判文书', '被执行人', '失信被执行人', '限制高消费', '终本案件', '司法拍卖', '司法协助', '环保处罚', '非正常户', '股权质押'], dropdowns: true },
+      { key: 'relation', title: '企业关系', options: ['受益所有人', '实控企业', '间接持股企业', '合作持股股东', '对外投资', '工商股东', '最新公示股东', '间接股东', '主要人员', '供应商', '客户'], dropdowns: true },
+      { key: 'operInfo', title: '经营信息', options: ['参保人数', '启信分', '官方认证', '税务资质', '进出口信息', '融资信息', '债券信息', '域名信息', '资质证书', '专利信息', '商标信息', '新闻舆情'], dropdowns: true },
+      { key: 'history', title: '历史信息', options: ['工商变更', '主要人员', '减资公告', '对外投资', '工商股东', '最新公示股东', '立案信息', '开庭公告'], dropdowns: true },
+    ],
+    collapse: '收起筛选',
+  },
+  toolbar: {
+    selectedText: '深圳市腾讯... 等2个企业',
+    delete: '删除',
+    edit: '编辑',
+    portrait: '企业画像',
+    market: '营销',
+    distribute: '分发',
+    addToCustomer: '加入客户列表',
+    exportAll: '导出全部',
+    exportCount: 2,
+  },
+  table: {
+    columns: [
+      { key: 'seq', label: '序号' },
+      { key: 'name', label: '企业名称' },
+      { key: 'regCapital', label: '注册资本' },
+      { key: 'paidCapital', label: '实缴资本' },
+      { key: 'orgType', label: '机构类型' },
+      { key: 'status', label: '经营状态' },
+      { key: 'insuredCount', label: '参保人数' },
+      { key: 'industry1', label: '一级行业' },
+      { key: 'industry2', label: '二级行业' },
+      { key: 'province', label: '省份' },
+      { key: 'city', label: '市' },
+      { key: 'district', label: '区域' },
+      { key: 'establishDate', label: '成立日期' },
+      { key: 'capitalBackground', label: '资本背景' },
+      { key: 'scale', label: '企业规模' },
+      { key: 'techCert', label: '科技认定' },
+      { key: 'listing', label: '上市信息' },
+      { key: 'park', label: '园区名称' },
+      { key: 'group', label: '所属集团' },
+      { key: 'emergingIndustry', label: '新兴产业' },
+      { key: 'qixinScore', label: '启信分值' },
+      { key: 'shellIndex', label: '空壳指数' },
+      { key: 'contractDefault', label: '合同违约指数' },
+      { key: 'techScore', label: '科创评分' },
+      { key: 'judicialDocs', label: '裁判文书' },
+      { key: 'executed', label: '被执行人' },
+      { key: 'dishonest', label: '失信被执行人' },
+      { key: 'equityFreeze', label: '股权冻结' },
+      { key: 'consumptionLimit', label: '限制高消费' },
+      { key: 'finalCases', label: '终本案件' },
+      { key: 'abnormal', label: '经营异常' },
+      { key: 'seriousIllegal', label: '严重违法失信' },
+      { key: 'adminPenalty', label: '行政处罚' },
+      { key: 'envPenalty', label: '环保处罚' },
+      { key: 'equityPledge', label: '股权出质' },
+      { key: 'taxIllegal', label: '重大税收违法' },
+      { key: 'abnormalTax', label: '非正常户' },
+      { key: 'simpleCancel', label: '简易注销' },
+      { key: 'cancelRecord', label: '注销备案' },
+      { key: 'equityMortgage', label: '股权质押' },
+      { key: 'blacklist', label: '黑名单' },
+      { key: 'patents', label: '专利信息' },
+      { key: 'trademarks', label: '商标信息' },
+      { key: 'copyrights', label: '著作权' },
+      { key: 'softwareCopyrights', label: '软件著作权' },
+    ],
+    rows: [],
+  },
+  footer: { selectedIndicator: '已选指标: 44/203', selectedEnterprise: '已选企业 0/2', fullscreen: '全屏显示' },
+  uploadModal: {
+    title: '上传企业名单',
+    steps: ['下载模板', '上传文件', '开始尽调'],
+    step1: { title: '下载批量尽调模板', desc: '请下载 Excel 模板，按要求填写企业名称或统一社会信用代码，单次最多支持 2000 家企业。' },
+    step2: { title: '上传企业名单', desc: '支持拖拽或点击上传 .xlsx / .xls 文件，文件大小不超过 20MB。' },
+    step3: { title: '开始批量尽调', desc: '确认上传无误后，点击开始尽调，系统将自动对名单企业进行多维风险扫描。' },
+    downloadTemplate: '下载模板',
+    uploadFile: '点击或拖拽上传',
+    start: '开始尽调',
+    next: '下一步',
+    prev: '上一步',
+  },
+}
+
+function SearchIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+      <circle cx="7" cy="7" r="5" stroke="#94A3B8" strokeWidth="1.5" />
+      <path d="M11 11l3 3" stroke="#94A3B8" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+function ChevronRight({ size = 14 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 14 14" fill="none" style={{ flexShrink: 0 }}>
+      <path d="M5 3l4 4-4 4" stroke="#94A3B8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+function ChevronDown({ size = 14 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 14 14" fill="none" style={{ flexShrink: 0 }}>
+      <path d="M3 5l4 4 4-4" stroke="#94A3B8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+function FilterIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ flexShrink: 0, marginLeft: 2 }}>
+      <path d="M1 2.5h5M8 2.5h3M1 6h3M6 6h5M1 9.5h5M8 9.5h3" stroke="#94A3B8" strokeWidth="1" strokeLinecap="round" />
+      <circle cx="6.5" cy="2.5" r="1" fill="#94A3B8" />
+      <circle cx="4.5" cy="6" r="1" fill="#94A3B8" />
+      <circle cx="6.5" cy="9.5" r="1" fill="#94A3B8" />
+    </svg>
+  )
+}
+
+function CustomCheckbox({ checked, onChange }: { checked: boolean; onChange?: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onChange}
+      style={{
+        width: 14,
+        height: 14,
+        border: `1px solid ${checked ? '#2563EB' : '#CBD5E1'}`,
+        borderRadius: 2,
+        background: checked ? '#2563EB' : '#fff',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        cursor: 'pointer',
+        flexShrink: 0,
+      }}
+    >
+      {checked && (
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+          <path d="M2 5l2 2 4-4.5" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      )}
+    </button>
+  )
+}
+
+function IndicatorSidebar({ data }: { data: Data['left'] }) {
+  const [kw, setKw] = useState('')
+  const [checked, setChecked] = useState<Set<string>>(() => new Set(data.tree.filter((t) => t.checked).map((t) => t.key)))
+  const [tab, setTab] = useState(data.active)
+  const filtered = data.tree.filter((t) => t.label.includes(kw.trim()))
+
+  const toggleOne = (key: string) => {
+    const next = new Set(checked)
+    if (next.has(key)) next.delete(key)
+    else next.add(key)
+    setChecked(next)
+  }
+
+  const toggleAll = () => {
+    if (checked.size === data.tree.length) setChecked(new Set())
+    else setChecked(new Set(data.tree.map((t) => t.key)))
+  }
+
+  return (
+    <div
+      style={{
+        width: 260,
+        flexShrink: 0,
+        background: '#fff',
+        borderRadius: 12,
+        border: '1px solid #E2E8F0',
+        display: 'flex',
+        flexDirection: 'column',
+      }}
+    >
+      <div style={{ display: 'flex', borderBottom: '1px solid #E2E8F0' }}>
+        {data.tabs.map((lt) => (
+          <button
+            key={lt}
+            onClick={() => setTab(lt)}
+            style={{
+              flex: 1,
+              padding: '12px 0',
+              border: 'none',
+              background: tab === lt ? '#fff' : 'transparent',
+              color: tab === lt ? '#2563EB' : '#475569',
+              fontSize: 13,
+              fontWeight: tab === lt ? 600 : 400,
+              cursor: 'pointer',
+              borderLeft: tab === lt ? '3px solid #2563EB' : '3px solid transparent',
+            }}
+          >
+            {lt}
+          </button>
+        ))}
+      </div>
+
+      <div style={{ padding: 14 }}>
+        <div style={{ position: 'relative', marginBottom: 12 }}>
+          <input
+            value={kw}
+            onChange={(e) => setKw(e.target.value)}
+            placeholder={data.searchPlaceholder}
+            style={{
+              width: '100%',
+              padding: '7px 28px 7px 10px',
+              borderRadius: 6,
+              border: '1px solid #E2E8F0',
+              fontSize: 13,
+              outline: 'none',
+              boxSizing: 'border-box',
+            }}
+          />
+          <div style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)' }}>
+            <SearchIcon />
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+          <button
+            onClick={toggleAll}
+            style={{ display: 'flex', alignItems: 'center', gap: 6, border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 13, color: '#0F172A' }}
+          >
+            <CustomCheckbox checked={checked.size === data.tree.length && data.tree.length > 0} />
+            <span>
+              {data.selectAll}({data.total})
+            </span>
+          </button>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <EpBtn variant="ghost" size="sm">{data.settings}</EpBtn>
+            <EpBtn variant="primary" size="sm">{data.saveTemplate}</EpBtn>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          {filtered.map((item) => (
+            <div key={item.key} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 0' }}>
+              <ChevronRight />
+              <CustomCheckbox checked={checked.has(item.key)} onChange={() => toggleOne(item.key)} />
+              <span style={{ fontSize: 13, color: '#0F172A' }}>{item.label}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div style={{ marginTop: 'auto', padding: 12, borderTop: '1px solid #E2E8F0', display: 'flex', justifyContent: 'center' }}>
+        <button
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 4,
+            padding: '4px 12px',
+            borderRadius: 12,
+            border: '1px solid #E2E8F0',
+            background: '#F8FAFC',
+            fontSize: 12,
+            color: '#475569',
+            cursor: 'pointer',
+          }}
+        >
+          <ChevronRight size={12} />
+          {data.collapse}
+        </button>
+      </div>
+    </div>
+  )
+}
+
+export default function JdBatchResult({ params }: { params: URLSearchParams }) {
+  const [data] = useSample<Data>('jdBatchResult.json', seed)
+  const [tab, setTab] = useState(data.activeTab)
+  const [selected, setSelected] = useState<string[]>([])
+  const [uploadOpen, setUploadOpen] = useState(params.get('upload') === '1')
+  const [step, setStep] = useState(1)
+
+  // 关闭上传弹窗后重置到第一步
+  useEffect(() => {
+    if (!uploadOpen) setStep(1)
+  }, [uploadOpen])
+
+  // 默认高亮：带"不限"的筛选组选中"不限"
+  const initialFilter = () => {
+    const map: Record<string, string> = {}
+    data.filters.groups.forEach((g) => {
+      if (g.options.includes('不限')) map[g.key] = '不限'
+    })
+    return map
+  }
+  const [activeFilter, setActiveFilter] = useState<Record<string, string>>(initialFilter)
+
+  const columns = data.table.columns.map((c) => ({
+    key: c.key,
+    label: c.label,
+    width: c.key === 'name' ? 260 : c.key === 'seq' ? 70 : 138,
+    align: 'left' as const,
+  }))
+
+  const rows = data.table.rows.map((r) => ({ ...r, id: String(r.id ?? r.seq) }))
+
+  const nextStep = () => {
+    if (step < 3) setStep(step + 1)
+    else setUploadOpen(false)
+  }
+
+  return (
+    <EpPage title={data.pageTitle} actions={<Sam value="jdBatchResult.json" />}>
+      {/* 顶部 Tab */}
+      <div style={{ display: 'flex', borderBottom: '1px solid #E2E8F0', marginBottom: 16 }}>
+        {data.tabs.map((t) => (
+          <button
+            key={t.key}
+            onClick={() => setTab(t.key)}
+            style={{
+              padding: '10px 0',
+              marginRight: 28,
+              border: 'none',
+              borderBottom: `2px solid ${tab === t.key ? '#2563EB' : 'transparent'}`,
+              background: 'transparent',
+              color: tab === t.key ? '#2563EB' : '#475569',
+              fontSize: 15,
+              fontWeight: tab === t.key ? 600 : 400,
+              cursor: 'pointer',
+              marginBottom: -1,
+            }}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {tab === 'person' ? (
+        <EpCard>
+          <div style={{ padding: 40, textAlign: 'center', color: '#64748B' }}>查人员结果内容待补充</div>
+        </EpCard>
+      ) : (
+        <div style={{ display: 'flex', gap: 16 }}>
+          <IndicatorSidebar data={data.left} />
+
+          <div style={{ flex: 1, minWidth: 0 }}>
+            {/* 高级筛选 */}
+            <EpCard title={data.filters.title} pad>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                {/* 常用筛选 */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: '#0F172A', width: 70 }}>{data.filters.common.title}</span>
+                  {data.filters.common.items.map((item) => (
+                    <button
+                      key={item.label}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 3,
+                        padding: '4px 10px',
+                        borderRadius: 4,
+                        border: '1px solid #E2E8F0',
+                        background: '#fff',
+                        fontSize: 13,
+                        color: '#475569',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      {item.label}
+                      <ChevronDown size={12} />
+                    </button>
+                  ))}
+                </div>
+
+                {/* 分组筛选 */}
+                {data.filters.groups.map((g) => (
+                  <div key={g.key} style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: '#0F172A', width: 70, flexShrink: 0 }}>{g.title}</span>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, flex: 1 }}>
+                      {g.options.map((opt) => {
+                        const active = activeFilter[g.key] === opt
+                        return (
+                          <button
+                            key={opt}
+                            onClick={() => setActiveFilter({ ...activeFilter, [g.key]: opt })}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 2,
+                              padding: '3px 10px',
+                              borderRadius: 4,
+                              border: `1px solid ${active ? '#2563EB' : '#E2E8F0'}`,
+                              background: active ? '#EFF6FF' : '#fff',
+                              fontSize: 13,
+                              color: active ? '#2563EB' : '#475569',
+                              cursor: 'pointer',
+                            }}
+                          >
+                            {opt}
+                            {g.dropdowns && <FilterIcon />}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'center', marginTop: 16 }}>
+                <button
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 4,
+                    border: 'none',
+                    background: 'transparent',
+                    color: '#64748B',
+                    fontSize: 13,
+                    cursor: 'pointer',
+                  }}
+                >
+                  {data.filters.collapse}
+                  <ChevronDown />
+                </button>
+              </div>
+            </EpCard>
+
+            {/* 工具栏 */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: 12,
+                marginTop: 16,
+                marginBottom: 12,
+                flexWrap: 'wrap',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                <span style={{ fontSize: 14, color: '#0F172A' }}>{data.toolbar.selectedText}</span>
+                <EpBtn variant="ghost" size="sm">
+                  {data.toolbar.delete}
+                </EpBtn>
+                <EpBtn variant="ghost" size="sm">
+                  {data.toolbar.edit}
+                </EpBtn>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                <EpBtn variant="default" size="sm">
+                  {data.toolbar.portrait}
+                </EpBtn>
+                <EpBtn variant="default" size="sm">
+                  {data.toolbar.market}
+                </EpBtn>
+                <EpBtn variant="default" size="sm">
+                  {data.toolbar.distribute}
+                </EpBtn>
+                <EpBtn variant="default" size="sm">
+                  {data.toolbar.addToCustomer}
+                </EpBtn>
+                <EpBtn variant="primary" size="sm">
+                  {data.toolbar.exportAll}({data.toolbar.exportCount}家)
+                </EpBtn>
+              </div>
+            </div>
+
+            {/* 表格 */}
+            <EpCard pad>
+              <DataTable
+                columns={columns}
+                rows={rows}
+                selectable
+                selected={selected}
+                onSelectChange={setSelected}
+                pager
+                defaultPageSize={10}
+                pageSizeOptions={[10, 20, 50]}
+              />
+            </EpCard>
+
+            {/* 底部状态 */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                marginTop: 12,
+                fontSize: 13,
+                color: '#64748B',
+              }}
+            >
+              <div style={{ display: 'flex', gap: 16 }}>
+                <span>{data.footer.selectedIndicator}</span>
+                <span>{data.footer.selectedEnterprise}</span>
+              </div>
+              <button
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 4,
+                  border: 'none',
+                  background: 'transparent',
+                  color: '#64748B',
+                  cursor: 'pointer',
+                  fontSize: 13,
+                }}
+              >
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                  <rect x="2" y="2" width="10" height="10" rx="2" stroke="#94A3B8" strokeWidth="1.5" />
+                  <path d="M5 7h4" stroke="#94A3B8" strokeWidth="1.5" strokeLinecap="round" />
+                </svg>
+                {data.footer.fullscreen}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 上传弹窗（三步） */}
+      <Modal
+        open={uploadOpen}
+        onClose={() => setUploadOpen(false)}
+        title={data.uploadModal.title}
+        width="max-w-2xl"
+        footer={
+          <>
+            {step > 1 && (
+              <EpBtn variant="default" size="sm" onClick={() => setStep(step - 1)}>
+                {data.uploadModal.prev}
+              </EpBtn>
+            )}
+            <EpBtn variant="primary" size="sm" onClick={nextStep}>
+              {step === 3 ? data.uploadModal.start : data.uploadModal.next}
+            </EpBtn>
+          </>
+        }
+      >
+        {/* 步骤条 */}
+        <div style={{ display: 'flex', alignItems: 'center', marginBottom: 24 }}>
+          {data.uploadModal.steps.map((s, idx) => {
+            const num = idx + 1
+            const active = num === step
+            const done = num < step
+            return (
+              <div key={s} style={{ display: 'flex', alignItems: 'center', flex: 1 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <div
+                    style={{
+                      width: 28,
+                      height: 28,
+                      borderRadius: '50%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: 13,
+                      fontWeight: 600,
+                      color: active || done ? '#fff' : '#64748B',
+                      background: active ? '#2563EB' : done ? '#10B981' : '#E2E8F0',
+                    }}
+                  >
+                    {done ? '✓' : num}
+                  </div>
+                  <span style={{ fontSize: 13, color: active ? '#2563EB' : done ? '#10B981' : '#64748B', fontWeight: active ? 600 : 400 }}>{s}</span>
+                </div>
+                {idx < data.uploadModal.steps.length - 1 && (
+                  <div style={{ flex: 1, height: 1, background: done ? '#10B981' : '#E2E8F0', margin: '0 12px' }} />
+                )}
+              </div>
+            )
+          })}
+        </div>
+
+        {step === 1 && (
+          <div>
+            <div style={{ fontSize: 15, fontWeight: 600, color: '#0F172A', marginBottom: 8 }}>{data.uploadModal.step1.title}</div>
+            <div style={{ fontSize: 13, color: '#64748B', lineHeight: 1.7, marginBottom: 20 }}>{data.uploadModal.step1.desc}</div>
+            <EpBtn variant="primary" size="md">
+              {data.uploadModal.downloadTemplate}
+            </EpBtn>
+          </div>
+        )}
+
+        {step === 2 && (
+          <div>
+            <div style={{ fontSize: 15, fontWeight: 600, color: '#0F172A', marginBottom: 8 }}>{data.uploadModal.step2.title}</div>
+            <div style={{ fontSize: 13, color: '#64748B', lineHeight: 1.7, marginBottom: 16 }}>{data.uploadModal.step2.desc}</div>
+            <div
+              style={{
+                border: '2px dashed #CBD5E1',
+                borderRadius: 12,
+                padding: 40,
+                textAlign: 'center',
+                color: '#64748B',
+                fontSize: 13,
+                background: '#F8FAFC',
+              }}
+            >
+              {data.uploadModal.uploadFile}
+            </div>
+          </div>
+        )}
+
+        {step === 3 && (
+          <div>
+            <div style={{ fontSize: 15, fontWeight: 600, color: '#0F172A', marginBottom: 8 }}>{data.uploadModal.step3.title}</div>
+            <div style={{ fontSize: 13, color: '#64748B', lineHeight: 1.7 }}>{data.uploadModal.step3.desc}</div>
+          </div>
+        )}
+      </Modal>
+    </EpPage>
+  )
+}

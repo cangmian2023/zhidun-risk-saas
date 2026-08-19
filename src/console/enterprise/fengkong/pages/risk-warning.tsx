@@ -1,8 +1,8 @@
-// 风控中心 · 风险预警（fk-risk-warning）· 1:1 复刻「风控 - 风险预警」
-// 折叠子快照：风控 - 风险预警 - 添加监控 / - 解读 / - 风险和推送设置 / - 风险详情 / - 风险详情 - 案件串联（均为抽屉）
+// 风控中心 · 风险预警（fk-risk-warning）· 1:1 复刻「风险预警」列表页
 // 数据：本地样例 fkRisk.json（橘 Sam）
 import { useState } from 'react'
 import { EpPage, EpCard, EpStat, EpTag, EpBtn, EpDrawer, DataTable, useSample, Sam } from '../../epCommon'
+import { AddMonitorDrawer } from '../components/AddMonitorDrawer'
 import type { Row, Column } from '../../../../components/ui'
 import seedJson from '../../../fkRisk.json'
 
@@ -16,162 +16,193 @@ const LEVEL: Record<string, { c: string; b: string }> = {
   日常资讯: { c: '#475569', b: '#F1F5F9' },
 }
 
-const RISK_TYPES = ['不限', '基本信息', '经营风险', '司法风险', '交通气象预报', '经营信息', '企业舆情', '供应链风险', '关联方风险', '加征关税', '关键词舆情']
-const MARKS = ['重点关注风险', '存在信用风险', '重大工商变更', '外部供应链风险']
-
 export default function FkRiskWarning({ params }: { params: URLSearchParams }) {
   const [data] = useSample('fkRisk.json', seedJson)
   const [kw, setKw] = useState(params.get('kw') || '')
-  const [pushTime, setPushTime] = useState('最近30天')
-  const [happenTime, setHappenTime] = useState('不限')
+
+  // 监控筛选
+  const [timeMode, setTimeMode] = useState<'推送时间' | '发生时间'>('推送时间')
   const [levels, setLevels] = useState<string[]>([])
-  const [readState, setReadState] = useState('不限')
-  const [followState, setFollowState] = useState('不限')
-  const [riskType, setRiskType] = useState('不限')
-  const [rule, setRule] = useState('全部')
-  const [view, setView] = useState<'主体' | '全字段'>('主体')
+  const [readState, setReadState] = useState<string[]>([])
+  const [followState, setFollowState] = useState<string[]>([])
+  const [markState, setMarkState] = useState<string[]>([])
+  const [ruleState, setRuleState] = useState<string[]>([])
+
+  // 企业筛选
+  const [scope, setScope] = useState<string[]>([])
+  const [region, setRegion] = useState<string[]>([])
+  const [epTag, setEpTag] = useState<string[]>([])
+  const [epGroup, setEpGroup] = useState<string[]>([])
+  const [owner, setOwner] = useState('')
+  const [adder, setAdder] = useState('')
+  const [related, setRelated] = useState('')
+
+  // 风险类型
+  const [riskTypes, setRiskTypes] = useState<string[]>(['不限'])
+
   const [selected, setSelected] = useState<string[]>([])
 
   const [addOpen, setAddOpen] = useState(false)
-  const [addTab, setAddTab] = useState('输入粘贴上传')
   const [cfgOpen, setCfgOpen] = useState(false)
   const [readOpen, setReadOpen] = useState(false)
   const [detailOpen, setDetailOpen] = useState(false)
+  const [riskDetailOpen, setRiskDetailOpen] = useState(false)
+  const [aiExpand, setAiExpand] = useState(true)
   const [caseOpen, setCaseOpen] = useState(false)
   const [cur, setCur] = useState<RiskRow | null>(null)
+
+  const toggle = (list: string[], setList: (v: string[]) => void, v: string) => {
+    if (v === '不限') {
+      setList(list.includes('不限') ? [] : ['不限'])
+      return
+    }
+    const next = list.includes('不限') ? [v] : list.includes(v) ? list.filter((x) => x !== v) : [...list, v]
+    setList(next)
+  }
 
   const rows = data.rows.filter((r) => {
     if (kw && !r.subject.includes(kw) && !r.content.includes(kw) && !r.title.includes(kw)) return false
     if (levels.length && !levels.includes(r.level)) return false
-    if (followState !== '不限' && r.status !== followState) return false
     return true
   })
-
-  const toggleLevel = (l: string) => setLevels(levels.includes(l) ? levels.filter((x) => x !== l) : [...levels, l])
 
   const levelCell = (r: Row) => {
     const l = String(r.level)
     return <EpTag color={LEVEL[l]?.c} bg={LEVEL[l]?.b}>{l}</EpTag>
   }
-  const contentCell = (r: Row) => (
-    <div style={{ maxWidth: 460, whiteSpace: 'normal', lineHeight: 1.6 }}>
-      {r.title !== r.content && <div style={{ color: '#0F172A', fontWeight: 500 }}>{String(r.title)}</div>}
-      <div style={{ color: '#64748B', fontSize: 12 }}>{String(r.content)}</div>
-      <span style={{ display: 'inline-flex', gap: 8, marginTop: 4 }}>
-        <a style={lk} onClick={() => { setCur(r as unknown as RiskRow); setReadOpen(true) }}>AI解读</a>
-        {(r as unknown as RiskRow).caseLink && (
-          <a style={lk} onClick={() => { setCur(r as unknown as RiskRow); setCaseOpen(true) }}>案件串联</a>
-        )}
+
+  const typeCell = (r: Row) => (
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 13, color: '#475569' }}>
+      <span style={{ width: 14, height: 14, borderRadius: '50%', background: '#F59E0B', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+        <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg>
       </span>
-    </div>
-  )
-  const opCell = (r: Row) => (
-    <span style={{ display: 'inline-flex', gap: 8, whiteSpace: 'nowrap' }}>
-      <a style={lk} onClick={() => { setCur(r as unknown as RiskRow); setDetailOpen(true) }}>企业风险</a>
-      <a style={lk}>推送</a>
-      <a style={lk}>供应商</a>
-      <a style={lk}>标记动态</a>
-      <a style={lk}>收藏动态</a>
+      {String(r.type)}
     </span>
   )
 
-  const colsSubject: Column[] = [
-    { key: 'subject', label: '监控主体', width: '180px', render: (r: Row) => (
-      <a style={lk} onClick={() => { setCur(r as unknown as RiskRow); setDetailOpen(true) }}>{String(r.subject)}</a>
-    ) },
-    { key: 'level', label: '风险等级', render: levelCell },
-    { key: 'happen', label: '发生时间' },
-    { key: 'type', label: '风险类型', width: '140px' },
+  const contentCell = (r: Row) => (
+    <div
+      style={{ maxWidth: 520, whiteSpace: 'normal', lineHeight: 1.6, cursor: 'pointer' }}
+      onClick={() => { setCur(r as unknown as RiskRow); setRiskDetailOpen(true) }}
+    >
+      <div style={{ color: '#0F172A', fontWeight: 500, fontSize: 13 }}>{String(r.title)}</div>
+      <div style={{ color: '#64748B', fontSize: 12, marginTop: 2 }}>{String(r.content)}</div>
+    </div>
+  )
+
+  const opCell = (r: Row) => (
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap', fontSize: 13 }}>
+      <a style={lk} onClick={() => { setCur(r as unknown as RiskRow); setReadOpen(true) }}>AI 解读</a>
+      <span style={{ color: '#CBD5E1' }}>|</span>
+      <a style={lk}>推送</a>
+      <span style={{ color: '#CBD5E1' }}>|</span>
+      <a style={lk}>更多</a>
+    </span>
+  )
+
+  const cols: Column[] = [
+    { key: 'push', label: '推送时间', width: '110px' },
+    { key: 'level', label: '风险等级', width: '90px', render: levelCell },
+    { key: 'type', label: '风险类型', width: '130px', render: typeCell },
     { key: 'content', label: '风险内容', render: contentCell },
-    { key: 'score', label: '风险评分', align: 'center' },
-    { key: 'push', label: '推送时间' },
-    { key: 'owner', label: '负责人' },
-    { key: 'status', label: '处理状态' },
-    { key: 'op', label: '操作', fixed: 'right', render: opCell },
+    { key: 'score', label: '风险评分', width: '90px', align: 'center' },
+    { key: 'affectEp', label: '影响企业', width: '150px' },
+    { key: 'affectArea', label: '影响地区', width: '110px' },
+    { key: 'happen', label: '发生时间', width: '110px' },
+    { key: 'owner', label: '负责人', width: '110px' },
+    { key: 'status', label: '处理状态', width: '100px' },
+    { key: 'doneTime', label: '处理完成时间', width: '130px' },
+    { key: 'cycle', label: '处理周期（天）', width: '120px', align: 'center' },
+    { key: 'op', label: '操作', width: '150px', fixed: 'right', render: opCell },
   ]
 
-  const colsFull: Column[] = [
-    { key: 'push', label: '推送时间' },
-    { key: 'level', label: '风险等级', render: levelCell },
-    { key: 'type', label: '风险类型', width: '140px' },
-    { key: 'content', label: '风险内容', render: contentCell },
-    { key: 'score', label: '风险评分', align: 'center' },
-    { key: 'affectEp', label: '影响企业', width: '180px' },
-    { key: 'affectArea', label: '影响地区' },
-    { key: 'happen', label: '发生时间' },
-    { key: 'owner', label: '负责人' },
-    { key: 'status', label: '处理状态' },
-    { key: 'doneTime', label: '处理完成时间' },
-    { key: 'cycle', label: '处理周期（天）', align: 'center' },
-    { key: 'op', label: '操作', fixed: 'right', render: opCell },
-  ]
+  const filterChip = (on: boolean) => ({
+    cursor: 'pointer',
+    padding: '2px 10px',
+    borderRadius: 12,
+    fontSize: 12,
+    border: `1px solid ${on ? '#2563EB' : '#E2E8F0'}`,
+    background: on ? '#EFF6FF' : '#fff',
+    color: on ? '#2563EB' : '#475569',
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 4,
+  } as React.CSSProperties)
 
   return (
     <EpPage
-      title="风险预警"
-      subtitle="按监控规则推送企业风险动态，支持解读、跟进与案件串联"
+      title="风险预警 AI"
       crumb="风控中心 / 风险预警"
       actions={
         <span style={{ display: 'inline-flex', gap: 8 }}>
           <EpBtn variant="default" onClick={() => setCfgOpen(true)}>风险和推送设置</EpBtn>
-          <EpBtn variant="primary" onClick={() => setAddOpen(true)}>添加监控</EpBtn>
+          <EpBtn variant="primary" onClick={() => setAddOpen(true)}>+ 添加监控</EpBtn>
         </span>
       }
     >
-      {/* 顶部同步与额度 */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 12, marginBottom: 14 }}>
-        <EpStat label="已同步" value={`${data.synced} 家`} sub="家企业3个月监控动态数据" accent="#2563EB" />
-        <EpStat label="剩余额度" value={data.quota} sub="添加监控：输入添加 / Excel上传 / 从客户列表导入" accent="#0F766E" />
-      </div>
+      {/* 筛选区 */}
+      <EpCard pad={false}>
+        <div style={{ padding: '14px 18px', display: 'flex', flexDirection: 'column', gap: 12, fontSize: 13 }}>
+          {/* 监控筛选 */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '8px 16px' }}>
+            <span style={{ color: '#0F172A', fontWeight: 600, marginRight: 4 }}>监控筛选</span>
+            <RadioGroup label="" options={['推送时间', '发生时间']} value={timeMode} onChange={(v) => setTimeMode(v as typeof timeMode)} />
+            <CheckboxGroup label="风险等级" options={['高风险', '中风险', '低风险', '轻微风险']} value={levels} onChange={(v) => toggle(levels, setLevels, v)} />
+            <CheckboxGroup label="阅读状态" options={['已读', '未读']} value={readState} onChange={(v) => toggle(readState, setReadState, v)} />
+            <CheckboxGroup label="跟进状态" options={['未处理', '处理中', '已处理', '无需处理']} value={followState} onChange={(v) => toggle(followState, setFollowState, v)} />
+            <CheckboxGroup label="标记动态" options={['重点关注风险', '存在信用风险', '重大工商变更', '外部供应链风险']} value={markState} onChange={(v) => toggle(markState, setMarkState, v)} />
+            <CheckboxGroup label="监控规则" options={['启信慧眼默认规则(国内)', '启信慧眼默认规则(境外)', '外部供应链风险']} value={ruleState} onChange={(v) => toggle(ruleState, setRuleState, v)} />
+          </div>
 
-      {/* 监控筛选 */}
-      <EpCard title="监控筛选" pad={false}>
-        <div style={{ padding: '12px 18px', display: 'flex', flexDirection: 'column', gap: 10, fontSize: 13 }}>
-          <Row2 label="推送时间" opts={['今天', '昨天', '最近7天', '最近30天', '最近3个月', '自定义']} value={pushTime} onChange={setPushTime} />
-          <Row2 label="发生时间" opts={['不限', '今天', '昨天', '最近7天', '最近30天', '最近3个月', '自定义']} value={happenTime} onChange={setHappenTime} />
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-            <span style={{ color: '#475569', width: 84 }}>风险等级</span>
-            {['高风险', '中风险', '低风险', '轻微风险', '日常资讯'].map((l) => (
-              <span key={l} onClick={() => toggleLevel(l)} style={chip(levels.includes(l))}>{l}</span>
-            ))}
+          {/* 企业筛选 */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '8px 16px' }}>
+            <span style={{ color: '#0F172A', fontWeight: 600, marginRight: 4 }}>企业筛选</span>
+            <CheckboxGroup label="" options={['国内', '境外']} value={scope} onChange={(v) => toggle(scope, setScope, v)} />
+            <CheckboxGroup label="国家地区" options={['中国', '德国', '美国']} value={region} onChange={(v) => toggle(region, setRegion, v)} />
+            <CheckboxGroup label="企业标签" options={['全选', '默认分组']} value={epTag} onChange={(v) => toggle(epTag, setEpTag, v)} />
+            <CheckboxGroup label="企业分组" options={['未分组', '长时间未联系', '重点维护']} value={epGroup} onChange={(v) => toggle(epGroup, setEpGroup, v)} />
+            <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: '#475569' }}>
+              负责人/部门
+              <select style={{ ...inp, width: 130 }} value={owner} onChange={(e) => setOwner(e.target.value)}>
+                <option value="">请选择</option>
+                <option>19156027703</option>
+              </select>
+            </label>
+            <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: '#475569' }}>
+              添加人
+              <select style={{ ...inp, width: 130 }} value={adder} onChange={(e) => setAdder(e.target.value)}>
+                <option value="">请选择</option>
+                <option>19156027703</option>
+              </select>
+            </label>
+            <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: '#475569' }}>
+              关联企业
+              <input placeholder="请输入企业名称" style={{ ...inp, width: 160 }} value={related} onChange={(e) => setRelated(e.target.value)} />
+            </label>
           </div>
-          <Row2 label="阅读状态" opts={['不限', '已读', '未读']} value={readState} onChange={setReadState} />
-          <Row2 label="跟进状态" opts={['不限', '未处理', '处理中', '已处理', '无需处理']} value={followState} onChange={setFollowState} />
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-            <span style={{ color: '#475569', width: 84 }}>标记动态</span>
-            {MARKS.map((m) => <span key={m} style={chip(false)}>{m}</span>)}
+
+          {/* 风险类型 */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '8px 16px' }}>
+            <span style={{ color: '#0F172A', fontWeight: 600, marginRight: 4 }}>风险类型</span>
+            <CheckboxGroup label="" options={['不限', '基本信息', '经营风险', '司法风险', '经营信息', '企业舆情', '供应链风险', '关联方风险', '关键词舆情']} value={riskTypes} onChange={(v) => toggle(riskTypes, setRiskTypes, v)} />
           </div>
-          <Row2 label="监控规则" opts={['全部', '启信慧眼默认规则(国内)', '启信慧眼默认规则(境外)']} value={rule} onChange={setRule} />
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-            <span style={{ color: '#475569', width: 84 }}>企业筛选</span>
-            {['国内', '境外'].map((m) => <span key={m} style={chip(false)}>{m}</span>)}
-            <span style={{ color: '#475569', marginLeft: 8 }}>国家地区</span>
-            {['中国', '德国', '美国'].map((m) => <span key={m} style={chip(false)}>{m}</span>)}
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-            <span style={{ color: '#475569', width: 84 }}>企业标签</span>
-            {['全选', '默认分组'].map((m) => <span key={m} style={chip(false)}>{m}</span>)}
-            <EpBtn variant="ghost" size="sm">编辑标签</EpBtn>
-            <span style={{ color: '#475569', marginLeft: 8 }}>企业分组</span>
-            {['未分组', '长时间未联系', '重点维护'].map((m) => <span key={m} style={chip(false)}>{m}</span>)}
-            <EpBtn variant="ghost" size="sm">编辑分组</EpBtn>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-            <span style={{ color: '#475569', width: 84 }}>负责人/部门</span>
-            <select style={{ ...inp, width: 180 }}><option>请选择</option><option>19156027703</option></select>
-            <span style={{ color: '#475569' }}>添加人</span>
-            <select style={{ ...inp, width: 160 }}><option>19156027703</option></select>
-            <span style={{ color: '#475569' }}>关联企业</span>
-            <input placeholder="请输入企业名称" style={{ ...inp, width: 180 }} />
-          </div>
-          <Row2 label="风险类型" opts={RISK_TYPES} value={riskType} onChange={setRiskType} />
+
           {/* 已选条件 */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, borderTop: '1px dashed #E2E8F0', paddingTop: 10, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, borderTop: '1px dashed #E2E8F0', paddingTop: 12, flexWrap: 'wrap' }}>
             <span style={{ color: '#475569' }}>已选条件</span>
-            <EpTag>推送时间：{data.range}</EpTag>
-            <input value={kw} onChange={(e) => setKw(e.target.value)} placeholder="请输入关键词搜索" style={{ ...inp, width: 200 }} />
-            <EpBtn variant="default" size="sm">保存条件</EpBtn>
-            <EpBtn variant="ghost" size="sm" onClick={() => { setLevels([]); setFollowState('不限'); setKw('') }}>清空</EpBtn>
+            <EpTag>
+              <span style={{ color: '#475569' }}>{timeMode}：</span>
+              <span style={{ color: '#2563EB' }}>{data.range}</span>
+              <span style={{ marginLeft: 6, cursor: 'pointer', color: '#94A3B8' }}>×</span>
+            </EpTag>
+            <span style={{ marginLeft: 'auto', display: 'inline-flex', gap: 10 }}>
+              <a style={lk}>保存条件</a>
+              <a style={lk} onClick={() => {
+                setLevels([]); setReadState([]); setFollowState([]); setMarkState([]); setRuleState([])
+                setScope([]); setRegion([]); setEpTag([]); setEpGroup([]); setOwner(''); setAdder(''); setRelated('')
+                setRiskTypes(['不限']); setKw('')
+              }}>清空</a>
+            </span>
           </div>
         </div>
       </EpCard>
@@ -185,28 +216,33 @@ export default function FkRiskWarning({ params }: { params: URLSearchParams }) {
         <EpStat label="无需处理" value={`${data.stat.skip}条`} />
       </div>
 
-      {/* 工具条 */}
+      {/* 结果工具条 */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10, flexWrap: 'wrap' }}>
         <span style={{ fontSize: 13, color: '#0F172A' }}>找到 <b>{rows.length}</b> 条结果</span>
-        <span style={{ marginLeft: 8, display: 'inline-flex', gap: 8 }}>
+        <span style={{ marginLeft: 'auto', display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ display: 'inline-flex', gap: 2 }}>
+            <button style={iconBtn}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#64748B" strokeWidth="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></button>
+            <button style={iconBtn}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#64748B" strokeWidth="2"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg></button>
+          </span>
+          <span style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" strokeWidth="2" style={{ position: 'absolute', left: 8 }}><circle cx="11" cy="11" r="8"/><path d="M21 21L16.65 16.65"/></svg>
+            <input placeholder="请输入企业名称" style={{ ...inp, width: 180, paddingLeft: 28 }} value={kw} onChange={(e) => setKw(e.target.value)} />
+          </span>
           <EpBtn variant="default" size="sm">标为已读</EpBtn>
-          <EpBtn variant="ghost" size="sm">已读所选</EpBtn>
-          <EpBtn variant="ghost" size="sm">已读全部</EpBtn>
-        </span>
-        <span style={{ marginLeft: 'auto', display: 'inline-flex', gap: 8, alignItems: 'center' }}>
-          <span style={{ fontSize: 12, color: '#64748B' }}>展示字段</span>
-          {(['主体', '全字段'] as const).map((v) => (
-            <span key={v} onClick={() => setView(v)} style={chip(view === v)}>{v === '主体' ? '监控主体视图' : '全字段视图'}</span>
-          ))}
-          <EpBtn variant="default" size="sm">导出列表</EpBtn>
-          <EpBtn variant="ghost" size="sm">导出所选</EpBtn>
-          <EpBtn variant="ghost" size="sm">导出全部</EpBtn>
+          <EpBtn variant="default" size="sm" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#64748B" strokeWidth="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+            展示字段
+          </EpBtn>
+          <EpBtn variant="default" size="sm" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#64748B" strokeWidth="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+            导出列表
+          </EpBtn>
         </span>
       </div>
 
       <EpCard desc={<Sam value="fkRisk.json" />}>
         <DataTable
-          columns={view === '主体' ? colsSubject : colsFull}
+          columns={cols}
           rows={rows as unknown as Row[]}
           selectable
           selected={selected}
@@ -218,97 +254,10 @@ export default function FkRiskWarning({ params }: { params: URLSearchParams }) {
         />
       </EpCard>
 
-      {/* 添加监控（快照：风控 - 风险预警 - 添加监控） */}
-      <EpDrawer open={addOpen} onClose={() => setAddOpen(false)} title="添加监控" width={640}>
-        <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
-          {['输入粘贴上传', 'Excel上传', '客户列表导入'].map((t) => (
-            <span key={t} onClick={() => setAddTab(t)} style={tab(addTab === t)}>{t}</span>
-          ))}
-        </div>
-        <div style={{ fontSize: 12, color: '#64748B', marginBottom: 10 }}>
-          剩余额度 <b style={{ color: '#0F172A' }}>18</b>
-          <a style={{ ...lk, marginLeft: 10 }}>添加境外企业</a>
-        </div>
-        {addTab === '输入粘贴上传' && (
-          <>
-            <div style={{ fontSize: 12, color: '#94A3B8', marginBottom: 6 }}>
-              1、企业信息可手动输入添加，也可直接复制粘贴，如：乐视网信息技术（北京）股份有限公司
-            </div>
-            <textarea placeholder="请输入企业名称或选择分组" style={{ ...inp, height: 150, resize: 'vertical' }} />
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6, fontSize: 12, color: '#94A3B8' }}>
-              <span>0 / 540</span>
-              <span style={{ display: 'inline-flex', gap: 10 }}>
-                <a style={lk}>清空</a>
-                <a style={lk}>立即匹配</a>
-              </span>
-            </div>
-            <div style={{ marginTop: 12, border: '1px solid #F1F5F9', borderRadius: 10, padding: 14 }}>
-              <div style={{ fontSize: 13, color: '#0F172A' }}>已选目标 <b>0</b> <span style={{ color: '#94A3B8' }}>/18</span>
-                <a style={{ ...lk, marginLeft: 10, fontSize: 12 }}>下载名单</a>
-              </div>
-              <div style={{ marginTop: 8, fontSize: 12, color: '#94A3B8' }}>您添加的企业将展示在这里</div>
-            </div>
-          </>
-        )}
-        {addTab === 'Excel上传' && (
-          <div>
-            <div style={{ display: 'flex', gap: 8, fontSize: 12, color: '#64748B', marginBottom: 10 }}>
-              {['1 上传名单', '2 数据校验', '3 信息校验', '4 上传完成'].map((s) => (
-                <span key={s} style={{ padding: '3px 10px', borderRadius: 12, background: '#F1F5F9' }}>{s}</span>
-              ))}
-            </div>
-            <div style={{ border: '1px dashed #CBD5E1', borderRadius: 12, padding: 30, textAlign: 'center', color: '#94A3B8', fontSize: 13 }}>
-              将Excel文件拖拽至框内上传
-              <div style={{ fontSize: 12, marginTop: 6 }}>可添加 18 个目标 · 仅支持 Excel 格式文件(xls, xlsx)</div>
-              <div style={{ marginTop: 10, display: 'inline-flex', gap: 10 }}>
-                <EpBtn variant="primary" size="sm">点击上传</EpBtn>
-                <EpBtn variant="default" size="sm">下载样例文件</EpBtn>
-              </div>
-              <div style={{ marginTop: 10, fontSize: 12 }}>上传中 0% · 预计剩余时长 - 秒</div>
-            </div>
-            <div style={{ marginTop: 12, textAlign: 'right' }}>
-              <EpBtn variant="primary" size="sm">下一步</EpBtn>
-            </div>
-          </div>
-        )}
-        {addTab === '客户列表导入' && (
-          <div>
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 10 }}>
-              <input placeholder="输入企业关键字" style={{ ...inp, width: 200 }} />
-              <select style={{ ...inp, width: 140 }}><option>部门人员</option><option>19156027703</option></select>
-              <select style={{ ...inp, width: 140 }}>
-                <option>客商标签</option>
-                {['开户', '存款', '贷款', '战略客户', '睡眠户', '招采贷', '科技贷'].map((t) => <option key={t}>{t}</option>)}
-              </select>
-              <select style={{ ...inp, width: 140 }}>
-                <option>客商分组</option>
-                {['未分组', '长时间未联系', '重点维护'].map((t) => <option key={t}>{t}</option>)}
-              </select>
-            </div>
-            <DataTable
-              columns={[
-                { key: 'name', label: '选择本页' },
-                { key: 'group', label: '分组' },
-                { key: 'tag', label: '标签' },
-                { key: 'owner', label: '负责人' },
-                { key: 'time', label: '添加时间' },
-              ]}
-              rows={[
-                { id: 'i1', name: '抖音有限公司', group: '未分组', tag: '开户', owner: '19156027703', time: '2026-08-17' },
-                { id: 'i2', name: '深圳书读科技有限公司', group: '重点维护', tag: '贷款', owner: '19156027703', time: '2026-08-17' },
-              ]}
-              selectable
-            />
-            <div style={{ marginTop: 8, fontSize: 12, color: '#94A3B8' }}>共 2 条结果</div>
-          </div>
-        )}
-        <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 16 }}>
-          <EpBtn variant="default" onClick={() => setAddOpen(false)}>取消</EpBtn>
-          <EpBtn variant="primary" onClick={() => setAddOpen(false)}>确定</EpBtn>
-        </div>
-      </EpDrawer>
+      {/* 添加监控 · 与监控列表页共用同一弹窗 */}
+      <AddMonitorDrawer open={addOpen} onClose={() => setAddOpen(false)} />
 
-      {/* 风险和推送设置（快照：风控 - 风险预警 - 风险和推送设置 → 跳转到监控管理） */}
+      {/* 风险和推送设置 */}
       <EpDrawer open={cfgOpen} onClose={() => setCfgOpen(false)} title="风险和推送设置" width={560}>
         <div style={{ background: '#EFF6FF', border: '1px solid #DBEAFE', borderRadius: 10, padding: '12px 14px', fontSize: 13, color: '#1E3A8A' }}>
           该入口跳转到「监控管理」，在监控规则中统一维护风险项与推送方式。
@@ -324,13 +273,13 @@ export default function FkRiskWarning({ params }: { params: URLSearchParams }) {
           <div>
             <div style={{ color: '#64748B', fontSize: 12, marginBottom: 6 }}>推送风险等级</div>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              {['高风险', '中风险', '低风险', '轻微风险', '日常资讯'].map((l) => <span key={l} style={chip(l !== '日常资讯')}>{l}</span>)}
+              {['高风险', '中风险', '低风险', '轻微风险', '日常资讯'].map((l) => <span key={l} style={filterChip(l !== '日常资讯')}>{l}</span>)}
             </div>
           </div>
           <div>
             <div style={{ color: '#64748B', fontSize: 12, marginBottom: 6 }}>推送方式</div>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              {['站内消息', '邮件', '短信', '企业微信'].map((l) => <span key={l} style={chip(l === '站内消息')}>{l}</span>)}
+              {['站内消息', '邮件', '短信', '企业微信'].map((l) => <span key={l} style={filterChip(l === '站内消息')}>{l}</span>)}
             </div>
           </div>
           <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
@@ -340,7 +289,7 @@ export default function FkRiskWarning({ params }: { params: URLSearchParams }) {
         </div>
       </EpDrawer>
 
-      {/* 解读（快照：风控 - 风险预警 - 解读） */}
+      {/* AI 解读 */}
       <EpDrawer open={readOpen} onClose={() => setReadOpen(false)} title={cur ? `${cur.subject}-${cur.type}` : data.read.title} width={680}>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>
           {['标记动态', '收藏动态', '下载动态', '风险推送', '供应商', '企业风险'].map((b) => (
@@ -381,7 +330,7 @@ export default function FkRiskWarning({ params }: { params: URLSearchParams }) {
         </EpCard>
       </EpDrawer>
 
-      {/* 风险详情（快照：风控 - 风险预警 - 风险详情） */}
+      {/* 风险详情 */}
       <EpDrawer open={detailOpen} onClose={() => setDetailOpen(false)} title={`${cur?.subject ?? data.detail.name} 风险详情`} width={760}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 12 }}>
           <span style={{ fontSize: 16, fontWeight: 700 }}>{cur?.subject ?? data.detail.name}</span>
@@ -392,7 +341,6 @@ export default function FkRiskWarning({ params }: { params: URLSearchParams }) {
             <EpBtn variant="ghost" size="sm">关联企业</EpBtn>
           </span>
         </div>
-
         <EpCard title="企业信息" pad={false}>
           <dl style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', margin: 0 }}>
             {[
@@ -409,22 +357,13 @@ export default function FkRiskWarning({ params }: { params: URLSearchParams }) {
             ))}
           </dl>
         </EpCard>
-
         <EpCard title="风险概览" desc="推送时间 / 发生时间 · 今日 昨日 最近7天 最近30天 更多 自定义" className="mt-3.5">
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 10 }}>
             <EpStat label="风险分数" value={data.detail.score} accent="#DC2626" />
             <EpStat label="风险总数" value={data.detail.riskTotal} />
             <EpStat label="高风险" value={data.detail.highRisk} accent="#B91C1C" />
           </div>
-          <div style={{ marginTop: 10, fontSize: 12, color: '#64748B' }}>
-            风险分数趋势
-            <span style={{ marginLeft: 8, display: 'inline-flex', gap: 6 }}>
-              {['按天', '按周', '按月'].map((t) => <span key={t} style={chip(t === '按天')}>{t}</span>)}
-            </span>
-            <div style={{ marginTop: 6, color: '#94A3B8' }}>2026年08月04日 · 风险分值 0 · 风险总数 0 · 已处理 0 · 风险分环比无变化</div>
-          </div>
         </EpCard>
-
         <EpCard title="风险分布" className="mt-3.5">
           {data.detail.dist.map((g) => (
             <div key={g.type}>
@@ -441,27 +380,9 @@ export default function FkRiskWarning({ params }: { params: URLSearchParams }) {
             </div>
           ))}
         </EpCard>
-
-        <EpCard title="风险动态" desc={<Sam value="fkRisk.json" />} className="mt-3.5">
-          <DataTable
-            columns={[
-              { key: 'subject', label: '监控主体' },
-              { key: 'level', label: '风险等级', render: levelCell },
-              { key: 'happen', label: '发生时间' },
-              { key: 'type', label: '风险类型' },
-              { key: 'content', label: '风险内容', render: (r: Row) => <div style={{ maxWidth: 300, whiteSpace: 'normal' }}>{String(r.content)}</div> },
-              { key: 'score', label: '风险评分' },
-              { key: 'push', label: '推送时间' },
-              { key: 'owner', label: '负责人' },
-              { key: 'status', label: '处理状态' },
-            ]}
-            rows={data.rows.filter((r) => !cur || r.subject === cur.subject) as unknown as Row[]}
-            empty="暂无数据"
-          />
-        </EpCard>
       </EpDrawer>
 
-      {/* 案件串联（快照：风控 - 风险预警 - 风险详情 - 案件串联） */}
+      {/* 案件串联 */}
       <EpDrawer open={caseOpen} onClose={() => setCaseOpen(false)} title="案件详情" width={640}>
         <div style={{ fontSize: 14, fontWeight: 600, color: '#0F172A' }}>{data.caseLink.title}</div>
         <div style={{ marginTop: 4, fontSize: 12, color: '#64748B' }}>{data.caseLink.ep}</div>
@@ -491,28 +412,155 @@ export default function FkRiskWarning({ params }: { params: URLSearchParams }) {
           ))}
         </div>
       </EpDrawer>
+
+      {/* 风险预警详情（点击列表「风险内容」字段弹出） */}
+      <EpDrawer open={riskDetailOpen} onClose={() => setRiskDetailOpen(false)} width={760}>
+        {cur && (() => {
+          const d = (cur as unknown as Record<string, any>).detail as
+            | {
+                tag?: string
+                overview?: string
+                aiReading?: { status?: string; generating?: boolean; items?: string[] }
+                happenTime?: string
+                riskType?: string
+                affectRegions?: string[]
+                articleTitle?: string
+                article?: string
+              }
+            | undefined
+          return (
+            <div>
+              {/* 顶部：类型标签 + 标题 + 操作按钮 */}
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, flexWrap: 'wrap', marginBottom: 14 }}>
+                {d?.tag && <EpTag color="#C2410C" bg="#FFEDD5">{d.tag}</EpTag>}
+                <div style={{ flex: 1, minWidth: 280, fontSize: 16, fontWeight: 700, color: '#0F172A', lineHeight: 1.5 }}>{String(cur.title)}</div>
+                <span style={{ marginLeft: 'auto', display: 'inline-flex', gap: 8 }}>
+                  <EpBtn variant="ghost" size="sm">更多</EpBtn>
+                  <EpBtn variant="ghost" size="sm">风险推送</EpBtn>
+                  <EpBtn variant="primary" size="sm" onClick={() => { setRiskDetailOpen(false); setDetailOpen(true) }}>企业风险</EpBtn>
+                </span>
+              </div>
+
+              {/* 中部：风险等级 / 评分 / 负责人 */}
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, fontSize: 13, marginBottom: 12 }}>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                  <span style={{ color: '#94A3B8' }}>风险等级：</span>
+                  <EpTag color={LEVEL[String(cur.level)]?.c} bg={LEVEL[String(cur.level)]?.b}>{String(cur.level)}</EpTag>
+                </span>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                  <span style={{ color: '#94A3B8' }}>风险评分：</span>
+                  <b style={{ color: '#0F172A' }}>{cur.score}分</b>
+                </span>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                  <span style={{ color: '#94A3B8' }}>负责人：</span>
+                  <span style={{ color: '#0F172A' }}>{String(cur.owner)}</span>
+                </span>
+              </div>
+              <div style={{ fontSize: 13, color: '#334155', lineHeight: 1.8, background: '#F8FAFC', border: '1px solid #F1F5F9', borderRadius: 10, padding: '12px 14px', marginBottom: 14, whiteSpace: 'normal' }}>
+                {d?.overview ?? String(cur.content)}
+              </div>
+
+              {/* AI 风险解读折叠面板 */}
+              <EpCard
+                title={
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                    <span>AI 风险解读</span>
+                    <span style={{ padding: '1px 8px', borderRadius: 10, fontSize: 11, background: d?.aiReading?.generating ? '#FEF3C7' : '#DCFCE7', color: d?.aiReading?.generating ? '#92400E' : '#166534' }}>
+                      {d?.aiReading?.generating ? '解读中...' : 'AI生成'}
+                    </span>
+                  </span>
+                }
+                desc={
+                  <span style={{ cursor: 'pointer', fontSize: 12, color: '#2563EB' }} onClick={() => setAiExpand((v) => !v)}>
+                    {aiExpand ? '收起' : '展开'}
+                  </span>
+                }
+              >
+                {aiExpand && (
+                  <div style={{ fontSize: 13, color: '#334155', lineHeight: 1.9 }}>
+                    {(d?.aiReading?.items ?? ['正在为您解读']).map((it, i) => (
+                      <div key={i} style={{ display: 'flex', gap: 8 }}>
+                        <span style={{ color: '#94A3B8' }}>·</span>
+                        <span>{it}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </EpCard>
+
+              {/* 底部分栏：发生时间 / 风险类型 / 风险等级 / 影响范围 */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 10, margin: '14px 0' }}>
+                <div style={{ border: '1px solid #F1F5F9', borderRadius: 10, padding: '10px 12px' }}>
+                  <div style={{ fontSize: 12, color: '#94A3B8' }}>发生时间</div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: '#0F172A', marginTop: 4 }}>{d?.happenTime ?? String(cur.happen)}</div>
+                </div>
+                <div style={{ border: '1px solid #F1F5F9', borderRadius: 10, padding: '10px 12px' }}>
+                  <div style={{ fontSize: 12, color: '#94A3B8' }}>风险类型</div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: '#0F172A', marginTop: 4 }}>{d?.riskType ?? String(cur.type)}</div>
+                </div>
+                <div style={{ border: '1px solid #F1F5F9', borderRadius: 10, padding: '10px 12px' }}>
+                  <div style={{ fontSize: 12, color: '#94A3B8' }}>风险等级</div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: '#0F172A', marginTop: 4 }}>
+                    <EpTag color={LEVEL[String(cur.level)]?.c} bg={LEVEL[String(cur.level)]?.b}>{String(cur.level)}</EpTag>
+                  </div>
+                </div>
+                <div style={{ border: '1px solid #F1F5F9', borderRadius: 10, padding: '10px 12px' }}>
+                  <div style={{ fontSize: 12, color: '#94A3B8' }}>影响范围</div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: '#0F172A', marginTop: 4 }}>{(d?.affectRegions ?? []).join('、') || '-'}</div>
+                </div>
+              </div>
+
+              {/* 正文区：详细原文 + 查看原文 */}
+              <EpCard title={d?.articleTitle ?? String(cur.title)}>
+                <div style={{ fontSize: 13, color: '#334155', lineHeight: 1.9, whiteSpace: 'pre-wrap' }}>{d?.article ?? String(cur.content)}</div>
+                <a style={{ ...lk, fontSize: 12, marginTop: 8, display: 'inline-block' }}>查看原文 &gt;</a>
+              </EpCard>
+            </div>
+          )
+        })()}
+      </EpDrawer>
     </EpPage>
   )
 }
 
-function Row2({ label, opts, value, onChange }: { label: string; opts: string[]; value: string; onChange: (v: string) => void }) {
+function RadioGroup({ label, options, value, onChange }: { label?: string; options: string[]; value: string; onChange: (v: string) => void }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-      <span style={{ color: '#475569', width: 84 }}>{label}</span>
-      {opts.map((o) => <span key={o} onClick={() => onChange(o)} style={chip(value === o)}>{o}</span>)}
-    </div>
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+      {label && <span style={{ color: '#475569' }}>{label}</span>}
+      {options.map((o) => (
+        <label key={o} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, cursor: 'pointer', fontSize: 13, color: '#475569' }}>
+          <span style={{ width: 14, height: 14, borderRadius: '50%', border: `1px solid ${value === o ? '#2563EB' : '#CBD5E1'}`, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+            {value === o && <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#2563EB' }} />}
+          </span>
+          <span onClick={() => onChange(o)}>{o}</span>
+        </label>
+      ))}
+    </span>
   )
 }
 
-const chip = (on: boolean): React.CSSProperties => ({
-  cursor: 'pointer',
-  padding: '3px 12px',
-  borderRadius: 14,
-  fontSize: 12,
-  border: `1px solid ${on ? '#2563EB' : '#E2E8F0'}`,
-  background: on ? '#EFF6FF' : '#fff',
-  color: on ? '#2563EB' : '#64748B',
-})
+function CheckboxGroup({ label, options, value, onChange }: { label?: string; options: string[]; value: string[]; onChange: (v: string) => void }) {
+  return (
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+      {label && <span style={{ color: '#475569' }}>{label}</span>}
+      {options.map((o) => {
+        const checked = value.includes(o)
+        return (
+          <label key={o} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, cursor: 'pointer', fontSize: 13, color: '#475569' }}>
+            <span style={{ width: 14, height: 14, borderRadius: 3, border: `1px solid ${checked ? '#2563EB' : '#CBD5E1'}`, background: checked ? '#2563EB' : '#fff', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+              {checked && (
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              )}
+            </span>
+            <span onClick={() => onChange(o)}>{o}</span>
+          </label>
+        )
+      })}
+    </span>
+  )
+}
 
 const tab = (on: boolean): React.CSSProperties => ({
   cursor: 'pointer',
@@ -526,3 +574,21 @@ const tab = (on: boolean): React.CSSProperties => ({
 const dt: React.CSSProperties = { color: '#94A3B8' }
 const lk: React.CSSProperties = { color: '#2563EB', cursor: 'pointer' }
 const inp: React.CSSProperties = { padding: '7px 12px', border: '1px solid #CBD5E1', borderRadius: 8, fontSize: 13, outline: 'none', width: '100%' }
+const iconBtn: React.CSSProperties = { width: 28, height: 28, border: '1px solid #E2E8F0', background: '#fff', borderRadius: 6, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }
+
+function SortIcon() {
+  return (
+    <span style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'center', lineHeight: 0.6 }}>
+      <svg width="8" height="5" viewBox="0 0 24 24" fill="#94A3B8"><path d="M12 4l8 8H4z"/></svg>
+      <svg width="8" height="5" viewBox="0 0 24 24" fill="#94A3B8"><path d="M12 20l-8-8h16z"/></svg>
+    </span>
+  )
+}
+
+function FilterIcon() {
+  return (
+    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
+    </svg>
+  )
+}

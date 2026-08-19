@@ -12,12 +12,16 @@ import {
 import MidAlertWorkbench from './MidAlertWorkbench';
 import ScoreModelManagePage from './ScoreModelManage';
 import { FkModule } from './enterprise/fengkong/FkModule';
+import { JdModule } from './enterprise/jindiao/JdModule';
 
 export default function EnterpriseModule({ pageKey }: { pageKey: string }) {
   const cur = pageKey.split(':')[1] ?? 'overview';
   const params = new URLSearchParams(window.location.search);
   if (cur.startsWith('fk-')) {
     return <FkModule base={cur} params={params} />;
+  }
+  if (cur.startsWith('jd-')) {
+    return <JdModule base={cur} params={params} />;
   }
   switch (cur) {
     case 'qiye-search':
