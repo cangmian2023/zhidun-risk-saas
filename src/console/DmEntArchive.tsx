@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { PageShell } from './PageShell';
 import { loadQixinPage } from './qixinRuntime';
 import { extractHeader, extractContent, ARCHIVE_PATCH, FALLBACK_HIDE } from './qixinInject';
@@ -150,6 +151,7 @@ function loadBasic() {
 }
 
 export default function DmEntArchive() {
+  const nav = useNavigate();
   const [hash, setHash] = useState('basic');
   const [hover, setHover] = useState(false);
   const [resolved, setResolved] = useState<Resolved>(resolve('basic'));
@@ -217,6 +219,27 @@ export default function DmEntArchive() {
     root.append(style, body);
   }, [page, basic]);
 
+  // 集团信息：点击集团名 → 集团详情页
+  useEffect(() => {
+    if (resolved.pageKey !== 'group-info') return;
+    const el = contentRef.current;
+    if (!el) return;
+    const root = el.shadowRoot;
+    if (!root) return;
+    const names = Array.from(root.querySelectorAll('.enterprise-name')) as HTMLElement[];
+    names.forEach((n) => {
+      const name = (n.textContent || '').trim();
+      if (!name) return;
+      n.style.cursor = 'pointer';
+      n.style.color = '#2b6de5';
+      n.onclick = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        nav(`/console/dm/group-account-detail?name=${encodeURIComponent(name)}&back=/console/dm/ent-archive`);
+      };
+    });
+  }, [page, resolved.pageKey, nav]);
+
   // 图谱主题条（#navigator .menu-container）：文本→hash 映射，点击切换主题 + 高亮当前
   useEffect(() => {
     const el = contentRef.current;
@@ -249,16 +272,20 @@ export default function DmEntArchive() {
     <>
       <PageShell title="企业档案" subtitle="企业尽调档案 · qixin 快照 1:1 原样复刻（record/qixin）" legend={false} />
       <style>{`
-        .ent-tabbar-wrap{position:sticky;top:0;z-index:300;background:#fff;border-bottom:1px solid #edf0f5;box-shadow:0 2px 10px rgba(0,0,0,.05)}
+        /* 统一宽度容器：与 PageHeader 左右边距一致 */
+        .dm-archive-frame{max-width:1440px;margin:0 auto;padding:0 24px}
+        /* 吸顶位置：框架 header 56px + PageHeader 约 84px → 总 top:140px */
+        .ent-tabbar-wrap{position:sticky;top:140px;z-index:290;background:transparent;border:none;box-shadow:none;padding:12px 0}
         .ent-tabbar{display:flex;align-items:stretch;gap:2px;max-width:1440px;margin:0 auto;padding:0 24px;height:52px}
+        .ent-tabbar-inner{background:#fff;border:1px solid #edf0f5;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,.06);display:flex;align-items:stretch;gap:2px;padding:0 8px;height:52px;width:100%}
         .ent-tab-item{display:flex;align-items:center}
         .ent-tab-btn{display:inline-flex;align-items:center;gap:5px;height:52px;padding:0 14px;border:none;background:transparent;font-size:15px;color:#4a5160;cursor:pointer;position:relative;transition:color .15s}
         .ent-tab-btn:hover{color:#2b6de5}
         .ent-tab-btn.active{color:#2b6de5;font-weight:600}
         .ent-tab-btn.active::after{content:'';position:absolute;left:14px;right:14px;bottom:0;height:3px;border-radius:2px;background:#2b6de5}
         .ent-tab-count{font-size:11px;color:#ff5a5f;background:#fff0f0;border-radius:8px;padding:1px 6px;font-weight:500}
-        .ent-mega{position:absolute;top:100%;left:0;width:100%;background:#fff;border-top:1px solid #edf0f5;box-shadow:0 14px 34px rgba(0,0,0,.14);z-index:400;padding:18px 24px}
-        .ent-mega-inner{max-width:1440px;margin:0 auto;display:flex;flex-wrap:wrap;gap:10px 30px}
+        .ent-mega{position:absolute;top:calc(100% - 4px);left:50%;transform:translateX(-50%);width:calc(100% - 48px);max-width:1440px;background:#fff;border:1px solid #edf0f5;border-top:none;border-radius:0 0 8px 8px;box-shadow:0 14px 34px rgba(0,0,0,.14);z-index:400;padding:16px 0}
+        .ent-mega-inner{max-width:none;margin:0 auto;padding:0 16px;display:flex;flex-wrap:wrap;gap:10px 30px}
         .ent-mega-col{min-width:132px;flex:0 1 auto}
         .ent-mega-h{display:flex;align-items:center;gap:5px;font-size:13px;font-weight:600;color:#2b6de5;margin:0 0 8px;cursor:pointer}
         .ent-mega-h:hover{text-decoration:underline}
@@ -267,22 +294,26 @@ export default function DmEntArchive() {
         .ent-mega-item.active{color:#2b6de5;font-weight:600;background:#f3f7ff}
         .ent-loading{padding:40px 24px;color:#9aa3b2;font-size:14px}
       `}</style>
-      {/* 概要：随页滚走 */}
-      <div ref={summaryRef} style={{ width: '100%' }} />
-      {/* 原生 Tab 工具条：吸顶；悬停展开统一大白色 mega 面板 */}
+      {/* 概要：随页滚走，宽度与内容/表格对齐 */}
+      <div className="dm-archive-frame">
+        <div ref={summaryRef} style={{ width: '100%' }} />
+      </div>
+      {/* 原生 Tab 工具条：吸顶在 PageHeader 下方，卡片式居中（与上下卡片同宽） */}
       <div className="ent-tabbar-wrap" onMouseLeave={() => setHover(false)}>
-        <div className="ent-tabbar" onMouseEnter={() => setHover(true)}>
-          {ENT_TABS.map((t, i) => (
-            <div key={t.hash} className="ent-tab-item">
-              <button
-                className={`ent-tab-btn ${i === resolved.tabIdx ? 'active' : ''}`}
-                onClick={() => go(t.sub ? t.sub[0].hash : t.hash)}
-              >
-                {t.label}
-                {t.count && <span className="ent-tab-count">{t.count}</span>}
-              </button>
-            </div>
-          ))}
+        <div className="ent-tabbar">
+          <div className="ent-tabbar-inner" onMouseEnter={() => setHover(true)}>
+            {ENT_TABS.map((t, i) => (
+              <div key={t.hash} className="ent-tab-item">
+                <button
+                  className={`ent-tab-btn ${i === resolved.tabIdx ? 'active' : ''}`}
+                  onClick={() => go(t.sub ? t.sub[0].hash : t.hash)}
+                >
+                  {t.label}
+                  {t.count && <span className="ent-tab-count">{t.count}</span>}
+                </button>
+              </div>
+            ))}
+          </div>
         </div>
         {hover && (
           <div className="ent-mega">
@@ -311,8 +342,8 @@ export default function DmEntArchive() {
           </div>
         )}
       </div>
-      {/* 内容区 */}
-      <div style={{ padding: '16px 24px 24px', maxWidth: 1440, margin: '0 auto' }}>
+      {/* 内容区：宽度与概要/tabbar 对齐 */}
+      <div className="dm-archive-frame" style={{ paddingTop: 16, paddingBottom: 24 }}>
         <div ref={contentRef} style={{ width: '100%', minHeight: 400 }}>
           {!page && <div className="ent-loading">加载中…</div>}
         </div>

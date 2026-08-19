@@ -181,7 +181,7 @@ export const dmMenu: MenuGroup[] = [
       { label: '网格营销', key: 'dm:grid-marketing', keep: true, desc: '网格化责任片区管理：片区客户分布、商机跟进与业绩看板' },
       { label: '企业库', key: 'dm:company-lib', desc: '全量企业名录库：多维筛选、企业详情与批量收藏' },
       { label: '集团户', key: 'dm:group-account', keep: true, desc: '集团客户管理：国企/央企/民营/外资/机构集团及实际控制人视图' },
-      { label: '招投标', key: 'dm:tender', desc: '招投标信息检索与商机挖掘（资料待补充）' },
+      { label: '招投标', key: 'dm:tender', desc: '招投标信息检索与商机挖掘（我的标讯/全部标讯/中标企业库/产品词库）' },
       { label: '供应链', key: 'dm:supply-chain', desc: '产业链上下游企业挖掘与供应链金融商机识别' },
     ],
   },
@@ -190,7 +190,7 @@ export const dmMenu: MenuGroup[] = [
     section: '专题营销',
     items: [
       { label: '科创金融', key: 'dm:techfin', desc: '科创企业专属金融服务：科创企业库与资质画像' },
-      { label: '产业金融', key: 'dm:industry-fin', desc: '聚焦重点产业的链式营销与客群洞察' },
+      { label: '产业金融', key: 'dm:industry-fin', desc: '重点产业链式营销：产业概览/产业链图/产业地图/财务分析/企业名单/风险图谱等 11 个维度详情' },
       { label: '园区金融', key: 'dm:park-fin', desc: '产业园区客群拓展：园区列表、开发区画像与商机线索' },
       { label: '绿色金融', key: 'dm:green-fin', desc: '绿色金融客群：绿色企业认定与碳账户营销' },
       { label: '乡村振兴', key: 'dm:rural-revive', keep: true, desc: '乡村振兴客群：涉农企业、新型农业经营主体与惠农金融' },

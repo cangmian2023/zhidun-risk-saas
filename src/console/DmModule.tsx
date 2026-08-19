@@ -7,10 +7,11 @@ import ModulePage from './ModulePage'
 import { moduleSpecs } from './specs'
 import { subNames } from './menus'
 
-import DmAiMarketing from './DmAiMarketing'
+import DmAiMarketing, { DmAiMarketingResult } from './DmAiMarketing'
 import DmGridMarketing from './DmGridMarketing'
 import DmRuralRevive from './DmRuralRevive'
 import DmGroupAccount from './DmGroupAccount'
+import DmGroupAccountDetail from './DmGroupAccountDetail'
 import DmIndustryReport from './DmIndustryReport'
 import DmRating from './DmRating'
 import DmFullSearch from './DmFullSearch'
@@ -18,8 +19,11 @@ import DmRegionalBiz from './DmRegionalBiz'
 import DmMapProspect from './DmMapProspect'
 import DmCompanyLib from './DmCompanyLib'
 import DmSupplyChain from './DmSupplyChain'
+import DmTender from './DmTender'
 import DmTechFin from './DmTechFin'
+import DmTechFinDetail from './DmTechFinDetail'
 import DmIndustryFin from './DmIndustryFin'
+import DmIndustryFinDetail from './DmIndustryFinDetail'
 import DmParkFin from './DmParkFin'
 import DmGreenFin from './DmGreenFin'
 import DmMarketList from './DmMarketList'
@@ -45,12 +49,16 @@ export default function DmModule({ pageKey }: { pageKey: string }) {
   switch (cur) {
     case 'ai-marketing':
       return <DmAiMarketing />
+    case 'ai-marketing-result':
+      return <DmAiMarketingResult />
     case 'grid-marketing':
       return <DmGridMarketing />
     case 'rural-revive':
       return <DmRuralRevive />
     case 'group-account':
       return <DmGroupAccount />
+    case 'group-account-detail':
+      return <DmGroupAccountDetail />
     case 'industry-report':
       return <DmIndustryReport />
     case 'rating':
@@ -65,10 +73,16 @@ export default function DmModule({ pageKey }: { pageKey: string }) {
       return <DmCompanyLib />
     case 'supply-chain':
       return <DmSupplyChain />
+    case 'tender':
+      return <DmTender />
     case 'techfin':
       return <DmTechFin />
+    case 'techfin-detail':
+      return <DmTechFinDetail />
     case 'industry-fin':
       return <DmIndustryFin />
+    case 'industry-fin-detail':
+      return <DmIndustryFinDetail />
     case 'park-fin':
       return <DmParkFin />
     case 'green-fin':

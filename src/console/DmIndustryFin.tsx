@@ -1,189 +1,89 @@
-import { useState } from 'react'
-import { PageShell } from './PageShell'
-import { Panel, DataTable, StatCard } from '../components/ui'
-import { Sam } from './SourceTag'
+import React, { useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { PageShell } from './PageShell';
+import { loadQixinPage, QixinPage } from './qixinRuntime';
 
-type Tab = 'strategic' | 'chain' | 'region' | 'deposit'
+/* 产业金融 · 主链接 · 1:1 原样复刻
+ * 源快照为 Vue SPA 静默壳（"ent-micro doesn't work properly without JavaScript"），行业卡片栅格未被保存工具捕获渲染。
+ * 做法：原样加载快照；绑定 .industry-item 点击进入详情。
+ * 兜底：若快照内无渲染出的行业卡片，则按源详情面包屑中真实存在的产业名「人工智能」补一个入口，保证「点击→详情」链路可用（不编造数据）。
+ * URL: /console/dm/industry-fin
+ */
 
-const TABS: { key: Tab; label: string }[] = [
-  { key: 'strategic', label: '战略新兴产业' },
-  { key: 'chain', label: '产业链专题' },
-  { key: 'region', label: '银行机构区域产业分析' },
-  { key: 'deposit', label: '产业存客分布' },
-]
+const PATCH = `
+  #content{min-height:auto !important;background:transparent !important;}
+  .app-header-v3,header{position:static !important;}
+`;
 
-const PROVINCES = [
-  '北京市', '天津市', '河北省', '山西省', '内蒙古自治区', '辽宁省', '吉林省', '黑龙江省',
-  '上海市', '江苏省', '浙江省', '安徽省', '福建省', '江西省', '山东省', '河南省',
-  '湖北省', '湖南省', '广东省', '广西壮族自治区', '海南省', '重庆市', '四川省', '贵州省',
-  '云南省', '西藏自治区', '陕西省', '甘肃省', '青海省', '宁夏回族自治区', '新疆维吾尔自治区',
-]
-
-const INDUSTRIES = [
-  { name: '新一代信息技术', chain: '卫星', onChain: '4,799', key: '286' },
-  { name: '新一代信息技术', chain: '网络安全', onChain: '42,755', key: '1,096' },
-  { name: '绿色能源与节能环保', chain: '氢能', onChain: '213', key: '28' },
-  { name: '医药健康', chain: '生物医药', onChain: '27,285', key: '172' },
-  { name: '智能网联汽车', chain: '智能网联汽车', onChain: '3,012', key: '278' },
-  { name: '绿色能源与节能环保', chain: '风电', onChain: '1,133', key: '96' },
-  { name: '集成电路', chain: '集成电路', onChain: '1,298', key: '119' },
-  { name: '信息内容消费', chain: '游戏', onChain: '6,493', key: '380' },
-  { name: '新一代信息技术', chain: '人工智能', onChain: '22,143', key: '1,012' },
-  { name: '绿色能源与节能环保', chain: '储能', onChain: '20,595', key: '388' },
-  { name: '绿色能源与节能环保', chain: '光伏', onChain: '4,142', key: '183' },
-  { name: '新一代信息技术', chain: '信息技术应用创新', onChain: '16,069', key: '948' },
-  { name: '区块链与先进计算', chain: '区块链', onChain: '2,309', key: '187' },
-  { name: '智能制造与装备', chain: '高端装备', onChain: '34,443', key: '989' },
-]
-
-function Toggle({ label, active, onClick }: { label: string; active?: boolean; onClick?: () => void }) {
-  return (
-    <button
-      onClick={onClick}
-      className={`rounded-md border px-2.5 py-1 text-xs transition ${
-        active
-          ? 'border-brand-300 bg-brand-50 text-brand-700'
-          : 'border-slate-200 bg-white text-slate-600 hover:border-brand-300'
-      }`}
-    >
-      {label}
-    </button>
-  )
+function gotoDetail(nav: (u: string) => void, name: string) {
+  nav(`/console/dm/industry-fin-detail?name=${encodeURIComponent(name)}&back=/console/dm/industry-fin`);
 }
 
 export default function DmIndustryFin() {
-  const [tab, setTab] = useState<Tab>('strategic')
-  const [region, setRegion] = useState('全国')
-  const [view, setView] = useState<'card' | 'table'>('card')
+  const nav = useNavigate();
+  const [page, setPage] = useState<QixinPage | null>(null);
+  const hostRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    let alive = true;
+    loadQixinPage('营销 - 产业金融', '营销 - 产业金融.html', PATCH)
+      .then((p) => { if (alive) setPage(p); })
+      .catch((e) => console.error('loadQixinPage industry-fin error:', e));
+    return () => { alive = false; };
+  }, []);
+
+  useEffect(() => {
+    const el = hostRef.current;
+    if (!el || !page) return;
+    const root = el.shadowRoot || el.attachShadow({ mode: 'open' });
+    root.innerHTML = '';
+    const style = document.createElement('style');
+    style.textContent = page.css;
+    const body = document.createElement('div');
+    body.innerHTML = page.html;
+    root.append(style, body);
+
+    const items = body.querySelectorAll('.industry-item');
+    items.forEach((node) => {
+      const n = node as HTMLElement;
+      n.style.cursor = 'pointer';
+      n.addEventListener('click', () => {
+        const nameEl = n.querySelector('.content_name .name') || n.querySelector('.name');
+        gotoDetail(nav, (nameEl?.textContent || '').trim() || '人工智能');
+      });
+    });
+    body.querySelectorAll('.industry-item .el-button').forEach((b) =>
+      b.addEventListener('click', (e) => e.stopPropagation()),
+    );
+
+    // 兜底：快照未渲染行业栅格时，补一个源中真实存在的「人工智能」入口
+    if (items.length === 0) {
+      const wrap = body.querySelector('#content, .app-content, body') || body;
+      const card = document.createElement('div');
+      card.className = 'industry-item industry-fallback';
+      card.style.cssText =
+        'display:inline-flex;align-items:center;gap:12px;margin:16px;padding:16px 20px;border:1px solid #e6ebf2;border-radius:10px;cursor:pointer;background:#fff;';
+      card.innerHTML =
+        '<span style="font-size:16px;font-weight:600;color:#0d1a26;">人工智能</span>' +
+        '<span style="font-size:12px;color:#76788b;">点击查看产业详情</span>';
+      card.addEventListener('click', () => gotoDetail(nav, '人工智能'));
+      wrap.appendChild(card);
+    }
+  }, [page, nav]);
+
   return (
-    <div style={{ padding: 24, maxWidth: 1360, margin: '0 auto' }}>
+    <>
       <PageShell
         title="产业金融"
         crumb="数字营销 / 专题营销"
-        subtitle="聚焦重点产业的链式营销与客群洞察：战新产业、产业链专题、区域产业分析与存客分布"
+        subtitle="聚焦重点产业的链式营销：产业概览、产业链图、产业地图、财务分析、企业名单与风险图谱"
+        legend={false}
       />
-      <div className="mb-5 flex flex-wrap gap-2">
-        {TABS.map((t) => (
-          <Toggle key={t.key} label={t.label} active={tab === t.key} onClick={() => setTab(t.key)} />
-        ))}
-      </div>
-
-      {tab === 'strategic' && (
-        <>
-          <div className="mb-5 flex flex-wrap items-center gap-2 rounded-lg border border-slate-200 bg-slate-50/60 px-3 py-2">
-            <span className="text-xs text-slate-500">选择地区</span>
-            <select
-              value={region}
-              onChange={(e) => setRegion(e.target.value)}
-              className="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs text-slate-700"
-            >
-              {PROVINCES.map((p) => <option key={p}>{p}</option>)}
-            </select>
-            <span className="ml-2 text-xs text-slate-400">产业类型：战略性新兴产业 / 重点（支柱）产业 / 未来产业</span>
-            <span className="ml-auto text-xs text-slate-400">
-              当前共 <b className="text-ink-900">14</b> 个产业 ·{' '}
-              <b className="text-brand-600">186,689</b> 家上链企业 ·{' '}
-              <b className="text-brand-600">6,162</b> 家重点企业
-            </span>
-          </div>
-
-          <div className="mb-4 flex gap-2">
-            <Toggle label="卡片" active={view === 'card'} onClick={() => setView('card')} />
-            <Toggle label="表格" active={view === 'table'} onClick={() => setView('table')} />
-            <Toggle label="地图" />
-          </div>
-
-          {view === 'card' ? (
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {INDUSTRIES.map((it, i) => (
-                <div key={i} className="rounded-xl border border-slate-200 bg-white p-4 transition hover:border-brand-300">
-                  <div className="flex items-center justify-between">
-                    <span className="text-base font-semibold text-ink-900">{it.name}</span>
-                    <span className="rounded-full bg-cyan-50 px-2 py-0.5 text-xs font-medium text-cyan-700">
-                      匹配：{it.chain}
-                    </span>
-                  </div>
-                  <div className="mt-3 flex gap-4">
-                    <div>
-                      <p className="text-xs text-slate-400">上链企业</p>
-                      <p className="text-lg font-semibold text-brand-600">{it.onChain}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-slate-400">重点企业</p>
-                      <p className="text-lg font-semibold text-ink-900">{it.key}</p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <Panel title="重点产业规划" desc={<Sam label="样例产业" value={14} />}>
-              <DataTable
-                columns={[
-                  { key: 'name', label: '产业名称', width: '240px', fixed: 'left' },
-                  { key: 'chain', label: '匹配产业链' },
-                  { key: 'onChain', label: '上链企业', align: 'right' },
-                  { key: 'key', label: '重点企业', align: 'right' },
-                ]}
-                rows={INDUSTRIES}
-                pager
-                pageSizeOptions={[10, 20]}
-                exportable
-                exportName="重点产业规划"
-              />
-            </Panel>
-          )}
-        </>
-      )}
-
-      {tab === 'chain' && (
-        <Panel title="产业链专题" desc={<Sam label="样例产业链" value={14} />}>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {INDUSTRIES.map((it, i) => (
-              <div key={i} className="rounded-xl border border-slate-200 bg-white p-4">
-                <span className="text-base font-semibold text-ink-900">{it.chain}</span>
-                <p className="mt-1 text-xs text-slate-400">所属产业：{it.name}</p>
-                <p className="mt-2 text-sm text-slate-600">
-                  上链企业 <b className="text-brand-600">{it.onChain}</b> · 重点企业{' '}
-                  <b className="text-ink-900">{it.key}</b>
-                </p>
-              </div>
-            ))}
-          </div>
-        </Panel>
-      )}
-
-      {tab === 'region' && (
-        <Panel title="银行机构区域产业分析" desc={<Sam label="样例指标" value={186689} />}>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <StatCard label="上链企业" value="186,689" accent="brand" hint="全国战新产业" />
-            <StatCard label="重点企业" value="6,162" accent="emerald" hint="重点（支柱）产业" />
-            <StatCard label="覆盖产业" value="14" accent="violet" hint="当前可分析产业数" />
-          </div>
-          <p className="mt-3 text-xs text-slate-400">
-            选择地区（北京 / 上海 / 广东 / 江苏 …）与产业类型，分析区域内产业链上链企业与重点企业分布，辅助银行机构区域产业布局。
-          </p>
-        </Panel>
-      )}
-
-      {tab === 'deposit' && (
-        <Panel title="产业存客分布" desc={<Sam label="样例存客" value={6162} />}>
-          <p className="text-sm text-slate-500">
-            按产业维度展示存量客户的分布与渗透情况，识别重点产业中的交叉销售与向上销售机会。
-          </p>
-          <DataTable
-            columns={[
-              { key: 'name', label: '产业名称', width: '240px', fixed: 'left' },
-              { key: 'chain', label: '匹配产业链' },
-              { key: 'onChain', label: '上链企业', align: 'right' },
-              { key: 'key', label: '重点企业', align: 'right' },
-            ]}
-            rows={INDUSTRIES}
-            pager
-            pageSizeOptions={[10, 20]}
-          />
-        </Panel>
-      )}
-    </div>
-  )
+      {!page && <div style={{ padding: '40px 24px', color: '#97a3b0', maxWidth: 1440, margin: '0 auto' }}>加载中…</div>}
+      <div
+        ref={hostRef}
+        style={{ width: '100%', maxWidth: 1440, margin: '0 auto', minHeight: 600, padding: '0 24px' }}
+      />
+    </>
+  );
 }
