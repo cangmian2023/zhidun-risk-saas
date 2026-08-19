@@ -4,6 +4,7 @@
 import React, { useEffect, useRef, useState, type ReactNode } from 'react'
 import { PageShell } from '../PageShell'
 import { Sam, Cfg, Cal, type SourceKind } from '../SourceTag'
+export { Sam, Cfg, Cal }
 import { DataTable, Panel } from '../../components/ui'
 import { entMenu } from '../menus'
 

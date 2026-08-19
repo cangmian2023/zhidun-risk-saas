@@ -1,9 +1,13 @@
-// 风控中心 · 监控列表（fk-monitor-list）· 1:1 复刻「风控 - 监控列表」
-// 子快照「风控 - 监控列表 - 风险详情」（0KB，内容与「风控 - 风险预警 - 风险详情」同源）→ 抽屉渲染
-// 数据：本地样例 fkMonitor.json（橘 Sam）
+// 风控中心 · 监控列表（ep:fk-monitor-list）· 1:1 复刻「启信慧眼 - 监控列表」截图
+// 布局：顶部标题栏 → 两行筛选条 → 操作条 → 表格 → 分页
 import { useState } from 'react'
-import { EpPage, EpCard, EpStat, EpTag, EpBtn, EpDrawer, DataTable, useSample, Sam } from '../../epCommon'
-import type { Row, Column } from '../../../../components/ui'
+import { Sam } from '../../../SourceTag'
+
+type Avatar =
+  | { kind: 'logo' }        // 抖音黑色logo方块
+  | { kind: 'wave' }        // 蓝色波浪符（抖音视界等）
+  | { kind: 'letter'; letter: string; color: string; bg: string }
+  | { kind: 'building' }
 
 type Company = {
   id: string
@@ -12,480 +16,330 @@ type Company = {
   area: string
   addr: number
   rule: string
-  tag: string
-  owner: string
-  adder: string
-  addTime: string
-  note: string
+  avatar: Avatar
 }
 
-type Dyn = {
-  id: string
-  subject: string
-  level: string
-  happen: string
-  type: string
-  content: string
-  score: number
-  push: string
-  owner: string
-  status: string
-}
+const COMPANIES: Company[] = [
+  { id: '1', name: '抖音视界有限公司', code: '9111010759963556...', area: '北京石景山区', addr: 1, rule: '启信慧眼默认规则(...', avatar: { kind: 'wave' } },
+  { id: '2', name: '抖音有限公司', code: '91110105MA005AE...', area: '北京海淀区', addr: 1, rule: '启信慧眼默认规则(...', avatar: { kind: 'logo' } },
+  { id: '3', name: '深圳书读科技有限公司', code: '91440300MA5HMF...', area: '广东深圳南山区', addr: 1, rule: '启信慧眼默认规则(...', avatar: { kind: 'letter', letter: '深', color: '#165DFF', bg: '#E8F3FF' } },
+  { id: '4', name: 'Tesla, Inc.', code: '-', area: '德国柏林,美国加利...', addr: 2, rule: '启信慧眼默认规则(...', avatar: { kind: 'letter', letter: 'T', color: '#fff', bg: '#165DFF' } },
+  { id: '5', name: 'Siemens', code: '-', area: '德国柏林', addr: 1, rule: '启信慧眼默认规则(...', avatar: { kind: 'letter', letter: 'S', color: '#0FC6C2', bg: '#E8FFFB' } },
+  { id: '6', name: 'openai', code: '-', area: '美国加利福尼亚州', addr: 1, rule: '启信慧眼默认规则(...', avatar: { kind: 'letter', letter: 'o', color: '#00B42A', bg: '#E8FFEA' } },
+  { id: '7', name: '军蒂粤信智能科技（北京）有限公司', code: '91110108MA01LQP...', area: '北京丰台区', addr: 1, rule: '启信慧眼默认规则(...', avatar: { kind: 'letter', letter: '军', color: '#165DFF', bg: '#E8F3FF' } },
+  { id: '8', name: '广州粤信科技有限公司湘西分公司', code: '91433101MA4Q0A...', area: '湖南湘西吉首市', addr: 1, rule: '启信慧眼默认规则(...', avatar: { kind: 'building' } },
+  { id: '9', name: '福州粤信知慧科技有限公司', code: '9135010457700179...', area: '福建福州台江区', addr: 1, rule: '启信慧眼默认规则(...', avatar: { kind: 'letter', letter: '福', color: '#165DFF', bg: '#E8F3FF' } },
+  { id: '10', name: '北京粤信云鼎科技有限公司', code: '91110113MAEWW...', area: '北京顺义区', addr: 1, rule: '启信慧眼默认规则(...', avatar: { kind: 'letter', letter: '北', color: '#165DFF', bg: '#E8F3FF' } },
+  { id: '11', name: '广东安家粤信科技有限公司', code: '91440101MA5D3N...', area: '广东广州天河区', addr: 1, rule: '启信慧眼默认规则(...', avatar: { kind: 'letter', letter: '广', color: '#165DFF', bg: '#E8F3FF' } },
+  { id: '12', name: '湘西粤信数慧科技有限公司', code: '91433100MA4RMK...', area: '湖南湘西吉首市', addr: 1, rule: '启信慧眼默认规则(...', avatar: { kind: 'letter', letter: '湘', color: '#165DFF', bg: '#E8F3FF' } },
+  { id: '13', name: '深圳粤信数慧科技有限公司', code: '91440300MA5G4GJ...', area: '广东深圳南山区', addr: 1, rule: '启信慧眼默认规则(...', avatar: { kind: 'letter', letter: '深', color: '#165DFF', bg: '#E8F3FF' } },
+  { id: '14', name: '粤信数智种植产业发展（金寨）有限公司', code: '91341524MA8PCX5...', area: '安徽六安金寨县', addr: 1, rule: '启信慧眼默认规则(...', avatar: { kind: 'letter', letter: '粤', color: '#165DFF', bg: '#E8F3FF' } },
+  { id: '15', name: '广州粤信科技有限公司北京分公司', code: '91110108MA01E7C...', area: '北京海淀区', addr: 1, rule: '启信慧眼默认规则(...', avatar: { kind: 'building' } },
+  { id: '16', name: '合瑞云创网络信息（北京）有限公司', code: '91110108MA0050...', area: '北京海淀区', addr: 1, rule: '启信慧眼默认规则(...', avatar: { kind: 'letter', letter: '合', color: '#165DFF', bg: '#E8F3FF' } },
+]
 
-const seed = {
-  synced: 0,
-  quota: 17,
-  monitorCount: 16,
-  rule: '启信慧眼默认规则(国内)',
-  companies: [
-    { id: '1', name: '抖音视界有限公司', code: '91110107599635562F', area: '北京石景山区', addr: 1, rule: '启信慧眼默认规则(国内)', tag: '-', owner: '19156027703', adder: '19156027703', addTime: '2026-08-17 15:19', note: '-' },
-    { id: '2', name: '抖音有限公司', code: '91110105MA005AEF36', area: '北京海淀区', addr: 1, rule: '启信慧眼默认规则(国内)', tag: '-', owner: '19156027703', adder: '19156027703', addTime: '2026-08-17 15:12', note: '-' },
-    { id: '3', name: '深圳书读科技有限公司', code: '91440300MA5HMF811W', area: '广东深圳南山区', addr: 1, rule: '启信慧眼默认规则(国内)', tag: '-', owner: '19156027703', adder: '19156027703', addTime: '2026-08-17 15:12', note: '-' },
-    { id: '4', name: 'Tesla, Inc.', code: '-', area: '德国柏林,美国加利福尼亚州', addr: 2, rule: '启信慧眼默认规则(境外)', tag: '-', owner: '19156027703', adder: '19156027703', addTime: '2026-08-17 13:00', note: '-' },
-    { id: '5', name: 'Siemens', code: '-', area: '德国柏林', addr: 1, rule: '启信慧眼默认规则(境外)', tag: '-', owner: '19156027703', adder: '19156027703', addTime: '2026-08-17 13:00', note: '-' },
-    { id: '6', name: 'openai', code: '-', area: '美国加利福尼亚州', addr: 1, rule: '启信慧眼默认规则(境外)', tag: '-', owner: '19156027703', adder: '19156027703', addTime: '2026-08-17 13:00', note: '-' },
-    { id: '7', name: '军蒂粤信智能科技（北京）有限公司', code: '91110108MA01LQPE7U', area: '北京丰台区', addr: 1, rule: '启信慧眼默认规则(国内)', tag: '-', owner: '19156027703', adder: '19156027703', addTime: '2026-08-17 12:59', note: '-' },
-    { id: '8', name: '广州粤信科技有限公司湘西分公司', code: '91433101MA4Q0ADG9U', area: '湖南湘西吉首市', addr: 1, rule: '启信慧眼默认规则(国内)', tag: '-', owner: '19156027703', adder: '19156027703', addTime: '2026-08-17 12:59', note: '-' },
-    { id: '9', name: '福州粤信知慧科技有限公司', code: '91350104577001796Q', area: '福建福州台江区', addr: 1, rule: '启信慧眼默认规则(国内)', tag: '-', owner: '19156027703', adder: '19156027703', addTime: '2026-08-17 12:59', note: '-' },
-    { id: '10', name: '北京粤信云鼎科技有限公司', code: '91110113MAEWWUAL33', area: '北京顺义区', addr: 1, rule: '启信慧眼默认规则(国内)', tag: '-', owner: '19156027703', adder: '19156027703', addTime: '2026-08-17 12:59', note: '-' },
-    { id: '11', name: '广东安家粤信科技有限公司', code: '91440101MA5D3NR25U', area: '广东广州天河区', addr: 1, rule: '启信慧眼默认规则(国内)', tag: '-', owner: '19156027703', adder: '19156027703', addTime: '2026-08-17 12:59', note: '-' },
-    { id: '12', name: '湘西粤信数慧科技有限公司', code: '91433100MA4RMK9K4G', area: '湖南湘西吉首市', addr: 1, rule: '启信慧眼默认规则(国内)', tag: '-', owner: '19156027703', adder: '19156027703', addTime: '2026-08-17 12:59', note: '-' },
-    { id: '13', name: '深圳粤信数慧科技有限公司', code: '91440300MA5G4GJL93', area: '广东深圳南山区', addr: 1, rule: '启信慧眼默认规则(国内)', tag: '-', owner: '19156027703', adder: '19156027703', addTime: '2026-08-17 12:59', note: '-' },
-    { id: '14', name: '粤信数智种植产业发展（金寨）有限公司', code: '91341524MA8PCX5T9Q', area: '安徽六安金寨县', addr: 1, rule: '启信慧眼默认规则(国内)', tag: '-', owner: '19156027703', adder: '19156027703', addTime: '2026-08-17 12:59', note: '-' },
-    { id: '15', name: '广州粤信科技有限公司北京分公司', code: '91110108MA01E7CBX5', area: '北京海淀区', addr: 1, rule: '启信慧眼默认规则(国内)', tag: '-', owner: '19156027703', adder: '19156027703', addTime: '2026-08-17 12:59', note: '-' },
-    { id: '16', name: '合瑞云创网络信息（北京）有限公司', code: '91110108MA0050MQ7N', area: '北京海淀区', addr: 1, rule: '启信慧眼默认规则(国内)', tag: '-', owner: '19156027703', adder: '19156027703', addTime: '2026-08-17 12:59', note: '-' },
-  ] as Company[],
-  detail: {
-    name: '抖音有限公司',
-    status: '存续',
-    legal: '银平',
-    capital: '10,000万人民币',
-    found: '2016-05-04',
-    area: '北京海淀区',
-    code: '91110105MA005AEF36',
-    country: '中国',
-    address: '北京市海淀区北三环西路甲23号院1号楼3层327',
-    email: '-',
-    epNo: '-',
-    shortName: '-',
-    relatedEp: '-',
-    epTag: '-',
-    epGroup: '未分组',
-    owner: '19156027703',
-    note: '-',
-    adder: '19156027703',
-    addTime: '2026-08-17',
-    rule: '启信慧眼默认规则(国内)',
-    score: 180,
-    riskTotal: 6,
-    highRisk: 0,
-    dist: [
-      {
-        type: '司法风险',
-        count: 6,
-        items: [
-          { name: '开庭公告', num: '0条', level: '中风险', content: '暂无内容' },
-          { name: '法院公告', num: '0条', level: '低风险', content: '暂无内容' },
-        ],
-      },
-    ],
-    dynamics: [
-      { id: 'd1', subject: '抖音有限公司', level: '低风险', happen: '2026-06-23', type: '法院公告', content: '新增法院公告，其身份为被告，案号为（2025）京0108民初71962号，案由为确认不侵害著作权纠纷，是一则裁判文书的公告', score: 10, push: '2026-08-17', owner: '19156027703', status: '未处理' },
-      { id: 'd2', subject: '抖音有限公司', level: '中风险', happen: '2026-06-08', type: '开庭公告', content: '新增开庭公告，其身份为被告，案由为买卖合同纠纷，案号（2026）赣0111民初1112号', score: 50, push: '2026-08-17', owner: '19156027703', status: '未处理' },
-      { id: 'd3', subject: '抖音有限公司', level: '低风险', happen: '2026-04-27', type: '开庭公告', content: '新增开庭公告，相关当事人 上海格物致品网络科技有限公司，案由为买卖合同纠纷', score: 10, push: '2026-08-17', owner: '19156027703', status: '未处理' },
-    ] as Dyn[],
-  },
-}
+const QUOTA = 17
 
-const LEVEL_COLOR: Record<string, { c: string; b: string }> = {
-  高风险: { c: '#B91C1C', b: '#FEE2E2' },
-  中风险: { c: '#C2410C', b: '#FFEDD5' },
-  低风险: { c: '#1D4ED8', b: '#EFF6FF' },
-  轻微风险: { c: '#0F766E', b: '#CCFBF1' },
-  日常资讯: { c: '#475569', b: '#F1F5F9' },
-}
-
-export default function FkMonitorList({ params }: { params: URLSearchParams }) {
-  const [data] = useSample('fkMonitor.json', seed)
-  const [kw, setKw] = useState('')
-  const [scope, setScope] = useState('国内')
-  const [country, setCountry] = useState('中国')
-  const [hasAddr, setHasAddr] = useState('不限')
-  const [hasEmail, setHasEmail] = useState('不限')
-  const [rule, setRule] = useState('全部')
-  const [group, setGroup] = useState('未分组')
-  const [selected, setSelected] = useState<string[]>([])
-  const [addOpen, setAddOpen] = useState(false)
-  const [addTab, setAddTab] = useState('输入添加')
-  const [detailOpen, setDetailOpen] = useState(false)
-  const [curName, setCurName] = useState(params.get('name') || '抖音有限公司')
-
-  const rows = data.companies.filter((c) => {
-    if (kw && !c.name.includes(kw) && !c.code.includes(kw)) return false
-    if (rule !== '全部' && c.rule !== rule) return false
-    return true
-  })
-
-  const columns: Column[] = [
-    { key: 'name', label: '企业名称', width: '200px', render: (r: Row) => (
-      <a style={{ color: '#2563EB', cursor: 'pointer' }} onClick={() => { setCurName(String(r.name)); setDetailOpen(true) }}>{String(r.name)}</a>
-    ) },
-    { key: 'code', label: '统一社会信用代码', width: '170px' },
-    { key: 'area', label: '地区', width: '160px' },
-    { key: 'addr', label: '关联地址', align: 'center', render: (r: Row) => <a style={{ color: '#2563EB' }}>{String(r.addr)}</a> },
-    { key: 'rule', label: '监控规则', width: '170px' },
-    { key: 'tag', label: '标签' },
-    { key: 'owner', label: '负责人/部门' },
-    { key: 'adder', label: '添加人' },
-    { key: 'addTime', label: '添加时间', width: '140px' },
-    { key: 'note', label: '备注' },
-    {
-      key: 'op',
-      label: '操作',
-      fixed: 'right',
-      width: '230px',
-      render: (r: Row) => (
-        <span style={{ display: 'inline-flex', gap: 8, whiteSpace: 'nowrap' }}>
-          <a style={lk} onClick={() => { setCurName(String(r.name)); setDetailOpen(true) }}>查看</a>
-          <span style={{ color: '#CBD5E1' }}>|</span>
-          <a style={lk}>编辑企业</a>
-          <a style={lk}>编辑地址</a>
-          <span style={{ color: '#CBD5E1' }}>|</span>
-          <a style={lk}>关联企业</a>
-          <a style={{ ...lk, color: '#DC2626' }}>移除</a>
-        </span>
-      ),
-    },
-  ]
+export default function FkMonitorList(_: { params?: URLSearchParams } = {}) {
+  const [selected, setSelected] = useState<Set<string>>(new Set())
+  const allSelected = selected.size === COMPANIES.length && COMPANIES.length > 0
+  const toggleAll = () => setSelected(allSelected ? new Set() : new Set(COMPANIES.map((c) => c.id)))
+  const toggle = (id: string) =>
+    setSelected((prev) => {
+      const n = new Set(prev)
+      n.has(id) ? n.delete(id) : n.add(id)
+      return n
+    })
 
   return (
-    <EpPage
-      title="监控列表"
-      subtitle="已同步企业 3 个月监控动态数据，按监控规则持续推送风险"
-      crumb="风控中心 / 监控列表"
-      actions={
-        <span style={{ display: 'inline-flex', gap: 8 }}>
-          <EpBtn variant="default">风险和推送设置</EpBtn>
-          <EpBtn variant="primary" onClick={() => setAddOpen(true)}>添加监控</EpBtn>
-        </span>
-      }
-    >
-      {/* 顶部统计：已同步 X 家企业 3 个月监控动态数据 / 剩余额度 */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 12, marginBottom: 14 }}>
-        <EpStat label="已同步" value={`${data.synced} 家`} sub="家企业3个月监控动态数据" accent="#2563EB" />
-        <EpStat label="剩余额度" value={data.quota} sub="可继续添加监控企业数" accent="#0F766E" />
-        <EpStat label="监控企业数" value={`${data.monitorCount} 家`} sub={data.rule} />
+    <div style={{ padding: '16px 20px 60px', background: '#F5F6F7', minHeight: '100vh' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+        <h1 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: '#1D2129' }}>监控列表</h1>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 13, color: '#4E5969' }}>
+            <BellIcon /> 剩余额度 <span style={{ color: '#F53F3F', fontWeight: 600 }}>{QUOTA}</span>
+          </span>
+          <button type="button" style={btnDefault}>
+            <SettingIcon /> 风险和推送设置
+          </button>
+          <button type="button" style={btnPrimary}>
+            <PlusIcon /> 添加监控
+          </button>
+        </div>
       </div>
 
-      {/* 添加监控入口（输入添加 / Excel上传 / 从客户列表导入） */}
-      <EpCard pad={false} className="mb-3.5">
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 18px', flexWrap: 'wrap' }}>
-          <span style={{ fontSize: 13, color: '#475569' }}>添加监控</span>
-          {['输入添加', 'Excel上传', '从客户列表导入'].map((t) => (
-            <EpBtn key={t} variant="default" size="sm" onClick={() => { setAddTab(t); setAddOpen(true) }}>{t}</EpBtn>
-          ))}
-          <span style={{ marginLeft: 'auto', display: 'inline-flex', gap: 8 }}>
-            <input value={kw} onChange={(e) => setKw(e.target.value)} placeholder="请输入企业名称、编号、简称" style={{ ...inp, width: 240 }} />
-            <EpBtn variant="primary" size="sm">搜索</EpBtn>
+      <div style={{ background: '#fff', borderRadius: 2, border: '1px solid #E5E6EB' }}>
+        <div style={{ padding: '14px 16px 6px', borderBottom: '1px solid #F2F3F5' }}>
+          <FilterRow label="企业信息">
+            <CheckDropdown label="国内/境外" />
+            <CheckDropdown label="国家地区" />
+            <RadioDropdown label="关联地址" />
+            <RadioDropdown label="联系邮箱" />
+          </FilterRow>
+          <FilterRow label="监控筛选">
+            <CheckDropdown label="负责人/部门" />
+            <CheckDropdown label="企业标签" />
+            <CheckDropdown label="企业分组" />
+            <CheckDropdown label="添加人" />
+            <CheckDropdown label="监控规则" />
+          </FilterRow>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', padding: '10px 16px', gap: 8, flexWrap: 'wrap', borderBottom: '1px solid #F2F3F5' }}>
+          <span style={{ fontSize: 14, fontWeight: 600, color: '#1D2129', marginRight: 4 }}>
+            监控企业数：{COMPANIES.length}家
           </span>
-        </div>
-      </EpCard>
-
-      {/* 筛选：企业信息 + 监控筛选 */}
-      <EpCard title="企业信息" pad={false}>
-        <div style={{ padding: '12px 18px', display: 'flex', flexDirection: 'column', gap: 10, fontSize: 13 }}>
-          <FilterRow label="国内/境外" opts={['国内', '境外']} value={scope} onChange={setScope} />
-          <FilterRow label="国家地区" opts={['中国', '德国', '美国']} value={country} onChange={setCountry} />
-          <FilterRow label="关联地址" opts={['不限', '有', '无']} value={hasAddr} onChange={setHasAddr} />
-          <FilterRow label="联系邮箱" opts={['不限', '有', '无']} value={hasEmail} onChange={setHasEmail} />
-        </div>
-      </EpCard>
-
-      <div style={{ marginTop: 12 }}>
-        <EpCard title="监控筛选" pad={false}>
-          <div style={{ padding: '12px 18px', display: 'flex', flexDirection: 'column', gap: 10, fontSize: 13 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <span style={{ color: '#475569', width: 92 }}>负责人/部门</span>
-              <select style={{ ...inp, width: 220 }}>
-                <option>请选择</option>
-                <option>19156027703</option>
-              </select>
-              <span style={{ color: '#475569', marginLeft: 12 }}>添加人</span>
-              <select style={{ ...inp, width: 180 }}>
-                <option>19156027703</option>
-              </select>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-              <span style={{ color: '#475569', width: 92 }}>企业标签</span>
-              {['全选', '默认分组'].map((t) => <Chip key={t} on={false}>{t}</Chip>)}
-              <EpBtn variant="ghost" size="sm">编辑标签</EpBtn>
-            </div>
-            <FilterRow label="企业分组" opts={['未分组', '长时间未联系', '重点维护']} value={group} onChange={setGroup} extra={<EpBtn variant="ghost" size="sm">分组管理</EpBtn>} />
-            <FilterRow
-              label="监控规则"
-              opts={['全部', '启信慧眼默认规则(国内)', '启信慧眼默认规则(境外)']}
-              value={rule}
-              onChange={setRule}
+          <div style={searchBox}>
+            <SearchIcon />
+            <input
+              placeholder="请输入企业名称、编号、简称"
+              style={{ border: 'none', outline: 'none', flex: 1, fontSize: 13, background: 'transparent', minWidth: 180 }}
             />
           </div>
-        </EpCard>
-      </div>
-
-      {/* 批量操作条 */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '16px 0 10px', flexWrap: 'wrap' }}>
-        <span style={{ fontSize: 13, color: '#0F172A', fontWeight: 600 }}>监控企业数：{data.monitorCount}家</span>
-        <span style={{ marginLeft: 8, display: 'inline-flex', gap: 8, flexWrap: 'wrap' }}>
-          <BatchMenu label="监控规则修改" items={['修改所选', '修改所有']} />
-          <BatchMenu label="设置标签" items={['变更标签', '增加标签', '删除标签']} />
-          <BatchMenu label="负责人/部门设置" items={['变更负责人/部门', '增加负责人/部门', '删除']} />
-          <BatchMenu label="批量删除" items={['删除所选', '删除全部']} />
-        </span>
-        <span style={{ marginLeft: 'auto', display: 'inline-flex', gap: 8 }}>
-          <EpBtn variant="default" size="sm">展示字段 (10/31)</EpBtn>
-          <EpBtn variant="default" size="sm">导出</EpBtn>
-        </span>
-      </div>
-
-      <EpCard desc={<Sam value="fkMonitor.json" />}>
-        <DataTable
-          columns={columns}
-          rows={rows as unknown as Row[]}
-          selectable
-          selected={selected}
-          onSelectChange={setSelected}
-          pager
-          exportable
-          exportName="监控列表"
-          empty="暂无监控企业，点击「添加监控」录入"
-        />
-      </EpCard>
-
-      {/* 添加监控 */}
-      <EpDrawer open={addOpen} onClose={() => setAddOpen(false)} title="添加监控" width={620}>
-        <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
-          {['输入添加', 'Excel上传', '从客户列表导入'].map((t) => (
-            <span key={t} onClick={() => setAddTab(t)} style={tabStyle(addTab === t)}>{t}</span>
-          ))}
+          <ActionBtn icon={<EditRuleIcon />} label="监控规则修改" />
+          <ActionBtn icon={<TagIcon />} label="设置标签" />
+          <ActionBtn icon={<UserIcon />} label="负责人/部门设置" />
+          <ActionBtn icon={<TrashIcon />} label="删除" />
+          <ActionBtn icon={<ColumnsIcon />} label="展示字段 (10/31)" />
+          <ActionBtn icon={<ExportIcon />} label="导出" />
         </div>
-        <div style={{ fontSize: 12, color: '#64748B', marginBottom: 8 }}>剩余额度 {data.quota}</div>
-        {addTab === '输入添加' && (
-          <>
-            <textarea placeholder="企业信息可手动输入添加，也可直接复制粘贴，如：抖音有限公司" style={{ ...inp, height: 140, resize: 'vertical' }} />
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#94A3B8', marginTop: 6 }}>
-              <span>0 / 540</span>
-              <span style={{ display: 'inline-flex', gap: 10 }}>
-                <a style={lk}>清空</a>
-                <a style={lk}>立即匹配</a>
-              </span>
-            </div>
-          </>
-        )}
-        {addTab === 'Excel上传' && (
-          <div>
-            <div style={{ display: 'flex', gap: 10, fontSize: 12, color: '#64748B', marginBottom: 10 }}>
-              {['1 上传名单', '2 数据校验', '3 信息校验', '4 上传完成'].map((s) => (
-                <span key={s} style={{ padding: '3px 10px', borderRadius: 12, background: '#F1F5F9' }}>{s}</span>
+
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+            <thead>
+              <tr style={{ background: '#F7F8FA', height: 38 }}>
+                <Th w={40}><input type="checkbox" checked={allSelected} onChange={toggleAll} style={{ cursor: 'pointer' }} /></Th>
+                <Th al="left" w={260}>企业名称</Th>
+                <Th al="left" w={180}>统一社会信用代码</Th>
+                <Th al="left" w={170}>地区</Th>
+                <Th al="center" w={90}>关联地址</Th>
+                <Th al="left" w={200}>监控规则</Th>
+                <Th al="center" w={60}>标签</Th>
+                <Th al="left" w={170}>操作</Th>
+              </tr>
+            </thead>
+            <tbody>
+              {COMPANIES.map((c) => (
+                <tr key={c.id} style={{ borderBottom: '1px solid #F2F3F5', height: 44 }}>
+                  <Td center>
+                    <input type="checkbox" checked={selected.has(c.id)} onChange={() => toggle(c.id)} style={{ cursor: 'pointer' }} />
+                  </Td>
+                  <Td>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <CompanyAvatar c={c} />
+                      <a style={lk}>{c.name}</a>
+                    </div>
+                  </Td>
+                  <Td color="#4E5969">{c.code}</Td>
+                  <Td color="#4E5969">{c.area}</Td>
+                  <Td center><a style={lk}>{c.addr}</a></Td>
+                  <Td color="#4E5969">{c.rule}</Td>
+                  <Td center color="#C9CDD4">-</Td>
+                  <Td>
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap' }}>
+                      <a style={lk}>查看</a>
+                      <span style={{ color: '#E5E6EB' }}>|</span>
+                      <a style={{ ...lk, display: 'inline-flex', alignItems: 'center', gap: 2 }}>编辑 <CaretDown /></a>
+                      <span style={{ color: '#E5E6EB' }}>|</span>
+                      <a style={lk}>移除</a>
+                    </div>
+                  </Td>
+                </tr>
               ))}
-            </div>
-            <div style={{ border: '1px dashed #CBD5E1', borderRadius: 12, padding: 30, textAlign: 'center', color: '#94A3B8', fontSize: 13 }}>
-              将Excel文件拖拽至框内上传
-              <div style={{ fontSize: 12, marginTop: 6 }}>仅支持 Excel 格式文件(xls, xlsx)</div>
-              <div style={{ marginTop: 10, display: 'inline-flex', gap: 10 }}>
-                <EpBtn variant="primary" size="sm">点击上传</EpBtn>
-                <EpBtn variant="default" size="sm">下载样例文件</EpBtn>
-              </div>
-            </div>
-          </div>
-        )}
-        {addTab === '从客户列表导入' && (
-          <div style={{ fontSize: 13, color: '#475569' }}>
-            <input placeholder="请输入关键词搜索" style={{ ...inp, marginBottom: 10 }} />
-            <DataTable
-              columns={[
-                { key: 'name', label: '选择本页' },
-                { key: 'group', label: '分组' },
-                { key: 'tag', label: '标签' },
-                { key: 'owner', label: '负责人' },
-                { key: 'time', label: '添加时间' },
-              ]}
-              rows={[
-                { id: 'c1', name: '抖音有限公司', group: '未分组', tag: '开户', owner: '19156027703', time: '2026-08-17' },
-                { id: 'c2', name: '抖音视界有限公司', group: '重点维护', tag: '贷款', owner: '19156027703', time: '2026-08-17' },
-              ]}
-              selectable
-            />
-          </div>
-        )}
-        <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 16 }}>
-          <EpBtn variant="default" onClick={() => setAddOpen(false)}>取消</EpBtn>
-          <EpBtn variant="primary" onClick={() => setAddOpen(false)}>确定</EpBtn>
+            </tbody>
+          </table>
         </div>
-      </EpDrawer>
 
-      {/* 风险详情（快照：风控 - 监控列表 - 风险详情） */}
-      <EpDrawer open={detailOpen} onClose={() => setDetailOpen(false)} title={`${curName} 风险详情`} width={720}>
-        <RiskDetail d={data.detail} name={curName} />
-      </EpDrawer>
-    </EpPage>
-  )
-}
-
-/* ---------- 风险详情（企业信息 / 风险概览 / 风险分布 / 风险动态） ---------- */
-function RiskDetail({ d, name }: { d: typeof seed.detail; name: string }) {
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-        <span style={{ fontSize: 16, fontWeight: 700, color: '#0F172A' }}>{name}</span>
-        <EpTag color="#0F766E" bg="#CCFBF1">{d.status}</EpTag>
-        <span style={{ fontSize: 12, color: '#64748B' }}>{d.legal}</span>
-        <span style={{ fontSize: 12, color: '#64748B' }}>{d.capital}</span>
-        <span style={{ fontSize: 12, color: '#64748B' }}>{d.found}</span>
-        <span style={{ fontSize: 12, color: '#64748B' }}>{d.area}</span>
-      </div>
-
-      <EpCard title="企业信息" pad={false}>
-        <dl style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 0, margin: 0 }}>
-          {[
-            ['信用代码', d.code],
-            ['国家/地区', d.country],
-            ['详细地址', d.address],
-            ['联系邮箱', d.email],
-            ['企业编号', d.epNo],
-            ['企业简称', d.shortName],
-            ['关联企业', d.relatedEp],
-            ['企业标签', d.epTag],
-            ['企业分组', d.epGroup],
-            ['负责人/部门', d.owner],
-            ['备注信息', d.note],
-            ['添加人员', d.adder],
-            ['添加时间', d.addTime],
-            ['监控规则', d.rule],
-          ].map(([k, v]) => (
-            <div key={k} style={{ padding: '9px 16px', borderBottom: '1px solid #F1F5F9', fontSize: 12 }}>
-              <span style={{ color: '#94A3B8', marginRight: 8 }}>{k}</span>
-              <span style={{ color: '#0F172A' }}>{v}</span>
-            </div>
-          ))}
-        </dl>
-      </EpCard>
-
-      <EpCard title="风险概览" desc="推送时间 / 发生时间 · 今日 昨日 最近7天 最近30天 更多">
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 10 }}>
-          <EpStat label="风险分数" value={d.score} accent="#DC2626" />
-          <EpStat label="风险总数" value={d.riskTotal} />
-          <EpStat label="高风险" value={d.highRisk} accent="#B91C1C" />
-        </div>
-        <div style={{ marginTop: 12, fontSize: 12, color: '#64748B' }}>
-          风险分数趋势
-          <span style={{ marginLeft: 10, display: 'inline-flex', gap: 6 }}>
-            {['按天', '按周', '按月'].map((t) => <Chip key={t} on={t === '按天'}>{t}</Chip>)}
+        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', padding: '10px 16px', gap: 14, fontSize: 13, color: '#4E5969' }}>
+          <span>共 {COMPANIES.length} 条</span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, cursor: 'pointer', border: '1px solid #E5E6EB', borderRadius: 2, padding: '3px 8px', color: '#1D2129', fontSize: 12 }}>
+            20条/页 <CaretDown />
           </span>
-          <div style={{ marginTop: 8, color: '#94A3B8' }}>2026年08月04日 · 风险分值 0 · 风险总数 0 · 已处理 0 · 风险分环比无变化</div>
+          <Sam value="fkMonitor.json" />
         </div>
-      </EpCard>
-
-      <EpCard title="风险分布">
-        {d.dist.map((g) => (
-          <div key={g.type} style={{ marginBottom: 10 }}>
-            <div style={{ fontSize: 13, fontWeight: 600, color: '#0F172A', marginBottom: 6 }}>{g.type}{g.count}</div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-              {g.items.map((it) => (
-                <div key={it.name} style={{ border: '1px solid #F1F5F9', borderRadius: 10, padding: '10px 12px' }}>
-                  <div style={{ fontSize: 13, color: '#0F172A' }}>
-                    {it.name} <span style={{ color: '#64748B' }}>{it.num}</span>
-                    <EpTag color={LEVEL_COLOR[it.level]?.c} bg={LEVEL_COLOR[it.level]?.b}>{it.level}</EpTag>
-                  </div>
-                  <div style={{ fontSize: 12, color: '#94A3B8', marginTop: 4 }}>{it.content}</div>
-                  <a style={{ ...lk, fontSize: 12 }}>查看更多 &gt;</a>
-                </div>
-              ))}
-            </div>
-          </div>
-        ))}
-      </EpCard>
-
-      <EpCard title="风险动态" desc={<Sam value="fkMonitor.json" />}>
-        <DataTable
-          columns={[
-            { key: 'subject', label: '监控主体' },
-            { key: 'level', label: '风险等级', render: (r: Row) => <EpTag color={LEVEL_COLOR[String(r.level)]?.c} bg={LEVEL_COLOR[String(r.level)]?.b}>{String(r.level)}</EpTag> },
-            { key: 'happen', label: '发生时间' },
-            { key: 'type', label: '风险类型' },
-            { key: 'content', label: '风险内容', render: (r: Row) => <div style={{ maxWidth: 320, whiteSpace: 'normal' }}>{String(r.content)}</div> },
-            { key: 'score', label: '风险评分' },
-            { key: 'push', label: '推送时间' },
-            { key: 'owner', label: '负责人' },
-            { key: 'status', label: '处理状态' },
-          ]}
-          rows={d.dynamics as unknown as Row[]}
-          empty="暂无数据"
-        />
-      </EpCard>
+      </div>
     </div>
   )
 }
 
-/* ---------- 小组件 ---------- */
-function FilterRow({ label, opts, value, onChange, extra }: { label: string; opts: string[]; value: string; onChange: (v: string) => void; extra?: React.ReactNode }) {
+/* ---------- 表格单元格 ---------- */
+function Th({ children, w, al = 'left' }: { children?: React.ReactNode; w?: number; al?: 'left' | 'center' | 'right' }) {
+  return <th style={{ padding: '0 10px', fontSize: 13, fontWeight: 500, color: '#4E5969', textAlign: al, width: w, whiteSpace: 'nowrap' }}>{children}</th>
+}
+function Td({ children, center, color = '#1D2129' }: { children?: React.ReactNode; center?: boolean; color?: string }) {
+  return <td style={{ padding: '0 10px', fontSize: 13, color, textAlign: center ? 'center' : 'left' }}>{children}</td>
+}
+const lk: React.CSSProperties = { color: '#165DFF', cursor: 'pointer', textDecoration: 'none' }
+
+/* ---------- 筛选 ---------- */
+function FilterRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-      <span style={{ color: '#475569', width: 92 }}>{label}</span>
-      {opts.map((o) => (
-        <span key={o} onClick={() => onChange(o)} style={chipStyle(value === o)}>{o}</span>
-      ))}
-      {extra}
+    <div style={{ display: 'flex', alignItems: 'center', gap: 18, marginBottom: 10, flexWrap: 'wrap' }}>
+      <span style={{ fontSize: 13, fontWeight: 600, color: '#1D2129', minWidth: 60 }}>{label}</span>
+      {children}
     </div>
   )
 }
-
-function Chip({ children, on }: { children: React.ReactNode; on?: boolean }) {
-  return <span style={chipStyle(!!on)}>{children}</span>
+const chipBase: React.CSSProperties = {
+  display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 13, color: '#4E5969',
+  cursor: 'pointer', padding: '2px 0', userSelect: 'none',
+}
+function CheckDropdown({ label }: { label: string }) {
+  return (
+    <label style={chipBase}>
+      <input type="checkbox" style={{ margin: 0, cursor: 'pointer', accentColor: '#165DFF' }} />
+      <span>{label}</span>
+      <CaretDown />
+    </label>
+  )
+}
+function RadioDropdown({ label }: { label: string }) {
+  return (
+    <label style={chipBase}>
+      <input type="radio" name={`r-${label}`} defaultChecked style={{ margin: 0, cursor: 'pointer', accentColor: '#165DFF' }} />
+      <span>{label}</span>
+      <CaretDown />
+    </label>
+  )
 }
 
-function BatchMenu({ label, items }: { label: string; items: string[] }) {
-  const [open, setOpen] = useState(false)
+/* ---------- 操作条按钮 ---------- */
+function ActionBtn({ icon, label }: { icon: React.ReactNode; label: string }) {
   return (
-    <span style={{ position: 'relative' }}>
-      <EpBtn variant="default" size="sm" onClick={() => setOpen(!open)}>{label} ▾</EpBtn>
-      {open && (
-        <span
-          style={{ position: 'absolute', top: 28, left: 0, zIndex: 20, background: '#fff', border: '1px solid #E2E8F0', borderRadius: 8, boxShadow: '0 6px 18px rgba(15,23,42,.08)', minWidth: 150, padding: '4px 0' }}
-        >
-          {items.map((i) => (
-            <span key={i} onClick={() => setOpen(false)} style={{ display: 'block', padding: '6px 12px', fontSize: 12, color: '#334155', cursor: 'pointer' }}>{i}</span>
-          ))}
-        </span>
-      )}
+    <button type="button" style={actBtn}>
+      <span style={{ fontSize: 14, display: 'inline-flex', alignItems: 'center' }}>{icon}</span>
+      <span>{label}</span>
+    </button>
+  )
+}
+
+/* ---------- 公司头像 ---------- */
+function CompanyAvatar({ c }: { c: Company }) {
+  const size = 22
+  const base: React.CSSProperties = {
+    width: size, height: size, borderRadius: 4, flexShrink: 0,
+    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+    fontSize: 11, fontWeight: 600,
+  }
+  if (c.avatar.kind === 'building') {
+    return (
+      <span style={{ ...base, background: '#FFF1F0', color: '#F53F3F', fontSize: 13 }}>
+        <BuildingIcon />
+      </span>
+    )
+  }
+  if (c.avatar.kind === 'logo') {
+    return (
+      <span style={{ ...base, background: '#000', color: '#fff', fontSize: 10, overflow: 'hidden' }}>
+        <DouyinLogo />
+      </span>
+    )
+  }
+  if (c.avatar.kind === 'wave') {
+    return (
+      <span style={{ ...base, background: 'transparent', color: '#165DFF', fontSize: 14, fontWeight: 700 }}>
+        <WaveIcon />
+      </span>
+    )
+  }
+  return (
+    <span style={{ ...base, background: c.avatar.bg, color: c.avatar.color, fontSize: 11 }}>
+      {c.avatar.letter}
     </span>
   )
 }
 
-const chipStyle = (on: boolean): React.CSSProperties => ({
-  cursor: 'pointer',
-  padding: '3px 12px',
-  borderRadius: 14,
-  fontSize: 12,
-  border: `1px solid ${on ? '#2563EB' : '#E2E8F0'}`,
-  background: on ? '#EFF6FF' : '#fff',
-  color: on ? '#2563EB' : '#64748B',
-})
+/* ---------- 图标（14~16px inline SVG） ---------- */
+const ic = (d: string, size = 14, color = 'currentColor') => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d={d} />
+  </svg>
+)
+const BellIcon = () => ic('M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9 M13.73 21a2 2 0 0 1-3.46 0')
+const SettingIcon = () => ic('M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z')
+const PlusIcon = () => ic('M12 5v14 M5 12h14', 14)
+const SearchIcon = () => ic('M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16z M21 21l-4.35-4.35', 14, '#86909C')
+const EditRuleIcon = () => ic('M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7 M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z', 14, '#4E5969')
+const TagIcon = () => ic('M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z M7 7h.01', 14, '#4E5969')
+const UserIcon = () => ic('M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2 M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z', 14, '#4E5969')
+const TrashIcon = () => ic('M3 6h18 M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2', 14, '#4E5969')
+const ColumnsIcon = () => ic('M12 3h7a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-7m0-18H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h7m0-18v18', 14, '#4E5969')
+const ExportIcon = () => ic('M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4 M7 10l5 5 5-5 M12 15V3', 14, '#4E5969')
+const CaretDown = () => (
+  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="6 9 12 15 18 9" />
+  </svg>
+)
+const BuildingIcon = () => (
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+    <path d="M12 2L2 8v14h20V8L12 2zm-5 9H5v-2h2v2zm0 4H5v-2h2v2zm0 4H5v-2h2v2zm6-8h-2V9h2v2zm0 4h-2v-2h2v2zm0 4h-2v-2h2v2zm6-8h-2v-2h2v2zm0 4h-2v-2h2v2zm0 4h-2v-2h2v2z"/>
+  </svg>
+)
 
-const tabStyle = (on: boolean): React.CSSProperties => ({
-  cursor: 'pointer',
+const WaveIcon = () => (
+  <svg width="16" height="14" viewBox="0 0 24 16" fill="none">
+    <path d="M2 8c3-4 6 4 10 0s7 4 10 0" stroke="#00C6C2" strokeWidth="2.5" strokeLinecap="round"/>
+    <path d="M2 4c3-4 6 4 10 0s7 4 10 0" stroke="#165DFF" strokeWidth="2.5" strokeLinecap="round" opacity="0.7"/>
+  </svg>
+)
+
+/* 抖音logo简化 */
+const DouyinLogo = () => (
+  <svg width="20" height="20" viewBox="0 0 48 48" fill="none">
+    <path d="M36.4 7.4c-.2 3.2-1.8 6.2-4.4 8.2v14.6c0 7.6-6.2 13.8-13.8 13.8S4.4 37.8 4.4 30.2s6.2-13.8 13.8-13.8c.5 0 .9 0 1.4.1v6.6c-.5-.1-.9-.2-1.4-.2-4 0-7.2 3.3-7.2 7.3s3.2 7.3 7.2 7.3 7.2-3.3 7.2-7.3V6h6.4c.2 0 .4 0 .6.1.2 0 .4.1.6.2v.1c.8.2 1.6.5 2.4 1z" fill="#fff"/>
+    <path d="M36.4 7.4h-4c0 4.4-3.6 8-8 8v4c2.4 0 4.6-.9 6.2-2.4 1.2-1.2 2-2.6 2.4-4.2V7.4h3.4z" fill="#FF0050"/>
+    <path d="M33 9.5c-.2 2.4-1.4 4.6-3.2 6.2-1.6 1.4-3.6 2.3-5.8 2.5V22c2-.2 4-1 5.6-2.2 2-1.6 3.4-3.8 3.8-6.4l-.4-3.9z" fill="#00F2EA"/>
+  </svg>
+)
+
+/* ---------- 按钮/输入样式 ---------- */
+const btnDefault: React.CSSProperties = {
   padding: '6px 14px',
+  borderRadius: 4,
+  border: '1px solid #C9CDD4',
+  background: '#fff',
+  color: '#1D2129',
   fontSize: 13,
-  borderBottom: `2px solid ${on ? '#2563EB' : 'transparent'}`,
-  color: on ? '#2563EB' : '#64748B',
-  fontWeight: on ? 600 : 400,
-})
-
-const lk: React.CSSProperties = { color: '#2563EB', cursor: 'pointer' }
-
-const inp: React.CSSProperties = {
-  padding: '7px 12px',
-  border: '1px solid #CBD5E1',
-  borderRadius: 8,
+  cursor: 'pointer',
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: 4,
+  lineHeight: 1.4,
+}
+const btnPrimary: React.CSSProperties = {
+  padding: '6px 16px',
+  borderRadius: 4,
+  border: '1px solid #FFAA00',
+  background: '#FFAA00',
+  color: '#fff',
   fontSize: 13,
-  outline: 'none',
-  width: '100%',
+  fontWeight: 500,
+  cursor: 'pointer',
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: 4,
+  lineHeight: 1.4,
+}
+const actBtn: React.CSSProperties = {
+  padding: '5px 10px',
+  borderRadius: 4,
+  border: '1px solid #E5E6EB',
+  background: '#fff',
+  color: '#4E5969',
+  fontSize: 13,
+  cursor: 'pointer',
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: 4,
+  lineHeight: 1.4,
+}
+const searchBox: React.CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: 6,
+  padding: '5px 10px',
+  border: '1px solid #E5E6EB',
+  borderRadius: 4,
+  background: '#fff',
+  marginRight: 4,
 }

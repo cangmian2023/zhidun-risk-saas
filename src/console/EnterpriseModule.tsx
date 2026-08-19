@@ -5,15 +5,20 @@
 import { QiyeSearch, QiyeProfile } from './QiyePages';
 import { EntGraphDetail, EntCreditReport, EntVerifyReport } from './EntReportPages';
 import {
-  EntQuickSearch, EntBatchDue, EntBatchDueDetail, EntMonitorList,
+  EntQuickSearch, EntBatchDue, EntBatchDueDetail,
   EntDecisionEvents, EntDecisionTraceDetail,
   EntModelDetail, EntArchive, EntOperateLog,
 } from './EnterprisePages';
 import MidAlertWorkbench from './MidAlertWorkbench';
 import ScoreModelManagePage from './ScoreModelManage';
+import { FkModule } from './enterprise/fengkong/FkModule';
 
 export default function EnterpriseModule({ pageKey }: { pageKey: string }) {
   const cur = pageKey.split(':')[1] ?? 'overview';
+  const params = new URLSearchParams(window.location.search);
+  if (cur.startsWith('fk-')) {
+    return <FkModule base={cur} params={params} />;
+  }
   switch (cur) {
     case 'qiye-search':
       return <EntQuickSearch />;
@@ -21,8 +26,6 @@ export default function EnterpriseModule({ pageKey }: { pageKey: string }) {
       return <EntBatchDue />;
     case 'batch-due-detail':
       return <EntBatchDueDetail />;
-    case 'monitor-list':
-      return <EntMonitorList />;
     case 'decision-events':
       return <EntDecisionEvents />;
     case 'decision-trace':

@@ -16,7 +16,7 @@ const LEVEL: Record<string, { c: string; b: string }> = {
   日常资讯: { c: '#475569', b: '#F1F5F9' },
 }
 
-const RISK_TYPES = ['不限', '基本信息', '经营风险', '司法风险', '经营信息', '企业舆情', '供应链风险', '关联方风险', '关键词舆情']
+const RISK_TYPES = ['不限', '基本信息', '经营风险', '司法风险', '交通气象预报', '经营信息', '企业舆情', '供应链风险', '关联方风险', '加征关税', '关键词舆情']
 const MARKS = ['重点关注风险', '存在信用风险', '重大工商变更', '外部供应链风险']
 
 export default function FkRiskWarning({ params }: { params: URLSearchParams }) {
