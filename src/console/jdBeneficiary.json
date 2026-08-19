@@ -1,0 +1,32 @@
+{
+  "source": "jdBeneficiary",
+  "pageTitle": "受益所有人",
+  "search": {
+    "placeholder": "请输入企业名称/统一社会信用代码",
+    "btn": "识别",
+    "samplePrefix": "一键试用",
+    "sample": "上海合合信息科技股份有限公司"
+  },
+  "filters": {
+    "namePlaceholder": "企业名称",
+    "personPlaceholder": "请选择识别人"
+  },
+  "columns": ["序号", "识别企业", "识别方式", "识别人", "识别时间", "操作"],
+  "rows": [
+    {
+      "id": 1,
+      "company": "上海合合信息科技股份有限公司",
+      "method": "正常识别",
+      "person": "19156027703",
+      "time": "2026-08-20 00:01:37"
+    },
+    {
+      "id": 2,
+      "company": "上海合合信息科技股份有限公司",
+      "method": "正常识别",
+      "person": "19156027703",
+      "time": "2026-08-19 15:04:04"
+    }
+  ],
+  "actions": ["详情", "下载报告", "佐证材料", "重新识别"]
+}

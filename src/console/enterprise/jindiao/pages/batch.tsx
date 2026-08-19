@@ -25,6 +25,30 @@ type TemplateLibrary = {
   templates: Record<string, TemplateDetail>
   actions: { directUse: string; useAndSave: string }
 }
+type PersonUpload = {
+  title: string
+  sample: string
+  tips: string[]
+  fileName: string
+  reUpload: string
+  status: string
+}
+type PersonRow = {
+  id: string
+  name: string
+  avatar: string
+  partners: string[]
+  legalRep: string[]
+  shareholder: string[]
+  executive: string[]
+}
+type PersonData = {
+  uploadToolbar: PersonUpload
+  resultToolbar: { selectAll: string; export: string; exportAll: string }
+  loading: { text: string }
+  summary: { matched: number; unmatched: number; empty: number }
+  rows: PersonRow[]
+}
 type Data = {
   pageTitle: string
   tabs: { key: string; label: string }[]
@@ -50,6 +74,7 @@ type Data = {
   }
   toggle: string
   templateLibrary: TemplateLibrary
+  person: PersonData
 }
 
 const seed: Data = {
@@ -262,6 +287,39 @@ const seed: Data = {
       directUse: '直接使用',
       useAndSave: '使用并保存',
     },
+  },
+  person: {
+    uploadToolbar: {
+      title: '准备Excel文件',
+      sample: '查看样例',
+      tips: ['支持最多1000条信息', '智能去重保证精确'],
+      fileName: 'person.xlsx',
+      reUpload: '重新上传',
+      status: '上传成功，共匹配查询到 {matched} 个人员，未匹配到 {unmatched} 个人员，人员姓名为空 {empty} 条数据',
+    },
+    resultToolbar: { selectAll: '全选', export: '导出', exportAll: '全部导出' },
+    loading: { text: '正在查询人员信息...' },
+    summary: { matched: 4, unmatched: 0, empty: 0 },
+    rows: [
+      {
+        id: 'p1',
+        name: '吴孟',
+        avatar: 'https://placehold.co/80x80/334155/ffffff?text=吴',
+        partners: ['赵凯', '贾跃亭', '邓伟', '刘秋萍', '贾跃芳', '李晋', '刘丰选', '徐展春', '张昭', '隋伟', '刘延峰', '毛丙龙', '李洪涛', '张胤', '刘淑青', '张巍', '梁军', '贾跃民', '张海亮', '高飞'],
+        legalRep: ['乐视控股（北京）有限公司', '乐视汽车（北京）有限公司', '北京百乐文化传媒有限公司'],
+        shareholder: ['北京东方车云信息技术有限公司', '乐为互联投资管理（北京）有限公司', '北京锦阳资产管理中心（有限合伙）'],
+        executive: ['乐视网信息技术（北京）股份有限公司', '乐视控股（北京）有限公司', '乐融致新电子科技（天津）有限公司'],
+      },
+      {
+        id: 'p2',
+        name: '雷军',
+        avatar: 'https://placehold.co/80x80/2563EB/ffffff?text=雷',
+        partners: ['刘德', '王川', '孙谦', '邹涛', '洪锋', 'CHEWSHOUZI', '林斌', '马文静', '刘芹', '刘伟', '黎万强', '彭博', '求伟芹', '林世伟', '张彤', '曹莉平', '求伯君', '卢伟冰', '周受资', '龚道军'],
+        legalRep: ['小米科技有限责任公司', '天津金星创业投资有限公司', '广东小米科技有限责任公司'],
+        shareholder: ['小米科技有限责任公司', '广州华多网络科技有限公司', '北京口袋时尚科技有限公司'],
+        executive: ['小米科技有限责任公司', '拉卡拉支付股份有限公司', '小米通讯技术有限公司'],
+      },
+    ],
   },
 }
 
@@ -608,6 +666,286 @@ function TemplateLibraryModal({
   )
 }
 
+/* ================= 查人员 Tab ================= */
+const AVATAR_COLORS = ['#334155', '#2563EB', '#7C3AED', '#DB2777', '#059669', '#D97706', '#DC2626']
+
+function Avatar({ name }: { name: string }) {
+  const color = AVATAR_COLORS[name.charCodeAt(0) % AVATAR_COLORS.length]
+  return (
+    <div
+      style={{
+        width: 64,
+        height: 64,
+        borderRadius: 6,
+        background: color,
+        color: '#fff',
+        fontSize: 26,
+        fontWeight: 700,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexShrink: 0,
+      }}
+    >
+      {name.slice(0, 1)}
+    </div>
+  )
+}
+
+function UploadIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+      <polyline points="17 8 12 3 7 8" />
+      <line x1="12" y1="3" x2="12" y2="15" />
+    </svg>
+  )
+}
+
+function DownloadIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+      <polyline points="7 10 12 15 17 10" />
+      <line x1="12" y1="15" x2="12" y2="3" />
+    </svg>
+  )
+}
+
+function DocIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1677ff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+      <polyline points="14 2 14 8 20 8" />
+      <line x1="8" y1="13" x2="16" y2="13" />
+      <line x1="8" y1="17" x2="16" y2="17" />
+    </svg>
+  )
+}
+
+function CheckIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#22C55E" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="20 6 9 17 4 12" />
+    </svg>
+  )
+}
+
+function Spinner() {
+  return (
+    <>
+      <style>{`@keyframes ep-spin { to { transform: rotate(360deg); } }`}</style>
+      <div
+        style={{
+          width: 40,
+          height: 40,
+          borderRadius: '50%',
+          border: '3px solid #E2E8F0',
+          borderTopColor: '#2563EB',
+          margin: '0 auto',
+          animation: 'ep-spin 1s linear infinite',
+        }}
+      />
+    </>
+  )
+}
+
+function InfoLine({ label, values }: { label: string; values: string[] }) {
+  return (
+    <div style={{ marginTop: 8, fontSize: 13, lineHeight: 1.7, color: '#334155' }}>
+      <span style={{ color: '#64748B' }}>{label}</span>
+      {values.map((v, i) => (
+        <span key={v}>
+          {i > 0 && <span style={{ color: '#CBD5E1' }}>、</span>}
+          <span style={{ color: '#1677ff', cursor: 'pointer' }}>{v}</span>
+        </span>
+      ))}
+    </div>
+  )
+}
+
+function PersonTab({
+  data,
+  phase,
+  sel,
+  setSel,
+  onUpload,
+  onRemoveFile,
+}: {
+  data: PersonData
+  phase: 'idle' | 'loading' | 'done'
+  sel: Set<string>
+  setSel: (s: Set<string>) => void
+  onUpload: () => void
+  onRemoveFile: () => void
+}) {
+  const { uploadToolbar: up, resultToolbar: rt, summary, rows } = data
+
+  const toggleRow = (id: string) => {
+    const next = new Set(sel)
+    if (next.has(id)) next.delete(id)
+    else next.add(id)
+    setSel(next)
+  }
+  const toggleAll = () => {
+    if (sel.size === rows.length) setSel(new Set())
+    else setSel(new Set(rows.map((r) => r.id)))
+  }
+
+  const outlineBtn = {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 6,
+    padding: '6px 14px',
+    borderRadius: 6,
+    border: '1px solid #CBD5E1',
+    background: '#fff',
+    color: '#334155',
+    fontSize: 13,
+    cursor: 'pointer',
+  }
+
+  return (
+    <div>
+      {/* 上传卡片 */}
+      <div style={{ background: '#f7f8fc', borderRadius: 10, border: '1px solid #EFF1F7', padding: '16px 20px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+            <span style={{ fontSize: 15, fontWeight: 600, color: '#1F2937' }}>{up.title}</span>
+            <a style={{ fontSize: 13, color: '#1677ff', cursor: 'pointer' }}>{up.sample}</a>
+          </div>
+          <button
+            onClick={onUpload}
+            disabled={phase === 'loading'}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              padding: '7px 16px',
+              borderRadius: 6,
+              border: 'none',
+              background: '#ffc53d',
+              color: '#fff',
+              fontSize: 13,
+              fontWeight: 600,
+              cursor: 'pointer',
+              opacity: phase === 'loading' ? 0.6 : 1,
+            }}
+          >
+            <UploadIcon />
+            {up.reUpload}
+          </button>
+        </div>
+        <div style={{ display: 'flex', gap: 24, marginTop: 10 }}>
+          {up.tips.map((t) => (
+            <span key={t} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 12, color: '#94A3B8' }}>
+              <CheckIcon />
+              {t}
+            </span>
+          ))}
+        </div>
+        <div
+          style={{
+            marginTop: 12,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 10,
+            background: '#fff',
+            borderRadius: 8,
+            padding: '9px 14px',
+            border: '1px solid #E2E8F0',
+          }}
+        >
+          <DocIcon />
+          <span style={{ fontSize: 13, color: '#1677ff', fontWeight: 500 }}>{up.fileName}</span>
+          <button
+            onClick={onRemoveFile}
+            title="删除文件"
+            style={{
+              marginLeft: 'auto',
+              border: 'none',
+              background: 'transparent',
+              cursor: 'pointer',
+              color: '#94A3B8',
+              display: 'inline-flex',
+              padding: 4,
+            }}
+          >
+            <CloseIcon />
+          </button>
+        </div>
+      </div>
+
+      {phase === 'idle' && (
+        <div style={{ padding: 70, textAlign: 'center', color: '#94A3B8', fontSize: 14 }}>上传 Excel 文件后开始排查人员关系</div>
+      )}
+
+      {phase === 'loading' && (
+        <div style={{ padding: 70, textAlign: 'center' }}>
+          <Spinner />
+          <div style={{ marginTop: 14, fontSize: 14, color: '#64748B' }}>{data.loading.text}</div>
+        </div>
+      )}
+
+      {phase === 'done' && (
+        <>
+          {/* 结果提示 */}
+          <div style={{ marginTop: 16, fontSize: 14, color: '#1F2937' }}>
+            上传成功，共匹配查询到 <span style={{ color: '#1677ff', fontWeight: 600 }}>{summary.matched}</span> 个人员，未匹配到{' '}
+            <span style={{ color: '#1677ff', fontWeight: 600 }}>{summary.unmatched}</span> 个人员，人员姓名为空{' '}
+            <span style={{ color: '#1677ff', fontWeight: 600 }}>{summary.empty}</span> 条数据
+          </div>
+
+          {/* 操作栏 */}
+          <div style={{ marginTop: 14, display: 'flex', alignItems: 'center', gap: 12 }}>
+            <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#475569', cursor: 'pointer' }}>
+              <input type="checkbox" checked={rows.length > 0 && sel.size === rows.length} onChange={toggleAll} />
+              {rt.selectAll}
+            </label>
+            <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
+              <button style={outlineBtn}>
+                <DownloadIcon />
+                {rt.export}
+              </button>
+              <button style={outlineBtn}>
+                <DownloadIcon />
+                {rt.exportAll}
+              </button>
+            </div>
+          </div>
+
+          {/* 人员卡片列表 */}
+          <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {rows.map((r) => (
+              <div
+                key={r.id}
+                style={{
+                  display: 'flex',
+                  gap: 16,
+                  background: '#fff',
+                  borderRadius: 10,
+                  border: '1px solid #E2E8F0',
+                  padding: '18px 20px',
+                }}
+              >
+                <input type="checkbox" checked={sel.has(r.id)} onChange={() => toggleRow(r.id)} style={{ marginTop: 24, cursor: 'pointer' }} />
+                <Avatar name={r.name} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 18, fontWeight: 700, color: '#0F172A' }}>{r.name}</div>
+                  <InfoLine label="合作伙伴：" values={r.partners} />
+                  <InfoLine label="担任法定代表人的企业：" values={r.legalRep} />
+                  <InfoLine label="担任股东的企业：" values={r.shareholder} />
+                  <InfoLine label="担任高管的企业：" values={r.executive} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
+
 export default function JdBatch({ params }: { params: URLSearchParams }) {
   const [data] = useSample<Data>('jdBatch.json', seed)
   const { goDetail } = usePageNav()
@@ -616,6 +954,19 @@ export default function JdBatch({ params }: { params: URLSearchParams }) {
   const [checked, setChecked] = useState<Set<string>>(() => new Set(data.left.tree.filter((t) => t.checked).map((t) => t.key)))
   const [leftTab, setLeftTab] = useState(data.left.active)
   const [templateOpen, setTemplateOpen] = useState(false)
+  const [personPhase, setPersonPhase] = useState<'idle' | 'loading' | 'done'>('idle')
+  const [personSel, setPersonSel] = useState<Set<string>>(new Set())
+
+  const startPersonCheck = () => {
+    if (personPhase === 'loading') return
+    setPersonPhase('loading')
+    window.setTimeout(() => setPersonPhase('done'), 2000)
+  }
+
+  const removePersonFile = () => {
+    setPersonPhase('idle')
+    setPersonSel(new Set())
+  }
 
   const openUpload = () => goDetail('/console/ep/jd-batch-result', { upload: '1' })
   const openTemplate = () => setTemplateOpen(true)
@@ -668,9 +1019,14 @@ export default function JdBatch({ params }: { params: URLSearchParams }) {
       </div>
 
       {tab === 'person' ? (
-        <EpCard>
-          <div style={{ padding: 40, textAlign: 'center', color: '#64748B' }}>查人员内容待补充</div>
-        </EpCard>
+        <PersonTab
+          data={data.person}
+          phase={personPhase}
+          sel={personSel}
+          setSel={setPersonSel}
+          onUpload={startPersonCheck}
+          onRemoveFile={removePersonFile}
+        />
       ) : (
         <div style={{ display: 'flex', gap: 16, position: 'relative' }}>
           {/* 左侧边栏 */}

@@ -226,11 +226,14 @@ export default function Console() {
     'ep:jd-batch': 'stack',
     'ep:jd-batch-result': 'stack',
     'ep:jd-relation': 'link',
+    'ep:jd-relation-result': 'search',
     'ep:jd-person': 'id',
     // 尽调报告
     'ep:jd-report': 'report',
+    'ep:jd-report-custom': 'file',
     // 受益所有人
     'ep:jd-beneficiary': 'layers',
+    'ep:jd-beneficiary-result': 'search',
     // 企业档案（详情内页，不在左侧菜单）
     'ep:archive': 'database',
     // 数字营销（新 IA：潜客挖掘 / 专题营销 / 营销管理 / 存客管理 / 金融工具）

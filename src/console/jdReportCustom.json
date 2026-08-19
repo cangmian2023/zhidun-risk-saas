@@ -1,0 +1,78 @@
+{
+  "source": "jdReportCustom",
+  "pageTitle": "自定义报告",
+  "crumb": "报告中心 / 自定义报告",
+  "topActions": { "label": "报告" },
+  "panel": {
+    "title": "自定义报告",
+    "chooseTemplate": "选择报告模板"
+  },
+  "cover": {
+    "nameLabel": "报告名称",
+    "nameValue": "企业信用报告",
+    "belongLabel": "报告归属",
+    "belongPlaceholder": "请输入报告归属",
+    "subtitleLabel": "副标题",
+    "subtitleOptions": [
+      { "key": "company", "label": "企业名称" },
+      { "key": "legal", "label": "法人" }
+    ],
+    "logoLabel": "上传logo",
+    "logoBtn": "上传Logo",
+    "logoFile": "启信慧眼logo.png",
+    "descLabel": "说明信息",
+    "descOptions": [
+      { "key": "default", "label": "默认说明" },
+      { "key": "custom", "label": "自定义" }
+    ],
+    "qrLabel": "二维码",
+    "qrOptions": [
+      { "key": "default", "label": "默认二维码" },
+      { "key": "custom", "label": "自定义" }
+    ],
+    "bgLabel": "封面背景",
+    "bgColors": ["#1677ff", "#003e8f", "#1f2329", "#006b55", "#722ed1", "#13c2c2"]
+  },
+  "dataTree": {
+    "title": "选择数据",
+    "total": 175,
+    "groups": [
+      {
+        "key": "qixin",
+        "label": "启信指数",
+        "open": true,
+        "checked": false,
+        "children": [
+          { "key": "score", "label": "启信分" },
+          { "key": "shell", "label": "空壳指数" },
+          { "key": "contract", "label": "合同违约指数" },
+          { "key": "judicial", "label": "司法风险" }
+        ]
+      },
+      {
+        "key": "basic",
+        "label": "基本信息",
+        "open": true,
+        "checked": false,
+        "children": [
+          { "key": "ic", "label": "工商信息" },
+          { "key": "tag", "label": "企业标签" }
+        ]
+      }
+    ]
+  },
+  "panelActions": { "clear": "清空数据", "preview": "预览", "done": "完成" },
+  "preview": {
+    "logoText": "启信慧眼",
+    "title": "企业信用报告",
+    "subtitle": ["上海xxxxxxx科技股份有限公司", "法定代表人：xxxxx"],
+    "noteLines": [
+      "本报告生成时间为20xx年xx月xx日 xx:xx:xx",
+      "您所看到的报告内容为截至该时间点该公司的启信慧眼数据快照。",
+      "电话咨询：xxxxxxxxx 官网地址：b.qixin.com",
+      "本报告仅为您的决策提供参考，我们不对该查询结果的全面、准确、真实性负责"
+    ],
+    "nav": ["封面", "目录"],
+    "toc": ["一、企业基本信息", "二、启信指数", "三、司法风险", "四、经营信息", "五、知识产权"]
+  }
+}
