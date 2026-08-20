@@ -1,0 +1,326 @@
+{
+  "source": "fkSam",
+  "pageTitle": "关系尽调",
+  "tabs": [
+    { "key": "central", "label": "集中排查", "badge": "AI" },
+    { "key": "group", "label": "组与组排查" },
+    { "key": "related", "label": "关联方识别" }
+  ],
+  "activeTab": "central",
+  "left": {
+    "targetTitle": "关系目标",
+    "targetCount": 2,
+    "clear": "清空",
+    "settings": "关系设置",
+    "batchAdd": "+ 批量添加",
+    "targets": [
+      { "id": "t1", "name": "万科企业股份有限公司", "type": "company" },
+      { "id": "t2", "name": "王健林", "type": "person" }
+    ],
+    "inputPlaceholder": "请输入企业/人员",
+    "addTarget": "+ 新增关系目标",
+    "startCheck": "开始排查",
+    "result": {
+      "title": "关系结果",
+      "filters": [
+        { "key": "level", "label": "层级" },
+        { "key": "degree", "label": "关联度" },
+        { "key": "ratio", "label": "比例" },
+        { "key": "sort", "label": "排序" }
+      ],
+      "summaryLabel": "关系排查结果：",
+      "summaryValue": "高关联",
+      "summaryArrow": "›",
+      "items": [
+        {
+          "id": "r1",
+          "level": 4,
+          "levelLabel": "4层",
+          "content": "万科企业股份有限公司 十大股东：1.23% 香港中央结算有限公司 十大股东：0.67% 浙江华策影视股份有限公司 历史股东：0.71% 儒意前程影视传媒有限公司 历史股东 王健林",
+          "paths": 50
+        },
+        {
+          "id": "r2",
+          "level": 4,
+          "levelLabel": "4层",
+          "content": "万科企业股份有限公司 十大股东：1.23% 香港中央结算有限公司 十大股东：1.01% 永辉超市股份有限公司 历史股东：1.50% 大连万达商业管理集团股份有限公司 工商股东：1.60%，历史法定代表人 王健林",
+          "paths": 45
+        },
+        {
+          "id": "r3",
+          "level": 4,
+          "levelLabel": "4层",
+          "content": "万科企业股份有限公司 十大股东：1.23% 香港中央结算有限公司 十大股东：...",
+          "paths": 30
+        }
+      ]
+    }
+  },
+  "main": {
+    "summary": {
+      "icon": "warning",
+      "parts": [
+        { "text": "万科企业股份有限公司和王健林", "highlight": false },
+        { "text": "是", "highlight": false },
+        { "text": "高关联关系", "highlight": true, "color": "#EF4444" },
+        { "text": "，共产生", "highlight": false },
+        { "text": "50", "highlight": true, "color": "#EF4444" },
+        { "text": "条关系路径 其中", "highlight": false },
+        { "text": "5", "highlight": true, "color": "#EF4444" },
+        { "text": "条高风险路径，", "highlight": false },
+        { "text": "45", "highlight": true, "color": "#F59E0B" },
+        { "text": "条中风险路径，", "highlight": false },
+        { "text": "0", "highlight": true, "color": "#22C55E" },
+        { "text": "条低风险路径", "highlight": false }
+      ]
+    },
+    "aiBtn": "AI 分析",
+    "legend": [
+      { "label": "公司", "color": "#3B82F6" },
+      { "label": "人员", "color": "#F43F5E" },
+      { "label": "目标", "color": "#F97316" }
+    ],
+    "graph": {
+      "width": 820,
+      "height": 480,
+      "nodes": [
+        { "id": "n1", "label": "万科企业股份有限公司", "type": "target", "x": 80, "y": 280 },
+        { "id": "n2", "label": "上海中城联盟投资管理股份有限公司", "type": "company", "x": 220, "y": 120 },
+        { "id": "n3", "label": "香港中央结算有限公司", "type": "company", "x": 360, "y": 280 },
+        { "id": "n4", "label": "金丰投资有限公司", "type": "company", "x": 360, "y": 100 },
+        { "id": "n5", "label": "赵勇", "type": "person", "x": 520, "y": 80 },
+        { "id": "n6", "label": "方正科技集团股份有限公司", "type": "company", "x": 520, "y": 200 },
+        { "id": "n7", "label": "江月芳", "type": "person", "x": 520, "y": 320 },
+        { "id": "n8", "label": "北京国能公益有限公司", "type": "company", "x": 680, "y": 100 },
+        { "id": "n9", "label": "金建华", "type": "person", "x": 680, "y": 260 },
+        { "id": "n10", "label": "东方国际创业股份有限公司", "type": "company", "x": 520, "y": 400 },
+        { "id": "n11", "label": "王彤", "type": "person", "x": 680, "y": 380 },
+        { "id": "n12", "label": "王健林", "type": "target", "x": 760, "y": 280 }
+      ],
+      "edges": [
+        { "from": "n1", "to": "n2", "label": "十大股东：1.65%" },
+        { "from": "n1", "to": "n3", "label": "十大股东：1.23%" },
+        { "from": "n2", "to": "n4", "label": "十大股东：1.88%" },
+        { "from": "n2", "to": "n6", "label": "十大股东：4.73%" },
+        { "from": "n3", "to": "n4", "label": "十大股东：1.39%" },
+        { "from": "n3", "to": "n6", "label": "十大股东：1.39%" },
+        { "from": "n3", "to": "n10", "label": "十大股东：0.85%" },
+        { "from": "n4", "to": "n5", "label": "历史股东" },
+        { "from": "n4", "to": "n7", "label": "历史股东" },
+        { "from": "n5", "to": "n8", "label": "董事" },
+        { "from": "n6", "to": "n9", "label": "历史股东：5.42%" },
+        { "from": "n6", "to": "n10", "label": "十大股东：0.85%" },
+        { "from": "n7", "to": "n8", "label": "历史股东" },
+        { "from": "n9", "to": "n11", "label": "监事" },
+        { "from": "n10", "to": "n11", "label": "历史股东" },
+        { "from": "n8", "to": "n12", "label": "历史股东" },
+        { "from": "n11", "to": "n12", "label": "历史法定代表人" }
+      ]
+    },
+    "loading": {
+      "text": "关系排查中…",
+      "spinText": "正在计算关系路径"
+    }
+  },
+  "group": {
+    "config": {
+      "title": "关系组 ②",
+      "clear": "清空",
+      "settings": "关系设置",
+      "groups": [
+        { "id": "g1", "label": "万科企业股份有限公…", "count": "等2个目标" },
+        { "id": "g2", "label": "万科企业股份有限公…", "count": "等2个目标" }
+      ],
+      "addGroup": "+新增关系组",
+      "modeTitle": "排查方式",
+      "modes": [
+        { "key": "between", "label": "组间排查" },
+        { "key": "inner", "label": "组内排查" }
+      ],
+      "modeDefault": "between",
+      "startCheck": "开始排查"
+    },
+    "result": {
+      "download": "下载数据",
+      "ratio": "比例",
+      "sort": "排序",
+      "summary": "2个排查目标中，共找到2个目标1对关联关系。",
+      "relationSelect": "组1和组2的关系",
+      "items": [
+        {
+          "id": "gr1",
+          "label": "王健林 组2 和 万科企业股份有限公司 组1",
+          "paths": 50,
+          "chains": [
+            {
+              "level": "3层",
+              "segments": [
+                { "type": "target", "name": "王健林", "tag": "组2" },
+                { "type": "edge", "label": "工商股东：0.24%，董事，法定代表人" },
+                { "type": "company", "name": "大连万达集团股份有限公司" },
+                { "type": "edge", "label": "供应关系" },
+                { "type": "company", "name": "北京东方雨虹防水技术股份有限公司" },
+                { "type": "edge", "label": "供应关系" },
+                { "type": "target", "name": "万科企业股份有限公司", "tag": "组1" }
+              ]
+            },
+            {
+              "level": "3层",
+              "segments": [
+                { "type": "target", "name": "王健林", "tag": "组2" },
+                { "type": "edge", "label": "工商股东：0.24%，董事，法定代表人" },
+                { "type": "company", "name": "中国建筑股份有限公司" },
+                { "type": "edge", "label": "供应关系" },
+                { "type": "company", "name": "北京东方雨虹防水技术股份有限公司" },
+                { "type": "edge", "label": "供应关系" },
+                { "type": "target", "name": "万科企业股份有限公司", "tag": "组1" }
+              ]
+            },
+            {
+              "level": "3层",
+              "segments": [
+                { "type": "target", "name": "王健林", "tag": "组2" },
+                { "type": "edge", "label": "工商股东：0.24%，董事，法定代表人" },
+                { "type": "company", "name": "大连万达集团股份有限公司" },
+                { "type": "edge", "label": "供应关系" },
+                { "type": "company", "name": "上海建工集团股份有限公司" },
+                { "type": "edge", "label": "供应关系" },
+                { "type": "target", "name": "万科企业股份有限公司", "tag": "组1" }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "main": {
+      "title": "王健林和万科企业股份有限公司共产生50对关系",
+      "legend": [
+        { "label": "公司", "color": "#3B82F6" },
+        { "label": "人员", "color": "#F43F5E" },
+        { "label": "目标", "color": "#F97316" }
+      ],
+      "toolbar": ["放大", "缩小", "全屏", "重置视图", "导出"],
+      "graph": {
+        "width": 820,
+        "height": 460,
+        "nodes": [
+          { "id": "gn1", "label": "王健林", "type": "target", "tag": "组2", "x": 70, "y": 240 },
+          { "id": "gc1", "label": "大连万达集团股份有限公司", "type": "company", "x": 260, "y": 100 },
+          { "id": "gc2", "label": "北京东方雨虹防水技术股份有限公司", "type": "company", "x": 430, "y": 240 },
+          { "id": "gc3", "label": "中国建筑股份有限公司", "type": "company", "x": 260, "y": 380 },
+          { "id": "gc4", "label": "上海建工集团股份有限公司", "type": "company", "x": 590, "y": 120 },
+          { "id": "gc5", "label": "恒信永基置业有限公司", "type": "company", "tag": "吊销", "x": 590, "y": 360 },
+          { "id": "gc6", "label": "深圳万科金色家园房地产开发有限公司", "type": "company", "tag": "注销", "x": 700, "y": 240 },
+          { "id": "gn2", "label": "万科企业股份有限公司", "type": "target", "tag": "组1", "x": 780, "y": 400 }
+        ],
+        "edges": [
+          { "from": "gn1", "to": "gc1", "label": "工商股东：0.24%，董事，法定代表人" },
+          { "from": "gn1", "to": "gc3", "label": "供应关系" },
+          { "from": "gc1", "to": "gc2", "label": "供应关系" },
+          { "from": "gc3", "to": "gc2", "label": "供应关系" },
+          { "from": "gc2", "to": "gc4", "label": "供应关系" },
+          { "from": "gc2", "to": "gc6", "label": "供应关系" },
+          { "from": "gc4", "to": "gn2", "label": "供应关系" },
+          { "from": "gc5", "to": "gn2", "label": "历史股东" },
+          { "from": "gc6", "to": "gn2", "label": "历史法定代表人" }
+        ]
+      },
+      "watermark": "启信慧眼",
+      "disclaimer": "数据基于公开数据动态分析，仅供参考"
+    }
+  },
+  "related": {
+    "search": {
+      "placeholder": "请输入企业名称/统一社会信用代码",
+      "btn": "查询"
+    },
+    "filter": {
+      "typeTitle": "关系类型",
+      "types": [
+        { "key": "controller", "label": "实控人", "checked": false, "arrow": true },
+        { "key": "beneficiary", "label": "受益所有人", "checked": false, "arrow": false },
+        { "key": "legal", "label": "法定代表人", "checked": false, "arrow": true },
+        { "key": "branch", "label": "分支机构", "checked": false, "arrow": true },
+        { "key": "director", "label": "董监高", "checked": true, "arrow": true },
+        { "key": "shareholder", "label": "股东", "checked": true, "arrow": true },
+        { "key": "investment", "label": "对外投资", "checked": true, "arrow": true },
+        { "key": "coop", "label": "商业合作", "checked": false, "arrow": true },
+        { "key": "contact", "label": "联系方式", "checked": false, "arrow": true },
+        { "key": "other", "label": "其他关系", "checked": false, "arrow": true }
+      ],
+      "settings": "设置",
+      "excludeTitle": "关系剔除",
+      "excludes": [
+        { "key": "abnormal", "label": "经营状态异常企业", "checked": false },
+        { "key": "organ", "label": "机关、事业单位", "checked": false }
+      ]
+    },
+    "templates": {
+      "title": "精选模板：",
+      "items": [
+        { "key": "acc", "label": "会计准则", "icon": "doc" },
+        { "key": "exchange", "label": "深交所上交所", "icon": "wave" },
+        { "key": "regulator", "label": "金融监管总局", "icon": "building" }
+      ]
+    },
+    "diagram": {
+      "center": "关联方识别",
+      "left": ["实控人", "受益所有人", "法人", "股东", "董监高"],
+      "right": ["分支机构", "对外投资", "商业合作", "联系方式", "其他类型"],
+      "try": "一键试用",
+      "collapse": "收起示例"
+    },
+    "records": {
+      "title": "排查记录",
+      "count": 4,
+      "filters": [
+        { "key": "person", "placeholder": "请选择排查人" },
+        { "key": "result", "placeholder": "请选择排查结果" }
+      ],
+      "columns": ["序号", "排查目标", "排查结果", "排查人", "排查时间", "完成时间", "操作"],
+      "rows": [
+        {
+          "id": 1,
+          "name": "乐视网信息技术（北京）股份有限公司",
+          "running": true,
+          "result": "—",
+          "resultCount": null,
+          "person": "19156027703",
+          "startTime": "2026-08-19 23:44",
+          "endTime": "—"
+        },
+        {
+          "id": 2,
+          "name": "乐视网信息技术（北京）股份有限公司",
+          "running": false,
+          "result": "已完成",
+          "resultCount": 2986,
+          "person": "19156027703",
+          "startTime": "2026-08-19 15:02",
+          "endTime": "2026-08-19 15:05"
+        },
+        {
+          "id": 3,
+          "name": "乐视网信息技术（北京）股份有限公司",
+          "running": false,
+          "result": "已完成",
+          "resultCount": 2969,
+          "person": "19156027703",
+          "startTime": "2026-08-18 20:28",
+          "endTime": "2026-08-18 20:31"
+        },
+        {
+          "id": 4,
+          "name": "乐视网信息技术（北京）股份有限公司",
+          "running": false,
+          "result": "已完成",
+          "resultCount": 3007,
+          "person": "19156027703",
+          "startTime": "2026-08-17 15:59",
+          "endTime": "2026-08-17 16:02"
+        }
+      ],
+      "actions": ["详情", "下载报告", "重新排查"]
+    }
+  }
+}

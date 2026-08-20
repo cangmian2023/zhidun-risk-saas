@@ -231,7 +231,9 @@ export const dmMenu: MenuGroup[] = [
     section: '档案备份',
     items: [
       { label: '企业档案', key: 'dm:ent-archive', keep: true, desc: '企业尽调档案 1:1 原样备份：基本信息 / 企业图谱(8视图) / 历史信息 / 司法风险 / 知识产权 / 经营信息 / 经营风险 / 新闻舆情 / 财产信息 / 集团信息' },
+      { label: '企业档案 · 数据复刻', key: 'dm:ent-archive-basic', keep: true, desc: '企业尽调档案 · 数据复刻版（与 DmEntArchiveBasic 同结构，1:1 仿企业档案样式）' },
       { label: '个人档案', key: 'dm:person-archive', keep: true, desc: '人员尽调档案 1:1 原样备份：基本信息 / 风险信息 / 历史信息 / 关联风险企业 / 个人图谱 / 专利信息' },
+      { label: '个人档案 · 数据复刻', key: 'dm:person-archive-basic', keep: true, desc: '人员尽调档案 · 数据复刻版（6 个主 Tab 1:1 仿企业档案结构：基本信息 779 / 风险信息 13 / 专利信息 46 / 关联企业风险 / 个人图谱 / 历史信息 49）' },
     ],
   },
 ]

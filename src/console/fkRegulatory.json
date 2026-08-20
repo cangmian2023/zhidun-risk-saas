@@ -1,0 +1,121 @@
+{
+  "scope": "全部范围",
+  "searchPlaceholder": "请输入主体名称、判决机构等关键词，非必填",
+  "searchBtn": "查询",
+  "violationTypes": [
+    "不限",
+    "商业贿赂",
+    "市场垄断",
+    "违规推广",
+    "质量问题",
+    "围标串标",
+    "非法集资",
+    "非法经营",
+    "安全疏忽",
+    "信息泄露",
+    "不正当竞争"
+  ],
+  "otherFilters": ["涉案/处罚金额", "披露日期", "数据来源", "行业分类", "省份地区", "注册资本"],
+  "totalText": "找到 {total} 条结果",
+  "viewToggle": { "card": "卡片", "table": "表格" },
+  "exportBtn": "导出数据",
+  "detailTitle": "查合规详情",
+  "rows": [
+    {
+      "id": 1,
+      "name": "广西平果和泰科技有限公司",
+      "tags": [
+        { "label": "安全疏忽", "color": "#B45309", "bg": "#FEF3C7" },
+        { "label": "安全事故IPE", "color": "#1D4ED8", "bg": "#EFF6FF" }
+      ],
+      "date": "2050-07-10",
+      "amount": "-",
+      "authority": "平果市人民政府",
+      "decision": "-",
+      "description": "生产安全事故，涉及1人，损失财产132.726400万元",
+      "detail": {
+        "companyName": "广西平果和泰科技有限公司",
+        "creditCode": "91451082MA5L3X8E8X",
+        "dataSource": "安全事故IPE",
+        "content": "-"
+      }
+    },
+    {
+      "id": 2,
+      "name": "广东湛江雷州牧原农牧有限公司",
+      "tags": [
+        { "label": "安全疏忽", "color": "#B45309", "bg": "#FEF3C7" },
+        { "label": "安全事故IPE", "color": "#1D4ED8", "bg": "#EFF6FF" }
+      ],
+      "date": "2050-04-19",
+      "amount": "-",
+      "authority": "雷州市应急管理局",
+      "decision": "-",
+      "description": "生产安全事故，涉及1人，损失财产148.000000万元",
+      "detail": {
+        "companyName": "广东湛江雷州牧原农牧有限公司",
+        "creditCode": "91440882MA549J6RXT",
+        "dataSource": "安全事故IPE",
+        "content": "-"
+      }
+    },
+    {
+      "id": 3,
+      "name": "揭阳市榕城区合发货物运输代理服务部",
+      "tags": [
+        { "label": "安全疏忽", "color": "#B45309", "bg": "#FEF3C7" },
+        { "label": "安全事故IPE", "color": "#1D4ED8", "bg": "#EFF6FF" }
+      ],
+      "date": "2040-07-05",
+      "amount": "-",
+      "authority": "丰顺县人民政府",
+      "decision": "-",
+      "description": "生产安全事故，涉及1人，损失财产若干万元",
+      "detail": {
+        "companyName": "揭阳市榕城区合发货物运输代理服务部",
+        "creditCode": "92445202MA55MR3F5K",
+        "dataSource": "安全事故IPE",
+        "content": "-"
+      }
+    },
+    {
+      "id": 4,
+      "name": "广州美诚食品有限公司",
+      "tags": [
+        { "label": "信息泄露", "color": "#B45309", "bg": "#FEF3C7" },
+        { "label": "不正当竞争", "color": "#1D4ED8", "bg": "#EFF6FF" }
+      ],
+      "date": "2026-08-10",
+      "amount": "50.00",
+      "authority": "广州市市场监督管理局",
+      "decision": "罚款并责令整改",
+      "description": "虚假宣传，误导消费者，涉及不正当竞争行为",
+      "detail": {
+        "companyName": "广州美诚食品有限公司",
+        "creditCode": "91440101MA59M8J99F",
+        "dataSource": "行政处罚",
+        "content": "罚款并责令整改"
+      }
+    },
+    {
+      "id": 5,
+      "name": "上海某某数据科技有限公司",
+      "tags": [
+        { "label": "信息泄露", "color": "#B45309", "bg": "#FEF3C7" },
+        { "label": "违规推广", "color": "#1D4ED8", "bg": "#EFF6FF" }
+      ],
+      "date": "2026-07-22",
+      "amount": "-",
+      "authority": "上海市网信办",
+      "decision": "-",
+      "description": "未履行个人信息保护义务，导致用户数据泄露",
+      "detail": {
+        "companyName": "上海某某数据科技有限公司",
+        "creditCode": "91310115MA1H9JNH0D",
+        "dataSource": "监管通报",
+        "content": "-"
+      }
+    }
+  ],
+  "pagination": { "total": 20000, "pageSize": 10, "current": 1 }
+}

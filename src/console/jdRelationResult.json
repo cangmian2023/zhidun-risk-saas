@@ -1,0 +1,79 @@
+{
+  "source": "jdRelationResult",
+  "pageTitle": "关联方识别",
+  "crumb": "关联方识别 / 识别结果",
+  "targetLabel": "识别目标",
+  "targetValue": "乐视网信息技术（北京）股份有限公司",
+  "expandRule": "展开规则",
+  "resultSummary": "关系结果识别完成，共找到{count}个关联方",
+  "count": 2986,
+  "toolbar": {
+    "upload": "上传名单，排查是否命中关联方",
+    "searchPlaceholder": "在当前结果中查找企业",
+    "report": "生成报送文件",
+    "download": "下载报告"
+  },
+  "tree": [
+    {
+      "key": "dgd",
+      "label": "董监高",
+      "count": 285,
+      "children": [
+        { "key": "dgd-8", "label": "董监高", "count": 8, "active": true },
+        { "key": "dgd-invest", "label": "董监高对外投资", "count": 225 },
+        { "key": "dgd-control", "label": "董监高实控企业", "count": 52 }
+      ]
+    },
+    {
+      "key": "holder",
+      "label": "股东",
+      "count": 3167,
+      "children": [
+        { "key": "h-13", "label": "股东", "count": 13 },
+        { "key": "h-invest", "label": "直接股东对外投资", "count": 2597 },
+        { "key": "h-control", "label": "直接股东实控企业", "count": 526 },
+        { "key": "h-dgd", "label": "直接股东董监高", "count": 31 }
+      ]
+    },
+    {
+      "key": "invest",
+      "label": "对外投资",
+      "count": 490,
+      "children": [{ "key": "i-490", "label": "对外投资", "count": 490 }]
+    }
+  ],
+  "detail": {
+    "columns": ["序号", "主要人员姓名", "职位", "简介", "关联路径"],
+    "rows": [
+      { "id": 1, "name": "魏波", "position": "监事、监事会主席", "intro": null, "path": "详情" },
+      { "id": 2, "name": "张巍", "position": "监事、职工代表监事", "intro": null, "path": "详情" },
+      { "id": 3, "name": "李利婷", "position": "董事", "intro": null, "path": "详情" },
+      { "id": 4, "name": "高昊", "position": "董事", "intro": null, "path": "详情" },
+      {
+        "id": 5,
+        "name": "刘延峰",
+        "position": "法定代表人、财务负…",
+        "intro": "刘延峰，男，1987年6月出生。曾任职于河北家兴易购科技股份有限公司。现任乐视网第四届董事会董事长。",
+        "path": "详情"
+      },
+      {
+        "id": 6,
+        "name": "杨涛",
+        "position": "监事会主席",
+        "intro": "杨涛,男,1975年2月出生,中国国籍,无境外居留权,学士,毕业于首都经济贸易大学,获得审计学专业学士学位,中国注册会计师。2001年至2015年,任普华永道会计师事务所审计师、高级审计师、经理、高级经理;2015年至2016年,任北京大生知行科技有限公司财务总监;2016年至2017年,任宏力…",
+        "long": true,
+        "path": "详情"
+      },
+      { "id": 7, "name": "鲁浩", "position": "董事", "intro": null, "path": "详情" },
+      { "id": 8, "name": "崔留磊", "position": "董事", "intro": null, "path": "详情" }
+    ],
+    "expand": "展开",
+    "collapse": "收起"
+  },
+  "nextSection": {
+    "title": "董监高对外投资",
+    "count": 225,
+    "filter": "持股比例"
+  },
+  "empty": "该分类暂无明细数据"
+}

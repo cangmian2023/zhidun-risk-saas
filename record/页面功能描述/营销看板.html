@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>营销看板</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#ffc53d',
+            tableHeader: '#f7f8fc',
+            rank1: '#f56c6c',
+            rank2: '#e6a23c',
+            rank3: '#409eff',
+            rank4: '#909399'
+          }
+        }
+      }
+    }
+  </script>
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .stat-card { @apply flex-1 min-w-[280px] px-4 py-3 border-r last:border-r-0 relative }
+      .stat-arrow { @apply absolute right-0 top-1/2 -translate-y-1/2 w-0 h-0 border-solid border-y-[12px] border-r-[12px] border-y-transparent border-r-white }
+      .sort-icon { @apply inline-block text-gray-400 ml-1 }
+    }
+  </style>
+</head>
+<body class="bg-gray-50 text-gray-800 p-4">
+  <div class="w-full max-w-[2800px] mx-auto">
+    <!-- 页面标题 -->
+    <h1 class="text-xl font-bold mb-4">营销看板</h1>
+
+    <!-- 顶部筛选行 -->
+    <div class="flex items-center gap-4 mb-4 text-sm">
+      <span class="cursor-pointer flex items-center gap-1">线索筛选 <i class="fa fa-angle-down"></i></span>
+      <span class="cursor-pointer flex items-center gap-1">名单筛选 <i class="fa fa-angle-down"></i></span>
+      <span class="cursor-pointer flex items-center gap-1">更新日期 <i class="fa fa-angle-down"></i></span>
+      <span class="cursor-pointer flex items-center gap-1">创建日期 <i class="fa fa-angle-down"></i></span>
+    </div>
+
+    <!-- 顶部指标卡片组 -->
+    <div class="flex bg-white border rounded mb-4 overflow-x-auto relative">
+      <div class="stat-card">
+        <div class="font-semibold text-base">总线索 <span class="text-lg">20</span> 条</div>
+        <div class="text-sm text-gray-500 mt-1">未分配 <span class="text-red-500">19</span> &nbsp;|&nbsp; 已分配 1</div>
+        <div class="stat-arrow"></div>
+      </div>
+      <div class="stat-card">
+        <div class="font-semibold text-base">待营销 <span class="text-lg">0</span> 条</div>
+        <div class="text-sm text-gray-500 mt-1">30天未跟进 0 &nbsp;|&nbsp; 近7日新增 0</div>
+        <div class="stat-arrow"></div>
+      </div>
+      <div class="stat-card">
+        <div class="font-semibold text-base">营销中 <span class="text-lg text-blue-600">1</span> 条</div>
+        <div class="text-sm text-gray-500 mt-1">有限进记录 0 &nbsp;|&nbsp; 无跟进记录 1</div>
+        <div class="stat-arrow"></div>
+      </div>
+      <div class="stat-card">
+        <div class="font-semibold text-base">营销结束 <span class="text-lg">0</span> 条</div>
+        <div class="text-sm text-gray-500 mt-1">成功 0 &nbsp;|&nbsp; 失败 0 &nbsp;|&nbsp; 无需营销 0</div>
+      </div>
+    </div>
+
+    <!-- 部门营销数据区域 -->
+    <div class="bg-white border rounded mb-4 overflow-x-auto">
+      <div class="px-4 py-3 flex items-center justify-between border-b">
+        <div class="flex items-center gap-3">
+          <span class="font-medium">部门营销数据</span>
+          <button class="flex items-center gap-1 text-blue-500 text-sm">
+            <i class="fa fa-pie-chart"></i> 图表分析
+          </button>
+          <span class="text-gray-500 text-sm">统计口径: 全部名单及线索，其中包含了个人可见的名单及线索。</span>
+        </div>
+        <button class="border rounded px-3 py-1 text-sm flex items-center gap-1">
+          <i class="fa fa-download"></i> 导出
+        </button>
+      </div>
+      <table class="w-full text-sm">
+        <thead class="bg-[#f7f8fc]">
+          <tr>
+            <th class="px-3 py-2 border text-left w-12">序号</th>
+            <th class="px-3 py-2 border text-left min-w-[160px]">部门</th>
+            <th class="px-3 py-2 border text-right min-w-[120px]">待营销 <i class="fa fa-sort sort-icon"></i></th>
+            <th class="px-3 py-2 border text-right min-w-[120px]">营销中 <i class="fa fa-sort-desc sort-icon text-blue-500"></i></th>
+            <th class="px-3 py-2 border text-right min-w-[120px]">有跟进 <i class="fa fa-sort sort-icon"></i></th>
+            <th class="px-3 py-2 border text-right min-w-[120px]">营销成功 <i class="fa fa-sort sort-icon"></i></th>
+            <th class="px-3 py-2 border text-right min-w-[120px]">跟进次数 <i class="fa fa-sort sort-icon"></i></th>
+            <th class="px-3 py-2 border text-right min-w-[120px]">活跃次数 <i class="fa fa-sort sort-icon"></i></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="hover:bg-gray-50">
+            <td class="px-3 py-2 border"><span class="text-rank1 font-bold">1</span></td>
+            <td class="px-3 py-2 border text-blue-500 cursor-pointer">授信部</td>
+            <td class="px-3 py-2 border text-right">-</td>
+            <td class="px-3 py-2 border text-right">-</td>
+            <td class="px-3 py-2 border text-right">-</td>
+            <td class="px-3 py-2 border text-right">-</td>
+            <td class="px-3 py-2 border text-right">-</td>
+            <td class="px-3 py-2 border text-right">-</td>
+          </tr>
+          <tr class="hover:bg-gray-50">
+            <td class="px-3 py-2 border"><span class="text-rank2 font-bold">2</span></td>
+            <td class="px-3 py-2 border text-blue-500 cursor-pointer">风险部</td>
+            <td class="px-3 py-2 border text-right">-</td>
+            <td class="px-3 py-2 border text-right">-</td>
+            <td class="px-3 py-2 border text-right">-</td>
+            <td class="px-3 py-2 border text-right">-</td>
+            <td class="px-3 py-2 border text-right">-</td>
+            <td class="px-3 py-2 border text-right">-</td>
+          </tr>
+          <tr class="hover:bg-gray-50">
+            <td class="px-3 py-2 border"><span class="text-rank3 font-bold">3</span></td>
+            <td class="px-3 py-2 border text-blue-500 cursor-pointer">普惠部</td>
+            <td class="px-3 py-2 border text-right">-</td>
+            <td class="px-3 py-2 border text-right">-</td>
+            <td class="px-3 py-2 border text-right">-</td>
+            <td class="px-3 py-2 border text-right">-</td>
+            <td class="px-3 py-2 border text-right">-</td>
+            <td class="px-3 py-2 border text-right">-</td>
+          </tr>
+          <tr class="hover:bg-gray-50">
+            <td class="px-3 py-2 border"><span class="text-rank4 font-bold">4</span></td>
+            <td class="px-3 py-2 border text-blue-500 cursor-pointer">公司部</td>
+            <td class="px-3 py-2 border text-right">-</td>
+            <td class="px-3 py-2 border text-right">-</td>
+            <td class="px-3 py-2 border text-right">-</td>
+            <td class="px-3 py-2 border text-right">-</td>
+            <td class="px-3 py-2 border text-right">-</td>
+            <td class="px-3 py-2 border text-right">-</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 个人排行榜区域 -->
+    <div class="bg-white border rounded overflow-x-auto">
+      <div class="px-4 py-3 flex items-center justify-between border-b">
+        <div class="flex items-center gap-3">
+          <span class="font-medium">个人排行榜</span>
+          <button class="flex items-center gap-1 text-blue-500 text-sm">
+            <i class="fa fa-pie-chart"></i> 图表分析
+          </button>
+          <span class="text-gray-500 text-sm">统计口径: 全部名单及线索，其中包含了个人可见的名单及线索。</span>
+        </div>
+        <div class="flex gap-3 items-center">
+          <select class="border rounded px-3 py-1 text-sm">
+            <option>选择部门</option>
+          </select>
+          <button class="border rounded px-3 py-1 text-sm flex items-center gap-1">
+            <i class="fa fa-download"></i> 导出
+          </button>
+        </div>
+      </div>
+      <table class="w-full text-sm">
+        <thead class="bg-[#f7f8fc]">
+          <tr>
+            <th class="px-3 py-2 border text-left w-12">序号</th>
+            <th class="px-3 py-2 border text-left min-w-[140px]">姓名</th>
+            <th class="px-3 py-2 border text-left min-w-[240px]">部门</th>
+            <th class="px-3 py-2 border text-right min-w-[120px]">待营销 <i class="fa fa-sort sort-icon"></i></th>
+            <th class="px-3 py-2 border text-right min-w-[120px]">营销中 <i class="fa fa-sort-desc sort-icon text-blue-500"></i></th>
+            <th class="px-3 py-2 border text-right min-w-[120px]">有跟进 <i class="fa fa-sort sort-icon"></i></th>
+            <th class="px-3 py-2 border text-right min-w-[120px]">营销成功 <i class="fa fa-sort sort-icon"></i></th>
+            <th class="px-3 py-2 border text-right min-w-[120px]">跟进次数 <i class="fa fa-sort sort-icon"></i></th>
+            <th class="px-3 py-2 border text-right min-w-[120px]">活跃次数 <i class="fa fa-sort sort-icon"></i></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="hover:bg-gray-50">
+            <td class="px-3 py-2 border"><span class="text-rank1 font-bold">1</span></td>
+            <td class="px-3 py-2 border">19156027703</td>
+            <td class="px-3 py-2 border">广州粤信科技有限公司</td>
+            <td class="px-3 py-2 border text-right">-</td>
+            <td class="px-3 py-2 border text-right">1 5.00%</td>
+            <td class="px-3 py-2 border text-right">1 5.00%</td>
+            <td class="px-3 py-2 border text-right">-</td>
+            <td class="px-3 py-2 border text-right">-</td>
+            <td class="px-3 py-2 border text-right">1323</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</body>
+</html>

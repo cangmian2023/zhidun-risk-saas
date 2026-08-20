@@ -1,0 +1,59 @@
+{
+  "//": "企业关系 · 样例数据（使用域作者维护）。左右分栏：左侧力导向网络图 + 右侧筛选配置面板。",
+  "company": "比亚迪股份有限公司",
+  "updatedAt": "2026-08-18",
+  "nodes": [
+    { "id": "core", "name": "比亚迪股份有限公司", "type": "core", "x": 0, "y": 0 },
+    { "id": "n1", "name": "王传福", "type": "person", "x": -180, "y": -120, "groups": ["legal", "dg"], "rel": "法定代表人、董事长" },
+    { "id": "n2", "name": "吕向阳", "type": "person", "x": -150, "y": 40, "groups": ["dg"], "rel": "副董事长" },
+    { "id": "n3", "name": "夏佐全", "type": "person", "x": -80, "y": -180, "groups": ["dg"], "rel": "非执行董事" },
+    { "id": "n4", "name": "融捷投资控股集团有限公司", "type": "company", "x": 160, "y": -140, "groups": ["shareholder"], "rel": "股东" },
+    { "id": "n5", "name": "香港中央结算有限公司", "type": "company", "x": 180, "y": -40, "groups": ["shareholder"], "rel": "股东" },
+    { "id": "n6", "name": "比亚迪青岛分公司", "type": "company", "x": 120, "y": 140, "groups": ["branch"], "rel": "分支机构" },
+    { "id": "n7", "name": "比亚迪杭州分公司", "type": "company", "x": 200, "y": 120, "groups": ["branch"], "rel": "分支机构" },
+    { "id": "n8", "name": "BERKSHIRE HATHAWAY", "type": "company", "x": -40, "y": 150, "groups": ["history"], "rel": "历史股东" },
+    { "id": "n9", "name": "王念强", "type": "person", "x": -200, "y": 120, "groups": ["legal"], "rel": "历史监事" },
+    { "id": "n10", "name": "深圳势源新材料有限公司", "type": "company", "x": 60, "y": 220, "groups": ["shareholder"], "rel": "股东" }
+  ],
+  "links": [
+    { "from": "core", "to": "n1", "label": "法定代表人" },
+    { "from": "core", "to": "n2", "label": "董事" },
+    { "from": "core", "to": "n3", "label": "董事" },
+    { "from": "core", "to": "n4", "label": "股东" },
+    { "from": "core", "to": "n5", "label": "股东" },
+    { "from": "core", "to": "n6", "label": "分支机构" },
+    { "from": "core", "to": "n7", "label": "分支机构" },
+    { "from": "core", "to": "n8", "label": "历史股东" },
+    { "from": "core", "to": "n9", "label": "历史监事" },
+    { "from": "core", "to": "n10", "label": "股东" }
+  ],
+  "filterGroups": [
+    {
+      "title": "层级关系",
+      "type": "radio",
+      "options": [
+        { "key": "level1", "label": "一层", "default": false },
+        { "key": "level2", "label": "二层", "default": true }
+      ]
+    },
+    {
+      "title": "任职关系",
+      "type": "checkbox",
+      "options": [
+        { "key": "legal", "label": "法人", "default": true },
+        { "key": "dg", "label": "董监高", "default": true },
+        { "key": "dgAnnounce", "label": "公告中的董监高", "default": true },
+        { "key": "dgHistory", "label": "历史董监高", "default": true }
+      ]
+    },
+    {
+      "title": "投资关系",
+      "type": "checkbox",
+      "options": [
+        { "key": "shareholder", "label": "股东", "default": true },
+        { "key": "branch", "label": "分支机构", "default": true },
+        { "key": "history", "label": "历史股东", "default": true }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,83 @@
+{
+  "//": "企业链图 · 样例数据（使用域作者维护）。核心节点为比亚迪股份有限公司，分支节点按业务分类配色。",
+  "company": "比亚迪股份有限公司",
+  "updatedAt": "2026-08-18",
+  "nodes": [
+    { "id": "core", "name": "比亚迪股份有限公司", "type": "core", "x": 0, "y": 0 },
+
+    { "id": "branch-exe", "name": "高管", "type": "staff", "x": -260, "y": -120 },
+    { "id": "exe-1", "name": "吕向阳", "type": "staff", "post": "副董事长", "x": -260, "y": -230 },
+    { "id": "exe-2", "name": "喻玲", "type": "staff", "post": "董事", "x": -260, "y": -150 },
+    { "id": "exe-3", "name": "夏佐全", "type": "staff", "post": "董事", "x": -260, "y": -70 },
+    { "id": "exe-4", "name": "张敏", "type": "staff", "post": "董事", "x": -260, "y": 10 },
+    { "id": "exe-5", "name": "王传福", "type": "staff", "post": "董事长", "x": -260, "y": 90 },
+
+    { "id": "branch-inv", "name": "对外投资", "type": "invest", "x": -260, "y": 240, "expand": "105" },
+    { "id": "inv-1", "name": "山东国金汽车制造", "type": "invest", "ratio": "2.75%", "x": -260, "y": 330 },
+    { "id": "inv-2", "name": "深圳迪链科技有限", "type": "invest", "ratio": "100.00%", "x": -260, "y": 410 },
+
+    { "id": "branch-branch", "name": "分支机构", "type": "branch", "x": -260, "y": 510 },
+    { "id": "br-1", "name": "公司青岛分公司", "type": "branch", "x": -260, "y": 600 },
+    { "id": "br-2", "name": "公司杭州分公司", "type": "branch", "x": -260, "y": 680 },
+
+    { "id": "branch-court", "name": "法院公告", "type": "court", "x": 260, "y": -230, "collapse": "13" },
+    { "id": "court-1", "name": "深圳市华华盛达新能", "type": "court", "x": 260, "y": -120 },
+    { "id": "court-2", "name": "常州未来发明能源", "type": "court", "x": 260, "y": -40 },
+    { "id": "court-3", "name": "中国银行股份有限", "type": "court", "x": 260, "y": 40 },
+
+    { "id": "branch-hsh", "name": "历史股东", "type": "history", "x": 260, "y": 160, "collapse": "9" },
+    { "id": "hsh-1", "name": "A股股东", "type": "history", "x": 260, "y": 250 },
+    { "id": "hsh-2", "name": "境外上市外资股", "type": "history", "x": 260, "y": 330 },
+    { "id": "hsh-3", "name": "BERKSHIRE H/", "type": "history", "x": 260, "y": 410 },
+    { "id": "hsh-4", "name": "MIDAMERICA", "type": "history", "x": 260, "y": 490 },
+    { "id": "hsh-5", "name": "WESTERN CAPIT", "type": "history", "x": 260, "y": 570 },
+
+    { "id": "branch-suspect", "name": "疑似关系", "type": "suspect", "x": 260, "y": 680 },
+    { "id": "suspect-1", "name": "山东国金汽车制造", "type": "suspect", "x": 260, "y": 770 },
+    { "id": "suspect-2", "name": "深圳迪链科技有限", "type": "suspect", "x": 260, "y": 850 },
+    { "id": "suspect-3", "name": "国金汽车集团有限", "type": "suspect", "x": 260, "y": 930 },
+    { "id": "suspect-4", "name": "国网冀北张家口风", "type": "suspect", "x": 260, "y": 1010 }
+  ],
+  "links": [
+    { "from": "core", "to": "branch-exe" },
+    { "from": "branch-exe", "to": "exe-1" },
+    { "from": "branch-exe", "to": "exe-2" },
+    { "from": "branch-exe", "to": "exe-3" },
+    { "from": "branch-exe", "to": "exe-4" },
+    { "from": "branch-exe", "to": "exe-5" },
+    { "from": "core", "to": "branch-inv" },
+    { "from": "branch-inv", "to": "inv-1" },
+    { "from": "branch-inv", "to": "inv-2" },
+    { "from": "core", "to": "branch-branch" },
+    { "from": "branch-branch", "to": "br-1" },
+    { "from": "branch-branch", "to": "br-2" },
+    { "from": "core", "to": "branch-court" },
+    { "from": "branch-court", "to": "court-1" },
+    { "from": "branch-court", "to": "court-2" },
+    { "from": "branch-court", "to": "court-3" },
+    { "from": "core", "to": "branch-hsh" },
+    { "from": "branch-hsh", "to": "hsh-1" },
+    { "from": "branch-hsh", "to": "hsh-2" },
+    { "from": "branch-hsh", "to": "hsh-3" },
+    { "from": "branch-hsh", "to": "hsh-4" },
+    { "from": "branch-hsh", "to": "hsh-5" },
+    { "from": "core", "to": "branch-suspect" },
+    { "from": "branch-suspect", "to": "suspect-1" },
+    { "from": "branch-suspect", "to": "suspect-2" },
+    { "from": "branch-suspect", "to": "suspect-3" },
+    { "from": "branch-suspect", "to": "suspect-4" }
+  ],
+  "filters": [
+    { "key": "shareholder", "label": "股东", "count": 11 },
+    { "key": "staff", "label": "高管", "count": 6 },
+    { "key": "invest", "label": "对外投资", "count": 110 },
+    { "key": "judgment", "label": "裁判文书", "count": 87 },
+    { "key": "court", "label": "法院公告", "count": 18 },
+    { "key": "history", "label": "历史股东", "count": 14 },
+    { "key": "suspect", "label": "疑似关系", "count": 37, "help": true },
+    { "key": "branch", "label": "分支机构", "count": 2 },
+    { "key": "hold", "label": "控股企业", "count": 2056 },
+    { "key": "customer", "label": "客户", "count": 0 },
+    { "key": "supplier", "label": "供应商", "count": 0 }
+  ]
+}

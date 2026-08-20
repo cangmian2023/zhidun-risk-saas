@@ -1,0 +1,47 @@
+{
+  "//": "股权结构 · 样例数据（使用域作者维护）。横向放射布局：左侧核心主体 + 右侧放射股东节点。",
+  "company": "比亚迪股份有限公司",
+  "updatedAt": "2026-08-18",
+  "core": {
+    "name": "比亚迪股份有限公司",
+    "suspectController": "王传福",
+    "totalRatio": "16.90%"
+  },
+  "dims": [
+    {
+      "key": "shareholder",
+      "label": "股东持股",
+      "nodes": [
+        { "id": "sh-1", "name": "香港中央结算（代理人）有限公司", "type": "org", "ratio": "40.38%", "amount": "368147.3217万股", "path": true },
+        { "id": "sh-2", "name": "王传福", "type": "person", "ratio": "16.90%", "amount": "154087.155万股", "path": true, "tags": ["实际控制人", "受益人"] },
+        { "id": "sh-3", "name": "吕向阳", "type": "person", "ratio": "7.87%", "amount": "71768.586万股", "path": true, "tags": ["受益人"] },
+        { "id": "sh-4", "name": "融捷投资控股集团有限公司", "type": "org", "ratio": "5.11%", "amount": "46544.8806万股", "path": true, "tags": ["投资机构"], "expand": true },
+        { "id": "sh-5", "name": "夏佐全", "type": "person", "ratio": "2.72%", "amount": "24790.6821万股", "path": true, "tags": ["受益人"] },
+        { "id": "sh-6", "name": "香港中央结算有限公司", "type": "org", "ratio": "2.16%", "amount": "19717.372万股", "path": true },
+        { "id": "sh-7", "name": "张炜", "type": "person", "ratio": "0.60%", "amount": "5500万股", "path": true },
+        { "id": "sh-8", "name": "王念强", "type": "person", "ratio": "0.60%", "amount": "5489.922万股", "path": true },
+        { "id": "sh-9", "name": "全国社保基金——四组合", "type": "org", "ratio": "0.46%", "amount": "4199.9938万股" },
+        { "id": "sh-10", "name": "李柯", "type": "person", "ratio": "0.36%", "amount": "3258.42万股", "path": true },
+        { "id": "sh-11", "name": "比亚迪股份有限公司-2025年员工持股计...", "type": "org", "ratio": "0.3526%", "amount": "3214.497万股" }
+      ]
+    },
+    {
+      "key": "invest",
+      "label": "对外投资",
+      "nodes": [
+        { "id": "iv-1", "name": "金菱环球有限公司", "type": "org", "ratio": "65.676%", "amount": "-万股", "path": true, "tags": ["投资机构"] },
+        { "id": "iv-2", "name": "比亚迪（香港）有限公司", "type": "org", "ratio": "100%", "amount": "-万股", "path": true, "tags": ["投资机构"] },
+        { "id": "iv-3", "name": "上海致远新创科技有限公司", "type": "org", "ratio": "12.75%", "amount": "-万股", "path": true }
+      ]
+    },
+    {
+      "key": "history",
+      "label": "历史股东持股",
+      "nodes": [
+        { "id": "hi-1", "name": "香港中央结算（代理人）有限公司", "type": "org", "ratio": "38.12%", "amount": "300000万股", "path": true },
+        { "id": "hi-2", "name": "BERKSHIRE HATHAWAY", "type": "org", "ratio": "7.02%", "amount": "150000万股", "path": true, "tags": ["投资机构"] },
+        { "id": "hi-3", "name": "融捷投资控股集团有限公司", "type": "org", "ratio": "6.18%", "amount": "120000万股", "path": true }
+      ]
+    }
+  ]
+}

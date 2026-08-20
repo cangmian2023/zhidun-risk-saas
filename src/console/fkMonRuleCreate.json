@@ -1,0 +1,208 @@
+{
+  "ruleName": "",
+  "ruleNameMax": 20,
+  "ruleDesc": "",
+  "ruleDescMax": 150,
+  "totalDims": 823,
+  "monitoredDims": 457,
+  "levelCounts": {
+    "high": 129,
+    "mid": 159,
+    "low": 169,
+    "micro": 0,
+    "daily": 0
+  },
+  "categories": ["基本信息", "经营风险", "司法风险", "经营信息", "企业舆情", "供应链风险", "关联方风险"],
+  "activeCategory": "基本信息",
+  "search": "",
+  "dims": [
+    {
+      "id": "base-addr",
+      "category": "基本信息",
+      "name": "地址信息",
+      "checked": true,
+      "expanded": false,
+      "grade": "轻微风险",
+      "score": 0,
+      "children": []
+    },
+    {
+      "id": "base-scope",
+      "category": "基本信息",
+      "name": "经营范围",
+      "checked": false,
+      "expanded": false,
+      "grade": "轻微风险",
+      "score": 0,
+      "children": []
+    },
+    {
+      "id": "base-term",
+      "category": "基本信息",
+      "name": "经营期限",
+      "checked": false,
+      "expanded": false,
+      "grade": "轻微风险",
+      "score": 0,
+      "children": []
+    },
+    {
+      "id": "base-legal",
+      "category": "基本信息",
+      "name": "法定代表人",
+      "checked": true,
+      "expanded": false,
+      "grade": "轻微风险",
+      "score": 0,
+      "children": []
+    },
+    {
+      "id": "base-capital",
+      "category": "基本信息",
+      "name": "注册资本",
+      "checked": true,
+      "expanded": true,
+      "grade": "轻微风险",
+      "score": 0,
+      "children": [
+        {
+          "id": "base-capital-1",
+          "name": "注册资本减资比例",
+          "checked": true,
+          "grade": "中风险",
+          "score": 50,
+          "operator": "大于等于",
+          "percent": "50"
+        },
+        {
+          "id": "base-capital-2",
+          "name": "注册资本减资比例",
+          "checked": true,
+          "grade": "中风险",
+          "score": 50,
+          "operator": "小于",
+          "percent": "50"
+        },
+        {
+          "id": "base-capital-3",
+          "name": "注册资本增加",
+          "checked": false,
+          "grade": "轻微风险",
+          "score": 0,
+          "operator": "",
+          "percent": ""
+        }
+      ]
+    },
+    {
+      "id": "base-shareholder",
+      "category": "基本信息",
+      "name": "股东信息",
+      "checked": true,
+      "expanded": false,
+      "grade": "低风险",
+      "score": 10,
+      "children": []
+    },
+    {
+      "id": "base-major-shareholder",
+      "category": "基本信息",
+      "name": "大股东变更",
+      "checked": true,
+      "expanded": false,
+      "grade": "中风险",
+      "score": 50,
+      "children": []
+    },
+    {
+      "id": "base-key-personnel",
+      "category": "基本信息",
+      "name": "主要人员",
+      "checked": false,
+      "expanded": false,
+      "grade": "轻微风险",
+      "score": 0,
+      "children": []
+    },
+    {
+      "id": "base-company-name",
+      "category": "基本信息",
+      "name": "企业名称",
+      "checked": true,
+      "expanded": false,
+      "grade": "低风险",
+      "score": 10,
+      "children": []
+    },
+    {
+      "id": "base-company-type",
+      "category": "基本信息",
+      "name": "企业类型",
+      "checked": false,
+      "expanded": false,
+      "grade": "轻微风险",
+      "score": 0,
+      "children": []
+    },
+    {
+      "id": "operate-status",
+      "category": "经营风险",
+      "name": "经营状态",
+      "checked": true,
+      "expanded": false,
+      "grade": "高风险",
+      "score": 88,
+      "children": []
+    },
+    {
+      "id": "judicial-court",
+      "category": "司法风险",
+      "name": "开庭公告",
+      "checked": true,
+      "expanded": false,
+      "grade": "中风险",
+      "score": 40,
+      "children": []
+    },
+    {
+      "id": "info-email",
+      "category": "经营信息",
+      "name": "邮箱变更",
+      "checked": false,
+      "expanded": false,
+      "grade": "中风险",
+      "score": 40,
+      "children": []
+    },
+    {
+      "id": "news-invest",
+      "category": "企业舆情",
+      "name": "对外投资",
+      "checked": false,
+      "expanded": false,
+      "grade": "中风险",
+      "score": 50,
+      "children": []
+    },
+    {
+      "id": "supply-chain",
+      "category": "供应链风险",
+      "name": "供应商变更",
+      "checked": false,
+      "expanded": false,
+      "grade": "低风险",
+      "score": 20,
+      "children": []
+    },
+    {
+      "id": "related-person",
+      "category": "关联方风险",
+      "name": "参保人数",
+      "checked": false,
+      "expanded": false,
+      "grade": "高风险",
+      "score": 70,
+      "children": []
+    }
+  ]
+}

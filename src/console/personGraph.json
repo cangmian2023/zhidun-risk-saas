@@ -1,0 +1,103 @@
+{
+  "subject": "王传福",
+  "queryTime": "2026-08-20 10:24:08",
+  "relations": [
+    {
+      "key": "legalRep",
+      "label": "担任法定代表人",
+      "count": 30,
+      "color": "#e6f7ff",
+      "edgeColor": "#1677ff",
+      "companies": [
+        { "name": "比亚迪股份有限公司", "credit": "914403001xxx", "status": "存续", "amount": "注册资本 29.11 亿" },
+        { "name": "比亚迪汽车工业有限公司", "credit": "914403002xxx", "status": "存续", "amount": "注册资本 33.00 亿" },
+        { "name": "惠州比亚迪实业有限公司", "credit": "914413003xxx", "status": "存续", "amount": "注册资本 1.50 亿" },
+        { "name": "比亚迪精密制造有限公司", "credit": "914403004xxx", "status": "存续", "amount": "注册资本 1.20 亿" },
+        { "name": "深圳市比亚迪锂电池有限公司", "credit": "914403005xxx", "status": "存续", "amount": "注册资本 2.00 亿" },
+        { "name": "比亚迪半导体股份有限公司", "credit": "914403006xxx", "status": "存续", "amount": "注册资本 4.50 亿" },
+        { "name": "商洛比亚迪实业有限公司", "credit": "916110007xxx", "status": "存续", "amount": "注册资本 8.00 亿" }
+      ]
+    },
+    {
+      "key": "executive",
+      "label": "担任高管",
+      "count": 28,
+      "color": "#f0f7ff",
+      "edgeColor": "#1677ff",
+      "companies": [
+        { "name": "比亚迪股份有限公司(董事)", "credit": "914403001xxx", "status": "存续", "amount": "董事长兼总裁" },
+        { "name": "比亚迪电子(国际)有限公司", "credit": "HK0285xxx", "status": "存续", "amount": "执行董事" },
+        { "name": "比亚迪汽车金融有限公司", "credit": "914403008xxx", "status": "存续", "amount": "董事" },
+        { "name": "弗迪电池有限公司", "credit": "914403009xxx", "status": "存续", "amount": "执行董事" },
+        { "name": "弗迪动力有限公司", "credit": "914403010xxx", "status": "存续", "amount": "执行董事" },
+        { "name": "比亚迪丰田电动车科技有限公司", "credit": "914403011xxx", "status": "存续", "amount": "董事长" }
+      ]
+    },
+    {
+      "key": "shareholder",
+      "label": "担任股东",
+      "count": 3,
+      "color": "#f9f0ff",
+      "edgeColor": "#722ed1",
+      "companies": [
+        { "name": "比亚迪股份有限公司", "credit": "914403001xxx", "status": "存续", "amount": "自然人股东 17.64%" },
+        { "name": "深圳远望科技有限公司", "credit": "914403012xxx", "status": "存续", "amount": "股东 45.00%" },
+        { "name": "拉萨经济技术开发区比创股权投资", "credit": "915401013xxx", "status": "存续", "amount": "股东 12.30%" }
+      ]
+    },
+    {
+      "key": "histLegalRep",
+      "label": "担任历史法定代表人",
+      "count": 51,
+      "color": "#fff2e8",
+      "edgeColor": "#fa8c16",
+      "companies": [
+        { "name": "深圳市比亚迪电子有限公司(历史)", "credit": "914403013xxx", "status": "注销", "amount": "历史法人" },
+        { "name": "比亚迪汽车销售有限公司(历史)", "credit": "914403014xxx", "status": "迁出", "amount": "历史法人" },
+        { "name": "广州比亚迪新能源客车(历史)", "credit": "914401015xxx", "status": "注销", "amount": "历史法人" },
+        { "name": "杭州比亚迪汽车(历史)", "credit": "913301016xxx", "status": "吊销", "amount": "历史法人" },
+        { "name": "西安比亚迪电子(历史)", "credit": "916101017xxx", "status": "注销", "amount": "历史法人" }
+      ]
+    },
+    {
+      "key": "histExecutive",
+      "label": "担任历史高管",
+      "count": 51,
+      "color": "#fff2e8",
+      "edgeColor": "#fa8c16",
+      "companies": [
+        { "name": "比亚迪供应链金融(历史)", "credit": "914403018xxx", "status": "注销", "amount": "历史高管" },
+        { "name": "比亚迪融资租赁(历史)", "credit": "914403019xxx", "status": "迁出", "amount": "历史高管" },
+        { "name": "常州比亚迪汽车(历史)", "credit": "913204020xxx", "status": "注销", "amount": "历史高管" },
+        { "name": "长沙比亚迪零部件(历史)", "credit": "914301021xxx", "status": "吊销", "amount": "历史高管" }
+      ]
+    },
+    {
+      "key": "histShareholder",
+      "label": "担任历史股东",
+      "count": 2,
+      "color": "#fff2e8",
+      "edgeColor": "#fa8c16",
+      "companies": [
+        { "name": "宁波比亚迪半导体(历史)", "credit": "914403022xxx", "status": "注销", "amount": "历史股东 8.00%" },
+        { "name": "比亚迪商用车研究院(历史)", "credit": "914403023xxx", "status": "迁出", "amount": "历史股东" }
+      ]
+    },
+    {
+      "key": "holding",
+      "label": "控股企业",
+      "count": 485,
+      "color": "#ffe8e8",
+      "edgeColor": "#f5222d",
+      "companies": [
+        { "name": "弗迪系控股平台", "credit": "914403024xxx", "status": "存续", "amount": "控股 100%" },
+        { "name": "比亚迪新材料控股", "credit": "914403025xxx", "status": "存续", "amount": "控股 92.50%" },
+        { "name": "比亚迪储能控股", "credit": "914403026xxx", "status": "存续", "amount": "控股 88.00%" },
+        { "name": "比亚迪光伏控股", "credit": "914403027xxx", "status": "存续", "amount": "控股 76.30%" },
+        { "name": "比亚迪芯片投资控股", "credit": "914403028xxx", "status": "存续", "amount": "控股 65.00%" },
+        { "name": "区域销售控股(华东)", "credit": "914403029xxx", "status": "存续", "amount": "控股 95.00%" },
+        { "name": "海外投资控股(欧洲)", "credit": "914403030xxx", "status": "存续", "amount": "控股 100%" }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>营销线索</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#ffc53d',
+            labelBlue: '#3b82f6',
+            labelOrange: '#f97316',
+            labelGray: '#e5e7eb'
+          }
+        }
+      }
+    }
+  </script>
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .content-auto { content-visibility: auto; }
+      .card-item { @apply bg-white px-4 py-3 border-r last:border-r-0 }
+      .filter-group { @apply mb-2 }
+      .filter-title { @apply text-gray-700 font-medium mr-2 inline-block w-20 }
+      .filter-item { @apply inline-block mr-3 text-sm text-gray-600 cursor-pointer hover:text-blue-500 }
+    }
+  </style>
+</head>
+<body class="bg-gray-50 text-gray-800 p-4">
+  <div class="max-w-[2200px] mx-auto">
+    <!-- 页面标题 -->
+    <h1 class="text-xl font-bold mb-4">营销线索</h1>
+
+    <!-- 顶部指标卡片 -->
+    <div class="flex bg-white border rounded mb-4 overflow-x-auto">
+      <div class="card-item flex-1 min-w-[240px]">
+        <div class="font-semibold">总线索 <span class="text-lg">20</span> 条</div>
+        <div class="text-sm text-gray-500 mt-1">未分配 19 &nbsp;|&nbsp; 已分配 1</div>
+      </div>
+      <div class="card-item flex-1 min-w-[240px]">
+        <div class="font-semibold">待营销 <span class="text-lg">0</span> 条</div>
+        <div class="text-sm text-gray-500 mt-1">30天未跟进 0 &nbsp;|&nbsp; 近7日新增 0</div>
+      </div>
+      <div class="card-item flex-1 min-w-[240px]">
+        <div class="font-semibold">营销中 <span class="text-lg">1</span> 条</div>
+        <div class="text-sm text-gray-500 mt-1">有限进记录 0 &nbsp;|&nbsp; 无跟进记录 1</div>
+      </div>
+      <div class="card-item flex-1 min-w-[240px]">
+        <div class="font-semibold">营销结束 <span class="text-lg">0</span> 条</div>
+        <div class="text-sm text-gray-500 mt-1">成功 0 &nbsp;|&nbsp; 失败 0 &nbsp;|&nbsp; 无需营销 0</div>
+      </div>
+    </div>
+
+    <!-- 线索范围标签 -->
+    <div class="bg-white border rounded px-4 py-3 mb-4">
+      <span class="text-gray-600 mr-3">线索范围：</span>
+      <span class="px-2 py-1 bg-primary rounded text-sm mr-2 cursor-pointer">全部</span>
+      <span class="px-2 py-1 bg-gray-100 rounded text-sm mr-2 cursor-pointer hover:bg-gray-200">本人</span>
+      <span class="px-2 py-1 bg-gray-100 rounded text-sm mr-2 cursor-pointer hover:bg-gray-200">本人及下属部门</span>
+      <span class="px-2 py-1 bg-gray-100 rounded text-sm mr-2 cursor-pointer hover:bg-gray-200">本部门</span>
+      <span class="px-2 py-1 bg-gray-100 rounded text-sm cursor-pointer hover:bg-gray-200">本部门及下属部门</span>
+    </div>
+
+    <!-- 高级筛选区域 -->
+    <div class="bg-white border rounded px-4 py-3 mb-4">
+      <div class="filter-group">
+        <span class="filter-title">线索筛选</span>
+        <span class="filter-item">名单筛选 <i class="fa fa-angle-down"></i></span>
+        <span class="filter-item">线索状态 <i class="fa fa-angle-down"></i></span>
+        <span class="filter-item">归属人员 <i class="fa fa-angle-down"></i></span>
+        <span class="filter-item">归属部门 <i class="fa fa-angle-down"></i></span>
+        <span class="filter-item">走访状态 <i class="fa fa-angle-down"></i></span>
+        <span class="filter-item">加入名单时间 <i class="fa fa-angle-down"></i></span>
+      </div>
+
+      <div class="filter-group">
+        <span class="filter-title">基本筛选</span>
+        <span class="filter-item">省份地区 <i class="fa fa-angle-down"></i></span>
+        <span class="filter-item">所在行业 <i class="fa fa-angle-down"></i></span>
+        <span class="filter-item">成立年限 <i class="fa fa-angle-down"></i></span>
+        <span class="filter-item">注册资本 <i class="fa fa-angle-down"></i></span>
+        <span class="filter-item">实缴资本 <i class="fa fa-angle-down"></i></span>
+        <span class="filter-item">经营状态 <i class="fa fa-angle-down"></i></span>
+        <span class="filter-item">企业类型 <i class="fa fa-angle-down"></i></span>
+        <span class="filter-item">组织类型 <i class="fa fa-angle-down"></i></span>
+        <span class="filter-item">参保人数 <i class="fa fa-angle-down"></i></span>
+        <span class="filter-item">启信分 <i class="fa fa-angle-down"></i></span>
+        <span class="filter-item">税务资质 <i class="fa fa-angle-down"></i></span>
+        <span class="filter-item">进出口信息 <i class="fa fa-angle-down"></i></span>
+        <span class="filter-item">融资信息 <i class="fa fa-angle-down"></i></span>
+        <span class="filter-item">专利信息 <i class="fa fa-angle-down"></i></span>
+        <span class="filter-item">商标信息 <i class="fa fa-angle-down"></i></span>
+        <span class="filter-item text-blue-500">收起 <i class="fa fa-angle-up"></i></span>
+        <br/>
+        <span class="filter-title"></span>
+        <span class="filter-item">著作权 <i class="fa fa-angle-down"></i></span>
+      </div>
+
+      <div class="filter-group">
+        <span class="filter-title">概念标签</span>
+        <span class="filter-item">业务概念 <i class="fa fa-angle-down"></i></span>
+        <span class="filter-item">企业特点 <i class="fa fa-angle-down"></i></span>
+        <span class="filter-item">榜单企业 <i class="fa fa-angle-down"></i></span>
+        <span class="filter-item">企业组织机构类型 <i class="fa fa-angle-down"></i></span>
+        <span class="filter-item">企业规模 <i class="fa fa-angle-down"></i></span>
+        <span class="filter-item">区域类型 <i class="fa fa-angle-down"></i></span>
+        <span class="filter-item">技术领先 <i class="fa fa-angle-down"></i></span>
+        <span class="filter-item">金融机构 <i class="fa fa-angle-down"></i></span>
+        <span class="filter-item">供应商企业 <i class="fa fa-angle-down"></i></span>
+        <span class="filter-item">司法涉诉 <i class="fa fa-angle-down"></i></span>
+        <span class="filter-item">风险特征 <i class="fa fa-angle-down"></i></span>
+        <span class="filter-item">自贸区 <i class="fa fa-angle-down"></i></span>
+        <span class="filter-item">资金扩张 <i class="fa fa-angle-down"></i></span>
+        <span class="filter-item">业务扩张 <i class="fa fa-angle-down"></i></span>
+        <span class="filter-item">人员扩张 <i class="fa fa-angle-down"></i></span>
+        <span class="filter-item text-blue-500">收起 <i class="fa fa-angle-up"></i></span>
+      </div>
+
+      <div class="filter-group">
+        <span class="filter-title">科技认定</span>
+        <span class="filter-item">专精特新 <i class="fa fa-angle-down"></i></span>
+        <span class="filter-item">专精特新小巨人 <i class="fa fa-angle-down"></i></span>
+        <span class="filter-item">科技小巨人 <i class="fa fa-angle-down"></i></span>
+        <span class="filter-item">科技型企业 <i class="fa fa-angle-down"></i></span>
+        <span class="filter-item">科技型中小企业 <i class="fa fa-angle-down"></i></span>
+        <span class="filter-item">高新企业 <i class="fa fa-angle-down"></i></span>
+        <span class="filter-item">独角兽企业 <i class="fa fa-angle-down"></i></span>
+        <span class="filter-item">种子独角兽 <i class="fa fa-angle-down"></i></span>
+        <span class="filter-item">未来独角兽 <i class="fa fa-angle-down"></i></span>
+        <span class="filter-item">民营科技企业 <i class="fa fa-angle-down"></i></span>
+        <span class="filter-item text-blue-500">收起 <i class="fa fa-angle-up"></i></span>
+      </div>
+
+      <div class="filter-group">
+        <span class="filter-title">风险信息</span>
+        <span class="filter-item">失信被执行人 <i class="fa fa-angle-down"></i></span>
+        <span class="filter-item">被执行人 <i class="fa fa-angle-down"></i></span>
+        <span class="filter-item">终本案件 <i class="fa fa-angle-down"></i></span>
+        <span class="filter-item">动产抵押 <i class="fa fa-angle-down"></i></span>
+        <span class="filter-item">限制高消费 <i class="fa fa-angle-down"></i></span>
+      </div>
+
+      <div class="filter-group">
+        <span class="filter-title">联系方式</span>
+        <span class="filter-item">手机号码 <i class="fa fa-angle-down"></i></span>
+        <span class="filter-item">座机号码 <i class="fa fa-angle-down"></i></span>
+        <span class="filter-item">空号过滤 <i class="fa fa-angle-down"></i></span>
+        <span class="filter-item">邮箱地址 <i class="fa fa-angle-down"></i></span>
+        <span class="filter-item">企业地址 <i class="fa fa-angle-down"></i></span>
+        <span class="filter-item">企业网址 <i class="fa fa-angle-down"></i></span>
+      </div>
+
+      <div class="text-center mt-3">
+        <span class="text-blue-500 cursor-pointer">收起筛选 <i class="fa fa-angle-up"></i></span>
+      </div>
+    </div>
+
+    <!-- 工具栏 -->
+    <div class="bg-white border rounded px-4 py-3 mb-4 flex items-center justify-between flex-wrap gap-3">
+      <div class="flex items-center gap-3">
+        <span class="text-gray-600">找到 20 条结果</span>
+        <button class="border rounded px-3 py-1 text-sm flex items-center gap-1">
+          <i class="fa fa-cogs"></i> 批量操作
+        </button>
+      </div>
+      <div class="flex items-center gap-3">
+        <input class="border rounded px-3 py-1 text-sm w-56" placeholder="请输入企业名称" />
+        <button class="border rounded px-3 py-1 text-sm flex items-center gap-1">
+          <i class="fa fa-map-marker"></i> 地图派单
+        </button>
+        <button class="border rounded px-3 py-1 text-sm flex items-center gap-1">
+          <i class="fa fa-download"></i> 导出
+        </button>
+        <button class="border rounded px-3 py-1 text-sm flex items-center gap-1">
+          <i class="fa fa-columns"></i> 展示字段(10/10)
+        </button>
+      </div>
+    </div>
+
+    <!-- 数据表格 -->
+    <div class="bg-white border rounded overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-3 py-2 border text-left w-8"><input type="checkbox"/></th>
+            <th class="px-3 py-2 border text-left min-w-[200px]">企业名称</th>
+            <th class="px-3 py-2 border text-left min-w-[120px]">名单名称</th>
+            <th class="px-3 py-2 border text-left min-w-[100px]">线索状态</th>
+            <th class="px-3 py-2 border text-left min-w-[120px]">加入名单时间</th>
+            <th class="px-3 py-2 border text-left min-w-[140px]">线索归属部门</th>
+            <th class="px-3 py-2 border text-left min-w-[140px]">线索归属人员</th>
+            <th class="px-3 py-2 border text-left min-w-[100px]">走访状态</th>
+            <th class="px-3 py-2 border text-left min-w-[80px]">启信分 <i class="fa fa-sort"></i></th>
+            <th class="px-3 py-2 border text-left min-w-[100px]">发生日期</th>
+            <th class="px-3 py-2 border text-left min-w-[140px]">最新商机内容</th>
+            <th class="px-3 py-2 border text-left min-w-[220px]">操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="hover:bg-gray-50">
+            <td class="px-3 py-2 border"><input type="checkbox"/></td>
+            <td class="px-3 py-2 border">
+              <div class="text-blue-500 cursor-pointer">上海数臻信息科技有限公司</div>
+            </td>
+            <td class="px-3 py-2 border">乡村振兴</td>
+            <td class="px-3 py-2 border">
+              <span class="bg-blue-100 text-blue-600 px-2 py-0.5 rounded text-xs">营销中 <i class="fa fa-angle-down"></i></span>
+            </td>
+            <td class="px-3 py-2 border">2026-08-17</td>
+            <td class="px-3 py-2 border">-</td>
+            <td class="px-3 py-2 border">1915602... <i class="fa fa-copy cursor-pointer ml-1"></i></td>
+            <td class="px-3 py-2 border">
+              <span class="bg-orange-100 text-orange-600 px-2 py-0.5 rounded text-xs">需走访 <i class="fa fa-angle-down"></i></span>
+            </td>
+            <td class="px-3 py-2 border">0</td>
+            <td class="px-3 py-2 border">-</td>
+            <td class="px-3 py-2 border">-</td>
+            <td class="px-3 py-2 border">
+              <button class="text-blue-500 mr-2 text-sm">AI+ <i class="fa fa-angle-down"></i></button>
+              <button class="text-blue-500 mr-2 text-sm">分配</button>
+              <button class="text-blue-500 mr-2 text-sm">记录</button>
+              <button class="text-blue-500 text-sm">更多 <i class="fa fa-angle-down"></i></button>
+            </td>
+          </tr>
+          <tr class="hover:bg-gray-50">
+            <td class="px-3 py-2 border"><input type="checkbox"/></td>
+            <td class="px-3 py-2 border">
+              <div class="text-blue-500 cursor-pointer">上海坤元数智技术有限公司</div>
+              <div class="mt-1">
+                <span class="bg-gray-100 px-1 rounded text-xs mr-1">民营企业</span>
+                <span class="bg-gray-100 px-1 rounded text-xs mr-1">有软著</span>
+                <span class="bg-gray-100 px-1 rounded text-xs mr-1">有商标</span>
+                <span class="text-gray-400 text-xs">...</span>
+              </div>
+            </td>
+            <td class="px-3 py-2 border">乡村振兴</td>
+            <td class="px-3 py-2 border">
+              <span class="bg-amber-50 text-amber-700 px-2 py-0.5 rounded text-xs">未分配 <i class="fa fa-angle-down"></i></span>
+            </td>
+            <td class="px-3 py-2 border">2026-08-17</td>
+            <td class="px-3 py-2 border">-</td>
+            <td class="px-3 py-2 border">1915602... <i class="fa fa-copy cursor-pointer ml-1"></i></td>
+            <td class="px-3 py-2 border">
+              <span class="bg-orange-100 text-orange-600 px-2 py-0.5 rounded text-xs">需走访 <i class="fa fa-angle-down"></i></span>
+            </td>
+            <td class="px-3 py-2 border">676</td>
+            <td class="px-3 py-2 border">-</td>
+            <td class="px-3 py-2 border">-</td>
+            <td class="px-3 py-2 border">
+              <button class="text-blue-500 mr-2 text-sm">AI+ <i class="fa fa-angle-down"></i></button>
+              <button class="text-blue-500 mr-2 text-sm">分配</button>
+              <button class="text-blue-500 mr-2 text-sm">跟进</button>
+              <button class="text-blue-500 text-sm">更多 <i class="fa fa-angle-down"></i></button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 分页区域（预留） -->
+    <div class="mt-3 flex justify-end">
+      <div class="border rounded px-3 py-2 text-sm text-gray-500">分页组件区域</div>
+    </div>
+  </div>
+</body>
+</html>

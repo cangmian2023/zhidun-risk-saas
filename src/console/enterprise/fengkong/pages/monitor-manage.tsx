@@ -1,18 +1,18 @@
-// 风控中心 · 监控管理（fk-monitor-manage）· 1:1 复刻「风控 - 监控管理」
-// Tabs: 监控规则 / 订阅管理；「监控管理 - 详情」用抽屉渲染（规则表单 + 维度表）
+// 企业风控 · 监控规则（fk-monitor-manage）· 1:1 复刻「监控规则」截图
 // 数据：本地样例 fkMonManage.json（橘 Sam）
 import { useState } from 'react'
 import { EpPage, EpCard, EpTag, EpBtn, EpDrawer, DataTable, useSample, Sam } from '../../epCommon'
 import type { Row, Column } from '../../../../components/ui'
+import { usePageNav } from '../../../pageNav'
 
 type MonData = typeof seed
 
 const seed = {
   rules: [
-    { id: 1, name: '北京首都国际机场, PEK BEIJING CAPITAL INTERNATIONAL AIRPORT）等共计59个', type: '国内企业', target: '北京首都国际机场等共计59家企业', desc: '自动监控主体工商 / 司法 / 经营变更', creator: '19156027703', createTime: '2026-08-17' },
-    { id: 2, name: '启信慧眼推荐关键词', type: '关键词', target: '关键词舆情（默认词包）', desc: '监控公开舆情中与关键词相关的风险动态', creator: '启信慧眼', createTime: '2026-08-15' },
-    { id: 3, name: '启信慧眼默认规则(国内)', type: '国内企业', target: '抖音有限公司等共计12家企业', desc: '默认工商 / 司法 / 经营风险监控', creator: '启信慧眼', createTime: '2026-08-10' },
-    { id: 4, name: '启信慧眼默认规则(境外)', type: '境外企业', target: 'Tesla, Inc.等共计3家海外企业', desc: '默认海外主体风险监控', creator: '启信慧眼', createTime: '2026-08-10' },
+    { id: 1, name: '外部供应链风险', type: '外部供应链风险', target: '北京首都国际机场，PEK BEIJING CAPITAL INTERNATIONAL AIRPORT）等共计59个', desc: '-', creator: '19156027703', createTime: '2026-08-17' },
+    { id: 2, name: '启信慧眼推荐关键词', type: '关键词', target: '关键词舆情', desc: '-', creator: '19156027703', createTime: '2026-08-17' },
+    { id: 3, name: '启信慧眼默认规则(国内)', type: '国内企业', target: '抖音有限公司等共计13家企业', desc: '-', creator: '启信慧眼', createTime: '2026-08-17' },
+    { id: 4, name: '启信慧眼默认规则(境外)', type: '境外企业', target: 'Tesla, Inc.等共计3家海外企业', desc: '-', creator: '启信慧眼', createTime: '2026-08-17' },
   ],
   subscriptions: {
     国内企业: [
@@ -69,11 +69,11 @@ const seed = {
 const TABS = ['监控规则', '订阅管理'] as const
 const gradeColor: Record<string, string> = { 高风险: '#DC2626', 中风险: '#F59E0B', 低风险: '#10B981', 轻微风险: '#94A3B8' }
 
-function Filter({ placeholder, w = 130 }: { placeholder: string; w?: number }) {
+function Filter({ placeholder, w = 150 }: { placeholder: string; w?: number }) {
   return (
     <select
       defaultValue=""
-      style={{ padding: '7px 10px', border: '1px solid #CBD5E1', borderRadius: 8, fontSize: 13, color: '#64748B', width: w }}
+      style={{ padding: '7px 10px', border: '1px solid #CBD5E1', borderRadius: 8, fontSize: 13, color: '#64748B', width: w, background: '#fff' }}
     >
       <option value="">{placeholder}</option>
       <option>请选择</option>
@@ -81,12 +81,41 @@ function Filter({ placeholder, w = 130 }: { placeholder: string; w?: number }) {
   )
 }
 
+const IconSearch = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="11" cy="11" r="8" />
+    <path d="m21 21-4.35-4.35" />
+  </svg>
+)
+
+const IconMonitor = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
+    <line x1="8" y1="21" x2="16" y2="21" />
+    <line x1="12" y1="17" x2="12" y2="21" />
+  </svg>
+)
+
+const IconBell = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
+    <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
+  </svg>
+)
+
+const IconDown = () => (
+  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="6 9 12 15 18 9" />
+  </svg>
+)
+
 export default function FkMonitorManage({ params }: { params: URLSearchParams }) {
   const [data] = useSample<MonData>('fkMonManage.json', seed)
   const [tab, setTab] = useState<string>(TABS[0])
   const [detailOpen, setDetailOpen] = useState(false)
   const [detail, setDetail] = useState(data.detail)
   const [dimCat, setDimCat] = useState(data.detail.categories[0])
+  const { goDetail } = usePageNav()
 
   const openDetail = (r?: typeof data.rules[number]) => {
     if (r) setDetail({ ...data.detail, ruleName: r.name, ruleDesc: r.desc })
@@ -105,6 +134,7 @@ export default function FkMonitorManage({ params }: { params: URLSearchParams })
       key: 'op', label: '操作',
       render: (r: Row) => (
         <div style={{ display: 'flex', gap: 10, whiteSpace: 'nowrap' }}>
+          <a style={{ color: '#2563EB', cursor: 'pointer' }} onClick={() => goDetail('/console/ep/fk-monitor-rule-detail?id=' + r.id)}>查看</a>
           <a style={{ color: '#2563EB', cursor: 'pointer' }} onClick={() => openDetail(r as unknown as typeof data.rules[number])}>修改</a>
           <a style={{ color: '#2563EB', cursor: 'pointer' }} onClick={() => alert('复制规则')}>复制</a>
           <a style={{ color: '#2563EB', cursor: 'pointer' }} onClick={() => alert('下载规则')}>下载</a>
@@ -114,13 +144,11 @@ export default function FkMonitorManage({ params }: { params: URLSearchParams })
     },
   ]
 
-  const subKeys = Object.keys(data.subscriptions)
-
   return (
     <EpPage
-      title="监控管理"
+      title="监控规则"
       subtitle="风控中心监控规则与订阅管理"
-      crumb="风控中心 / 监控管理"
+      crumb="风控中心 / 监控规则"
       actions={<Sam value="fkMonManage.json" />}
     >
       {/* Tabs */}
@@ -137,25 +165,37 @@ export default function FkMonitorManage({ params }: { params: URLSearchParams })
             }}
           >
             {t}
-            {t === '监控规则' && <span style={{ marginLeft: 6, color: '#94A3B8', fontSize: 12 }}>共 {data.rules.length} 条规则</span>}
           </button>
         ))}
       </div>
 
       {tab === '监控规则' && (
         <>
-          {/* 搜索 + 创建 */}
+          {/* 筛选工具栏 */}
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', marginBottom: 14 }}>
-            <input placeholder="搜索规则" style={{ flex: 1, minWidth: 200, padding: '8px 12px', border: '1px solid #CBD5E1', borderRadius: 8, fontSize: 13 }} />
+            <div style={{ fontSize: 13, color: '#64748B' }}>共{data.rules.length}条规则</div>
+            <div style={{ flex: 1 }} />
+            <div style={{ position: 'relative', width: 240 }}>
+              <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)' }}><IconSearch /></span>
+              <input
+                placeholder="搜索规则"
+                style={{ width: '100%', padding: '7px 10px 7px 30px', border: '1px solid #CBD5E1', borderRadius: 8, fontSize: 13 }}
+              />
+            </div>
             <Filter placeholder="请选择监控类型" />
             <Filter placeholder="请选择创建人" />
-            <div style={{ flex: 1 }} />
-            <EpTag color="#7C3AED" bg="#F5F3FF">监控模式</EpTag>
-            <EpBtn variant="default" size="sm">监控订阅</EpBtn>
-            <EpBtn variant="primary" size="sm" onClick={() => openDetail()}>创建新规则</EpBtn>
+            <EpBtn variant="default" size="sm" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+              <IconMonitor /> 监控模式
+            </EpBtn>
+            <EpBtn variant="default" size="sm" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+              <IconBell /> 监控订阅
+            </EpBtn>
+            <EpBtn variant="primary" size="sm" onClick={() => goDetail('/console/ep/fk-monitor-rule-create')} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: '#F59E0B', borderColor: '#F59E0B' }}>
+              创建新规则 <IconDown />
+            </EpBtn>
           </div>
 
-          <EpCard title="监控规则" desc="序号 / 规则名称 / 监控类型 / 规则应用对象 / 规则说明 / 创建人 / 创建时间 / 操作" pad={false}>
+          <EpCard pad={false}>
             <DataTable columns={ruleCols} rows={data.rules as unknown as Row[]} exportable exportName="监控规则" empty="暂无数据" />
           </EpCard>
         </>
@@ -166,7 +206,7 @@ export default function FkMonitorManage({ params }: { params: URLSearchParams })
       )}
 
       {/* 详情抽屉 */}
-      <EpDrawer open={detailOpen} onClose={() => setDetailOpen(false)} title="监控管理 - 详情" width={720}>
+      <EpDrawer open={detailOpen} onClose={() => setDetailOpen(false)} title="监控规则 - 详情" width={720}>
         <DetailForm detail={detail} dimCat={dimCat} setDimCat={setDimCat} />
       </EpDrawer>
     </EpPage>

@@ -2,6 +2,8 @@
 // 布局：顶部标题栏 → 两行筛选条 → 操作条 → 表格 → 分页
 import { useState } from 'react'
 import { Sam } from '../../../SourceTag'
+import { usePageNav } from '../../../pageNav'
+import { AddMonitorDrawer } from '../components/AddMonitorDrawer'
 
 type Avatar =
   | { kind: 'logo' }        // 抖音黑色logo方块
@@ -16,6 +18,11 @@ type Company = {
   area: string
   addr: number
   rule: string
+  tag: string
+  owner: string
+  adder: string
+  addTime: string
+  note: string
   avatar: Avatar
 }
 
@@ -38,12 +45,25 @@ const COMPANIES: Company[] = [
   { id: '16', name: '合瑞云创网络信息（北京）有限公司', code: '91110108MA0050...', area: '北京海淀区', addr: 1, rule: '启信慧眼默认规则(...', avatar: { kind: 'letter', letter: '合', color: '#165DFF', bg: '#E8F3FF' } },
 ]
 
+// 补充目标表头所需字段（负责人/部门、添加人、添加时间、备注、标签），保持与 fkMonitor.json 一致
+const OWNERS = ['银平 / 风控部', '李雪 / 贷中监控组', '夏绪宏 / 数据组', '张利东 / 法务部', '王敏 / 风控部']
+const ADDERS = ['银平', '李雪', '夏绪宏', '张利东', '王敏']
+const COMPANIES2: Company[] = COMPANIES.map((c, i) => ({
+  ...c,
+  tag: i % 3 === 0 ? '重点关注' : i % 3 === 1 ? '战略客户' : '常规监控',
+  owner: OWNERS[i % OWNERS.length],
+  adder: ADDERS[i % ADDERS.length],
+  addTime: `2026-0${(i % 8) + 1}-1${i % 9} 1${i % 9}:0${i % 9}`,
+  note: i % 4 === 0 ? '需季度复核' : i % 4 === 1 ? '客户主动要求监控' : i % 4 === 2 ? '关联交易排查' : '例行监控',
+}))
 const QUOTA = 17
 
 export default function FkMonitorList(_: { params?: URLSearchParams } = {}) {
+  const { goDetail } = usePageNav()
   const [selected, setSelected] = useState<Set<string>>(new Set())
-  const allSelected = selected.size === COMPANIES.length && COMPANIES.length > 0
-  const toggleAll = () => setSelected(allSelected ? new Set() : new Set(COMPANIES.map((c) => c.id)))
+  const [addOpen, setAddOpen] = useState(false)
+  const allSelected = selected.size === COMPANIES2.length && COMPANIES2.length > 0
+  const toggleAll = () => setSelected(allSelected ? new Set() : new Set(COMPANIES2.map((c) => c.id)))
   const toggle = (id: string) =>
     setSelected((prev) => {
       const n = new Set(prev)
@@ -52,6 +72,7 @@ export default function FkMonitorList(_: { params?: URLSearchParams } = {}) {
     })
 
   return (
+    <>
     <div style={{ padding: '16px 20px 60px', background: '#F5F6F7', minHeight: '100vh' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
         <h1 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: '#1D2129' }}>监控列表</h1>
@@ -62,7 +83,7 @@ export default function FkMonitorList(_: { params?: URLSearchParams } = {}) {
           <button type="button" style={btnDefault}>
             <SettingIcon /> 风险和推送设置
           </button>
-          <button type="button" style={btnPrimary}>
+          <button type="button" style={btnPrimary} onClick={() => setAddOpen(true)}>
             <PlusIcon /> 添加监控
           </button>
         </div>
@@ -87,7 +108,7 @@ export default function FkMonitorList(_: { params?: URLSearchParams } = {}) {
 
         <div style={{ display: 'flex', alignItems: 'center', padding: '10px 16px', gap: 8, flexWrap: 'wrap', borderBottom: '1px solid #F2F3F5' }}>
           <span style={{ fontSize: 14, fontWeight: 600, color: '#1D2129', marginRight: 4 }}>
-            监控企业数：{COMPANIES.length}家
+            监控企业数：{COMPANIES2.length}家
           </span>
           <div style={searchBox}>
             <SearchIcon />
@@ -115,11 +136,15 @@ export default function FkMonitorList(_: { params?: URLSearchParams } = {}) {
                 <Th al="center" w={90}>关联地址</Th>
                 <Th al="left" w={200}>监控规则</Th>
                 <Th al="center" w={60}>标签</Th>
+                <Th al="left" w={170}>负责人/部门</Th>
+                <Th al="left" w={120}>添加人</Th>
+                <Th al="left" w={150}>添加时间 <SortCaret /></Th>
+                <Th al="left" w={120}>备注</Th>
                 <Th al="left" w={170}>操作</Th>
               </tr>
             </thead>
             <tbody>
-              {COMPANIES.map((c) => (
+              {COMPANIES2.map((c) => (
                 <tr key={c.id} style={{ borderBottom: '1px solid #F2F3F5', height: 44 }}>
                   <Td center>
                     <input type="checkbox" checked={selected.has(c.id)} onChange={() => toggle(c.id)} style={{ cursor: 'pointer' }} />
@@ -134,10 +159,14 @@ export default function FkMonitorList(_: { params?: URLSearchParams } = {}) {
                   <Td color="#4E5969">{c.area}</Td>
                   <Td center><a style={lk}>{c.addr}</a></Td>
                   <Td color="#4E5969">{c.rule}</Td>
-                  <Td center color="#C9CDD4">-</Td>
+                  <Td center><span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: 4, background: '#F2F3F5', color: '#4E5969', fontSize: 12 }}>{c.tag}</span></Td>
+                  <Td color="#4E5969">{c.owner}</Td>
+                  <Td color="#4E5969">{c.adder}</Td>
+                  <Td color="#4E5969">{c.addTime}</Td>
+                  <Td color="#4E5969">{c.note}</Td>
                   <Td>
                     <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap' }}>
-                      <a style={lk}>查看</a>
+                      <a style={lk} onClick={() => goDetail('/console/ep/fk-monitor-detail?id=' + c.id)}>查看</a>
                       <span style={{ color: '#E5E6EB' }}>|</span>
                       <a style={{ ...lk, display: 'inline-flex', alignItems: 'center', gap: 2 }}>编辑 <CaretDown /></a>
                       <span style={{ color: '#E5E6EB' }}>|</span>
@@ -151,7 +180,7 @@ export default function FkMonitorList(_: { params?: URLSearchParams } = {}) {
         </div>
 
         <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', padding: '10px 16px', gap: 14, fontSize: 13, color: '#4E5969' }}>
-          <span>共 {COMPANIES.length} 条</span>
+          <span>共 {COMPANIES2.length} 条</span>
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, cursor: 'pointer', border: '1px solid #E5E6EB', borderRadius: 2, padding: '3px 8px', color: '#1D2129', fontSize: 12 }}>
             20条/页 <CaretDown />
           </span>
@@ -159,6 +188,8 @@ export default function FkMonitorList(_: { params?: URLSearchParams } = {}) {
         </div>
       </div>
     </div>
+      <AddMonitorDrawer open={addOpen} onClose={() => setAddOpen(false)} />
+    </>
   )
 }
 
@@ -269,6 +300,12 @@ const CaretDown = () => (
   <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <polyline points="6 9 12 15 18 9" />
   </svg>
+)
+const SortCaret = () => (
+  <span style={{ display: 'inline-flex', flexDirection: 'column', verticalAlign: 'middle', marginLeft: 2, lineHeight: 0.6, fontSize: 9, color: '#86909C' }}>
+    <span style={{ transform: 'rotate(180deg)' }}>▲</span>
+    <span>▼</span>
+  </span>
 )
 const BuildingIcon = () => (
   <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">

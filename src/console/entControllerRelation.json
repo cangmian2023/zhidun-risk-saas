@@ -1,0 +1,25 @@
+{
+  "//": "控制人关系 · 样例数据（使用域作者维护）。横向两点连线布局：左侧目标企业 + 右侧实际控制人。",
+  "company": "比亚迪股份有限公司",
+  "updatedAt": "2026-08-18",
+  "views": [
+    {
+      "key": "suspect",
+      "label": "疑似实际控制人",
+      "target": { "name": "比亚迪股份有限公司", "type": "company", "detail": "比亚迪股份有限公司（002594.SZ / 01211.HK），本次控制人关系查询的目标企业主体。" },
+      "controller": { "name": "王传福", "type": "person", "ratio": "16.90%", "detail": "王传福，比亚迪创始人、法定代表人、董事长，直接持股 16.90%，为公司的实际控制人。" },
+      "links": [
+        { "from": "controller", "to": "target", "ratio": "16.90%" }
+      ]
+    },
+    {
+      "key": "relation",
+      "label": "控制人关系",
+      "target": { "name": "比亚迪股份有限公司", "type": "company", "detail": "比亚迪股份有限公司（002594.SZ / 01211.HK），本次控制人关系查询的目标企业主体。" },
+      "controller": { "name": "王传福", "type": "person", "ratio": "16.90%", "detail": "王传福，比亚迪创始人、法定代表人、董事长，直接持股 16.90%，为公司的实际控制人。" },
+      "links": [
+        { "from": "controller", "to": "target", "ratio": "16.90%" }
+      ]
+    }
+  ]
+}

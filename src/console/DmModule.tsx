@@ -32,7 +32,9 @@ import DmMarketBoard from './DmMarketBoard'
 import DmExistBiz from './DmExistBiz'
 import DmCrowdAnalysis from './DmCrowdAnalysis'
 import DmEntArchive from './DmEntArchive'
+import DmEntArchiveBasic from './DmEntArchiveBasic'
 import DmPersonArchive from './DmPersonArchive'
+import DmPersonArchiveBasic from './DmPersonArchiveBasic'
 
 function emptySpec(crumb: string) {
   return {
@@ -99,8 +101,12 @@ export default function DmModule({ pageKey }: { pageKey: string }) {
       return <DmCrowdAnalysis />
     case 'ent-archive':
       return <DmEntArchive />
+    case 'ent-archive-basic':
+      return <DmEntArchiveBasic />
     case 'person-archive':
       return <DmPersonArchive />
+    case 'person-archive-basic':
+      return <DmPersonArchiveBasic />
     default:
       return <ModulePage spec={moduleSpecs[pageKey] ?? emptySpec(subNames['dm'] ?? '数字营销')} />
   }

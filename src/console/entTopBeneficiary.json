@@ -1,0 +1,102 @@
+{
+  "//": "十大受益人 · 样例数据（使用域作者维护）。横向树形股权链路：底层中心主体 + 向上延伸受益人持股链路。",
+  "company": "比亚迪股份有限公司",
+  "updatedAt": "2026-08-18",
+  "center": { "name": "比亚迪股份有限公司", "type": "company" },
+  "chains": [
+    {
+      "id": "c1",
+      "name": "王传福",
+      "nodeType": "person",
+      "nodeColor": "red",
+      "label": { "text": "受益人有人16.9%", "note": "实际控制人", "color": "red" },
+      "ratio": "16.9%",
+      "linkColor": "red",
+      "avatar": "王"
+    },
+    {
+      "id": "c2",
+      "name": "夏佐全",
+      "nodeType": "person",
+      "nodeColor": "blue",
+      "label": { "text": "受益人有人2.72%", "note": "非执行董事", "color": "blue" },
+      "ratio": "2.72%",
+      "linkColor": "gray",
+      "avatar": "夏"
+    },
+    {
+      "id": "c3",
+      "name": "李柯",
+      "nodeType": "person",
+      "nodeColor": "red",
+      "label": { "text": "最终受益股份:0.6%", "note": "", "color": "blue" },
+      "ratio": "0.6%",
+      "linkColor": "gray",
+      "avatar": "李"
+    },
+    {
+      "id": "c4",
+      "name": "吕向阳",
+      "nodeType": "person",
+      "nodeColor": "red",
+      "label": { "text": "受益人有人:12.4434%", "note": "副董事长", "color": "blue" },
+      "ratio": "12.4434%",
+      "linkColor": "gray",
+      "avatar": "吕",
+      "middle": {
+        "name": "融捷投资控股集团有限公司",
+        "type": "company",
+        "color": "blue",
+        "branches": [
+          { "ratio": "89.5%" },
+          { "ratio": "10.5%" }
+        ]
+      }
+    },
+    {
+      "id": "c5",
+      "name": "张长虹",
+      "nodeType": "person",
+      "nodeColor": "red",
+      "label": { "text": "最终受益股份:0.5366%", "note": "", "color": "blue" },
+      "ratio": "0.5366%",
+      "linkColor": "gray"
+    },
+    {
+      "id": "c6",
+      "name": "张炜",
+      "nodeType": "person",
+      "nodeColor": "red",
+      "label": { "text": "最终受益股份:0.6%", "note": "", "color": "blue" },
+      "ratio": "0.6%",
+      "linkColor": "gray"
+    },
+    {
+      "id": "c7",
+      "name": "全国社保基金一一四组合",
+      "nodeType": "company",
+      "nodeColor": "plain",
+      "label": { "text": "最终受益股份:0.46%", "note": "", "color": "blue" },
+      "ratio": "0.46%",
+      "linkColor": "gray"
+    },
+    {
+      "id": "c8",
+      "name": "李柯",
+      "nodeType": "person",
+      "nodeColor": "red",
+      "label": { "text": "最终受益股份:0.36%", "note": "", "color": "blue" },
+      "ratio": "0.36%",
+      "linkColor": "gray"
+    },
+    {
+      "id": "c9",
+      "name": "比亚迪股份有限公司-2025年员工持股计划",
+      "nodeType": "company",
+      "nodeColor": "plain",
+      "label": { "text": "最终受益股份:0.3526%", "note": "", "color": "blue" },
+      "ratio": "0.3526%",
+      "linkColor": "gray"
+    }
+  ]
+}

@@ -1,0 +1,50 @@
+{
+  "//": "经营风险 · 样例数据（使用域作者维护）。包含：债务分析、经营风险概览、股权质押、黑名单。",
+  "company": "比亚迪股份有限公司",
+  "updatedAt": "2026-08-18",
+  "quickTabs": [
+    "债务分析", "经营风险概览", "行政处罚", "经营异常", "严重违法失信", "环保处罚", "非正常户", "欠税信息",
+    "重大税收违法", "债券违约", "股权出质", "股权质押", "动产抵押", "应收账款质押", "应收账款转让（保理）",
+    "融资租赁", "其他动产融资", "土地抵押", "简易注销", "注销备案", "清算信息", "劳动仲裁", "违法违规建设",
+    "黑名单", "破产案件", "强制执行", "知识产权出质", "涉嫌冒用他人身份登记信息", "产品召回", "未准入境", "软件违规"
+  ],
+  "debt": {
+    "menu": ["汇总统计", "债务类型", "历年趋势", "关联债务"],
+    "title": "经营债务结构分布",
+    "items": [
+      { "label": "融资债务", "percent": "100.00%", "amount": "2,000,000万元" }
+    ]
+  },
+  "riskOverview": {
+    "source": "统计图表数据来源：企业经营风险的数据",
+    "timeRange": ["2022-01-01", "2026-08-19"],
+    "empty": "该企业暂无风险信息"
+  },
+  "equityMortgage": {
+    "summary": [
+      { "label": "质押比例", "value": "4.43%" },
+      { "label": "质押笔数", "value": "84" },
+      { "label": "限售股质押数", "value": "-" },
+      { "label": "无限售股质押数(股)", "value": "2.41亿" },
+      { "label": "交易日期", "value": "2026-08-14" }
+    ],
+    "shareholderAccum": [
+      { "name": "吕向阳", "amount": "4,773.55万", "shareRatio": "19.95%", "totalRatio": "1.64%", "date": "2024-05-22" },
+      { "name": "融捷投资控股集团有限公司", "amount": "3,664万", "shareRatio": "23.62%", "totalRatio": "1.26%", "date": "2024-05-17" }
+    ],
+    "detailCount": 412,
+    "details": [
+      { "name": "吕向阳", "pledgeAmount": "600万", "remaining": "1,000万", "shareRatio": "2.51%", "totalRatio": "0.21%", "progress": "解押", "date": "2024-05-22" },
+      { "name": "吕向阳", "pledgeAmount": "800万", "remaining": "900万", "shareRatio": "3.35%", "totalRatio": "0.28%", "progress": "正常", "date": "2024-05-17" },
+      { "name": "融捷投资控股集团有限公司", "pledgeAmount": "1,000万", "remaining": "3,664万", "shareRatio": "6.45%", "totalRatio": "0.35%", "progress": "正常", "date": "2024-05-15" },
+      { "name": "融捷投资控股集团有限公司", "pledgeAmount": "500万", "remaining": "500万", "shareRatio": "3.22%", "totalRatio": "0.17%", "progress": "解押", "date": "2024-05-10" },
+      { "name": "吕向阳", "pledgeAmount": "1,200万", "remaining": "1,200万", "shareRatio": "5.02%", "totalRatio": "0.41%", "progress": "正常", "date": "2024-04-28" }
+    ]
+  },
+  "blacklist": {
+    "count": 1,
+    "rows": [
+      { "type": "环保", "name": "环保黑名单", "basis": "-", "dept": "深圳市环境保护局", "level": "市级", "inDate": "2006-04-19", "outDate": "-", "content": "-", "penalty": "-", "source": "-" }
+    ]
+  }
+}

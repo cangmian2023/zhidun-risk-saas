@@ -52,6 +52,11 @@ import ScoreModule from './ScoreModule'
 import DecisionModule from './DecisionModule'
 import DmModule from './DmModule'
 import { getDashboardByKey } from './dashboardData'
+
+// AI 营销现回归系统框架内渲染（保留顶部导航与左侧菜单），不再需要全屏沉浸式模式
+const AI_MARKETING_FULLSCREEN_PAGES = new Set<string>([])
+// 企业档案类页面需要内容区全宽自适应（不再受 max-w-[1320px] 约束），保留顶部导航与侧边栏
+const WIDE_CONTENT_PAGES = new Set(['ent-archive-basic', 'ent-archive', 'person-archive', 'person-archive-basic'])
 import { creditRiskMenu, scoringMenu, entMenu, dmMenu, dataGovernanceMenu, cmMenu, collectionMenu, decisionEngineMenu, type MenuGroup } from './menus'
 import SidebarMenu from './SidebarMenu'
 import { MenuIcon, type IconName } from '../components/icons'
@@ -222,13 +227,18 @@ export default function Console() {
     'ep:fk-regulatory': 'shield',
     // 企业尽调
     'ep:jd-company': 'search',
+    'ep:jd-company-result': 'search',
     'ep:jd-batch': 'stack',
+    'ep:jd-batch-result': 'stack',
     'ep:jd-relation': 'link',
+    'ep:jd-relation-result': 'search',
     'ep:jd-person': 'id',
     // 尽调报告
     'ep:jd-report': 'report',
+    'ep:jd-report-custom': 'file',
     // 受益所有人
     'ep:jd-beneficiary': 'layers',
+    'ep:jd-beneficiary-result': 'search',
     // 企业档案（详情内页，不在左侧菜单）
     'ep:archive': 'database',
     // 数字营销（新 IA：潜客挖掘 / 专题营销 / 营销管理 / 存客管理 / 金融工具）
@@ -297,6 +307,9 @@ export default function Console() {
     // 档案备份页（qixin 快照 1:1 原样复刻）
     'dm:ent-archive': 'id',
     'dm:person-archive': 'user',
+    // 档案 basic 版（数据复刻 · 6 个主 Tab 1:1 仿企业档案 basic）
+    'dm:ent-archive-basic': 'id',
+    'dm:person-archive-basic': 'user',
     // 管理中心（原公共模块）
     'cm:overview': 'dashboard',
     'cm:user-list': 'users',
@@ -401,6 +414,9 @@ export default function Console() {
   const menuLeafKeys = menu.flatMap((g) => g.items).map((i) => i.key.split(':')[1])
   const activeCur = menuLeafKeys.includes(cur) ? cur : (backCur && menuLeafKeys.includes(backCur) ? backCur : cur)
 
+  const isAiMarketingFullScreen = sub === 'dm' && AI_MARKETING_FULLSCREEN_PAGES.has(cur)
+  const isWideContent = sub === 'dm' && WIDE_CONTENT_PAGES.has(cur)
+
   const isQuery = cur.endsWith('-query')
   const prod = cur.split('-')[0]
   const queryProd =
@@ -428,45 +444,48 @@ export default function Console() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <header className="sticky top-0 z-40 flex h-14 items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 lg:px-6">
-        {/* 左：Logo + 子系统切换（直接跟系列按钮，无标签、无子系统名） */}
-        <div className="flex min-w-0 items-center gap-3">
-          <Logo />
-          <span className="hidden h-5 w-px bg-slate-200 sm:block" />
-          <div className="flex shrink-0 items-center gap-1 rounded-xl bg-slate-100 p-1">
-            {subsystems.map((s) => {
-              const active = s.key === shellSub
-              return (
-                <button
-                  key={s.key}
-                  onClick={() => switchSub(s.key)}
-                  title={s.open ? s.name : `${s.name}（规划中）`}
-                  className={`whitespace-nowrap rounded-lg px-3.5 py-1.5 text-sm font-medium transition ${
-                    active
-                      ? 'bg-white text-brand-700 shadow-sm'
-                      : 'text-slate-500 hover:bg-white/60 hover:text-slate-900'
-                  }`}
-                >
-                  {s.name}
-                  {!s.open && (
-                    <span className="ml-1.5 rounded bg-slate-200/70 px-1 py-0.5 text-[10px] font-normal text-slate-500">
-                      规划中
-                    </span>
-                  )}
-                </button>
-              )
-            })}
+      {!isAiMarketingFullScreen && (
+        <header className="sticky top-0 z-40 flex h-14 items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 lg:px-6">
+          {/* 左：Logo + 子系统切换（直接跟系列按钮，无标签、无子系统名） */}
+          <div className="flex min-w-0 items-center gap-3">
+            <Logo />
+            <span className="hidden h-5 w-px bg-slate-200 sm:block" />
+            <div className="flex shrink-0 items-center gap-1 rounded-xl bg-slate-100 p-1">
+              {subsystems.map((s) => {
+                const active = s.key === shellSub
+                return (
+                  <button
+                    key={s.key}
+                    onClick={() => switchSub(s.key)}
+                    title={s.open ? s.name : `${s.name}（规划中）`}
+                    className={`whitespace-nowrap rounded-lg px-3.5 py-1.5 text-sm font-medium transition ${
+                      active
+                        ? 'bg-white text-brand-700 shadow-sm'
+                        : 'text-slate-500 hover:bg-white/60 hover:text-slate-900'
+                    }`}
+                  >
+                    {s.name}
+                    {!s.open && (
+                      <span className="ml-1.5 rounded bg-slate-200/70 px-1 py-0.5 text-[10px] font-normal text-slate-500">
+                        规划中
+                      </span>
+                    )}
+                  </button>
+                )
+              })}
+            </div>
           </div>
-        </div>
 
-        {/* 右：点击用户名弹出 SaaS 基础用户功能 */}
-        <div className="flex shrink-0 items-center gap-3">
-          <UserDropdown onLogout={onLogout} />
-        </div>
-      </header>
+          {/* 右：点击用户名弹出 SaaS 基础用户功能 */}
+          <div className="flex shrink-0 items-center gap-3">
+            <UserDropdown onLogout={onLogout} />
+          </div>
+        </header>
+      )}
 
       <div className="flex">
-        <aside
+        {!isAiMarketingFullScreen && (
+          <aside
           className={`sticky top-14 z-30 h-[calc(100vh-3.5rem)] shrink-0 overflow-y-auto border-r border-slate-200 bg-white py-4 ${collapsed ? 'w-16' : ''}`}
           style={collapsed ? undefined : { width }}
         >
@@ -532,9 +551,10 @@ export default function Console() {
           ) : (
             <SidebarMenu menu={menu} sub={shellSub} cur={activeCur} menuIcon={menuIcon} nav={nav} />
           )}
-        </aside>
+          </aside>
+        )}
 
-        {!collapsed && (
+        {!isAiMarketingFullScreen && !collapsed && (
           <div
             onMouseDown={onDragDown}
             title="拖拽调整菜单宽度"
@@ -542,8 +562,11 @@ export default function Console() {
           />
         )}
 
-        <main className="min-w-0 flex-1 px-4 py-6 lg:px-8">
-          <div className="mx-auto w-full max-w-[1320px]">
+        <main className={isAiMarketingFullScreen || isWideContent ? 'min-w-0 flex-1' : 'min-w-0 flex-1 px-4 py-6 lg:px-8'}>
+          {isAiMarketingFullScreen || isWideContent ? (
+            <DmModule pageKey={key} />
+          ) : (
+            <div className="mx-auto w-full max-w-[1320px]">
             {!supported ? (
               <PlannedPlaceholder name={subName[sub] ?? '该子系统'} />
             ) : key === 'cr:pre-application' ? (
@@ -668,6 +691,7 @@ export default function Console() {
               <ModulePage spec={moduleSpecs[key] ?? emptySpec(subName[sub] ?? '控制台')} />
             )}
           </div>
+          )}
         </main>
       </div>
 

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { PageShell } from './PageShell';
 import { loadQixinPage } from './qixinRuntime';
 import { extractHeader, extractContent, ARCHIVE_PATCH, FALLBACK_HIDE } from './qixinInject';
+import EntChainGraph from './EntChainGraph';
 
 /* 企业档案 · 1:1 原样复刻（record/qixin 快照，运行时直接加载，无需预生成）
  * 结构：
@@ -181,9 +182,10 @@ export default function DmEntArchive() {
     return () => { alive = false; };
   }, []);
 
-  // 加载当前页
+  // 加载当前页（graph-rel 走自定义企业链图组件，无需加载快照）
   useEffect(() => {
     let alive = true;
+    if (resolved.pageKey === 'graph-rel') return () => { alive = false; };
     const f = ENT_FILES[resolved.pageKey];
     setPage(null);
     if (f) loadQixinPage(f.src, f.html).then((m) => { if (alive) setPage(m); });
@@ -344,9 +346,13 @@ export default function DmEntArchive() {
       </div>
       {/* 内容区：宽度与概要/tabbar 对齐 */}
       <div className="dm-archive-frame" style={{ paddingTop: 16, paddingBottom: 24 }}>
-        <div ref={contentRef} style={{ width: '100%', minHeight: 400 }}>
-          {!page && <div className="ent-loading">加载中…</div>}
-        </div>
+        {resolved.pageKey === 'graph-rel' ? (
+          <EntChainGraph />
+        ) : (
+          <div ref={contentRef} style={{ width: '100%', minHeight: 400 }}>
+            {!page && <div className="ent-loading">加载中…</div>}
+          </div>
+        )}
       </div>
     </>
   );

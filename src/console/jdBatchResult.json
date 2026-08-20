@@ -1,0 +1,271 @@
+{
+  "pageTitle": "批量尽调结果",
+  "tabs": [
+    { "key": "enterprise", "label": "查企业" },
+    { "key": "person", "label": "查人员" }
+  ],
+  "activeTab": "enterprise",
+  "left": {
+    "tabs": ["选择指标", "我的模板", "精选模板"],
+    "active": "选择指标",
+    "searchPlaceholder": "请输入指标名称",
+    "selectAll": "全选",
+    "total": 203,
+    "settings": "设置",
+    "saveTemplate": "存为模板",
+    "tree": [
+      { "key": "business", "label": "工商信息", "checked": true },
+      { "key": "qixin", "label": "启信指数", "checked": false },
+      { "key": "relation", "label": "企业关系", "checked": false },
+      { "key": "judicial", "label": "司法风险", "checked": false },
+      { "key": "operation", "label": "经营风险", "checked": false },
+      { "key": "operInfo", "label": "经营信息", "checked": false },
+      { "key": "ip", "label": "知识产权", "checked": false },
+      { "key": "history", "label": "历史信息", "checked": false }
+    ],
+    "collapse": "收起"
+  },
+  "filters": {
+    "title": "高级筛选",
+    "common": {
+      "title": "常用筛选",
+      "items": [
+        { "label": "省份地区", "type": "select" },
+        { "label": "所在行业", "type": "select" }
+      ]
+    },
+    "groups": [
+      {
+        "key": "establish",
+        "title": "成立年限",
+        "options": ["不限", "1-5年", "5-10年", "10-15年", "1年以上", "3年以上", "5年以上", "10年以上", "15年以上", "自定义"]
+      },
+      {
+        "key": "regCapital",
+        "title": "注册资本",
+        "options": ["不限", "0万-100万", "100万-200万", "200万-500万", "500万-1000万", "1000万以上", "自定义"]
+      },
+      {
+        "key": "status",
+        "title": "经营状态",
+        "options": ["不限", "存续", "注销", "吊销", "撤销", "迁出", "设立中", "清算中", "停业", "其他"]
+      },
+      {
+        "key": "concept",
+        "title": "概念标签",
+        "options": ["资本背景", "企业规模", "机构类型"],
+        "dropdowns": true
+      },
+      {
+        "key": "risk",
+        "title": "风险信息",
+        "options": ["经营异常", "股权出质", "招投标", "债券违约", "应收账款质押", "应收账款转让", "融资租赁", "其他动产融资", "简易注销", "减资公告", "开庭公告", "裁判文书", "被执行人", "失信被执行人", "限制高消费", "终本案件", "司法拍卖", "司法协助", "环保处罚", "非正常户", "股权质押"],
+        "dropdowns": true
+      },
+      {
+        "key": "relation",
+        "title": "企业关系",
+        "options": ["受益所有人", "实控企业", "间接持股企业", "合作持股股东", "对外投资", "工商股东", "最新公示股东", "间接股东", "主要人员", "供应商", "客户"],
+        "dropdowns": true
+      },
+      {
+        "key": "operInfo",
+        "title": "经营信息",
+        "options": ["参保人数", "启信分", "官方认证", "税务资质", "进出口信息", "融资信息", "债券信息", "域名信息", "资质证书", "专利信息", "商标信息", "新闻舆情"],
+        "dropdowns": true
+      },
+      {
+        "key": "history",
+        "title": "历史信息",
+        "options": ["工商变更", "主要人员", "减资公告", "对外投资", "工商股东", "最新公示股东", "立案信息", "开庭公告"],
+        "dropdowns": true
+      }
+    ],
+    "collapse": "收起筛选",
+    "collapseGroup": "收起"
+  },
+  "toolbar": {
+    "selectedText": "深圳市腾讯... 等2个企业",
+    "delete": "删除",
+    "edit": "编辑",
+    "portrait": "企业画像",
+    "market": "营销",
+    "distribute": "分发",
+    "addToCustomer": "加入客户列表",
+    "exportAll": "导出全部",
+    "exportCount": 2
+  },
+  "table": {
+    "columns": [
+      { "key": "seq", "label": "序号" },
+      { "key": "name", "label": "企业名称" },
+      { "key": "regCapital", "label": "注册资本" },
+      { "key": "paidCapital", "label": "实缴资本" },
+      { "key": "orgType", "label": "机构类型" },
+      { "key": "status", "label": "经营状态" },
+      { "key": "insuredCount", "label": "参保人数" },
+      { "key": "industry1", "label": "一级行业" },
+      { "key": "industry2", "label": "二级行业" },
+      { "key": "province", "label": "省份" },
+      { "key": "city", "label": "市" },
+      { "key": "district", "label": "区域" },
+      { "key": "establishDate", "label": "成立日期" },
+      { "key": "capitalBackground", "label": "资本背景" },
+      { "key": "scale", "label": "企业规模" },
+      { "key": "techCert", "label": "科技认定" },
+      { "key": "listing", "label": "上市信息" },
+      { "key": "park", "label": "园区名称" },
+      { "key": "group", "label": "所属集团" },
+      { "key": "emergingIndustry", "label": "新兴产业" },
+      { "key": "qixinScore", "label": "启信分值" },
+      { "key": "shellIndex", "label": "空壳指数" },
+      { "key": "contractDefault", "label": "合同违约指数" },
+      { "key": "techScore", "label": "科创评分" },
+      { "key": "judicialDocs", "label": "裁判文书" },
+      { "key": "executed", "label": "被执行人" },
+      { "key": "dishonest", "label": "失信被执行人" },
+      { "key": "equityFreeze", "label": "股权冻结" },
+      { "key": "consumptionLimit", "label": "限制高消费" },
+      { "key": "finalCases", "label": "终本案件" },
+      { "key": "abnormal", "label": "经营异常" },
+      { "key": "seriousIllegal", "label": "严重违法失信" },
+      { "key": "adminPenalty", "label": "行政处罚" },
+      { "key": "envPenalty", "label": "环保处罚" },
+      { "key": "equityPledge", "label": "股权出质" },
+      { "key": "taxIllegal", "label": "重大税收违法" },
+      { "key": "abnormalTax", "label": "非正常户" },
+      { "key": "simpleCancel", "label": "简易注销" },
+      { "key": "cancelRecord", "label": "注销备案" },
+      { "key": "equityMortgage", "label": "股权质押" },
+      { "key": "blacklist", "label": "黑名单" },
+      { "key": "patents", "label": "专利信息" },
+      { "key": "trademarks", "label": "商标信息" },
+      { "key": "copyrights", "label": "著作权" },
+      { "key": "softwareCopyrights", "label": "软件著作权" }
+    ],
+    "rows": [
+      {
+        "id": "tencent",
+        "seq": 1,
+        "name": "深圳市腾讯计算机系统有限公司",
+        "regCapital": "6500万人民币",
+        "paidCapital": "6500万人民币",
+        "orgType": "有限责任公司",
+        "status": "存续",
+        "insuredCount": "3908人(2025年报)",
+        "industry1": "信息传输、软件和信息技术服务业",
+        "industry2": "互联网和相关服务",
+        "province": "广东省",
+        "city": "深圳市",
+        "district": "南山区",
+        "establishDate": "1998-11-11",
+        "capitalBackground": "民营",
+        "scale": "大型企业",
+        "techCert": "高新技术企业",
+        "listing": "未上市",
+        "park": "科技园",
+        "group": "腾讯集团",
+        "emergingIndustry": "数字经济",
+        "qixinScore": "92",
+        "shellIndex": "0",
+        "contractDefault": "0",
+        "techScore": "88",
+        "judicialDocs": "0",
+        "executed": "0",
+        "dishonest": "0",
+        "equityFreeze": "0",
+        "consumptionLimit": "0",
+        "finalCases": "0",
+        "abnormal": "0",
+        "seriousIllegal": "0",
+        "adminPenalty": "0",
+        "envPenalty": "0",
+        "equityPledge": "0",
+        "taxIllegal": "0",
+        "abnormalTax": "0",
+        "simpleCancel": "0",
+        "cancelRecord": "0",
+        "equityMortgage": "0",
+        "blacklist": "0",
+        "patents": "12345",
+        "trademarks": "6789",
+        "copyrights": "3456",
+        "softwareCopyrights": "2890"
+      },
+      {
+        "id": "letv",
+        "seq": 2,
+        "name": "乐视网信息技术（北京）股份有限公司",
+        "regCapital": "398944.0192万人...",
+        "paidCapital": "398944.0192万人...",
+        "orgType": "股份有限公司（非上市、自然人投资或控股）",
+        "status": "存续",
+        "insuredCount": "37人(2025年报)",
+        "industry1": "信息传输、软件和信息技术服务业",
+        "industry2": "互联网和相关服务",
+        "province": "北京市",
+        "city": "北京市",
+        "district": "朝阳区",
+        "establishDate": "2004-11-08",
+        "capitalBackground": "民营",
+        "scale": "中型企业",
+        "techCert": "-",
+        "listing": "已退市",
+        "park": "-",
+        "group": "乐视控股",
+        "emergingIndustry": "-",
+        "qixinScore": "32",
+        "shellIndex": "12",
+        "contractDefault": "45",
+        "techScore": "-",
+        "judicialDocs": "128",
+        "executed": "36",
+        "dishonest": "8",
+        "equityFreeze": "5",
+        "consumptionLimit": "12",
+        "finalCases": "22",
+        "abnormal": "2",
+        "seriousIllegal": "1",
+        "adminPenalty": "3",
+        "envPenalty": "0",
+        "equityPledge": "2",
+        "taxIllegal": "1",
+        "abnormalTax": "0",
+        "simpleCancel": "0",
+        "cancelRecord": "0",
+        "equityMortgage": "1",
+        "blacklist": "0",
+        "patents": "156",
+        "trademarks": "420",
+        "copyrights": "89",
+        "softwareCopyrights": "67"
+      }
+    ]
+  },
+  "footer": {
+    "selectedIndicator": "已选指标: 44/203",
+    "selectedEnterprise": "已选企业 0/2",
+    "fullscreen": "全屏显示"
+  },
+  "uploadModal": {
+    "title": "上传企业名单",
+    "steps": ["下载模板", "上传文件", "开始尽调"],
+    "step1": {
+      "title": "下载批量尽调模板",
+      "desc": "请下载 Excel 模板，按要求填写企业名称或统一社会信用代码，单次最多支持 2000 家企业。"
+    },
+    "step2": {
+      "title": "上传企业名单",
+      "desc": "支持拖拽或点击上传 .xlsx / .xls 文件，文件大小不超过 20MB。"
+    },
+    "step3": {
+      "title": "开始批量尽调",
+      "desc": "确认上传无误后，点击开始尽调，系统将自动对名单企业进行多维风险扫描。"
+    },
+    "downloadTemplate": "下载模板",
+    "uploadFile": "点击或拖拽上传",
+    "start": "开始尽调",
+    "next": "下一步",
+    "prev": "上一步"
+  }
+}
