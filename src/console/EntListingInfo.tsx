@@ -46,7 +46,7 @@ export default function EntListingInfo({ companyName }: { companyName?: string }
 
   const renderTable = (cols: string[], rows: string[][], withSeq?: boolean, minW = 700) => (
     <div style={{ overflowX: 'auto' }}>
-      <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: minW }}>
+      <div className="overflow-x-auto"><table style={{ width: '100%', borderCollapse: 'collapse', minWidth: minW }}>
         <thead><tr>{cols.map((c, ci) => <th key={ci} style={th}>{c}</th>)}</tr></thead>
         <tbody>
           {rows.length === 0 ? <tr><td colSpan={cols.length} style={{ padding: '32px 16px', textAlign: 'center', color: '#86909c' }}>暂无数据</td></tr> : rows.map((r, ri) => (
@@ -56,12 +56,12 @@ export default function EntListingInfo({ companyName }: { companyName?: string }
             </tr>
           ))}
         </tbody>
-      </table>
+      </table></div>
     </div>
   );
 
   const renderForm = (rows: string[][]) => (
-    <table style={{ width: '100%', borderCollapse: 'collapse', border: '1px solid #f0f0f0' }}>
+    <div className="overflow-x-auto"><table style={{ width: '100%', borderCollapse: 'collapse', border: '1px solid #f0f0f0' }}>
       <tbody>
         {rows.map((r, i) => (
           <tr key={i}>
@@ -74,7 +74,7 @@ export default function EntListingInfo({ companyName }: { companyName?: string }
           </tr>
         ))}
       </tbody>
-    </table>
+    </table></div>
   );
 
   // 模块区块包装：带锚点 id，便于滚动定位

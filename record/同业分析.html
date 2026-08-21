@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>同业分析</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    background: #fff; color: #333; font-size: 14px; line-height: 1.5;
+  }
+  .page-container { width: 100%; min-height: 100vh; }
+
+  /* 标题 */
+  .page-header { padding: 16px 24px 0; }
+  .page-title { font-size: 18px; font-weight: 700; color: #1a1a1a; margin-bottom: 20px; }
+
+  /* 浅灰筛选区 */
+  .filter-section { background: #f5f6fa; padding: 20px 24px; }
+
+  /* 行业选择 */
+  .industry-row {
+    display: flex; align-items: center; flex-wrap: wrap; gap: 8px;
+    margin-bottom: 12px; position: relative;
+  }
+  .industry-label {
+    font-size: 15px; font-weight: 700; color: #1a1a1a;
+    margin-right: 12px; white-space: nowrap; min-width: 70px;
+  }
+  .industry-tab {
+    padding: 6px 14px; border-radius: 4px; font-size: 14px;
+    color: #555; cursor: pointer; transition: all .2s; user-select: none;
+    white-space: nowrap;
+  }
+  .industry-tab:hover { color: #333; background: #e8eaf0; }
+  .industry-tab.active { background: #e8f0ff; color: #4a7dff; font-weight: 500; }
+  .collapse-btn {
+    position: absolute; right: 0; top: 0; color: #4a7dff;
+    font-size: 14px; cursor: pointer; user-select: none;
+  }
+
+  /* 虚线分隔 */
+  .dashed-divider { border: none; border-top: 1px dashed #dcdfe6; margin: 12px 0; }
+
+  /* 数值筛选 */
+  .value-filter { display: flex; align-items: center; gap: 24px; }
+  .filter-label-sm { font-size: 15px; font-weight: 700; color: #1a1a1a; min-width: 70px; }
+  .filter-dropdown {
+    display: flex; align-items: center; gap: 4px; font-size: 14px;
+    color: #4a7dff; cursor: pointer; user-select: none; padding: 4px 0;
+  }
+  .filter-dropdown.gray { color: #555; }
+  .filter-dropdown .arrow { font-size: 10px; }
+
+  /* 已选标签 */
+  .selected-section {
+    display: flex; align-items: center; flex-wrap: wrap; gap: 10px;
+    padding: 16px 24px;
+  }
+  .selected-label { font-size: 15px; font-weight: 700; color: #1a1a1a; margin-right: 4px; }
+  .selected-tag {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 5px 12px; background: #f0f4ff; border-radius: 4px;
+    font-size: 14px; color: #4a7dff;
+  }
+  .selected-tag .close {
+    cursor: pointer; color: #999; font-size: 14px; line-height: 1;
+  }
+  .selected-tag .close:hover { color: #666; }
+  .reset-btn {
+    margin-left: auto; color: #555; font-size: 14px; cursor: pointer;
+    user-select: none;
+  }
+  .reset-btn:hover { color: #4a7dff; }
+
+  /* 结果区域 */
+  .result-section { padding: 20px 24px 0; background: #f5f6fa; }
+  .result-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 16px;
+  }
+  .result-count { font-size: 15px; color: #333; }
+  .result-count .num { color: #4a7dff; font-weight: 600; }
+  .search-box {
+    display: flex; align-items: center; gap: 8px;
+    border: 1px solid #dcdfe6; border-radius: 4px;
+    padding: 8px 14px; background: #fff; width: 260px;
+  }
+  .search-box .icon { color: #999; font-size: 14px; }
+  .search-box input {
+    border: none; outline: none; flex: 1; font-size: 14px; color: #333;
+  }
+  .search-box input::placeholder { color: #999; }
+
+  /* 表格 */
+  .table-container { width: 100%; overflow-x: auto; background: #fff; }
+  .data-table { width: 100%; border-collapse: collapse; table-layout: fixed; min-width: 1200px; }
+  .data-table thead th {
+    background: #f5f6fa; padding: 12px 10px; text-align: left;
+    font-size: 14px; font-weight: 600; color: #333;
+    border-bottom: 1px solid #e8eaf0; white-space: nowrap;
+  }
+  .data-table tbody td {
+    padding: 14px 10px; font-size: 14px; color: #333;
+    border-bottom: 1px solid #f0f0f0; vertical-align: middle;
+  }
+  .data-table tbody tr:hover { background: #fafbfc; }
+
+  /* 统计值行（浅绿背景） */
+  .stat-row td { background: #f0f9eb; }
+  .stat-row:hover td { background: #e8f5e0 !important; }
+
+  .col-rank { width: 50px; text-align: center; }
+  .col-name { width: 220px; }
+  .col-finance { width: 160px; }
+
+  .data-table thead th.col-rank,
+  .data-table tbody td.col-rank { text-align: center; }
+
+  /* 排序箭头 */
+  .sort-header { display: inline-flex; align-items: center; gap: 4px; cursor: pointer; }
+  .sort-arrow { font-size: 10px; color: #c0c4cc; }
+  .sort-arrow.active { color: #4a7dff; }
+
+  /* 行业统计值单元格 */
+  .stat-name {
+    display: flex; align-items: center; gap: 8px; font-size: 14px; color: #333;
+  }
+  .stat-name .icon { font-size: 14px; }
+
+  /* 公司名称 */
+  .company-name { font-size: 14px; color: #1a1a1a; font-weight: 500; }
+
+  /* 财务数值 */
+  .finance-value { font-size: 14px; color: #333; }
+  .finance-with-yoy { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .yoy {
+    display: inline-flex; align-items: center; gap: 2px;
+    font-size: 13px;
+  }
+  .yoy.up { color: #f5222d; }
+  .yoy.down { color: #52c41a; }
+  .yoy .arrow { font-size: 11px; }
+
+  /* 净资产收益率 */
+  .roe-value { font-size: 14px; font-weight: 500; }
+  .roe-value.positive { color: #f5222d; }
+  .roe-value.negative { color: #52c41a; }
+
+  .rank-num { font-size: 14px; color: #666; }
+</style>
+</head>
+<body>
+<div class="page-container">
+
+  <div class="page-header">
+    <div class="page-title">同业分析</div>
+  </div>
+
+  <div class="filter-section">
+    <!-- 行业选择 第一行 -->
+    <div class="industry-row">
+      <div class="industry-label">行业选择</div>
+      <div class="industry-tab active">煤炭</div>
+      <div class="industry-tab">农林牧渔</div>
+      <div class="industry-tab">基础化工</div>
+      <div class="industry-tab">钢铁</div>
+      <div class="industry-tab">有色金属</div>
+      <div class="industry-tab">电子</div>
+      <div class="industry-tab">汽车</div>
+      <div class="industry-tab">家用电器</div>
+      <div class="industry-tab">食品饮料</div>
+      <div class="industry-tab">纺织服饰</div>
+      <div class="industry-tab">轻工制造</div>
+      <div class="industry-tab">医药生物</div>
+      <div class="industry-tab">公用事业</div>
+      <div class="collapse-btn">收起 ⌃</div>
+    </div>
+    <!-- 第二行 -->
+    <div class="industry-row">
+      <div class="industry-label" style="visibility:hidden;">行业选择</div>
+      <div class="industry-tab">交通运输</div>
+      <div class="industry-tab">房地产</div>
+      <div class="industry-tab">商贸零售</div>
+      <div class="industry-tab">社会服务</div>
+      <div class="industry-tab">银行</div>
+      <div class="industry-tab">非银金融</div>
+      <div class="industry-tab">建筑材料</div>
+      <div class="industry-tab">建筑装饰</div>
+      <div class="industry-tab">电力设备</div>
+      <div class="industry-tab">机械设备</div>
+      <div class="industry-tab">国防军工</div>
+      <div class="industry-tab">计算机</div>
+      <div class="industry-tab">传媒</div>
+    </div>
+    <!-- 第三行 -->
+    <div class="industry-row">
+      <div class="industry-label" style="visibility:hidden;">行业选择</div>
+      <div class="industry-tab">通信</div>
+      <div class="industry-tab">石油石化</div>
+      <div class="industry-tab">环保</div>
+      <div class="industry-tab">美容护理</div>
+      <div class="industry-tab">综合</div>
+    </div>
+
+    <hr class="dashed-divider">
+
+    <!-- 数值筛选 -->
+    <div class="value-filter">
+      <div class="filter-label-sm">数值筛选</div>
+      <div class="filter-dropdown">
+        <span>统计值</span><span class="arrow">▼</span>
+      </div>
+      <div class="filter-dropdown">
+        <span>报告期</span><span class="arrow">▼</span>
+      </div>
+      <div class="filter-dropdown gray">
+        <span>地区</span><span class="arrow">▼</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 已选标签 -->
+  <div class="selected-section">
+    <div class="selected-label">已选</div>
+    <div class="selected-tag">最高值 <span class="close">×</span></div>
+    <div class="selected-tag">最低值 <span class="close">×</span></div>
+    <div class="selected-tag">平均值 <span class="close">×</span></div>
+    <div class="selected-tag">2021年 中报 <span class="close">×</span></div>
+    <div class="reset-btn">重置</div>
+  </div>
+
+  <!-- 结果区域 -->
+  <div class="result-section">
+    <div class="result-header">
+      <div class="result-count">找到 <span class="num">40</span> 条结果</div>
+      <div class="search-box">
+        <span class="icon">🔍</span>
+        <input type="text" placeholder="请输入公司名称">
+      </div>
+    </div>
+
+    <div class="table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th class="col-rank"></th>
+            <th class="col-name">行业统计值</th>
+            <th class="col-finance">
+              <span class="sort-header">营业收入(亿元/同比)<span class="sort-arrow active">▼</span></span>
+            </th>
+            <th class="col-finance">
+              <span class="sort-header">归母净利润(亿元/同比)<span class="sort-arrow">⬍</span></span>
+            </th>
+            <th class="col-finance">
+              <span class="sort-header">总资产(亿元/同比)<span class="sort-arrow">⬍</span></span>
+            </th>
+            <th class="col-finance">
+              <span class="sort-header">净资产(亿元/同比)<span class="sort-arrow">⬍</span></span>
+            </th>
+            <th class="col-finance">
+              <span class="sort-header">净资产收益率(%)<span class="sort-arrow">⬍</span></span>
+            </th>
+            <th class="col-finance">
+              <span class="sort-header">扣非净利润(亿元/同比)<span class="sort-arrow">⬍</span></span>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- 最高值 -->
+          <tr class="stat-row">
+            <td class="col-rank"></td>
+            <td class="col-name">
+              <div class="stat-name">煤炭行业最高值 <span class="icon">📊</span></div>
+            </td>
+            <td class="col-finance"><span class="finance-value">1439.79</span></td>
+            <td class="col-finance"><span class="finance-value">260.26</span></td>
+            <td class="col-finance"><span class="finance-value">5993.34</span></td>
+            <td class="col-finance"><span class="finance-value">4212.79</span></td>
+            <td class="col-finance"><span class="roe-value positive">24.07%</span></td>
+            <td class="col-finance"><span class="finance-value">255.32</span></td>
+          </tr>
+          <!-- 最低值 -->
+          <tr class="stat-row">
+            <td class="col-rank"></td>
+            <td class="col-name">
+              <div class="stat-name">煤炭行业最低值 <span class="icon">📊</span></div>
+            </td>
+            <td class="col-finance"><span class="finance-value">0.05</span></td>
+            <td class="col-finance"><span class="finance-value">-3.47</span></td>
+            <td class="col-finance"><span class="finance-value">3.88</span></td>
+            <td class="col-finance"><span class="finance-value">3.25</span></td>
+            <td class="col-finance"><span class="roe-value negative">-13.15%</span></td>
+            <td class="col-finance"><span class="finance-value">-3.61</span></td>
+          </tr>
+          <!-- 平均值 -->
+          <tr class="stat-row">
+            <td class="col-rank"></td>
+            <td class="col-name">
+              <div class="stat-name">煤炭行业平均值 <span class="icon">📊</span></div>
+            </td>
+            <td class="col-finance"><span class="finance-value">166.80</span></td>
+            <td class="col-finance"><span class="finance-value">18.57</span></td>
+            <td class="col-finance"><span class="finance-value">582.33</span></td>
+            <td class="col-finance"><span class="finance-value">287.86</span></td>
+            <td class="col-finance"><span class="roe-value positive">6.24%</span></td>
+            <td class="col-finance"><span class="finance-value">17.82</span></td>
+          </tr>
+          <!-- 第1名 中国神华 -->
+          <tr>
+            <td class="col-rank"><span class="rank-num">1</span></td>
+            <td class="col-name"><span class="company-name">中国神华能源股份有限公司</span></td>
+            <td class="col-finance">
+              <div class="finance-with-yoy">
+                <span class="finance-value">1439.79</span>
+                <span class="yoy up"><span class="arrow">▲</span>37.10%</span>
+              </div>
+            </td>
+            <td class="col-finance">
+              <div class="finance-with-yoy">
+                <span class="finance-value">260.26</span>
+                <span class="yoy up"><span class="arrow">▲</span>25.99%</span>
+              </div>
+            </td>
+            <td class="col-finance">
+              <div class="finance-with-yoy">
+                <span class="finance-value">5993.34</span>
+                <span class="yoy up"><span class="arrow">▲</span>4.07%</span>
+              </div>
+            </td>
+            <td class="col-finance">
+              <div class="finance-with-yoy">
+                <span class="finance-value">4212.79</span>
+                <span class="yoy up"><span class="arrow">▲</span>1.07%</span>
+              </div>
+            </td>
+            <td class="col-finance"><span class="roe-value positive">7.32%</span></td>
+            <td class="col-finance">
+              <div class="finance-with-yoy">
+                <span class="finance-value">255.32</span>
+                <span class="yoy up"><span class="arrow">▲</span>24.15%</span>
+              </div>
+            </td>
+          </tr>
+          <!-- 第2名 中国中煤 -->
+          <tr>
+            <td class="col-rank"><span class="rank-num">2</span></td>
+            <td class="col-name"><span class="company-name">中国中煤能源股份有限公司</span></td>
+            <td class="col-finance">
+              <div class="finance-with-yoy">
+                <span class="finance-value">1021.79</span>
+                <span class="yoy up"><span class="arrow">▲</span>60.80%</span>
+              </div>
+            </td>
+            <td class="col-finance">
+              <div class="finance-with-yoy">
+                <span class="finance-value">76.15</span>
+                <span class="yoy up"><span class="arrow">▲</span>228.46%</span>
+              </div>
+            </td>
+            <td class="col-finance">
+              <div class="finance-with-yoy">
+                <span class="finance-value">3013.40</span>
+                <span class="yoy up"><span class="arrow">▲</span>6.70%</span>
+              </div>
+            </td>
+            <td class="col-finance">
+              <div class="finance-with-yoy">
+                <span class="finance-value">1330.76</span>
+                <span class="yoy up"><span class="arrow">▲</span>9.78%</span>
+              </div>
+            </td>
+            <td class="col-finance"><span class="roe-value positive">7.27%</span></td>
+            <td class="col-finance">
+              <div class="finance-with-yoy">
+                <span class="finance-value">73.45</span>
+                <span class="yoy up"><span class="arrow">▲</span>215.30%</span>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div style="height:40px;"></div>
+  </div>
+
+</div>
+
+<script>
+  // 行业标签切换
+  document.querySelectorAll('.industry-tab').forEach(function(tab){
+    tab.addEventListener('click', function(){
+      document.querySelectorAll('.industry-tab').forEach(function(t){t.classList.remove('active');});
+      this.classList.add('active');
+    });
+  });
+  // 已选标签关闭
+  document.querySelectorAll('.selected-tag .close').forEach(function(close){
+    close.addEventListener('click', function(){
+      this.parentElement.remove();
+    });
+  });
+  // 重置
+  document.querySelector('.reset-btn').addEventListener('click', function(){
+    location.reload();
+  });
+</script>
+</body>
+</html>

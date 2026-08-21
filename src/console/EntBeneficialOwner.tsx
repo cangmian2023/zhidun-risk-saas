@@ -110,7 +110,7 @@ export default function EntBeneficialOwner({ companyName }: { companyName?: stri
 
       {/* ============ 区块4：核心数据表格 ============ */}
       <div style={{ border: '1px solid #e8ebf0', borderRadius: 8, overflowX: 'auto' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 1080 }}>
+        <div className="overflow-x-auto"><table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 1080 }}>
           <thead>
             <tr>
               <th style={{ ...thStyle, width: 56 }}>序号</th>
@@ -149,7 +149,7 @@ export default function EntBeneficialOwner({ companyName }: { companyName?: stri
               </tr>
             ))}
           </tbody>
-        </table>
+        </table></div>
 
         {/* 加载骨架屏 */}
         {loading && (
@@ -188,7 +188,7 @@ export default function EntBeneficialOwner({ companyName }: { companyName?: stri
         </a>
         {expandedFooter && (
           <div style={{ marginTop: 12 }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 1080 }}>
+            <div className="overflow-x-auto"><table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 1080 }}>
               <thead>
                 <tr>
                   <th style={thStyle}>序号</th>
@@ -220,7 +220,7 @@ export default function EntBeneficialOwner({ companyName }: { companyName?: stri
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </table></div>
           </div>
         )}
       </div>

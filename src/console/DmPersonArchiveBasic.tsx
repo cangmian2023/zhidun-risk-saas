@@ -328,10 +328,10 @@ function Pagination({ total, pageSize = 5 }: { total: number; pageSize?: number 
 function TableShell({ headers, children }: { headers: string[]; children: React.ReactNode }) {
   return (
     <div style={{ border: '1px solid #e5e6eb', borderRadius: 8, overflow: 'hidden' }}>
-      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+      <div className="overflow-x-auto"><table style={{ width: '100%', borderCollapse: 'collapse' }}>
         <thead><tr>{headers.map((h, i) => <th key={i} style={thStyle(i === 0 ? { width: 56 } : undefined)}>{h}</th>)}</tr></thead>
         <tbody>{children}</tbody>
-      </table>
+      </table></div>
     </div>
   )
 }
@@ -932,7 +932,7 @@ function PlaceholderBlock({ child }: { child: { key: string; label: string; coun
         {child.count && <span style={{ fontSize: 14, color: '#f53f3f', fontWeight: 400 }}>{child.count}</span>}
       </h3>
       <div style={{ border: '1px solid #e5e6eb', borderRadius: 8, overflow: 'hidden' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+        <div className="overflow-x-auto"><table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <tbody>
             <tr>
               <td style={{ padding: '60px 16px', textAlign: 'center', color: '#86909c', fontSize: 14 }}>
@@ -940,7 +940,7 @@ function PlaceholderBlock({ child }: { child: { key: string; label: string; coun
               </td>
             </tr>
           </tbody>
-        </table>
+        </table></div>
       </div>
     </div>
   )

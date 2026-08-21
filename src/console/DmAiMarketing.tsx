@@ -285,7 +285,7 @@ export function DmAiMarketingResult() {
             overflow: 'hidden',
             maxWidth: 600
           }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <div className="overflow-x-auto"><table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
                 <tr style={{ background: '#f2f3f5' }}>
                   <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: 14, fontWeight: 600, color: '#1d2129', borderBottom: '1px solid #e5e6eb' }}>#</th>
@@ -306,7 +306,7 @@ export function DmAiMarketingResult() {
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </table></div>
           </div>
 
           {/* 结果提示 */}

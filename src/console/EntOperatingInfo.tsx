@@ -98,25 +98,25 @@ export default function EntOperatingInfo({ companyName, menu }: { companyName?: 
           <div key={si} style={{ marginBottom: 20 }}>
             <div style={{ fontSize: 14, fontWeight: 600, color: '#333', marginBottom: 8 }}>{subTitle}</div>
             <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 700 }}>
+              <div className="overflow-x-auto"><table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 700 }}>
                 <thead><tr>{cols.map((c, ci) => <th key={ci} style={th}>{c}</th>)}</tr></thead>
                 <tbody>{subRows.map((r, ri) => <tr key={ri}>{r.map((cell, ci) => <td key={ci} style={td}>{cell}</td>)}</tr>)}</tbody>
-              </table>
+              </table></div>
             </div>
           </div>
         ))}
         {(mod.rows || []).length > 0 && (
           <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 700 }}>
+            <div className="overflow-x-auto"><table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 700 }}>
               <thead><tr>{(mod.columns || []).map((c, ci) => <th key={ci} style={th}>{c}</th>)}</tr></thead>
               <tbody>{mod.rows!.map((r, ri) => <tr key={ri}>{r.map((cell, ci) => <td key={ci} style={td}>{cell}</td>)}</tr>)}</tbody>
-            </table>
+            </table></div>
           </div>
         )}
       </div>
     ) : (
       <div style={{ overflowX: 'auto' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 800 }}>
+        <div className="overflow-x-auto"><table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 800 }}>
           <thead><tr>{(mod.columns || []).map((c, ci) => <th key={ci} style={th}>{c}</th>)}</tr></thead>
           <tbody>
             {(mod.rows || []).length === 0 ? (
@@ -125,7 +125,7 @@ export default function EntOperatingInfo({ companyName, menu }: { companyName?: 
               <tr key={ri}><td style={td}>{ri + 1}</td>{r.map((cell, ci) => <td key={ci} style={td}>{cell}</td>)}</tr>
             ))}
           </tbody>
-        </table>
+        </table></div>
       </div>
     );
 

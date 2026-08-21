@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>债券数据</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:"Microsoft Yahei",system-ui,-apple-system,sans-serif;}
+body{background:#fff;color:#222;font-size:14px;}
+.container{width:100%;max-width:2400px;margin:12px 16px;}
+.page-title{font-size:18px;font-weight:bold;margin-bottom:12px;}
+
+/* 顶层主Tab */
+.main-tabs{display:flex;border-bottom:1px solid #e5e7eb;margin-bottom:16px;gap:32px;}
+.main-tab-item{padding:10px 4px 10px 0px;cursor:pointer;font-size:15px;color:#666;position:relative;user-select:none;}
+.main-tab-item.active{color:#111;font-weight:500;}
+.main-tab-item.active::after{content:"";position:absolute;bottom:-1px;left:0;width:100%;height:3px;background:#f7c030;}
+
+/* Tab内容面板，默认隐藏 */
+.tab-panel{display:none;}
+.tab-panel.show{display:block;}
+
+/* 债券审批内部子tab */
+.sub-tabs{display:flex;gap:24px;margin-bottom:16px;}
+.sub-tab-item{padding:8px 12px;cursor:pointer;border-radius:6px;font-size:14px;color:#444;}
+.sub-tab-item.active{background:#e8f0ff;color:#2b65e8;}
+.sub-panel{display:none;}
+.sub-panel.show{display:block;}
+
+/* 搜索栏 */
+.search-row{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+.search-input{padding:10px 12px;width:340px;border:1px solid #e2e2eb;border-radius:6px;background:#f7f7fc;font-size:14px;outline:none;}
+.btn-yellow{background:#f7c030;border:none;color:#111;padding:10px 20px;border-radius:6px;font-weight:500;cursor:pointer;font-size:14px;}
+.hint-link-group{margin:6px 0 20px 8px;}
+.hint-link-group span{color:#666;font-size:13px;}
+.hint-link-group a{color:#2b65e8;font-size:13px;margin:0 6px;text-decoration:none;}
+
+/* 筛选行 */
+.filter-row{display:flex;align-items:center;gap:28px;margin-bottom:14px;padding:10px 0;border-bottom:1px dashed #ddd;flex-wrap:wrap;}
+.filter-label{font-weight:bold;font-size:15px;}
+.filter-dropdown{color:#333;cursor:pointer;display:flex;align-items:center;gap:4px;}
+.filter-tag-group{display:flex;gap:12px;flex-wrap:wrap;margin:8px 0;}
+.filter-tag{padding:4px 10px;border-radius:4px;cursor:pointer;}
+.filter-tag.active{background:#e8f0ff;color:#2b65e8;}
+
+/* 结果计数 */
+.result-count{margin:12px 0;font-size:14px;color:#444;}
+
+/* 表格 */
+table{width:100%;border-collapse:collapse;margin-bottom:16px;}
+th{background:#f7f7fc;text-align:left;padding:12px 10px;font-weight:500;color:#333;border:1px solid #eee;}
+td{padding:12px 10px;border-bottom:1px dashed #e8e8ee;vertical-align:middle;}
+tr:nth-child(even){background:#f8f8fe;}
+.tag-small{display:inline-block;padding:2px 6px;border-radius:4px;font-size:12px;border:1px solid #c9d8ff;color:#2b4899;margin:0 4px;}
+.link-blue{color:#2b65e8;text-decoration:none;cursor:pointer;}
+.download-btn{border:1px solid #bbb;padding:6px 14px;border-radius:6px;background:#fff;cursor:pointer;float:right;margin:8px 0;}
+</style>
+</head>
+<body>
+<div class="container">
+    <div class="page-title">债券数据</div>
+
+    <!-- 主Tab导航 -->
+    <div class="main-tabs">
+        <div class="main-tab-item active" data-tab="tab1">债券公告</div>
+        <div class="main-tab-item" data-tab="tab2">债券审批</div>
+        <div class="main-tab-item" data-tab="tab3">债券发行</div>
+        <div class="main-tab-item" data-tab="tab4">债券违约</div>
+        <div class="main-tab-item" data-tab="tab5">债券承销</div>
+        <div class="main-tab-item" data-tab="tab6">债券担保</div>
+    </div>
+
+    <!-- ========= Tab1 债券公告 ========= -->
+    <div class="tab-panel show" id="tab1">
+        <div class="search-row">
+            <span class="filter-label">高级搜索</span>
+            <input class="search-input" placeholder="输入公告关键字/企业名称">
+            <button class="btn-yellow">Q 搜索</button>
+        </div>
+        <div class="hint-link-group">
+            <span>试一下：</span>
+            <a href="#">募集说明书</a>
+            <a href="#">发行结果</a>
+            <a href="#">付息兑付</a>
+            <a href="#">评级报告</a>
+            <a href="#">持有人会议</a>
+        </div>
+        <div class="filter-row">
+            <span class="filter-label">基本筛选</span>
+            <div class="filter-dropdown">债券类型 ∨</div>
+            <div class="filter-dropdown">地区 ∨</div>
+            <div class="filter-dropdown">发布主体 ∨</div>
+            <div class="filter-dropdown">公告日期 ∨</div>
+        </div>
+        <div class="result-count">找到<span style="color:#278027">4656011</span>条结果</div>
+        <table>
+            <thead>
+                <tr>
+                    <th>企业名称</th>
+                    <th>债券简称</th>
+                    <th>公告内容</th>
+                    <th>公告日期</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>招商局港口集团股份有限公司</td>
+                    <td>25招港K1</td>
+                    <td>25招港K1:2025年面向专业投资者公开发行科技创新公司债券(第一期)(品种一)2026年付息公告<br><span style="color:#555">深交所‑债券</span></td>
+                    <td>2026‑08‑21</td>
+                </tr>
+                <tr>
+                    <td>安徽应流机电股份有限公司</td>
+                    <td>‑</td>
+                    <td>应流股份:应流股份2026年度第二期科技创新债券发行结果公告<br><span style="color:#555">上海交易所</span></td>
+                    <td>2026‑08‑21</td>
+                </tr>
+                <tr>
+                    <td>大唐国际发电股份有限公司</td>
+                    <td>‑</td>
+                    <td>大唐发电:大唐发电关于中期票据发行的公告<br><span style="color:#555">上海交易所</span></td>
+                    <td>2026‑08‑21</td>
+                </tr>
+                <tr>
+                    <td>无锡派克新材料科技股份有限公司</td>
+                    <td>‑</td>
+                    <td>派克新材:派克新材向不特定对象发行可转换公司债券上市公告书<br><span style="color:#555">上海交易所</span></td>
+                    <td>2026‑08‑21</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- ========= Tab2 债券审批 ========= -->
+    <div class="tab-panel" id="tab2">
+        <div class="sub-tabs">
+            <div class="sub-tab-item active" data-sub="sub2‑1">发债审核进程</div>
+            <div class="sub-tab-item" data-sub="sub2‑2">企业债审批</div>
+            <div class="sub-tab-item" data-sub="sub2‑3">DCM注册进程</div>
+        </div>
+        <div class="sub-panel show" id="sub2‑1">
+            <div class="search-row">
+                <span class="filter-label">搜索</span>
+                <input class="search-input" placeholder="输入债券/发行人等关键词搜索">
+                <button class="btn-yellow">Q 查询</button>
+            </div>
+            <div class="filter-row">
+                <span class="filter-label">筛选</span>
+                <div class="filter-dropdown">交易市场 ∨</div>
+                <div class="filter-dropdown">债券年份 ∨</div>
+                <div class="filter-dropdown">项目状态 ∨</div>
+                <div class="filter-dropdown">省份地区 ∨</div>
+                <div class="filter-dropdown">所在行业 ∨</div>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+                <div class="result-count">找到<span style="color:#278027">18593</span>条结果</div>
+                <div class="download-btn">⤓下载前500条</div>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>债券名称</th>
+                        <th>拟发行金额</th>
+                        <th>发行人</th>
+                        <th>项目状态</th>
+                        <th>主承销商</th>
+                        <th>最新更新日期</th>
+                        <th>进程</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>和县城市建设投资有限责任公司2021年面向专业投资者非公开发行公司债券</td>
+                        <td>8亿</td>
+                        <td>和县城市建设投资有限责任公司<br><span class="tag-small">ⓘ历史发行项目</span></td>
+                        <td>已受理</td>
+                        <td>开源证券股份有限公司 <span class="tag-small">ⓘ历史项目</span></td>
+                        <td>2021‑12‑31</td>
+                        <td><a class="link-blue">查看</a></td>
+                    </tr>
+                    <tr>
+                        <td>宿州马鞍山投资集团(控股)有限公司2021年非公开发行公司债券</td>
+                        <td>10亿</td>
+                        <td>宿州马鞍山投资集团(控股)有限公司<br><span class="tag-small">ⓘ历史发行项目</span></td>
+                        <td>已反馈</td>
+                        <td>华安证券股份有限公司 <span class="tag-small">ⓘ历史项目</span></td>
+                        <td>2021‑12‑31</td>
+                        <td><a class="link-blue">查看</a></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="sub-panel" id="sub2‑2">企业债审批面板占位</div>
+        <div class="sub-panel" id="sub2‑3">DCM注册进程面板占位</div>
+    </div>
+
+    <!-- ========= Tab3 债券发行 ========= -->
+    <div class="tab-panel" id="tab3">
+        <div class="search-row">
+            <span class="filter-label">高级搜索</span>
+            <input class="search-input" placeholder="请输入企业名称/债券名称">
+            <button class="btn-yellow">Q 搜索</button>
+        </div>
+        <div class="filter-tag-group">
+            <span class="filter-label">发行状态</span>
+            <div class="filter-tag active">全部</div>
+            <div class="filter-tag">等待发行</div>
+            <div class="filter-tag">正在发行</div>
+            <div class="filter-tag">已完成发行</div>
+        </div>
+        <div class="filter-row">
+            <span class="filter-label">基本筛选</span>
+            <div class="filter-dropdown">交易市场 ∨</div>
+            <div class="filter-dropdown">债券类型 ∨</div>
+            <div class="filter-dropdown">年份 ∨</div>
+            <div class="filter-dropdown">债项评级 ∨</div>
+        </div>
+        <div class="result-count">找到<span style="color:#278027">516066</span>条结果</div>
+        <table>
+            <thead>
+                <tr>
+                    <th>债券名称</th>
+                    <th>发行规模</th>
+                    <th>票面利率</th>
+                    <th>债券期限</th>
+                    <th>债项评级</th>
+                    <th>发行起始日</th>
+                    <th>发行截止日</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>2026年记账式贴现(五十四期)国债 <span class="tag-small">国债</span> <span class="tag-small">上交所</span><br><span style="color:#555">主承销商 −</span><br><b>中华人民共和国财政部</b><br><span style="color:#555">发行人</span></td>
+                    <td style="color:#f28028;font-size:20px;font-weight:bold">300.00亿</td>
+                    <td>−</td>
+                    <td>0.2493年</td>
+                    <td>−</td>
+                    <td>2026‑08‑26</td>
+                    <td>2026‑08‑26</td>
+                </tr>
+                <tr>
+                    <td>2026年吉林省土地储备专项债券(一期)‑2026年吉林省政府专项债券(十四期) <span class="tag-small">地方政府债</span> <span class="tag-small">深交所</span><br><span style="color:#555">主承销商 −</span><br><b>吉林省人民政府</b><br><span style="color:#555">发行人</span></td>
+                    <td style="color:#f28028;font-size:20px;font-weight:bold">6.19亿</td>
+                    <td>−</td>
+                    <td>5年</td>
+                    <td>−</td>
+                    <td>2026‑08‑26</td>
+                    <td>2026‑08‑26</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- ========= Tab4 债券违约 ========= -->
+    <div class="tab-panel" id="tab4">
+        <div class="search-row">
+            <span class="filter-label">高级搜索</span>
+            <input class="search-input" placeholder="请输入企业名称">
+            <button class="btn-yellow">Q 搜索</button>
+        </div>
+        <div class="filter-row">
+            <span class="filter-label">更多筛选</span>
+            <div class="filter-dropdown">公告日期 ∨</div>
+            <div class="filter-dropdown">省份地区 ∨</div>
+        </div>
+        <div class="result-count">找到<span style="color:#278027">1857</span>条结果</div>
+        <table>
+            <thead>
+                <tr>
+                    <th>公告日期</th>
+                    <th>债券名称</th>
+                    <th>发行人</th>
+                    <th>违约类型</th>
+                    <th>公告内容</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>2026‑07‑30</td>
+                    <td>20荣盛地产MTN001</td>
+                    <td>荣盛房地产发展股份有限公司</td>
+                    <td>未按时足额兑付</td>
+                    <td>主承销商关于荣盛房地产发展股份有限公司2020年度第一期中期票据未按期足额兑付的进展公告(2026年7月)</td>
+                </tr>
+                <tr>
+                    <td>2026‑07‑30</td>
+                    <td>20荣盛地产MTN002</td>
+                    <td>荣盛房地产发展股份有限公司</td>
+                    <td>未按时足额兑付</td>
+                    <td>主承销商关于荣盛房地产发展股份有限公司2020年度第二期中期票据未按期足额兑付的进展公告(2026年7月)</td>
+                </tr>
+                <tr>
+                    <td>2026‑07‑30</td>
+                    <td>20荣盛地产MTN003</td>
+                    <td>荣盛房地产发展股份有限公司</td>
+                    <td>未按时足额兑付</td>
+                    <td>荣盛房地产发展股份有限公司关于“20荣盛地产MTN003“未按期足额兑付本金的处置进展公告(2026年7月)</td>
+                </tr>
+                <tr>
+                    <td>2026‑07‑30</td>
+                    <td>20荣盛地产MTN003</td>
+                    <td>荣盛房地产发展股份有限公司</td>
+                    <td>未按时足额兑付</td>
+                    <td>主承销商关于荣盛房地产发展股份有限公司2020年度第三期中期票据未按期足额兑付的进展公告(2026年7月)</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- ========= Tab5 债券承销 ========= -->
+    <div class="tab-panel" id="tab5">
+        <div class="search-row">
+            <span class="filter-label">高级搜索</span>
+            <input class="search-input" placeholder="请输入承销商名称">
+            <button class="btn-yellow">Q 搜索</button>
+        </div>
+        <div class="filter-tag-group">
+            <span class="filter-label">债券类型</span>
+            <div class="filter-tag active">不限</div>
+            <div class="filter-tag">同业存单</div>
+            <div class="filter-tag">地方政府债</div>
+            <div class="filter-tag">公司债</div>
+            <div class="filter-tag">超短期融资券</div>
+            <div class="filter-tag">券商专项资产管理</div>
+            <div class="filter-tag">中期票据</div>
+            <div class="filter-tag">短期融资券</div>
+            <div class="filter-tag">企业债</div>
+            <div class="filter-tag">政策性银行债</div>
+            <div class="filter-tag">定向工具</div>
+            <div class="filter-tag">其他</div>
+        </div>
+        <div class="filter-tag-group">
+            <span class="filter-label">年　份</span>
+            <div class="filter-tag">2026</div>
+            <div class="filter-tag active">2025</div>
+            <div class="filter-tag">2024</div>
+            <div class="filter-tag">2023</div>
+            <div class="filter-tag">2022</div>
+        </div>
+        <div class="filter-tag-group">
+            <span class="filter-label">报告期</span>
+            <div class="filter-tag active">年度</div>
+            <div class="filter-tag">上半年</div>
+            <div class="filter-tag">下半年</div>
+            <div class="filter-tag">一季度</div>
+            <div class="filter-tag">二季度</div>
+            <div class="filter-tag">三季度</div>
+            <div class="filter-tag">四季度</div>
+        </div>
+        <div class="result-count">当前承销商企业共计<span style="color:#278027">986</span>家</div>
+        <table>
+            <thead>
+                <tr>
+                    <th>序号</th>
+                    <th>承销商</th>
+                    <th>承销只数</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>1</td>
+                    <td>中信证券股份有限公司</td>
+                    <td>1155</td>
+                    <td><a class="link-blue">查看承销详情</a></td>
+                </tr>
+                <tr>
+                    <td>2</td>
+                    <td>中信建投证券股份有限公司</td>
+                    <td>1117</td>
+                    <td><a class="link-blue">查看承销详情</a></td>
+                </tr>
+                <tr>
+                    <td>3</td>
+                    <td>国泰海通证券股份有限公司</td>
+                    <td>1100</td>
+                    <td><a class="link-blue">查看承销详情</a></td>
+                </tr>
+                <tr>
+                    <td>4</td>
+                    <td>中信银行股份有限公司</td>
+                    <td>629</td>
+                    <td><a class="link-blue">查看承销详情</a></td>
+                </tr>
+                <tr>
+                    <td>5</td>
+                    <td>兴业银行股份有限公司</td>
+                    <td>621</td>
+                    <td><a class="link-blue">查看承销详情</a></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- ========= Tab6 债券担保 ========= -->
+    <div class="tab-panel" id="tab6">
+        <div class="search-row">
+            <span class="filter-label">高级搜索</span>
+            <input class="search-input" placeholder="请输入债券代码/简称/发债人/担保人">
+            <button class="btn-yellow">Q 搜索</button>
+        </div>
+        <div class="filter-tag-group">
+            <span class="filter-label">交易市场</span>
+            <div class="filter-tag active">不限</div>
+            <div class="filter-tag">上海证券交易所</div>
+            <div class="filter-tag">中国银行间市场</div>
+            <div class="filter-tag">深圳证券交易所</div>
+            <div class="filter-tag">浙江股权交易中心</div>
+            <div class="filter-tag">天津股权交易所</div>
+            <div class="filter-tag">江苏股权交易中心</div>
+            <div class="filter-tag">机构间市场</div>
+            <a class="link-blue" style="margin-left:12px">更多 ∨</a>
+        </div>
+        <div class="filter-tag-group">
+            <span class="filter-label">债券类型</span>
+            <div class="filter-tag active">不限</div>
+            <div class="filter-tag">公司债</div>
+            <div class="filter-tag">券商专项资产管理</div>
+            <div class="filter-tag">企业债</div>
+            <div class="filter-tag">中期票据</div>
+            <div class="filter-tag">定向工具</div>
+            <div class="filter-tag">超短期融资券</div>
+            <div class="filter-tag">可交换债券</div>
+            <div class="filter-tag">资产支持票据</div>
+            <div class="filter-tag">可转换债券</div>
+            <div class="filter-tag">短期融资券</div>
+            <a class="link-blue" style="margin-left:12px">更多 ∨</a>
+        </div>
+        <div class="filter-tag-group">
+            <span class="filter-label">担保方式</span>
+            <div class="filter-tag active">不限</div>
+            <div class="filter-tag">保证担保</div>
+            <div class="filter-tag">抵押担保</div>
+            <div class="filter-tag">留置担保</div>
+            <div class="filter-tag">信用担保</div>
+            <div class="filter-tag">质押担保</div>
+            <div class="filter-tag">抵押担保和质押担保</div>
+            <div class="filter-tag">其他</div>
+            <div class="filter-tag">个人担保</div>
+            <div class="filter-tag">第三方担保和质押担保</div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin:12px 0;">
+            <div class="result-count">当前企业数 <span style="color:#d04020;font-weight:bold">29,022</span></div>
+            <div style="display:flex;gap:12px;">
+                <button style="border:1px solid #ddd;padding:8px 16px;border-radius:6px;background:#fff;">＋批量添加</button>
+                <button class="btn-yellow">⤓下载</button>
+            </div>
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th></th>
+                    <th>企业名称</th>
+                    <th>债券信息</th>
+                    <th>债券类型</th>
+                    <th>担保人</th>
+                    <th>担保起始时间</th>
+                    <th>担保方式</th>
+                    <th>保证方式</th>
+                    <th>市场</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><input type="checkbox"></td>
+                    <td>上海陆家嘴金融发展有限公司</td>
+                    <td>23LJZ优</td>
+                    <td>券商专项资产管理</td>
+                    <td>上海陆家嘴金融贸易区开发股份有限公司</td>
+                    <td>2041‑06‑06/‑</td>
+                    <td>质押担保</td>
+                    <td>−</td>
+                    <td>上海证券交易所</td>
+                </tr>
+                <tr>
+                    <td><input type="checkbox"></td>
+                    <td>上海陆家嘴金融发展有限公司</td>
+                    <td>23LJZ优</td>
+                    <td>券商专项资产管理</td>
+                    <td>上海陆家嘴金融贸易区开发股份有限公司</td>
+                    <td>2041‑06‑06/‑</td>
+                    <td>抵押担保</td>
+                    <td>−</td>
+                    <td>上海证券交易所</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+//主tab切换
+const mainTabs = document.querySelectorAll('.main-tab-item');
+mainTabs.forEach(tab=>{
+    tab.onclick = function(){
+        let targetId = this.dataset.tab;
+        //清除激活
+        mainTabs.forEach(t=>t.classList.remove('active'));
+        document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('show'));
+        this.classList.add('active');
+        document.getElementById(targetId).classList.add('show');
+    }
+})
+//子tab切换（债券审批内部）
+const subTabs = document.querySelectorAll('.sub-tab-item');
+subTabs.forEach(tab=>{
+    tab.onclick = function(){
+        let subId = this.dataset.sub;
+        subTabs.forEach(s=>s.classList.remove('active'));
+        document.querySelectorAll('.sub-panel').forEach(p=>p.classList.remove('show'));
+        this.classList.add('active');
+        document.getElementById(subId).classList.add('show');
+    }
+})
+</script>
+</body>
+</html>

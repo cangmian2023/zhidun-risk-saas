@@ -112,3 +112,76 @@ export const RISK_RESULTS: RiskResult[] = [
     court: '深圳市龙岗区人民法院', noticeType: '起诉状副本及开庭传票',
     entities: [{ name: '东莞市芯启源电子有限公司', kind: 'ent' }] },
 ]
+
+/* ==================== 舆情模块 ==================== */
+export type PubSentiment = '积极' | '中立' | '消极' | '未知'
+export interface PublicOpinion {
+  title: string        // 舆情标题（命中关键词高亮，点击跳详情）
+  sentiment: PubSentiment // 情感属性：积极 / 中立 / 消极 / 未知
+  category: string     // 舆情分类：科技 / 时政 / 财经 ...
+  authority: string    // 权威等级：A级 / B级 / C级
+  topics: string[]     // 话题标签：业绩亏损/下降、发行上市 ...
+  date: string         // 发布日期 yyyy-MM-dd（展示 MM-dd）
+  source?: string      // 来源媒体（高级搜索/兜底用）
+}
+export const PUBLIC_STATS_TOTAL = 21514
+export const PUBLIC_KEYWORD_PLACEHOLDER = '请输入关键词检索相关舆情资讯，如：手机'
+export const PUBLIC_TIME_TAGS = [
+  { key: '7d', label: '最近7天' },
+  { key: '30d', label: '最近30天' },
+  { key: '3m', label: '最近3个月' },
+  { key: '6m', label: '最近半年' },
+  { key: '1y', label: '最近1年' },
+]
+export const PUBLIC_CATEGORY_OPTIONS = ['科技', '时政', '财经', '社会', '国际', '娱乐', '体育', '健康']
+export const PUBLIC_SENTIMENT_OPTIONS = ['积极', '中立', '消极']
+export const PUBLIC_TOPIC_OPTIONS = ['业绩亏损/下降', '发行上市', '新品发布', '市场份额', '产品召回', '监管政策', '供应链', '高端化', '折叠屏', '价格战']
+export const PUBLIC_AUTHORITY_OPTIONS = ['A级', 'B级', 'C级']
+export const PUBLIC_RESULTS: PublicOpinion[] = [
+  { title: '小米15系列手机销量破千万，高端化战略初见成效', sentiment: '积极', category: '科技', authority: 'A级', topics: ['销量突破', '高端化'], date: '2026-08-19', source: '科技日报' },
+  { title: '华为麒麟芯片重返旗舰手机市场，供应链全面恢复', sentiment: '积极', category: '科技', authority: 'A级', topics: ['芯片自研', '供应链'], date: '2026-08-17', source: '第一财经' },
+  { title: '某手机厂商因电池安全隐患宣布大规模召回', sentiment: '消极', category: '财经', authority: 'B级', topics: ['安全隐患', '产品召回'], date: '2026-08-15', source: '经济观察报' },
+  { title: '智能手机市场Q2出货量同比下滑12%，需求持续疲软', sentiment: '消极', category: '财经', authority: 'A级', topics: ['业绩亏损/下降', '市场需求'], date: '2026-08-12', source: '证券时报' },
+  { title: '苹果iPhone新机发布时间确认，9月秋季发布会来袭', sentiment: '中立', category: '科技', authority: 'A级', topics: ['新品发布', '发行上市'], date: '2026-08-18', source: '界面新闻' },
+  { title: '国产手机操作系统装机量突破5亿，生态建设提速', sentiment: '积极', category: '科技', authority: 'B级', topics: ['操作系统', '生态建设'], date: '2026-08-08', source: '36氪' },
+  { title: '工信部发文规范手机APP个人信息收集行为', sentiment: '中立', category: '时政', authority: 'A级', topics: ['监管政策', '数据安全'], date: '2026-07-30', source: '新华社' },
+  { title: '某品牌手机摄像头虚标参数被约谈，消费者权益受损', sentiment: '消极', category: '社会', authority: 'B级', topics: ['虚假宣传', '消费者权益'], date: '2026-07-25', source: '中国消费者报' },
+  { title: '折叠屏手机渗透率提升，成为行业新增长极', sentiment: '积极', category: '科技', authority: 'B级', topics: ['折叠屏', '行业增长'], date: '2026-06-15', source: '钛媒体' },
+  { title: '手机行业价格战加剧，中小品牌生存空间受挤压', sentiment: '消极', category: '财经', authority: 'C级', topics: ['价格战', '行业洗牌'], date: '2026-05-28', source: '财经网' },
+  { title: '全球芯片短缺缓解，手机产能恢复正常', sentiment: '中立', category: '国际', authority: 'A级', topics: ['供应链', '芯片'], date: '2026-03-10', source: '路透社' },
+  { title: '5G手机普及率超80%，换机周期拉长', sentiment: '中立', category: '科技', authority: 'B级', topics: ['5G', '换机周期'], date: '2025-11-05', source: '通信世界网' },
+]
+
+/* ==================== 研报模块 ==================== */
+export interface ResearchReport {
+  title: string        // 研报标题（命中关键词高亮，点击跳预览）
+  isNew: boolean       // 新标识（浅绿“新”标签）
+  category: string     // 行业分类：大消费 / 综合其他 / 科技传媒
+  reportType: string   // 报告类型：行业研究 / 公司研究
+  date: string         // 发布日期 yyyy-MM-dd
+  org: string          // 发布机构：爱建证券 / 国盛证券 ...
+  pages: number        // 共 xx 页
+  size?: string        // 文件大小，如 2M
+  features?: string[]  // 特色标签：新鲜出炉 / 深度研究 / 热门
+}
+export const REPORT_STATS_TOTAL = 6
+export const REPORT_KEYWORD_PLACEHOLDER = '请输入关键词检索相关研究报告，如：小米'
+export const REPORT_TIME_TAGS = [
+  { key: 'today', label: '今日' },
+  { key: 'yesterday', label: '昨日' },
+  { key: '7d', label: '最近7天' },
+  { key: '30d', label: '最近30天' },
+]
+export const REPORT_TYPE_OPTIONS = ['其他报告(期货资讯晨会)', '公司研究', '年报季报', '行业研究', '宏观策略', '招股说明书', '管理咨询', '政策法规', '综合其他']
+export const REPORT_CATEGORY_OPTIONS = ['综合其他', '工业制造', '能源矿产', '金融地产', '科技传媒', '大消费', '健康医疗', '公共服务', '农林牧渔', '交通物流']
+export const REPORT_FEATURE_OPTIONS = ['新鲜出炉', '非券商', '英文', '深度研究', '热门']
+export const REPORT_PAGE_OPTIONS = ['不限', '大于5页', '大于10页', '大于20页', '大于50页']
+export const REPORT_ORG_OPTIONS = ['SEC', '深交所', '上交所', '港交所', '国泰君安期货', '华泰证券', '天风证券', '华泰期货', '东吴证券', '中泰证券', '爱建证券', '国盛证券', '国泰海通']
+export const REPORT_RESULTS: ResearchReport[] = [
+  { title: '智能汽车系列报告（十一）：小米澎程入局增程，有望激活家庭SUV增量', isNew: true, category: '大消费', reportType: '行业研究', date: '2026-08-13', org: '爱建证券', pages: 15, size: '2M', features: ['新鲜出炉', '热门'] },
+  { title: '汽车行业周报：小米增程首车发布，优质供给撬动需求', isNew: true, category: '综合其他', reportType: '行业研究', date: '2026-08-13', org: '爱建证券', pages: 10, size: '1M', features: ['新鲜出炉'] },
+  { title: '小米集团-W（01810）：积极应对手机市场扰动，迭代AI能力', isNew: true, category: '综合其他', reportType: '公司研究', date: '2026-08-10', org: '国盛证券', pages: 5, size: '1M', features: ['热门'] },
+  { title: '小米集团-W（01810）：26Q2业绩前瞻：Q2仍有存储压力，关注H2新车及成本拐点', isNew: true, category: '综合其他', reportType: '公司研究', date: '2026-08-06', org: '国泰海通', pages: 7, size: '2M' },
+  { title: '整车主线周报：本周SW商用载货车表现较好，小米举行澎程技术发布会', isNew: true, category: '科技传媒', reportType: '行业研究', date: '2026-08-03', org: '东吴证券', pages: 17, size: '3M', features: ['热门'] },
+  { title: '消费电子行业深度：AI手机渗透率加速，重塑产业链格局', isNew: true, category: '科技传媒', reportType: '行业研究', date: '2026-07-28', org: '华泰证券', pages: 28, size: '4M', features: ['深度研究'] },
+]

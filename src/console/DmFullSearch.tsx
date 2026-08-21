@@ -6,6 +6,12 @@ import {
   PERSON_RESULTS, PERSON_SEARCH_KEYWORD, PERSON_STATS_TOTAL,
   BIZ_RESULTS, BIZ_STATS_TOTAL, BIZ_KEYWORD_PLACEHOLDER,
   RISK_RESULTS, RISK_STATS_TOTAL, RISK_KEYWORD_PLACEHOLDER,
+  PUBLIC_RESULTS, PUBLIC_STATS_TOTAL, PUBLIC_KEYWORD_PLACEHOLDER,
+  PUBLIC_TIME_TAGS, PUBLIC_CATEGORY_OPTIONS, PUBLIC_SENTIMENT_OPTIONS, PUBLIC_TOPIC_OPTIONS, PUBLIC_AUTHORITY_OPTIONS,
+  type PublicOpinion, type PubSentiment,
+  REPORT_RESULTS, REPORT_STATS_TOTAL, REPORT_KEYWORD_PLACEHOLDER,
+  REPORT_TIME_TAGS, REPORT_TYPE_OPTIONS, REPORT_CATEGORY_OPTIONS, REPORT_FEATURE_OPTIONS, REPORT_PAGE_OPTIONS, REPORT_ORG_OPTIONS,
+  type ResearchReport,
   type EntCard, type PersonResult, type BizResult, type RiskResult, type RiskEntity, type RiskParty,
 } from './DmFullSearchData'
 
@@ -572,6 +578,109 @@ function exportRiskRows(rows: RiskResult[], fields: Record<string, boolean>, for
   URL.revokeObjectURL(url)
 }
 
+/* ---------- 关键词高亮（命中红色） ---------- */
+function hl(text: string, kw: string): ReactNode {
+  const k = kw.trim()
+  if (!k) return text
+  const lower = text.toLowerCase(); const kl = k.toLowerCase()
+  const idx = lower.indexOf(kl)
+  if (idx === -1) return text
+  return (<>
+    {text.slice(0, idx)}
+    <span style={{ color: C.red }}>{text.slice(idx, idx + k.length)}</span>
+    {text.slice(idx + k.length)}
+  </>)
+}
+
+/* ---------- 多选筛选下拉（舆情/研报通用） ---------- */
+function MultiFilterDropdown({ label, options, value, onChange, accent }: { label: string; options: string[]; value: string[]; onChange: (n: string[]) => void; accent: string }) {
+  const [open, setOpen] = useState(false)
+  const toggle = (o: string) => onChange(value.includes(o) ? value.filter((x) => x !== o) : [...value, o])
+  return (
+    <div style={{ position: 'relative' }}>
+      <button onClick={() => setOpen((o) => !o)} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: value.length > 0 ? '#fff7e6' : '#fff', border: `1px solid ${open ? accent : C.border}`, borderRadius: 4, padding: '6px 12px', cursor: 'pointer', fontSize: 13, color: C.text }}>
+        {label}{value.length > 0 && `（${value.length}）`} ▾
+      </button>
+      {open && (
+        <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, background: '#fff', border: `1px solid ${C.border}`, borderRadius: 6, boxShadow: '0 4px 16px rgba(0,0,0,.12)', padding: 12, width: 240, zIndex: 20 }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px 10px', marginBottom: 10, maxHeight: 240, overflowY: 'auto' }}>
+            {options.map((o) => (
+              <label key={o} style={{ fontSize: 13, color: C.text, display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer' }}>
+                <input type="checkbox" checked={value.includes(o)} onChange={() => toggle(o)} style={{ accentColor: accent }} />{o}
+              </label>
+            ))}
+          </div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button onClick={() => onChange([])} style={{ background: '#fff', border: `1px solid ${C.border}`, color: C.sub, borderRadius: 4, padding: '5px 16px', cursor: 'pointer', fontSize: 13 }}>清空</button>
+            <button onClick={() => setOpen(false)} style={{ background: accent, color: '#fff', border: 'none', borderRadius: 4, padding: '5px 16px', cursor: 'pointer', fontSize: 13 }}>确定</button>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+/* ---------- 舆情条目卡片 ---------- */
+const PUB_SENT_COLOR: Record<PubSentiment, { c: string; bg: string }> = {
+  积极: { c: C.green, bg: C.greenBg },
+  中立: { c: C.primary, bg: '#eef3ff' },
+  消极: { c: C.red, bg: '#fff1f0' },
+  未知: { c: C.ph, bg: '#fafafa' },
+}
+function PubCard({ item, kw }: { item: PublicOpinion; kw: string }) {
+  const sc = PUB_SENT_COLOR[item.sentiment]
+  return (
+    <div style={{ background: '#fafbfc', border: `1px solid ${C.border}`, borderRadius: 8, padding: '12px 16px', marginBottom: 12, transition: 'background .2s' }}
+      onMouseEnter={(e) => (e.currentTarget.style.background = '#f0f3f7')}
+      onMouseLeave={(e) => (e.currentTarget.style.background = '#fafbfc')}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ color: C.text, fontWeight: 700, fontSize: 15, cursor: 'pointer' }} title={item.title}>{hl(item.title, kw)}</span>
+            <span style={{ fontSize: 12, color: sc.c, background: sc.bg, border: `1px solid ${sc.c}33`, padding: '1px 8px', borderRadius: 4, flexShrink: 0 }}>{item.sentiment}</span>
+          </div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, margin: '8px 0' }}>
+            <span style={{ fontSize: 12, color: C.green, background: C.greenBg, border: `1px solid ${C.green}33`, padding: '2px 8px', borderRadius: 4 }}>{item.category}</span>
+            <span style={{ fontSize: 12, color: C.primary, background: '#eef3ff', border: `1px solid ${C.primary}33`, padding: '2px 8px', borderRadius: 4 }}>{item.authority}</span>
+            {item.topics.map((t) => (
+              <span key={t} style={{ fontSize: 12, color: C.sub, background: '#f5f5f5', border: `1px solid ${C.border}`, padding: '2px 8px', borderRadius: 4, cursor: 'pointer' }}>#{t}</span>
+            ))}
+          </div>
+        </div>
+        <div style={{ fontSize: 13, color: C.ph, flexShrink: 0, paddingTop: 2, whiteSpace: 'nowrap' }}>{item.date.slice(5)}</div>
+      </div>
+    </div>
+  )
+}
+
+/* ---------- 研报条目卡片 ---------- */
+function ReportCard({ item, kw }: { item: ResearchReport; kw: string }) {
+  const [dl, setDl] = useState(false)
+  return (
+    <div style={{ background: '#fff', borderBottom: `1px solid ${C.border}`, padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 16, transition: 'background .2s' }}
+      onMouseEnter={(e) => (e.currentTarget.style.background = '#fafafa')}
+      onMouseLeave={(e) => (e.currentTarget.style.background = '#fff')}>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {item.isNew && <span style={{ fontSize: 12, color: C.green, background: C.greenBg, border: `1px solid ${C.green}33`, padding: '1px 6px', borderRadius: 4, flexShrink: 0 }}>新</span>}
+          <span style={{ color: C.text, fontWeight: 700, fontSize: 15, cursor: 'pointer' }} title={item.title}>{hl(item.title, kw)}</span>
+        </div>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px 14px', marginTop: 8, fontSize: 13, color: C.sub }}>
+          <span style={{ color: C.orange, background: C.orangeBg, border: `1px solid ${C.orange}33`, padding: '1px 8px', borderRadius: 4 }}>{item.category}</span>
+          <span style={{ color: C.primary, background: '#eef3ff', border: `1px solid ${C.primary}33`, padding: '1px 8px', borderRadius: 4 }}>{item.reportType}</span>
+          <span>{item.date}</span>
+          <span>{item.org}</span>
+          <span>共{item.pages}页</span>
+        </div>
+      </div>
+      <button onClick={() => { setDl(true); window.setTimeout(() => setDl(false), 1200) }}
+        style={{ display: 'inline-flex', alignItems: 'center', gap: 4, flexShrink: 0, border: `1px solid ${C.border}`, background: '#fff', color: C.sub, borderRadius: 4, padding: '6px 12px', cursor: 'pointer', fontSize: 13 }}>
+        {dl ? '下载中…' : `⬇ ${item.size || ''}`.trim()}
+      </button>
+    </div>
+  )
+}
+
 /* ---------- 主组件 ---------- */
 export default function DmFullSearch() {
   const go = useGo()
@@ -656,6 +765,84 @@ export default function DmFullSearch() {
     setRiskProvince([]); setRiskTypeSel([]); setRiskChecked({}); setRiskPage(1); setRiskLoading(false); setRiskExportOpen(false)
   }
 
+  // 舆情模块状态
+  const [pubKeyword, setPubKeyword] = useState('')
+  const [pubSearchPanel, setPubSearchPanel] = useState<'batch' | 'advanced' | null>(null)
+  const [pubTime, setPubTime] = useState('')
+  const [pubDate, setPubDate] = useState<{ from: string; to: string }>({ from: '', to: '' })
+  const [pubCat, setPubCat] = useState<string[]>([])
+  const [pubSent, setPubSent] = useState<string[]>([])
+  const [pubTopic, setPubTopic] = useState<string[]>([])
+  const [pubAuth, setPubAuth] = useState<string[]>([])
+  const [pubPage, setPubPage] = useState(1)
+  const [pubLoading, setPubLoading] = useState(false)
+  const doPubSearch = () => { setPubPage(1); setPubLoading(true); window.setTimeout(() => setPubLoading(false), 450) }
+  const resetPub = () => { setPubKeyword(''); setPubSearchPanel(null); setPubTime(''); setPubDate({ from: '', to: '' }); setPubCat([]); setPubSent([]); setPubTopic([]); setPubAuth([]); setPubPage(1); setPubLoading(false) }
+
+  // 研报模块状态
+  const [repKeyword, setRepKeyword] = useState('')
+  const [repSearchPanel, setRepSearchPanel] = useState<'batch' | 'advanced' | null>(null)
+  const [repTime, setRepTime] = useState('')
+  const [repDate, setRepDate] = useState<{ from: string; to: string }>({ from: '', to: '' })
+  const [repType, setRepType] = useState<string[]>([])
+  const [repCat, setRepCat] = useState<string[]>([])
+  const [repFeat, setRepFeat] = useState<string[]>([])
+  const [repPageSize, setRepPageSize] = useState('不限')
+  const [repOrg, setRepOrg] = useState<string[]>([])
+  const [repPage, setRepPage] = useState(1)
+  const [repLoading, setRepLoading] = useState(false)
+  const doRepSearch = () => { setRepPage(1); setRepLoading(true); window.setTimeout(() => setRepLoading(false), 450) }
+  const resetRep = () => { setRepKeyword(''); setRepSearchPanel(null); setRepTime(''); setRepDate({ from: '', to: '' }); setRepType([]); setRepCat([]); setRepFeat([]); setRepPageSize('不限'); setRepOrg([]); setRepPage(1); setRepLoading(false) }
+
+  const toDate = (d: string) => { const x = new Date(d + 'T00:00:00'); return isNaN(x.getTime()) ? null : x }
+  const matchTime = (dateStr: string, quick: string, range: { from: string; to: string }) => {
+    const dt = toDate(dateStr); if (!dt) return true
+    const today = new Date(); today.setHours(0, 0, 0, 0)
+    if (range.from) { const f = toDate(range.from); if (f && dt < f) return false }
+    if (range.to) { const t = toDate(range.to); if (t && dt > t) return false }
+    if (quick === 'today') return dt.getTime() === today.getTime()
+    if (quick === 'yesterday') { const y = new Date(today); y.setDate(y.getDate() - 1); return dt.getTime() === y.getTime() }
+    if (quick === '7d') { const w = new Date(today); w.setDate(w.getDate() - 7); return dt.getTime() >= w.getTime() }
+    if (quick === '30d') { const w = new Date(today); w.setDate(w.getDate() - 30); return dt.getTime() >= w.getTime() }
+    if (quick === '3m') { const w = new Date(today); w.setMonth(w.getMonth() - 3); return dt.getTime() >= w.getTime() }
+    if (quick === '6m') { const w = new Date(today); w.setMonth(w.getMonth() - 6); return dt.getTime() >= w.getTime() }
+    if (quick === '1y') { const w = new Date(today); w.setFullYear(w.getFullYear() - 1); return dt.getTime() >= w.getTime() }
+    return true
+  }
+
+  // 舆情过滤
+  const pubFiltered = PUBLIC_RESULTS.filter((r) => {
+    if (pubKeyword.trim() && !r.title.toLowerCase().includes(pubKeyword.trim().toLowerCase())) return false
+    if (pubCat.length > 0 && !pubCat.includes(r.category)) return false
+    if (pubSent.length > 0 && !pubSent.includes(r.sentiment)) return false
+    if (pubTopic.length > 0 && !r.topics.some((t) => pubTopic.includes(t))) return false
+    if (pubAuth.length > 0 && !pubAuth.includes(r.authority)) return false
+    return matchTime(r.date, pubTime, pubDate)
+  })
+  const hasPubFilter = pubTime !== '' || pubDate.from !== '' || pubDate.to !== '' || pubCat.length > 0 || pubSent.length > 0 || pubTopic.length > 0 || pubAuth.length > 0
+  const pubStatTotal = hasPubFilter ? pubFiltered.length : PUBLIC_STATS_TOTAL
+
+  // 研报过滤
+  const repPageMatch = (pages: number) => {
+    if (repPageSize === '大于5页') return pages > 5
+    if (repPageSize === '大于10页') return pages > 10
+    if (repPageSize === '大于20页') return pages > 20
+    if (repPageSize === '大于50页') return pages > 50
+    return true
+  }
+  const repFiltered = REPORT_RESULTS.filter((r) => {
+    if (repKeyword.trim() && !r.title.toLowerCase().includes(repKeyword.trim().toLowerCase())) return false
+    if (repType.length > 0 && !repType.includes(r.reportType)) return false
+    if (repCat.length > 0 && !repCat.includes(r.category)) return false
+    if (repFeat.length > 0 && !(r.features || []).some((f) => repFeat.includes(f))) return false
+    if (repOrg.length > 0 && !repOrg.includes(r.org)) return false
+    if (!repPageMatch(r.pages)) return false
+    return matchTime(r.date, repTime, repDate)
+  })
+  const hasRepFilter = repTime !== '' || repDate.from !== '' || repDate.to !== '' || repType.length > 0 || repCat.length > 0 || repFeat.length > 0 || repPageSize !== '不限' || repOrg.length > 0
+  const repStatTotal = hasRepFilter ? repFiltered.length : REPORT_STATS_TOTAL
+  const accent = ['person', 'risk', 'public', 'report'].includes(activeModule) ? C.yellow : C.primary
+
   const toggle = (o: string) => setChecked((s) => ({ ...s, [o]: !s[o] }))
   const toggleGroup = (g: string) => setExpandedGroups((s) => { const n = new Set(s); n.has(g) ? n.delete(g) : n.add(g); return n })
 
@@ -678,10 +865,10 @@ export default function DmFullSearch() {
       <div style={{ display: 'flex', gap: 4, borderBottom: `2px solid ${C.border}`, marginBottom: 12 }}>
         {MODULES.map((m) => {
           const navActive = activeModule === m.key
-          const navColor = ['person', 'risk'].includes(activeModule) ? C.yellow : C.primary
+          const navColor = ['person', 'risk', 'public', 'report'].includes(activeModule) ? C.yellow : C.primary
           return (
             <div key={m.key}
-              onClick={() => { setActiveModule(m.key); setKeyword(m.key === 'person' ? PERSON_SEARCH_KEYWORD : SEARCH_KEYWORD); setPage(1); resetBiz(); resetRisk() }}
+              onClick={() => { setActiveModule(m.key); setKeyword(m.key === 'person' ? PERSON_SEARCH_KEYWORD : SEARCH_KEYWORD); setPage(1); resetBiz(); resetRisk(); resetPub(); resetRep() }}
               style={{ padding: '8px 18px', cursor: 'pointer', fontSize: 15, color: navActive ? navColor : C.sub, fontWeight: navActive ? 700 : 400, borderBottom: navActive ? `2px solid ${navColor}` : '2px solid transparent', marginBottom: -2 }}>
               {m.label}
             </div>
@@ -753,7 +940,7 @@ export default function DmFullSearch() {
               {/* 企业列表 */}
               {viewMode === 'card' ? list.map((c, i) => <EntCardView key={i} card={c} go={go} />)
                 : (
-                  <table style={{ width: '100%', background: '#fff', border: `1px solid ${C.border}`, borderRadius: 8, borderCollapse: 'collapse', fontSize: 13 }}>
+                  <div className="overflow-x-auto"><table style={{ width: '100%', background: '#fff', border: `1px solid ${C.border}`, borderRadius: 8, borderCollapse: 'collapse', fontSize: 13 }}>
                     <thead>
                       <tr style={{ background: '#fafafa', color: C.sub }}>
                         <th style={{ borderBottom: `1px solid ${C.border}`, padding: '8px 10px', textAlign: 'left' }}>企业名称</th>
@@ -774,7 +961,7 @@ export default function DmFullSearch() {
                         </tr>
                       ))}
                     </tbody>
-                  </table>
+                  </table></div>
                 )}
 
               {/* 分页 */}
@@ -1104,11 +1291,219 @@ export default function DmFullSearch() {
         </>
       )}
 
-      {/* ============ 其他模块占位 ============ */}
-      {['public', 'report'].includes(activeModule) && (
-        <div style={{ background: '#fff', border: `1px solid ${C.border}`, borderRadius: 8, padding: 60, textAlign: 'center', color: C.ph, fontSize: 14 }}>
-          「{MODULES.find((m) => m.key === activeModule)!.label}」模块示例数据正在补充中
-        </div>
+      {/* ============ 舆情 模块 ============ */}
+      {activeModule === 'public' && (
+        <>
+          {/* 搜索操作栏 */}
+          <div style={{ background: '#fff', border: `1px solid ${C.border}`, borderRadius: 8, padding: 14, marginBottom: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+              <input value={pubKeyword} onChange={(e) => setPubKeyword(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && doPubSearch()} placeholder={PUBLIC_KEYWORD_PLACEHOLDER} style={{ flex: 1, minWidth: 240, maxWidth: 420, border: `1px solid ${C.border}`, borderRadius: 4, padding: '7px 10px' }} />
+              <button onClick={doPubSearch} style={{ background: C.yellow, color: C.yellowText, border: 'none', borderRadius: 4, padding: '8px 18px', cursor: 'pointer', fontSize: 14, fontWeight: 600 }}>查询</button>
+              <div style={{ display: 'flex', gap: 14, marginLeft: 6 }}>
+                <a onClick={() => setPubSearchPanel(pubSearchPanel === 'batch' ? null : 'batch')} style={{ color: pubSearchPanel === 'batch' ? accent : C.sub, fontSize: 13, cursor: 'pointer' }}>批量搜索</a>
+                <a onClick={() => setPubSearchPanel(pubSearchPanel === 'advanced' ? null : 'advanced')} style={{ color: pubSearchPanel === 'advanced' ? accent : C.sub, fontSize: 13, cursor: 'pointer' }}>高级搜索</a>
+              </div>
+            </div>
+            {pubSearchPanel && (
+              <div style={{ marginTop: 10, border: `1px solid ${C.border}`, borderRadius: 6, background: '#fafbfc', padding: 12, fontSize: 13 }}>
+                {pubSearchPanel === 'batch' ? (
+                  <>
+                    <div style={{ fontWeight: 600, color: C.text, marginBottom: 6 }}>批量搜索：每行输入一个关键词，提交后逐条检索舆情资讯</div>
+                    <textarea rows={3} style={{ width: '100%', border: `1px solid ${C.border}`, borderRadius: 4, padding: 8, resize: 'vertical', boxSizing: 'border-box' }} placeholder={'手机\n华为\n小米'} />
+                    <div style={{ marginTop: 8, display: 'flex', gap: 8 }}>
+                      <button onClick={() => { setPubSearchPanel(null); doPubSearch() }} style={{ background: C.yellow, color: C.yellowText, border: 'none', borderRadius: 4, padding: '5px 16px', cursor: 'pointer', fontWeight: 600 }}>开始批量检索</button>
+                      <button onClick={() => setPubSearchPanel(null)} style={{ background: '#fff', border: `1px solid ${C.border}`, color: C.sub, borderRadius: 4, padding: '5px 16px', cursor: 'pointer' }}>取消</button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div style={{ fontWeight: 600, color: C.text, marginBottom: 8 }}>高级搜索：来源媒体 / 发布地区 / 文章字数 等复合条件</div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px 16px', marginBottom: 8, alignItems: 'center' }}>
+                      <input placeholder="来源媒体，如：科技日报" style={{ border: `1px solid ${C.border}`, borderRadius: 4, padding: '6px 8px', width: 220 }} />
+                      <input placeholder="发布地区，如：广东" style={{ border: `1px solid ${C.border}`, borderRadius: 4, padding: '6px 8px', width: 180 }} />
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><input type="number" placeholder="最少字数" style={{ border: `1px solid ${C.border}`, borderRadius: 4, padding: '6px 8px', width: 100 }} />—<input type="number" placeholder="最多字数" style={{ border: `1px solid ${C.border}`, borderRadius: 4, padding: '6px 8px', width: 100 }} /></span>
+                    </div>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button onClick={() => { setPubSearchPanel(null); doPubSearch() }} style={{ background: C.yellow, color: C.yellowText, border: 'none', borderRadius: 4, padding: '5px 16px', cursor: 'pointer', fontWeight: 600 }}>确定检索</button>
+                      <button onClick={() => setPubSearchPanel(null)} style={{ background: '#fff', border: `1px solid ${C.border}`, color: C.sub, borderRadius: 4, padding: '5px 16px', cursor: 'pointer' }}>取消</button>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+
+            {/* 时间快速筛选区 */}
+            <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+              <span style={{ color: C.sub, fontSize: 13 }}>时间：</span>
+              {PUBLIC_TIME_TAGS.map((t) => (
+                <span key={t.key} onClick={() => setPubTime(pubTime === t.key ? '' : t.key)}
+                  style={{ fontSize: 13, cursor: 'pointer', padding: '4px 12px', borderRadius: 4, border: `1px solid ${pubTime === t.key ? accent : C.border}`, color: pubTime === t.key ? accent : C.text, background: pubTime === t.key ? '#fff7e6' : '#fff' }}>
+                  {t.label}
+                </span>
+              ))}
+              <input type="date" value={pubDate.from} onChange={(e) => { setPubDate((s) => ({ ...s, from: e.target.value })); setPubTime('') }} style={{ border: `1px solid ${C.border}`, borderRadius: 4, padding: '4px 8px' }} />
+              <span style={{ color: C.sub }}>—</span>
+              <input type="date" value={pubDate.to} onChange={(e) => { setPubDate((s) => ({ ...s, to: e.target.value })); setPubTime('') }} style={{ border: `1px solid ${C.border}`, borderRadius: 4, padding: '4px 8px' }} />
+              {(pubTime !== '' || pubDate.from || pubDate.to) && (
+                <a onClick={() => { setPubTime(''); setPubDate({ from: '', to: '' }) }} style={{ color: accent, fontSize: 13, cursor: 'pointer' }}>清除</a>
+              )}
+            </div>
+
+            {/* 筛选下拉控件：舆情分类 / 情感属性 / 主题分类 / 权威等级 */}
+            <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+              <MultiFilterDropdown label="舆情分类" options={PUBLIC_CATEGORY_OPTIONS} value={pubCat} onChange={setPubCat} accent={accent} />
+              <MultiFilterDropdown label="情感属性" options={PUBLIC_SENTIMENT_OPTIONS} value={pubSent} onChange={setPubSent} accent={accent} />
+              <MultiFilterDropdown label="主题分类" options={PUBLIC_TOPIC_OPTIONS} value={pubTopic} onChange={setPubTopic} accent={accent} />
+              <MultiFilterDropdown label="权威等级" options={PUBLIC_AUTHORITY_OPTIONS} value={pubAuth} onChange={setPubAuth} accent={accent} />
+            </div>
+          </div>
+
+          {/* 结果统计区域 */}
+          <div style={{ background: '#fff', border: `1px solid ${C.border}`, borderRadius: 8, padding: '10px 14px', marginBottom: 12, fontSize: 14, color: C.text }}>
+            找到 <b style={{ color: accent }}>{pubStatTotal.toLocaleString()}</b> 条相关结果
+          </div>
+
+          {/* 舆情列表：骨架屏 / 空态 / 条目 */}
+          {pubLoading ? (
+            <div style={{ background: '#fff', border: `1px solid ${C.border}`, borderRadius: 8, padding: 16 }}>
+              {[0, 1, 2, 3].map((i) => (
+                <div key={i} style={{ marginBottom: i < 3 ? 14 : 0 }}>
+                  <div style={{ width: i % 2 === 0 ? '55%' : '38%', height: 18, background: '#f0f1f3', borderRadius: 4, marginBottom: 8 }} />
+                  <div style={{ width: '70%', height: 14, background: '#f5f6f8', borderRadius: 4 }} />
+                </div>
+              ))}
+            </div>
+          ) : pubFiltered.length === 0 ? (
+            <div style={{ background: '#fff', border: `1px solid ${C.border}`, borderRadius: 8, padding: 56, textAlign: 'center', color: C.ph, fontSize: 14 }}>
+              <div style={{ fontSize: 30, marginBottom: 10 }}>🔍</div>
+              暂无匹配的舆情数据，请调整关键词或清除筛选条件后重试
+            </div>
+          ) : (
+            <div>
+              {pubFiltered.map((r, i) => <PubCard key={i} item={r} kw={pubKeyword.trim()} />)}
+            </div>
+          )}
+
+          {/* 分页 */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 16, fontSize: 13, color: C.sub, flexWrap: 'wrap' }}>
+            <span>共 {pubStatTotal.toLocaleString()} 条 10条/页</span>
+            <button onClick={() => setPubPage((p) => Math.max(1, p - 1))} disabled={pubPage <= 1} style={{ border: `1px solid ${C.border}`, background: '#fff', borderRadius: 4, padding: '4px 10px', cursor: 'pointer' }}>上一页</button>
+            {[1, 2, 3, 4, 5].map((p) => (
+              <button key={p} onClick={() => setPubPage(p)} style={{ border: `1px solid ${pubPage === p ? accent : C.border}`, color: pubPage === p ? accent : C.sub, background: pubPage === p ? '#fff7e6' : '#fff', borderRadius: 4, padding: '4px 10px', cursor: 'pointer' }}>{p}</button>
+            ))}
+            <button onClick={() => setPubPage((p) => p + 1)} style={{ border: `1px solid ${C.border}`, background: '#fff', borderRadius: 4, padding: '4px 10px', cursor: 'pointer' }}>下一页</button>
+            <span>前往 <input value={pubPage} onChange={(e) => setPubPage(Number(e.target.value) || 1)} style={{ width: 44, border: `1px solid ${C.border}`, borderRadius: 4, padding: '3px 6px' }} /> 页</span>
+          </div>
+        </>
+      )}
+
+      {/* ============ 研报 模块 ============ */}
+      {activeModule === 'report' && (
+        <>
+          {/* 搜索操作栏 */}
+          <div style={{ background: '#fff', border: `1px solid ${C.border}`, borderRadius: 8, padding: 14, marginBottom: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+              <input value={repKeyword} onChange={(e) => setRepKeyword(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && doRepSearch()} placeholder={REPORT_KEYWORD_PLACEHOLDER} style={{ flex: 1, minWidth: 240, maxWidth: 420, border: `1px solid ${C.border}`, borderRadius: 4, padding: '7px 10px' }} />
+              <button onClick={doRepSearch} style={{ background: C.yellow, color: C.yellowText, border: 'none', borderRadius: 4, padding: '8px 18px', cursor: 'pointer', fontSize: 14, fontWeight: 600 }}>查询</button>
+              <div style={{ display: 'flex', gap: 14, marginLeft: 6 }}>
+                <a onClick={() => setRepSearchPanel(repSearchPanel === 'batch' ? null : 'batch')} style={{ color: repSearchPanel === 'batch' ? accent : C.sub, fontSize: 13, cursor: 'pointer' }}>批量搜索</a>
+                <a onClick={() => setRepSearchPanel(repSearchPanel === 'advanced' ? null : 'advanced')} style={{ color: repSearchPanel === 'advanced' ? accent : C.sub, fontSize: 13, cursor: 'pointer' }}>高级搜索</a>
+              </div>
+            </div>
+            {repSearchPanel && (
+              <div style={{ marginTop: 10, border: `1px solid ${C.border}`, borderRadius: 6, background: '#fafbfc', padding: 12, fontSize: 13 }}>
+                {repSearchPanel === 'batch' ? (
+                  <>
+                    <div style={{ fontWeight: 600, color: C.text, marginBottom: 6 }}>批量搜索：每行输入一个关键词，提交后逐条检索研报数据</div>
+                    <textarea rows={3} style={{ width: '100%', border: `1px solid ${C.border}`, borderRadius: 4, padding: 8, resize: 'vertical', boxSizing: 'border-box' }} placeholder={'小米\n华为\n腾讯'} />
+                    <div style={{ marginTop: 8, display: 'flex', gap: 8 }}>
+                      <button onClick={() => { setRepSearchPanel(null); doRepSearch() }} style={{ background: C.yellow, color: C.yellowText, border: 'none', borderRadius: 4, padding: '5px 16px', cursor: 'pointer', fontWeight: 600 }}>开始批量检索</button>
+                      <button onClick={() => setRepSearchPanel(null)} style={{ background: '#fff', border: `1px solid ${C.border}`, color: C.sub, borderRadius: 4, padding: '5px 16px', cursor: 'pointer' }}>取消</button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div style={{ fontWeight: 600, color: C.text, marginBottom: 8 }}>高级搜索：报告摘要 / 作者 / 文件大小 等复合条件</div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px 16px', marginBottom: 8, alignItems: 'center' }}>
+                      <input placeholder="报告摘要关键词" style={{ border: `1px solid ${C.border}`, borderRadius: 4, padding: '6px 8px', width: 220 }} />
+                      <input placeholder="作者 / 分析师" style={{ border: `1px solid ${C.border}`, borderRadius: 4, padding: '6px 8px', width: 180 }} />
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><input type="number" placeholder="最小(MB)" style={{ border: `1px solid ${C.border}`, borderRadius: 4, padding: '6px 8px', width: 90 }} />—<input type="number" placeholder="最大(MB)" style={{ border: `1px solid ${C.border}`, borderRadius: 4, padding: '6px 8px', width: 90 }} /></span>
+                    </div>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button onClick={() => { setRepSearchPanel(null); doRepSearch() }} style={{ background: C.yellow, color: C.yellowText, border: 'none', borderRadius: 4, padding: '5px 16px', cursor: 'pointer', fontWeight: 600 }}>确定检索</button>
+                      <button onClick={() => setRepSearchPanel(null)} style={{ background: '#fff', border: `1px solid ${C.border}`, color: C.sub, borderRadius: 4, padding: '5px 16px', cursor: 'pointer' }}>取消</button>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+
+            {/* 时间快速筛选区 */}
+            <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+              <span style={{ color: C.sub, fontSize: 13 }}>时间：</span>
+              {REPORT_TIME_TAGS.map((t) => (
+                <span key={t.key} onClick={() => setRepTime(repTime === t.key ? '' : t.key)}
+                  style={{ fontSize: 13, cursor: 'pointer', padding: '4px 12px', borderRadius: 4, border: `1px solid ${repTime === t.key ? accent : C.border}`, color: repTime === t.key ? accent : C.text, background: repTime === t.key ? '#fff7e6' : '#fff' }}>
+                  {t.label}
+                </span>
+              ))}
+              <input type="date" value={repDate.from} onChange={(e) => { setRepDate((s) => ({ ...s, from: e.target.value })); setRepTime('') }} style={{ border: `1px solid ${C.border}`, borderRadius: 4, padding: '4px 8px' }} />
+              <span style={{ color: C.sub }}>—</span>
+              <input type="date" value={repDate.to} onChange={(e) => { setRepDate((s) => ({ ...s, to: e.target.value })); setRepTime('') }} style={{ border: `1px solid ${C.border}`, borderRadius: 4, padding: '4px 8px' }} />
+              {(repTime !== '' || repDate.from || repDate.to) && (
+                <a onClick={() => { setRepTime(''); setRepDate({ from: '', to: '' }) }} style={{ color: accent, fontSize: 13, cursor: 'pointer' }}>清除</a>
+              )}
+            </div>
+
+            {/* 筛选下拉控件：报告类型 / 行业分类 / 特色标签 / 报告页数 / 发布机构 */}
+            <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+              <MultiFilterDropdown label="报告类型" options={REPORT_TYPE_OPTIONS} value={repType} onChange={setRepType} accent={accent} />
+              <MultiFilterDropdown label="行业分类" options={REPORT_CATEGORY_OPTIONS} value={repCat} onChange={setRepCat} accent={accent} />
+              <MultiFilterDropdown label="特色标签" options={REPORT_FEATURE_OPTIONS} value={repFeat} onChange={setRepFeat} accent={accent} />
+              <select value={repPageSize} onChange={(e) => setRepPageSize(e.target.value)} style={{ border: `1px solid ${C.border}`, borderRadius: 4, padding: '6px 8px', color: C.text, fontSize: 13, background: '#fff' }}>
+                {REPORT_PAGE_OPTIONS.map((o) => <option key={o} value={o}>{o === '不限' ? '报告页数' : o}</option>)}
+              </select>
+              <MultiFilterDropdown label="发布机构" options={REPORT_ORG_OPTIONS} value={repOrg} onChange={setRepOrg} accent={accent} />
+            </div>
+          </div>
+
+          {/* 结果统计区域 */}
+          <div style={{ background: '#fff', border: `1px solid ${C.border}`, borderRadius: 8, padding: '10px 14px', marginBottom: 12, fontSize: 14, color: C.text }}>
+            找到 <b style={{ color: accent }}>{repStatTotal.toLocaleString()}</b> 条相关结果
+          </div>
+
+          {/* 研报列表：骨架屏 / 空态 / 条目 */}
+          {repLoading ? (
+            <div style={{ background: '#fff', border: `1px solid ${C.border}`, borderRadius: 8, padding: 16 }}>
+              {[0, 1, 2, 3].map((i) => (
+                <div key={i} style={{ marginBottom: i < 3 ? 14 : 0 }}>
+                  <div style={{ width: i % 2 === 0 ? '55%' : '38%', height: 18, background: '#f0f1f3', borderRadius: 4, marginBottom: 8 }} />
+                  <div style={{ width: '70%', height: 14, background: '#f5f6f8', borderRadius: 4 }} />
+                </div>
+              ))}
+            </div>
+          ) : repFiltered.length === 0 ? (
+            <div style={{ background: '#fff', border: `1px solid ${C.border}`, borderRadius: 8, padding: 56, textAlign: 'center', color: C.ph, fontSize: 14 }}>
+              <div style={{ fontSize: 30, marginBottom: 10 }}>🔍</div>
+              暂无匹配的研报数据，请调整关键词或清除筛选条件后重试
+            </div>
+          ) : (
+            <div style={{ background: '#fff', border: `1px solid ${C.border}`, borderRadius: 8, overflow: 'hidden' }}>
+              {repFiltered.map((r, i) => <ReportCard key={i} item={r} kw={repKeyword.trim()} />)}
+            </div>
+          )}
+
+          {/* 分页 */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 16, fontSize: 13, color: C.sub, flexWrap: 'wrap' }}>
+            <span>共 {repStatTotal.toLocaleString()} 条 10条/页</span>
+            <button onClick={() => setRepPage((p) => Math.max(1, p - 1))} disabled={repPage <= 1} style={{ border: `1px solid ${C.border}`, background: '#fff', borderRadius: 4, padding: '4px 10px', cursor: 'pointer' }}>上一页</button>
+            {[1, 2, 3, 4, 5].map((p) => (
+              <button key={p} onClick={() => setRepPage(p)} style={{ border: `1px solid ${repPage === p ? accent : C.border}`, color: repPage === p ? accent : C.sub, background: repPage === p ? '#fff7e6' : '#fff', borderRadius: 4, padding: '4px 10px', cursor: 'pointer' }}>{p}</button>
+            ))}
+            <button onClick={() => setRepPage((p) => p + 1)} style={{ border: `1px solid ${C.border}`, background: '#fff', borderRadius: 4, padding: '4px 10px', cursor: 'pointer' }}>下一页</button>
+            <span>前往 <input value={repPage} onChange={(e) => setRepPage(Number(e.target.value) || 1)} style={{ width: 44, border: `1px solid ${C.border}`, borderRadius: 4, padding: '3px 6px' }} /> 页</span>
+          </div>
+        </>
       )}
 
       {/* 风险导出配置弹窗 */}

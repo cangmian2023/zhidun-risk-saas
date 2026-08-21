@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>招投标标讯系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Microsoft YaHei", system-ui, -apple-system, sans-serif;
+        }
+        body {
+            background: #ffffff;
+            padding: 12px 16px;
+            color: #222;
+        }
+        /* 顶部导航 */
+        .top-nav-bar {
+            display: flex;
+            align-items: center;
+            gap: 32px;
+            margin-bottom:16px;
+        }
+        .nav-item {
+            font-size:17px;
+            cursor:pointer;
+            padding:6px 2px;
+            color:#444;
+            position:relative;
+        }
+        .nav-item.active {
+            color:#000000;
+            font-weight:bold;
+        }
+        .nav-item.active::after{
+            content:"";
+            position:absolute;
+            bottom:-2px;
+            left:0;
+            width:100%;
+            height:3px;
+            background:#f7c548;
+        }
+        .top-right-btn{
+            margin-left:auto;
+        }
+        .btn-yellow{
+            background:#f7c548;
+            border:none;
+            padding:8px 18px;
+            border-radius:4px;
+            font-size:15px;
+            cursor:pointer;
+        }
+        /*搜索栏*/
+        .search-wrap{
+            display:flex;
+            align-items:center;
+            gap:10px;
+            margin-bottom:18px;
+        }
+        .search-input-wrap{
+            display:flex;
+            flex:1;
+            max-width:620px;
+            background:#f5f6fa;
+            border-radius:6px;
+            overflow:hidden;
+        }
+        .search-select{
+            padding:10px 14px;
+            background:#f5f6fa;
+            border:none;
+            font-size:15px;
+        }
+        .search-input{
+            flex:1;
+            border:none;
+            background:transparent;
+            padding:10px 12px;
+            font-size:15px;
+            outline:none;
+        }
+        .btn-search{
+            background:#f7c548;
+            border:none;
+            padding:10px 24px;
+            font-size:15px;
+            cursor:pointer;
+        }
+        .toggle-text{
+            display:flex;
+            align-items:center;
+            gap:6px;
+        }
+        /*统计卡片行*/
+        .stat-row{
+            display:grid;
+            grid-template-columns: 1fr 1fr 1fr 1fr;
+            gap:12px;
+            margin-bottom:16px;
+        }
+        .stat-card{
+            background:#f5f6fa;
+            padding:14px;
+            border-radius:6px;
+        }
+        .stat-title{
+            font-size:14px;
+            color:#444;
+            margin-bottom:6px;
+        }
+        .stat-num{
+            font-size:22px;
+            color:#2b65e8;
+            font-weight:bold;
+        }
+        /*筛选区*/
+        .filter-area{
+            background:#f8f9fc;
+            padding:14px;
+            border-radius:6px;
+            margin-bottom:12px;
+        }
+        .filter-line{
+            display:flex;
+            align-items:center;
+            gap:12px;
+            margin-bottom:10px;
+            flex-wrap:wrap;
+        }
+        .filter-label{
+            width:70px;
+            font-size:15px;
+        }
+        .tag-item{
+            display:inline-flex;
+            align-items:center;
+            background:#e7edfc;
+            padding:4px 10px;
+            border-radius:4px;
+            font-size:14px;
+            gap:6px;
+        }
+        .tag-close{
+            cursor:pointer;
+        }
+        .filter-bottom-bar{
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            margin:14px 0;
+        }
+        .left-info{
+            display:flex;
+            align-items:center;
+            gap:10px;
+        }
+        select{
+            padding:6px 10px;
+            border:1px solid #ccc;
+            border-radius:4px;
+        }
+        .btn-normal{
+            border:1px solid #b8bcc8;
+            background:#fff;
+            padding:7px 16px;
+            border-radius:4px;
+            cursor:pointer;
+        }
+        .btn-export{
+            background:#f7c548;
+            border:none;
+            padding:7px 16px;
+            border-radius:4px;
+            cursor:pointer;
+        }
+        /*列表通用*/
+        .list-item{
+            padding:16px 12px;
+            border-bottom:1px dashed #dde0e8;
+        }
+        .item-title{
+            font-size:18px;
+            font-weight:bold;
+            margin-bottom:8px;
+            cursor:pointer;
+        }
+        .item-tag-row{
+            display:flex;
+            gap:10px;
+            margin-bottom:10px;
+        }
+        .item-tag{
+            font-size:14px;
+            color:#2b65e8;
+        }
+        .meta-grid{
+            display:grid;
+            grid-template-columns:1fr 1fr 1fr;
+            gap:8px;
+            font-size:14px;
+            color:#444;
+            margin-bottom:8px;
+        }
+        .text-gray{
+            color:#666;
+            font-size:14px;
+        }
+        .item-right-op{
+            float:right;
+        }
+        /*中标企业库筛选行*/
+        .enterprise-filter-row{
+            display:flex;
+            gap:24px;
+            padding:12px 0;
+            border-bottom:1px dashed #dde0e8;
+        }
+        .ent-tag{
+            padding:3px 8px;
+            border-radius:3px;
+            font-size:13px;
+        }
+        .ent-tag-red{
+            background:#fce3d4;
+            color:#b34219;
+        }
+        /*产品词库列表*/
+        .product-item p{
+            margin:6px 0;
+            font-size:14px;
+            color:#555;
+        }
+        /*tab面板切换*/
+        .tab-panel{
+            display:none;
+        }
+        .tab-panel.show{
+            display:block;
+        }
+    </style>
+</head>
+<body>
+    <!--顶部导航-->
+    <div class="top-nav-bar">
+        <div class="nav-item">我的标讯</div>
+        <div class="nav-item active" data-tab="all-bid">全部标讯</div>
+        <div class="nav-item" data-tab="bid-company">中标企业库</div>
+        <div class="nav-item" data-tab="product-lib">产品词库</div>
+        <div class="top-right-btn">
+            <button class="btn-yellow">＋ 添加订阅 ▾</button>
+        </div>
+    </div>
+
+    <!-- ===================== Panel1：全部标讯 ===================== -->
+    <div class="tab-panel show" id="panel-all-bid">
+        <div class="search-wrap">
+            <div class="search-input-wrap">
+                <select class="search-select">
+                    <option>全部</option>
+                </select>
+                <input class="search-input" placeholder="输入招投标关键词，如“科技软件”">
+            </div>
+            <button class="btn-search">Q 搜索</button>
+            <div class="toggle-text">
+                <span>精准搜索ⓘ</span>
+                <input type="checkbox">
+            </div>
+        </div>
+        <!--统计卡片-->
+        <div class="stat-row">
+            <div class="stat-card">
+                <div class="stat-title">北京市企业大额中标 ⓘ</div>
+                <div class="stat-num">6,761条</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-title">北京市政府事业单位招标 ⓘ</div>
+                <div class="stat-num">5,510条</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-title">北京市国央企招标 ⓘ</div>
+                <div class="stat-num">9,999+条</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-title">北京市企业中标政府项目 ⓘ</div>
+                <div class="stat-num">5,222条</div>
+            </div>
+        </div>
+
+        <!--筛选区域-->
+        <div class="filter-area">
+            <div class="filter-line">
+                <span class="filter-label">标讯类型</span>
+                <label><input type="checkbox" checked>不限</label>
+                <label><input type="checkbox">招标公告</label>
+                <label><input type="checkbox">中标公告</label>
+                <label><input type="checkbox">拟建公告</label>
+            </div>
+            <div class="filter-line">
+                <span class="filter-label">省份地区</span>
+                <label><input type="checkbox" checked>省份地区 ▾</label>
+            </div>
+            <div class="filter-line">
+                <span class="filter-label">发布时间</span>
+                <label><input type="radio" name="pubtime">不限</label>
+                <label><input type="radio" name="pubtime">今天</label>
+                <label><input type="radio" name="pubtime">近7天</label>
+                <label><input type="radio" name="pubtime" checked>近30天</label>
+                <label><input type="radio" name="pubtime">近3个月</label>
+                <label><input type="radio" name="pubtime">近半年</label>
+                <label><input type="radio" name="pubtime">近1年</label>
+                <label><input type="radio" name="pubtime">近3年</label>
+                <label><input type="radio" name="pubtime">自定义 ▾</label>
+            </div>
+            <div class="filter-line">
+                <span class="filter-label">其他筛选</span>
+                <label><input type="radio" name="other">联系方式 ▾</label>
+                <label><input type="checkbox">招标人 ▾</label>
+                <label><input type="checkbox">所属行业 ▾</label>
+                <label><input type="radio" name="other">预算金额 ▾</label>
+                <label><input type="radio" name="other">中标金额 ▾</label>
+                <label><input type="radio" name="other">附件 ▾</label>
+            </div>
+            <!--已选条件标签-->
+            <div style="display:flex;gap:10px;margin-top:8px;">
+                <div class="tag-item">省份地区：北京市 <span class="tag-close">×</span></div>
+                <div class="tag-item">发布时间：近30天 <span class="tag-close">×</span></div>
+                <div style="margin-left:auto;">
+                    <span>订阅条件</span>
+                    <span style="margin-left:12px;">清空</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="filter-bottom-bar">
+            <div class="left-info">
+                <input type="checkbox">
+                <span>找到 82,038 条标讯</span>
+                <select>
+                    <option>默认排序</option>
+                </select>
+            </div>
+            <div>
+                <button class="btn-normal">⿲</button>
+                <button class="btn-normal">⊞</button>
+                <button class="btn-normal">批量操作</button>
+                <button class="btn-normal">营销</button>
+                <button class="btn-export">⤓ 导出</button>
+            </div>
+        </div>
+
+        <!--标讯列表项-->
+        <div class="list-item">
+            <div style="display:flex;justify-content:space-between;">
+                <div class="item-title">OV支援勤务保障外包服务采购项目</div>
+                <div class="item-right-op">
+                    <span>🗔订阅</span>｜<span>更多 ▾</span>
+                </div>
+            </div>
+            <div class="item-tag-row">
+                <span class="item-tag">招标公告 | 招标</span>
+                <span class="text-gray">北京市朝阳区</span>
+                <span class="text-gray">服务采购</span>
+                <span class="text-gray">有联系方式</span>
+            </div>
+            <div class="meta-grid">
+                <div>发布时间：2026‑08‑20 20小时前获取</div>
+                <div>项目编号：OVBS‑2026‑0005</div>
+                <div>联系人： 2个</div>
+                <div>招标单位：<span style="color:#2b65e8;">北京飞机维修工程有限公司</span></div>
+                <div>中标单位： −</div>
+                <div>代理单位： −</div>
+                <div>中标候选人： −</div>
+                <div>投标单位： −</div>
+                <div>被提及单位：<span style="color:#2b65e8;">中航集团</span></div>
+            </div>
+            <div class="text-gray">采购产品：OV支援勤务保障外包服务 OV飞机客舱清洁外包人… +1</div>
+            <div class="text-gray" style="margin-top:6px;">标讯正文：OV支援勤务保障外包服务采购项目 北京飞机维修工程有限公司（Ameco）现就以下采购项目进行第二次公开招标，诚邀合格投标人参加投标。一、项目基本情况 1.项目名称：OV支…</div>
+        </div>
+    </div>
+
+    <!-- ===================== Panel2：中标企业库 ===================== -->
+    <div class="tab-panel" id="panel-bid-company">
+        <div class="search-wrap">
+            <div class="search-input-wrap">
+                <input class="search-input" placeholder="输入中标企业名称，如“小米”">
+            </div>
+            <button class="btn-search">Q 搜索</button>
+        </div>
+        <!--筛选行-->
+        <div class="enterprise-filter-row">
+            <span>中标人 ▾</span>
+            <span>省份地区 ▾</span>
+            <span>所在行业 ▾</span>
+            <span>企业背景 ▾</span>
+            <span>企业规模 ▾</span>
+            <span>资质标签 ▾</span>
+            <span>参保人数 ▾</span>
+            <span>注册资本 ▾</span>
+            <span>成立时间 ▾</span>
+        </div>
+        <div class="enterprise-filter-row">
+            <span>最新中标</span>
+            <span>中标时间 ▾</span>
+            <span>招标人背景 ▾</span>
+            <span>招标人地区 ▾</span>
+            <span>中标金额 ▾</span>
+            <span>行业分类 ▾</span>
+        </div>
+        <div class="filter-bottom-bar">
+            <div class="left-info">
+                <span>发现 <span style="color:green;">10万+</span> 条标讯结果</span>
+            </div>
+            <div>
+                <button class="btn-normal">营销</button>
+                <button class="btn-export">⤓导出</button>
+            </div>
+        </div>
+        <div style="background:#f5f6fa;padding:10px;border-radius:4px;margin:8px 0;">标讯信息</div>
+
+        <div class="list-item">
+            <div style="display:flex;justify-content:space-between;">
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <input type="checkbox">
+                    <div class="item-title">中铁工程设计咨询集团有限公司</div>
+                </div>
+                <div class="item-right-op"><span>🗔订阅</span></div>
+            </div>
+            <div class="item-tag-row">
+                <span class="ent-tag ent-tag-red">中标</span>
+                <span>北京市</span>
+                <span>市政公用</span>
+                <span>157.14737万</span>
+                <span>事业单位</span>
+            </div>
+            <div class="text-gray">2026‑08‑20 知识城湾区半导体产业园市政道路及配套工程（一期）勘察设计评标报告</div>
+        </div>
+        <div class="list-item">
+            <div style="display:flex;justify-content:space-between;">
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <input type="checkbox">
+                    <div class="item-title">四川辰美益机电设备有限公司</div>
+                </div>
+                <div class="item-right-op"><span>🗔订阅</span></div>
+            </div>
+            <div class="item-tag-row">
+                <span class="ent-tag ent-tag-red">中标</span>
+                <span>成都市</span>
+                <span>房屋建筑</span>
+                <span>2.526万</span>
+                <span>机关</span>
+            </div>
+            <div class="text-gray">2026‑08‑20 成都东部新区董家埂镇人民政府壁挂式空调机直接选定采购合同</div>
+        </div>
+        <div class="list-item">
+            <div style="display:flex;justify-content:space-between;">
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <input type="checkbox">
+                    <div class="item-title">中铁桥隧技术有限公司</div>
+                </div>
+                <div class="item-right-op"><span>🗔订阅</span></div>
+            </div>
+            <div class="item-tag-row">
+                <span class="ent-tag ent-tag-red">中标</span>
+                <span>南京市</span>
+                <span>交通工程</span>
+                <span>915.5585万</span>
+                <span>国企</span>
+            </div>
+            <div class="text-gray">2026‑08‑20 （南昌市本级）峰福线K278+029岳溪大桥第4、5孔钢梁换梁大修项目施工总价承包中标公告</div>
+        </div>
+    </div>
+
+    <!-- ===================== Panel3：产品词库 ===================== -->
+    <div class="tab-panel" id="panel-product-lib">
+        <div class="search-wrap">
+            <div class="search-input-wrap">
+                <input class="search-input" placeholder="请输入产品名称">
+            </div>
+            <button class="btn-search">Q 搜索</button>
+        </div>
+        <div class="filter-bottom-bar">
+            <div class="left-info">
+                <span>找到<span style="color:green;">10万+</span>个产品</span>
+                <select>
+                    <option>按公告更新日期排序</option>
+                </select>
+            </div>
+            <div></div>
+        </div>
+
+        <div class="list-item product-item">
+            <div style="display:flex;justify-content:space-between;">
+                <div class="item-title">新建排水工程</div>
+                <div class="item-right-op"><span>🗔订阅</span></div>
+            </div>
+            <p>招标公告：295条｜中标公告：124条｜拟建公告：66条｜采购商：201家｜供应商：183家｜代理商：127家｜被提及：216家</p>
+        </div>
+        <div class="list-item product-item">
+            <div style="display:flex;justify-content:space-between;">
+                <div class="item-title">新能源汽车换电设施</div>
+                <div class="item-right-op"><span>🗔订阅</span></div>
+            </div>
+            <p>中标公告：7条｜拟建公告：100条｜采购商：29家｜供应商：6家｜被提及：93家</p>
+        </div>
+        <div class="list-item product-item">
+            <div style="display:flex;justify-content:space-between;">
+                <div class="item-title">旋转叉车</div>
+                <div class="item-right-op"><span>🗔订阅</span></div>
+            </div>
+            <p>招标公告：37条｜中标公告：7条｜采购商：29家｜供应商：10家｜代理商：11家｜被提及：13家</p>
+        </div>
+        <div class="list-item product-item">
+            <div style="display:flex;justify-content:space-between;">
+                <div class="item-title">数控双面研磨机</div>
+                <div class="item-right-op"><span>🗔订阅</span></div>
+            </div>
+            <p>招标公告：11条｜中标公告：8条｜拟建公告：1条｜采购商：3家｜供应商：1家｜代理商：1家｜被提及：2家</p>
+        </div>
+        <div class="list-item product-item">
+            <div style="display:flex;justify-content:space-between;">
+                <div class="item-title">无线会议麦克风</div>
+                <div class="item-right-op"><span>🗔订阅</span></div>
+            </div>
+            <p>招标公告：303条｜中标公告：400条｜采购商：454家｜供应商：420家｜代理商：125家｜被提及：360家</p>
+        </div>
+    </div>
+
+<script>
+    //tab切换逻辑
+    const navItems = document.querySelectorAll('.nav-item[data-tab]');
+    navItems.forEach(item=>{
+        item.onclick = function(){
+            navItems.forEach(n=>n.classList.remove('active'));
+            this.classList.add('active');
+            const tabId = this.dataset.tab;
+            document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('show'));
+            document.getElementById('panel-'+tabId).classList.add('show');
+        }
+    })
+</script>
+</body>
+</html>

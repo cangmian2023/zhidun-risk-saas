@@ -562,7 +562,9 @@ export default function Console() {
           />
         )}
 
-        <main className={isAiMarketingFullScreen || isWideContent ? 'min-w-0 flex-1' : 'min-w-0 flex-1 px-4 py-6 lg:px-8'}>
+        <main
+          className={`${isAiMarketingFullScreen || isWideContent ? 'min-w-0 flex-1' : 'min-w-0 flex-1 px-4 py-6 lg:px-8'} ${sub === 'ep' || sub === 'dm' ? 'ep-dm-tables' : ''}`}
+        >
           {isAiMarketingFullScreen || isWideContent ? (
             <DmModule pageKey={key} />
           ) : (

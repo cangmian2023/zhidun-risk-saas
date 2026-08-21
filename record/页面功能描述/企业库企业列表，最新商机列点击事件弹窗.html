@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>商机详情弹窗</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+        body {
+            background-color: #ffffff;
+            padding: 20px;
+        }
+        /* 弹窗容器 */
+        .ipo-modal {
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            background: #fff;
+            overflow: hidden;
+        }
+        /* 弹窗头部 */
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px 24px;
+        }
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap:12px;
+        }
+        .title-text {
+            font-size: 32px;
+            color:#1f2937;
+        }
+        .stars {
+            color:#3b82f6;
+            font-size:28px;
+            letter-spacing:4px;
+        }
+        .header-right {
+            display:flex;
+            gap:16px;
+            align-items:center;
+        }
+        .share-btn {
+            display:flex;
+            align-items:center;
+            gap:6px;
+            background:#f3f4f6;
+            border-radius:999px;
+            padding:8px 16px;
+            font-size:18px;
+            color:#1f2937;
+            border:none;
+        }
+        .close-btn {
+            font-size:28px;
+            color:#6b7280;
+            background:none;
+            border:none;
+            cursor:pointer;
+        }
+        /* 表格区域 */
+        .info-table {
+            width:100%;
+            border-collapse: collapse;
+        }
+        .info-table td {
+            border:1px solid #e5e7eb;
+            padding:24px 28px;
+            font-size:28px;
+        }
+        .info-table td:nth-child(odd) {
+            background-color:#f7f8fc;
+            font-weight:600;
+            color:#374151;
+        }
+        .info-table td:nth-child(even) {
+            color:#111827;
+        }
+    </style>
+</head>
+<body>
+<div class="ipo-modal">
+    <div class="modal-header">
+        <div class="header-left">
+            <span class="title-text">商机详情：拟IPO–最新进程</span>
+            <span class="stars">★★★★★</span>
+        </div>
+        <div class="header-right">
+            <button class="share-btn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2">
+                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                    <polyline points="15 3 21 3 21 9"></polyline>
+                    <line x1="10" y1="14" x2="21" y2="3"></line>
+                </svg>
+                分享
+            </button>
+            <button class="close-btn">×</button>
+        </div>
+    </div>
+    <table class="info-table">
+        <tr>
+            <td>最新进程</td>
+            <td>注册生效</td>
+            <td>披露时间</td>
+            <td>2026‑07‑14</td>
+        </tr>
+        <tr>
+            <td>所属领域</td>
+            <td>软件和信息技术服务业</td>
+            <td>拟上市市场</td>
+            <td>上交所科创板</td>
+        </tr>
+        <tr>
+            <td>保荐机构</td>
+            <td>中信证券股份有限公司</td>
+            <td>交易市场</td>
+            <td>上交所科创板</td>
+        </tr>
+    </table>
+</div>
+</body>
+</html>

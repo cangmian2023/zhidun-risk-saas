@@ -73,7 +73,7 @@ export default function EntLegalRisk({ companyName, menu }: { companyName?: stri
         </div>
       )}
       <div style={{ overflowX: 'auto' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 900 }}>
+        <div className="overflow-x-auto"><table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 900 }}>
           <thead><tr>{(m.columns || []).map((c, ci) => <th key={ci} style={th}>{c}</th>)}</tr></thead>
           <tbody>
             {(m.rows || []).length === 0 ? (
@@ -82,7 +82,7 @@ export default function EntLegalRisk({ companyName, menu }: { companyName?: stri
               <tr key={ri}><td style={td}>{ri + 1}</td>{r.map((cell, ci) => <td key={ci} style={td}>{roleCell(cell)}</td>)}</tr>
             ))}
           </tbody>
-        </table>
+        </table></div>
       </div>
       <div style={{ padding: '10px 16px', textAlign: 'right', fontSize: 12, color: '#999' }}>共{m.count}条，10条/页</div>
     </div>
@@ -139,12 +139,12 @@ export default function EntLegalRisk({ companyName, menu }: { companyName?: stri
       <div style={{ padding: 16, borderBottom: '1px solid #f2f3f5' }}>
         <div style={{ fontSize: 14, fontWeight: 600, color: '#333', marginBottom: 10 }}>案件串联（共{m.count}条）</div>
         <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 900 }}>
+          <div className="overflow-x-auto"><table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 900 }}>
             <thead><tr>{(m.caseCols || []).map((c, ci) => <th key={ci} style={th}>{c}</th>)}</tr></thead>
             <tbody>{(m.caseRows || []).map((r, ri) => (
               <tr key={ri}><td style={td}>{ri + 1}</td>{r.map((cell, ci) => <td key={ci} style={td}>{ci === 5 ? roleCell(cell) : cell}</td>)}</tr>
             ))}</tbody>
-          </table>
+          </table></div>
         </div>
         <div style={{ padding: '10px 0', textAlign: 'right', fontSize: 12, color: '#999' }}>共{m.count}条，10条/页</div>
       </div>
@@ -152,12 +152,12 @@ export default function EntLegalRisk({ companyName, menu }: { companyName?: stri
       <div style={{ padding: 16 }}>
         <div style={{ fontSize: 14, fontWeight: 600, color: '#333', marginBottom: 10 }}>诉讼关系（共228条）</div>
         <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 700 }}>
+          <div className="overflow-x-auto"><table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 700 }}>
             <thead><tr>{(m.relCols || []).map((c, ci) => <th key={ci} style={th}>{c}</th>)}</tr></thead>
             <tbody>{(m.relRows || []).map((r, ri) => (
               <tr key={ri}><td style={td}>{ri + 1}</td>{r.map((cell, ci) => <td key={ci} style={td}>{ci === r.length - 1 ? <a style={{ color: '#1677ff', cursor: 'pointer' }}>{cell}</a> : cell}</td>)}</tr>
             ))}</tbody>
-          </table>
+          </table></div>
         </div>
       </div>
     </div>

@@ -169,12 +169,12 @@ export default function EntOperatingRisk({ companyName, menu }: { companyName?: 
                   <button onClick={exportData} style={{ padding: '5px 14px', border: '1px solid #d9d9d9', borderRadius: 6, background: '#fff', color: '#333', fontSize: 13, cursor: 'pointer' }}>下载数据</button>
                 </div>
                 <div style={{ overflowX: 'auto' }}>
-                  <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 700 }}>
+                  <div className="overflow-x-auto"><table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 700 }}>
                     <thead><tr><th style={th}>序号</th><th style={th}>股东名称</th><th style={th}>累计质押股数</th><th style={th}>累计占持股比</th><th style={th}>累计占总股本比</th><th style={th}>最新日期</th></tr></thead>
                     <tbody>{eq.shareholderAccum.map((s, i) => (
                       <tr key={i}><td style={td}>{i + 1}</td><td style={td}>{s.name}</td><td style={td}>{s.amount}</td><td style={td}>{s.shareRatio}</td><td style={td}>{s.totalRatio}</td><td style={td}>{s.date}</td></tr>
                     ))}</tbody>
-                  </table>
+                  </table></div>
                 </div>
               </div>
               <div style={{ border: '1px solid #e8ebf0', borderRadius: 8, background: '#fff', overflow: 'hidden' }}>
@@ -182,7 +182,7 @@ export default function EntOperatingRisk({ companyName, menu }: { companyName?: 
                   <span style={{ fontSize: 15, fontWeight: 600, color: '#1d2129' }}>质押明细（共{eq.detailCount}条）</span>
                 </div>
                 <div style={{ overflowX: 'auto' }}>
-                  <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 1100 }}>
+                  <div className="overflow-x-auto"><table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 1100 }}>
                     <thead><tr><th style={th}>序号</th><th style={th}>股东名称</th><th style={th}>本次质押股数</th><th style={th}>剩余未解押股数</th><th style={th}>占持股比</th><th style={th}>占总股本比</th><th style={th}>当前进度</th><th style={th}>更新日期</th><th style={th}>内容</th></tr></thead>
                     <tbody>{currentDetails.map((r, i) => (
                       <tr key={i}>
@@ -197,7 +197,7 @@ export default function EntOperatingRisk({ companyName, menu }: { companyName?: 
                         <td style={td}><a style={{ color: '#1677ff', cursor: 'pointer' }} onClick={() => {}}>详情</a></td>
                       </tr>
                     ))}</tbody>
-                  </table>
+                  </table></div>
                 </div>
                 <div style={{ padding: '10px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
                   <span style={{ fontSize: 12, color: '#999' }}>数据来源：中登公司</span>
@@ -234,7 +234,7 @@ export default function EntOperatingRisk({ companyName, menu }: { companyName?: 
                 </div>
               </div>
               <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 1300 }}>
+                <div className="overflow-x-auto"><table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 1300 }}>
                   <thead><tr>
                     <th style={th}>序号</th><th style={th}>黑名单类型</th><th style={th}>黑名单名称</th><th style={th}>黑名单认定依据</th><th style={th}>认定部门</th><th style={th}>认定等级</th><th style={th}>列入日期</th><th style={th}>移出日期</th><th style={th}>内容</th><th style={th}>处罚结果</th><th style={th}>数据来源</th><th style={th}>操作</th>
                   </tr></thead>
@@ -246,7 +246,7 @@ export default function EntOperatingRisk({ companyName, menu }: { companyName?: 
                       </tr>
                     ))}
                   </tbody>
-                </table>
+                </table></div>
                 {!loading && blackRows.length === 0 && (
                   <div style={{ padding: '40px 16px', textAlign: 'center', color: '#86909c', fontSize: 14 }}>当前筛选条件下无黑名单记录</div>
                 )}

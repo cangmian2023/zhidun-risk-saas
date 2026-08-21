@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>新建排水工程标讯列表</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Microsoft YaHei", sans-serif;
+        }
+        body {
+            background-color: #ffffff;
+            padding:12px;
+        }
+        .page-wrap {
+            width: 100%;
+        }
+        /* header */
+        .page-header {
+            display:flex;
+            justify-content: space-between;
+            align-items:center;
+            margin-bottom:12px;
+        }
+        .page-header h1 {
+            font-size:22px;
+            font-weight:600;
+            color:#111827;
+        }
+        .btn-yellow-subscribe {
+            background:#facc15;
+            border:none;
+            border-radius:6px;
+            padding:7px 16px;
+            font-size:15px;
+        }
+        /* tab count bar */
+        .tab-count-bar {
+            display:flex;
+            gap:32px;
+            border-bottom:1px solid #e5e7eb;
+            margin-bottom:16px;
+        }
+        .tab-item {
+            font-size:16px;
+            padding:8px 0;
+            color:#4b5563;
+        }
+        .tab-item.active {
+            border-bottom:2px solid #eab308;
+            color:#111827;
+            font-weight:600;
+        }
+        /* filter area */
+        .filter-area {
+            margin-bottom:16px;
+        }
+        .filter-row {
+            display:flex;
+            align-items:center;
+            gap:24px;
+            margin-bottom:12px;
+            font-size:15px;
+        }
+        .filter-checkbox-item {
+            display:flex;
+            align-items:center;
+            gap:4px;
+        }
+        .location-tag {
+            border:1px solid #cbd5e1;
+            border-radius:12px;
+            padding:3px 10px;
+            font-size:14px;
+            color:#2563eb;
+        }
+        /* tool bar */
+        .tool-bar {
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            margin:16px 0;
+        }
+        .tool-left {
+            display:flex;
+            align-items:center;
+            gap:10px;
+        }
+        .select-box {
+            border:1px solid #cbd5e1;
+            border-radius:6px;
+            padding:6px 10px;
+        }
+        .tool-right {
+            display:flex;
+            align-items:center;
+            gap:10px;
+        }
+        .icon-btn-group span {
+            border:1px solid #cbd5e1;
+            padding:6px 10px;
+            border-radius:6px;
+        }
+        .search-input {
+            border:1px solid #cbd5e1;
+            border-radius:6px;
+            padding:7px 12px;
+            width:220px;
+        }
+        .tool-btn {
+            border:1px solid #cbd5e1;
+            border-radius:6px;
+            padding:7px 14px;
+            background:#fff;
+        }
+        .btn-export-yellow {
+            background:#facc15;
+            border:none;
+            border-radius:6px;
+            padding:7px 14px;
+        }
+        /* list item */
+        .list-item {
+            border-bottom:1px dashed #d1d5db;
+            padding:16px 4px;
+        }
+        .item-header {
+            display:flex;
+            justify-content:space-between;
+            align-items:flex-start;
+            margin-bottom:8px;
+        }
+        .item-title {
+            font-size:17px;
+            font-weight:600;
+            color:#111827;
+        }
+        .item-op {
+            display:flex;
+            gap:16px;
+            font-size:14px;
+            color:#4b5563;
+        }
+        .tag-line {
+            display:flex;
+            gap:8px;
+            margin:8px 0;
+            font-size:14px;
+        }
+        .tag-line span {
+            background:#f3f4f6;
+            padding:2px 6px;
+            border-radius:3px;
+            color:#374151;
+        }
+        .grid-info-row {
+            display:grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap:8px;
+            font-size:15px;
+            line-height:1.7;
+            margin:6px 0;
+        }
+        .blue-link {
+            color:#2563eb;
+            text-decoration:none;
+        }
+        .text-gray {
+            color:#4b5563;
+        }
+    </style>
+</head>
+<body>
+<div class="page-wrap">
+    <div class="page-header">
+        <h1>新建排水工程</h1>
+        <button class="btn-yellow-subscribe">☉ 订阅</button>
+    </div>
+
+    <div class="tab-count-bar">
+        <div class="tab-item active">招投标信息 518</div>
+        <div class="tab-item">采购商 186</div>
+        <div class="tab-item">供应商 167</div>
+        <div class="tab-item">被提及 302</div>
+        <div class="tab-item">代理方 124</div>
+    </div>
+
+    <div class="filter-area">
+        <div class="filter-row">
+            <div class="filter-checkbox-item">
+                <input type="checkbox" checked>
+                <span>标讯类型</span>
+            </div>
+            <div class="filter-checkbox-item">
+                <input type="checkbox">
+                <span>招标公告</span>
+            </div>
+            <div class="filter-checkbox-item">
+                <input type="checkbox">
+                <span>中标公告</span>
+            </div>
+            <div class="filter-checkbox-item">
+                <input type="checkbox">
+                <span>拟建公告</span>
+            </div>
+        </div>
+        <div class="filter-row">
+            <div class="filter-checkbox-item">
+                <input type="checkbox">
+                <span>省份地区 ▾</span>
+            </div>
+            <span class="location-tag">⦿ 定位本地: 北京市</span>
+        </div>
+        <div class="filter-row">
+            <div class="filter-checkbox-item">
+                <input type="radio" name="publish" checked>
+                <span>发布时间 不限</span>
+            </div>
+            <div class="filter-checkbox-item">
+                <input type="radio" name="publish">
+                <span>今天</span>
+            </div>
+            <div class="filter-checkbox-item">
+                <input type="radio" name="publish">
+                <span>近7天</span>
+            </div>
+            <div class="filter-checkbox-item">
+                <input type="radio" name="publish">
+                <span>近30天</span>
+            </div>
+            <div class="filter-checkbox-item">
+                <input type="radio" name="publish">
+                <span>近3个月</span>
+            </div>
+            <div class="filter-checkbox-item">
+                <input type="radio" name="publish">
+                <span>近半年</span>
+            </div>
+            <div class="filter-checkbox-item">
+                <input type="radio" name="publish">
+                <span>近1年</span>
+            </div>
+            <div class="filter-checkbox-item">
+                <input type="radio" name="publish">
+                <span>近3年</span>
+            </div>
+            <div class="filter-checkbox-item">
+                <input type="radio" name="publish">
+                <span>自定义 ▾</span>
+            </div>
+        </div>
+        <div class="filter-row">
+            <span>其他筛选</span>
+            <div class="filter-checkbox-item">
+                <input type="radio" name="other">
+                <span>联系方式 ▾</span>
+            </div>
+            <div class="filter-checkbox-item">
+                <input type="checkbox">
+                <span>招标人 ▾</span>
+            </div>
+            <div class="filter-checkbox-item">
+                <input type="checkbox">
+                <span>所属行业 ▾</span>
+            </div>
+            <div class="filter-checkbox-item">
+                <input type="radio" name="other">
+                <span>预算金额 ▾</span>
+            </div>
+            <div class="filter-checkbox-item">
+                <input type="radio" name="other">
+                <span>中标金额 ▾</span>
+            </div>
+            <div class="filter-checkbox-item">
+                <input type="checkbox">
+                <span>附件 ▾</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="tool-bar">
+        <div class="tool-left">
+            <input type="checkbox">
+            <span>找到518条标讯</span>
+            <select class="select-box">
+                <option>默认排序</option>
+            </select>
+        </div>
+        <div class="tool-right">
+            <div class="icon-btn-group">
+                <span>🗄</span>
+                <span>⊞</span>
+            </div>
+            <input class="search-input" placeholder="Q 请输入关键词">
+            <button class="tool-btn">☑ 批量操作</button>
+            <button class="tool-btn">🗂 营销</button>
+            <button class="btn-export-yellow">⤓ 导出</button>
+        </div>
+    </div>
+
+    <!-- list item 1 -->
+    <div class="list-item">
+        <div class="item-header">
+            <div style="display:flex;align-items:center;gap:8px;">
+                <input type="checkbox">
+                <div class="item-title">张北县张北镇人民政府办本级张北镇三道洼村庄排水工程项目竞争性磋商公告</div>
+            </div>
+            <div class="item-op">
+                <span>☉订阅</span>
+                <span>更多 ▾</span>
+            </div>
+        </div>
+        <div class="tag-line">
+            <span><a class="blue-link" href="#">招标公告</a> | 竞磋</span>
+            <span>河北张家口市张北县</span>
+            <span>市政公用</span>
+            <span>230万</span>
+            <span>有联系方式</span>
+        </div>
+        <div class="grid-info-row">
+            <div>发布时间：2026‑08‑19</div>
+            <div>项目编号：HBZC2026‑022</div>
+            <div>联系人： 2个</div>
+        </div>
+        <div class="grid-info-row">
+            <div>招标单位：<a class="blue-link" href="#">张北县张北镇人民政府办本级</a></div>
+            <div>中标单位： –</div>
+            <div>代理单位： <a class="blue-link" href="#">河北卓诚项目管理咨询有限公司</a></div>
+        </div>
+        <div class="grid-info-row">
+            <div>中标候选人： –</div>
+            <div>投标单位： –</div>
+            <div>被提及及单位： <a class="blue-link" href="#">国家统计局</a></div>
+        </div>
+        <div class="grid-info-row">
+            <div colspan="3">采购产品：<span class="text-gray">村庄排水工程项目 拆除、重建15cm混凝土路面 修建…+2</span></div>
+        </div>
+        <div class="text-gray">标讯正文：公告概要：公告信息：采购项目名称张北镇三道洼村庄排水工程项目品目 采购单位张北县张北镇人民政府办本级行政区域张北县公告时间2026年08月19日 09:54获取采购文件时间20…</div>
+    </div>
+
+    <!-- list item 2 -->
+    <div class="list-item">
+        <div class="item-header">
+            <div style="display:flex;align-items:center;gap:8px;">
+                <input type="checkbox">
+                <div class="item-title">张北县张北镇人民政府办本级张北镇三道洼村庄排水工程项目竞争性磋商公告</div>
+            </div>
+            <div class="item-op">
+                <span>☉订阅</span>
+                <span>更多 ▾</span>
+            </div>
+        </div>
+        <div class="tag-line">
+            <span><a class="blue-link" href="#">招标公告</a> | 招标</span>
+            <span>河北张家口市张北县</span>
+            <span>水利水电</span>
+            <span>230万</span>
+            <span>有联系方式</span>
+        </div>
+        <div class="grid-info-row">
+            <div>发布时间：2026‑08‑17</div>
+            <div>项目编号：HBZC2026‑0022</div>
+            <div>联系人： 2个</div>
+        </div>
+        <div class="grid-info-row">
+            <div>招标单位：<a class="blue-link" href="#">张北县张北镇人民政府办本级</a></div>
+            <div>中标单位： –</div>
+            <div>代理单位： <a class="blue-link" href="#">河北卓诚项目管理咨询有限公司</a></div>
+        </div>
+        <div class="grid-info-row">
+            <div>中标候选人： –</div>
+            <div>投标单位： –</div>
+            <div>被提及及单位： <a class="blue-link" href="#">国家统计局</a></div>
+        </div>
+        <div class="grid-info-row">
+            <div colspan="3">采购产品：<span class="text-gray">村庄排水工程项目 拆除、重建15cm混凝土路面 修建…+3</span></div>
+        </div>
+        <div class="text-gray">标讯正文：项目概况 张北镇三道洼村庄排水工程项目 招标项目的潜在投标人应在 “河北省公共资源交易服务平台张家口电子交易系统”（https://szj.hebei.gov.cn/hbggfwpt/municipal.html?…</div>
+    </div>
+</div>
+</body>
+</html>

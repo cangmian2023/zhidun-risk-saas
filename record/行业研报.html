@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>行业研报</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Microsoft YaHei", sans-serif;
+        }
+        body {
+            background-color: #ffffff;
+            padding: 24px;
+        }
+        h1 {
+            font-size: 22px;
+            font-weight: bold;
+            margin-bottom: 32px;
+        }
+        .search-wrap {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 32px;
+        }
+        .search-input {
+            width: 600px;
+            height: 56px;
+            background-color: #f5f5fa;
+            border: 1px solid #e8e8f0;
+            border-radius: 6px 0 0 6px;
+            padding: 0 20px;
+            font-size: 16px;
+        }
+        .search-btn {
+            height: 56px;
+            width: 110px;
+            background-color: #f7c02e;
+            border: none;
+            border-radius: 0 6px 6px 0;
+            font-size:16px;
+            cursor: pointer;
+        }
+        .filter-section {
+            padding:16px 0;
+            border-top:1px solid #eee;
+        }
+        .filter-row {
+            display:flex;
+            align-items:center;
+            gap:12px;
+            margin-bottom:18px;
+        }
+        .filter-label {
+            width:90px;
+            font-size:17px;
+            font-weight:500;
+        }
+        .tag-item {
+            padding:4px 12px;
+            font-size:16px;
+            cursor:pointer;
+            border-radius:4px;
+        }
+        .tag-active {
+            background:#e1ecff;
+            color:#2255bb;
+        }
+        .divider-line {
+            border-bottom:1px dashed #eeeeee;
+            margin:12px 0;
+        }
+        .more-filter-wrap {
+            display:flex;
+            align-items:center;
+            gap:12px;
+            margin:20px 0;
+        }
+        .dropdown-text {
+            font-size:16px;
+            cursor:pointer;
+        }
+        .result-stat-row {
+            display:flex;
+            justify-content:space-between;
+            margin:24px 0 16px 0;
+            font-size:17px;
+            color:#444;
+        }
+        .result-item {
+            padding:14px 0;
+            border-top:1px solid #e9e9ee;
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+        }
+        .item-left-top {
+            font-size:17px;
+            margin-bottom:8px;
+        }
+        .badge {
+            display:inline-block;
+            padding:2px 8px;
+            border-radius:6px;
+            font-size:13px;
+            margin:0 4px;
+        }
+        .badge-new {
+            background:#e8f8d8;
+        }
+        .badge-en {
+            background:#d8e8ff;
+        }
+        .item-tag-group span{
+            display:inline-block;
+            padding:3px 10px;
+            background:#e8edff;
+            border-radius:4px;
+            font-size:14px;
+            margin-right:6px;
+        }
+        .item-meta-text {
+            font-size:15px;
+            color:#666;
+        }
+        .download-btn {
+            border:1px solid #bbbbbb;
+            padding:8px 22px;
+            border-radius:4px;
+            background:#fff;
+            cursor:pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>行业研报</h1>
+
+    <div class="search-wrap">
+        <input class="search-input" placeholder="请输入报告名称、公司简称、发布机构等关键词">
+        <button class="search-btn">ⵠ 查询</button>
+    </div>
+
+    <div class="filter-section">
+        <!--报告类型-->
+        <div class="filter-row">
+            <div class="filter-label">报告类型</div>
+            <div>
+                <span class="tag-item tag-active">不限</span>
+                <span class="tag-item">其他报告(期货资讯晨会)</span>
+                <span class="tag-item">公司研究</span>
+                <span class="tag-item">年报季报</span>
+                <span class="tag-item">行业研究</span>
+                <span class="tag-item">宏观策略</span>
+                <span class="tag-item">招股说明书</span>
+                <span class="tag-item">管理咨询</span>
+                <span class="tag-item">政策法规</span>
+                <span class="tag-item">综合其他</span>
+            </div>
+        </div>
+        <div class="divider-line"></div>
+
+        <!--行业分类-->
+        <div class="filter-row">
+            <div class="filter-label">行业分类</div>
+            <div>
+                <span class="tag-item tag-active">不限</span>
+                <span class="tag-item">综合其他</span>
+                <span class="tag-item">工业制造</span>
+                <span class="tag-item">能源矿产</span>
+                <span class="tag-item">金融地产</span>
+                <span class="tag-item">科技传媒</span>
+                <span class="tag-item">大消费</span>
+                <span class="tag-item">健康医疗</span>
+                <span class="tag-item">公共服务</span>
+                <span class="tag-item">农林牧渔</span>
+                <span class="tag-item">交通物流</span>
+            </div>
+        </div>
+        <div class="divider-line"></div>
+
+        <!--特色标签-->
+        <div class="filter-row">
+            <div class="filter-label">特色标签</div>
+            <div>
+                <span class="tag-item tag-active">不限</span>
+                <span class="tag-item">新鲜出炉</span>
+                <span class="tag-item">非券商</span>
+                <span class="tag-item">英文</span>
+                <span class="tag-item">深度研究</span>
+                <span class="tag-item">热门</span>
+            </div>
+        </div>
+        <div class="divider-line"></div>
+
+        <!--更多筛选-->
+        <div class="more-filter-wrap">
+            <span class="filter-label">更多筛选</span>
+            <span class="dropdown-text">发布时间 ⌄</span>
+            <span class="dropdown-text">报告页数 ⌄</span>
+            <span class="dropdown-text">发布机构 ⌄</span>
+        </div>
+    </div>
+
+    <div class="result-stat-row">
+        <span>找到1693825条结果</span>
+        <span>发布时间 ▲</span>
+    </div>
+
+    <!--列表项-->
+    <div class="result-item">
+        <div>
+            <div class="item-left-top">
+                滨海泰达物流 2026年中期业绩报告
+                <span class="badge badge-new">新</span>
+                <span class="badge badge-en">英文</span>
+            </div>
+            <div class="item-tag-group">
+                <span>滨海泰达物流</span>
+                <span>综合其他</span>
+                <span>年报季报</span>
+                <span class="item-meta-text">2026‑08‑18 &nbsp;共34页 &nbsp;港交所</span>
+            </div>
+        </div>
+        <button class="download-btn">⤓ 1M</button>
+    </div>
+</div>
+</body>
+</html>

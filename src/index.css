@@ -131,3 +131,69 @@ aside::-webkit-scrollbar-thumb {
 aside:hover::-webkit-scrollbar-thumb {
   background: #cbd5e1;
 }
+
+/* ============ 企业风控(ep) / 数字营销(dm) 子系统表格统一规范 ============
+ * 目标：所有表格撑开不换行；第一列固定；最后一列(操作列)固定；中间列可横向拖动。
+ * 由 Console.tsx 在 <main> 上按子系统注入 .ep-dm-tables 容器类生效。
+ * DataTable 组件自带同样行为（nowrap + sticky），本规则只兜底原生 <table> 页面。
+ */
+.ep-dm-tables .overflow-x-auto {
+  overflow-x: auto;
+}
+
+/* 表格整体：允许按内容撑开（min-width 由各列 nowrap 内容决定），超宽时滚动 */
+.ep-dm-tables table {
+  border-collapse: collapse;
+  width: 100%;
+}
+.ep-dm-tables th,
+.ep-dm-tables td {
+  white-space: nowrap;
+  /* 固定列背景不透明，避免横向滚动时内容透出 */
+}
+.ep-dm-tables thead th:first-child,
+.ep-dm-tables tbody td:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 6;
+}
+.ep-dm-tables thead th:last-child,
+.ep-dm-tables tbody td:last-child {
+  position: sticky;
+  right: 0;
+  z-index: 6;
+}
+/* 固定列底色（表头灰、表体白），hover 时保持不透明避免透出 */
+.ep-dm-tables thead th:first-child,
+.ep-dm-tables thead th:last-child {
+  background: #f5f6fa;
+}
+.ep-dm-tables tbody td:first-child,
+.ep-dm-tables tbody td:last-child {
+  background: #fff;
+}
+.ep-dm-tables tbody tr:hover td:first-child,
+.ep-dm-tables tbody tr:hover td:last-child {
+  background: #fafbfc;
+}
+
+/* 兜底覆盖：个别页面用 table-fixed 会把列压扁导致内容显示不全，统一放开为按内容撑开 */
+.ep-dm-tables table {
+  table-layout: auto !important;
+  min-width: 100%;
+}
+.ep-dm-tables th,
+.ep-dm-tables td {
+  white-space: nowrap !important;
+  overflow: visible;
+}
+
+/* 斑马纹表格（odd:bg-white even:bg-[#f8f8fe]）固定列跟随偶数行底色，避免滚动时色块错位 */
+.ep-dm-tables tbody tr:nth-child(even) td:first-child,
+.ep-dm-tables tbody tr:nth-child(even) td:last-child {
+  background: #f8f8fe;
+}
+.ep-dm-tables tbody tr:nth-child(even):hover td:first-child,
+.ep-dm-tables tbody tr:nth-child(even):hover td:last-child {
+  background: #eef3fd;
+}

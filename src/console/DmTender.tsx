@@ -1,358 +1,362 @@
-import React, { useMemo, useState } from 'react';
-import { PageShell } from './PageShell';
-import { Badge, Button, Panel, StatCard } from '../components/ui';
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { PageShell } from './PageShell'
 
-/* 招投标 · 原生重写版（demo）
- * 与快照注入版（Shadow DOM）不同：本版为纯 React + Tailwind 组件，样式归 SaaS 设计体系管理，
- * 不加载 record/qixin 任何文件、不注入外部 HTML/CSS。数据为硬编码样例（仅用于验证样式/交互手感）。
- * 保留原结构：4 个主 tab（我的标讯 / 全部标讯 / 中标企业库 / 产品词库）+ 搜索 + 筛选 + 卡片列表。
- */
+/* ============ 图标（等价 HTML：搜索/下载/订阅等） ============ */
+const SearchIcon = () => (
+  <svg width="13" height="13" viewBox="0 0 16 16" fill="none" className="inline">
+    <circle cx="7" cy="7" r="5" stroke="currentColor" strokeWidth="1.4" />
+    <path d="m11 11 3.5 3.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+  </svg>
+)
+const DownloadIcon = () => (
+  <svg width="13" height="13" viewBox="0 0 16 16" fill="none" className="inline align-middle">
+    <path d="M8 2v8m0 0L5 7m3 3 3-3M3 13h10" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+)
+const ArrowDown = () => (
+  <svg width="10" height="10" viewBox="0 0 12 12" fill="none" className="inline align-middle ml-1">
+    <path d="M2.5 4.5 6 8l3.5-3.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+)
 
-const TABS = [
-  { key: 'my', label: '我的标讯' },
-  { key: 'all', label: '全部标讯' },
-  { key: 'company', label: '中标企业库' },
-  { key: 'product', label: '产品词库' },
-] as const;
-type TabKey = (typeof TABS)[number]['key'];
-
-/* ---------------- 样例数据 ---------------- */
-type Tender = {
-  id: string; title: string; type: '招标公告' | '中标公告' | '拟建公告';
-  region: string; industry: string; hasContact: boolean; time: string;
-  projectNo: string; contact: string; tenderer: string; winner: string;
-  agent: string; candidate: string; bidder: string; mentioned: string; product: string; body: string;
-};
-const TENDERS: Tender[] = [
-  { id: 't1', title: '科研处运输保险服务（天津站）采购项目', type: '招标公告', region: '北京市朝阳区', industry: '服务采购', hasContact: true, time: '2026-08-18 15小时前获取', projectNo: 'F26355', contact: '1个', tenderer: '中央美术学院', winner: '国创互联(北京)国际物流有限公司', agent: '-', candidate: '-', bidder: '-', mentioned: '-', product: '科研处运输保险服务', body: '科研处运输保险服务(天津站)采购项目成交公告。公告日期：2026年08月17日。采购单位：中央美术学院科研处运输保险服务(天津站)采购项目，项目编号 F26355，成交供应商为国创互联(北京)国际物流有限公司。' },
-  { id: 't2', title: '某高校实验室设备采购项目', type: '中标公告', region: '北京市海淀区', industry: '信息通信', hasContact: true, time: '2026-08-18 3小时前获取', projectNo: 'H8821', contact: '2个', tenderer: '清华大学', winner: '北京同方计算机有限公司', agent: '中招国际招标有限公司', candidate: '联想(北京)有限公司', bidder: '3家', mentioned: '1家', product: '高性能计算服务器', body: '清华大学实验室设备采购项目于2026年08月16日完成评标，北京同方计算机有限公司为成交供应商，中标金额 486.00 万元。' },
-  { id: 't3', title: '城市道路照明改造提升工程', type: '招标公告', region: '上海市浦东新区', industry: '市政公用', hasContact: true, time: '2026-08-17 昨天获取', projectNo: 'PD-2026-0912', contact: '1个', tenderer: '上海市浦东新区市政工程管理局', winner: '-', agent: '上海上咨建设工程咨询有限公司', candidate: '-', bidder: '-', mentioned: '-', product: 'LED 路灯及控制系统', body: '浦东新区城市道路照明改造提升工程招标，涉及 12 条主干道 LED 路灯更换及智能控制系统建设，预算金额 2,350 万元。' },
-  { id: 't4', title: '医院门诊楼智能化系统采购', type: '中标公告', region: '广州市天河区', industry: '弱电安防', hasContact: true, time: '2026-08-17 昨天获取', projectNo: 'TH-2026-0331', contact: '3个', tenderer: '中山大学附属第一医院', winner: '华为技术有限公司', agent: '国义招标股份有限公司', candidate: '新华三技术有限公司', bidder: '5家', mentioned: '2家', product: '安防监控及门禁系统', body: '中山大学附属第一医院门诊楼智能化系统采购项目成交，华为技术有限公司中标，中标金额 1,278.60 万元。' },
-  { id: 't5', title: '乡村振兴饮水安全巩固提升工程', type: '招标公告', region: '四川省凉山州', industry: '水利水电', hasContact: false, time: '2026-08-16 2天前获取', projectNo: 'LS-2026-0455', contact: '0个', tenderer: '凉山州水务局', winner: '-', agent: '-', candidate: '-', bidder: '-', mentioned: '-', product: '供水管网及蓄水池', body: '凉山州乡村振兴饮水安全巩固提升工程，覆盖 18 个行政村供水管网及蓄水池建设，预算金额 4,120 万元。' },
-  { id: 't6', title: '新能源汽车充电桩建设一期项目', type: '中标公告', region: '江苏省苏州市', industry: '能源化工', hasContact: true, time: '2026-08-16 2天前获取', projectNo: 'SZ-2026-0718', contact: '2个', tenderer: '苏州交通投资集团', winner: '特来电新能源股份有限公司', agent: '江苏海外集团国际工程咨询有限公司', candidate: '星星充电', bidder: '4家', mentioned: '1家', product: '直流充电桩及运营平台', body: '苏州市新能源汽车充电桩建设一期项目成交，特来电新能源股份有限公司中标，建设 320 个直流快充桩及运营平台。' },
-];
-
-type Company = { id: string; name: string; region: string; industry: string; bg: string; scale: string; certs: string[]; insured: string };
-const COMPANIES: Company[] = [
-  { id: 'c1', name: '国创互联(北京)国际物流有限公司', region: '北京市', industry: '交通运输、仓储和邮政业', bg: '民营企业', scale: '大型企业', certs: ['高新企业'], insured: '320人' },
-  { id: 'c2', name: '北京同方计算机有限公司', region: '北京市', industry: '制造业', bg: '国有企业', scale: '大型企业', certs: ['专精特新小巨人', '高新企业'], insured: '1,200人' },
-  { id: 'c3', name: '华为技术有限公司', region: '广东省深圳市', industry: '信息传输、软件和信息技术服务业', bg: '民营企业', scale: '大型企业', certs: ['高新企业', '隐形冠军', '国家级企业技术中心'], insured: '19.6万人' },
-  { id: 'c4', name: '特来电新能源股份有限公司', region: '山东省青岛市', industry: '电力、热力、燃气及水生产和供应业', bg: '民营企业', scale: '大型企业', certs: ['高新企业', '专精特新企业'], insured: '4,500人' },
-  { id: 'c5', name: '中山大学附属第一医院', region: '广东省广州市', industry: '卫生和社会工作', bg: '事业单位', scale: '大型', certs: ['国家级技术创新示范'], insured: '8,000人' },
-  { id: 'c6', name: '苏州交通投资集团有限责任公司', region: '江苏省苏州市', industry: '建筑业', bg: '国有企业', scale: '大型企业', certs: ['省级企业技术中心'], insured: '2,600人' },
-];
-
-type Product = { id: string; name: string; tender: number; win: number; buyer: number; supplier: number; agent: number; mentioned: number; planned?: number };
-const PRODUCTS: Product[] = [
-  { id: 'p1', name: '造型吸顶灯', tender: 19, win: 4, buyer: 14, supplier: 15, agent: 8, mentioned: 18 },
-  { id: 'p2', name: '食堂食材采购服务项目', tender: 128, win: 144, buyer: 103, supplier: 151, agent: 82, mentioned: 75 },
-  { id: 'p3', name: '钢结构安装', tender: 999, win: 828, planned: 96, buyer: 428, supplier: 587, agent: 97, mentioned: 694 },
-  { id: 'p4', name: '消防车辆', tender: 999, win: 999, planned: 67, buyer: 999, supplier: 999, agent: 999, mentioned: 999 },
-  { id: 'p5', name: '特警装备', tender: 999, win: 999, buyer: 682, supplier: 999, agent: 366, mentioned: 529 },
-  { id: 'p6', name: '环形吊带', tender: 345, win: 83, buyer: 173, supplier: 174, agent: 14, mentioned: 95 },
-  { id: 'p7', name: '生态环境监控服务', tender: 1, win: 4, buyer: 12, supplier: 9, agent: 3, mentioned: 21 },
-  { id: 'p8', name: '进气电磁阀', tender: 47, win: 63, buyer: 64, supplier: 77, agent: 6, mentioned: 35 },
-  { id: 'p9', name: '钨锡助熔剂', tender: 66, win: 10, buyer: 31, supplier: 2, agent: 4, mentioned: 24 },
-  { id: 'p10', name: '洗手间', tender: 470, win: 243, planned: 83, buyer: 999, supplier: 803, agent: 429, mentioned: 537 },
-];
-
-const STATS = [
-  { label: '北京市企业大额中标', sub: '过去30天本地企业中有大于100万中标的标讯', value: '6,593', unit: '条' },
-  { label: '北京市政府事业单位招标', sub: '过去30天当地政府和事业单位新增的招标信息', value: '5,945', unit: '条' },
-  { label: '北京市国企央企招标', sub: '过去30天国企和央企新增的招标信息', value: '9,999+', unit: '条' },
-  { label: '北京市企业中标政府项目', sub: '过去30天最近中标政府项目的企业', value: '5,581', unit: '条' },
-];
-
-const TYPE_OPTS = ['不限', '招标公告', '中标公告', '拟建公告'] as const;
-const REGION_OPTS = ['北京市', '上海市', '广东省', '江苏省', '浙江省', '四川省'];
-const TIME_OPTS = ['不限', '今天', '近7天', '近30天', '近3个月', '近半年', '近1年'];
-const SORT_OPTS = ['默认排序', '按收录时间新到旧', '按收录时间旧到新', '中标金额从高到低', '中标金额从低到高', '预算金额从高到低', '预算金额从低到高'];
-
-const fmt = (n: number) => (n >= 999 ? '999+' : String(n));
-
-/* ---------------- 子组件 ---------------- */
-function TenderCard({ t, subbed, onSub }: { t: Tender; subbed: boolean; onSub: () => void }) {
-  const meta: [string, string][] = [
-    ['项目编号', t.projectNo], ['联系人', t.contact], ['招标单位', t.tenderer], ['中标单位', t.winner],
-    ['代理单位', t.agent], ['中标候选人', t.candidate], ['投标单位', t.bidder], ['被提及单位', t.mentioned], ['采购产品', t.product],
-  ];
+/* 搜索行（HTML .search-wrap） */
+function SearchRow({ placeholder, withSelect }: { placeholder: string; withSelect?: boolean }) {
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition hover:border-brand-200 hover:shadow-md">
-      <div className="flex items-start justify-between gap-3">
-        <h3 className="text-[15px] font-semibold leading-snug text-slate-900">{t.title}</h3>
-        <div className="flex shrink-0 items-center gap-1">
-          <Button size="sm" variant={subbed ? 'primary' : 'secondary'} onClick={onSub}>{subbed ? '已订阅' : '订阅'}</Button>
-          <Button size="sm" variant="ghost">更多</Button>
-        </div>
+    <div className="mb-4.5 flex items-center gap-2.5">
+      <div className="flex max-w-[620px] flex-1 overflow-hidden rounded-md bg-[#f5f6fa]">
+        {withSelect && (
+          <select className="border-none bg-[#f5f6fa] px-3.5 py-2.5 text-[15px] outline-none">
+            <option>全部</option>
+          </select>
+        )}
+        <input placeholder={placeholder} className="flex-1 bg-transparent px-3 py-2.5 text-[15px] outline-none placeholder:text-gray-400" />
       </div>
-      <div className="mt-2 flex flex-wrap items-center gap-1.5">
-        <Badge kind="blue">{t.type} | {t.type === '招标公告' ? '招标' : '中标'}</Badge>
-        <Badge kind="gray">{t.region}</Badge>
-        <Badge kind="gray">{t.industry}</Badge>
-        {t.hasContact && <Badge kind="green">有联系方式</Badge>}
-      </div>
-      <div className="mt-1 text-xs text-slate-400">发布时间：{t.time}</div>
-      <div className="mt-3 grid grid-cols-2 gap-x-6 gap-y-1 sm:grid-cols-3">
-        {meta.map(([k, v]) => (
-          <div key={k} className="flex gap-1 text-[13px] leading-5">
-            <span className="shrink-0 text-slate-400">{k}：</span>
-            <span className="text-slate-700">{v}</span>
-          </div>
-        ))}
-      </div>
-      <p className="mt-2 line-clamp-2 text-[13px] leading-5 text-slate-500">标讯正文：{t.body}</p>
-      <div className="mt-3 flex items-center gap-2 border-t border-slate-100 pt-2 text-xs">
-        <button className="text-brand-600 hover:underline">营销</button>
-        <span className="text-slate-300">·</span>
-        <button className="text-brand-600 hover:underline">监控</button>
-        <span className="text-slate-300">·</span>
-        <button className="text-brand-600 hover:underline">导出</button>
-        <span className="text-slate-300">·</span>
-        <button className="text-brand-600 hover:underline">订阅关联企业</button>
-      </div>
+      <button className="cursor-pointer bg-[#f7c548] px-6 py-2.5 text-[15px] hover:opacity-90"><SearchIcon /> 搜索</button>
     </div>
-  );
+  )
 }
 
-function CompanyCard({ c }: { c: Company }) {
-  return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition hover:border-brand-200 hover:shadow-md">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h3 className="text-[15px] font-semibold text-slate-900">{c.name}</h3>
-          <div className="mt-1 text-xs text-slate-400">{c.region} · {c.industry}</div>
-        </div>
-        <Button size="sm" variant="secondary">查看档案</Button>
-      </div>
-      <div className="mt-2 flex flex-wrap items-center gap-1.5">
-        <Badge kind="violet">{c.bg}</Badge>
-        <Badge kind="gray">{c.scale}</Badge>
-        <Badge kind="amber">参保 {c.insured}</Badge>
-      </div>
-      <div className="mt-2 flex flex-wrap gap-1.5">
-        {c.certs.map((x) => <Badge key={x} kind="cyan">{x}</Badge>)}
-      </div>
-    </div>
-  );
-}
+/* 顶部导航（HTML .top-nav-bar） */
+const NAV_TABS = ['我的标讯', '全部标讯', '中标企业库', '产品词库']
+const PANEL_KEYS: Record<string, string> = { '全部标讯': 'all-bid', '中标企业库': 'bid-company', '产品词库': 'product-lib' }
 
-function ProductCard({ p, subbed, onSub }: { p: Product; subbed: boolean; onSub: () => void }) {
-  const stats: [string, number][] = [['招标公告', p.tender], ['中标公告', p.win], ['拟建公告', p.planned ?? 0], ['采购商', p.buyer], ['供应商', p.supplier], ['代理商', p.agent], ['被提及', p.mentioned]];
-  return (
-    <div className="flex flex-col rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition hover:border-brand-200 hover:shadow-md">
-      <div className="flex items-start justify-between gap-2">
-        <h3 className="text-[15px] font-semibold text-slate-900">{p.name}</h3>
-        <Button size="sm" variant={subbed ? 'primary' : 'secondary'} onClick={onSub}>{subbed ? '已订阅' : '订阅'}</Button>
-      </div>
-      <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1.5 text-[13px]">
-        {stats.map(([k, v]) => (
-          <div key={k} className="flex justify-between">
-            <span className="text-slate-400">{k}</span>
-            <span className="font-medium tabular-nums text-slate-700">{fmt(v)} {k.includes('公告') || k === '被提及' ? '条' : '家'}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
+/* 通用样式类 */
+const btnNormalCls = 'cursor-pointer rounded border border-[#b8bcc8] bg-white px-4 py-1.5'
+const btnExportCls = 'cursor-pointer rounded bg-[#f7c548] px-4 py-1.5'
 
-function FilterChip({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
-  return (
-    <button
-      onClick={onClick}
-      className={`rounded-full px-3 py-1 text-xs font-medium transition ${active ? 'bg-brand-600 text-white' : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50'}`}
-    >
-      {children}
-    </button>
-  );
-}
-
-/* ---------------- 主组件 ---------------- */
 export default function DmTender() {
-  const [tab, setTab] = useState<TabKey>('all');
-  const [q, setQ] = useState('');
-  const [exact, setExact] = useState(false);
-  const [type, setType] = useState<string>('不限');
-  const [region, setRegion] = useState<string>('北京市');
-  const [time, setTime] = useState<string>('近30天');
-  const [sort, setSort] = useState(SORT_OPTS[0]);
-  const [subbed, setSubbed] = useState<Record<string, boolean>>({});
+  const nav = useNavigate()
+  const [tab, setTab] = useState('全部标讯')
+  const [panel, setPanel] = useState('all-bid')
+  const [bidOpen, setBidOpen] = useState(false)
 
-  const toggleSub = (id: string) => setSubbed((s) => ({ ...s, [id]: !s[id] }));
-  const subtitle = `招投标信息检索与商机挖掘 · ${TABS.find((t) => t.key === tab)?.label ?? ''}`;
-
-  const filteredTenders = useMemo(() => {
-    const kw = q.trim();
-    return TENDERS.filter((t) => {
-      if (type !== '不限' && t.type !== type) return false;
-      if (region !== '不限' && !t.region.includes(region)) return false;
-      if (kw && !t.title.includes(kw) && !t.tenderer.includes(kw) && !t.product.includes(kw)) return false;
-      return true;
-    });
-  }, [q, type, region]);
-
-  const filteredCompanies = useMemo(() => {
-    const kw = q.trim();
-    return COMPANIES.filter((c) => !kw || c.name.includes(kw) || c.industry.includes(kw));
-  }, [q]);
-
-  const filteredProducts = useMemo(() => {
-    const kw = q.trim();
-    return PRODUCTS.filter((p) => !kw || p.name.includes(kw));
-  }, [q]);
+  const switchTab = (t: string) => {
+    setTab(t)
+    if (PANEL_KEYS[t]) setPanel(PANEL_KEYS[t])
+  }
 
   return (
-    <>
-      <PageShell title="招投标" crumb="数字营销 / 潜客挖掘" subtitle={subtitle} legend={false} />
-      <div className="mx-auto max-w-7xl px-6 py-5">
-        {/* Tab 条 */}
-        <div className="mb-4 flex items-center gap-1 border-b border-slate-200">
-          {TABS.map((t) => (
-            <button
-              key={t.key}
-              onClick={() => { setTab(t.key); setQ(''); }}
-              className={`-mb-px border-b-2 px-4 py-2.5 text-sm font-medium transition ${
-                tab === t.key ? 'border-brand-600 text-brand-700' : 'border-transparent text-slate-500 hover:text-slate-800'
-              }`}
-            >
-              {t.label}
-            </button>
-          ))}
-          <div className="ml-auto">
-            <Button size="sm" variant="primary">+ 添加订阅</Button>
+    <div style={{ padding: 12 }} className="bg-white text-sm text-[#222]">
+      <PageShell title="招投标" crumb="数字营销 / 商机挖掘" subtitle="招投标信息检索与商机挖掘" legend={false} />
+
+      {/* ============ 顶部导航 ============ */}
+      <div className="mb-4 flex items-center gap-8">
+        {NAV_TABS.map((t) => (
+          <span
+            key={t}
+            onClick={() => switchTab(t)}
+            className={`relative cursor-pointer px-0.5 py-1.5 text-[17px] ${
+              tab === t ? 'font-bold text-black' : 'text-[#444]'
+            }`}
+          >
+            {t}
+            {tab === t && PANEL_KEYS[t] && <span className="absolute -bottom-0.5 left-0 h-[3px] w-full bg-[#f7c548]" />}
+          </span>
+        ))}
+        <div className="ml-auto">
+          <button className="cursor-pointer rounded bg-[#f7c548] px-4.5 py-2 text-[15px] hover:opacity-90">＋ 添加订阅 ▾</button>
+        </div>
+      </div>
+
+      {/* ============ Panel1 全部标讯 ============ */}
+      {panel === 'all-bid' && (
+        <div>
+          <SearchRow placeholder="输入招投标关键词，如“科技软件”" withSelect />
+          <div className="mb-2 flex items-center gap-1.5">
+            <span>精准搜索ⓘ</span>
+            <input type="checkbox" />
+          </div>
+
+          {/* 统计卡片 */}
+          <div className="mb-4 grid grid-cols-4 gap-3">
+            {[
+              { title: '北京市企业大额中标 ⓘ', num: '6,761条' },
+              { title: '北京市政府事业单位招标 ⓘ', num: '5,510条' },
+              { title: '北京市国央企招标 ⓘ', num: '9,999+条' },
+              { title: '北京市企业中标政府项目 ⓘ', num: '5,222条' },
+            ].map((c) => (
+              <div key={c.title} className="rounded-md bg-[#f5f6fa] p-3.5">
+                <div className="mb-1.5 text-sm text-[#444]">{c.title}</div>
+                <div className="text-[22px] font-bold text-[#2b65e8]">{c.num}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* 筛选区 */}
+          <div className="mb-3 rounded-md bg-[#f8f9fc] p-3.5">
+            <div className="mb-2.5 flex flex-wrap items-center gap-3">
+              <span className="w-[70px] text-[15px]">标讯类型</span>
+              <label className="flex items-center gap-1"><input type="checkbox" checked />不限</label>
+              <label className="flex items-center gap-1"><input type="checkbox" />招标公告</label>
+              <label className="flex items-center gap-1"><input type="checkbox" />中标公告</label>
+              <label className="flex items-center gap-1"><input type="checkbox" />拟建公告</label>
+            </div>
+            <div className="mb-2.5 flex flex-wrap items-center gap-3">
+              <span className="w-[70px] text-[15px]">省份地区</span>
+              <label className="flex items-center gap-1"><input type="checkbox" checked />省份地区 <ArrowDown /></label>
+            </div>
+            <div className="mb-2.5 flex flex-wrap items-center gap-3">
+              <span className="w-[70px] text-[15px]">发布时间</span>
+              {['不限', '今天', '近7天', '近30天', '近3个月', '近半年', '近1年', '近3年', '自定义 ▾'].map((p) => (
+                <label key={p} className="flex items-center gap-1">
+                  <input type="radio" name="pubtime" defaultChecked={p === '近30天'} />{p}
+                </label>
+              ))}
+            </div>
+            <div className="mb-2.5 flex flex-wrap items-center gap-3">
+              <span className="w-[70px] text-[15px]">其他筛选</span>
+              <label className="flex items-center gap-1"><input type="radio" name="other" />联系方式 <ArrowDown /></label>
+              <label className="flex items-center gap-1"><input type="checkbox" />招标人 <ArrowDown /></label>
+              <label className="flex items-center gap-1"><input type="checkbox" />所属行业 <ArrowDown /></label>
+              <label className="flex items-center gap-1"><input type="radio" name="other" />预算金额 <ArrowDown /></label>
+              <label className="flex items-center gap-1"><input type="radio" name="other" />中标金额 <ArrowDown /></label>
+              <label className="flex items-center gap-1"><input type="radio" name="other" />附件 <ArrowDown /></label>
+            </div>
+            {/* 已选条件标签 */}
+            <div className="mt-2 flex items-center gap-2.5">
+              <span className="inline-flex items-center gap-1.5 rounded bg-[#e7edfc] px-2.5 py-1 text-sm">省份地区：北京市 <span className="cursor-pointer">×</span></span>
+              <span className="inline-flex items-center gap-1.5 rounded bg-[#e7edfc] px-2.5 py-1 text-sm">发布时间：近30天 <span className="cursor-pointer">×</span></span>
+              <div className="ml-auto">
+                <span className="cursor-pointer">订阅条件</span>
+                <span className="ml-3 cursor-pointer">清空</span>
+              </div>
+            </div>
+          </div>
+
+          {/* 底部操作栏 */}
+          <div className="my-3.5 flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <input type="checkbox" />
+              <span>找到 82,038 条标讯</span>
+              <select className="rounded border border-[#ccc] px-2.5 py-1.5">
+                <option>默认排序</option>
+              </select>
+            </div>
+            <div className="flex gap-2">
+              <button className={btnNormalCls}>⿲</button>
+              <button className={btnNormalCls}>⊞</button>
+              <button className={btnNormalCls}>批量操作</button>
+              <button className={btnNormalCls}>营销</button>
+              <button className={btnExportCls}><DownloadIcon /> 导出</button>
+            </div>
+          </div>
+
+          {/* 标讯列表项 */}
+          <div className="border-b border-dashed border-[#dde0e8] px-3 py-4">
+            <div className="flex items-center justify-between">
+              <div className="mb-2 cursor-pointer text-lg font-bold" onClick={() => setBidOpen(true)}>OV支援勤务保障外包服务采购项目</div>
+              <div className="text-sm text-[#444]"><span className="cursor-pointer">🗔订阅</span>｜<span className="cursor-pointer">更多 ▾</span></div>
+            </div>
+            <div className="mb-2.5 flex gap-2.5">
+              <span className="text-sm text-[#2b65e8]">招标公告 | 招标</span>
+              <span className="text-sm text-[#666]">北京市朝阳区</span>
+              <span className="text-sm text-[#666]">服务采购</span>
+              <span className="text-sm text-[#666]">有联系方式</span>
+            </div>
+            <div className="mb-2 grid grid-cols-3 gap-2 text-sm text-[#444]">
+              <div>发布时间：2026-08-20 20小时前获取</div>
+              <div>项目编号：OVBS-2026-0005</div>
+              <div>联系人： 2个</div>
+              <div>招标单位：<span className="text-[#2b65e8]">北京飞机维修工程有限公司</span></div>
+              <div>中标单位： −</div>
+              <div>代理单位： −</div>
+              <div>中标候选人： −</div>
+              <div>投标单位： −</div>
+              <div>被提及单位：<span className="text-[#2b65e8]">中航集团</span></div>
+            </div>
+            <div className="text-sm text-[#666]">采购产品：OV支援勤务保障外包服务 OV飞机客舱清洁外包人… +1</div>
+            <div className="mt-1.5 text-sm text-[#666]">标讯正文：OV支援勤务保障外包服务采购项目 北京飞机维修工程有限公司（Ameco）现就以下采购项目进行第二次公开招标，诚邀合格投标人参加投标。一、项目基本情况 1.项目名称：OV支…</div>
           </div>
         </div>
+      )}
 
-        {tab === 'my' && <MyTab />}
+      {/* ============ Panel2 中标企业库 ============ */}
+      {panel === 'bid-company' && (
+        <div>
+          <SearchRow placeholder="输入中标企业名称，如“小米”" />
+          <div className="flex gap-6 border-b border-dashed border-[#dde0e8] py-3">
+            {['中标人', '省份地区', '所在行业', '企业背景', '企业规模', '资质标签', '参保人数', '注册资本', '成立时间'].map((f) => (
+              <span key={f} className="cursor-pointer text-sm">{f} ▾</span>
+            ))}
+          </div>
+          <div className="flex gap-6 border-b border-dashed border-[#dde0e8] py-3">
+            {['最新中标', '中标时间', '招标人背景', '招标人地区', '中标金额', '行业分类'].map((f) => (
+              <span key={f} className={`cursor-pointer text-sm ${f === '最新中标' ? '' : ''}`}>{f === '最新中标' ? f : `${f} ▾`}</span>
+            ))}
+          </div>
+          <div className="my-3.5 flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <span>发现 <span className="text-green-600">10万+</span> 条标讯结果</span>
+            </div>
+            <div className="flex gap-2">
+              <button className={btnNormalCls}>营销</button>
+              <button className={btnExportCls}><DownloadIcon />导出</button>
+            </div>
+          </div>
+          <div className="my-2 rounded bg-[#f5f6fa] px-2.5 py-2.5">标讯信息</div>
 
-        {tab === 'all' && (
-          <div className="space-y-4">
-            {/* 搜索区 */}
-            <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
-              <div className="flex flex-wrap items-center gap-2">
-                <select className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600 outline-none focus:border-brand-400">
-                  <option>全部</option><option>标题·正文</option><option>仅标题</option><option>仅正文</option>
-                  <option>招标单位</option><option>代理单位</option><option>中标单位</option><option>项目编号</option>
-                </select>
-                <input
-                  value={q} onChange={(e) => setQ(e.target.value)}
-                  placeholder="搜索标讯标题、招标单位、采购产品…"
-                  className="min-w-[260px] flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand-400"
-                />
-                <Button size="sm" variant="primary">搜索</Button>
-                <button
-                  onClick={() => setExact((v) => !v)}
-                  className={`flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium transition ${exact ? 'border-brand-300 bg-brand-50 text-brand-700' : 'border-slate-200 text-slate-500'}`}
+          {/* 中标企业列表 */}
+          {[
+            { name: '中铁工程设计咨询集团有限公司', tags: ['北京市', '市政公用', '157.14737万', '事业单位'], desc: '2026-08-20　知识城湾区半导体产业园市政道路及配套工程（一期）勘察设计评标报告' },
+            { name: '四川辰美益机电设备有限公司', tags: ['成都市', '房屋建筑', '2.526万', '机关'], desc: '2026-08-20　成都东部新区董家埂镇人民政府壁挂式空调机直接选定采购合同' },
+            { name: '中铁桥隧技术有限公司', tags: ['南京市', '交通工程', '915.5585万', '国企'], desc: '2026-08-20　（南昌市本级）峰福线K278+029岳溪大桥第4、5孔钢梁换梁大修项目施工总价承包中标公告' },
+          ].map((r) => (
+            <div key={r.name} className="border-b border-dashed border-[#dde0e8] px-3 py-4">
+              <div className="mb-2 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <input type="checkbox" />
+                  <div className="cursor-pointer text-lg font-bold">{r.name}</div>
+                </div>
+                <div><span className="cursor-pointer">🗔订阅</span></div>
+              </div>
+              <div className="mb-2.5 flex gap-2.5">
+                <span className="rounded bg-[#fce3d4] px-2 py-0.5 text-[13px] text-[#b34219]">中标</span>
+                {r.tags.map((t) => (
+                  <span key={t} className="text-sm text-[#222]">{t}</span>
+                ))}
+              </div>
+              <div className="text-sm text-[#666]">{r.desc}</div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* ============ Panel3 产品词库 ============ */}
+      {panel === 'product-lib' && (
+        <div>
+          <SearchRow placeholder="请输入产品名称" />
+          <div className="my-3.5 flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <span>找到<span className="text-green-600">10万+</span>个产品</span>
+              <select className="rounded border border-[#ccc] px-2.5 py-1.5">
+                <option>按公告更新日期排序</option>
+              </select>
+            </div>
+            <div></div>
+          </div>
+
+          {/* 产品列表 */}
+          {[
+            { name: '新建排水工程', desc: '招标公告：295条｜中标公告：124条｜拟建公告：66条｜采购商：201家｜供应商：183家｜代理商：127家｜被提及：216家' },
+            { name: '新能源汽车换电设施', desc: '中标公告：7条｜拟建公告：100条｜采购商：29家｜供应商：6家｜被提及：93家' },
+            { name: '旋转叉车', desc: '招标公告：37条｜中标公告：7条｜采购商：29家｜供应商：10家｜代理商：11家｜被提及：13家' },
+            { name: '数控双面研磨机', desc: '招标公告：11条｜中标公告：8条｜拟建公告：1条｜采购商：3家｜供应商：1家｜代理商：1家｜被提及：2家' },
+            { name: '无线会议麦克风', desc: '招标公告：303条｜中标公告：400条｜采购商：454家｜供应商：420家｜代理商：125家｜被提及：360家' },
+          ].map((r) => (
+            <div key={r.name} className="border-b border-dashed border-[#dde0e8] px-3 py-4">
+              <div className="mb-2 flex items-center justify-between">
+                <div
+                  className="cursor-pointer text-lg font-bold hover:text-[#2b65e8]"
+                  onClick={() => nav(`/console/dm/tender-product?name=${encodeURIComponent(r.name)}`)}
                 >
-                  <span className={`h-3.5 w-3.5 rounded-full border ${exact ? 'border-brand-600 bg-brand-600' : 'border-slate-300'}`} />
-                  精准搜索
-                </button>
+                  {r.name}
+                </div>
+                <div><span className="cursor-pointer">🗔订阅</span></div>
+              </div>
+              <p className="my-1.5 text-sm text-[#555]">{r.desc}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* ============ 招标详情弹窗：标题点击 ============ */}
+      {bidOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+          onClick={(e) => { if (e.target === e.currentTarget) setBidOpen(false) }}
+        >
+          <div className="w-[860px] max-h-[90vh] overflow-y-auto rounded-lg border border-[#e5e7eb] bg-white shadow-xl">
+            {/* 头部区域 */}
+            <div className="flex items-start justify-between px-5 pb-2 pt-4">
+              <div>
+                <h1 className="mb-2.5 text-2xl font-semibold text-[#111827]">OV支援勤务保障外包服务采购项目</h1>
+                <div>
+                  <span className="mr-1 rounded bg-[#f3f4f6] px-1.5 py-0.5 text-sm text-[#374151]">招标公告|招标</span>
+                  <span className="mr-1 rounded bg-[#f3f4f6] px-1.5 py-0.5 text-sm text-[#374151]">北京朝阳区</span>
+                  <span className="mr-1 rounded bg-[#f3f4f6] px-1.5 py-0.5 text-sm text-[#374151]">国企</span>
+                  <span className="mr-1 rounded bg-[#f3f4f6] px-1.5 py-0.5 text-sm text-[#374151]">有联系方式</span>
+                </div>
+                <div className="mt-2 text-[15px] text-[#4b5563]">
+                  2026-08-20 20小时更新
+                  <span className="ml-1.5 cursor-pointer text-[#2563eb]">🔗 查看原文</span>
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <button className="cursor-pointer rounded-md border border-[#9ca3af] bg-white px-3.5 py-1.5 text-[15px] hover:bg-gray-50">添加订阅 ▾</button>
+                <button className="cursor-pointer rounded-md bg-[#facc15] px-4 py-1.5 text-[15px] font-medium hover:opacity-90">更多 ▾</button>
+                <button onClick={() => setBidOpen(false)} className="cursor-pointer text-2xl leading-none text-gray-400 hover:text-gray-600">×</button>
               </div>
             </div>
 
-            {/* 统计卡 */}
-            <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-              {STATS.map((s) => (
-                <StatCard key={s.label} label={s.label} value={s.value} unit={s.unit} hint={s.sub} accent="brand" />
-              ))}
-            </div>
-
-            {/* 筛选区 */}
-            <Panel title="筛选条件" className="!p-3">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-xs text-slate-400">标讯类型</span>
-                {TYPE_OPTS.map((o) => <FilterChip key={o} active={type === o} onClick={() => setType(o)}>{o}</FilterChip>)}
-                <span className="ml-2 text-xs text-slate-400">省份地区</span>
-                {REGION_OPTS.map((o) => <FilterChip key={o} active={region === o} onClick={() => setRegion(o)}>{o}</FilterChip>)}
-                <span className="ml-2 text-xs text-slate-400">发布时间</span>
-                {TIME_OPTS.map((o) => <FilterChip key={o} active={time === o} onClick={() => setTime(o)}>{o}</FilterChip>)}
-                <button className="ml-auto rounded-lg border border-slate-200 px-3 py-1 text-xs text-slate-500 hover:bg-slate-50">其他筛选 ▾</button>
+            {/* 信息卡片 */}
+            <div className="mx-5 my-3 rounded-md border border-[#e0e7ff] bg-[#f8faff] p-3.5">
+              <div className="mb-3.5 flex justify-between text-[15px]">
+                <div>
+                  招标单位：<span className="cursor-pointer text-[#2563eb]">北京飞机维修工程有限…</span>
+                  <button className="ml-0.5 cursor-pointer rounded border border-[#cbd5e1] bg-white px-1 py-px text-xs">+ 订阅</button>
+                  <span className="ml-1.5">更多招采联系方式 <span className="text-[#ea580c]">254</span></span>
+                  &nbsp;招标联系方式：王女士 010-87495550
+                </div>
+                <div>
+                  <span>更多2</span>
+                  &nbsp;采购产品：<span className="cursor-pointer text-[#2563eb]">OV支援勤务保障外包服务 OV飞机客舱清洁外包人…</span> +1
+                </div>
               </div>
-              <div className="mt-2 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-2 text-xs">
-                <span className="text-slate-400">已选条件：</span>
-                <Badge kind="blue">省份地区：{region}</Badge>
-                <Badge kind="blue">发布时间：{time}</Badge>
-                <button className="text-slate-400 hover:text-slate-600">清空</button>
+              <div className="mb-3.5 grid grid-cols-3 text-[15px]">
+                <div>项目名称：OV支援勤务保障外包服务采购项目</div>
+                <div>项目编号：OVBS-2026-0005</div>
+                <div>开标时间：2026-09-03 00:00:00</div>
               </div>
-            </Panel>
-
-            {/* 结果头 + 批量操作 */}
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <div className="text-sm text-slate-500">找到 <b className="text-slate-900">{filteredTenders.length}</b> 条标讯（样例）</div>
-              <div className="flex items-center gap-2">
-                <select value={sort} onChange={(e) => setSort(e.target.value)} className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-600 outline-none focus:border-brand-400">
-                  {SORT_OPTS.map((o) => <option key={o}>{o}</option>)}
-                </select>
-                <Button size="sm" variant="secondary">监控</Button>
-                <Button size="sm" variant="secondary">营销</Button>
-                <Button size="sm" variant="secondary">加入所选</Button>
-                <Button size="sm" variant="secondary">导出</Button>
+              <div className="grid grid-cols-3 text-[15px]">
+                <div>标书最后获取时间：2026-08-18 00:00:00</div>
+                <div>被提及单位：<span className="cursor-pointer text-[#2563eb]">中航集团</span> <button className="ml-0.5 cursor-pointer rounded border border-[#cbd5e1] bg-white px-1 py-px text-xs">+ 订阅</button></div>
+                <div>联系方式：王女士 010-87495550 <span className="cursor-pointer">更多2</span></div>
               </div>
             </div>
 
-            {/* 卡片列表 */}
-            <div className="space-y-3">
-              {filteredTenders.map((t) => (
-                <TenderCard key={t.id} t={t} subbed={!!subbed[t.id]} onSub={() => toggleSub(t.id)} />
-              ))}
-              {filteredTenders.length === 0 && <Empty text="没有匹配的标讯样例" />}
+            <div className="mx-5 mb-4 border-b border-dashed border-[#d1d5db]" />
+
+            {/* 正文区域 */}
+            <div className="px-5 pb-6">
+              <div className="mb-3 flex items-center gap-1.5">
+                <div className="h-5 w-1 bg-[#2563eb]" />
+                <span className="text-lg font-semibold">正文</span>
+              </div>
+              <div className="text-[15px] leading-8">
+                <p className="mb-3">OV支援勤务保障外包服务采购项目</p>
+                <p className="mb-3"><span className="cursor-pointer text-[#2563eb]">北京飞机维修工程有限公司</span>（Ameco）现就以下采购项目进行第二次公开招标，诚邀合格投标人参加投标。</p>
+                <p className="mb-3">一、项目基本情况</p>
+                <p className="mb-3">1.项目名称：OV支援勤务保障外包服务采购项目</p>
+                <p className="mb-3">2.项目编号：OVBS-2026-0005</p>
+                <p className="mb-3">3.项目地点：北京</p>
+                <p className="mb-3">二、公告发布日期</p>
+                <p className="mb-3">2026年8月20日-2026年08月27日</p>
+              </div>
             </div>
           </div>
-        )}
-
-        {tab === 'company' && (
-          <div className="space-y-4">
-            <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
-              <div className="flex flex-wrap items-center gap-2">
-                <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="输入中标人名称…" className="min-w-[240px] flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand-400" />
-                <Button size="sm" variant="primary">搜索</Button>
-              </div>
-            </div>
-            <div className="flex items-center justify-between text-sm text-slate-500">
-              <span>共 <b className="text-slate-900">{filteredCompanies.length}</b> 家中标企业（样例）</span>
-              <select className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-600 outline-none"><option>匹配度排序</option><option>中标次数从高到低</option></select>
-            </div>
-            <div className="grid gap-3 lg:grid-cols-2">
-              {filteredCompanies.map((c) => <CompanyCard key={c.id} c={c} />)}
-              {filteredCompanies.length === 0 && <Empty text="没有匹配的中标企业" />}
-            </div>
-          </div>
-        )}
-
-        {tab === 'product' && (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="text-sm text-slate-500">找到 <b className="text-slate-900">10万+</b> 个产品（样例）</div>
-              <select className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-600 outline-none"><option>按产品词匹配度排序</option><option>按公告更新日期排序</option></select>
-            </div>
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {filteredProducts.map((p) => <ProductCard key={p.id} p={p} subbed={!!subbed[p.id]} onSub={() => toggleSub(p.id)} />)}
-              {filteredProducts.length === 0 && <Empty text="没有匹配的产品词" />}
-            </div>
-          </div>
-        )}
-      </div>
-    </>
-  );
-}
-
-function MyTab() {
-  const [sub, setSub] = useState<'rule' | 'ent'>('rule');
-  return (
-    <div className="space-y-4">
-      <div className="flex gap-2 border-b border-slate-200">
-        <button onClick={() => setSub('rule')} className={`-mb-px border-b-2 px-3 py-2 text-sm font-medium ${sub === 'rule' ? 'border-brand-600 text-brand-700' : 'border-transparent text-slate-500'}`}>根据规则订阅标讯</button>
-        <button onClick={() => setSub('ent')} className={`-mb-px border-b-2 px-3 py-2 text-sm font-medium ${sub === 'ent' ? 'border-brand-600 text-brand-700' : 'border-transparent text-slate-500'}`}>根据企业订阅标讯</button>
-      </div>
-      <Empty text="你还没有创建订阅规则，点击右上角「添加订阅」开始" />
+        </div>
+      )}
     </div>
-  );
-}
-
-function Empty({ text }: { text: string }) {
-  return (
-    <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50/50 py-16 text-center text-sm text-slate-400">
-      {text}
-    </div>
-  );
+  )
 }

@@ -44,7 +44,7 @@ export default function EntIntellectualProperty({ companyName }: { companyName?:
 
   const renderTable = (cols: string[], rows: string[][], withSeq = true, minW = 800) => (
     <div style={{ overflowX: 'auto' }}>
-      <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: minW }}>
+      <div className="overflow-x-auto"><table style={{ width: '100%', borderCollapse: 'collapse', minWidth: minW }}>
         <thead><tr>{cols.map((c, ci) => <th key={ci} style={th}>{c}</th>)}</tr></thead>
         <tbody>
           {rows.length === 0 ? <tr><td colSpan={cols.length} style={{ padding: '32px 16px', textAlign: 'center', color: '#86909c' }}>暂无数据</td></tr> : rows.map((r, ri) => (
@@ -54,7 +54,7 @@ export default function EntIntellectualProperty({ companyName }: { companyName?:
             </tr>
           ))}
         </tbody>
-      </table>
+      </table></div>
     </div>
   );
 

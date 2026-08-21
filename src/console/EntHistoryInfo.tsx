@@ -81,15 +81,15 @@ export default function EntHistoryInfo({ companyName, menu }: { companyName?: st
           </div>
         </div>
         <div style={{ overflowX: 'auto', paddingBottom: 16 }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 800 }}>
+          <div className="overflow-x-auto"><table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 800 }}>
             <thead><tr>{(mod.columns || []).map((c, ci) => <th key={ci} style={th}>{c}</th>)}</tr></thead>
             <tbody>{(mod.rows || []).map((r, ri) => <tr key={ri}><td style={td}>{ri + 1}</td>{r.map((cell, ci) => <td key={ci} style={td}>{cell}</td>)}</tr>)}</tbody>
-          </table>
+          </table></div>
         </div>
       </div>
     ) : (
       <div style={{ overflowX: 'auto' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 800 }}>
+        <div className="overflow-x-auto"><table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 800 }}>
           <thead><tr>{(mod.columns || []).map((c, ci) => <th key={ci} style={th}>{c}</th>)}</tr></thead>
           <tbody>
             {(mod.rows || []).length === 0 ? (
@@ -98,7 +98,7 @@ export default function EntHistoryInfo({ companyName, menu }: { companyName?: st
               <tr key={ri}><td style={td}>{ri + 1}</td>{r.map((cell, ci) => <td key={ci} style={td}>{cell}</td>)}</tr>
             ))}
           </tbody>
-        </table>
+        </table></div>
       </div>
     );
 

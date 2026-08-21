@@ -218,7 +218,7 @@ export default function EntNewsSentiment({ companyName }: { companyName?: string
           </div>
           <div style={{ border: '1px solid #e8ebf0', borderRadius: 8, background: '#fff', overflow: 'hidden' }}>
             <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 900 }}>
+              <div className="overflow-x-auto"><table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 900 }}>
                 <thead><tr>{d.list.cols.map((c, ci) => <th key={ci} style={th}>{c}</th>)}</tr></thead>
                 <tbody>
                   {d.list.rows.map((r, ri) => (
@@ -233,7 +233,7 @@ export default function EntNewsSentiment({ companyName }: { companyName?: string
                     </tr>
                   ))}
                 </tbody>
-              </table>
+              </table></div>
             </div>
             <div style={{ padding: '10px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span style={{ fontSize: 12, color: '#999' }}>数据来源：新闻舆情全网监测</span>

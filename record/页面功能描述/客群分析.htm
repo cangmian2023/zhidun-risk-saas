@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>客群分析</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#1677ff',
+            tip: '#ff7d00',
+            cardBg: '#f9fafc'
+          }
+        }
+      }
+    }
+  </script>
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .card-shadow {
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+      }
+      .chart-box {
+        height: 220px;
+      }
+    }
+  </style>
+</head>
+<body class="bg-gray-50 text-gray-700 text-sm">
+  <div class="p-4 max-w-[1200px] mx-auto">
+    <!-- 顶部标题与提示 -->
+    <div class="mb-4">
+      <h2 class="text-lg font-bold mb-1">客群分析</h2>
+      <div class="flex items-center text-tip text-xs">
+        <i class="fa fa-info-circle mr-1"></i>
+        <span>温馨提示：企业动态每晚进行更新，新添加企业将于次日展示统计结果</span>
+      </div>
+    </div>
+
+    <!-- 筛选栏：客群分组 + 分析周期 -->
+    <div class="bg-white p-3 rounded mb-4 flex flex-wrap gap-y-3 gap-x-6 items-center">
+      <div class="flex items-center">
+        <span class="mr-2 font-medium">客群分组</span>
+        <div class="flex gap-1">
+          <button class="px-3 py-1 rounded bg-primary text-white">全部</button>
+          <button class="px-3 py-1 rounded bg-gray-100">未分组</button>
+          <button class="px-3 py-1 rounded bg-gray-100">长时间未联系</button>
+          <button class="px-3 py-1 rounded bg-gray-100">重点维护</button>
+        </div>
+      </div>
+      <div class="flex items-center">
+        <span class="mr-2 font-medium">分析周期</span>
+        <div class="flex gap-1">
+          <button class="px-3 py-1 rounded bg-primary text-white">近一个月： 2026/08/01 - 2026/08/19</button>
+          <button class="px-3 py-1 rounded bg-gray-100">近两个月</button>
+          <button class="px-3 py-1 rounded bg-gray-100">近三个月</button>
+          <button class="px-3 py-1 rounded bg-gray-100">第一季度</button>
+          <button class="px-3 py-1 rounded bg-gray-100">第二季度</button>
+          <button class="px-3 py-1 rounded bg-gray-100">第三季度</button>
+          <button class="px-3 py-1 rounded bg-gray-100">第四季度</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== 模块1：企业结构 3列卡片 ========== -->
+    <div class="mb-6">
+      <h3 class="font-medium mb-3">企业结构</h3>
+      <div class="grid grid-cols-3 gap-4">
+        <!-- 注册资本 -->
+        <div class="bg-white p-3 rounded card-shadow">
+          <h4 class="font-medium mb-2">注册资本</h4>
+          <div id="chart-capital" class="chart-box"></div>
+        </div>
+        <!-- 成立年限 -->
+        <div class="bg-white p-3 rounded card-shadow">
+          <h4 class="font-medium mb-2">成立年限</h4>
+          <div id="chart-age" class="chart-box"></div>
+        </div>
+        <!-- 企业规模 -->
+        <div class="bg-white p-3 rounded card-shadow">
+          <h4 class="font-medium mb-2">企业规模</h4>
+          <div id="chart-scale" class="chart-box"></div>
+        </div>
+      </div>
+      <!-- 第二行 企业性质 / 行业分布 / 区域分布 -->
+      <div class="grid grid-cols-3 gap-4 mt-4">
+        <!-- 企业性质 -->
+        <div class="bg-white p-3 rounded card-shadow">
+          <h4 class="font-medium mb-2">企业性质</h4>
+          <div id="chart-nature" class="chart-box"></div>
+          <div class="text-xs text-center mt-1">● 上市企业0家 ● 非上市企业2家</div>
+        </div>
+        <!-- 行业分布 -->
+        <div class="bg-white p-3 rounded card-shadow">
+          <h4 class="font-medium mb-2">行业分布</h4>
+          <div id="chart-industry" class="chart-box"></div>
+        </div>
+        <!-- 区域分布 -->
+        <div class="bg-white p-3 rounded card-shadow">
+          <h4 class="font-medium mb-2">区域分布</h4>
+          <div id="chart-area" class="chart-box"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== 模块2：信用质量 3列卡片 ========== -->
+    <div class="mb-6">
+      <h3 class="font-medium mb-3">信用质量</h3>
+      <div class="grid grid-cols-3 gap-4">
+        <!-- 信用等级 -->
+        <div class="bg-white p-3 rounded card-shadow">
+          <h4 class="font-medium mb-2">信用等级 <i class="fa fa-question-circle text-gray-400"></i></h4>
+          <div id="chart-credit" class="chart-box"></div>
+        </div>
+        <!-- 空壳指数 -->
+        <div class="bg-white p-3 rounded card-shadow">
+          <h4 class="font-medium mb-2">空壳指数 <i class="fa fa-question-circle text-gray-400"></i></h4>
+          <div id="chart-shell" class="chart-box"></div>
+        </div>
+        <!-- 合同违约风险 -->
+        <div class="bg-white p-3 rounded card-shadow">
+          <h4 class="font-medium mb-2">合同违约风险 <i class="fa fa-question-circle text-gray-400"></i></h4>
+          <div id="chart-default" class="chart-box"></div>
+        </div>
+      </div>
+      <!-- 第二行：事件动态 -->
+      <div class="grid grid-cols-3 gap-4 mt-4">
+        <div class="bg-white p-3 rounded card-shadow col-span-3">
+          <h4 class="font-medium mb-2">事件动态</h4>
+          <div id="chart-event" class="chart-box"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== 模块3：动态分析 ========== -->
+    <div class="mb-6">
+      <h3 class="font-medium mb-3">动态分析</h3>
+      <div class="grid grid-cols-2 gap-4">
+        <!-- 经营变更 -->
+        <div class="bg-white p-3 rounded card-shadow">
+          <h4 class="font-medium mb-2">经营变更</h4>
+          <div id="chart-operate" class="chart-box"></div>
+        </div>
+        <!-- 合规管控 -->
+        <div class="bg-white p-3 rounded card-shadow">
+          <h4 class="font-medium mb-2">合规管控</h4>
+          <div id="chart-compliance" class="chart-box"></div>
+        </div>
+        <!-- 司法诉讼 -->
+        <div class="bg-white p-3 rounded card-shadow">
+          <h4 class="font-medium mb-2">司法诉讼(审批流程)</h4>
+          <div id="chart-litigation" class="chart-box"></div>
+        </div>
+        <!-- 负面舆情 -->
+        <div class="bg-white p-3 rounded card-shadow">
+          <h4 class="font-medium mb-2">负面舆情 <i class="fa fa-question-circle text-gray-400"></i></h4>
+          <div id="chart-negative" class="chart-box flex items-center justify-center bg-primary text-white">客户投诉 5</div>
+        </div>
+      </div>
+      <!-- 发展实力 通栏 -->
+      <div class="grid grid-cols-1 gap-4 mt-4">
+        <div class="bg-white p-3 rounded card-shadow">
+          <h4 class="font-medium mb-2">发展实力</h4>
+          <div id="chart-develop" class="chart-box"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== 模块4：重点关注企业 表格 ========== -->
+    <div class="bg-white p-3 rounded card-shadow mb-4">
+      <div class="flex justify-between items-center mb-3">
+        <h3 class="font-medium">重点关注企业 <i class="fa fa-question-circle text-gray-400"></i></h3>
+        <div class="flex gap-2 items-center">
+          <span class="text-xs text-gray-500">上限 5000 条</span>
+          <button class="px-3 py-1 border rounded text-xs">
+            <i class="fa fa-download mr-1"></i>导出
+          </button>
+        </div>
+      </div>
+      <!-- Tab切换 -->
+      <div class="flex border-b mb-3">
+        <button class="px-3 py-1 border-b-2 border-primary text-primary">高风险等级</button>
+        <button class="px-3 py-1 text-gray-500">高违约风险</button>
+        <button class="px-3 py-1 text-gray-500">事件top20</button>
+      </div>
+      <!-- 表格 -->
+      <table class="w-full text-xs">
+        <thead>
+          <tr class="bg-gray-50">
+            <th class="py-2 px-1 text-left"><input type="checkbox"></th>
+            <th class="py-2 px-1 text-left">序号</th>
+            <th class="py-2 px-1 text-left">企业名称</th>
+            <th class="py-2 px-1 text-left">注册资本</th>
+            <th class="py-2 px-1 text-left">成立年限</th>
+            <th class="py-2 px-1 text-left">企业规模</th>
+            <th class="py-2 px-1 text-left">企业性质</th>
+            <th class="py-2 px-1 text-left">上市情况</th>
+            <th class="py-2 px-1 text-left">所属行业</th>
+            <th class="py-2 px-1 text-left">所属区域</th>
+            <th class="py-2 px-1 text-left">信用等级</th>
+            <th class="py-2 px-1 text-left">启信分</th>
+            <th class="py-2 px-1 text-left">所属分组</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td colspan="13" class="py-6 text-center text-gray-400">暂无数据</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    // 示例：初始化空echarts容器，后续可回填原图数据
+    const chartIds = [
+      'chart-capital','chart-age','chart-scale','chart-nature','chart-industry','chart-area',
+      'chart-credit','chart-shell','chart-default','chart-event','chart-operate','chart-compliance',
+      'chart-litigation','chart-develop'
+    ]
+    chartIds.forEach(id=>{
+      const dom = document.getElementById(id)
+      if(dom) echarts.init(dom)
+    })
+  </script>
+</body>
+</html>

@@ -18,8 +18,10 @@ import DmFullSearch from './DmFullSearch'
 import DmRegionalBiz from './DmRegionalBiz'
 import DmMapProspect from './DmMapProspect'
 import DmCompanyLib from './DmCompanyLib'
+import DmCompanyLibList from './DmCompanyLibList'
 import DmSupplyChain from './DmSupplyChain'
 import DmTender from './DmTender'
+import DmTenderProduct from './DmTenderProduct'
 import DmTechFin from './DmTechFin'
 import DmTechFinDetail from './DmTechFinDetail'
 import DmIndustryFin from './DmIndustryFin'
@@ -27,6 +29,7 @@ import DmIndustryFinDetail from './DmIndustryFinDetail'
 import DmParkFin from './DmParkFin'
 import DmGreenFin from './DmGreenFin'
 import DmMarketList from './DmMarketList'
+import DmMarketListDetail from './DmMarketListDetail'
 import DmMarketLead from './DmMarketLead'
 import DmMarketBoard from './DmMarketBoard'
 import DmExistBiz from './DmExistBiz'
@@ -35,6 +38,11 @@ import DmEntArchive from './DmEntArchive'
 import DmEntArchiveBasic from './DmEntArchiveBasic'
 import DmPersonArchive from './DmPersonArchive'
 import DmPersonArchiveBasic from './DmPersonArchiveBasic'
+import DmPevc from './DmPevc'
+import DmListing from './DmListing'
+import DmBond from './DmBond'
+import DmPeerAnalysis from './DmPeerAnalysis'
+import DmFinLaw from './DmFinLaw'
 
 function emptySpec(crumb: string) {
   return {
@@ -73,10 +81,14 @@ export default function DmModule({ pageKey }: { pageKey: string }) {
       return <DmMapProspect />
     case 'company-lib':
       return <DmCompanyLib />
+    case 'company-lib-list':
+      return <DmCompanyLibList />
     case 'supply-chain':
       return <DmSupplyChain />
     case 'tender':
       return <DmTender />
+    case 'tender-product':
+      return <DmTenderProduct />
     case 'techfin':
       return <DmTechFin />
     case 'techfin-detail':
@@ -91,6 +103,8 @@ export default function DmModule({ pageKey }: { pageKey: string }) {
       return <DmGreenFin />
     case 'market-list':
       return <DmMarketList />
+    case 'market-list-detail':
+      return <DmMarketListDetail />
     case 'market-lead':
       return <DmMarketLead />
     case 'market-board':
@@ -107,6 +121,16 @@ export default function DmModule({ pageKey }: { pageKey: string }) {
       return <DmPersonArchive />
     case 'person-archive-basic':
       return <DmPersonArchiveBasic />
+    case 'pevc':
+      return <DmPevc />
+    case 'listing':
+      return <DmListing />
+    case 'bond':
+      return <DmBond />
+    case 'peer-analysis':
+      return <DmPeerAnalysis />
+    case 'fin-law':
+      return <DmFinLaw />
     default:
       return <ModulePage spec={moduleSpecs[pageKey] ?? emptySpec(subNames['dm'] ?? '数字营销')} />
   }

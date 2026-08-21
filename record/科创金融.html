@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>企业筛选列表页</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Microsoft YaHei", system-ui, sans‑serif;
+        }
+        body {
+            background: #fff;
+            padding: 12px 16px;
+            color: #222;
+            font-size:14px;
+        }
+        /*顶部搜索*/
+        .search-header{
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            gap:8px;
+            margin-bottom:8px;
+        }
+        .search-input-wrap{
+            display:flex;
+            align-items:center;
+            width:440px;
+            background:#f4f5f9;
+            border-radius:6px;
+            padding:10px 14px;
+        }
+        .search-input{
+            flex:1;
+            border:none;
+            background:transparent;
+            outline:none;
+            font-size:14px;
+        }
+        .icon-map{
+            color:#3670d8;
+            margin-right:4px;
+        }
+        .btn-search{
+            background:#f7c43c;
+            border:none;
+            border-radius:4px;
+            padding:10px 20px;
+            font-weight:500;
+            cursor:pointer;
+        }
+        .hot-lib{
+            text-align:center;
+            margin-bottom:12px;
+        }
+        .hot-lib span{
+            font-size:13px;
+            color:#666;
+        }
+        .hot-lib a{
+            margin:0 6px;
+            color:#2b63e6;
+            text-decoration:none;
+            font-size:13px;
+        }
+        /*筛选面板*/
+        .filter-panel{
+            border:1px solid #e5e7f0;
+            border-radius:6px;
+            padding:10px 14px;
+        }
+        .filter-row{
+            display:flex;
+            align-items:center;
+            flex-wrap:wrap;
+            margin:6px 0;
+            line-height:28px;
+        }
+        .filter-label{
+            width:80px;
+            color:#444;
+            flex-shrink:0;
+        }
+        .filter-item{
+            margin:0 8px;
+            cursor:pointer;
+        }
+        .filter-more{
+            color:#2b63e6;
+            cursor:pointer;
+        }
+        /*结果栏*/
+        .result-bar{
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            margin:14px 0;
+        }
+        .result-text{
+            font-size:14px;
+        }
+        .result-right{
+            display:flex;
+            gap:8px;
+        }
+        .btn-view{
+            border:1px solid #d1d5e0;
+            background:#fff;
+            border-radius:4px;
+            padding:6px 12px;
+            cursor:pointer;
+        }
+        .btn-marketing{
+            border:1px solid #d1d5e0;
+            background:#fff;
+            border-radius:4px;
+            padding:6px 12px;
+            cursor:pointer;
+        }
+        .btn-export{
+            background:#f7c43c;
+            border:none;
+            border-radius:4px;
+            padding:6px 14px;
+            cursor:pointer;
+        }
+        /*地图分布栏*/
+        .map-bar{
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            background:#f4f6fc;
+            padding:10px 14px;
+            border-radius:6px;
+            margin-bottom:12px;
+        }
+        .map-tip{
+            font-size:13px;
+            color:#444;
+        }
+        .map-expand{
+            color:#2b63e6;
+            cursor:pointer;
+        }
+        /*企业卡片*/
+        .company-card{
+            border:1px solid #e5e7f0;
+            border-radius:6px;
+            padding:14px;
+        }
+        .card-head{
+            display:flex;
+            align-items:flex-start;
+            gap:10px;
+        }
+        .card-checkbox{
+            margin-top:4px;
+        }
+        .company-logo{
+            width:48px;
+            height:48px;
+            background:#3669bc;
+            border-radius:4px;
+            flex-shrink:0;
+        }
+        .company-main{
+            flex:1;
+        }
+        .company-title{
+            font-size:16px;
+            font-weight:bold;
+            margin-bottom:6px;
+        }
+        .tag-group span{
+            display:inline-block;
+            border:1px solid #c9d2e8;
+            border-radius:3px;
+            font-size:12px;
+            padding:1px 6px;
+            margin:2px 3px;
+        }
+        .card-ops{
+            flex-shrink:0;
+        }
+        .card-ops button{
+            border:1px solid #d1d5e0;
+            background:#fff;
+            border-radius:4px;
+            padding:4px 8px;
+            margin:0 2px;
+            cursor:pointer;
+        }
+        /*基础信息网格*/
+        .info-grid{
+            display:grid;
+            grid-template-columns: 1fr 1fr 1fr 1fr;
+            gap:8px 4px;
+            margin-top:10px;
+            font-size:13px;
+        }
+        .info-item label{
+            color:#666;
+        }
+    </style>
+</head>
+<body>
+    <!--顶部搜索-->
+    <div class="search-header">
+        <div class="search-input-wrap">
+            <span class="icon-map">🗺</span>
+            <input class="search-input" placeholder="请输入企业名称、标签、产业等">
+        </div>
+        <button class="btn-search">Q 查询</button>
+    </div>
+    <div class="hot-lib">
+        <span>热门企业库：</span>
+        <a href="#">专精特新</a>
+        <a href="#">专精特新小巨人</a>
+        <a href="#">科技小巨人</a>
+        <a href="#">科技型中小企业</a>
+        <a href="#">高新技术企业</a>
+    </div>
+
+    <!--筛选面板-->
+    <div class="filter-panel">
+        <div class="filter-row">
+            <div class="filter-label">常用筛选</div>
+            <span class="filter-item">省份地区 ▾</span>
+            <span class="filter-item">所在行业 ▾</span>
+        </div>
+        <div class="filter-row">
+            <div class="filter-label">科创等级</div>
+            <span class="filter-item">不限</span>
+            <span class="filter-item">AAA(3,243)</span>
+            <span class="filter-item">AA(20,816)</span>
+            <span class="filter-item">A(30,000+)</span>
+            <span class="filter-item">BBB(30,000+)</span>
+            <span class="filter-item">BB(30,000+)</span>
+            <span class="filter-item">B(30,000+)</span>
+            <span class="filter-item">CCC(30,000+)</span>
+            <span class="filter-item">CC(30,000+)</span>
+            <span class="filter-item">C(30,000+)</span>
+            <span class="filter-item">科创分筛选 ▾</span>
+        </div>
+        <div class="filter-row">
+            <div class="filter-label">科创排名</div>
+            <span class="filter-item">不限30,000+</span>
+            <span class="filter-item">前20%(30,000+)</span>
+            <span class="filter-item">前20%‑40%(30,000+)</span>
+            <span class="filter-item">前40%‑60%(30,000+)</span>
+            <span class="filter-item">前60%‑80%(30,000+)</span>
+            <span class="filter-item">前80%‑100%(30,000+)</span>
+        </div>
+        <div class="filter-row">
+            <div class="filter-label">科创认定</div>
+            <span class="filter-item">不限</span>
+            <span class="filter-item">专精特新</span>
+            <span class="filter-item">专精特新小巨人</span>
+            <span class="filter-item">科技小巨人</span>
+            <span class="filter-item">科技型中小企业</span>
+            <span class="filter-item">高新技术企业</span>
+            <span class="filter-item">独角兽企业</span>
+            <span class="filter-item">潜在独角兽企业</span>
+            <span class="filter-item">种子独角兽企业</span>
+            <span class="filter-item">未来独角兽企业</span>
+            <span class="filter-item">民营科技企业</span>
+            <span class="filter-more">更多 ▾</span>
+        </div>
+        <div class="filter-row">
+            <div class="filter-label">产业链</div>
+            <span class="filter-item">新基建 ▾</span>
+        </div>
+        <div class="filter-row">
+            <div class="filter-label">上市信息</div>
+            <span class="filter-item">不限</span>
+            <span class="filter-item">A股上市</span>
+            <span class="filter-item">新三板</span>
+            <span class="filter-item">上交所</span>
+            <span class="filter-item">深交所</span>
+            <span class="filter-item">科创板</span>
+            <span class="filter-item">创业板</span>
+            <span class="filter-item">中概股</span>
+            <span class="filter-item">新四板</span>
+            <span class="filter-item">A股退市</span>
+        </div>
+        <div class="filter-row">
+            <div class="filter-label">上市进度</div>
+            <span class="filter-item">不限</span>
+            <span class="filter-item">IPO辅导</span>
+            <span class="filter-item">主板申报中 ▾</span>
+            <span class="filter-item">科创板申报中 ▾</span>
+        </div>
+        <div class="filter-row">
+            <div class="filter-label">PE/VC</div>
+            <span class="filter-item">不限</span>
+            <span class="filter-item">种子轮</span>
+            <span class="filter-item">天使轮</span>
+            <span class="filter-item">Pre‑A轮</span>
+            <span class="filter-item">A轮</span>
+            <span class="filter-item">A+轮</span>
+            <span class="filter-item">Pre‑B轮</span>
+            <span class="filter-item">B轮</span>
+            <span class="filter-item">B+轮</span>
+            <span class="filter-item">C轮</span>
+            <span class="filter-item">C+轮</span>
+            <span class="filter-item">D轮</span>
+            <span class="filter-item">E轮</span>
+            <span class="filter-item">F轮</span>
+            <span class="filter-item">后期阶段(late stage)</span>
+            <span class="filter-item">战略投资</span>
+            <span class="filter-more">更多 ▾</span>
+        </div>
+        <div class="filter-row">
+            <div class="filter-label">生命周期</div>
+            <span class="filter-item">不限</span>
+            <span class="filter-item">种子期</span>
+            <span class="filter-item">初创期</span>
+            <span class="filter-item">成长期</span>
+            <span class="filter-item">成熟期</span>
+        </div>
+        <div class="filter-row">
+            <div class="filter-label">企业规模</div>
+            <span class="filter-item">不限</span>
+            <span class="filter-item">小型企业</span>
+            <span class="filter-item">中型企业</span>
+            <span class="filter-item">大型企业</span>
+            <span class="filter-item">规模以上企业</span>
+            <span class="filter-item">规模以上服务业企业</span>
+            <span class="filter-item">规模以上工业企业</span>
+        </div>
+        <div class="filter-row">
+            <div class="filter-label">企业类型</div>
+            <span class="filter-item">不限</span>
+            <span class="filter-item">外商投资</span>
+            <span class="filter-item">中外合资</span>
+            <span class="filter-item">外商独资</span>
+            <span class="filter-item">港澳台投资</span>
+            <span class="filter-item">港澳台和大陆合资</span>
+            <span class="filter-item">民营企业</span>
+            <span class="filter-item">国有企业</span>
+            <span class="filter-item">央企</span>
+            <span class="filter-item">事业单位</span>
+        </div>
+        <div class="filter-row">
+            <div class="filter-label">注册资本</div>
+            <span class="filter-item">不限</span>
+            <span class="filter-item">0‑100万</span>
+            <span class="filter-item">100‑200万</span>
+            <span class="filter-item">200‑500万</span>
+            <span class="filter-item">500‑1000万</span>
+            <span class="filter-item">100万以上</span>
+            <span class="filter-item">200万以上</span>
+            <span class="filter-item">500万以上</span>
+            <span class="filter-item">1000万以上</span>
+            <span class="filter-item">自定义 ▾</span>
+        </div>
+        <div class="filter-row">
+            <div class="filter-label">成立年限</div>
+            <span class="filter-item">不限</span>
+            <span class="filter-item">1年内</span>
+            <span class="filter-item">1‑5年</span>
+            <span class="filter-item">5‑10年</span>
+            <span class="filter-item">10‑15年</span>
+            <span class="filter-item">15年以上</span>
+            <span class="filter-item">3年以上</span>
+            <span class="filter-item">5年以上</span>
+            <span class="filter-item">10年以上</span>
+            <span class="filter-item">15年以上</span>
+            <span class="filter-item">自定义 ▾</span>
+        </div>
+        <div class="filter-row">
+            <div class="filter-label">经营状态</div>
+            <span class="filter-item">不限</span>
+            <span class="filter-item">存续</span>
+            <span class="filter-item">迁出</span>
+        </div>
+        <div class="filter-row">
+            <div class="filter-label">启信分</div>
+            <span class="filter-item">不限</span>
+            <span class="filter-item">200‑400分</span>
+            <span class="filter-item">401‑500分</span>
+            <span class="filter-item">501‑600分</span>
+            <span class="filter-item">601‑700分</span>
+            <span class="filter-item">700分以上</span>
+            <span class="filter-item">自定义 ▾</span>
+        </div>
+        <div class="filter-row">
+            <div class="filter-label">经营信息</div>
+            <span class="filter-item">商机信息 ▾</span>
+            <span class="filter-item">参保人数 ▾</span>
+        </div>
+        <div class="filter-row">
+            <div class="filter-label">经营标签</div>
+            <span class="filter-item">资金扩张 ▾</span>
+            <span class="filter-item">业务扩张 ▾</span>
+            <span class="filter-item">人员扩张 ▾</span>
+            <span class="filter-item">地域扩张 ▾</span>
+            <span class="filter-item">业务概念 ▾</span>
+            <span class="filter-item">技术领先 ▾</span>
+            <span class="filter-item">政府扶持和奖励 ▾</span>
+        </div>
+    </div>
+
+    <div class="result-bar">
+        <div class="result-text">为您找到30,000+条结果</div>
+        <div class="result-right">
+            <button class="btn-view">🗏 列表视图</button>
+            <button class="btn-view">🗄 表格视图</button>
+            <button class="btn-marketing">🗁 营销</button>
+            <button class="btn-export">⤓ 导出数据</button>
+        </div>
+    </div>
+
+    <div class="map-bar">
+        <div class="map-tip">🗺 地图分布 *该地图仅展示当前筛选条件下的企业数据</div>
+        <div class="map-expand">展开地图 ▾</div>
+    </div>
+
+    <!--企业卡片-->
+    <div class="company-card">
+        <div class="card-head">
+            <input type="checkbox" class="card-checkbox">
+            <div class="company-logo"></div>
+            <div class="company-main">
+                <div class="company-title">中工国际工程股份有限公司
+                    <span class="tag-group">
+                        <span>存续</span>
+                        <span>科创等级 AA</span>
+                        <span>商机线索：商机事件29条</span>
+                    </span>
+                </div>
+                <div class="tag-group">
+                    <span>启信分：825分</span>
+                    <span>发票抬头</span>
+                    <span>集团</span>
+                    <span>大型企业(挖掘)</span>
+                    <span>国有企业</span>
+                    <span>央企子公司</span>
+                    <span>国有绝对控股</span>
+                    <span>园区企业</span>
+                    <span>行政处罚</span>
+                    <span>高新技术企业</span>
+                    <span>标准起草单位</span>
+                    <span>有商标</span>
+                    <span>全部标签(35)</span>
+                </div>
+                <div style="margin-top:4px;font-size:13px;color:#444;">
+                    主营业务：#建材 #机械设备 #建筑工程承包商 #咨询设计 #国内工程总承包 #国际工程承包 #贸易与服务 #关键核心装备研发与制造 #工程投资与运营
+                </div>
+            </div>
+            <div class="card-ops">
+                <button>PK企业PK</button>
+                <button>🗁营销</button>
+            </div>
+        </div>
+        <div class="info-grid">
+            <div class="info-item"><label>法定代表人</label>：王博镕4</div>
+            <div class="info-item"><label>成立日期</label>：2001‑05‑22</div>
+            <div class="info-item"><label>注册资本</label>：123,740.8937万元人民币</div>
+            <div class="info-item"><label>注册地址</label>：北京市海淀区丹棱街3号</div>
+            <div class="info-item"><label>科创资质</label>：高新技术企业</div>
+            <div class="info-item"><label>国标行业</label>：建筑业 > 土木工程建筑业</div>
+            <div class="info-item"><label>产业链</label>：储能,节能环保,测量仪器,新能源汽车充电桩…</div>
+            <div class="info-item"><label>园区</label>：中国电子大厦(中关村)</div>
+        </div>
+    </div>
+</body>
+</html>
