@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>凸版印刷株式会社北京办事处 - 科创成果分析</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#165DFF',
+                        blueTop: '#3670c9',
+                        tabActive: '#165DFF',
+                        grayBg: '#f7f8fa',
+                        borderLine: '#e5e6eb',
+                        greenHigh: '#00b42a',
+                        orangeMid: '#ff7d00',
+                        redLow: '#f53f3f',
+                        chartBlue: '#4080FF',
+                        chartGreen: '#00B42A',
+                        chartOrange: '#FF7D00',
+                        chartPurple: '#722ED1',
+                        tagHigh: '#00b42a',
+                        tagMid: '#ff7d00',
+                    }
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .tab-item {
+                @apply px-3 py-2 text-xs whitespace-nowrap cursor-pointer border-b-2 border-transparent;
+            }
+            .tab-active {
+                @apply border-tabActive text-tabActive font-medium;
+            }
+            .card-wrap {
+                @apply bg-white border border-borderLine rounded p-3 mb-3;
+            }
+            .text-desc-xs {
+                @apply text-xs text-gray-500;
+            }
+            .flex-row-between {
+                @apply flex flex-row justify-between items-center;
+            }
+            .table-cell-xs {
+                @apply px-2 py-1 text-xs border border-borderLine;
+            }
+            .btn-filter {
+                @apply border border-borderLine rounded px-2 py-1 text-xs bg-white;
+            }
+            .btn-page {
+                @apply border border-borderLine rounded w-6 h-6 flex items-center justify-center text-xs;
+            }
+            .btn-page-active {
+                @apply bg-primary text-white border-primary;
+            }
+        }
+    </style>
+</head>
+<body class="bg-grayBg text-gray-800 text-sm">
+    <div class="max-w-[980px] mx-auto bg-white min-h-screen">
+        <!-- 面包屑 -->
+        <div class="px-4 py-2 flex items-center gap-1 text-xs text-gray-500">
+            <span>科创首页</span>
+            <i class="fa fa-angle-right"></i>
+            <span>科创企业详情页</span>
+        </div>
+
+        <!-- 头部企业标题栏 -->
+        <div class="px-4 py-3 flex-row-between border-b border-borderLine">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 bg-blueTop text-white flex items-center justify-center font-bold">凸</div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h1 class="text-base font-bold">凸版印刷株式会社北京办事处</h1>
+                        <span class="text-xs bg-gray-100 px-1 rounded">存续</span>
+                        <a href="#" class="text-primary text-xs">完整企业详情</a>
+                    </div>
+                    <div class="flex gap-3 mt-1 text-xs text-gray-500">
+                        <span>科创等级 AA</span>
+                        <span>关联商机11条</span>
+                    </div>
+                    <div class="flex gap-3 mt-1 text-xs">
+                        <span>通用标签</span>
+                        <span>发票抬头</span>
+                        <span class="text-primary">企业亮点：有发明专利</span>
+                    </div>
+                </div>
+            </div>
+            <div class="flex gap-3 text-xs">
+                <button class="border border-borderLine rounded px-2 py-1">AI触达</button>
+                <button class="border border-borderLine rounded px-2 py-1">查看授信指引/报告</button>
+                <button class="border border-borderLine rounded px-2 py-1">PK 企业PK</button>
+                <button class="border border-borderLine rounded px-2 py-1">营销</button>
+            </div>
+        </div>
+
+        <!-- 一级Tab导航 -->
+        <div class="px-4 flex border-b border-borderLine overflow-x-auto">
+            <div class="tab-item">企业概览</div>
+            <div class="tab-item">科创力分析</div>
+            <div class="tab-item tab-active">科创成果分析</div>
+            <div class="tab-item">科研团队分析</div>
+            <div class="tab-item">荣誉资质</div>
+            <div class="tab-item">资产分析</div>
+            <div class="tab-item">风险分析</div>
+        </div>
+
+        <!-- 二级Tab导航 -->
+        <div class="px-4 flex border-b border-borderLine overflow-x-auto bg-grayBg">
+            <div class="tab-item tab-active">专利价值概览</div>
+            <div class="tab-item">专利信息 651</div>
+            <div class="tab-item">软著信息</div>
+            <div class="tab-item">作品著作权 2</div>
+            <div class="tab-item">国际专利 583</div>
+            <div class="tab-item">集成电路布图</div>
+        </div>
+
+        <div class="p-4">
+            <!-- 专利价值概览 顶部三栏 -->
+            <div class="grid grid-cols-12 gap-3 card-wrap">
+                <!-- 左侧：有权专利整体价值状况 -->
+                <div class="col-span-4">
+                    <div class="text-xs font-medium mb-2">有权专利整体价值状况 <span class="text-desc-xs">ⓘ</span></div>
+                    <div class="space-y-2">
+                        <div class="flex-row-between text-xs">
+                            <span>法律价值度</span>
+                            <span>89.8%</span>
+                        </div>
+                        <div class="w-full h-[6px] bg-gray-200 rounded overflow-hidden">
+                            <div class="h-full bg-chartBlue w-[89.8%]"></div>
+                        </div>
+
+                        <div class="flex-row-between text-xs">
+                            <span>专利价值度</span>
+                            <span>58.09%</span>
+                        </div>
+                        <div class="w-full h-[6px] bg-gray-200 rounded overflow-hidden">
+                            <div class="h-full bg-chartBlue w-[58.09%]"></div>
+                        </div>
+
+                        <div class="flex-row-between text-xs">
+                            <span>技术价值度</span>
+                            <span>54.67%</span>
+                        </div>
+                        <div class="w-full h-[6px] bg-gray-200 rounded overflow-hidden">
+                            <div class="h-full bg-chartBlue w-[54.67%]"></div>
+                        </div>
+
+                        <div class="flex-row-between text-xs">
+                            <span>经济价值度</span>
+                            <span>27.58%</span>
+                        </div>
+                        <div class="w-full h-[6px] bg-gray-200 rounded overflow-hidden">
+                            <div class="h-full bg-chartBlue w-[27.58%]"></div>
+                        </div>
+                    </div>
+                </div>
+                <!-- 中间：专利价值度结构 环形图 -->
+                <div class="col-span-4">
+                    <div class="text-xs font-medium mb-2">专利价值度结构 <span class="text-desc-xs">ⓘ</span></div>
+                    <div class="h-[140px]">
+                        <canvas id="patentValueRing"></canvas>
+                    </div>
+                    <div class="text-desc-xs mt-1">
+                        <span class="inline-block w-2 h-2 rounded bg-chartGreen mr-1"></span>高价值 57.60%
+                        <span class="inline-block w-2 h-2 rounded bg-chartBlue mr-1 ml-2"></span>中价值 40.40%
+                        <span class="inline-block w-2 h-2 rounded bg-chartOrange mr-1 ml-2"></span>低价值 2.00%
+                    </div>
+                </div>
+                <!-- 右侧：专利法律状态 环形图 -->
+                <div class="col-span-4">
+                    <div class="text-xs font-medium mb-2">专利法律状态</div>
+                    <div class="h-[140px]">
+                        <canvas id="patentLegalRing"></canvas>
+                    </div>
+                    <div class="text-desc-xs mt-1">
+                        <span class="inline-block w-2 h-2 rounded bg-chartBlue mr-1"></span>有权 40.09%
+                        <span class="inline-block w-2 h-2 rounded bg-chartOrange mr-1 ml-2"></span>审中 23.96%
+                        <span class="inline-block w-2 h-2 rounded bg-chartPurple mr-1 ml-2"></span>无权 35.94%
+                    </div>
+                </div>
+            </div>
+
+            <!-- 专利信息 651 -->
+            <div class="card-wrap">
+                <div class="flex-row-between mb-3">
+                    <div class="text-xs font-medium">专利信息 651</div>
+                    <div class="flex gap-2 items-center">
+                        <button class="btn-filter">注册地区 <i class="fa fa-angle-down ml-1"></i></button>
+                        <button class="btn-filter">专利类型 <i class="fa fa-angle-down ml-1"></i></button>
+                        <button class="btn-filter">申请日期 <i class="fa fa-angle-down ml-1"></i></button>
+                        <button class="btn-filter">发布日期 <i class="fa fa-angle-down ml-1"></i></button>
+                        <button class="btn-filter"><i class="fa fa-download mr-1"></i>下载数据</button>
+                    </div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full border-collapse">
+                        <thead>
+                            <tr class="bg-grayBg">
+                                <th class="table-cell-xs text-center">序号</th>
+                                <th class="table-cell-xs text-left">专利名称</th>
+                                <th class="table-cell-xs text-center">申请日期</th>
+                                <th class="table-cell-xs text-center">发布日期</th>
+                                <th class="table-cell-xs text-center">申请号</th>
+                                <th class="table-cell-xs text-center">专利类型</th>
+                                <th class="table-cell-xs text-center">价值分</th>
+                                <th class="table-cell-xs text-center">专利价值</th>
+                                <th class="table-cell-xs text-center">操作</th>
+                                <th class="table-cell-xs text-center">文档</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="table-cell-xs text-center">1</td>
+                                <td class="table-cell-xs">复合颗粒及其制造方法、个人护理产品、个人护理用颗粒及其制造方法、…</td>
+                                <td class="table-cell-xs text-center">2020-06-03</td>
+                                <td class="table-cell-xs text-center">2022-02-01</td>
+                                <td class="table-cell-xs text-center">CN202080041771.9</td>
+                                <td class="table-cell-xs text-center">发明专利</td>
+                                <td class="table-cell-xs text-center">75</td>
+                                <td class="table-cell-xs text-center"><span class="text-tagHigh">高价值</span></td>
+                                <td class="table-cell-xs text-center"><a class="text-primary">详情</a></td>
+                                <td class="table-cell-xs text-center"><i class="fa fa-file-pdf-o text-red-500"></i></td>
+                            </tr>
+                            <tr>
+                                <td class="table-cell-xs text-center">2</td>
+                                <td class="table-cell-xs">树脂成型体、层状体及装片</td>
+                                <td class="table-cell-xs text-center">2018-05-30</td>
+                                <td class="table-cell-xs text-center">2020-01-14</td>
+                                <td class="table-cell-xs text-center">CN201880034403.4</td>
+                                <td class="table-cell-xs text-center">发明专利</td>
+                                <td class="table-cell-xs text-center">75</td>
+                                <td class="table-cell-xs text-center"><span class="text-tagHigh">高价值</span></td>
+                                <td class="table-cell-xs text-center"><a class="text-primary">详情</a></td>
+                                <td class="table-cell-xs text-center"><i class="fa fa-file-pdf-o text-red-500"></i></td>
+                            </tr>
+                            <tr>
+                                <td class="table-cell-xs text-center">3</td>
+                                <td class="table-cell-xs">复合颗粒、复合颗粒的制造方法、干燥粉体以及成型用树脂组合物</td>
+                                <td class="table-cell-xs text-center">2018-12-27</td>
+                                <td class="table-cell-xs text-center">2020-08-21</td>
+                                <td class="table-cell-xs text-center">CN201880084299.X</td>
+                                <td class="table-cell-xs text-center">发明专利</td>
+                                <td class="table-cell-xs text-center">75</td>
+                                <td class="table-cell-xs text-center"><span class="text-tagHigh">高价值</span></td>
+                                <td class="table-cell-xs text-center"><a class="text-primary">详情</a></td>
+                                <td class="table-cell-xs text-center"><i class="fa fa-file-pdf-o text-red-500"></i></td>
+                            </tr>
+                            <tr>
+                                <td class="table-cell-xs text-center">4</td>
+                                <td class="table-cell-xs">显示体、ID卡、显示体的制造方法及制造装置</td>
+                                <td class="table-cell-xs text-center">2018-03-08</td>
+                                <td class="table-cell-xs text-center">2019-11-08</td>
+                                <td class="table-cell-xs text-center">CN201880011294.4</td>
+                                <td class="table-cell-xs text-center">发明专利</td>
+                                <td class="table-cell-xs text-center">74</td>
+                                <td class="table-cell-xs text-center"><span class="text-tagHigh">高价值</span></td>
+                                <td class="table-cell-xs text-center"><a class="text-primary">详情</a></td>
+                                <td class="table-cell-xs text-center"><i class="fa fa-file-pdf-o text-red-500"></i></td>
+                            </tr>
+                            <tr>
+                                <td class="table-cell-xs text-center">5</td>
+                                <td class="table-cell-xs">红外光截止滤光片、固态成像元件用滤光片、固态成像元件、以及固态成像…</td>
+                                <td class="table-cell-xs text-center">2020-09-17</td>
+                                <td class="table-cell-xs text-center">2022-04-12</td>
+                                <td class="table-cell-xs text-center">CN202080062875.8</td>
+                                <td class="table-cell-xs text-center">发明专利</td>
+                                <td class="table-cell-xs text-center">74</td>
+                                <td class="table-cell-xs text-center"><span class="text-tagHigh">高价值</span></td>
+                                <td class="table-cell-xs text-center"><a class="text-primary">详情</a></td>
+                                <td class="table-cell-xs text-center"><i class="fa fa-file-pdf-o text-red-500"></i></td>
+                            </tr>
+                            <tr>
+                                <td class="table-cell-xs text-center">6</td>
+                                <td class="table-cell-xs">不燃性装饰片材、金属装饰部件及金属装饰部件的制造方法</td>
+                                <td class="table-cell-xs text-center">2015-05-22</td>
+                                <td class="table-cell-xs text-center">2017-08-29</td>
+                                <td class="table-cell-xs text-center">CN201580072607.3</td>
+                                <td class="table-cell-xs text-center">发明专利</td>
+                                <td class="table-cell-xs text-center">74</td>
+                                <td class="table-cell-xs text-center"><span class="text-tagHigh">高价值</span></td>
+                                <td class="table-cell-xs text-center"><a class="text-primary">详情</a></td>
+                                <td class="table-cell-xs text-center"><i class="fa fa-file-pdf-o text-red-500"></i></td>
+                            </tr>
+                            <tr>
+                                <td class="table-cell-xs text-center">7</td>
+                                <td class="table-cell-xs">身份证明</td>
+                                <td class="table-cell-xs text-center">2018-08-22</td>
+                                <td class="table-cell-xs text-center">2022-01-04</td>
+                                <td class="table-cell-xs text-center">CN202111135737.X</td>
+                                <td class="table-cell-xs text-center">发明专利</td>
+                                <td class="table-cell-xs text-center">73</td>
+                                <td class="table-cell-xs text-center"><span class="text-tagHigh">高价值</span></td>
+                                <td class="table-cell-xs text-center"><a class="text-primary">详情</a></td>
+                                <td class="table-cell-xs text-center"><i class="fa fa-file-pdf-o text-red-500"></i></td>
+                            </tr>
+                            <tr>
+                                <td class="table-cell-xs text-center">8</td>
+                                <td class="table-cell-xs">固体摄像元件用彩色滤波器用感光性绿色组合物，彩色滤波器及固体摄像元件</td>
+                                <td class="table-cell-xs text-center">2018-03-29</td>
+                                <td class="table-cell-xs text-center">2019-12-06</td>
+                                <td class="table-cell-xs text-center">CN201880022180.X</td>
+                                <td class="table-cell-xs text-center">发明专利</td>
+                                <td class="table-cell-xs text-center">73</td>
+                                <td class="table-cell-xs text-center"><span class="text-tagHigh">高价值</span></td>
+                                <td class="table-cell-xs text-center"><a class="text-primary">详情</a></td>
+                                <td class="table-cell-xs text-center"><i class="fa fa-file-pdf-o text-red-500"></i></td>
+                            </tr>
+                            <tr>
+                                <td class="table-cell-xs text-center">9</td>
+                                <td class="table-cell-xs">阻气膜</td>
+                                <td class="table-cell-xs text-center">2020-12-04</td>
+                                <td class="table-cell-xs text-center">2022-07-08</td>
+                                <td class="table-cell-xs text-center">CN202080081430.4</td>
+                                <td class="table-cell-xs text-center">发明专利</td>
+                                <td class="table-cell-xs text-center">73</td>
+                                <td class="table-cell-xs text-center"><span class="text-tagHigh">高价值</span></td>
+                                <td class="table-cell-xs text-center"><a class="text-primary">详情</a></td>
+                                <td class="table-cell-xs text-center"><i class="fa fa-file-pdf-o text-red-500"></i></td>
+                            </tr>
+                            <tr>
+                                <td class="table-cell-xs text-center">10</td>
+                                <td class="table-cell-xs">量子点及其制造方法、使用量子点的波长转换构件、照明构件、背光装置以…</td>
+                                <td class="table-cell-xs text-center">2018-10-12</td>
+                                <td class="table-cell-xs text-center">2021-11-02</td>
+                                <td class="table-cell-xs text-center">CN202110710825.2</td>
+                                <td class="table-cell-xs text-center">发明专利</td>
+                                <td class="table-cell-xs text-center">72</td>
+                                <td class="table-cell-xs text-center"><span class="text-tagMid">中价值</span></td>
+                                <td class="table-cell-xs text-center"><a class="text-primary">详情</a></td>
+                                <td class="table-cell-xs text-center"><i class="fa fa-file-pdf-o text-red-500"></i></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <!-- 分页 -->
+                <div class="flex-row-between mt-3 text-xs">
+                    <div>共 651 条 10条/页</div>
+                    <div class="flex gap-1 items-center">
+                        <button class="btn-page">&lt;</button>
+                        <button class="btn-page btn-page-active">1</button>
+                        <button class="btn-page">2</button>
+                        <button class="btn-page">3</button>
+                        <button class="btn-page">4</button>
+                        <span>…</span>
+                        <button class="btn-page">66</button>
+                        <button class="btn-page">&gt;</button>
+                        <span class="ml-2">前往 <input class="w-6 border border-borderLine rounded text-center" value="1"> 页</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 作品著作权 2 -->
+            <div class="card-wrap">
+                <div class="flex-row-between mb-3">
+                    <div class="text-xs font-medium">作品著作权 2</div>
+                    <div class="flex gap-2 items-center">
+                        <input class="btn-filter w-48" placeholder="请输入作品名称">
+                        <button class="btn-filter">作品类别 <i class="fa fa-angle-down ml-1"></i></button>
+                        <button class="btn-filter">登记日期开始 - 登记日期结束 <i class="fa fa-angle-down ml-1"></i></button>
+                        <button class="btn-filter"><i class="fa fa-download mr-1"></i>下载数据</button>
+                    </div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full border-collapse">
+                        <thead>
+                            <tr class="bg-grayBg">
+                                <th class="table-cell-xs text-center">序号</th>
+                                <th class="table-cell-xs text-left">作品名称</th>
+                                <th class="table-cell-xs text-center">登记日期</th>
+                                <th class="table-cell-xs text-center">登记号</th>
+                                <th class="table-cell-xs text-center">作品类型</th>
+                                <th class="table-cell-xs text-center">首次发表日期</th>
+                                <th class="table-cell-xs text-center">创作完成日期</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="table-cell-xs text-center">1</td>
+                                <td class="table-cell-xs">小熊角色1</td>
+                                <td class="table-cell-xs text-center">2022-08-24</td>
+                                <td class="table-cell-xs text-center">国作登字-2022-F-10174906</td>
+                                <td class="table-cell-xs text-center">美术</td>
+                                <td class="table-cell-xs text-center">2003-03-01</td>
+                                <td class="table-cell-xs text-center">2002-10-18</td>
+                            </tr>
+                            <tr>
+                                <td class="table-cell-xs text-center">2</td>
+                                <td class="table-cell-xs">小熊角色2</td>
+                                <td class="table-cell-xs text-center">2022-08-24</td>
+                                <td class="table-cell-xs text-center">国作登字-2022-F-10174905</td>
+                                <td class="table-cell-xs text-center">美术</td>
+                                <td class="table-cell-xs text-center">2015-03-01</td>
+                                <td class="table-cell-xs text-center">2014-10-01</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 国际专利 583 -->
+            <div class="card-wrap">
+                <div class="flex-row-between mb-3">
+                    <div class="text-xs font-medium">国际专利 583</div>
+                    <div class="flex gap-2 items-center">
+                        <button class="btn-filter">法律状态 <i class="fa fa-angle-down ml-1"></i></button>
+                        <button class="btn-filter">申请日期开始 - 申请日期结束 <i class="fa fa-angle-down ml-1"></i></button>
+                        <button class="btn-filter">公开日期开始 - 公开日期结束 <i class="fa fa-angle-down ml-1"></i></button>
+                        <button class="btn-filter"><i class="fa fa-download mr-1"></i>下载数据</button>
+                    </div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full border-collapse">
+                        <thead>
+                            <tr class="bg-grayBg">
+                                <th class="table-cell-xs text-center">序号</th>
+                                <th class="table-cell-xs text-left">专利名称</th>
+                                <th class="table-cell-xs text-center">申请国家</th>
+                                <th class="table-cell-xs text-center">最新状态</th>
+                                <th class="table-cell-xs text-center">申请号</th>
+                                <th class="table-cell-xs text-center">申请日期</th>
+                                <th class="table-cell-xs text-center">公开(公告)号</th>
+                                <th class="table-cell-xs text-center">公开(公告)日</th>
+                                <th class="table-cell-xs text-center">摘要</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="table-cell-xs text-center">1</td>
+                                <td class="table-cell-xs">转印箔、转印物、显示体、显示体的真实性的验证方法及验证装置、以及个体认证方法</td>
+                                <td class="table-cell-xs text-center">日本</td>
+                                <td class="table-cell-xs text-center">实质审查的生效</td>
+                                <td class="table-cell-xs text-center">CN202280059114.6</td>
+                                <td class="table-cell-xs text-center">2022-08-30</td>
+                                <td class="table-cell-xs text-center">CN117916080A</td>
+                                <td class="table-cell-xs text-center">2024-04-19</td>
+                                <td class="table-cell-xs text-center">一种转离地</td>
+                            </tr>
+                            <tr>
+                                <td class="table-cell-xs text-center">2</td>
+                                <td class="table-cell-xs">纸浆模塑成形品及其制造方法</td>
+                                <td class="table-cell-xs text-center">日本</td>
+                                <td class="table-cell-xs text-center">实质审查的生效</td>
+                                <td class="table-cell-xs text-center">CN202280052569.5</td>
+                                <td class="table-cell-xs text-center">2022-08-02</td>
+                                <td class="table-cell-xs text-center">CN117716088A</td>
+                                <td class="table-cell-xs text-center">2024-03-15</td>
+                                <td class="table-cell-xs text-center">能够不在短</td>
+                            </tr>
+                            <tr>
+                                <td class="table-cell-xs text-center">3</td>
+                                <td class="table-cell-xs">信息处理方法以及信息处理系统</td>
+                                <td class="table-cell-xs text-center">日本</td>
+                                <td class="table-cell-xs text-center">实质审查的生效</td>
+                                <td class="table-cell-xs text-center">CN202280034359.3</td>
+                                <td class="table-cell-xs text-center">2022-06-17</td>
+                                <td class="table-cell-xs text-center">CN117716433A</td>
+                                <td class="table-cell-xs text-center">2024-03-15</td>
+                                <td class="table-cell-xs text-center">一种信息系统具</td>
+                            </tr>
+                            <tr>
+                                <td class="table-cell-xs text-center">4</td>
+                                <td class="table-cell-xs">纸浆模塑成形品及其制造方法</td>
+                                <td class="table-cell-xs text-center">日本</td>
+                                <td class="table-cell-xs text-center">实质审查的生效</td>
+                                <td class="table-cell-xs text-center">CN202280052796.8</td>
+                                <td class="table-cell-xs text-center">2022-08-02</td>
+                                <td class="table-cell-xs text-center">CN117716089A</td>
+                                <td class="table-cell-xs text-center">2024-03-15</td>
+                                <td class="table-cell-xs text-center">能够实现质、目</td>
+                            </tr>
+                            <tr>
+                                <td class="table-cell-xs text-center">5</td>
+                                <td class="table-cell-xs">固体成像元件</td>
+                                <td class="table-cell-xs text-center">日本</td>
+                                <td class="table-cell-xs text-center">实质审查的生效</td>
+                                <td class="table-cell-xs text-center">CN202280050201.5</td>
+                                <td class="table-cell-xs text-center">2022-07-15</td>
+                                <td class="table-cell-xs text-center">CN117693815A</td>
+                                <td class="table-cell-xs text-center">2024-03-12</td>
+                                <td class="table-cell-xs text-center">一种面具有多</td>
+                            </tr>
+                            <tr>
+                                <td class="table-cell-xs text-center">6</td>
+                                <td class="table-cell-xs">灭火材料形成用组合物、灭火材料以及灭火性部件及其制造方法</td>
+                                <td class="table-cell-xs text-center">日本</td>
+                                <td class="table-cell-xs text-center">实质审查的生效</td>
+                                <td class="table-cell-xs text-center">CN202280049881.9</td>
+                                <td class="table-cell-xs text-center">2022-07-28</td>
+                                <td class="table-cell-xs text-center">CN117693384A</td>
+                                <td class="table-cell-xs text-center">2024-03-12</td>
+                                <td class="table-cell-xs text-center">一种灭火包含灭</td>
+                            </tr>
+                            <tr>
+                                <td class="table-cell-xs text-center">7</td>
+                                <td class="table-cell-xs">包装材料订购系统以及包装材料订购管理装置</td>
+                                <td class="table-cell-xs text-center">日本</td>
+                                <td class="table-cell-xs text-center">实质审查的生效</td>
+                                <td class="table-cell-xs text-center">CN202280045810.1</td>
+                                <td class="table-cell-xs text-center">2022-06-27</td>
+                                <td class="table-cell-xs text-center">CN117581251A</td>
+                                <td class="table-cell-xs text-center">2024-02-20</td>
+                                <td class="table-cell-xs text-center">包装材料订</td>
+                            </tr>
+                            <tr>
+                                <td class="table-cell-xs text-center">8</td>
+                                <td class="table-cell-xs">灭火体</td>
+                                <td class="table-cell-xs text-center">日本</td>
+                                <td class="table-cell-xs text-center">公布</td>
+                                <td class="table-cell-xs text-center">CN202280045049.1</td>
+                                <td class="table-cell-xs text-center">2022-06-28</td>
+                                <td class="table-cell-xs text-center">CN117545531A</td>
+                                <td class="table-cell-xs text-center">2024-02-09</td>
+                                <td class="table-cell-xs text-center">本公开由包含</td>
+                            </tr>
+                            <tr>
+                                <td class="table-cell-xs text-center">9</td>
+                                <td class="table-cell-xs">层压管用层叠体以及层压管</td>
+                                <td class="table-cell-xs text-center">日本</td>
+                                <td class="table-cell-xs text-center">实质审查的生效</td>
+                                <td class="table-cell-xs text-center">CN202280044572.2</td>
+                                <td class="table-cell-xs text-center">2022-06-27</td>
+                                <td class="table-cell-xs text-center">CN117545631A</td>
+                                <td class="table-cell-xs text-center">2024-02-09</td>
+                                <td class="table-cell-xs text-center">本公开具备</td>
+                            </tr>
+                            <tr>
+                                <td class="table-cell-xs text-center">10</td>
+                                <td class="table-cell-xs">装饰片以及装饰片的制造方法</td>
+                                <td class="table-cell-xs text-center">日本</td>
+                                <td class="table-cell-xs text-center">实质审查的生效</td>
+                                <td class="table-cell-xs text-center">CN202280044585.X</td>
+                                <td class="table-cell-xs text-center">2022-07-06</td>
+                                <td class="table-cell-xs text-center">CN117545630A</td>
+                                <td class="table-cell-xs text-center">2024-02-09</td>
+                                <td class="table-cell-xs text-center">本发</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <!-- 分页 -->
+                <div class="flex-row-between mt-3 text-xs">
+                    <div>共 583 条 10条/页</div>
+                    <div class="flex gap-1 items-center">
+                        <button class="btn-page">&lt;</button>
+                        <button class="btn-page btn-page-active">1</button>
+                        <button class="btn-page">2</button>
+                        <button class="btn-page">3</button>
+                        <button class="btn-page">4</button>
+                        <span>…</span>
+                        <button class="btn-page">59</button>
+                        <button class="btn-page">&gt;</button>
+                        <span class="ml-2">前往 <input class="w-6 border border-borderLine rounded text-center" value="1"> 页</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 专利价值度环形图
+        const valueRingCtx = document.getElementById('patentValueRing').getContext('2d');
+        new Chart(valueRingCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['高价值','中价值','低价值'],
+                datasets: [{
+                    data: [57.60,40.40,2.00],
+                    backgroundColor: ['#00B42A','#4080FF','#FF7D00'],
+                    borderWidth:0
+                }]
+            },
+            options:{ maintainAspectRatio:false, cutout:'70%', plugins:{ legend:{ display:false } } }
+        });
+        // 专利法律状态环形图
+        const legalRingCtx = document.getElementById('patentLegalRing').getContext('2d');
+        new Chart(legalRingCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['有权','审中','无权'],
+                datasets: [{
+                    data: [40.09,23.96,35.94],
+                    backgroundColor: ['#4080FF','#FF7D00','#722ED1'],
+                    borderWidth:0
+                }]
+            },
+            options:{ maintainAspectRatio:false, cutout:'70%', plugins:{ legend:{ display:false } } }
+        });
+    </script>
+</body>
+</html>

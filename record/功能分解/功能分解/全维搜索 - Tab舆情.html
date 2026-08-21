@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>舆情页面复刻</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#165DFF',
+                        tabActive: '#165DFF',
+                        tabBorder: '#FFD100',
+                        btnYellow: '#FFC500',
+                        tagTech: '#84CC16',
+                        tagA: '#3B82F6',
+                        tagB: '#6366F1',
+                        tagD: '#9CA3AF',
+                        positive: '#86EFAC',
+                        neutral: '#BFDBFE',
+                    }
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .tab-active-border {
+                border-bottom: 2px solid #FFD100;
+            }
+            .text-ellipsis-row {
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+        }
+    </style>
+</head>
+<body class="bg-white text-gray-800 font-sans text-sm">
+    <!-- 顶部Tab导航 -->
+    <div class="flex border-b border-gray-200">
+        <div class="px-4 py-2 cursor-pointer hover:text-primary">企业 AI</div>
+        <div class="px-4 py-2 cursor-pointer hover:text-primary">人员</div>
+        <div class="px-4 py-2 cursor-pointer hover:text-primary">商机</div>
+        <div class="px-4 py-2 cursor-pointer hover:text-primary">风险</div>
+        <div class="px-4 py-2 cursor-pointer tab-active-border text-primary font-medium">舆情</div>
+        <div class="px-4 py-2 cursor-pointer hover:text-primary">研报</div>
+    </div>
+
+    <!-- 搜索栏区域 -->
+    <div class="p-4 flex flex-wrap items-center gap-2 border-b border-gray-100">
+        <input type="text" placeholder="手机" class="border border-gray-300 rounded px-3 py-1.5 w-64 outline-none focus:border-primary">
+        <button class="bg-btnYellow px-4 py-1.5 rounded flex items-center gap-1 font-medium">
+            <i class="fa fa-search"></i> 查询
+        </button>
+        <button class="px-3 py-1.5 rounded border border-gray-300 flex items-center gap-1">
+            <i class="fa fa-file-text-o"></i> 批量搜索
+        </button>
+        <button class="px-3 py-1.5 rounded border border-gray-300 flex items-center gap-1">
+            <i class="fa fa-search-plus"></i> 高级搜索
+        </div>
+
+    <!-- 时间筛选行 -->
+    <div class="px-4 py-2 flex flex-wrap items-center gap-2">
+        <span>发生日期</span>
+        <button class="px-2 py-1 rounded bg-blue-100 text-primary">最近7天</button>
+        <button class="px-2 py-1 rounded hover:bg-gray-100">最近30天</button>
+        <button class="px-2 py-1 rounded hover:bg-gray-100">最近3个月</button>
+        <button class="px-2 py-1 rounded hover:bg-gray-100">最近半年</button>
+        <button class="px-2 py-1 rounded hover:bg-gray-100">最近1年</button>
+        <div class="flex items-center gap-1">
+            <input type="text" placeholder="开始日期" class="border border-gray-300 rounded px-2 py-1 w-28">
+            <span>-</span>
+            <input type="text" placeholder="结束日期" class="border border-gray-300 rounded px-2 py-1 w-28">
+        </div>
+    </div>
+
+    <!-- 筛选条件下拉行 -->
+    <div class="px-4 py-2 flex flex-wrap items-center gap-3 border-b border-gray-200">
+        <span>筛选条件</span>
+        <div class="flex items-center gap-1 cursor-pointer">舆情分类 <i class="fa fa-caret-down text-gray-500"></i></div>
+        <div class="flex items-center gap-1 cursor-pointer">情感属性 <i class="fa fa-caret-down text-gray-500"></i></div>
+        <div class="flex items-center gap-1 cursor-pointer">主题分类 <i class="fa fa-caret-down text-gray-500"></i></div>
+        <div class="flex items-center gap-1 cursor-pointer">权威等级 <i class="fa fa-caret-down text-gray-500"></i></div>
+    </div>
+
+    <!-- 结果统计 -->
+    <div class="px-4 py-3 text-gray-500">找到20812条相关结果</div>
+    <hr class="mx-4 border-gray-200">
+
+    <!-- 舆情列表 -->
+    <div class="px-4">
+        <!-- 条目1 -->
+        <div class="py-3 border-b border-gray-100 flex justify-between items-start">
+            <div class="flex-1">
+                <div class="flex items-center gap-2">
+                    <span class="text-base">IT早报0821：奕境汽车为“假Labubu”礼品致歉；华为发布享界G9/智界RX等四车、PuraXView阔直板手机；《黑神话：钟馗》15分钟实机演示公布...</span>
+                    <span class="px-2 py-0.5 rounded bg-neutral text-xs">中立</span>
+                </div>
+                <div class="mt-2 flex flex-wrap gap-2">
+                    <span class="px-1.5 py-0.5 rounded bg-tagTech text-white text-xs">科技</span>
+                    <span class="px-1.5 py-0.5 rounded bg-tagA text-white text-xs">B级</span>
+                    <span class="text-xs text-gray-600">#项目延期 #业绩亏损/下降 #事件澄清 #产品信息 #招聘信息 #其他新闻</span>
+                </div>
+            </div>
+            <span class="text-gray-500 ml-4">08-21</span>
+        </div>
+        <!-- 条目2 -->
+        <div class="py-3 border-b border-gray-100 flex justify-between items-start">
+            <div class="flex-1">
+                <div class="flex items-center gap-2">
+                    <span class="text-base">【迎峰度夏进行时】国家电投集团滨海2×100万千瓦扩建项目全面投产</span>
+                    <span class="px-2 py-0.5 rounded bg-positive text-xs">积极</span>
+                </div>
+                <div class="mt-2 flex flex-wrap gap-2">
+                    <span class="px-1.5 py-0.5 rounded bg-gray-300 text-xs">其他</span>
+                    <span class="px-1.5 py-0.5 rounded bg-tagA text-white text-xs">A级</span>
+                    <span class="text-xs text-gray-600">#生产投产</span>
+                </div>
+            </div>
+            <span class="text-gray-500 ml-4">08-21</span>
+        </div>
+        <!-- 条目3 -->
+        <div class="py-3 border-b border-gray-100 flex justify-between items-start">
+            <div class="flex-1">
+                <div class="flex items-center gap-2">
+                    <span class="text-base">中国农发集团山丹马场奏响生态保护绿色交响</span>
+                    <span class="px-2 py-0.5 rounded bg-positive text-xs">积极</span>
+                </div>
+                <div class="mt-2 flex flex-wrap gap-2">
+                    <span class="px-1.5 py-0.5 rounded bg-gray-300 text-xs">其他</span>
+                    <span class="px-1.5 py-0.5 rounded bg-tagA text-white text-xs">A级</span>
+                    <span class="text-xs text-gray-600">#其他新闻</span>
+                </div>
+            </div>
+            <span class="text-gray-500 ml-4">08-21</span>
+        </div>
+        <!-- 条目4 -->
+        <div class="py-3 flex justify-between items-start">
+            <div class="flex-1">
+                <div class="flex items-center gap-2">
+                    <span class="text-base">北京广受信赖的流媒体服务器生产商靠谱商家测评排名</span>
+                    <span class="px-2 py-0.5 rounded bg-positive text-xs">积极</span>
+                </div>
+                <div class="mt-2 flex flex-wrap gap-2">
+                    <span class="px-1.5 py-0.5 rounded bg-tagTech text-white text-xs">科技</span>
+                    <span class="px-1.5 py-0.5 rounded bg-tagD text-white text-xs">D级</span>
+                    <span class="text-xs text-gray-600">#其他新闻</span>
+                </div>
+            </div>
+            <span class="text-gray-500 ml-4">08-21</span>
+        </div>
+    </div>
+</body>
+</html>

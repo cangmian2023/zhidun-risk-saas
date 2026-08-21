@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>资产分析</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#165DFF',
+                        tabActiveBorder: '#FFC53D',
+                        grayBg: '#f7f8fa',
+                        borderLine: '#e5e6eb',
+                        chartBlue: '#4080FF',
+                        chartOrange: '#FF7D00',
+                        chartGreen: '#00B42A',
+                    }
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .tab-top {
+                @apply px-4 py-3 cursor-pointer text-sm text-gray-800;
+            }
+            .tab-top-active {
+                @apply border-b-2 border-tabActiveBorder font-medium;
+            }
+            .tab-sub {
+                @apply px-3 py-2 cursor-pointer text-xs rounded;
+            }
+            .tab-sub-active {
+                @apply bg-primary text-white;
+            }
+            .tab-sub-normal {
+                @apply text-gray-500;
+            }
+            .card-block {
+                @apply border border-borderLine rounded p-3 bg-white;
+            }
+            .table-cell-xs {
+                @apply px-2 py-2 text-xs border border-borderLine;
+            }
+        }
+    </style>
+</head>
+<body class="bg-white text-sm">
+    <!-- 一级顶部Tab -->
+    <div class="flex border-b border-borderLine">
+        <div class="tab-top">企业概览</div>
+        <div class="tab-top">科创力分析</div>
+        <div class="tab-top">科创成果分析</div>
+        <div class="tab-top">科研团队分析</div>
+        <div class="tab-top">荣誉资质</div>
+        <div class="tab-top tab-top-active">资产分析</div>
+        <div class="tab-top">风险分析</div>
+    </div>
+    <!-- 二级子Tab -->
+    <div class="flex gap-1 p-2 bg-grayBg">
+        <div class="tab-sub tab-sub-active">专利分析</div>
+        <div class="tab-sub tab-sub-normal">商标分析</div>
+        <div class="tab-sub tab-sub-normal">软件著作权分析</div>
+        <div class="tab-sub tab-sub-normal">集成电路布图分析</div>
+        <div class="tab-sub tab-sub-normal">土地使用权分析</div>
+        <div class="tab-sub tab-sub-normal">动产抵押分析</div>
+        <div class="tab-sub tab-sub-normal">不动产分析</div>
+    </div>
+
+    <div class="p-4 space-y-4">
+        <!-- 顶部说明 -->
+        <div class="text-xs text-gray-600">
+            该企业为专利分析, 无形资产420。可点击<a href="#" class="text-primary">查看详细</a>。
+        </div>
+
+        <!-- 第一行两个图表 -->
+        <div class="grid grid-cols-2 gap-4">
+            <!-- 专利类型分布 -->
+            <div class="card-block">
+                <div class="text-xs font-medium mb-2">专利类型分布 <span class="text-gray-400 font-normal">1/2</span></div>
+                <div class="h-[180px]">
+                    <canvas id="patentTypeChart"></canvas>
+                </div>
+                <div class="text-xs text-gray-500 mt-2">
+                    该企业专利中, 发明专利占比最高, 主要分布在G06F17/00、G06Q10/00、G06F19/00领域。
+                </div>
+            </div>
+            <!-- 商标注册类别分布 -->
+            <div class="card-block">
+                <div class="text-xs font-medium mb-2">商标注册类别分布 <span class="text-gray-400 font-normal">1/2</span></div>
+                <div class="h-[180px]">
+                    <canvas id="trademarkClassChart"></canvas>
+                </div>
+                <div class="text-xs text-gray-500 mt-2">
+                    该企业商标主要注册在第9类、第35类、第42类等类别。
+                </div>
+            </div>
+        </div>
+
+        <!-- 底部不动产表格 -->
+        <div class="card-block">
+            <div class="text-xs font-medium mb-3">不动产分析 <span class="text-gray-400 font-normal">2</span></div>
+            <div class="overflow-x-auto">
+                <table class="w-full border-collapse">
+                    <thead>
+                        <tr class="bg-grayBg">
+                            <th class="table-cell-xs text-center">序号</th>
+                            <th class="table-cell-xs text-center">数据来源</th>
+                            <th class="table-cell-xs text-left">地址</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="table-cell-xs text-center">1</td>
+                            <td class="table-cell-xs text-center">注册地址</td>
+                            <td class="table-cell-xs">北京市东城区珠市口东大街3号119室</td>
+                        </tr>
+                        <tr>
+                            <td class="table-cell-xs text-center">2</td>
+                            <td class="table-cell-xs text-center">注册地址</td>
+                            <td class="table-cell-xs">北京市通州区经济开发区东区靓丽三街9号-215</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 专利类型分布：柱状图
+        const patentTypeCtx = document.getElementById('patentTypeChart').getContext('2d');
+        new Chart(patentTypeCtx, {
+            type: 'bar',
+            data: {
+                labels: ['发明专利', '实用新型', '外观设计'],
+                datasets: [{
+                    data: [413, 3, 1],
+                    backgroundColor: ['#4080FF', '#00B42A', '#FF7D00'],
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: { beginAtZero: true, ticks: { precision: 0 } }
+                }
+            }
+        });
+
+        // 商标注册类别分布：柱状图
+        const trademarkClassCtx = document.getElementById('trademarkClassChart').getContext('2d');
+        new Chart(trademarkClassCtx, {
+            type: 'bar',
+            data: {
+                labels: ['第9类', '第35类', '第42类', '其他'],
+                datasets: [{
+                    data: [12, 8, 5, 3],
+                    backgroundColor: ['#4080FF', '#FF7D00', '#00B42A', '#722ED1'],
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: { beginAtZero: true, ticks: { precision: 0 } }
+                }
+            }
+        });
+    </script>
+</body>
+</html>

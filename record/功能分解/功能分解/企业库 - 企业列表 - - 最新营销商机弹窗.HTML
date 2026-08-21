@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>商机详情：新增中标</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#165DFF',
+                        starBlue: '#4080FF',
+                        redText: '#f53f3f'
+                    }
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .table-cell-border {
+                @apply border border-gray-200 p-3 align-top;
+            }
+        }
+    </style>
+</head>
+<body class="bg-white text-gray-800 font-sans">
+    <div class="p-6 max-w-4xl">
+        <!-- 头部标题区域 -->
+        <div class="flex justify-between items-center mb-6">
+            <div class="flex items-center gap-2">
+                <h2 class="text-xl font-medium">商机详情: 新增中标</h2>
+                <span class="text-starBlue">★★★★★</span>
+            </div>
+            <div class="flex items-center gap-3">
+                <button class="flex items-center gap-1 px-3 py-1 border border-gray-200 rounded text-sm text-primary">
+                    <i class="fa fa-share-alt"></i> 分享
+                </button>
+                <span class="cursor-pointer text-gray-500 text-xl">×</span>
+            </div>
+        </div>
+
+        <!-- 基础信息表格 -->
+        <table class="w-full border-collapse mb-6 text-sm">
+            <tbody>
+                <tr>
+                    <td class="table-cell-border w-32 bg-gray-50 font-medium">发生时间</td>
+                    <td class="table-cell-border">2026-07-10</td>
+                    <td class="table-cell-border w-32 bg-gray-50 font-medium">中标公告标题</td>
+                    <td class="table-cell-border">三峡智控水电站引水流量监测核心模组硬件采购项目成交公告</td>
+                </tr>
+                <tr>
+                    <td class="table-cell-border bg-gray-50 font-medium">中标金额</td>
+                    <td class="table-cell-border">-</td>
+                    <td class="table-cell-border bg-gray-50 font-medium">公告链接</td>
+                    <td class="table-cell-border text-primary cursor-pointer"><i class="fa fa-link"></i> 查看链接</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- 公告正文 -->
+        <div class="mb-6 text-sm">
+            <p class="mb-2">三峡智控水电站引水流量监测核心模组硬件采购项目成交公告</p>
+            <p class="text-redText mb-6"><i class="fa fa-calendar"></i> 发布时间: 2026-07-10</p>
+
+            <h1 class="text-3xl font-normal mb-6 leading-relaxed">三峡智控水电站引水流量监测核心模组硬件采购项目成交公告</h1>
+            <p class="mb-4 text-base">(采购编号: Q2612003230247)</p>
+            <p class="mb-4 text-base">三峡智控水电站引水流量监测核心模组硬件采购项目（Q2612003230247/01）成交人为欣皓创展信息技术有限公司。</p>
+            <p class="mb-6 text-base">特此公告。</p>
+            <p class="mb-8 text-base">采购人: 三峡智控科技有限公司</p>
+
+            <div class="space-y-4">
+                <div>
+                    <p class="text-redText font-medium">上一篇</p>
+                    <p>三峡智控协议模组及配套技术服务框架采购项目成交公告</p>
+                </div>
+                <div>
+                    <p class="text-redText font-medium">下一篇</p>
+                    <p>三峡旅游公司运输分公司2026-2027年车载动态视频监控系统维护及服务成交结果公告</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

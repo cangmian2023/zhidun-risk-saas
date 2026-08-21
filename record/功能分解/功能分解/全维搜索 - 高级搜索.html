@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>全维搜索</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primaryYellow: '#FFC107',
+                    }
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .condition-line {
+                @apply flex items-center gap-2 my-3;
+            }
+            .form-select {
+                @apply border border-gray-300 rounded px-2 py-1 bg-white outline-none;
+            }
+            .form-input {
+                @apply border border-gray-300 rounded px-2 py-1 outline-none;
+            }
+            .btn-yellow {
+                @apply bg-primaryYellow px-4 py-1.5 rounded border-none;
+            }
+            .btn-default {
+                @apply border border-gray-300 px-4 py-1.5 rounded bg-white;
+            }
+        }
+    </style>
+</head>
+<body class="bg-white text-gray-800 font-sans text-sm">
+    <div class="p-4">
+        <h2 class="text-lg font-semibold mb-4">全维搜索</h2>
+        <div class="bg-slate-50 h-8 w-full mb-4"></div>
+
+        <div class="flex justify-between items-center mb-3">
+            <div class="font-medium">查询条件</div>
+            <button class="btn-yellow flex items-center gap-1">
+                <i class="fa fa-save"></i> 保存查询条件
+            </button>
+        </div>
+
+        <!-- 关键词行 -->
+        <div class="flex items-center gap-2 mb-4">
+            <span class="w-16">关键词</span>
+            <input type="text" class="form-input w-[360px]" placeholder="请输入主营业务/产品关键词，最多5个">
+        </div>
+
+        <hr class="border-dashed border-gray-200 my-4">
+
+        <!-- 外层全部条件组 -->
+        <div class="mb-4">
+            <div class="flex items-center gap-2 mb-3">
+                <span>满足下列</span>
+                <select class="form-select">
+                    <option>全部</option>
+                    <option>任一</option>
+                </select>
+                <span>条件 <i class="fa fa-info-circle text-gray-400"></i></span>
+            </div>
+            <div class="pl-6 border-l border-gray-300">
+                <!-- 条件1 -->
+                <div class="condition-line">
+                    <select class="form-select w-[120px]">
+                        <option>企业名称</option>
+                    </select>
+                    <select class="form-select w-[100px]">
+                        <option>包含</option>
+                        <option>不包含</option>
+                    </select>
+                    <input type="text" class="form-input w-[220px]" placeholder="请输入关键字">
+                    <button class="text-gray-400 hover:text-red-500"><i class="fa fa-trash-o"></i></button>
+                </div>
+                <!-- 条件2 -->
+                <div class="condition-line">
+                    <select class="form-select w-[120px]">
+                        <option>法人代表</option>
+                    </select>
+                    <select class="form-select w-[100px]">
+                        <option>不包含</option>
+                        <option>包含</option>
+                    </select>
+                    <input type="text" class="form-input w-[220px]" placeholder="请输入关键字">
+                    <button class="text-gray-400 hover:text-red-500"><i class="fa fa-trash-o"></i></button>
+                </div>
+
+                <!-- 内层 任一 条件组 -->
+                <div class="my-4">
+                    <div class="flex items-center gap-2 mb-3">
+                        <span>满足下列</span>
+                        <select class="form-select">
+                            <option>任一</option>
+                            <option>全部</option>
+                        </select>
+                        <span>条件</span>
+                    </div>
+                    <div class="pl-6 border-l border-gray-300">
+                        <div class="condition-line">
+                            <select class="form-select w-[120px]">
+                                <option>进出口信息</option>
+                            </select>
+                            <select class="form-select w-[140px]">
+                                <option>请选择</option>
+                            </select>
+                            <button class="text-gray-400 hover:text-red-500"><i class="fa fa-trash-o"></i></button>
+                        </div>
+                        <div class="condition-line">
+                            <select class="form-select w-[120px]">
+                                <option>动产抵押</option>
+                            </select>
+                            <select class="form-select w-[140px]">
+                                <option>请选择</option>
+                            </select>
+                            <button class="text-gray-400 hover:text-red-500"><i class="fa fa-trash-o"></i></button>
+                        </div>
+                        <button class="btn-default flex items-center gap-1 mt-2">
+                            <i class="fa fa-plus"></i> 添加条件 <i class="fa fa-caret-down"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <button class="btn-default flex items-center gap-1 mt-2">
+                    <i class="fa fa-plus"></i> 添加条件 <i class="fa fa-caret-down"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- 底部按钮 -->
+        <div class="flex gap-3 mt-8">
+            <button class="btn-yellow">查询</button>
+            <button class="btn-default">清空</button>
+        </div>
+    </div>
+</body>
+</html>

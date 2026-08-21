@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>商机详情：应收账款转让（保理）</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primaryBlue: '#165DFF',
+                        starBlue: '#4080FF',
+                    }
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .table-cell-label {
+                @apply bg-slate-50 font-medium p-3 border border-gray-200 align-top w-[160px];
+            }
+            .table-cell-value {
+                @apply p-3 border border-gray-200 align-top;
+            }
+        }
+    </style>
+</head>
+<body class="bg-white text-gray-800 font-sans text-sm">
+    <div class="p-6 max-w-[1700px]">
+        <!-- 头部 -->
+        <div class="flex justify-between items-center mb-6">
+            <div class="flex items-center gap-3 text-xl font-medium">
+                <span>商机详情：应收账款转让（保理）</span>
+                <span class="text-starBlue">★★★☆☆</span>
+            </div>
+            <div class="flex items-center gap-4">
+                <button class="border border-primaryBlue text-primaryBlue rounded px-3 py-1 flex items-center gap-1">
+                    <i class="fa fa-share-square-o"></i> 分享
+                </button>
+                <button class="text-gray-500 text-lg">×</button>
+            </div>
+        </div>
+
+        <!-- 详情表格 -->
+        <table class="w-full border-collapse border border-gray-200">
+            <tbody>
+                <tr>
+                    <td class="table-cell-label">出让人名称</td>
+                    <td class="table-cell-value">北京科安达消防工程有限公司</td>
+                    <td class="table-cell-label">受让人名称</td>
+                    <td class="table-cell-value">中国建设银行股份有限公司天津海益国际中心支行</td>
+                </tr>
+                <tr>
+                    <td class="table-cell-label">主合同金额</td>
+                    <td class="table-cell-value">921516.46元</td>
+                    <td class="table-cell-label">登记种类</td>
+                    <td class="table-cell-value">初始登记</td>
+                </tr>
+                <tr>
+                    <td class="table-cell-label">登记期限</td>
+                    <td class="table-cell-value">1.00年</td>
+                    <td class="table-cell-label">登记时间</td>
+                    <td class="table-cell-value">2025-08-22</td>
+                </tr>
+                <tr>
+                    <td class="table-cell-label">登记到期日</td>
+                    <td class="table-cell-value">2026-08-21</td>
+                    <td class="table-cell-label">转让财产描述</td>
+                    <td class="table-cell-value">
+                        中国电建市政建设集团有限公司基于与北京科安达消防工程有限公司签订的编号为SZJT-ZSD-DXDKXM-[2024]-006的合同项下玖拾贰万壹仟伍佰壹拾陆元肆角陆分的应收账款,在建信融通服务平台签发编号为ZGDJSZ-20250821-008-000000的融信(电子债权凭证),金额为玖拾贰万壹仟伍佰壹拾陆元肆角陆分,付款日为2026年8月21日。现北京科安达消防工程有限公司已将其持有融信及其对应的玖拾贰万壹仟伍佰壹拾陆元肆角陆分应收账款全部转让给中国建设银行股份有限公司天津西青支行。该笔应收账款对应的发票号码为25112000000121393232,共1张。
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

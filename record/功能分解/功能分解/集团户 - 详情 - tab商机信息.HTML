@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>国家能源投资集团 - 商机信息</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#165DFF',
+                        yellowBtn: '#FFC107',
+                        tagOrange: '#f7b165',
+                        tagGray: '#b9bbc6',
+                        starBlue: '#4080FF'
+                    }
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .table-header {
+                @apply bg-gray-50 text-left p-2 border border-gray-200 text-xs whitespace-nowrap;
+            }
+            .table-cell {
+                @apply p-2 border border-gray-200 text-xs align-top;
+            }
+        }
+    </style>
+</head>
+<body class="bg-white text-gray-800 font-sans text-sm">
+    <div class="p-4">
+        <!-- 面包屑 -->
+        <div class="flex items-center gap-1 mb-4 text-xs text-gray-600">
+            <i class="fa fa-angle-left"></i>
+            <span>集团户 / </span>
+            <span class="font-medium">国家能源投资集团</span>
+        </div>
+
+        <!-- 头部集团信息 -->
+        <div class="flex justify-between items-start mb-4">
+            <div>
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 bg-red-600 text-white flex items-center justify-center">
+                        <i class="fa fa-fire"></i>
+                    </div>
+                    <h1 class="text-lg font-bold">国家能源投资集团</h1>
+                    <span class="text-xs">主体企业：<a class="text-primary">国家能源投资集团有限责任公司</a></span>
+                    <span class="text-xs">全部企业(5,448)</span>
+                    <span class="text-xs">核心企业(157)</span>
+                </div>
+                <p class="text-xs text-gray-600 mt-1 max-w-5xl">
+                    国家能源投资集团有限责任公司是经党中央、国务院批准,由中国国电集团公司和神华集团有限责任公司两家世界500强企业合并重组而成,于2017年11月28日正式挂牌成立,是中央直管国有重要骨干企业、国有资本投资公司改革试点企业,2018年世界500强排名第101位。国家 ...
+                    <a class="text-primary">更多∨</a>
+                </p>
+            </div>
+            <button class="bg-yellowBtn px-3 py-1 rounded text-xs font-medium flex items-center gap-1">
+                <i class="fa fa-plus"></i> 关注
+            </button>
+        </div>
+
+        <!-- Tab栏 -->
+        <div class="flex border-b border-gray-200 mb-3">
+            <div class="px-3 py-2 text-gray-600">集团信息</div>
+            <div class="px-3 py-2 border-b-2 border-primary font-medium">商机信息 66,891</div>
+        </div>
+
+        <!-- 筛选栏第一行 -->
+        <div class="flex flex-wrap gap-2 mb-2 text-xs">
+            <span>选择商机</span>
+            <a class="text-primary">发生日期 ∨</a>
+            <a class="text-primary">商机价值 ∨</a>
+            <a class="text-primary">业务机会 ∨</a>
+            <a class="text-primary">商机类型 ∨</a>
+        </div>
+        <!-- 筛选栏第二行 -->
+        <div class="flex flex-wrap gap-2 mb-3 text-xs">
+            <a class="text-primary">更多筛选 ∨</a>
+            <a class="text-primary">省份地区 ∨</a>
+            <a class="text-primary">所在行业 ∨</a>
+            <a class="text-primary">企业背景 ∨</a>
+            <a class="text-primary">企业类型 ∨</a>
+            <a class="text-primary">其他组织 ∨</a>
+            <a class="text-primary">资质标签 ∨</a>
+            <a class="text-primary">上市信息 ∨</a>
+            <a class="text-primary">企业规模 ∨</a>
+            <a class="text-primary">参保人数 ∨</a>
+            <a class="text-primary">注册资本 ∨</a>
+            <a class="text-primary">成立时间 ∨</a>
+            <a class="text-primary">启信分 ∨</a>
+            <a class="text-primary">失信被执行人 ∨</a>
+            <a class="text-primary">被执行人 ∨</a>
+            <a class="text-primary">终本案件 ∨</a>
+            <a class="text-primary">动产抵押 ∨</a>
+            <a class="text-primary">更多 ∨</a>
+        </div>
+
+        <!-- 已选筛选标签 -->
+        <div class="flex items-center gap-2 mb-3 text-xs">
+            <span>已选</span>
+            <span class="bg-gray-100 px-2 py-0.5 rounded flex items-center gap-1">
+                实控人控制等级 <i class="fa fa-times"></i>
+            </span>
+            <span class="ml-auto"><a class="text-primary">清空</a></span>
+        </div>
+
+        <!-- 结果操作栏 -->
+        <div class="flex justify-between items-center mb-3 text-xs">
+            <span>找到 30,000 条结果</span>
+            <div class="flex gap-2">
+                <input type="text" placeholder="输入企业或集团关键字" class="border border-gray-200 rounded px-2 py-1 w-56">
+                <button class="border border-gray-300 rounded px-3 py-1 flex items-center gap-1">
+                    营销 ∨
+                </button>
+                <button class="border border-gray-300 rounded px-3 py-1 flex items-center gap-1">
+                    <i class="fa fa-download"></i> 导出
+                </button>
+            </div>
+        </div>
+
+        <!-- 商机列表表格 -->
+        <div class="overflow-x-auto">
+            <table class="w-full border-collapse">
+                <thead>
+                    <tr>
+                        <th class="table-header w-8"><input type="checkbox"/></th>
+                        <th class="table-header">企业名称</th>
+                        <th class="table-header">发生日期</th>
+                        <th class="table-header">商机类型</th>
+                        <th class="table-header">商机价值</th>
+                        <th class="table-header">商机内容</th>
+                        <th class="table-header">操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="table-cell"><input type="checkbox"/></td>
+                        <td class="table-cell">国能新疆能源化工有限公司</td>
+                        <td class="table-cell">2026-08-20</td>
+                        <td class="table-cell"><span class="bg-orange-100 text-orange-600 px-1 rounded">新增供应商/项目</span></td>
+                        <td class="table-cell text-starBlue">★★★★★</td>
+                        <td class="table-cell">2026-08-20,国能新疆能源化工有限公司新增供应商扬州瀚智新能源装备有限公... <a class="text-primary">授信</a></td>
+                        <td class="table-cell"><a class="text-primary">公司商机 938</a></td>
+                    </tr>
+                    <tr>
+                        <td class="table-cell"><input type="checkbox"/></td>
+                        <td class="table-cell">国电电力发展股份有限公司</td>
+                        <td class="table-cell">2026-08-20</td>
+                        <td class="table-cell"><span class="bg-gray-100 text-gray-600 px-1 rounded">拟收购资产</span></td>
+                        <td class="table-cell text-starBlue">★★★★☆</td>
+                        <td class="table-cell">2026-08-20新增收购资产/计划收购资产事件,事件标题为【能源早报 | 国电电... <a class="text-primary">授信</a></td>
+                        <td class="table-cell"><a class="text-primary">公司商机 53</a></td>
+                    </tr>
+                    <tr>
+                        <td class="table-cell"><input type="checkbox"/></td>
+                        <td class="table-cell">国家能源集团宁夏煤业有限责任公司</td>
+                        <td class="table-cell">2026-08-20</td>
+                        <td class="table-cell"><span class="bg-orange-100 text-orange-600 px-1 rounded">国/央企工程类项目招标</span></td>
+                        <td class="table-cell text-starBlue">★★★★★</td>
+                        <td class="table-cell">2026-08-20,国家能源集团宁夏煤业有限责任公司发布了工程类项目招标【宁夏... <a class="text-primary">授信</a></td>
+                        <td class="table-cell"><a class="text-primary">公司商机 3,474</a></td>
+                    </tr>
+                    <tr>
+                        <td class="table-cell"><input type="checkbox"/></td>
+                        <td class="table-cell">国能神福（石狮）发电有限公司</td>
+                        <td class="table-cell">2026-08-20</td>
+                        <td class="table-cell"><span class="bg-orange-100 text-orange-600 px-1 rounded">新增供应商/项目</span></td>
+                        <td class="table-cell text-starBlue">★★★★★</td>
+                        <td class="table-cell">2026-08-20,国能神福（石狮）发电有限公司新增供应商泉州天星气体有限公司... <a class="text-primary">授信</a></td>
+                        <td class="table-cell"><a class="text-primary">公司商机 168</a></td>
+                    </tr>
+                    <tr>
+                        <td class="table-cell"><input type="checkbox"/></td>
+                        <td class="table-cell">国能经济技术研究院有限责任公司</td>
+                        <td class="table-cell">2026-08-20</td>
+                        <td class="table-cell"><span class="bg-orange-100 text-orange-600 px-1 rounded">新增供应商/项目</span></td>
+                        <td class="table-cell text-starBlue">★★★★★</td>
+                        <td class="table-cell">2026-08-20,国能经济技术研究院有限责任公司新增供应商国能大渡河大数据服... <a class="text-primary">授信</a></td>
+                        <td class="table-cell"><a class="text-primary">公司商机 16</a></td>
+                    </tr>
+                    <tr>
+                        <td class="table-cell"><input type="checkbox"/></td>
+                        <td class="table-cell">国能包头能源有限责任公司</td>
+                        <td class="table-cell">2026-08-20</td>
+                        <td class="table-cell"><span class="bg-orange-100 text-orange-600 px-1 rounded">新增供应商/项目</span></td>
+                        <td class="table-cell text-starBlue">★★★★★</td>
+                        <td class="table-cell">2026-08-20,国能包头能源有限责任公司新增供应商内蒙古中古商贸有限公司,... <a class="text-primary">授信</a></td>
+                        <td class="table-cell"><a class="text-primary">公司商机 183</a></td>
+                    </tr>
+                    <tr>
+                        <td class="table-cell"><input type="checkbox"/></td>
+                        <td class="table-cell">国能（柘荣）水电有限公司</td>
+                        <td class="table-cell">2026-08-20</td>
+                        <td class="table-cell"><span class="bg-orange-100 text-orange-600 px-1 rounded">新增供应商/项目</span></td>
+                        <td class="table-cell text-starBlue">★★★★★</td>
+                        <td class="table-cell">2026-08-20,国能（柘荣）水电有限公司新增供应商福建省陆禹建设有限公司,... <a class="text-primary">授信</a></td>
+                        <td class="table-cell"><a class="text-primary">公司商机 16</a></td>
+                    </tr>
+                    <tr>
+                        <td class="table-cell"><input type="checkbox"/></td>
+                        <td class="table-cell">国能水务环保有限公司</td>
+                        <td class="table-cell">2026-08-20</td>
+                        <td class="table-cell"><span class="bg-orange-100 text-orange-600 px-1 rounded">新增供应商/项目</span></td>
+                        <td class="table-cell text-starBlue">★★★★★</td>
+                        <td class="table-cell">2026-08-20,国能水务环保有限公司新增供应商上海蒙致工业自动化工程有限公... <a class="text-primary">授信</a></td>
+                        <td class="table-cell"><a class="text-primary">公司商机 243</a></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>
