@@ -45,3 +45,6 @@ _devlog.txt
 shot.mjs
 tmp/
 record/qixin/html文件菜单分组清单 - 副本.md
+
+# esbuild/dev 构建产物误写入的 dev/null
+dev/null
