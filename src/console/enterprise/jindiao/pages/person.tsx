@@ -2,6 +2,8 @@
 // 数据：本地样例 jdPerson.json（橘 Sam）
 import { useState } from 'react'
 import { EpPage, useSample, Sam } from '../../epCommon'
+import { usePageNav } from '../../../pageNav'
+import { useNavigate } from 'react-router-dom'
 
 type FilterRow = { title: string; items: string[] }
 type PersonRow = {
@@ -44,6 +46,22 @@ const seed: Data = {
       {
         title: '行业门类',
         items: ['农、林、牧、渔业', '采矿业', '制造业', '电力、热力、燃气及水生产和供应业', '建筑业', '批发和零售业', '交通运输、仓储和邮政业', '住宿和餐饮业', '信息传输、软件和信息技术服务业', '金融业', '房地产业'],
+      },
+      {
+        title: '风险等级',
+        items: ['高', '中', '低', '无风险'],
+      },
+      {
+        title: '身份角色',
+        items: ['法定代表人', '股东', '高管', '实控人', '合作伙伴'],
+      },
+      {
+        title: '企业状态',
+        items: ['存续', '在业', '注销', '吊销', '迁出'],
+      },
+      {
+        title: '登记状态',
+        items: ['正常', '异常经营', '严重违法', '限制高消费', '失信被执行人'],
       },
     ],
   },
@@ -100,7 +118,7 @@ function PersonAvatar({ name }: { name: string }) {
   )
 }
 
-function InfoLine({ label, values }: { label: string; values: string[] }) {
+function InfoLine({ label, values, onValue }: { label: string; values: string[]; onValue?: (v: string) => void }) {
   if (!values || values.length === 0) return null
   return (
     <div style={{ marginTop: 8, fontSize: 13, lineHeight: 1.7, color: '#334155' }}>
@@ -108,7 +126,12 @@ function InfoLine({ label, values }: { label: string; values: string[] }) {
       {values.map((v, i) => (
         <span key={v}>
           {i > 0 && <span style={{ color: '#CBD5E1' }}>、</span>}
-          <span style={{ color: '#1677ff', cursor: 'pointer' }}>{v}</span>
+          <span
+            style={{ color: '#1677ff', cursor: onValue ? 'pointer' : 'default' }}
+            onClick={() => onValue && onValue(v)}
+          >
+            {v}
+          </span>
         </span>
       ))}
     </div>
@@ -117,10 +140,13 @@ function InfoLine({ label, values }: { label: string; values: string[] }) {
 
 export default function JdPerson({ params }: { params: URLSearchParams }) {
   const [data] = useSample<Data>('jdPerson.json', seed)
+  const nav = usePageNav()
+  const rnav = useNavigate()
   const [kw, setKw] = useState(data.search.initialValue)
   const [chips, setChips] = useState<string[]>([data.search.initialValue])
   const [phase, setPhase] = useState<'idle' | 'loading' | 'done'>('idle')
   const [sel, setSel] = useState<Set<string>>(new Set())
+  const [expanded, setExpanded] = useState<Set<string>>(new Set())
 
   const startSearch = () => {
     const value = kw.trim()
@@ -282,21 +308,41 @@ export default function JdPerson({ params }: { params: URLSearchParams }) {
           </button>
         </div>
 
-        {data.filter.rows.map((row) => (
-          <div key={row.title} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginTop: 8 }}>
-            <span style={{ width: 64, flexShrink: 0, fontSize: 13, color: '#64748B', marginTop: 1 }}>{row.title}</span>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 14px', flex: 1, fontSize: 13, color: '#94A3B8' }}>
-              {row.items.map((it) => (
-                <span key={it} style={{ cursor: 'pointer', whiteSpace: 'nowrap' }}>
-                  {it}
-                </span>
-              ))}
+        {data.filter.rows.map((row) => {
+          const isOpen = expanded.has(row.title)
+          const shown = isOpen ? row.items : row.items.slice(0, 10)
+          return (
+            <div key={row.title} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginTop: 8 }}>
+              <span style={{ width: 64, flexShrink: 0, fontSize: 13, color: '#64748B', marginTop: 1 }}>{row.title}</span>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 14px', flex: 1, fontSize: 13, color: '#94A3B8' }}>
+                {shown.map((it) => (
+                  <span
+                    key={it}
+                    onClick={() => {
+                      if (!chips.includes(it)) setChips([...chips, it])
+                    }}
+                    style={{ cursor: 'pointer', whiteSpace: 'nowrap' }}
+                  >
+                    {it}
+                  </span>
+                ))}
+              </div>
+              {row.items.length > 10 && (
+                <button
+                  onClick={() => {
+                    const next = new Set(expanded)
+                    if (next.has(row.title)) next.delete(row.title)
+                    else next.add(row.title)
+                    setExpanded(next)
+                  }}
+                  style={{ border: 'none', background: 'transparent', color: '#1677ff', fontSize: 13, cursor: 'pointer', flexShrink: 0 }}
+                >
+                  {isOpen ? '收起 ▴' : `${data.filter.expand} ▾`}
+                </button>
+              )}
             </div>
-            <button style={{ border: 'none', background: 'transparent', color: '#1677ff', fontSize: 13, cursor: 'pointer', flexShrink: 0 }}>
-              {data.filter.expand} ▾
-            </button>
-          </div>
-        ))}
+          )
+        })}
       </div>
 
       {/* 结果区 */}
@@ -384,11 +430,16 @@ export default function JdPerson({ params }: { params: URLSearchParams }) {
                   />
                   <PersonAvatar name={r.name} />
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 18, fontWeight: 700, color: '#0F172A' }}>{r.name}</div>
-                    <InfoLine label="合作伙伴：" values={r.partners} />
-                    <InfoLine label="担任法定代表人的企业：" values={r.legalRep} />
-                    <InfoLine label="担任股东的企业：" values={r.shareholder} />
-                    <InfoLine label="担任高管的企业：" values={r.executive} />
+                    <div
+                      style={{ fontSize: 18, fontWeight: 700, color: '#0F172A', cursor: 'pointer' }}
+                      onClick={() => rnav('/console/dm/person-archive-basic?name=' + encodeURIComponent(r.name))}
+                    >
+                      {r.name}
+                    </div>
+                    <InfoLine label="合作伙伴：" values={r.partners} onValue={(v) => rnav('/console/dm/person-archive-basic?name=' + encodeURIComponent(v))} />
+                    <InfoLine label="担任法定代表人的企业：" values={r.legalRep} onValue={(v) => rnav('/console/ep/archive?base=arc-basic&name=' + encodeURIComponent(v))} />
+                    <InfoLine label="担任股东的企业：" values={r.shareholder} onValue={(v) => rnav('/console/ep/archive?base=arc-basic&name=' + encodeURIComponent(v))} />
+                    <InfoLine label="担任高管的企业：" values={r.executive} onValue={(v) => rnav('/console/ep/archive?base=arc-basic&name=' + encodeURIComponent(v))} />
                   </div>
                 </div>
               ))}

@@ -3,7 +3,8 @@
 import { useState } from 'react'
 import type { CSSProperties } from 'react'
 import { createPortal } from 'react-dom'
-import { EpPage, useSample, Sam } from '../../epCommon'
+import { EpPage, EpBtn, useSample, Sam } from '../../epCommon'
+import { usePageNav } from '../../../pageNav'
 
 type StdRow1 = { id: number; name: string; benefitType: string; position: string; holdType: string; ratio: string; path: string; date: string }
 type StdRow3 = { id: number; name: string; benefitType: string; position: string; holdType: string; ratio: string; date: string; reason: string }
@@ -339,13 +340,23 @@ function EvidenceModal({ data, open, onClose }: { data: EvidenceModal; open: boo
 
 export default function JdBeneficiaryResult({ params }: { params: URLSearchParams }) {
   const [data] = useSample<Data>('jdBeneficiaryResult.json', seed)
+  const { back } = usePageNav()
   const [mgrOpen, setMgrOpen] = useState(false)
   const [evidenceOpen, setEvidenceOpen] = useState(false)
   const co = data.company
   const ind = data.industry
 
   return (
-    <EpPage title={data.pageTitle} crumb={data.crumb} actions={<Sam value={data.source} />}>
+    <EpPage
+      title={data.pageTitle}
+      crumb={data.crumb}
+      actions={
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <EpBtn ghost onClick={() => back('/console/ep/jd-beneficiary')}>返回</EpBtn>
+          <Sam value={data.source} />
+        </div>
+      }
+    >
       {/* 企业头部摘要 */}
       <div style={{ background: '#fff', borderRadius: 10, border: '1px solid #E8E8E8', padding: '18px 22px' }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 14 }}>

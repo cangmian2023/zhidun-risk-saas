@@ -285,6 +285,10 @@ export default function DmMapProspect() {
                 )}
                 <button className="sr-filter-reset" onClick={resetMapFilters}>清空筛选</button>
               </div>
+              <div className="sr-titlebar">
+                <span className="sr-title">企业搜索结果</span>
+                <span className="sr-subtitle">基于地图圈选的周边企业</span>
+              </div>
               <div className="sr-selected">
                 <span className="sr-selected-tag">上海</span>
                 <span className="sr-selected-tag">上海合合信息科技股份有限公司</span>
@@ -293,10 +297,9 @@ export default function DmMapProspect() {
               <div className="sr-toolbar">
                 <span className="sr-count">找到 <b>16885</b> 条</span>
                 <div className="sr-toolbar-right">
-                  <span className="sr-sort">综合排序 ▾</span>
-                  <span className="sr-btn sr-btn-yellow">营销</span>
-                  <span className="sr-btn sr-btn-blue">关注</span>
-                  <span className="sr-btn sr-btn-green">导出</span>
+                  <span className="sr-btn sr-btn-blue" onClick={() => {}}>营销</span>
+                  <span className="sr-btn sr-btn-blue" onClick={() => {}}>关注</span>
+                  <span className="sr-btn sr-btn-blue" onClick={() => {}}>导出</span>
                 </div>
               </div>
               <div className="sr-table">
@@ -659,7 +662,7 @@ export default function DmMapProspect() {
 
         /* ===== 右侧抽屉：企业搜索结果（对齐 地图拓客搜索详情弹窗 设计稿） ===== */
         .sr-topbar {
-          display: flex; align-items: center; flex-wrap: wrap; padding: 14px 20px;
+          display: flex; align-items: center; flex-wrap: wrap; gap: 12px 16px; padding: 16px 20px;
           border-bottom: 1px solid #E5E6EB; background: #fff;
         }
         .sr-topbar-item {
@@ -702,6 +705,12 @@ export default function DmMapProspect() {
           background: #E8F3FF; color: #165DFF; font-size: 16px; border-radius: 4px;
           white-space: nowrap; line-height: 1.6;
         }
+        .sr-titlebar {
+          display: flex; align-items: baseline; gap: 10px; padding: 16px 20px 12px;
+          background: #fff; border-bottom: 1px solid #E5E6EB;
+        }
+        .sr-title { font-size: 18px; font-weight: 700; color: #1D2129; }
+        .sr-subtitle { font-size: 13px; color: #86909C; }
         .sr-toolbar { display: flex; align-items: center; padding: 16px 20px; background: #fff; }
         .sr-count { font-size: 16px; color: #1D2129; white-space: nowrap; }
         .sr-count b { color: #FF7D00; font-weight: 600; }
@@ -720,10 +729,9 @@ export default function DmMapProspect() {
           padding: 0 18px; border: 1px solid #C9CDD4; border-radius: 4px; background: #fff;
           color: #1D2129; font-size: 15px; cursor: pointer; white-space: nowrap;
         }
-        .sr-btn:hover { border-color: #165DFF; color: #165DFF; }
-        .sr-btn-yellow { background: #165DFF; border-color: #165DFF; color: #fff; }
-        .sr-btn-blue { background: #165DFF; border-color: #165DFF; color: #fff; }
-        .sr-btn-green { background: #00B42A; border-color: #00B42A; color: #fff; }
+        .sr-btn:hover { border-color: #1f47f5; color: #1f47f5; }
+        .sr-btn-blue { background: #1f47f5; border-color: #1f47f5; color: #fff; }
+        .sr-btn-blue:hover { background: #1a3fd6; border-color: #1a3fd6; color: #fff; }
         .sr-table { width: 100%; overflow-x: auto; background: #fff; }
         .sr-tr {
           display: flex; align-items: center; border-bottom: 1px solid #F2F3F5;

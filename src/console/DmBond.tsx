@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { PageShell } from './PageShell'
+import { usePageNav } from './pageNav'
+import { RightDrawer } from './components/ui'
 
 /* ============ 图标（系统未引入 FontAwesome，按 HTML 视觉等价替换为内联 SVG） ============ */
 const ChevronDown = () => (
@@ -204,7 +206,25 @@ const GUARANTEE_ROWS = [
   { company: '上海陆家嘴金融发展有限公司', bond: '23LJZ优', type: '券商专项资产管理', guarantor: '上海陆家嘴金融贸易区开发股份有限公司', start: '2041-06-06/-', way: '抵押担保', surety: '-', market: '上海证券交易所' },
 ]
 
+/* Tab2 进程明细（查看弹窗 + 里程碑节点时间轴） */
+const APPROVE_DETAIL = {
+  bond: '和县城市建设投资有限责任公司2021年面向专业投资者非公开发行公司债券',
+  issuer: '和县城市建设投资有限责任公司',
+  amount: '8亿',
+  lead: '开源证券股份有限公司',
+  status: '已受理',
+  milestones: [
+    { date: '2021-09-10', node: '项目受理', done: true, desc: '发行人提交申请材料，交易所正式受理' },
+    { date: '2021-10-15', node: '反馈意见', done: true, desc: '收到审核反馈意见，要求补充说明' },
+    { date: '2021-11-20', node: '反馈回复', done: true, desc: '主承销商提交反馈意见回复' },
+    { date: '2021-12-31', node: '已受理', done: true, desc: '审核通过，项目状态更新为已受理' },
+    { date: '2022-03-01', node: '注册生效', done: false, desc: '待发行注册' },
+    { date: '—', node: '发行完成', done: false, desc: '尚未发行' },
+  ],
+}
+
 export default function DmBond() {
+  const { goDetail } = usePageNav()
   const [tab, setTab] = useState('债券公告')
   const [sub, setSub] = useState('发债审核进程')
   /* Tab3/5/6 tag 选中态 */
@@ -215,6 +235,7 @@ export default function DmBond() {
   const [guMarket, setGuMarket] = useState('不限')
   const [guBondType, setGuBondType] = useState('不限')
   const [guWay, setGuWay] = useState('不限')
+  const [approveOpen, setApproveOpen] = useState(false)
 
   return (
     <div style={{ padding: 24, maxWidth: 2400, margin: '0 auto' }}>
@@ -260,7 +281,14 @@ export default function DmBond() {
             <tbody>
               {ANNOUNCE_ROWS.map((r) => (
                 <tr key={r.company + r.date} className="odd:bg-white even:bg-[#f8f8fe]">
-                  <td className={tdCls}>{r.company}</td>
+                  <td className={tdCls}>
+                    <span
+                      className="cursor-pointer text-[#2b65e8] hover:underline"
+                      onClick={() => goDetail('/console/dm/ent-archive-basic', { name: r.company })}
+                    >
+                      {r.company}
+                    </span>
+                  </td>
                   <td className={tdCls}>{r.bond}</td>
                   <td className={tdCls}>
                     {r.content}
@@ -320,7 +348,12 @@ export default function DmBond() {
                       <td className={tdCls}>{r.bond}</td>
                       <td className={tdCls}>{r.amount}</td>
                       <td className={tdCls}>
-                        {r.issuer}
+                        <span
+                          className="cursor-pointer text-[#2b65e8] hover:underline"
+                          onClick={() => goDetail('/console/dm/ent-archive-basic', { name: r.issuer })}
+                        >
+                          {r.issuer}
+                        </span>
                         <br />
                         <TagSmall><InfoIcon />{r.issuerTag}</TagSmall>
                       </td>
@@ -329,7 +362,7 @@ export default function DmBond() {
                         {r.lead} <TagSmall><InfoIcon />{r.leadTag}</TagSmall>
                       </td>
                       <td className={tdCls}>{r.date}</td>
-                      <td className={tdCls}><LinkBlue>查看</LinkBlue></td>
+                      <td className={tdCls}><LinkBlue><span onClick={() => setApproveOpen(true)}>查看</span></LinkBlue></td>
                     </tr>
                   ))}
                 </tbody>
@@ -364,7 +397,13 @@ export default function DmBond() {
               {ISSUE_ROWS.map((r) => (
                 <tr key={r.bond} className="odd:bg-white even:bg-[#f8f8fe]">
                   <td className={tdCls}>
-                    {r.bond} {r.tags.map((t) => <TagSmall key={t}>{t}</TagSmall>)}
+                    <span
+                      className="cursor-pointer text-[#2b65e8] hover:underline"
+                      onClick={() => goDetail('/console/dm/bond-detail', { name: r.bond, issuer: r.issuer })}
+                    >
+                      {r.bond}
+                    </span>
+                    {r.tags.map((t) => <TagSmall key={t}>{t}</TagSmall>)}
                     <br />
                     <span className="text-[#555]">{r.lead}</span>
                     <br />
@@ -406,7 +445,14 @@ export default function DmBond() {
                 <tr key={i} className="odd:bg-white even:bg-[#f8f8fe]">
                   <td className={tdCls}>{r.date}</td>
                   <td className={tdCls}>{r.bond}</td>
-                  <td className={tdCls}>{r.issuer}</td>
+                  <td className={tdCls}>
+                    <span
+                      className="cursor-pointer text-[#2b65e8] hover:underline"
+                      onClick={() => goDetail('/console/dm/ent-archive-basic', { name: r.issuer })}
+                    >
+                      {r.issuer}
+                    </span>
+                  </td>
                   <td className={tdCls}>{r.type}</td>
                   <td className={tdCls}>{r.content}</td>
                 </tr>
@@ -507,7 +553,14 @@ export default function DmBond() {
               {GUARANTEE_ROWS.map((r, i) => (
                 <tr key={i} className="odd:bg-white even:bg-[#f8f8fe]">
                   <td className={tdCls}><input type="checkbox" /></td>
-                  <td className={tdCls}>{r.company}</td>
+                  <td className={tdCls}>
+                    <span
+                      className="cursor-pointer text-[#2b65e8] hover:underline"
+                      onClick={() => goDetail('/console/dm/ent-archive-basic', { name: r.company })}
+                    >
+                      {r.company}
+                    </span>
+                  </td>
                   <td className={tdCls}>{r.bond}</td>
                   <td className={tdCls}>{r.type}</td>
                   <td className={tdCls}>{r.guarantor}</td>
@@ -521,6 +574,39 @@ export default function DmBond() {
           </table></div>
         </div>
       )}
+
+      {/* 进程查看弹窗（里程碑节点时间轴） */}
+      <RightDrawer open={approveOpen} onClose={() => setApproveOpen(false)} title="审核进程" width={560}>
+        <div className="px-1">
+          <div className="mb-4 rounded-md bg-[#f7f8fc] p-4">
+            <div className="mb-2 text-[15px] font-semibold text-[#111]">{APPROVE_DETAIL.bond}</div>
+            <div className="grid grid-cols-2 gap-y-1.5 text-sm text-[#444]">
+              <div>发行人：{APPROVE_DETAIL.issuer}</div>
+              <div>拟发行金额：{APPROVE_DETAIL.amount}</div>
+              <div>主承销商：{APPROVE_DETAIL.lead}</div>
+              <div>当前状态：<span className="font-medium text-[#278027]">{APPROVE_DETAIL.status}</span></div>
+            </div>
+          </div>
+          <div className="mb-3 text-[15px] font-semibold text-[#111]">里程碑节点</div>
+          <div className="relative pl-6">
+            <div className="absolute left-[7px] top-1 bottom-1 w-px bg-[#d8dbe6]" />
+            {APPROVE_DETAIL.milestones.map((m, i) => (
+              <div key={i} className="relative mb-5 last:mb-0">
+                <span
+                  className={`absolute -left-6 top-1 h-3.5 w-3.5 rounded-full border-2 ${
+                    m.done ? 'border-[#278027] bg-[#278027]' : 'border-[#c0c4cc] bg-white'
+                  }`}
+                />
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium text-[#111]">{m.node}</span>
+                  <span className="text-xs text-[#999]">{m.date}</span>
+                </div>
+                <div className="mt-0.5 text-xs text-[#666]">{m.desc}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </RightDrawer>
     </div>
   )
 }

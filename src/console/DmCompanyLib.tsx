@@ -211,7 +211,7 @@ function Icon({ name, size = 36 }: { name: string; size?: number }) {
       strokeWidth="1.5"
       strokeLinecap="round"
       strokeLinejoin="round"
-      className="text-[#1677ff]"
+      className="text-[#1f47f5]"
       aria-hidden
     >
       {ICON_PATHS[name] ?? ICON_PATHS.fund}
@@ -325,7 +325,7 @@ function LibCard({ card, onClick }: { card: Card; onClick: () => void }) {
   return (
     <div
       onClick={onClick}
-      className="group relative cursor-pointer rounded border border-slate-200 bg-white p-4 transition hover:border-[#1677ff] hover:shadow-sm"
+      className="group relative cursor-pointer rounded border border-slate-200 bg-white p-4 transition hover:border-[#1f47f5] hover:shadow-sm"
     >
       {card.tag && (
         <span className="absolute right-2 top-2 rounded bg-rose-500 px-1.5 py-0.5 text-[10px] font-medium leading-none text-white">
@@ -385,12 +385,24 @@ export default function DmCompanyLib() {
     goDetail('/console/dm/company-lib-list', { cat: card.id, name: card.title })
   }
 
-  return (
-    <div className="min-h-full bg-gray-50">
-      <PageShell title="企业库" crumb="数字营销 / 企业库" legend={false} />
+  // 吸顶：主题 tab 吸到 PageShell 标题下
+  const headerRef = useRef<HTMLDivElement>(null)
+  const [headH, setHeadH] = useState(64)
+  useEffect(() => {
+    const measure = () => { if (headerRef.current) setHeadH(headerRef.current.offsetHeight) }
+    measure()
+    window.addEventListener('resize', measure)
+    return () => window.removeEventListener('resize', measure)
+  }, [])
 
-      {/* 主题 tab 栏（吸顶） */}
-      <div className="sticky top-0 z-10 border-b border-slate-200 bg-white">
+  return (
+    <div className="min-h-full bg-[#f7f8fa]">
+      <div ref={headerRef}>
+        <PageShell title="企业库" crumb="数字营销 / 企业库" legend={false} />
+      </div>
+
+      {/* 主题 tab 栏（吸顶到标题下） */}
+      <div className="sticky z-10 border-b border-slate-200 bg-white" style={{ top: 56 + headH }}>
         <div className="mx-auto max-w-[1200px] px-4">
           <div className="flex flex-wrap gap-x-6">
             {SECTIONS.map((s) => {
@@ -400,13 +412,13 @@ export default function DmCompanyLib() {
                   key={s.id}
                   onClick={() => handleTabClick(s.id)}
                   className={`relative cursor-pointer py-3 text-sm transition ${
-                    active ? 'font-medium text-[#1677ff]' : 'text-slate-600 hover:text-slate-800'
+                    active ? 'font-medium text-[#1f47f5]' : 'text-slate-600 hover:text-slate-800'
                   }`}
                 >
                   {s.label}
                   <span
                     className={`absolute bottom-0 left-0 right-0 h-0.5 ${
-                      active ? 'bg-[#1677ff]' : 'bg-transparent'
+                      active ? 'bg-[#1f47f5]' : 'bg-transparent'
                     }`}
                   />
                 </button>

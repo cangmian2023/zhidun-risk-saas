@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { usePageNav } from './pageNav';
 import { PageShell } from './PageShell';
 import { Panel, DataTable, Modal } from '../components/ui';
 import type { Column, Row } from '../components/ui';
@@ -152,8 +153,10 @@ export default function DmGroupAccountDetail() {
   const name = params.get('name') || '集团详情';
   const backUrl = params.get('back') || `/console/${params.get('from') || 'dm'}/group-account`;
 
+  const { goDetail } = usePageNav()
   const [tab, setTab] = useState<string>('集团信息');
   const [bizOpen, setBizOpen] = useState(false);
+  const [bizFilters, setBizFilters] = useState<Record<string, string>>({});
 
   const groupColumns: Column[] = [
     { key: 'company', label: '公司名称', render: (r: Row) => (r as GroupRow).company },
@@ -169,8 +172,40 @@ export default function DmGroupAccountDetail() {
     { key: 'profit', label: '净利润↕', render: (r: Row) => (r as GroupRow).profit },
   ]
 
+  /* 商机列表筛选配置：按需求补充的筛选项与下拉内容 */
+  const BIZ_FILTER_OPTIONS: { key: string; label: string; options: string[] }[] = [
+    { key: 'bizSel', label: '选择商机', options: ['全部商机', '授信商机', '融资商机', '担保商机'] },
+    { key: 'date', label: '发生日期', options: ['不限', '今天', '近7天', '近30天', '近3个月', '近1年'] },
+    { key: 'value', label: '商机价值', options: ['不限', '1星', '2星', '3星', '4星', '5星'] },
+    { key: 'chance', label: '业务机会', options: ['不限', '信贷', '供应链金融', '投资并购'] },
+    { key: 'type', label: '商机类型', options: ['不限', '授信', '融资', '担保', '其他'] },
+    { key: 'province', label: '省份地区', options: ['不限', '北京市', '上海市', '广东省', '江苏省', '浙江省', '四川省'] },
+    { key: 'industry', label: '所在行业', options: ['不限', '制造业', '建筑业', '金融业', '信息技术', '批发零售'] },
+    { key: 'bg', label: '企业背景', options: ['不限', '国企', '民营', '外资', '上市公司'] },
+    { key: 'etype', label: '企业类型', options: ['不限', '有限责任公司', '股份有限公司', '国有企业'] },
+    { key: 'org', label: '其他组织', options: ['不限', '事业单位', '社会团体', '民办非企业'] },
+    { key: 'qual', label: '资质标签', options: ['不限', '高新企业', '科技型中小企业', '专精特新'] },
+    { key: 'list', label: '上市信息', options: ['不限', '已上市', '未上市', '新三板'] },
+    { key: 'scale', label: '企业规模', options: ['不限', '大型', '中型', '小型', '微型'] },
+    { key: 'insured', label: '参保人数', options: ['不限', '0-50', '50-200', '200-500', '500以上'] },
+    { key: 'regcap', label: '注册资本', options: ['不限', '0-100万', '100-1000万', '1000万-1亿', '1亿以上'] },
+    { key: 'found', label: '成立时间', options: ['不限', '1年内', '1-3年', '3-5年', '5年以上'] },
+    { key: 'health', label: '企业健康度', options: ['不限', '优秀', '良好', '一般', '预警'] },
+    { key: 'sx', label: '失信被执行人', options: ['不限', '是', '否'] },
+    { key: 'zx', label: '被执行人', options: ['不限', '是', '否'] },
+    { key: 'zb', label: '终本案件', options: ['不限', '是', '否'] },
+    { key: 'dy', label: '动产抵押', options: ['不限', '是', '否'] },
+  ]
+
   const bizColumns: Column[] = [
-    { key: 'company', label: '企业名称', render: (r: Row) => (r as BizRow).company },
+    { key: 'company', label: '企业名称', render: (r: Row) => (
+      <span
+        className="text-[#165DFF] cursor-pointer hover:underline"
+        onClick={() => goDetail('/console/dm/ent-archive-basic', { name: (r as BizRow).company })}
+      >
+        {(r as BizRow).company}
+      </span>
+    ) },
     { key: 'date', label: '发生日期', render: (r: Row) => (r as BizRow).date },
     {
       key: 'bizType',
@@ -292,28 +327,41 @@ export default function DmGroupAccountDetail() {
         {/* ========== Tab2：商机信息 ========== */}
         {tab === '商机信息' && (
           <Panel title="商机列表">
-            {/* 筛选栏第一行 */}
-            <div className="flex flex-wrap gap-2 mb-2 text-xs">
-              <span>选择商机</span>
-              {['发生日期', '商机价值', '业务机会', '商机类型'].map((f) => (
-                <span key={f} className="text-[#165DFF] cursor-pointer hover:opacity-80">{f} ∨</span>
+            {/* 筛选栏：统一下拉筛选 */}
+            <div className="flex flex-wrap items-center gap-2 mb-3">
+              {BIZ_FILTER_OPTIONS.map((f) => (
+                <select
+                  key={f.key}
+                  value={bizFilters[f.key] || f.options[0]}
+                  onChange={(e) => setBizFilters((s) => ({ ...s, [f.key]: e.target.value }))}
+                  className="rounded border border-gray-200 bg-white px-2 py-1 text-xs text-gray-700 outline-none hover:border-[#1a53ff] focus:border-[#1a53ff]"
+                >
+                  <option value={f.options[0]}>{f.label}</option>
+                  {f.options.slice(1).map((o) => (
+                    <option key={o} value={o}>{o}</option>
+                  ))}
+                </select>
               ))}
             </div>
-            {/* 筛选栏第二行 */}
-            <div className="flex flex-wrap gap-2 mb-3 text-xs">
-              <span className="text-[#165DFF] cursor-pointer hover:opacity-80">更多筛选 ∨</span>
-              {['省份地区', '所在行业', '企业背景', '企业类型', '其他组织', '资质标签', '上市信息', '企业规模', '参保人数', '注册资本', '成立时间', '企业健康度', '失信被执行人', '被执行人', '终本案件', '动产抵押'].map((f) => (
-                <span key={f} className="text-[#165DFF] cursor-pointer hover:opacity-80">{f} ∨</span>
-              ))}
-              <span className="ml-auto text-[#165DFF] cursor-pointer hover:opacity-80">更多 ∨</span>
-            </div>
-            {/* 已选筛选标签 */}
+            {/* 已选筛选标签 + 清空 */}
             <div className="flex items-center gap-2 mb-3 text-xs">
-              <span>已选</span>
-              <span className="bg-gray-100 px-2 py-0.5 rounded flex items-center gap-1">
-                实控人控制等级 <span className="cursor-pointer">×</span>
-              </span>
-              <span className="ml-auto text-[#165DFF] cursor-pointer">清空</span>
+              <span className="text-[#76788b]">已选</span>
+              {Object.entries(bizFilters).filter(([, v]) => v && v !== '不限' && v !== '全部商机').map(([k, v]) => {
+                const label = BIZ_FILTER_OPTIONS.find((x) => x.key === k)?.label ?? k
+                return (
+                  <span key={k} className="bg-gray-100 px-2 py-0.5 rounded flex items-center gap-1">
+                    {label}：{v}
+                    <span
+                      className="cursor-pointer"
+                      onClick={() => setBizFilters((s) => ({ ...s, [k]: '' }))}
+                    >×</span>
+                  </span>
+                )
+              })}
+              <span
+                className="ml-auto text-[#165DFF] cursor-pointer hover:underline"
+                onClick={() => setBizFilters({})}
+              >清空</span>
             </div>
             {/* 结果操作栏 */}
             <div className="flex justify-between items-center mb-3 text-xs">

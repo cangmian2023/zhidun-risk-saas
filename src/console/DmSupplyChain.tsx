@@ -1,3 +1,5 @@
+import { useMemo, useState } from 'react'
+import { usePageNav } from './pageNav'
 import { PageShell } from './PageShell'
 
 /* ============ 图标（等价 HTML：查询/营销/导出/下拉） ============ */
@@ -33,35 +35,73 @@ const LinkBlue = ({ children }: { children: React.ReactNode }) => (
   <span className="cursor-pointer text-[#2b65e8]">{children}</span>
 )
 
+/* 供应链筛选配置 */
+const SUPPLY_FILTERS: { key: string; label: string; options: string[] }[] = [
+  { key: 'health', label: '企业健康度', options: ['不限', '优秀', '良好', '一般', '预警'] },
+  { key: 'rel', label: '企业关系', options: ['不限', '供应商', '客户', '控股', '参股'] },
+  { key: 'found', label: '成立时间', options: ['不限', '1年内', '1-3年', '3-5年', '5年以上'] },
+  { key: 'region', label: '省份地区', options: ['不限', '广东省', '北京市', '上海市', '江苏省', '浙江省', '四川省'] },
+  { key: 'type', label: '企业类型', options: ['不限', '有限责任公司', '股份有限公司', '国有企业', '外商投资企业'] },
+]
+
 export default function DmSupplyChain() {
+  const { goDetail } = usePageNav()
+  const [filters, setFilters] = useState<Record<string, string>>({})
+  const [kw, setKw] = useState('')
+
+  const filtered = useMemo(
+    () => ROWS.filter((r) => {
+      if (kw.trim() && !r.supplier.includes(kw.trim())) return false
+      const f = filters
+      if (f.health && f.health !== '不限' && f.health === '优秀' && Number(r.score) < 700) return false
+      if (f.region && f.region !== '不限' && !r.region.includes(f.region.replace('省', ''))) return false
+      if (f.type && f.type !== '不限' && !r.type.includes(f.type.replace('（', '(').replace('）', ')'))) return false
+      return true
+    }),
+    [kw, filters],
+  )
+
   return (
-    <div style={{ padding: 16 }} className="bg-white text-sm text-[#222]">
+    <div style={{ padding: '16px 24px 24px' }} className="bg-white text-sm text-[#222]">
       <PageShell title="供应链" crumb="数字营销 / 商机挖掘" subtitle="产业链上下游企业挖掘与供应链金融商机识别" legend={false} />
 
       {/* ============ 搜索区域 ============ */}
       <div className="mb-8 flex items-center justify-center gap-3">
         <input
-          defaultValue="广州视源电子科技股份有限公司"
+          value={kw}
+          onChange={(e) => setKw(e.target.value)}
+          placeholder="输入企业名称查询"
           className="w-[520px] rounded-md bg-[#f5f6fa] px-4 py-3 text-[16px] outline-none"
         />
-        <button className="cursor-pointer rounded bg-[#f7c548] px-7 py-3 text-[16px] hover:opacity-90"><SearchIcon /> 查询</button>
+        <button className="cursor-pointer rounded bg-[#1f47f5] px-7 py-3 text-[16px] text-white hover:opacity-90"><SearchIcon /> 查询</button>
         <span className="cursor-pointer text-[16px] text-[#334155]">批量查询</span>
       </div>
 
       {/* ============ 筛选栏 ============ */}
-      <div className="mb-4 flex items-center gap-9 bg-[#f5f6fa] px-4 py-3.5">
-        <span className="cursor-pointer text-[16px] font-medium">基础信息</span>
-        {['企业健康度', '企业关系', '成立时间', '省份地区', '企业类型'].map((f) => (
-          <span key={f} className="flex cursor-pointer items-center gap-1 text-[16px]">
-            {f} <ArrowDown />
-          </span>
+      <div className="mb-4 flex flex-wrap items-center gap-3 bg-[#f5f6fa] px-4 py-3.5">
+        {SUPPLY_FILTERS.map((f) => (
+          <select
+            key={f.key}
+            value={filters[f.key] || f.options[0]}
+            onChange={(e) => setFilters((s) => ({ ...s, [f.key]: e.target.value }))}
+            className="rounded border border-[#d8dbe4] bg-white px-2 py-1.5 text-[15px] text-[#222] outline-none hover:border-[#1f47f5] focus:border-[#1f47f5]"
+          >
+            <option value={f.options[0]}>{f.label}</option>
+            {f.options.slice(1).map((o) => (
+              <option key={o} value={o}>{o}</option>
+            ))}
+          </select>
         ))}
+        <span
+          className="ml-auto cursor-pointer text-[15px] text-[#1f47f5] hover:underline"
+          onClick={() => setFilters({})}
+        >清空</span>
       </div>
 
       {/* ============ 顶部操作栏 ============ */}
       <div className="mb-2.5 flex items-center justify-between">
         <div className="text-[16px]">
-          找到 <span className="text-[#238b23]">43</span> 条结果
+          找到 <span className="text-[#238b23]">{filtered.length}</span> 条结果
         </div>
         <div className="flex items-center gap-4">
           <input placeholder="查询/上传企业" className="rounded border border-[#b8bcc8] px-3 py-2 text-[15px] outline-none placeholder:text-gray-400" />
@@ -88,10 +128,15 @@ export default function DmSupplyChain() {
           </tr>
         </thead>
         <tbody>
-          {ROWS.map((r) => (
+          {filtered.map((r) => (
             <tr key={r.supplier} className="transition hover:bg-[#fafbfc]">
               <td className={tdCls}><input type="checkbox" /></td>
-              <td className={tdCls}><LinkBlue>{r.supplier}</LinkBlue></td>
+              <td className={tdCls}>
+                <span
+                  className="cursor-pointer text-[#2b65e8] hover:underline"
+                  onClick={() => goDetail('/console/dm/ent-archive-basic', { name: r.supplier })}
+                >{r.supplier}</span>
+              </td>
               <td className={tdCls}>广州视源电子科技股份有限公司</td>
               <td className={tdCls}>{r.rel}</td>
               <td className={tdCls}>{r.score}</td>
@@ -100,7 +145,12 @@ export default function DmSupplyChain() {
               <td className={tdCls}>{r.type}</td>
               <td className={tdCls}>{r.pub}</td>
               <td className={tdCls}>{r.source}</td>
-              <td className={tdCls}><LinkBlue>企业尽调</LinkBlue></td>
+              <td className={tdCls}>
+                <span
+                  className="cursor-pointer text-[#2b65e8] hover:underline"
+                  onClick={() => goDetail('/console/ep/jd-company', { name: r.supplier })}
+                >企业尽调</span>
+              </td>
             </tr>
           ))}
         </tbody>

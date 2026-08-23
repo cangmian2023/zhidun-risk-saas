@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { PageShell } from './PageShell'
+import { usePageNav } from './pageNav'
 
 /* ============ 图标（等价 HTML：收起/图表/搜索/排序/涨跌箭头） ============ */
 const ArrowDown = ({ active }: { active?: boolean }) => (
@@ -83,6 +84,42 @@ const COMPANY_ROWS: CompanyRow[] = [
     ],
     roe: '7.27%',
   },
+  {
+    rank: 3,
+    name: '陕西煤业股份有限公司',
+    cells: [
+      { value: '847.21', yoy: '12.45%' },
+      { value: '198.33', yoy: '15.20%' },
+      { value: '1820.56', yoy: '3.11%' },
+      { value: '1105.42', yoy: '2.88%' },
+      { value: '61.28', yoy: '18.74%' },
+    ],
+    roe: '12.05%',
+  },
+  {
+    rank: 4,
+    name: '兖矿能源集团股份有限公司',
+    cells: [
+      { value: '756.84', yoy: '9.33%' },
+      { value: '142.07', yoy: '11.62%' },
+      { value: '1654.30', yoy: '2.45%' },
+      { value: '988.16', yoy: '1.92%' },
+      { value: '52.73', yoy: '13.05%' },
+    ],
+    roe: '11.42%',
+  },
+  {
+    rank: 5,
+    name: '山西焦煤能源集团股份有限公司',
+    cells: [
+      { value: '521.66', yoy: '-4.18%' },
+      { value: '61.58', yoy: '-8.77%' },
+      { value: '1120.88', yoy: '1.36%' },
+      { value: '654.20', yoy: '0.54%' },
+      { value: '38.91', yoy: '-5.62%' },
+    ],
+    roe: '8.94%',
+  },
 ]
 
 /* 同比涨跌颜色：涨红 #f5222d / 跌绿 #52c41a（HTML .yoy.up/.yoy.down） */
@@ -97,6 +134,7 @@ function YoY({ yoy }: { yoy: string }) {
 }
 
 export default function DmPeerAnalysis() {
+  const { goDetail } = usePageNav()
   const [industry, setIndustry] = useState('煤炭')
   const [collapsed, setCollapsed] = useState(false)
   const [selected, setSelected] = useState<string[]>(INITIAL_SELECTED)
@@ -250,7 +288,12 @@ export default function DmPeerAnalysis() {
                 <tr key={r.rank} className="transition hover:bg-[#fafbfc]">
                   <td className="border-b border-[#f0f0f0] px-2.5 py-3.5 text-center text-sm text-[#666]">{r.rank}</td>
                   <td className="border-b border-[#f0f0f0] px-2.5 py-3.5">
-                    <span className="text-sm font-medium text-[#1a1a1a]">{r.name}</span>
+                    <span
+                      className="cursor-pointer text-sm font-medium text-[#1a1a1a] hover:text-[#1f47f5] hover:underline"
+                      onClick={() => goDetail('/console/dm/ent-archive-basic', { name: r.name })}
+                    >
+                      {r.name}
+                    </span>
                   </td>
                   {r.cells.slice(0, 4).map((c, i) => (
                     <td key={i} className="border-b border-[#f0f0f0] px-2.5 py-3.5">

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { EpPage, EpBtn, useSample, Sam } from '../../epCommon'
 import { usePageNav } from '../../../pageNav'
+import { Modal } from '../../../../components/ui'
 
 type Target = { id: string; name: string; type: 'company' | 'person' }
 type Filter = { key: string; label: string }
@@ -110,6 +111,23 @@ type Data = {
     legend: LegendItem[]
     graph: { width: number; height: number; nodes: GraphNode[]; edges: GraphEdge[] }
     loading: { text: string; spinText: string }
+    nodeDetail: {
+      company: {
+        name: string
+        status: string
+        legalPerson: string
+        regCapital: string
+        foundDate: string
+        industry: string
+        shareholders: { name: string; ratio: string }[]
+      }
+      person: {
+        name: string
+        partners: string[]
+        intro: string
+        roles: { name: string; capital: string; status: string }[]
+      }
+    }
   }
   group: GroupData
   related: RelatedData
@@ -238,6 +256,33 @@ const seed: Data = {
     loading: {
       text: '关系排查中…',
       spinText: '正在计算关系路径',
+    },
+    nodeDetail: {
+      company: {
+        name: '上海中城联盟投资管理股份有限公司',
+        status: '存续（在营、开业、在册）',
+        legalPerson: '戴大为',
+        regCapital: '188174.5 万人民币',
+        foundDate: '2002-09-28',
+        industry: '投资与资产管理',
+        shareholders: [
+          { name: '其他股东', ratio: '-' },
+          { name: '万科企业股份有限公司', ratio: '4.73%' },
+          { name: '万通投资控股股份有限公司', ratio: '1.89%' },
+          { name: '上海三盛宏业投资（集团）有限责任公司', ratio: '-' },
+          { name: '上海信义房屋中介咨询有限公司', ratio: '1.89%' },
+        ],
+      },
+      person: {
+        name: '王健林',
+        partners: ['何其聪', '黄国斌', '王思聪', '杜庆春', '张霖', '陈洪涛', '曾茂军', '张春远', '张谌', '刘铭石', '齐界', '韩旭', '肖广瑞', '丁本锡', '高茜', '方栗双', '侯鸿军', '李耀汉', '董学林', '毛亦君'],
+        intro: '王健林，男。1954年10月24日生于四川省广元市苍溪县，1989年起担任大连万达集团股份有限公司董事长。1970年入伍，1986年从部队转业，毕业于辽宁大学，7月进入大连市西岗区人民政府任办公室主任，1989年起开始担任大连万达集团股份有限公司董事长。中共十七大代表、第十一届全国政协常委、第十一届全国工商联副主席，兼任中国民间商会副会长、中国企业联合会副会长、中国企业家协会副会长、中国商业联合会副会长、中国慈善联合会副会长。',
+        roles: [
+          { name: '大连万达集团股份有限公司', capital: '100000 万人民币', status: '存续（在营、开业、在册）' },
+          { name: '大连合兴投资有限公司', capital: '7860 万人民币', status: '存续（在营、开业、在册）' },
+          { name: '大连万达商业管理集团股份有限公司', capital: '2716408.56 万人民币', status: '存续（在营、开业、在册）' },
+        ],
+      },
     },
   },
   group: {
@@ -442,7 +487,7 @@ function TargetChip({ name, type, onRemove }: { name: string; type: 'company' | 
   )
 }
 
-function GraphView({ data }: { data: Data['main']['graph'] }) {
+function GraphView({ data, onNodeClick }: { data: Data['main']['graph']; onNodeClick?: (n: GraphNode) => void }) {
   const nodeMap = new Map(data.nodes.map((n) => [n.id, n]))
   const nodeColor = (type: string) => {
     if (type === 'target') return '#F97316'
@@ -488,7 +533,7 @@ function GraphView({ data }: { data: Data['main']['graph'] }) {
         const r = nodeRadius(n.type)
         const lines = n.label.length > 10 ? [n.label.slice(0, 10), n.label.slice(10)] : [n.label]
         return (
-          <g key={n.id} transform={`translate(${n.x}, ${n.y})`}>
+          <g key={n.id} transform={`translate(${n.x}, ${n.y})`} style={{ cursor: onNodeClick ? 'pointer' : 'default' }} onClick={() => onNodeClick && onNodeClick(n)}>
             <circle r={r} fill={nodeColor(n.type)} opacity={0.18} />
             <circle r={r - 4} fill={nodeColor(n.type)} />
             <text
@@ -510,7 +555,7 @@ function GraphView({ data }: { data: Data['main']['graph'] }) {
 }
 
 /* ================ 组与组排查 ================ */
-function GroupGraphView({ data }: { data: { width: number; height: number; nodes: GraphNode[]; edges: GraphEdge[] } }) {
+function GroupGraphView({ data, onNodeClick }: { data: { width: number; height: number; nodes: GraphNode[]; edges: GraphEdge[] }; onNodeClick?: (n: GraphNode) => void }) {
   const [zoom, setZoom] = useState(1)
   const nodeMap = new Map(data.nodes.map((n) => [n.id, n]))
   const nodeColor = (type: string) => {
@@ -569,7 +614,7 @@ function GroupGraphView({ data }: { data: { width: number; height: number; nodes
             const lines = name.length > maxLen ? [name.slice(0, maxLen), name.slice(maxLen)] : [name]
             const tag = (n as GraphNode & { tag?: string }).tag
             return (
-              <g key={n.id} transform={`translate(${n.x}, ${n.y})`}>
+              <g key={n.id} transform={`translate(${n.x}, ${n.y})`} style={{ cursor: onNodeClick ? 'pointer' : 'default' }} onClick={() => onNodeClick && onNodeClick(n)}>
                 <circle r={r} fill={nodeColor(n.type)} opacity={0.16} />
                 <circle r={r - 4} fill={nodeColor(n.type)} />
                 <text textAnchor="middle" style={{ fontSize: n.type === 'target' ? 11 : 9.5, fill: '#FFFFFF', fontWeight: 600 }}>
@@ -642,7 +687,7 @@ function GroupGraphView({ data }: { data: { width: number; height: number; nodes
   )
 }
 
-function GroupTab({ data }: { data: GroupData }) {
+function GroupTab({ data, onNodeClick }: { data: GroupData; onNodeClick?: (n: GraphNode) => void }) {
   const [mode, setMode] = useState(data.config.modeDefault)
   const [phase, setPhase] = useState<'idle' | 'loading' | 'done'>('idle')
   const [resultOpen, setResultOpen] = useState(true)
@@ -1021,7 +1066,7 @@ function GroupTab({ data }: { data: GroupData }) {
               </div>
 
               <div style={{ position: 'relative' }}>
-                <GroupGraphView data={main.graph} />
+                <GroupGraphView data={main.graph} onNodeClick={onNodeClick} />
                 {phase === 'loading' && (
                   <div
                     style={{
@@ -1420,6 +1465,88 @@ function RelatedTab({ data, onSearch }: { data: RelatedData; onSearch: () => voi
   )
 }
 
+/* ================ 关系图谱节点详情弹窗 ================ */
+function NodeDetailModal({ node, data, onClose }: { node: GraphNode; data: Data['main']['nodeDetail']; onClose: () => void }) {
+  const isPerson = node.type === 'person'
+  const c = data.company
+  const p = data.person
+  return (
+    <Modal
+      open
+      onClose={onClose}
+      title={isPerson ? '个人详情' : '企业详情'}
+      width={560}
+      footer={<EpBtn onClick={onClose}>关闭</EpBtn>}
+    >
+      {isPerson ? (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14, fontSize: 13, color: '#334155' }}>
+          <div style={{ fontSize: 18, fontWeight: 700, color: '#0F172A' }}>{p.name}</div>
+          <div>
+            <div style={{ color: '#64748B', marginBottom: 4 }}>合作伙伴</div>
+            <div style={{ lineHeight: 1.9 }}>{p.partners.join(' ， ')}</div>
+          </div>
+          <div>
+            <div style={{ color: '#64748B', marginBottom: 4 }}>简介</div>
+            <div style={{ lineHeight: 1.7 }}>{p.intro}</div>
+          </div>
+          <div>
+            <div style={{ color: '#64748B', marginBottom: 6 }}>担任法人 / 担任股东 / 担任高管</div>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+              <thead>
+                <tr style={{ background: '#F8FAFC', color: '#475569' }}>
+                  <th style={{ textAlign: 'left', padding: '6px 8px' }}>企业名称</th>
+                  <th style={{ textAlign: 'left', padding: '6px 8px' }}>注册资本</th>
+                  <th style={{ textAlign: 'left', padding: '6px 8px' }}>经营状态</th>
+                </tr>
+              </thead>
+              <tbody>
+                {p.roles.map((r) => (
+                  <tr key={r.name} style={{ borderTop: '1px solid #EEF2F7' }}>
+                    <td style={{ padding: '6px 8px' }}>{r.name}</td>
+                    <td style={{ padding: '6px 8px' }}>{r.capital}</td>
+                    <td style={{ padding: '6px 8px' }}>{r.status}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, fontSize: 13, color: '#334155' }}>
+          <div style={{ fontSize: 18, fontWeight: 700, color: '#0F172A' }}>{c.name}</div>
+          <div style={{ color: '#16A34A', fontWeight: 600 }}>{c.status}</div>
+          <div style={{ display: 'inline-flex', alignSelf: 'flex-start', padding: '2px 10px', borderRadius: 6, background: '#EFF6FF', color: '#2563EB', fontSize: 12, cursor: 'pointer' }}>找关系</div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', columnGap: 20, rowGap: 8 }}>
+            <div><span style={{ color: '#64748B' }}>法定代表人：</span>{c.legalPerson}</div>
+            <div><span style={{ color: '#64748B' }}>注册资本：</span>{c.regCapital}</div>
+            <div><span style={{ color: '#64748B' }}>成立日期：</span>{c.foundDate}</div>
+            <div><span style={{ color: '#64748B' }}>行业领域：</span>{c.industry}</div>
+          </div>
+          <div>
+            <div style={{ color: '#64748B', marginBottom: 6 }}>股东投资主要成员</div>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+              <thead>
+                <tr style={{ background: '#F8FAFC', color: '#475569' }}>
+                  <th style={{ textAlign: 'left', padding: '6px 8px' }}>姓名</th>
+                  <th style={{ textAlign: 'left', padding: '6px 8px' }}>股比</th>
+                </tr>
+              </thead>
+              <tbody>
+                {c.shareholders.map((s) => (
+                  <tr key={s.name} style={{ borderTop: '1px solid #EEF2F7' }}>
+                    <td style={{ padding: '6px 8px' }}>{s.name}</td>
+                    <td style={{ padding: '6px 8px' }}>{s.ratio}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+    </Modal>
+  )
+}
+
 export default function JdRelation() {
   const [data] = useSample<Data>('jdRelation.json', seed)
   const { goDetail } = usePageNav()
@@ -1428,6 +1555,8 @@ export default function JdRelation() {
   const [inputs, setInputs] = useState(['', ''])
   const [loading, setLoading] = useState(false)
   const [resultOpen, setResultOpen] = useState(true)
+  const [aiLoaded, setAiLoaded] = useState(false)
+  const [nodeClick, setNodeClick] = useState<GraphNode | null>(null)
 
   useEffect(() => {
     setTargets(data.left.targets)
@@ -1435,7 +1564,10 @@ export default function JdRelation() {
 
   const startCheck = () => {
     setLoading(true)
-    setTimeout(() => setLoading(false), 2500)
+    setTimeout(() => {
+      setLoading(false)
+      setAiLoaded(true)
+    }, 2500)
   }
 
   const removeTarget = (id: string) => setTargets((t) => t.filter((x) => x.id !== id))
@@ -1649,29 +1781,35 @@ export default function JdRelation() {
                   </div>
 
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                    {data.left.result.items.map((item, idx) => (
-                      <div key={item.id} style={{ padding: 12, borderRadius: 8, background: '#F8FAFC' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                          <span style={{ fontSize: 13, color: '#64748B' }}>{idx + 1}</span>
-                          <span
-                            style={{
-                              padding: '2px 6px',
-                              borderRadius: 4,
-                              background: '#FEF3C7',
-                              color: '#B45309',
-                              fontSize: 11,
-                              fontWeight: 600,
-                            }}
-                          >
-                            {item.levelLabel}
-                          </span>
-                          <span style={{ marginLeft: 'auto', fontSize: 13, color: '#3B82F6', fontWeight: 600 }}>
-                            {item.paths}
-                          </span>
-                        </div>
-                        <div style={{ fontSize: 13, color: '#334155', lineHeight: 1.6 }}>{item.content}</div>
+                    {!aiLoaded ? (
+                      <div style={{ padding: 20, textAlign: 'center', color: '#94A3B8', fontSize: 13 }}>
+                        点击「{data.left.startCheck}」后展示关系结果
                       </div>
-                    ))}
+                    ) : (
+                      data.left.result.items.map((item, idx) => (
+                        <div key={item.id} style={{ padding: 12, borderRadius: 8, background: '#F8FAFC' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                            <span style={{ fontSize: 13, color: '#64748B' }}>{idx + 1}</span>
+                            <span
+                              style={{
+                                padding: '2px 6px',
+                                borderRadius: 4,
+                                background: '#FEF3C7',
+                                color: '#B45309',
+                                fontSize: 11,
+                                fontWeight: 600,
+                              }}
+                            >
+                              {item.levelLabel}
+                            </span>
+                            <span style={{ marginLeft: 'auto', fontSize: 13, color: '#3B82F6', fontWeight: 600 }}>
+                              {item.paths}
+                            </span>
+                          </div>
+                          <div style={{ fontSize: 13, color: '#334155', lineHeight: 1.6 }}>{item.content}</div>
+                        </div>
+                      ))
+                    )}
                   </div>
                 </>
               )}
@@ -1707,9 +1845,6 @@ export default function JdRelation() {
                     ))}
                   </div>
                 </div>
-                <EpBtn variant="primary" size="sm" style={{ background: '#3B82F6', borderColor: '#3B82F6' }}>
-                  {data.main.aiBtn}
-                </EpBtn>
               </div>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: 18, marginBottom: 12 }}>
@@ -1729,7 +1864,25 @@ export default function JdRelation() {
               </div>
 
               <div style={{ position: 'relative' }}>
-                <GraphView data={data.main.graph} />
+                <GraphView
+                  data={aiLoaded ? data.main.graph : { ...data.main.graph, nodes: [], edges: [] }}
+                  onNodeClick={(n) => setNodeClick(n)}
+                />
+                {!aiLoaded && !loading && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      inset: 0,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: 14,
+                      color: '#94A3B8',
+                    }}
+                  >
+                    点击「{data.left.startCheck}」加载关系数据
+                  </div>
+                )}
                 {loading && (
                   <div
                     style={{
@@ -1764,9 +1917,13 @@ export default function JdRelation() {
           </div>
         </div>
       ) : activeTab === 'group' ? (
-        <GroupTab data={data.group} />
+        <GroupTab data={data.group} onNodeClick={(n) => setNodeClick(n)} />
       ) : (
         <RelatedTab data={data.related} onSearch={() => goDetail('/console/ep/jd-relation-result')} />
+      )}
+
+      {nodeClick && (
+        <NodeDetailModal node={nodeClick} data={data.main.nodeDetail} onClose={() => setNodeClick(null)} />
       )}
 
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>

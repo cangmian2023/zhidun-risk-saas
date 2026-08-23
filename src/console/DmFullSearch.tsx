@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react'
+import { useState, useEffect, useRef, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { PageShell } from './PageShell'
 import { RightDrawer } from '../components/ui'
@@ -18,7 +18,7 @@ import {
 
 /* ---------- 颜色规范 ---------- */
 const C = {
-  primary: '#1677ff',
+  primary: '#1f47f5',
   text: '#333',
   sub: '#666',
   ph: '#999',
@@ -67,6 +67,7 @@ const FILTER_STRUCTURE: { key: string; title: string }[] = [
   { key: 'tech', title: '科创筛选' },
   { key: 'capital', title: '资本市场' },
   { key: 'risk', title: '风险信息' },
+  { key: 'datasource', title: '数据来源' },
 ]
 
 /* 完整筛选项（用于真实渲染） */
@@ -99,6 +100,9 @@ const FILTER_OPTIONS: Record<string, { title: string; kind: 'check' | 'radio' | 
     { title: '风险类型', kind: 'check', options: ['失信被执行人', '被执行人', '法人被执行', '终本案件', '动产抵押', '限制高消费', '法人限高', '空壳指数', '破产清算', '1年内未结案件', '重大负面信息', '法人变更', '疑似实控人变更', '股权冻结', '欠税额度', '涉诉案件与金额'] },
     { title: '风险特征', kind: 'check', options: ['行政处罚', '环保处罚', '非正常户', '重大税收违法', '欠税信息', '历史欠税信息', '历史行政处罚', '政府采购失信名单', '供应商暂停名单', '严重违法', '票据逾期', '票据持续逾期', '票据信用未披露', '票据延迟披露'] },
   ],
+  datasource: [
+    { title: '数据来源', kind: 'check', options: ['园区金融(1)', '注册地址(5)', '工商(1)', '数据挖掘(12)', '招投标大数据(1)', '招投标知识数据(1)', '年报电话(1)', '年报邮箱(3)', '年报地址(5)'] },
+  ],
 }
 
 const QUICK_TAG_GROUPS = [
@@ -114,8 +118,21 @@ const SCOPE_OPTIONS = [
   '联系方式', '网址', '产品', '商标', '专利', '著作权作品名称', '软件著作权名称',
 ]
 
+/* 触达抽屉样例联系方式 */
+const SAMPLE_CONTACTS = [
+  { seq: 1, contact: '010-8888 6666', type: '座机', source: '招投标大数据', empty: '未检测' },
+  { seq: 2, contact: '138 0013 8000', type: '电话', source: '注册地址', empty: '实号' },
+  { seq: 3, contact: 'wang@demo.com', type: '邮箱', source: '年报邮箱', empty: '无需检测' },
+  { seq: 4, contact: '北京市海淀区中关村南大街 1 号', type: '地址', source: '注册地址', empty: '无需检测' },
+  { seq: 5, contact: '139 9999 0001', type: '电话', source: '数据挖掘', empty: '未检测' },
+  { seq: 6, contact: '010-8888 7777', type: '座机', source: '工商', empty: '未检测' },
+]
+
+/* 营销主题选项 */
+const MARKET_TOPICS = ['普惠信用贷', '设备更新贷', '供应链金融', '科创贷', '绿色金融', '乡村振兴贷']
+
 /* ---------- 单张企业卡片 ---------- */
-function EntCardView({ card, go }: { card: EntCard; go: ReturnType<typeof useGo> }) {
+function EntCardView({ card, go, onContact, onMarket, onMonitor }: { card: EntCard; go: ReturnType<typeof useGo>; onContact: (n: string) => void; onMarket: (n: string) => void; onMonitor: () => void }) {
   const [more, setMore] = useState(false)
   const sc = STATUS_COLOR[card.status] || { c: C.ph, bg: '#fafafa' }
   const extra: [string, string][] = [
@@ -138,9 +155,9 @@ function EntCardView({ card, go }: { card: EntCard; go: ReturnType<typeof useGo>
           </div>
         </div>
         <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
-          {['AI触达', '营销', '监控'].map((b) => (
-            <button key={b} style={{ border: `1px solid ${C.border}`, background: '#fff', color: C.sub, borderRadius: 4, padding: '4px 10px', fontSize: 12, cursor: 'pointer' }}>{b}</button>
-          ))}
+          <button onClick={() => onContact(card.name)} style={{ border: `1px solid ${C.border}`, background: '#fff', color: C.sub, borderRadius: 4, padding: '4px 10px', fontSize: 12, cursor: 'pointer' }}>触达</button>
+          <button onClick={() => onMarket(card.name)} style={{ border: `1px solid ${C.primary}`, background: '#fff', color: C.primary, borderRadius: 4, padding: '4px 10px', fontSize: 12, cursor: 'pointer' }}>营销</button>
+          <button onClick={() => onMonitor()} style={{ border: `1px solid ${C.border}`, background: '#fff', color: C.sub, borderRadius: 4, padding: '4px 10px', fontSize: 12, cursor: 'pointer' }}>监控</button>
         </div>
       </div>
 
@@ -155,7 +172,7 @@ function EntCardView({ card, go }: { card: EntCard; go: ReturnType<typeof useGo>
 
       {/* 基础信息行 */}
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 24px', color: C.text, fontSize: 13, marginBottom: 6 }}>
-        <span>法定代表人：<b>{card.legal || '-'}</b></span>
+        <span>法定代表人：{card.legal && card.legal !== '-' ? <b style={{ color: C.primary, cursor: 'pointer' }} onClick={() => go.person(card.legal)}>{card.legal}</b> : <b>{card.legal || '-'}</b>}</span>
         <span>注册时间：{card.regTime || '-'}</span>
         <span>注册资本：{card.regCap || '-'}</span>
         <span>实缴资本：{card.paidCap || '-'}</span>
@@ -190,14 +207,16 @@ function FilterPanel({ checked, toggle, expandedGroups, toggleGroup }: any) {
   return (
     <div style={{ width: '100%' }}>
       <div style={{ padding: 0 }}>
-        {Object.entries(FILTER_OPTIONS).map(([gkey, sections]) => (
+        {Object.entries(FILTER_OPTIONS).map(([gkey, sections]) => {
+          const isOpen = expandedGroups.has(gkey)
+          return (
           <div key={gkey} style={{ borderBottom: `1px solid ${C.border}`, paddingBottom: 8, marginBottom: 8 }}>
-            <div onClick={() => toggleGroup(gkey)} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', fontWeight: 700, color: C.text, fontSize: 14, padding: '4px 0' }}>
+            <div onClick={() => toggleGroup(gkey)} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', fontWeight: 700, color: isOpen ? C.primary : C.text, fontSize: 14, padding: '6px 8px', borderRadius: 6, background: isOpen ? '#f0f4ff' : 'transparent', transition: 'background .15s,color .15s' }}>
               <span>{FILTER_STRUCTURE.find((x) => x.key === gkey)!.title}</span>
-              <span style={{ color: C.ph, fontSize: 12 }}>{expandedGroups.has(gkey) ? '收起' : '展开'}</span>
+              <span style={{ color: isOpen ? C.primary : C.ph, fontSize: 12, transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform .15s' }}>▾</span>
             </div>
-            {expandedGroups.has(gkey) && sections.map((sec) => (
-              <div key={sec.title} style={{ margin: '8px 0' }}>
+            {isOpen && sections.map((sec) => (
+              <div key={sec.title} style={{ margin: '8px 0', paddingLeft: 8 }}>
                 <div style={{ fontSize: 13, color: C.sub, marginBottom: 6, fontWeight: 600 }}>{sec.title}</div>
                 {sec.kind === 'select' && (
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
@@ -235,7 +254,8 @@ function FilterPanel({ checked, toggle, expandedGroups, toggleGroup }: any) {
               </div>
             ))}
           </div>
-        ))}
+          )
+        })}
       </div>
     </div>
   )
@@ -771,7 +791,7 @@ export default function DmFullSearch() {
   const go = useGo()
   const [activeModule, setActiveModule] = useState('ent')
   const [keyword, setKeyword] = useState(SEARCH_KEYWORD)
-  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set(['basic', 'org', 'tech', 'capital', 'risk']))
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set(['basic', 'org', 'tech', 'capital', 'risk', 'datasource']))
   const [checked, setChecked] = useState<Record<string, boolean>>({})
   const [viewMode, setViewMode] = useState<'card' | 'table'>('card')
   const [sortBy, setSortBy] = useState('default')
@@ -779,6 +799,20 @@ export default function DmFullSearch() {
   const [quickIdx, setQuickIdx] = useState(0)
   const [showTop, setShowTop] = useState(false)
   const [scope, setScope] = useState('')
+  // 企业 AI 模块：初始化不加载结果，点击查询后才出现
+  const [loaded, setLoaded] = useState(false)
+  // 企业 AI 卡片操作：触达抽屉 / 营销主题抽屉 / 轻量 toast 提示
+  const [contact, setContact] = useState<{ company: string; contacts: any[] } | null>(null)
+  const [market, setMarket] = useState<string | null>(null)
+  const [toast, setToast] = useState<string | null>(null)
+  const showToast = (msg: string) => { setToast(msg); window.setTimeout(() => setToast(null), 2000) }
+
+  // 吸顶：顶部模块导航吸到 PageShell 标题下方
+  const headerRef = useRef<HTMLDivElement>(null)
+  const [headH, setHeadH] = useState(80)
+  const [headH2, setHeadH2] = useState(56)
+  const measureHeader = () => { if (headerRef.current) setHeadH(headerRef.current.offsetHeight) }
+  useEffect(() => { measureHeader(); window.addEventListener('resize', measureHeader); return () => window.removeEventListener('resize', measureHeader) }, [])
   // 企业 AI 筛选区：一键全部展开/收起
   const [filterPanelOpen, setFilterPanelOpen] = useState(true)
   // 商机模块状态
@@ -957,10 +991,12 @@ export default function DmFullSearch() {
 
   return (
     <div style={{ padding: '16px 24px 24px', maxWidth: 1440, margin: '0 auto' }}>
-      <PageShell title="全维搜索" subtitle="基于集团、品牌、投资机构、企业、产品等多维度数据，全方位定位目标客户" crumb="数字营销 / 潜客挖掘 / 全维搜索" legend={false} />
+      <div ref={headerRef}>
+        <PageShell title="全维搜索" subtitle="基于集团、品牌、投资机构、企业、产品等多维度数据，全方位定位目标客户" crumb="数字营销 / 潜客挖掘 / 全维搜索" legend={false} />
+      </div>
 
-      {/* 顶部模块导航 */}
-      <div style={{ display: 'flex', gap: 4, borderBottom: `2px solid ${C.border}`, marginBottom: 12 }}>
+      {/* 顶部模块导航（吸顶到标题下） */}
+      <div style={{ display: 'flex', gap: 4, borderBottom: `2px solid ${C.border}`, marginBottom: 12, position: 'sticky', top: 56 + headH, zIndex: 30, background: '#fff' }}>
         {MODULES.map((m) => {
           const navActive = activeModule === m.key
           const navColor = ['person', 'risk', 'public', 'report'].includes(activeModule) ? C.yellow : C.primary
@@ -985,7 +1021,7 @@ export default function DmFullSearch() {
                 {SCOPE_OPTIONS.map((o) => <option key={o} value={o}>{o}</option>)}
               </select>
               <input value={keyword} onChange={(e) => setKeyword(e.target.value)} placeholder="请输入关键词" style={{ flex: 1, minWidth: 220, maxWidth: 420, border: `1px solid ${C.border}`, borderRadius: 4, padding: '7px 10px' }} />
-              <button onClick={() => setPage(1)} style={{ background: C.primary, color: '#fff', border: 'none', borderRadius: 4, padding: '8px 18px', cursor: 'pointer', fontSize: 14 }}>查询</button>
+              <button onClick={() => { setPage(1); setLoaded(true) }} style={{ background: C.primary, color: '#fff', border: 'none', borderRadius: 4, padding: '8px 18px', cursor: 'pointer', fontSize: 14 }}>查询</button>
               <button style={{ border: `1px solid ${C.primary}`, color: C.primary, background: '#fff', borderRadius: 4, padding: '8px 14px', cursor: 'pointer' }}>AI找名单</button>
               <div style={{ marginLeft: 'auto', display: 'flex', gap: 12 }}>
                 <a style={{ color: C.sub, fontSize: 13, cursor: 'pointer' }}>批量搜索</a>
@@ -1009,6 +1045,7 @@ export default function DmFullSearch() {
             {filterPanelOpen && <FilterPanel checked={checked} toggle={toggle} expandedGroups={expandedGroups} toggleGroup={toggleGroup} />}
           </div>
 
+          {loaded ? (
           <div style={{ flex: 1, minWidth: 0 }}>
               {/* 结果统计栏 */}
               <div style={{ background: '#fff', border: `1px solid ${C.border}`, borderRadius: 8, padding: '10px 14px', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
@@ -1036,7 +1073,7 @@ export default function DmFullSearch() {
               </div>
 
               {/* 企业列表 */}
-              {viewMode === 'card' ? list.map((c, i) => <EntCardView key={i} card={c} go={go} />)
+              {viewMode === 'card' ? list.map((c, i) => <EntCardView key={i} card={c} go={go} onContact={(n) => setContact({ company: n, contacts: SAMPLE_CONTACTS })} onMarket={(n) => setMarket(n)} onMonitor={() => showToast('添加成功')} />)
                 : (
                   <div className="overflow-x-auto"><table style={{ width: '100%', background: '#fff', border: `1px solid ${C.border}`, borderRadius: 8, borderCollapse: 'collapse', fontSize: 13 }}>
                     <thead>
@@ -1073,6 +1110,12 @@ export default function DmFullSearch() {
                 <span>前往 <input value={page} onChange={(e) => setPage(Number(e.target.value) || 1)} style={{ width: 44, border: `1px solid ${C.border}`, borderRadius: 4, padding: '3px 6px' }} /> 页</span>
               </div>
             </div>
+          ) : (
+            <div style={{ background: '#fff', border: `1px solid ${C.border}`, borderRadius: 8, padding: '48px 16px', textAlign: 'center', color: C.sub, fontSize: 14 }}>
+              <div style={{ fontSize: 40, marginBottom: 12 }}>🔍</div>
+              请输入关键词并点击「查询」，开始全维搜索
+            </div>
+          )}
         </>
       )}
 
@@ -1804,6 +1847,79 @@ export default function DmFullSearch() {
       <RightDrawer open={!!riskDetail} onClose={() => setRiskDetail(null)} title="法院公告" width={820} level={2}>
         {riskDetail && <RiskDetailContent r={riskDetail} go={go} />}
       </RightDrawer>
+
+      {/* 企业 AI 卡片 · 触达抽屉（与区域商机一致） */}
+      <RightDrawer open={!!contact} onClose={() => setContact(null)} title={contact ? `${contact.company} - 全部联系方式` : ''} width={820} level={2}>
+        {contact && (
+          <div>
+            <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 12 }}>{contact.company}</div>
+            <div style={{ fontWeight: 600, fontSize: 14, margin: '12px 0 8px' }}>全部联系方式</div>
+            <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', fontSize: 12, color: C.sub, marginBottom: 10 }}>
+              <span>联系类型：<b style={{ color: C.text }}>不限</b></span>
+              <span>空号筛选：<b style={{ color: C.text }}>不限</b></span>
+              <span>数据来源：<b style={{ color: C.text }}>不限</b></span>
+            </div>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+              <thead>
+                <tr style={{ background: '#fafafa', color: C.sub }}>
+                  <th style={{ border: `1px solid ${C.border}`, padding: '8px 10px', textAlign: 'left', width: 48 }}>序号</th>
+                  <th style={{ border: `1px solid ${C.border}`, padding: '8px 10px', textAlign: 'left' }}>联系方式</th>
+                  <th style={{ border: `1px solid ${C.border}`, padding: '8px 10px', textAlign: 'left', width: 80 }}>类型</th>
+                  <th style={{ border: `1px solid ${C.border}`, padding: '8px 10px', textAlign: 'left' }}>来源</th>
+                  <th style={{ border: `1px solid ${C.border}`, padding: '8px 10px', textAlign: 'left', width: 96 }}>空号筛选</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(contact.contacts ?? []).map((c) => (
+                  <tr key={c.seq}>
+                    <td style={{ border: `1px solid ${C.border}`, padding: '8px 10px' }}>{c.seq}</td>
+                    <td style={{ border: `1px solid ${C.border}`, padding: '8px 10px' }}>{c.contact}</td>
+                    <td style={{ border: `1px solid ${C.border}`, padding: '8px 10px' }}>{c.type}</td>
+                    <td style={{ border: `1px solid ${C.border}`, padding: '8px 10px' }}>{c.source}</td>
+                    <td style={{ border: `1px solid ${C.border}`, padding: '8px 10px' }}>{c.empty}</td>
+                  </tr>
+                ))}
+                {(contact.contacts ?? []).length === 0 && (
+                  <tr><td colSpan={5} style={{ border: `1px solid ${C.border}`, padding: 16, textAlign: 'center', color: C.ph, fontSize: 13 }}>暂无联系方式示例数据</td></tr>
+                )}
+              </tbody>
+            </table>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 6, marginTop: 10, fontSize: 12, color: C.sub }}>
+              <span>共 {contact.contacts?.length ?? 0} 条</span>
+              <button style={{ border: `1px solid ${C.border}`, borderRadius: 4, padding: '2px 8px', cursor: 'pointer' }}>{'<'}</button>
+              <button style={{ background: C.primary, color: '#fff', border: `1px solid ${C.primary}`, borderRadius: 4, padding: '2px 8px' }}>1</button>
+              <button style={{ border: `1px solid ${C.border}`, borderRadius: 4, padding: '2px 8px', cursor: 'pointer' }}>2</button>
+              <button style={{ border: `1px solid ${C.border}`, borderRadius: 4, padding: '2px 8px', cursor: 'pointer' }}>3</button>
+              <button style={{ border: `1px solid ${C.border}`, borderRadius: 4, padding: '2px 8px', cursor: 'pointer' }}>{'>'}</button>
+            </div>
+            <div style={{ marginTop: 16, fontWeight: 600, fontSize: 14 }}>存客触达</div>
+            <div style={{ fontSize: 13, color: C.sub, marginTop: 6 }}>您的存客中暂未发现与该企业的关联关系。可<span style={{ color: C.primary, cursor: 'pointer' }} onClick={() => showToast('请上传更多存客名单')}>上传更多存客名单</span>，查看更多触达路径。</div>
+          </div>
+        )}
+      </RightDrawer>
+
+      {/* 企业 AI 卡片 · 营销主题抽屉 */}
+      <RightDrawer open={!!market} onClose={() => setMarket(null)} title={market ? `${market} - 选择营销主题` : ''} width={520} level={2}>
+        {market && (
+          <div>
+            <div style={{ fontSize: 13, color: C.sub, marginBottom: 12 }}>请选择要执行的营销主题，系统将据此创建营销任务。</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {MARKET_TOPICS.map((t) => (
+                <button key={t} onClick={() => { setMarket(null); showToast(`已添加营销任务：${t}`) }} style={{ textAlign: 'left', border: `1px solid ${C.border}`, borderRadius: 6, padding: '10px 14px', fontSize: 14, color: C.text, cursor: 'pointer', background: '#fff' }}>
+                  {t}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </RightDrawer>
+
+      {/* 轻量 toast 提示 */}
+      {toast && (
+        <div style={{ position: 'fixed', top: 24, left: '50%', transform: 'translateX(-50%)', background: 'rgba(0,0,0,.78)', color: '#fff', padding: '8px 18px', borderRadius: 6, fontSize: 14, zIndex: 9999, boxShadow: '0 4px 16px rgba(0,0,0,.2)' }}>
+          {toast}
+        </div>
+      )}
     </div>
   )
 }

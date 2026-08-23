@@ -85,7 +85,7 @@ const seed: Data = {
   ],
   activeTab: 'enterprise',
   left: {
-    tabs: ['选择指标', '我的模板', '精选模板'],
+    tabs: ['选择指标'],
     active: '选择指标',
     searchPlaceholder: '请输入指标名称',
     selectAll: '全选',
@@ -294,6 +294,7 @@ const seed: Data = {
       sample: '查看样例',
       tips: ['支持最多1000条信息', '智能去重保证精确'],
       fileName: 'person.xlsx',
+      upload: '上传',
       reUpload: '重新上传',
       status: '上传成功，共匹配查询到 {matched} 个人员，未匹配到 {unmatched} 个人员，人员姓名为空 {empty} 条数据',
     },
@@ -515,30 +516,6 @@ function TemplateLibraryModal({
 
           {/* Right content */}
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-            {/* Tabs */}
-            <div style={{ display: 'flex', borderBottom: '1px solid #E2E8F0', paddingLeft: 20 }}>
-              {lib.tabs.map((t) => (
-                <button
-                  key={t}
-                  onClick={() => setTab(t)}
-                  style={{
-                    padding: '12px 0',
-                    marginRight: 28,
-                    border: 'none',
-                    borderBottom: `2px solid ${tab === t ? '#2563EB' : 'transparent'}`,
-                    background: 'transparent',
-                    color: tab === t ? '#2563EB' : '#475569',
-                    fontSize: 14,
-                    fontWeight: tab === t ? 600 : 400,
-                    cursor: 'pointer',
-                    marginBottom: -1,
-                  }}
-                >
-                  {t}
-                </button>
-              ))}
-            </div>
-
             <div style={{ flex: 1, padding: 20, overflow: 'auto' }}>
               <div
                 style={{
@@ -792,6 +769,19 @@ function PersonTab({
     else setSel(new Set(rows.map((r) => r.id)))
   }
 
+  const downloadSample = () => {
+    const header = '姓名,身份证号,手机号\n吴孟,110108199001011234,13800000001\n雷军,110108198702021235,13800000002\n'
+    const blob = new Blob(['\ufeff' + header], { type: 'application/vnd.ms-excel' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = up.fileName
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  }
+
   const outlineBtn = {
     display: 'inline-flex',
     alignItems: 'center',
@@ -812,7 +802,7 @@ function PersonTab({
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
             <span style={{ fontSize: 15, fontWeight: 600, color: '#1F2937' }}>{up.title}</span>
-            <a style={{ fontSize: 13, color: '#1677ff', cursor: 'pointer' }}>{up.sample}</a>
+            <a onClick={downloadSample} style={{ fontSize: 13, color: '#1677ff', cursor: 'pointer' }}>{up.sample}</a>
           </div>
           <button
             onClick={onUpload}
@@ -833,7 +823,7 @@ function PersonTab({
             }}
           >
             <UploadIcon />
-            {up.reUpload}
+            {phase === 'idle' ? up.upload : up.reUpload}
           </button>
         </div>
         <div style={{ display: 'flex', gap: 24, marginTop: 10 }}>
@@ -844,36 +834,38 @@ function PersonTab({
             </span>
           ))}
         </div>
-        <div
-          style={{
-            marginTop: 12,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 10,
-            background: '#fff',
-            borderRadius: 8,
-            padding: '9px 14px',
-            border: '1px solid #E2E8F0',
-          }}
-        >
-          <DocIcon />
-          <span style={{ fontSize: 13, color: '#1677ff', fontWeight: 500 }}>{up.fileName}</span>
-          <button
-            onClick={onRemoveFile}
-            title="删除文件"
+        {phase !== 'idle' && (
+          <div
             style={{
-              marginLeft: 'auto',
-              border: 'none',
-              background: 'transparent',
-              cursor: 'pointer',
-              color: '#94A3B8',
-              display: 'inline-flex',
-              padding: 4,
+              marginTop: 12,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+              background: '#fff',
+              borderRadius: 8,
+              padding: '9px 14px',
+              border: '1px solid #E2E8F0',
             }}
           >
-            <CloseIcon />
-          </button>
-        </div>
+            <DocIcon />
+            <span style={{ fontSize: 13, color: '#1677ff', fontWeight: 500 }}>{up.fileName}</span>
+            <button
+              onClick={onRemoveFile}
+              title="删除文件"
+              style={{
+                marginLeft: 'auto',
+                border: 'none',
+                background: 'transparent',
+                cursor: 'pointer',
+                color: '#94A3B8',
+                display: 'inline-flex',
+                padding: 4,
+              }}
+            >
+              <CloseIcon />
+            </button>
+          </div>
+        )}
       </div>
 
       {phase === 'idle' && (
@@ -1103,9 +1095,6 @@ export default function JdBatch({ params }: { params: URLSearchParams }) {
                       <EpBtn variant="ghost" size="sm">
                         {data.left.settings}
                       </EpBtn>
-                      <EpBtn variant="primary" size="sm">
-                        {data.left.saveTemplate}
-                      </EpBtn>
                     </div>
                   </div>
 
@@ -1145,11 +1134,6 @@ export default function JdBatch({ params }: { params: URLSearchParams }) {
               </>
             )}
 
-            {(leftTab === '我的模板' || leftTab === '精选模板') && (
-              <div style={{ padding: 16, color: '#64748B', fontSize: 13, textAlign: 'center' }}>
-                点击已打开模板库弹窗
-              </div>
-            )}
           </div>
 
           {/* 右侧主内容 */}
@@ -1207,9 +1191,6 @@ export default function JdBatch({ params }: { params: URLSearchParams }) {
                 <div style={{ width: 180, flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
                   <BatchCircleIcon />
                   <div style={{ fontSize: 15, fontWeight: 600, color: '#0F172A' }}>{data.featured.center.title}</div>
-                  <EpBtn variant="primary" size="sm" onClick={openUpload}>
-                    {data.featured.center.btn}
-                  </EpBtn>
                 </div>
 
                 {/* 右侧两块 */}

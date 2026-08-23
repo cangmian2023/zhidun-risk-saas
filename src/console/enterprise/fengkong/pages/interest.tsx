@@ -154,6 +154,7 @@ export default function FkInterest({ params }: { params: URLSearchParams }) {
   const [partnerOpen, setPartnerOpen] = useState(false)
   const [banner, setBanner] = useState(data.banner)
   const [showTable, setShowTable] = useState(false)
+  const [collapsed, setCollapsed] = useState(false)
   const [kw, setKw] = useState('')
   const [detailRow, setDetailRow] = useState<TableRow | null>(null)
 
@@ -163,6 +164,7 @@ export default function FkInterest({ params }: { params: URLSearchParams }) {
     const time = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`
     setBanner({ ...data.banner, time, count: data.banner.count || 1 })
     setShowTable(true)
+    setCollapsed(true)
   }
 
   const filteredRows = data.table.rows.filter(
@@ -233,86 +235,89 @@ export default function FkInterest({ params }: { params: URLSearchParams }) {
 
   return (
     <EpPage title="利益排查" crumb="风控中心 / 利益排查">
-      {/* 结果提示条 */}
-      <div
-        style={{
-          background: '#F0FDF4',
-          border: '1px solid #BBF7D0',
-          borderRadius: 10,
-          padding: '12px 16px',
-          fontSize: 13,
-          color: '#15803D',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 8,
-        }}
-      >
-        <span style={{ color: '#16A34A', fontSize: 15 }}>✓</span>
-        <span>
-          您 <b>{banner.time}</b> {banner.verb} <b>{banner.count}</b> {banner.unit}
-        </span>
-        <a style={{ color: '#2563EB', cursor: 'pointer', marginLeft: 4, fontWeight: 500 }}>点击查看</a>
-      </div>
-
-      {/* 两张名单卡片 + 中间排查逻辑虚线 */}
-      <div style={{ display: 'flex', gap: 20, alignItems: 'stretch', marginTop: 18, flexWrap: 'wrap' }}>
-        <UploadCard card={data.emplCard} icon={<PersonIcon />} onAdd={() => setEmplOpen(true)} />
-
-        {/* 中间排查逻辑 */}
+      {/* 两张名单卡片 + 中间排查逻辑虚线（排查后可收起/展开） */}
+      {collapsed ? (
         <div
+          onClick={() => setCollapsed(false)}
           style={{
-            flex: '1 1 220px',
-            minWidth: 200,
+            marginTop: 18,
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center',
-            flexWrap: 'wrap',
-            gap: 6,
-            padding: '10px 0',
+            justifyContent: 'space-between',
+            padding: '12px 16px',
+            borderRadius: 10,
+            border: '1px solid #E2E8F0',
+            background: '#F8FAFC',
+            cursor: 'pointer',
+            fontSize: 13,
+            color: '#475569',
           }}
         >
-          {data.flow.map((f, i) => (
-            <span key={f} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-              <span
-                style={{
-                  fontSize: 12,
-                  color: '#475569',
-                  background: '#F1F5F9',
-                  border: '1px dashed #CBD5E1',
-                  borderRadius: 999,
-                  padding: '3px 10px',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                {f}
-              </span>
-              {i < data.flow.length - 1 && (
-                <span style={{ color: '#CBD5E1', fontSize: 16, lineHeight: 1 }}>—›</span>
-              )}
-            </span>
-          ))}
+          <span>名单配置已收起（已上传 {empCount} 名员工、{partnerCount} 家合作伙伴）</span>
+          <span style={{ color: '#2563EB', fontWeight: 500 }}>▾ 展开配置</span>
         </div>
+      ) : (
+        <>
+          <div style={{ display: 'flex', gap: 20, alignItems: 'stretch', marginTop: 18, flexWrap: 'wrap' }}>
+            <UploadCard card={data.emplCard} icon={<PersonIcon />} onAdd={() => setEmplOpen(true)} />
 
-        <UploadCard card={data.partnerCard} icon={<BuildingIcon />} onAdd={() => setPartnerOpen(true)} />
-      </div>
+            {/* 中间排查逻辑 */}
+            <div
+              style={{
+                flex: '1 1 220px',
+                minWidth: 200,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexWrap: 'wrap',
+                gap: 6,
+                padding: '10px 0',
+              }}
+            >
+              {data.flow.map((f, i) => (
+                <span key={f} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                  <span
+                    style={{
+                      fontSize: 12,
+                      color: '#475569',
+                      background: '#F1F5F9',
+                      border: '1px dashed #CBD5E1',
+                      borderRadius: 999,
+                      padding: '3px 10px',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {f}
+                  </span>
+                  {i < data.flow.length - 1 && (
+                    <span style={{ color: '#CBD5E1', fontSize: 16, lineHeight: 1 }}>—›</span>
+                  )}
+                </span>
+              ))}
+            </div>
 
-      {/* 排查按钮 */}
-      <div style={{ marginTop: 22, textAlign: 'center' }}>
-        <EpBtn
-          variant="primary"
-          onClick={onCheck}
-          style={{
-            background: '#2563EB',
-            borderColor: '#2563EB',
-            color: '#fff',
-            fontWeight: 600,
-            padding: '8px 28px',
-            fontSize: 14,
-          }}
-        >
-          {data.checkBtn}
-        </EpBtn>
-      </div>
+            <UploadCard card={data.partnerCard} icon={<BuildingIcon />} onAdd={() => setPartnerOpen(true)} />
+          </div>
+
+          {/* 排查按钮 */}
+          <div style={{ marginTop: 22, textAlign: 'center' }}>
+            <EpBtn
+              variant="primary"
+              onClick={onCheck}
+              style={{
+                background: '#2563EB',
+                borderColor: '#2563EB',
+                color: '#fff',
+                fontWeight: 600,
+                padding: '8px 28px',
+                fontSize: 14,
+              }}
+            >
+              {data.checkBtn}
+            </EpBtn>
+          </div>
+        </>
+      )}
 
       {/* 排查结果表格 */}
       {showTable && (
@@ -356,22 +361,39 @@ export default function FkInterest({ params }: { params: URLSearchParams }) {
         </div>
       )}
 
-      {/* 说明区 */}
-      <div style={{ marginTop: 22 }}>
-        <EpCard title="功能说明" desc={<Sam value="fkInterest.json" />}>
-          <div style={{ fontSize: 14, fontWeight: 600, color: '#0F172A', marginBottom: 12 }}>{data.intro.title}</div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      {/* 说明区：提示内容 */}
+      <div
+        style={{
+          marginTop: 22,
+          display: 'flex',
+          gap: 12,
+          padding: '14px 16px',
+          borderRadius: 12,
+          background: '#EFF6FF',
+          border: '1px solid #BFDBFE',
+          color: '#1E40AF',
+          fontSize: 13,
+          lineHeight: 1.7,
+        }}
+      >
+        <span style={{ flexShrink: 0, fontSize: 16, lineHeight: 1.4 }}>ℹ️</span>
+        <div>
+          <div style={{ fontWeight: 600, marginBottom: 6, color: '#1E3A8A' }}>{data.intro.title}</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {data.intro.items.map((it) => (
-              <div key={it.label} style={{ display: 'flex', gap: 10, fontSize: 13, color: '#475569' }}>
+              <div key={it.label} style={{ display: 'flex', gap: 8 }}>
                 <span style={{ color: '#2563EB', flexShrink: 0 }}>·</span>
                 <span>
-                  <b style={{ color: '#1E293B', fontWeight: 600 }}>{it.label}：</b>
+                  <b style={{ fontWeight: 600, color: '#1E3A8A' }}>{it.label}：</b>
                   {it.text}
                 </span>
               </div>
             ))}
+            <div style={{ marginTop: 2 }}>
+              <Sam value="fkInterest.json" />
+            </div>
           </div>
-        </EpCard>
+        </div>
       </div>
 
       {detailRow && (
@@ -426,91 +448,63 @@ function DetailModal({ row, labels, onClose }: { row: TableRow; labels: Data['de
           </button>
         </div>
 
-        {/* 表格 */}
-        <div style={{ padding: 16, overflow: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, border: '1px solid #E2E8F0' }}>
-            <thead>
-              <tr style={{ background: '#F8FAFC' }}>
-                <th
-                  style={{
-                    width: 56,
-                    padding: '12px 14px',
-                    textAlign: 'left',
-                    fontWeight: 600,
-                    color: '#334155',
-                    borderBottom: '1px solid #E2E8F0',
-                    borderRight: '1px solid #E2E8F0',
-                  }}
-                >
-                  {labels.seq}
-                </th>
-                <th
-                  style={{
-                    width: 240,
-                    padding: '12px 14px',
-                    textAlign: 'left',
-                    fontWeight: 600,
-                    color: '#334155',
-                    borderBottom: '1px solid #E2E8F0',
-                    borderRight: '1px solid #E2E8F0',
-                  }}
-                >
-                  {labels.company}
-                </th>
-                <th
-                  style={{
-                    padding: '12px 14px',
-                    textAlign: 'left',
-                    fontWeight: 600,
-                    color: '#334155',
-                    borderBottom: '1px solid #E2E8F0',
-                  }}
-                >
-                  {labels.detail}
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {row.detail.map((item, i) => (
-                <tr key={i}>
-                  <td
+        {/* 列表内容 */}
+        <div style={{ padding: 16, overflow: 'auto', display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {row.detail.map((item, i) => (
+            <div
+              key={i}
+              style={{
+                border: '1px solid #E2E8F0',
+                borderRadius: 10,
+                overflow: 'hidden',
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '10px 14px',
+                  background: '#F8FAFC',
+                  borderBottom: '1px solid #E2E8F0',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span
                     style={{
-                      padding: '14px',
-                      color: '#334155',
-                      borderBottom: '1px solid #F1F5F9',
-                      borderRight: '1px solid #E2E8F0',
-                      verticalAlign: 'top',
+                      width: 22,
+                      height: 22,
+                      borderRadius: '50%',
+                      background: '#2563EB',
+                      color: '#fff',
+                      fontSize: 12,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
                     }}
                   >
                     {i + 1}
-                  </td>
-                  <td
-                    style={{
-                      padding: '14px',
-                      color: '#0F172A',
-                      fontWeight: 600,
-                      borderBottom: '1px solid #F1F5F9',
-                      borderRight: '1px solid #E2E8F0',
-                      verticalAlign: 'top',
-                    }}
-                  >
-                    {item.company}
-                  </td>
-                  <td
-                    style={{
-                      padding: '14px',
-                      color: '#475569',
-                      lineHeight: 1.7,
-                      borderBottom: '1px solid #F1F5F9',
-                      verticalAlign: 'top',
-                    }}
-                  >
-                    {item.content}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                  </span>
+                  <span style={{ fontSize: 14, fontWeight: 600, color: '#0F172A' }}>{item.company}</span>
+                </div>
+                <span style={{ fontSize: 12, color: '#64748B' }}>{labels.company}</span>
+              </div>
+              <ul
+                style={{
+                  margin: 0,
+                  padding: '10px 14px 12px 30px',
+                  listStyle: 'disc',
+                  fontSize: 13,
+                  color: '#475569',
+                  lineHeight: 1.8,
+                }}
+              >
+                {String(item.content).split('\n').filter(Boolean).map((line, j) => (
+                  <li key={j}>{line}</li>
+                ))}
+              </ul>
+            </div>
+          ))}
         </div>
 
         {/* 底部按钮 */}

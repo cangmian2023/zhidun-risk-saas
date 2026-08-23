@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { PageShell } from './PageShell'
+import { RightDrawer } from '../components/ui'
 
 // 范围下拉选项
 const scopeOptions = ['1km', '3km', '5km', '10km', '20km'];
@@ -47,11 +49,13 @@ const detailData: Record<string, { name: string; address: string }[]> = {
 export default function DmGridMarketing() {
   const [scope, setScope] = useState('5km');
   const [openStat, setOpenStat] = useState<string | null>(null);
+  const [bizCompany, setBizCompany] = useState<string | null>(null);
 
   const list = openStat ? detailData[openStat] || [] : [];
 
   return (
-    <div style={{ width: '100%', height: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: '#fff', overflow: 'hidden' }}>
+    <div style={{ width: '100%', minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: '#fff', overflow: 'hidden' }}>
+      <PageShell title="网格营销" subtitle="按地理网格划分责任区，批量获取周边企业与商机" crumb="数字营销 / 网格营销" legend={false} />
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
         {/* 左侧面板 */}
         <div style={{ width: '320px', borderRight: '1px solid #e5e7eb', padding: '16px', overflowY: 'auto' }}>
@@ -107,7 +111,8 @@ export default function DmGridMarketing() {
                       <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '2px' }}>{c.address}</div>
                       <div style={{ marginTop: '6px', textAlign: 'right' }}>
                         <button
-                          style={{ fontSize: '12px', color: '#0066cc', border: '1px solid #0066cc', borderRadius: '4px', padding: '2px 10px', background: '#fff', cursor: 'pointer' }}
+                          onClick={() => setBizCompany(c.name)}
+                          style={{ fontSize: '12px', color: '#1f47f5', border: '1px solid #1f47f5', borderRadius: '4px', padding: '2px 10px', background: '#fff', cursor: 'pointer' }}
                         >
                           查看商机
                         </button>
@@ -216,6 +221,26 @@ export default function DmGridMarketing() {
           </div>
         </div>
       </div>
+
+      {/* 查看商机抽屉（与其他页面公司商机抽屉风格一致） */}
+      <RightDrawer open={!!bizCompany} onClose={() => setBizCompany(null)} title={bizCompany ? `${bizCompany} - 公司商机` : ''} width={820} level={2}>
+        {bizCompany && (
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+              <div style={{ display: 'flex', gap: 12, fontSize: 13, color: '#4E5969' }}>
+                <select className="border border-gray-300 rounded px-2 py-1 bg-white"><option>业务机会：不限</option><option>开户</option><option>存款</option><option>授信</option></select>
+                <select className="border border-gray-300 rounded px-2 py-1 bg-white"><option>商机类型：不限</option><option>新增项目</option><option>投融资并购</option></select>
+                <select className="border border-gray-300 rounded px-2 py-1 bg-white"><option>商业价值：不限</option><option>1星</option><option>2星</option></select>
+              </div>
+              <button className="border border-gray-300 rounded px-3 py-1 text-xs">导出前1千条</button>
+            </div>
+            <div style={{ border: '1px solid #e5e6eb', borderRadius: 8, padding: 16, fontSize: 14, color: '#4E5969', lineHeight: 1.9 }}>
+              根据企业周边网格商机模型，<b style={{ color: '#1D2129' }}>{bizCompany}</b> 当前暂无已生成的结构化商机记录。
+              可点击「AI分析」或调整左侧统计卡片维度后重新加载明细。
+            </div>
+          </div>
+        )}
+      </RightDrawer>
     </div>
   );
 }

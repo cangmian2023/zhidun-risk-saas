@@ -2,7 +2,7 @@
 // 数据：本地样例 jdBatchResult.json（橘 Sam）
 import { useEffect, useState } from 'react'
 import { EpPage, EpCard, EpBtn, DataTable, useSample, Sam } from '../../epCommon'
-import { Modal } from '../../../components/ui'
+import { Modal } from '../../../../components/ui'
 
 type TreeItem = { key: string; label: string; checked: boolean }
 type FilterGroup = {

@@ -2,6 +2,7 @@
 // 数据：本地样例 fkProperty.json（橘 Sam）
 import { useState, type ReactNode } from 'react'
 import { EpPage, EpCard, EpTag, EpBtn, useSample, Sam } from '../../epCommon'
+import { RiskContentDrawer } from '../components/RiskContentDrawer'
 
 const seed = {
   company: {
@@ -28,7 +29,7 @@ const seed = {
   },
   tabs: [
     { key: 'clue', label: '线索信息', count: 75 },
-    { key: 'expand', label: '扩大主体', count: 0 },
+    { key: 'expand', label: '扩大主体', count: 6 },
     { key: 'asset', label: '资产状况', count: 867 },
   ],
   filters: {
@@ -66,12 +67,24 @@ const seed = {
       parse: '案件恢复执行的原因有债权人向法院提供了财产线索或追加了当事人。',
     },
   ],
-  expand: [],
+  // 扩大主体：补充内容（关联主体 / 疑似关联人员 / 分支机构）
+  expand: [
+    { id: 'e1', name: '广州博鳌知识产权代理有限公司', rel: '控股子公司', legal: '谢旭辉', risk: '中风险', reason: '同一法定代表人，疑似核心运营主体' },
+    { id: 'e2', name: '谢旭辉', rel: '法定代表人 / 实际控制人', legal: '-', risk: '高风险', reason: '关联限制高消费、被执行记录' },
+    { id: 'e3', name: '北京博鳌纵横科技有限公司', rel: '兄弟公司', legal: '陈晓丹', risk: '低风险', reason: '同集团品牌，异地运营主体' },
+    { id: 'e4', name: '广州博鳌网络科技合伙企业（有限合伙）', rel: '股东平台', legal: '谢旭辉', risk: '中风险', reason: '员工持股平台，资金往来频繁' },
+    { id: 'e5', name: '广州黄埔区博鳌孵化器有限公司', rel: '分支机构', legal: '谢旭辉', risk: '低风险', reason: '园区运营主体' },
+    { id: 'e6', name: '海南纵横博鳌投资有限公司', rel: '对外投资', legal: '谢旭辉', risk: '中风险', reason: '对外投资控股平台' },
+  ],
   assets: [],
   pagination: { total: 75, pageSize: 5, current: 1 },
 }
 
 type Data = typeof seed
+type Clue = Data['clues'][number]
+type Expand = Data['expand'][number]
+
+const RISK_OF_DIFF: Record<string, string> = { 高: '高风险', 中: '中风险', 低: '低风险', 其他: '日常资讯' }
 
 export default function FkProperty({ params }: { params: URLSearchParams }) {
   const [data] = useSample<Data>('fkProperty.json', seed)
@@ -84,8 +97,27 @@ export default function FkProperty({ params }: { params: URLSearchParams }) {
   const [parseOpen, setParseOpen] = useState(true)
   const [descOpen, setDescOpen] = useState(false)
   const [page, setPage] = useState(data.pagination.current)
+  const [started, setStarted] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [cur, setCur] = useState<Clue | null>(null)
+  const [detailOpen, setDetailOpen] = useState(false)
 
   const totalPages = Math.max(1, Math.ceil(data.pagination.total / data.pagination.pageSize))
+
+  const onStart = () => {
+    setLoading(true)
+    window.setTimeout(() => { setStarted(true); setLoading(false) }, 600)
+  }
+
+  const openDetail = (c: Clue) => { setCur(c); setDetailOpen(true) }
+
+  // 线索行 → 风险内容弹窗所需 row
+  const detailRow = cur ? {
+    title: cur.event,
+    content: clueText(cur),
+    level: RISK_OF_DIFF[cur.diff] ?? '日常资讯',
+    detail: { tag: cur.type, overview: clueText(cur), riskType: cur.type },
+  } : null
 
   return (
     <EpPage
@@ -105,181 +137,233 @@ export default function FkProperty({ params }: { params: URLSearchParams }) {
         <EpBtn
           variant="primary"
           size="sm"
-          onClick={() => alert('开始查询')}
+          onClick={onStart}
+          disabled={loading}
           style={{ background: '#2563EB', borderColor: '#2563EB', display: 'inline-flex', alignItems: 'center', gap: 6 }}
         >
           <IconSearch />
-          开始查询
+          {loading ? '查询中…' : '开始查询'}
         </EpBtn>
       </div>
 
-      {/* 企业信息头卡 */}
-      <EpCard>
-        <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-          <div style={{
-            width: 48, height: 48, borderRadius: '50%', background: '#F59E0B', color: '#fff',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, fontWeight: 700, flexShrink: 0,
-          }}>
-            {data.company.logoText}
+      {!started ? (
+        <EpCard>
+          <div style={{ textAlign: 'center', padding: 60, color: '#94A3B8', fontSize: 13 }}>
+            {loading ? '正在加载财产线索数据…' : '请输入企业信息后点击「开始查询」'}
           </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-              <span style={{ fontSize: 18, fontWeight: 700, color: '#0F172A' }}>{data.company.name}</span>
-              <EpTag color="#0F766E" bg="#ECFDF5">{data.company.status}</EpTag>
+        </EpCard>
+      ) : (
+        <>
+          {/* 企业信息头卡 */}
+          <EpCard>
+            <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+              <div style={{
+                width: 48, height: 48, borderRadius: '50%', background: '#F59E0B', color: '#fff',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, fontWeight: 700, flexShrink: 0,
+              }}>
+                {data.company.logoText}
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: 18, fontWeight: 700, color: '#0F172A' }}>{data.company.name}</span>
+                  <EpTag color="#0F766E" bg="#ECFDF5">{data.company.status}</EpTag>
+                </div>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 10 }}>
+                  {data.company.tags.map((t) => <CompanyTag key={t} text={t} />)}
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px 24px', marginTop: 14, fontSize: 12, lineHeight: 1.8 }}>
+                  {Object.entries(data.company.info).map(([k, v]) => (
+                    <div key={k} style={{ display: 'flex', gap: 6, minWidth: 0 }}>
+                      <span style={{ color: '#94A3B8', whiteSpace: 'nowrap' }}>{k}：</span>
+                      <span style={{ color: '#334155', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{String(v)}</span>
+                    </div>
+                  ))}
+                </div>
+                <div style={{ marginTop: 12, fontSize: 12, color: '#64748B', lineHeight: 1.7 }}>
+                  {descOpen ? data.company.description : data.company.description.slice(0, 90) + '...'}
+                  <a style={{ color: '#2563EB', cursor: 'pointer', marginLeft: 6 }} onClick={() => setDescOpen(!descOpen)}>
+                    {descOpen ? '收起' : '展开'}
+                  </a>
+                </div>
+              </div>
             </div>
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 10 }}>
-              {data.company.tags.map((t) => <CompanyTag key={t} text={t} />)}
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px 24px', marginTop: 14, fontSize: 12, lineHeight: 1.8 }}>
-              {Object.entries(data.company.info).map(([k, v]) => (
-                <div key={k} style={{ display: 'flex', gap: 6, minWidth: 0 }}>
-                  <span style={{ color: '#94A3B8', whiteSpace: 'nowrap' }}>{k}：</span>
-                  <span style={{ color: '#334155', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{String(v)}</span>
+          </EpCard>
+
+          {/* Tabs + 导出 */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', margin: '16px 0 12px' }}>
+            <div style={{ display: 'flex', gap: 8 }}>
+              {data.tabs.map((t) => (
+                <div
+                  key={t.key}
+                  onClick={() => setTab(t.key as any)}
+                  style={{
+                    cursor: 'pointer', padding: '7px 16px', borderRadius: 8, fontSize: 13, fontWeight: 600,
+                    color: tab === t.key ? '#fff' : '#475569', background: tab === t.key ? '#2563EB' : '#F1F5F9',
+                  }}
+                >
+                  {t.label} {t.count}
                 </div>
               ))}
             </div>
-            <div style={{ marginTop: 12, fontSize: 12, color: '#64748B', lineHeight: 1.7 }}>
-              {descOpen ? data.company.description : data.company.description.slice(0, 90) + '...'}
-              <a style={{ color: '#2563EB', cursor: 'pointer', marginLeft: 6 }} onClick={() => setDescOpen(!descOpen)}>
-                {descOpen ? '收起' : '展开'}
-              </a>
-            </div>
-          </div>
-        </div>
-      </EpCard>
-
-      {/* Tabs + 导出 */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', margin: '16px 0 12px' }}>
-        <div style={{ display: 'flex', gap: 8 }}>
-          {data.tabs.map((t) => (
-            <div
-              key={t.key}
-              onClick={() => setTab(t.key as any)}
-              style={{
-                cursor: 'pointer', padding: '7px 16px', borderRadius: 8, fontSize: 13, fontWeight: 600,
-                color: tab === t.key ? '#fff' : '#475569', background: tab === t.key ? '#2563EB' : '#F1F5F9',
-              }}
-            >
-              {t.label} {t.count}
-            </div>
-          ))}
-        </div>
-        <EpBtn variant="default" size="sm" onClick={() => alert('导出财产线索')}>导出</EpBtn>
-      </div>
-
-      {tab === 'clue' && (
-        <>
-          {/* 筛选区 */}
-          <EpCard>
-            <FilterRow label="资金流向">
-              {data.filters.flow.map((f) => <Chip key={f} active={flow === f} onClick={() => setFlow(f)}>{f}</Chip>)}
-            </FilterRow>
-            <FilterRow label="发生时间">
-              {data.filters.time.map((t) => <Chip key={t} active={time === t} onClick={() => setTime(time === t ? '不限' : t)}>{t}</Chip>)}
-              <input placeholder="开始日期" style={{ padding: '5px 10px', border: '1px solid #CBD5E1', borderRadius: 6, fontSize: 12, width: 110 }} />
-              <span style={{ color: '#94A3B8' }}>-</span>
-              <input placeholder="结束日期" style={{ padding: '5px 10px', border: '1px solid #CBD5E1', borderRadius: 6, fontSize: 12, width: 110 }} />
-            </FilterRow>
-            <FilterRow label="资产类型">
-              {data.filters.assetType.map((a) => <Chip key={a} active={assetType === a} onClick={() => setAssetType(a)}>{a}</Chip>)}
-            </FilterRow>
-            <FilterRow label="执行难度">
-              {data.filters.difficulty.map((d) => <Chip key={d} active={diff === d} onClick={() => setDiff(diff === d ? '不限' : d)}>{d}</Chip>)}
-            </FilterRow>
-          </EpCard>
-
-          {/* 结果标题 */}
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, margin: '14px 0 10px' }}>
-            <span style={{ fontSize: 14, fontWeight: 600, color: '#0F172A' }}>财产线索 {data.pagination.total}</span>
-            <span style={{ fontSize: 12, color: '#94A3B8' }}>为保证线索时效性，仅展示近3年的线索信息</span>
+            <EpBtn variant="default" size="sm" onClick={() => alert('导出财产线索')}>导出</EpBtn>
           </div>
 
-          {/* 线索表格 */}
-          <EpCard pad={false}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
-              <thead>
-                <tr style={{ background: '#F8FAFC' }}>
-                  <th style={thStyle(110)}>发生时间</th>
-                  <th style={thStyle(120)}>事件类型</th>
-                  <th style={thStyle(90)}>资产类型</th>
-                  <th style={thStyle(80)}>执行难度</th>
-                  <th style={thStyle('auto')}>线索内容</th>
-                  <th style={thStyle(90)}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-                      解析
-                      <Toggle checked={parseOpen} onChange={setParseOpen} />
-                    </div>
-                  </th>
-                  <th style={thStyle(70)}>操作</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.clues.map((c) => (
-                  <tr key={c.id} style={{ borderBottom: '1px solid #F1F5F9' }}>
-                    <td style={tdStyle}>{c.time}</td>
-                    <td style={tdStyle}><EpTag color="#7C3AED" bg="#F5F3FF">{c.event}</EpTag></td>
-                    <td style={tdStyle}>{c.type}</td>
-                    <td style={tdStyle}><DiffText d={c.diff} /></td>
-                    <td style={{ ...tdStyle, minWidth: 280 }}>
-                      <div style={{ color: '#0F172A', lineHeight: 1.8 }}>
-                        {c.caseNo && <div>案号：{c.caseNo}</div>}
-                        {c.restricted && <div>限制法人或组织：{c.restricted}</div>}
-                        {c.related && <div>关联对象：{c.related}</div>}
-                        {c.applicant && <div>申请人：{c.applicant}</div>}
-                        {c.reason && <div>案由：{c.reason}</div>}
-                        {c.amount && <div>执行标的：{c.amount}</div>}
-                        {c.court && <div>执行法院：{c.court}</div>}
-                        {c.status && <div>执行状态：{c.status}</div>}
-                      </div>
-                      {parseOpen && (
-                        <div style={{ marginTop: 8, padding: '8px 10px', background: '#F8FAFC', borderRadius: 6, color: '#475569', fontSize: 12, lineHeight: 1.6 }}>
-                          线索解析：{c.parse}
+          {tab === 'clue' && (
+            <>
+              {/* 筛选区 */}
+              <EpCard>
+                <FilterRow label="资金流向">
+                  {data.filters.flow.map((f) => <Chip key={f} active={flow === f} onClick={() => setFlow(f)}>{f}</Chip>)}
+                </FilterRow>
+                <FilterRow label="发生时间">
+                  {data.filters.time.map((t) => <Chip key={t} active={time === t} onClick={() => setTime(time === t ? '不限' : t)}>{t}</Chip>)}
+                  <input placeholder="开始日期" style={{ padding: '5px 10px', border: '1px solid #CBD5E1', borderRadius: 6, fontSize: 12, width: 110 }} />
+                  <span style={{ color: '#94A3B8' }}>-</span>
+                  <input placeholder="结束日期" style={{ padding: '5px 10px', border: '1px solid #CBD5E1', borderRadius: 6, fontSize: 12, width: 110 }} />
+                </FilterRow>
+                <FilterRow label="资产类型">
+                  {data.filters.assetType.map((a) => <Chip key={a} active={assetType === a} onClick={() => setAssetType(a)}>{a}</Chip>)}
+                </FilterRow>
+                <FilterRow label="执行难度">
+                  {data.filters.difficulty.map((d) => <Chip key={d} active={diff === d} onClick={() => setDiff(diff === d ? '不限' : d)}>{d}</Chip>)}
+                </FilterRow>
+              </EpCard>
+
+              {/* 线索表格 + 提示标签（同一区域） */}
+              <EpCard pad={false}>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, padding: '14px 16px 0' }}>
+                  <span style={{ fontSize: 14, fontWeight: 600, color: '#0F172A' }}>财产线索 {data.pagination.total}</span>
+                  <span style={{ fontSize: 12, color: '#94A3B8' }}>为保证线索时效性，仅展示近3年的线索信息</span>
+                </div>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, marginTop: 8 }}>
+                  <thead>
+                    <tr style={{ background: '#F8FAFC' }}>
+                      <th style={thStyle(110)}>发生时间</th>
+                      <th style={thStyle(120)}>事件类型</th>
+                      <th style={thStyle(90)}>资产类型</th>
+                      <th style={thStyle(80)}>执行难度</th>
+                      <th style={thStyle('auto')}>线索内容</th>
+                      <th style={thStyle(90)}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                          解析
+                          <Toggle checked={parseOpen} onChange={setParseOpen} />
                         </div>
-                      )}
-                    </td>
-                    <td style={{ ...tdStyle, textAlign: 'center' }}>
-                      {parseOpen && <span style={{ fontSize: 12, color: '#64748B' }}>已解析</span>}
-                    </td>
-                    <td style={tdStyle}>
-                      <a style={{ color: '#2563EB', cursor: 'pointer' }} onClick={() => alert('查看线索详情')}>详情</a>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                      </th>
+                      <th style={thStyle(70)}>操作</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data.clues.map((c) => (
+                      <tr key={c.id} style={{ borderBottom: '1px solid #F1F5F9' }} className="fk-clue-row">
+                        <td style={tdStyle}>{c.time}</td>
+                        <td style={tdStyle}><EpTag color="#7C3AED" bg="#F5F3FF">{c.event}</EpTag></td>
+                        <td style={tdStyle}>{c.type}</td>
+                        <td style={tdStyle}><DiffText d={c.diff} /></td>
+                        <td style={{ ...tdStyle, minWidth: 280 }}>
+                          <div style={{ color: '#0F172A', lineHeight: 1.8 }}>
+                            {c.caseNo && <div>案号：{c.caseNo}</div>}
+                            {c.restricted && <div>限制法人或组织：{c.restricted}</div>}
+                            {c.related && <div>关联对象：{c.related}</div>}
+                            {c.applicant && <div>申请人：{c.applicant}</div>}
+                            {c.reason && <div>案由：{c.reason}</div>}
+                            {c.amount && <div>执行标的：{c.amount}</div>}
+                            {c.court && <div>执行法院：{c.court}</div>}
+                            {c.status && <div>执行状态：{c.status}</div>}
+                          </div>
+                          {parseOpen && (
+                            <div style={{ marginTop: 8, padding: '8px 10px', background: '#F8FAFC', borderRadius: 6, color: '#475569', fontSize: 12, lineHeight: 1.6 }}>
+                              线索解析：{c.parse}
+                            </div>
+                          )}
+                        </td>
+                        <td style={{ ...tdStyle, textAlign: 'center' }}>
+                          {parseOpen && <span style={{ fontSize: 12, color: '#64748B' }}>已解析</span>}
+                        </td>
+                        <td style={tdStyle}>
+                          <a style={{ color: '#2563EB', cursor: 'pointer' }} onClick={() => openDetail(c)}>详情</a>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
 
-            {/* 分页 */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8, padding: '12px 16px', borderTop: '1px solid #F1F5F9', fontSize: 12, color: '#64748B' }}>
-              <span>共 {data.pagination.total} 条</span>
-              <span>{data.pagination.pageSize}条/页</span>
-              <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1} style={pageBtnStyle}>上一页</button>
-              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => i + 1).map((p) => (
-                <button key={p} onClick={() => setPage(p)} style={{ ...pageBtnStyle, background: page === p ? '#2563EB' : '#fff', color: page === p ? '#fff' : '#475569', borderColor: page === p ? '#2563EB' : '#E2E8F0' }}>{p}</button>
-              ))}
-              {totalPages > 5 && <span>...</span>}
-              {totalPages > 5 && <button style={pageBtnStyle}>{totalPages}</button>}
-              <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages} style={pageBtnStyle}>下一页</button>
-              <span>前往</span>
-              <input defaultValue={page} style={{ width: 40, padding: '3px 6px', border: '1px solid #E2E8F0', borderRadius: 4, textAlign: 'center', fontSize: 12 }} />
-              <span>页</span>
-            </div>
-          </EpCard>
+                {/* 分页 */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8, padding: '12px 16px', borderTop: '1px solid #F1F5F9', fontSize: 12, color: '#64748B' }}>
+                  <span>共 {data.pagination.total} 条</span>
+                  <span>{data.pagination.pageSize}条/页</span>
+                  <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1} style={pageBtnStyle}>上一页</button>
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => i + 1).map((p) => (
+                    <button key={p} onClick={() => setPage(p)} style={{ ...pageBtnStyle, background: page === p ? '#2563EB' : '#fff', color: page === p ? '#fff' : '#475569', borderColor: page === p ? '#2563EB' : '#E2E8F0' }}>{p}</button>
+                  ))}
+                  {totalPages > 5 && <span>...</span>}
+                  {totalPages > 5 && <button style={pageBtnStyle}>{totalPages}</button>}
+                  <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages} style={pageBtnStyle}>下一页</button>
+                  <span>前往</span>
+                  <input defaultValue={page} style={{ width: 40, padding: '3px 6px', border: '1px solid #E2E8F0', borderRadius: 4, textAlign: 'center', fontSize: 12 }} />
+                  <span>页</span>
+                </div>
+              </EpCard>
+            </>
+          )}
+
+          {tab === 'expand' && (
+            <EpCard pad={false}>
+              <div style={{ padding: '14px 16px 0', fontSize: 14, fontWeight: 600, color: '#0F172A' }}>扩大主体 {data.expand.length}</div>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, marginTop: 8 }}>
+                <thead>
+                  <tr style={{ background: '#F8FAFC' }}>
+                    <th style={thStyle('auto')}>关联主体</th>
+                    <th style={thStyle(160)}>关联关系</th>
+                    <th style={thStyle(120)}>法定代表人</th>
+                    <th style={thStyle(90)}>风险等级</th>
+                    <th style={thStyle(280)}>关联说明</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.expand.map((e: Expand) => (
+                    <tr key={e.id} style={{ borderBottom: '1px solid #F1F5F9' }} className="fk-clue-row">
+                      <td style={{ ...tdStyle, color: '#2563EB', fontWeight: 600 }}>{e.name}</td>
+                      <td style={tdStyle}>{e.rel}</td>
+                      <td style={tdStyle}>{e.legal}</td>
+                      <td style={tdStyle}><DiffText d={e.risk.replace('风险', '')} /></td>
+                      <td style={{ ...tdStyle, color: '#64748B' }}>{e.reason}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </EpCard>
+          )}
+
+          {tab === 'asset' && (
+            <EpCard>
+              <div style={{ textAlign: 'center', padding: 40, color: '#94A3B8' }}>暂无资产状况数据</div>
+            </EpCard>
+          )}
         </>
       )}
 
-      {tab === 'expand' && (
-        <EpCard>
-          <div style={{ textAlign: 'center', padding: 40, color: '#94A3B8' }}>暂无扩大主体数据</div>
-        </EpCard>
-      )}
-
-      {tab === 'asset' && (
-        <EpCard>
-          <div style={{ textAlign: 'center', padding: 40, color: '#94A3B8' }}>暂无资产状况数据</div>
-        </EpCard>
-      )}
+      {/* 线索详情弹窗（与风险预警 - 风险内容列单击事件弹窗一致） */}
+      <RiskContentDrawer
+        open={detailOpen}
+        row={detailRow as any}
+        read={cur ? { items: [{ k: '线索解析', v: cur.parse }] } : undefined}
+        onClose={() => setDetailOpen(false)}
+      />
     </EpPage>
   )
+}
+
+function clueText(c: Clue): string {
+  return [
+    c.caseNo && `案号：${c.caseNo}`,
+    c.restricted && `限制法人或组织：${c.restricted}`,
+    c.related && `关联对象：${c.related}`,
+    c.applicant && `申请人：${c.applicant}`,
+    c.reason && `案由：${c.reason}`,
+    c.amount && `执行标的：${c.amount}`,
+    c.court && `执行法院：${c.court}`,
+    c.status && `执行状态：${c.status}`,
+  ].filter(Boolean).join('；')
 }
 
 function CompanyTag({ text }: { text: string }) {

@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { PageShell } from './PageShell'
+import { usePageNav } from './pageNav'
+import { RightDrawer } from './components/ui'
 
 /* ============ 图标（等价 HTML：搜索/营销/导出/下载报告） ============ */
 const SearchIcon = () => (
@@ -84,9 +86,19 @@ function outlookColor(o: string) {
   return 'text-[#333]'
 }
 
+/* 历史评级列表（查看弹窗） */
+const RATING_HISTORY = [
+  { idx: 1, agency: '联合资信', grade: 'AA', date: '2026-08-21', outlook: '稳定', disclose: '2026-08-21' },
+  { idx: 2, agency: '中诚信国际', grade: 'AA', date: '2026-03-15', outlook: '稳定', disclose: '2026-03-17' },
+  { idx: 3, agency: '联合资信', grade: 'AA-', date: '2025-08-20', outlook: '负面', disclose: '2025-08-22' },
+  { idx: 4, agency: '大公国际', grade: 'A+', date: '2024-09-10', outlook: '稳定', disclose: '2024-09-12' },
+]
+
 export default function DmRating() {
+  const { goDetail } = usePageNav()
   const [outlook, setOutlook] = useState('全部')
   const [checked, setChecked] = useState<boolean[]>(() => ROWS.map(() => false))
+  const [historyOpen, setHistoryOpen] = useState(false)
   const allChecked = checked.every(Boolean)
 
   const toggleAll = () => setChecked(ROWS.map(() => !allChecked))
@@ -197,7 +209,12 @@ export default function DmRating() {
                   <td className="border-b border-dashed border-[#dcdfe6] px-3 py-3.5">
                     <div className="flex items-center gap-2">
                       <EntIcon kind={r.icon === 'diamond' ? 'diamond' : 'char'} char={r.icon !== 'diamond' ? r.icon : undefined} />
-                      <span className="text-sm font-medium text-[#1a1a1a]">{r.name}</span>
+                      <span
+                        className="cursor-pointer text-sm font-medium text-[#1a1a1a] hover:text-[#1f47f5] hover:underline"
+                        onClick={() => goDetail('/console/dm/ent-archive-basic', { name: r.name })}
+                      >
+                        {r.name}
+                      </span>
                     </div>
                   </td>
                   <td className="border-b border-dashed border-[#dcdfe6] px-3 py-3.5">
@@ -217,7 +234,12 @@ export default function DmRating() {
                     </span>
                   </td>
                   <td className="border-b border-dashed border-[#dcdfe6] px-3 py-3.5 text-center">
-                    <span className="cursor-pointer text-sm text-[#4a7dff] hover:underline">查看</span>
+                    <span
+                      className="cursor-pointer text-sm text-[#4a7dff] hover:underline"
+                      onClick={() => setHistoryOpen(true)}
+                    >
+                      查看
+                    </span>
                   </td>
                 </tr>
               ))}
@@ -227,6 +249,36 @@ export default function DmRating() {
 
         <div className="h-10" />
       </div>
+
+      {/* 历史评级弹窗 */}
+      <RightDrawer open={historyOpen} onClose={() => setHistoryOpen(false)} title="历史评级" width={640}>
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse">
+            <thead>
+              <tr>
+                <th className="border-b border-[#e8eaf0] bg-[#f5f6fa] px-3 py-2.5 text-left text-sm font-semibold text-[#333]">序号</th>
+                <th className="border-b border-[#e8eaf0] bg-[#f5f6fa] px-3 py-2.5 text-left text-sm font-semibold text-[#333]">评级公司</th>
+                <th className="border-b border-[#e8eaf0] bg-[#f5f6fa] px-3 py-2.5 text-left text-sm font-semibold text-[#333]">主体评级</th>
+                <th className="border-b border-[#e8eaf0] bg-[#f5f6fa] px-3 py-2.5 text-left text-sm font-semibold text-[#333]">评级日期</th>
+                <th className="border-b border-[#e8eaf0] bg-[#f5f6fa] px-3 py-2.5 text-left text-sm font-semibold text-[#333]">评级展望</th>
+                <th className="border-b border-[#e8eaf0] bg-[#f5f6fa] px-3 py-2.5 text-left text-sm font-semibold text-[#333]">披露日期</th>
+              </tr>
+            </thead>
+            <tbody>
+              {RATING_HISTORY.map((r) => (
+                <tr key={r.idx} className="odd:bg-white even:bg-[#f8f8fe]">
+                  <td className="border-b border-dashed border-[#dcdfe6] px-3 py-2.5 text-sm">{r.idx}</td>
+                  <td className="border-b border-dashed border-[#dcdfe6] px-3 py-2.5 text-sm">{r.agency}</td>
+                  <td className="border-b border-dashed border-[#dcdfe6] px-3 py-2.5 text-sm font-medium">{r.grade}</td>
+                  <td className="border-b border-dashed border-[#dcdfe6] px-3 py-2.5 text-sm">{r.date}</td>
+                  <td className={`border-b border-dashed border-[#dcdfe6] px-3 py-2.5 text-sm ${outlookColor(r.outlook)}`}>{r.outlook}</td>
+                  <td className="border-b border-dashed border-[#dcdfe6] px-3 py-2.5 text-sm">{r.disclose}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </RightDrawer>
     </div>
   )
 }

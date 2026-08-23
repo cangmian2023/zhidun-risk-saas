@@ -77,6 +77,7 @@ export default function FkEmployee({ params }: { params: URLSearchParams }) {
         </EpBtn>
       }
     >
+      <style>{`.fk-emp-wrap table tbody tr:hover{background:#F8FAFC} .fk-emp-wrap table{border-radius:10px;overflow:hidden}`}</style>
       {/* 员工标签筛选 */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 14 }}>
         <span style={{ fontSize: 13, color: '#64748B' }}>员工标签</span>
@@ -108,7 +109,6 @@ export default function FkEmployee({ params }: { params: URLSearchParams }) {
       {/* 筛选条件 */}
       <EpCard title="筛选条件" pad={false}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 24, padding: '14px 18px', flexWrap: 'wrap', fontSize: 13 }}>
-          <Cond label="持股 / 任职 / 控制企业" value={conds.hold} onChange={(v) => setConds({ ...conds, hold: v })} />
           <Cond label="联系电话" value={conds.phone} onChange={(v) => setConds({ ...conds, phone: v })} />
           <Cond label="电话关联企业" value={conds.rel} onChange={(v) => setConds({ ...conds, rel: v })} />
           <EpBtn variant="ghost" size="sm">
@@ -117,32 +117,20 @@ export default function FkEmployee({ params }: { params: URLSearchParams }) {
         </div>
       </EpCard>
 
-      {/* 引导卡 + 列表 */}
+      {/* 列表 */}
       <div style={{ marginTop: 16 }}>
-        <div
-          style={{
-            background: 'linear-gradient(90deg,#EFF6FF,#F8FAFC)',
-            border: '1px solid #DBEAFE',
-            borderRadius: 16,
-            padding: '18px 22px',
-            marginBottom: 16,
-          }}
-        >
-          <div style={{ fontWeight: 600, color: '#1E3A8A' }}>维护员工信息，辅助合规管理</div>
-          <ul style={{ margin: '8px 0 0', paddingLeft: 18, fontSize: 12, color: '#64748B', lineHeight: 1.9 }}>
-            <li>可录入员工电话、关联企业等信息，最多 2000 名</li>
-            <li>我们将基于电话、关联企业等，查找更多潜在关联公司</li>
-            <li>员工相关信息同时可用于合作方利益排查</li>
-          </ul>
-          <div style={{ marginTop: 12 }}>
+        <EpCard
+          title="员工信息"
+          desc={<Sam value="fkEmployee.json" />}
+          actions={
             <EpBtn variant="primary" size="sm" onClick={() => setAddOpen(true)}>
               添加员工
             </EpBtn>
+          }
+        >
+          <div className="fk-emp-wrap">
+            <DataTable columns={columns} rows={rows as unknown as Row[]} rowKey="id" pager empty="暂无员工，点击「添加员工」录入" />
           </div>
-        </div>
-
-        <EpCard title="员工信息" desc={<Sam value="fkEmployee.json" />}>
-          <DataTable columns={columns} rows={rows as unknown as Row[]} pager empty="暂无员工，点击「添加员工」录入" />
         </EpCard>
       </div>
 

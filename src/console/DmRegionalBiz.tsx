@@ -50,8 +50,43 @@ function FilterSelect({ label, value, options, onChange }: { label: string; valu
   )
 }
 
-/* ============ 行政区下拉 ============ */
-const regionOptions = [{ label: '北京市', value: 'beijing' }]
+/* ============ 行政区下拉（省级行政单位） ============ */
+const regionOptions = [
+  { label: '北京市', value: 'beijing' },
+  { label: '天津市', value: 'tianjin' },
+  { label: '河北省', value: 'hebei' },
+  { label: '山西省', value: 'shanxi' },
+  { label: '内蒙古自治区', value: 'neimenggu' },
+  { label: '辽宁省', value: 'liaoning' },
+  { label: '吉林省', value: 'jilin' },
+  { label: '黑龙江省', value: 'heilongjiang' },
+  { label: '上海市', value: 'shanghai' },
+  { label: '江苏省', value: 'jiangsu' },
+  { label: '浙江省', value: 'zhejiang' },
+  { label: '安徽省', value: 'anhui' },
+  { label: '福建省', value: 'fujian' },
+  { label: '江西省', value: 'jiangxi' },
+  { label: '山东省', value: 'shandong' },
+  { label: '河南省', value: 'henan' },
+  { label: '湖北省', value: 'hubei' },
+  { label: '湖南省', value: 'hunan' },
+  { label: '广东省', value: 'guangdong' },
+  { label: '广西壮族自治区', value: 'guangxi' },
+  { label: '海南省', value: 'hainan' },
+  { label: '重庆市', value: 'chongqing' },
+  { label: '四川省', value: 'sichuan' },
+  { label: '贵州省', value: 'guizhou' },
+  { label: '云南省', value: 'yunnan' },
+  { label: '西藏自治区', value: 'xizang' },
+  { label: '陕西省', value: 'shanxi2' },
+  { label: '甘肃省', value: 'gansu' },
+  { label: '青海省', value: 'qinghai' },
+  { label: '宁夏回族自治区', value: 'ningxia' },
+  { label: '新疆维吾尔自治区', value: 'xinjiang' },
+  { label: '香港特别行政区', value: 'xianggang' },
+  { label: '澳门特别行政区', value: 'aomen' },
+  { label: '台湾省', value: 'taiwan' },
+]
 
 /* ============ 商机列表筛选条件选项 ============ */
 const DATE_OPTIONS = ['不限', '最近1个月', '最近3个月', '最近6个月', '最近1年']
@@ -982,9 +1017,13 @@ export default function DmRegionalBiz() {
       <PageHeader
         title="区域商机"
         crumb="数字营销 / 区域商机"
-        actions={
+      />
+
+      {/* ========== 区域商机概览（保留已有统计/地图/图表） ========== */}
+      <div className="mt-4">
+        <div className="flex items-center gap-3 mb-2">
           <select
-            className="border border-gray-300 rounded px-2 py-1"
+            className="border border-gray-300 rounded px-2 py-1.5 text-sm"
             value={selectedRegion}
             onChange={(e) => setSelectedRegion(e.target.value)}
           >
@@ -992,14 +1031,10 @@ export default function DmRegionalBiz() {
               <option key={o.value} value={o.value}>{o.label}</option>
             ))}
           </select>
-        }
-      />
-
-      {/* ========== 区域商机概览（保留已有统计/地图/图表） ========== */}
-      <div className="mt-4">
-        <p className="text-base">
-          北京有商机的企业<span className="text-[#0066cc]">1,013,478</span>家；有效商机<span className="text-[#0066cc]">7,376,451</span>条
-        </p>
+          <p className="text-base">
+            北京有商机的企业<span className="text-[#0066cc]">1,013,478</span>家；有效商机<span className="text-[#0066cc]">7,376,451</span>条
+          </p>
+        </div>
         <p className="text-sm mt-1 text-slate-500">北京有商机企业占本市全部在营企业的41.1%；商机数占全国商机数的3.2%</p>
         <div className="border-b border-dashed border-[#b8d8ff] my-2"></div>
         <p className="text-sm mt-2 text-slate-500">
@@ -1023,6 +1058,23 @@ export default function DmRegionalBiz() {
           </div>
           <div className="col-span-7">
             <div className="font-medium mb-2">|区域商机统计</div>
+            {/* 日期查询 + 翻页 */}
+            <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-slate-500">日期</span>
+                <input type="date" className="border border-gray-300 rounded px-2 py-1 text-xs" />
+                <span className="text-xs text-slate-400">至</span>
+                <input type="date" className="border border-gray-300 rounded px-2 py-1 text-xs" />
+                <button className="border border-gray-300 rounded px-2 py-1 text-xs bg-white hover:border-brand-500 cursor-pointer">查询</button>
+              </div>
+              <div className="flex items-center gap-1 text-xs">
+                <button className="border border-gray-300 rounded px-2 py-0.5 hover:border-brand-500 cursor-pointer">&lt;</button>
+                <button className="bg-brand-600 text-white border border-brand-600 rounded px-2 py-0.5">1</button>
+                <button className="border border-gray-300 rounded px-2 py-0.5 hover:border-brand-500 cursor-pointer">2</button>
+                <button className="border border-gray-300 rounded px-2 py-0.5 hover:border-brand-500 cursor-pointer">3</button>
+                <button className="border border-gray-300 rounded px-2 py-0.5 hover:border-brand-500 cursor-pointer">&gt;</button>
+              </div>
+            </div>
             <div className="overflow-x-auto">
               <table className="w-full border-collapse">
                 <thead>
@@ -1288,11 +1340,6 @@ export default function DmRegionalBiz() {
                 <span className="cursor-pointer" onClick={() => setContact(companyBiz)}>AI触达</span>
                 <span className="cursor-pointer flex items-center gap-1"><i className="fa fa-share-square-o" /> 分享</span>
               </div>
-            </div>
-
-            <div className="flex border-b border-gray-200 mb-3">
-              <div className="px-3 py-2 cursor-pointer">AI分析</div>
-              <div className="px-3 py-2 cursor-pointer border-b-2 border-amber-400 font-medium">公司商机 {companyBiz.companyBizCount}</div>
             </div>
 
             <div className="flex justify-between items-center mb-3">

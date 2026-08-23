@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { usePageNav } from './pageNav'
 import { PageShell } from './PageShell'
 
 /* 招投标 · 产品词库 → 产品标讯列表详情页
@@ -59,9 +60,20 @@ export default function DmTenderProduct() {
   const [params] = useSearchParams()
   const name = params.get('name') || '新建排水工程'
   const [tab, setTab] = useState('招投标信息 518')
+  const { back } = usePageNav()
 
   return (
-    <div style={{ padding: 12 }} className="bg-white text-sm text-[#222]">
+    <div style={{ padding: '16px 24px 24px' }} className="bg-white text-sm text-[#222]">
+      {/* 返回按钮 */}
+      <div className="mb-3">
+        <button
+          type="button"
+          onClick={() => back('/console/dm/tender')}
+          className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm text-gray-600 transition hover:bg-gray-100"
+        >
+          ← 返回
+        </button>
+      </div>
       <PageShell title={name} crumb={`数字营销 / 招投标 / 产品词库 / ${name}`} legend={false} />
 
       {/* ============ 头部 ============ */}
@@ -76,7 +88,7 @@ export default function DmTenderProduct() {
           <span
             key={t}
             onClick={() => setTab(t)}
-            className={`cursor-pointer pb-2 pt-2 text-[16px] ${tab === t ? 'border-b-2 border-[#eab308] font-semibold text-[#111827]' : 'text-[#4b5563]'}`}
+            className={`cursor-pointer pb-2 pt-2 text-[16px] ${tab === t ? 'border-b-2 border-[#1f47f5] font-semibold text-[#111827]' : 'text-[#4b5563]'}`}
           >
             {t}
           </span>

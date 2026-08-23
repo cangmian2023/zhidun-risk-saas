@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Tabs, Input, Button, Select, Table, Space, Dropdown, Menu } from 'antd';
+import { Tabs, Input, Button, Table, Space } from 'antd';
 import type { TableProps, TabsProps } from 'antd';
+import { usePageNav } from './pageNav';
 
 // ============ 类型定义 ============
 interface TableRecord {
@@ -109,15 +110,8 @@ const tabFilterMap: Record<string, FilterConfig> = {
   },
 };
 
-// 更多筛选下拉菜单
-const moreFilterMenu = (
-  <Menu>
-    <Menu.Item key="region">地区</Menu.Item>
-    <Menu.Item key="publishDate">披露日期</Menu.Item>
-  </Menu>
-);
-
 const IpoBoardPage: React.FC = () => {
+  const { goDetail } = usePageNav()
   const [activeTab, setActiveTab] = useState<'ipo' | 'sciBoard'>('ipo');
   const [searchText, setSearchText] = useState('');
   const [selectedMarket, setSelectedMarket] = useState('全部');
@@ -130,7 +124,19 @@ const IpoBoardPage: React.FC = () => {
   // 表格列定义
   const tableColumns: TableProps<TableRecord>['columns'] = [
     { title: '披露日期', dataIndex: 'publishDate', key: 'publishDate' },
-    { title: '企业名称', dataIndex: 'companyName', key: 'companyName' },
+    {
+      title: '企业名称',
+      dataIndex: 'companyName',
+      key: 'companyName',
+      render: (name: string) => (
+        <span
+          className="cursor-pointer text-[#1f47f5] hover:underline"
+          onClick={() => goDetail('/console/dm/ent-archive-basic', { name })}
+        >
+          {name}
+        </span>
+      ),
+    },
     { title: '当前状态', dataIndex: 'currentStatus', key: 'currentStatus' },
     { title: '所属领域', dataIndex: 'belongField', key: 'belongField' },
     { title: '拟发行市场', dataIndex: 'targetMarket', key: 'targetMarket' },
@@ -143,88 +149,76 @@ const IpoBoardPage: React.FC = () => {
   ];
 
   return (
-    <div style={{ padding: 24, background: '#fff', minHeight: '100vh' }}>
-      <Tabs
-        activeKey={activeTab}
-        items={tabItems}
-        onChange={(key) => {
-          setActiveTab(key as 'ipo' | 'sciBoard');
-          // 切换Tab重置筛选条件
-          setSelectedMarket('全部');
-          setSelectedStatus('全部');
-          setSearchText('');
-        }}
-      />
+    <div style={{ padding: 16, background: '#f5f6f8', minHeight: '100vh' }}>
+      <div style={{ background: '#fff', borderRadius: 8, padding: 20, maxWidth: 1440, margin: '0 auto' }}>
+        <Tabs
+          activeKey={activeTab}
+          items={tabItems}
+          onChange={(key) => {
+            setActiveTab(key as 'ipo' | 'sciBoard');
+            // 切换Tab重置筛选条件
+            setSelectedMarket('全部');
+            setSelectedStatus('全部');
+            setSearchText('');
+          }}
+        />
 
-      {/* 搜索区域 */}
-      <div style={{ marginBottom: 16 }}>
-        <Space size="middle" align="middle">
-          <span>高级搜索</span>
-          <Input
-            placeholder="请输入企业名称"
-            value={searchText}
-            onChange={(e) => setSearchText(e.target.value)}
-            style={{ width: 320 }}
-          />
-          <Button type="primary">搜索</Button>
-        </Space>
+        {/* 搜索区域 */}
+        <div style={{ marginBottom: 16 }}>
+          <Space size="middle" align="middle">
+            <span>高级搜索</span>
+            <Input
+              placeholder="请输入企业名称"
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              style={{ width: 320 }}
+            />
+            <Button type="primary">搜索</Button>
+          </Space>
+        </div>
+
+        {/* 筛选区（合并为卡片） */}
+        <div style={{ background: '#f7f8fa', borderRadius: 6, padding: '12px 16px', marginBottom: 16 }}>
+          <div style={{ marginBottom: 10 }}>
+            <Space size="middle" align="middle" wrap>
+              <span style={{ fontWeight: 600 }}>发行市场</span>
+              {currentFilter.marketOptions.map((item) => (
+                <Button
+                  key={item}
+                  size="small"
+                  type={selectedMarket === item ? 'primary' : 'default'}
+                  onClick={() => setSelectedMarket(item)}
+                >
+                  {item}
+                </Button>
+              ))}
+            </Space>
+          </div>
+          <div>
+            <Space size="middle" align="middle" wrap>
+              <span style={{ fontWeight: 600 }}>最新状态</span>
+              {currentFilter.statusOptions.map((item) => (
+                <Button
+                  key={item}
+                  size="small"
+                  type={selectedStatus === item ? 'primary' : 'default'}
+                  onClick={() => setSelectedStatus(item)}
+                >
+                  {item}
+                </Button>
+              ))}
+            </Space>
+          </div>
+        </div>
+
+        {/* 表格 */}
+        <Table<TableRecord>
+          rowKey="id"
+          columns={tableColumns}
+          dataSource={tableData}
+          pagination={{ showSizeChanger: true }}
+        />
       </div>
-
-      {/* 发行市场筛选 */}
-      <div style={{ marginBottom: 16 }}>
-        <Space size="middle" align="middle">
-          <span>发行市场</span>
-          {currentFilter.marketOptions.map((item) => (
-            <Button
-              key={item}
-              type={selectedMarket === item ? 'primary' : 'default'}
-              onClick={() => setSelectedMarket(item)}
-            >
-              {item}
-            </Button>
-          ))}
-        </Space>
-      </div>
-
-      {/* 最新状态筛选 */}
-      <div style={{ marginBottom: 16 }}>
-        <Space size="middle" align="middle">
-          <span>最新状态</span>
-          {currentFilter.statusOptions.map((item) => (
-            <Button
-              key={item}
-              type={selectedStatus === item ? 'primary' : 'default'}
-              onClick={() => setSelectedStatus(item)}
-            >
-              {item}
-            </Button>
-          ))}
-          <Dropdown overlay={moreFilterMenu} trigger={['click']}>
-            <Button type="link">更多 ∨</Button>
-          </Dropdown>
-        </Space>
-      </div>
-
-      {/* 更多筛选行 */}
-      <div style={{ marginBottom: 16 }}>
-        <Space size="middle" align="middle">
-          <span>更多筛选</span>
-          <Dropdown overlay={moreFilterMenu} trigger={['click']}>
-            <Button type="link">地区 ∨</Button>
-          </Dropdown>
-          <Dropdown overlay={moreFilterMenu} trigger={['click']}>
-            <Button type="link">披露日期 ∨</Button>
-          </Dropdown>
-        </Space>
-      </div>
-
-      {/* 表格 */}
-      <Table<TableRecord>
-        rowKey="id"
-        columns={tableColumns}
-        dataSource={tableData}
-        pagination={{ showSizeChanger: true }}
-      />
     </div>
   );
 };

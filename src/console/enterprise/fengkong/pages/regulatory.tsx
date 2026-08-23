@@ -121,6 +121,13 @@ export default function FkRegulatory({ params }: { params: URLSearchParams }) {
   const [view, setView] = useState<'card' | 'table'>('card')
   const [selected, setSelected] = useState<number[]>([])
   const [detailRow, setDetailRow] = useState<RowItem | null>(null)
+  const [started, setStarted] = useState(false)
+  const [loading, setLoading] = useState(false)
+
+  const onSearch = () => {
+    setLoading(true)
+    window.setTimeout(() => { setStarted(true); setLoading(false) }, 600)
+  }
 
   const filtered = data.rows.filter(
     (r) =>
@@ -196,13 +203,15 @@ export default function FkRegulatory({ params }: { params: URLSearchParams }) {
             background: '#fff',
           }}
         />
-        <EpBtn variant="primary" style={{ background: '#2563EB', borderColor: '#2563EB', color: '#fff', fontWeight: 600 }}>
-          {data.searchBtn}
+        <EpBtn variant="primary" style={{ background: '#2563EB', borderColor: '#2563EB', color: '#fff', fontWeight: 600 }} onClick={onSearch} disabled={loading}>
+          {loading ? '查询中…' : data.searchBtn}
         </EpBtn>
       </div>
 
-      {/* 违规类型 */}
-      <div style={{ display: 'flex', gap: 10, marginTop: 16, alignItems: 'center', flexWrap: 'wrap' }}>
+      {started ? (
+        <>
+          {/* 违规类型 */}
+          <div style={{ display: 'flex', gap: 10, marginTop: 16, alignItems: 'center', flexWrap: 'wrap' }}>
         <span style={{ fontSize: 13, fontWeight: 600, color: '#0F172A', whiteSpace: 'nowrap' }}>违规类型</span>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           {data.violationTypes.map((t) => {
@@ -322,6 +331,12 @@ export default function FkRegulatory({ params }: { params: URLSearchParams }) {
         <EpCard>
           <DataTable columns={columns} rows={filtered as unknown as Row[]} selectable pager pageSize={10} empty="暂无数据" />
         </EpCard>
+      )}
+        </>
+      ) : (
+        <div style={{ marginTop: 16, padding: '40px 0', textAlign: 'center', color: '#94A3B8', fontSize: 13 }}>
+          {loading ? '正在查询监管合规数据…' : '请输入关键词后点击「查询」获取结果'}
+        </div>
       )}
 
       {/* 详情抽屉 */}

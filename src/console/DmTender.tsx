@@ -32,18 +32,18 @@ function SearchRow({ placeholder, withSelect }: { placeholder: string; withSelec
         )}
         <input placeholder={placeholder} className="flex-1 bg-transparent px-3 py-2.5 text-[15px] outline-none placeholder:text-gray-400" />
       </div>
-      <button className="cursor-pointer bg-[#f7c548] px-6 py-2.5 text-[15px] hover:opacity-90"><SearchIcon /> 搜索</button>
+      <button className="cursor-pointer bg-[#1f47f5] px-6 py-2.5 text-[15px] text-white hover:opacity-90"><SearchIcon /> 搜索</button>
     </div>
   )
 }
 
 /* 顶部导航（HTML .top-nav-bar） */
-const NAV_TABS = ['我的标讯', '全部标讯', '中标企业库', '产品词库']
+const NAV_TABS = ['全部标讯', '中标企业库', '产品词库']
 const PANEL_KEYS: Record<string, string> = { '全部标讯': 'all-bid', '中标企业库': 'bid-company', '产品词库': 'product-lib' }
 
 /* 通用样式类 */
 const btnNormalCls = 'cursor-pointer rounded border border-[#b8bcc8] bg-white px-4 py-1.5'
-const btnExportCls = 'cursor-pointer rounded bg-[#f7c548] px-4 py-1.5'
+const btnExportCls = 'cursor-pointer rounded bg-[#1f47f5] px-4 py-1.5 text-white'
 
 export default function DmTender() {
   const nav = useNavigate()
@@ -57,7 +57,7 @@ export default function DmTender() {
   }
 
   return (
-    <div style={{ padding: 12 }} className="bg-white text-sm text-[#222]">
+    <div style={{ padding: '16px 24px 24px' }} className="bg-white text-sm text-[#222]">
       <PageShell title="招投标" crumb="数字营销 / 商机挖掘" subtitle="招投标信息检索与商机挖掘" legend={false} />
 
       {/* ============ 顶部导航 ============ */}
@@ -71,11 +71,11 @@ export default function DmTender() {
             }`}
           >
             {t}
-            {tab === t && PANEL_KEYS[t] && <span className="absolute -bottom-0.5 left-0 h-[3px] w-full bg-[#f7c548]" />}
+            {tab === t && PANEL_KEYS[t] && <span className="absolute -bottom-0.5 left-0 h-[3px] w-full bg-[#1f47f5]" />}
           </span>
         ))}
         <div className="ml-auto">
-          <button className="cursor-pointer rounded bg-[#f7c548] px-4.5 py-2 text-[15px] hover:opacity-90">＋ 添加订阅 ▾</button>
+          <button className="cursor-pointer rounded bg-[#1f47f5] px-4.5 py-2 text-[15px] text-white hover:opacity-90">＋ 添加订阅 ▾</button>
         </div>
       </div>
 
@@ -226,7 +226,10 @@ export default function DmTender() {
               <div className="mb-2 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <input type="checkbox" />
-                  <div className="cursor-pointer text-lg font-bold">{r.name}</div>
+                  <div
+                  className="cursor-pointer text-lg font-bold hover:text-[#1f47f5]"
+                  onClick={() => nav(`/console/dm/ent-archive-basic?name=${encodeURIComponent(r.name)}`)}
+                >{r.name}</div>
                 </div>
                 <div><span className="cursor-pointer">🗔订阅</span></div>
               </div>
@@ -315,7 +318,7 @@ export default function DmTender() {
                 <div>
                   招标单位：<span className="cursor-pointer text-[#2563eb]">北京飞机维修工程有限…</span>
                   <button className="ml-0.5 cursor-pointer rounded border border-[#cbd5e1] bg-white px-1 py-px text-xs">+ 订阅</button>
-                  <span className="ml-1.5">更多招采联系方式 <span className="text-[#ea580c]">254</span></span>
+                  <span className="ml-1.5">更多招采联系方式 <span className="text-[#1f47f5]">254</span></span>
                   &nbsp;招标联系方式：王女士 010-87495550
                 </div>
                 <div>

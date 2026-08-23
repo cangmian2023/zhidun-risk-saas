@@ -36,6 +36,7 @@ import DmPevc from './DmPevc'
 import DmPevcOrgDetail from './DmPevcOrgDetail'
 import DmListing from './DmListing'
 import DmBond from './DmBond'
+import DmBondDetail from './DmBondDetail'
 import DmPeerAnalysis from './DmPeerAnalysis'
 import DmFinLaw from './DmFinLaw'
 
@@ -112,6 +113,8 @@ export default function DmModule({ pageKey }: { pageKey: string }) {
       return <DmListing />
     case 'bond':
       return <DmBond />
+    case 'bond-detail':
+      return <DmBondDetail />
     case 'peer-analysis':
       return <DmPeerAnalysis />
     case 'fin-law':

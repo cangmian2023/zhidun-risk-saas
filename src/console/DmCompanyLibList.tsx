@@ -227,7 +227,7 @@ function FilterSelect({
   field: FilterControl
 }) {
   return (
-    <label className="inline-flex items-center gap-1 border border-slate-300 rounded px-2 py-1 text-xs bg-white hover:border-[#1677ff] cursor-pointer">
+    <label className="inline-flex items-center gap-1 border border-slate-300 rounded px-2 py-1 text-xs bg-white hover:border-[#1f47f5] cursor-pointer">
       <span className="text-slate-500">{label}</span>
       {field.control === 'select' ? (
         <select className="bg-transparent outline-none cursor-pointer text-slate-700" value={value} onChange={(e) => onChange(e.target.value)}>
@@ -265,7 +265,7 @@ const INSURED_FIELD: FilterControl = { control: 'select', options: ['不限', '0
 const REG_CAPITAL_FIELD: FilterControl = { control: 'select', options: ['不限', '0-1000万', '1000万-5000万', '5000万-1亿', '1亿-5亿', '5亿以上'] }
 
 export default function DmCompanyLibList() {
-  const { back } = usePageNav()
+  const { back, goDetail } = usePageNav()
   const params = useMemo(() => {
     const usp = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '')
     return { cat: usp.get('cat') || '', name: usp.get('name') || '' }
@@ -347,7 +347,7 @@ export default function DmCompanyLibList() {
   }
 
   return (
-    <div className="min-h-full bg-white">
+    <div className="min-h-full bg-[#f7f8fa]">
       <PageShell
         title={title}
         crumb={`数字营销 / 企业库 / ${title}`}
@@ -374,7 +374,7 @@ export default function DmCompanyLibList() {
             <FilterSelect label="认证状态" value={libFilters.certStatus} onChange={(v) => setLibFilter('certStatus', v)} field={CERT_STATUS_FIELD} />
             <FilterSelect label="认证级别" value={libFilters.certLevel} onChange={(v) => setLibFilter('certLevel', v)} field={CERT_LEVEL_FIELD} />
             <span
-              className="text-[#1677ff] cursor-pointer text-xs flex items-center gap-1 select-none"
+              className="text-[#1f47f5] cursor-pointer text-xs flex items-center gap-1 select-none"
               onClick={() => setLibExpanded((v) => !v)}
             >
               更多筛选
@@ -406,7 +406,7 @@ export default function DmCompanyLibList() {
               </span>
             ))}
             {Object.values(libFilters).every((v) => !v || v === '不限') && <span className="text-xs text-slate-400">无</span>}
-            <span className="ml-auto text-[#1677ff] cursor-pointer flex items-center gap-1 text-xs" onClick={clearLibFilters}>
+            <span className="ml-auto text-[#1f47f5] cursor-pointer flex items-center gap-1 text-xs" onClick={clearLibFilters}>
               <i className="fa fa-refresh" />清空
             </span>
           </div>
@@ -417,7 +417,7 @@ export default function DmCompanyLibList() {
           <div className="text-sm text-slate-700">
             找到 <span className="font-semibold text-slate-900">{filtered.length.toLocaleString()}</span> 条结果
             {selected.size > 0 && (
-              <span className="ml-2 text-xs text-[#1677ff]">已选择 {selected.size} 家</span>
+              <span className="ml-2 text-xs text-[#1f47f5]">已选择 {selected.size} 家</span>
             )}
           </div>
           <div className="flex items-center gap-3">
@@ -426,7 +426,7 @@ export default function DmCompanyLibList() {
                 value={keyword}
                 onChange={(e) => setKeyword(e.target.value)}
                 placeholder="请输入企业名称"
-                className="w-56 rounded border border-slate-200 py-1.5 pl-8 pr-3 text-sm text-slate-700 placeholder:text-slate-400 focus:border-[#1677ff] focus:outline-none"
+                className="w-56 rounded border border-slate-200 py-1.5 pl-8 pr-3 text-sm text-slate-700 placeholder:text-slate-400 focus:border-[#1f47f5] focus:outline-none"
               />
               <SearchIcon className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             </div>
@@ -434,7 +434,7 @@ export default function DmCompanyLibList() {
             <div className="relative" ref={marketingWrapRef}>
               <button
                 onClick={() => setMarketingOpen((v) => !v)}
-                className="flex items-center gap-2 rounded border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-700 hover:border-[#1677ff] hover:text-[#1677ff]"
+                className="flex items-center gap-2 rounded border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-700 hover:border-[#1f47f5] hover:text-[#1f47f5]"
               >
                 <MarketingIcon className="h-4 w-4" />
                 <span>营销</span>
@@ -461,7 +461,7 @@ export default function DmCompanyLibList() {
               )}
             </div>
 
-            <button className="flex items-center gap-2 rounded border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-700 hover:border-[#1677ff] hover:text-[#1677ff]">
+            <button className="flex items-center gap-2 rounded border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-700 hover:border-[#1f47f5] hover:text-[#1f47f5]">
               <ExportIcon className="h-4 w-4" />
               <span>导出</span>
             </button>
@@ -478,14 +478,14 @@ export default function DmCompanyLibList() {
                     type="checkbox"
                     checked={allSelected}
                     onChange={toggleAll}
-                    className="h-3.5 w-3.5 rounded border-slate-300 text-[#1677ff] focus:ring-[#1677ff]"
+                    className="h-3.5 w-3.5 rounded border-slate-300 text-[#1f47f5] focus:ring-[#1f47f5]"
                   />
                 </th>
                 <th className="px-3 py-3">被投资企业</th>
                 <th className="px-3 py-3">
                   <button
                     onClick={() => setSortDesc((v) => !v)}
-                    className="flex items-center gap-1 text-[#1677ff]"
+                    className="flex items-center gap-1 text-[#1f47f5]"
                   >
                     被投资次数
                     <SortDownIcon className="h-3 w-3" />
@@ -511,27 +511,27 @@ export default function DmCompanyLibList() {
                       type="checkbox"
                       checked={selected.has(row.id)}
                       onChange={() => toggleRow(row.id)}
-                      className="h-3.5 w-3.5 rounded border-slate-300 text-[#1677ff] focus:ring-[#1677ff]"
+                      className="h-3.5 w-3.5 rounded border-slate-300 text-[#1f47f5] focus:ring-[#1f47f5]"
                     />
                   </td>
                   <td className="px-3 py-3 align-top">
                     <div className="flex items-start gap-3">
                       <LogoBox text={row.name} color={row.abbrColor} />
                       <div className="min-w-0">
-                        <div className="cursor-pointer font-medium text-[#1677ff] hover:underline" title={row.name}>
+                        <div className="cursor-pointer font-medium text-[#1f47f5] hover:underline" title={row.name} onClick={() => goDetail('/console/dm/ent-archive-basic', { name: row.name })}>
                           {row.name}
                         </div>
                       </div>
                     </div>
                   </td>
-                  <td className="px-3 py-3 align-top text-base font-semibold text-[#1677ff]">
+                  <td className="px-3 py-3 align-top text-base font-semibold text-[#1f47f5]">
                     {row.investmentCount}
                   </td>
                   <td className="px-3 py-3 align-top">
                     <div className="flex flex-col gap-1">
                       {row.agencies.map((a, i) => (
                         <div key={i} className="flex items-start gap-1.5 text-xs text-slate-700">
-                          <BuildingIcon className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-[#1677ff]" />
+                          <BuildingIcon className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-[#1f47f5]" />
                           <span className="line-clamp-2" title={a}>{a}</span>
                         </div>
                       ))}
@@ -558,7 +558,7 @@ export default function DmCompanyLibList() {
                     <div className="flex flex-col gap-1">
                       {row.investors.map((inv, i) => (
                         <div key={i} className="flex items-start gap-1.5 text-xs text-slate-700">
-                          <span className="mt-0.5 flex h-3.5 w-3.5 flex-shrink-0 items-center justify-center rounded bg-[#1677ff]/10 text-[10px] font-bold text-[#1677ff]">基</span>
+                          <span className="mt-0.5 flex h-3.5 w-3.5 flex-shrink-0 items-center justify-center rounded bg-[#1f47f5]/10 text-[10px] font-bold text-[#1f47f5]">基</span>
                           <span className="line-clamp-2" title={inv}>{inv}</span>
                         </div>
                       ))}
@@ -567,7 +567,7 @@ export default function DmCompanyLibList() {
                   <td className="px-3 py-3 align-top">
                     <button
                       onClick={() => { setOppRow(row); setOppOpen(true) }}
-                      className="rounded bg-[#1677ff]/10 px-2 py-0.5 text-xs font-medium text-[#1677ff] hover:bg-[#1677ff]/20"
+                      className="rounded bg-[#1f47f5]/10 px-2 py-0.5 text-xs font-medium text-[#1f47f5] hover:bg-[#1f47f5]/20"
                       title="查看最新营销商机"
                     >
                       新增中标

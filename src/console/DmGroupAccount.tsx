@@ -12,7 +12,6 @@ type GroupRow = { name: string; member: string; core?: string; logo?: string; lo
 type TabDef = { key: string; label: string }
 
 const TABS: TabDef[] = [
-  { key: 'watch', label: '关注' },
   { key: 'yangqi', label: '央企' },
   { key: 'guoqi', label: '国企' },
   { key: 'minying', label: '民营' },
@@ -589,9 +588,7 @@ function FilterRow({ label, options, value, onChange, showMore }: {
             </button>
           )
         })}
-        {showMore && (
-          <button className="ml-auto text-sm text-[#1a53ff] hover:underline">更多</button>
-        )}
+        {showMore && null}
       </div>
     </div>
   )
@@ -628,6 +625,13 @@ export default function DmGroupAccount() {
 
   const showFilters = tab === 'guoqi' || tab === 'minying' || tab === 'waizi' || tab === 'jigou'
   const totalLabel = tab === 'guoqi' ? '17,490' : tab === 'minying' ? '202,399' : tab === 'waizi' ? '17,101' : undefined
+
+  const clearFilters = () => {
+    setProvince(tab === 'jigou' ? '北京市' : '全国')
+    setCity(tab === 'jigou' ? '直辖市' : '不限')
+    setRegion('不限')
+    setKw('')
+  }
 
   return (
     <>
@@ -666,7 +670,7 @@ export default function DmGroupAccount() {
             {/* 筛选器（仅国企 tab 显示） */}
             {showFilters && (
               <div className="mb-3 rounded-[4px] bg-white px-4">
-                <FilterRow label="选择省份" options={PROVINCES.slice(0, 16)} value={province} onChange={(v) => { setProvince(v); setCity(tab === 'jigou' ? '直辖市' : '不限'); setRegion('不限') }} showMore />
+                <FilterRow label="选择省份" options={PROVINCES.slice(0, 16)} value={province} onChange={(v) => { setProvince(v); setCity(tab === 'jigou' ? '直辖市' : '不限'); setRegion('不限') }} />
                 <div className="border-t border-dashed border-slate-100" />
                 <FilterRow label="选择城市" options={tab === 'jigou' ? ['直辖市'] : ['不限']} value={city} onChange={setCity} />
                 {tab !== 'jigou' && (
@@ -675,6 +679,14 @@ export default function DmGroupAccount() {
                     <FilterRow label="选择区域" options={['不限']} value={region} onChange={setRegion} />
                   </>
                 )}
+                <div className="flex justify-end border-t border-dashed border-slate-100 py-2">
+                  <button
+                    onClick={clearFilters}
+                    className="rounded border border-slate-200 px-3 py-1 text-sm text-[#76788b] transition-colors hover:border-[#1a53ff] hover:text-[#1a53ff]"
+                  >
+                    清空
+                  </button>
+                </div>
               </div>
             )}
 
