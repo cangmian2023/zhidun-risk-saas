@@ -66,7 +66,7 @@ const seed: Data = {
     ],
     logoLabel: '上传logo',
     logoBtn: '上传Logo',
-    logoFile: '启信慧眼logo.png',
+    logoFile: '企业征信logo.png',
     descLabel: '说明信息',
     descOptions: [
       { key: 'default', label: '默认说明' },
@@ -86,11 +86,11 @@ const seed: Data = {
     groups: [
       {
         key: 'qixin',
-        label: '启信指数',
+        label: '企业健康度',
         open: true,
         checked: false,
         children: [
-          { key: 'score', label: '启信分' },
+          { key: 'score', label: '企业健康度' },
           { key: 'shell', label: '空壳指数' },
           { key: 'contract', label: '合同违约指数' },
           { key: 'judicial', label: '司法风险' },
@@ -110,17 +110,17 @@ const seed: Data = {
   },
   panelActions: { clear: '清空数据', preview: '预览', done: '完成' },
   preview: {
-    logoText: '启信慧眼',
+    logoText: '企业征信',
     title: '企业信用报告',
     subtitle: ['上海xxxxxxx科技股份有限公司', '法定代表人：xxxxx'],
     noteLines: [
       '本报告生成时间为20xx年xx月xx日 xx:xx:xx',
-      '您所看到的报告内容为截至该时间点该公司的启信慧眼数据快照。',
+      '您所看到的报告内容为截至该时间点该公司的企业征信数据快照。',
       '电话咨询：xxxxxxxxx 官网地址：b.qixin.com',
       '本报告仅为您的决策提供参考，我们不对该查询结果的全面、准确、真实性负责',
     ],
     nav: ['封面', '目录'],
-    toc: ['一、企业基本信息', '二、启信指数', '三、司法风险', '四、经营信息', '五、知识产权'],
+    toc: ['一、企业基本信息', '二、企业健康度', '三、司法风险', '四、经营信息', '五、知识产权'],
   },
 }
 
@@ -421,8 +421,8 @@ export default function JdReportCustom({ params }: { params: URLSearchParams }) 
                 padding: '7px 0',
                 borderRadius: 6,
                 border: 'none',
-                background: '#ffc53d',
-                color: '#1F2937',
+                background: '#2563EB',
+                color: '#fff',
                 fontSize: 13.5,
                 fontWeight: 600,
                 cursor: 'pointer',

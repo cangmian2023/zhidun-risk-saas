@@ -90,7 +90,7 @@ export default function ArcProperty({ params }: { params: URLSearchParams }) {
         </div>
         <div style={{ marginTop: 10, fontSize: 13, color: '#334155', lineHeight: 1.9 }}>
           <span>简介：{data.profile.formerName}</span> · <span>曾用名</span> ·{' '}
-          <span>启信分：<b>{data.profile.qixinScore}</b> 分</span> ·{' '}
+          <span>企业健康度：<b>{data.profile.qixinScore}</b> 分</span> ·{' '}
           <span>税号：{data.profile.taxNo}</span> · <span>集团：{data.profile.group}</span> ·{' '}
           <span>{data.profile.scale}</span> · <span>{data.profile.nature}</span>
         </div>

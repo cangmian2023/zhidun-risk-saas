@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { PageShell } from './PageShell'
+import { RightDrawer } from '../components/ui'
+import { usePageNav } from './pageNav'
 
 /* ============ 图标（系统未引入 FontAwesome，按 HTML 视觉等价替换为内联 SVG） ============ */
 const ChevronDown = () => (
@@ -107,7 +109,26 @@ function statusBadge(tone: 'blue' | 'amber') {
 }
 
 export default function DmMarketLead() {
+  const { goDetail } = usePageNav()
   const [scope, setScope] = useState('全部')
+  const [fName, setFName] = useState('')
+  const [fList, setFList] = useState('')
+  const [fStatus, setFStatus] = useState('')
+  const [fDept, setFDept] = useState('')
+  const [fHealth, setFHealth] = useState('')
+  const [drawer, setDrawer] = useState<{ type: 'market' | 'touch'; name: string } | null>(null)
+
+  const listOpts = Array.from(new Set(LEADS.map((l) => l.listName)))
+  const statusOpts = Array.from(new Set(LEADS.map((l) => l.status)))
+  const deptOpts = Array.from(new Set(LEADS.map((l) => l.dept)))
+  const filtered = LEADS.filter((l) => {
+    if (fName && !l.name.includes(fName)) return false
+    if (fList && l.listName !== fList) return false
+    if (fStatus && l.status !== fStatus) return false
+    if (fDept && l.dept !== fDept) return false
+    if (fHealth && Number(l.qx) < Number(fHealth)) return false
+    return true
+  })
   return (
     <div style={{ padding: 24, maxWidth: 2200, margin: '0 auto' }}>
       <PageShell title="营销线索" crumb="数字营销 / 营销管理" subtitle="营销线索池：线索采集、打分与分配跟进" legend={false} />
@@ -141,7 +162,7 @@ export default function DmMarketLead() {
             <span
               key={s}
               onClick={() => setScope(s)}
-              className={`mr-2 cursor-pointer rounded px-2 py-1 text-sm ${on ? 'bg-[#ffc53d]' : 'bg-gray-100 hover:bg-gray-200'}`}
+              className={`mr-2 cursor-pointer rounded px-2 py-1 text-sm ${on ? 'bg-[#1f47f5] text-white' : 'bg-gray-100 hover:bg-gray-200'}`}
             >
               {s}
             </span>
@@ -151,14 +172,26 @@ export default function DmMarketLead() {
 
       {/* 高级筛选区域 */}
       <div className="mb-4 rounded border bg-white px-4 py-3">
-        <div className="mb-2">
+        <div className="mb-2 flex flex-wrap items-center">
           <FilterTitle>线索筛选</FilterTitle>
-          <FilterItem label="名单筛选" />
-          <FilterItem label="线索状态" />
-          <FilterItem label="归属人员" />
-          <FilterItem label="归属部门" />
-          <FilterItem label="走访状态" />
-          <FilterItem label="加入名单时间" />
+          <select value={fList} onChange={(e) => setFList(e.target.value)} className="mr-3 rounded border px-2 py-1 text-sm text-gray-600 outline-none">
+            <option value="">名单筛选（全部）</option>
+            {listOpts.map((o) => <option key={o} value={o}>{o}</option>)}
+          </select>
+          <select value={fStatus} onChange={(e) => setFStatus(e.target.value)} className="mr-3 rounded border px-2 py-1 text-sm text-gray-600 outline-none">
+            <option value="">线索状态（全部）</option>
+            {statusOpts.map((o) => <option key={o} value={o}>{o}</option>)}
+          </select>
+          <select value={fDept} onChange={(e) => setFDept(e.target.value)} className="mr-3 rounded border px-2 py-1 text-sm text-gray-600 outline-none">
+            <option value="">归属部门（全部）</option>
+            {deptOpts.map((o) => <option key={o} value={o}>{o}</option>)}
+          </select>
+          <select value={fHealth} onChange={(e) => setFHealth(e.target.value)} className="mr-3 rounded border px-2 py-1 text-sm text-gray-600 outline-none">
+            <option value="">企业健康度（不限）</option>
+            <option value="600">≥600</option>
+            <option value="700">≥700</option>
+            <option value="800">≥800</option>
+          </select>
         </div>
 
         <div className="mb-2">
@@ -172,7 +205,7 @@ export default function DmMarketLead() {
           <FilterItem label="企业类型" />
           <FilterItem label="组织类型" />
           <FilterItem label="参保人数" />
-          <FilterItem label="启信分" />
+          <FilterItem label="企业健康度" />
           <FilterItem label="税务资质" />
           <FilterItem label="进出口信息" />
           <FilterItem label="融资信息" />
@@ -251,7 +284,7 @@ export default function DmMarketLead() {
           </button>
         </div>
         <div className="flex items-center gap-3">
-          <input className="w-56 rounded border px-3 py-1 text-sm" placeholder="请输入企业名称" />
+          <input value={fName} onChange={(e) => setFName(e.target.value)} className="w-56 rounded border px-3 py-1 text-sm" placeholder="请输入企业名称" />
           <button className="flex items-center gap-1 rounded border px-3 py-1 text-sm">
             <MapIcon /> 地图派单
           </button>
@@ -277,18 +310,18 @@ export default function DmMarketLead() {
               <th className="min-w-[140px] border px-3 py-2 text-left">线索归属部门</th>
               <th className="min-w-[140px] border px-3 py-2 text-left">线索归属人员</th>
               <th className="min-w-[100px] border px-3 py-2 text-left">走访状态</th>
-              <th className="min-w-[80px] border px-3 py-2 text-left">启信分 <SortIcon /></th>
+              <th className="min-w-[80px] border px-3 py-2 text-left">企业健康度 <SortIcon /></th>
               <th className="min-w-[100px] border px-3 py-2 text-left">发生日期</th>
               <th className="min-w-[140px] border px-3 py-2 text-left">最新商机内容</th>
               <th className="min-w-[220px] border px-3 py-2 text-left">操作</th>
             </tr>
           </thead>
           <tbody>
-            {LEADS.map((l, i) => (
+            {filtered.map((l, i) => (
               <tr key={i} className="hover:bg-gray-50">
                 <td className="border px-3 py-2"><input type="checkbox" /></td>
                 <td className="border px-3 py-2">
-                  <div className="cursor-pointer text-blue-500">{l.name}</div>
+                  <button onClick={() => goDetail('/console/dm/ent-archive-basic', { name: l.name })} className="cursor-pointer text-blue-500 text-left">{l.name}</button>
                   {l.tags && (
                     <div className="mt-1">
                       {l.tags.map((t) => (
@@ -314,11 +347,10 @@ export default function DmMarketLead() {
                 <td className="border px-3 py-2">{l.occur}</td>
                 <td className="border px-3 py-2">{l.latest}</td>
                 <td className="border px-3 py-2">
-                  {l.ops.map((o, j) => (
-                    <button key={j} className={`mr-2 text-sm text-blue-500 ${j === l.ops.length - 1 ? '' : ''}`}>
-                      {o.label}{o.caret && <ChevronDown />}
-                    </button>
-                  ))}
+                  <button onClick={() => setDrawer({ type: 'market', name: l.name })} className="mr-2 text-sm text-blue-500 hover:underline">营销</button>
+                  <button onClick={() => setDrawer({ type: 'touch', name: l.name })} className="mr-2 text-sm text-blue-500 hover:underline">触达</button>
+                  <button className="mr-2 text-sm text-blue-500 hover:underline">分配</button>
+                  <button className="text-sm text-blue-500 hover:underline">记录</button>
                 </td>
               </tr>
             ))}
@@ -330,6 +362,47 @@ export default function DmMarketLead() {
       <div className="mt-3 flex justify-end">
         <div className="rounded border px-3 py-2 text-sm text-gray-500">分页组件区域</div>
       </div>
+
+      <RightDrawer open={!!drawer} onClose={() => setDrawer(null)} title={drawer?.type === 'market' ? '营销' : '触达'} width={480}>
+        {drawer && (drawer.type === 'market' ? (
+          <div className="space-y-4 text-sm">
+            <div className="rounded-md bg-slate-50 px-3 py-2">企业：<span className="font-medium">{drawer.name}</span></div>
+            <div>
+              <div className="mb-1 font-medium text-slate-600">关联营销产品</div>
+              <div className="space-y-1">
+                {['普惠信用贷', '设备更新贷', '供应链金融'].map((p) => (
+                  <label key={p} className="flex items-center gap-2 rounded border border-slate-200 px-3 py-2 text-slate-600">
+                    <input type="checkbox" className="accent-blue-600" />{p}
+                  </label>
+                ))}
+              </div>
+            </div>
+            <div>
+              <div className="mb-1 font-medium text-slate-600">营销话术</div>
+              <textarea rows={3} placeholder="请输入本次营销沟通要点" className="w-full resize-none rounded border border-slate-200 px-3 py-2 text-slate-700 outline-none" />
+            </div>
+            <button className="w-full rounded-md bg-[#1f47f5] py-2 text-white">发起营销</button>
+          </div>
+        ) : (
+          <div className="space-y-4 text-sm">
+            <div className="rounded-md bg-slate-50 px-3 py-2">企业：<span className="font-medium">{drawer.name}</span></div>
+            <div className="space-y-2">
+              {[
+                { k: '手机号', v: '19156027703' },
+                { k: '座机', v: '021-5888 6666' },
+                { k: '邮箱', v: 'contact@example.com' },
+                { k: '地址', v: '上海市浦东新区张江高科技园区博云路2号' },
+              ].map((c) => (
+                <div key={c.k} className="flex items-center justify-between rounded border border-slate-200 px-3 py-2">
+                  <span className="text-slate-500">{c.k}</span>
+                  <span className="flex items-center gap-2"><span className="font-medium">{c.v}</span><button className="text-blue-500">复制</button></span>
+                </div>
+              ))}
+            </div>
+            <button className="w-full rounded-md bg-[#1f47f5] py-2 text-white">发送触达</button>
+          </div>
+        ))}
+      </RightDrawer>
     </div>
   )
 }

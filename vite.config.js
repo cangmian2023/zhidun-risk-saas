@@ -42,6 +42,11 @@ function persistPlugin() {
         'scoringData.json', 'ruleHub.json',
         // 个人档案子系统（gr）· 个人图谱样例数据
         'personGraph.json',
+        // 企业风控子系统（fk）· 全部样例 JSON（漏加会让 useSample 返回 400，页面渲染出错）
+        'fkYearly.json', 'fkRisk.json', 'fkHealth.json', 'fkEmployee.json', 'fkMap.json',
+        'fkMonitorDetail.json', 'fkMonManage.json', 'fkMonRuleCreate.json',
+        'fkBlacklist.json', 'fkInterest.json', 'fkProperty.json', 'fkRegulatory.json',
+        'fkMonitor.json', 'fkStats.json',
       ]);
       server.middlewares.use((req, res, next) => {
         const url = new URL(req.url ?? '', 'http://localhost');

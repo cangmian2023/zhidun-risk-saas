@@ -9,7 +9,6 @@ import { subNames } from './menus'
 
 import DmAiMarketing, { DmAiMarketingResult } from './DmAiMarketing'
 import DmGridMarketing from './DmGridMarketing'
-import DmRuralRevive from './DmRuralRevive'
 import DmGroupAccount from './DmGroupAccount'
 import DmGroupAccountDetail from './DmGroupAccountDetail'
 import DmIndustryReport from './DmIndustryReport'
@@ -24,21 +23,17 @@ import DmTender from './DmTender'
 import DmTenderProduct from './DmTenderProduct'
 import DmTechFin from './DmTechFin'
 import DmTechFinDetail from './DmTechFinDetail'
-import DmIndustryFin from './DmIndustryFin'
-import DmIndustryFinDetail from './DmIndustryFinDetail'
-import DmParkFin from './DmParkFin'
-import DmGreenFin from './DmGreenFin'
+import DmTechFinPk from './DmTechFinPk'
 import DmMarketList from './DmMarketList'
 import DmMarketListDetail from './DmMarketListDetail'
 import DmMarketLead from './DmMarketLead'
 import DmMarketBoard from './DmMarketBoard'
 import DmExistBiz from './DmExistBiz'
 import DmCrowdAnalysis from './DmCrowdAnalysis'
-import DmEntArchive from './DmEntArchive'
 import DmEntArchiveBasic from './DmEntArchiveBasic'
-import DmPersonArchive from './DmPersonArchive'
 import DmPersonArchiveBasic from './DmPersonArchiveBasic'
 import DmPevc from './DmPevc'
+import DmPevcOrgDetail from './DmPevcOrgDetail'
 import DmListing from './DmListing'
 import DmBond from './DmBond'
 import DmPeerAnalysis from './DmPeerAnalysis'
@@ -63,8 +58,6 @@ export default function DmModule({ pageKey }: { pageKey: string }) {
       return <DmAiMarketingResult />
     case 'grid-marketing':
       return <DmGridMarketing />
-    case 'rural-revive':
-      return <DmRuralRevive />
     case 'group-account':
       return <DmGroupAccount />
     case 'group-account-detail':
@@ -93,14 +86,8 @@ export default function DmModule({ pageKey }: { pageKey: string }) {
       return <DmTechFin />
     case 'techfin-detail':
       return <DmTechFinDetail />
-    case 'industry-fin':
-      return <DmIndustryFin />
-    case 'industry-fin-detail':
-      return <DmIndustryFinDetail />
-    case 'park-fin':
-      return <DmParkFin />
-    case 'green-fin':
-      return <DmGreenFin />
+    case 'techfin-pk':
+      return <DmTechFinPk />
     case 'market-list':
       return <DmMarketList />
     case 'market-list-detail':
@@ -113,16 +100,14 @@ export default function DmModule({ pageKey }: { pageKey: string }) {
       return <DmExistBiz />
     case 'crowd-analysis':
       return <DmCrowdAnalysis />
-    case 'ent-archive':
-      return <DmEntArchive />
     case 'ent-archive-basic':
       return <DmEntArchiveBasic />
-    case 'person-archive':
-      return <DmPersonArchive />
     case 'person-archive-basic':
       return <DmPersonArchiveBasic />
     case 'pevc':
       return <DmPevc />
+    case 'pevc-org-detail':
+      return <DmPevcOrgDetail />
     case 'listing':
       return <DmListing />
     case 'bond':

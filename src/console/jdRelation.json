@@ -2,7 +2,7 @@
   "source": "fkSam",
   "pageTitle": "关系尽调",
   "tabs": [
-    { "key": "central", "label": "集中排查", "badge": "AI" },
+    { "key": "central", "label": "集中排查" },
     { "key": "group", "label": "组与组排查" },
     { "key": "related", "label": "关联方识别" }
   ],
@@ -74,7 +74,7 @@
         { "text": "条低风险路径", "highlight": false }
       ]
     },
-    "aiBtn": "AI 分析",
+    "aiBtn": "分析",
     "legend": [
       { "label": "公司", "color": "#3B82F6" },
       { "label": "人员", "color": "#F43F5E" },
@@ -225,7 +225,7 @@
           { "from": "gc6", "to": "gn2", "label": "历史法定代表人" }
         ]
       },
-      "watermark": "启信慧眼",
+      "watermark": "企业征信",
       "disclaimer": "数据基于公开数据动态分析，仅供参考"
     }
   },

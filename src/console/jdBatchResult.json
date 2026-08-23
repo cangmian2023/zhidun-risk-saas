@@ -15,7 +15,7 @@
     "saveTemplate": "存为模板",
     "tree": [
       { "key": "business", "label": "工商信息", "checked": true },
-      { "key": "qixin", "label": "启信指数", "checked": false },
+      { "key": "qixin", "label": "企业健康度", "checked": false },
       { "key": "relation", "label": "企业关系", "checked": false },
       { "key": "judicial", "label": "司法风险", "checked": false },
       { "key": "operation", "label": "经营风险", "checked": false },
@@ -71,7 +71,7 @@
       {
         "key": "operInfo",
         "title": "经营信息",
-        "options": ["参保人数", "启信分", "官方认证", "税务资质", "进出口信息", "融资信息", "债券信息", "域名信息", "资质证书", "专利信息", "商标信息", "新闻舆情"],
+        "options": ["参保人数", "企业健康度", "官方认证", "税务资质", "进出口信息", "融资信息", "债券信息", "域名信息", "资质证书", "专利信息", "商标信息", "新闻舆情"],
         "dropdowns": true
       },
       {
@@ -117,7 +117,7 @@
       { "key": "park", "label": "园区名称" },
       { "key": "group", "label": "所属集团" },
       { "key": "emergingIndustry", "label": "新兴产业" },
-      { "key": "qixinScore", "label": "启信分值" },
+      { "key": "qixinScore", "label": "企业健康度" },
       { "key": "shellIndex", "label": "空壳指数" },
       { "key": "contractDefault", "label": "合同违约指数" },
       { "key": "techScore", "label": "科创评分" },

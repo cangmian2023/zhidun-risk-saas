@@ -216,7 +216,7 @@ a:hover{color:#0d2eb7!important}
 .name-detail-tag .triangle{display:none!important}
 .name-detail-tag.risk{background:#fdecea!important;color:#f5573e!important}
 .name-detail-tag.top{background:#e8f0ff!important;color:#1a53ff!important}
-/* 启信风险块：软色块去边框，对齐企业风险块 */
+/* 企业风险块：软色块去边框，对齐企业风险块 */
 .qinxin-risk-tag{background:#fff4eb!important;border:none!important;border-radius:4px!important;height:auto!important;min-height:52px!important}
 .qinxin-risk-tag .qinxin-word{color:#f5573e!important;font-size:16px!important}
 .qinxin-risk-tag .all-tags .title{color:#00000a!important}

@@ -249,7 +249,7 @@ export function RuleForm({
               <EpBtn variant="default" size="sm" onClick={() => back(backTo)} style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
                 <IconClose /> 取消
               </EpBtn>
-              <EpBtn variant="primary" size="sm" onClick={() => alert('保存规则')} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: '#F59E0B', borderColor: '#F59E0B' }}>
+              <EpBtn variant="primary" size="sm" onClick={() => alert('保存规则')} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: '#2563EB', borderColor: '#2563EB' }}>
                 <IconSave /> 保存
               </EpBtn>
             </>

@@ -18,6 +18,13 @@ const tagS: React.CSSProperties = {
 
 export type SourceKind = 'cfg' | 'sample' | 'calc';
 
+// 企业风控（ep）/ 数字营销（dm）子系统已按产品需求不再展示数据来源标签
+function isTagHiddenSub() {
+  if (typeof window === 'undefined') return false;
+  const p = window.location.pathname;
+  return p.startsWith('/console/ep') || p.startsWith('/console/dm');
+}
+
 const KIND_META: Record<SourceKind, { label: string; bg: string; fg: string; bd: string }> = {
   cfg: { label: '配置JSON', bg: '#DBEAFE', fg: '#1D4ED8', bd: '#93C5FD' },
   sample: { label: '样例JSON', bg: '#FFF7ED', fg: '#C2410C', bd: '#FDBA74' },
@@ -25,7 +32,7 @@ const KIND_META: Record<SourceKind, { label: string; bg: string; fg: string; bd:
 };
 
 export function SourceTag({ kind, label, value }: { kind: SourceKind; label?: string; value?: ReactNode }) {
-  if (!useShowSourceTags()) return null;
+  if (!useShowSourceTags() || isTagHiddenSub()) return null;
   const m = KIND_META[kind];
   // 冗余去重：当 label 与大类默认名相同（如 "配置JSON"）时跳过，避免 "配置JSON·配置JSON"
   const showLabel = label && label !== m.label ? `·${label}` : '';
@@ -52,6 +59,7 @@ export const Cal = (props: { label?: string; value?: ReactNode }) => <SourceTag 
 
 // 页面级标签图例（蓝=配置 ｜ 橘=样例 ｜ 灰=实时计算），随全局开关显隐
 export function SourceTagLegend() {
+  if (isTagHiddenSub()) return null;
   return (
     <div style={{ display: 'flex', gap: 10, alignItems: 'center', margin: '8px 0 16px', fontSize: 11, color: '#94A3B8' }}>
       <span style={{ fontWeight: 500, color: '#64748B' }}>数据来源：</span>

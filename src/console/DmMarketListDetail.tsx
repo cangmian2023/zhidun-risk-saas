@@ -13,7 +13,7 @@ type Lead = {
   dept: string // 归属部门，未分配为 '—'
   visit: '需走访' | '已走访'
   joined: string // 加入名单时间 yyyy-MM-dd
-  score: number // 启信分
+  score: number // 企业健康度
   occur: string // 发生日期，无数据 '-'
   biz: string // 最新商机内容
 }
@@ -91,6 +91,14 @@ const CANDIDATE_COMPANIES = [
   '山西焦煤运销有限公司',
 ]
 
+/* 查看记录：演示样例跟进记录 */
+const RECORDS = [
+  { date: '2026-08-18', owner: '张伟（普惠部）', type: '电话外呼', content: '企业表达设备更新贷款意向，约下周上门走访，确认资金需求约 500 万。' },
+  { date: '2026-08-15', owner: '系统', type: '名单导入', content: '由「乡村振兴」主题名单自动归入，初始线索状态：未分配。' },
+  { date: '2026-08-12', owner: '李娜（公司部）', type: '微信沟通', content: '客户咨询普惠信用贷款额度，已发送产品资料与申请指引。' },
+  { date: '2026-08-05', owner: '王芳（零售部）', type: '上门走访', content: '实地走访经营场所，经营状况良好，建议匹配供应链金融产品。' },
+]
+
 /* 展示字段（9 列可配置，操作列固定） */
 const COLUMNS: { key: string; label: string }[] = [
   { key: 'name', label: '企业名称' },
@@ -99,7 +107,7 @@ const COLUMNS: { key: string; label: string }[] = [
   { key: 'dept', label: '线索归属部门' },
   { key: 'owner', label: '线索归属人员' },
   { key: 'visit', label: '走访状态' },
-  { key: 'score', label: '启信分' },
+  { key: 'score', label: '企业健康度' },
   { key: 'occur', label: '发生日期' },
   { key: 'biz', label: '最新商机内容' },
 ]
@@ -115,7 +123,6 @@ const SearchIcon = () => (<svg width="15" height="15" viewBox="0 0 16 16" fill="
 const CloseIcon = () => (<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></svg>)
 const TrashIcon = () => (<svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M3 4h10M6 4V2.5h4V4M5 4l.6 9h4.8L11 4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" /></svg>)
 const CopyIcon = () => (<svg width="13" height="13" viewBox="0 0 16 16" fill="none"><rect x="5" y="5" width="8" height="8" rx="1.5" stroke="currentColor" strokeWidth="1.4" /><path d="M3 11V4a1 1 0 0 1 1-1h7" stroke="currentColor" strokeWidth="1.4" /></svg>)
-const MapIcon = () => (<svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M8 1.5c3 0 5 2 5 5 0 3.5-5 8-5 8s-5-4.5-5-8c0-3 2-5 5-5Z" stroke="currentColor" strokeWidth="1.4" /><circle cx="8" cy="6.5" r="1.8" stroke="currentColor" strokeWidth="1.4" /></svg>)
 const MoreIcon = () => (<svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="3.5" cy="8" r="1.4" fill="currentColor" /><circle cx="8" cy="8" r="1.4" fill="currentColor" /><circle cx="12.5" cy="8" r="1.4" fill="currentColor" /></svg>)
 const ChartIcon = () => (<svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M2 14h12M4 14V8M8 14V4M12 14v-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>)
 const FilterIcon = () => (<svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M2 4h12M4 8h8M6 12h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>)
@@ -155,7 +162,7 @@ const rankColor = (i: number) => (i === 0 ? '#ef4444' : i === 1 ? '#22c55e' : i 
 /* ===================== 主页面 ===================== */
 export default function DmMarketListDetail() {
   const [params] = useSearchParams()
-  const { back } = usePageNav()
+  const { back, goDetail } = usePageNav()
   const id = params.get('id') || 'rural'
   const name = params.get('name') || '乡村振兴'
   const backUrl = params.get('back') || '/console/dm/market-list'
@@ -216,12 +223,12 @@ export default function DmMarketListDetail() {
   const [showFollow, setShowFollow] = useState<Lead | null>(null)
   const [followText, setFollowText] = useState('')
   const [showMore, setShowMore] = useState<Lead | null>(null)
+  const [showRecord, setShowRecord] = useState<Lead | null>(null)
   const [showRemove, setShowRemove] = useState<Lead | null>(null)
   const [showExport, setShowExport] = useState(false)
   const [exportCols, setExportCols] = useState<string[]>(COLUMNS.map((c) => c.key))
   const [exportSelectedOnly, setExportSelectedOnly] = useState(false)
   const [showCol, setShowCol] = useState(false)
-  const [showMap, setShowMap] = useState(false)
   const [showAI, setShowAI] = useState<Lead | null>(null)
   const [moreFilter, setMoreFilter] = useState<null | { title: string; items: string[] }>(null)
   const [toast, setToast] = useState('')
@@ -341,10 +348,12 @@ export default function DmMarketListDetail() {
         legend={false}
         header={(
           <div className="sticky top-14 z-30 -mx-4 border-b border-slate-100 bg-slate-50 px-4 pb-4 pt-1 lg:-mx-8 lg:px-8">
-            {/* 面包屑：营销名单可点击返回列表 */}
-            <div className="text-xs text-slate-400">
+            {/* 面包屑：返回按钮 + 营销名单可点击返回列表 */}
+            <div className="flex items-center gap-2 text-xs text-slate-400">
+              <button onClick={() => back(backUrl)} className="flex items-center gap-1 text-brand-600 hover:underline"><span>←</span>返回</button>
+              <span className="text-slate-300">/</span>
               <button onClick={() => back(backUrl)} className="text-brand-600 hover:underline">营销名单</button>
-              <span className="mx-1 text-slate-300">/</span>
+              <span className="text-slate-300">/</span>
               <span>{name} 主题详情</span>
             </div>
             {/* 标题 + Tab + 主操作 */}
@@ -419,7 +428,7 @@ export default function DmMarketListDetail() {
                   <SelectCell label="成立年限" value={''} onChange={() => {}} options={['', '1年内', '1-3年', '3-5年', '5年以上']} />
                   <SelectCell label="经营状态" value={''} onChange={() => {}} options={['', '存续', '在业', '吊销', '注销']} />
                   <SelectCell label="企业类型" value={''} onChange={() => {}} options={['', '有限责任公司', '股份有限公司', '个体工商户']} />
-                  <button onClick={() => setMoreFilter({ title: '基本筛选 · 更多', items: ['组织类型', '参保人数', '启信分', '税务资质', '进出口信息', '融资信息', '专利信息', '商标信息', '著作权'] })}
+                  <button onClick={() => setMoreFilter({ title: '基本筛选 · 更多', items: ['组织类型', '参保人数', '企业健康度', '税务资质', '进出口信息', '融资信息', '专利信息', '商标信息', '著作权'] })}
                     className="self-end rounded-md border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-600 hover:border-slate-300">更多</button>
                 </FilterGroup>
                 {/* 分组3：概念标签 */}
@@ -472,7 +481,6 @@ export default function DmMarketListDetail() {
                   className="h-full w-52 bg-transparent px-2 text-sm text-slate-600 outline-none placeholder:text-slate-400" />
                 <button onClick={doSearch} className="h-full rounded-r-md bg-slate-100 px-3 text-sm text-slate-600 hover:bg-slate-200">搜索</button>
               </div>
-              <button onClick={() => setShowMap(true)} className="flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-600 hover:border-slate-300" style={{ height: 36 }}><MapIcon /> 地图派单</button>
               <button onClick={() => { setExportSelectedOnly(false); setShowExport(true) }} className="flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-600 hover:border-slate-300" style={{ height: 36 }}><DownloadIcon /> 导出</button>
               <button onClick={() => setShowCol(true)} className="flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-600 hover:border-slate-300" style={{ height: 36 }}><ColIcon /> 展示字段({cols.length}/{COLUMNS.length})</button>
             </div>
@@ -521,7 +529,7 @@ export default function DmMarketListDetail() {
                         </td>
                         {cols.includes('name') && (
                           <td className="px-3 py-3">
-                            <button onClick={() => flash('跳转企业详情页（演示）')} className="font-semibold text-brand-600 hover:underline text-left">{l.name}</button>
+                            <button onClick={() => goDetail('/console/dm/ent-archive-basic', { name: l.name })} className="font-semibold text-brand-600 hover:underline text-left">{l.name}</button>
                           </td>
                         )}
                         {cols.includes('status') && (
@@ -554,19 +562,19 @@ export default function DmMarketListDetail() {
                         {cols.includes('score') && <td className="whitespace-nowrap px-3 py-3 tabular-nums text-slate-700">{l.score}</td>}
                         {cols.includes('occur') && <td className="whitespace-nowrap px-3 py-3 text-slate-500">{l.occur}</td>}
                         {cols.includes('biz') && (
-                          <td className="max-w-[220px] truncate px-3 py-3 text-slate-600" title={l.biz}>{l.biz}</td>
+                          <td className="max-w-[220px] line-clamp-2 px-3 py-3 text-slate-600" title={l.biz}>{l.biz}</td>
                         )}
                         <td className="whitespace-nowrap px-3 py-3 text-right">
-                          <div className="flex flex-wrap justify-end gap-2 text-xs">
+                          <div className="flex flex-nowrap justify-end gap-2 text-xs whitespace-nowrap">
                             <OpBtn onClick={() => setShowAI(l)}>AI+</OpBtn>
                             <OpBtn onClick={() => openAssign(l)}>分配</OpBtn>
                             <OpBtn onClick={() => setShowFollow(l)}>跟进</OpBtn>
+                            <OpBtn onClick={() => setShowRecord(l)}>查看记录</OpBtn>
                             <div className="relative">
                               <OpBtn onClick={() => setShowMore(showMore?.id === l.id ? null : l)} danger={false}>更多 <MoreIcon /></OpBtn>
                               {showMore?.id === l.id && (
                                 <div className="absolute right-0 z-30 mt-1 w-32 rounded-md border border-slate-200 bg-white py-1 text-left shadow-lg">
                                   <MoreItem onClick={() => { setShowMore(null); setShowRemove(l) }}>移出名单</MoreItem>
-                                  <MoreItem onClick={() => { setShowMore(null); flash('查看跟进记录（演示）') }}>查看记录</MoreItem>
                                   <MoreItem onClick={() => { setShowMore(null); openAssign(l) }}>编辑</MoreItem>
                                 </div>
                               )}
@@ -745,28 +753,40 @@ export default function DmMarketListDetail() {
         </Modal>
       )}
 
-      {/* ============ 地图派单弹窗 ============ */}
-      {showMap && (
-        <Modal title="地图派单" onClose={() => setShowMap(false)}>
-          <div className="flex h-64 items-center justify-center rounded-lg border border-dashed border-slate-300 bg-slate-50 text-sm text-slate-400">
-            地图视图（演示占位）：按地理分布展示线索、分配营销人员
-          </div>
-          <div className="mt-5 flex justify-end gap-2">
-            <button onClick={() => setShowMap(false)} className="rounded-md border border-slate-200 bg-white px-4 py-1.5 text-sm text-slate-600 hover:border-slate-300">关闭</button>
-          </div>
-        </Modal>
-      )}
-
       {/* ============ AI 分析弹窗 ============ */}
       {showAI && (
         <Modal title="企业 AI 分析" onClose={() => setShowAI(null)}>
           <div className="space-y-3 text-sm text-slate-600">
             <div className="rounded-md bg-slate-50 px-3 py-2">企业：<span className="font-medium text-slate-800">{showAI.name}</span></div>
-            <div className="rounded-md bg-slate-50 px-3 py-2">启信分：<span className="font-medium text-slate-800">{showAI.score}</span>　线索状态：{showAI.status}　走访：{showAI.visit}</div>
+            <div className="rounded-md bg-slate-50 px-3 py-2">企业健康度：<span className="font-medium text-slate-800">{showAI.score}</span>　线索状态：{showAI.status}　走访：{showAI.visit}</div>
             <p className="text-slate-500">AI 分析结论（演示）：该企业所属客群与名单主题高度匹配，建议优先分配营销人员跟进，重点关注其融资与设备更新需求。</p>
           </div>
           <div className="mt-5 flex justify-end gap-2">
             <button onClick={() => setShowAI(null)} className="rounded-md border border-slate-200 bg-white px-4 py-1.5 text-sm text-slate-600 hover:border-slate-300">关闭</button>
+          </div>
+        </Modal>
+      )}
+
+      {/* ============ 查看记录弹窗 ============ */}
+      {showRecord && (
+        <Modal title={`查看记录 · ${showRecord.name}`} onClose={() => setShowRecord(null)}>
+          <div className="space-y-3">
+            <div className="rounded-md bg-slate-50 px-3 py-2 text-sm text-slate-600">企业：<span className="font-medium text-slate-800">{showRecord.name}</span>　当前状态：{showRecord.status}　企业健康度：{showRecord.score}</div>
+            <div className="space-y-2">
+              {RECORDS.map((r, i) => (
+                <div key={i} className="rounded-md border border-slate-100 px-3 py-2">
+                  <div className="flex flex-wrap items-center gap-2 text-xs text-slate-400">
+                    <span className="font-medium text-slate-600">{r.date}</span>
+                    <span className="rounded bg-slate-100 px-1.5 py-0.5">{r.type}</span>
+                    <span>{r.owner}</span>
+                  </div>
+                  <div className="mt-1 text-sm text-slate-600">{r.content}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="mt-5 flex justify-end gap-2">
+            <button onClick={() => setShowRecord(null)} className="rounded-md border border-slate-200 bg-white px-4 py-1.5 text-sm text-slate-600 hover:border-slate-300">关闭</button>
           </div>
         </Modal>
       )}

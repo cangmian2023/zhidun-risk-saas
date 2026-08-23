@@ -1,189 +1,670 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>北京粤十机器人科技有限公司 - 公司商机</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        primary: '#165DFF',
-                        starBlue: '#4080FF',
-                        tagBg: '#EFF6FF',
-                    }
-                }
-            }
-        }
-    </script>
-    <style type="text/tailwindcss">
-        @layer utilities {
-            .tag-item {
-                @apply bg-slate-100 rounded px-1.5 py-0.5 text-xs text-gray-600;
-            }
-            .star-rating {
-                @apply text-starBlue;
-            }
-            .divider-line {
-                @apply border-b border-dashed border-gray-200 my-3;
-            }
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>北京中铁建工物资有限公司 - 营销详情</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    background: #FFFFFF; color: #1D2129; font-size: 14px;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: #165DFF; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  /* 企业头部 */
+  .company-header {
+    display: flex; align-items: center;
+    padding: 20px 24px;
+    border-bottom: 1px solid #E5E6EB; background: #FFFFFF;
+  }
+  .company-header .logo {
+    width: 56px; height: 56px; flex-shrink: 0;
+    margin-right: 14px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .company-header .logo svg { width: 100%; height: 100%; }
+  .company-header .info { flex: 1; min-width: 0; }
+  .company-header .name-row {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 8px;
+  }
+  .company-header .name { font-size: 22px; font-weight: 700; color: #1D2129; }
+  .company-header .status-tag {
+    display: inline-flex; align-items: center;
+    padding: 2px 10px; border: 1px solid #00B42A;
+    color: #00B42A; font-size: 13px; border-radius: 4px; font-weight: 500;
+  }
+  .company-header .meta {
+    display: flex; align-items: center; flex-wrap: wrap;
+    gap: 24px; font-size: 16px; color: #4E5969;
+  }
+  .company-header .meta .item { display: flex; align-items: center; gap: 6px; }
+  .company-header .meta .label { color: #86909C; }
+  .company-header .meta .person-icon {
+    width: 20px; height: 20px; border-radius: 50%;
+    background: #E8F3FF;
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .company-header .meta .person-icon svg { width: 14px; height: 14px; color: #165DFF; }
+  .company-header .actions {
+    display: flex; align-items: center; gap: 12px; flex-shrink: 0;
+  }
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    height: 40px; padding: 0 20px; border-radius: 4px; font-size: 15px;
+    cursor: pointer; border: 1px solid transparent;
+    transition: all .15s; white-space: nowrap; font-family: inherit;
+  }
+  .btn-outline { background: #FFFFFF; border-color: #C9CDD4; color: #1D2129; }
+  .btn-outline:hover { border-color: #165DFF; color: #165DFF; }
+  .btn-primary { background: #F7BA1E; border-color: #F7BA1E; color: #1D2129; font-weight: 600; }
+  .btn-primary:hover { background: #F5AE00; }
+
+  /* 营销统计卡片 */
+  .stats-cards {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 16px; padding: 20px 24px;
+  }
+  .stat-card {
+    border: 1px solid #E5E6EB; border-radius: 8px;
+    padding: 20px 24px; background: #FFFFFF;
+    cursor: pointer; transition: all .15s;
+  }
+  .stat-card:hover { border-color: #165DFF; box-shadow: 0 2px 8px rgba(22,93,255,0.1); }
+  .stat-card .card-title {
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 17px; font-weight: 600; color: #1D2129; margin-bottom: 12px;
+  }
+  .stat-card .card-title .sub { font-size: 15px; font-weight: 400; color: #86909C; }
+  .stat-card .card-num { font-size: 36px; font-weight: 700; color: #165DFF; line-height: 1.2; }
+  .stat-card .card-num .unit { font-size: 18px; font-weight: 400; color: #4E5969; margin-left: 4px; }
+
+  /* 板块标题 */
+  .section-title {
+    display: flex; align-items: center;
+    padding: 0 24px; margin-top: 8px; margin-bottom: 16px;
+  }
+  .section-title::before {
+    content: ""; display: inline-block;
+    width: 4px; height: 20px; background: #F7BA1E;
+    border-radius: 2px; margin-right: 10px;
+  }
+  .section-title .title-text { font-size: 18px; font-weight: 700; color: #1D2129; }
+  .section-title .result-count { font-size: 16px; color: #86909C; margin-left: 12px; }
+  .section-title .result-count .num { color: #FF7D00; font-weight: 600; }
+
+  /* 分类标签 */
+  .tab-filters { display: flex; flex-wrap: wrap; gap: 10px; padding: 0 24px 16px; }
+  .tab-filter {
+    display: inline-flex; align-items: center;
+    padding: 6px 14px; border: 1px solid #E5E6EB;
+    border-radius: 4px; font-size: 15px; color: #4E5969;
+    cursor: pointer; transition: all .15s; background: #FFFFFF;
+  }
+  .tab-filter:hover { border-color: #165DFF; color: #165DFF; }
+  .tab-filter.active { border-color: transparent; color: #165DFF; font-weight: 600; background: transparent; }
+
+  /* 子板块标题 */
+  .sub-section-title { font-size: 17px; font-weight: 600; color: #1D2129; padding: 0 24px 12px; }
+
+  /* 通用表格 */
+  .table-wrap { padding: 0 24px; margin-bottom: 24px; }
+  table.data-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+  table.data-table thead th {
+    background: #F7F8FA; color: #4E5969; font-weight: 600; font-size: 15px;
+    text-align: left; padding: 12px 14px;
+    border-bottom: 1px solid #E5E6EB; white-space: nowrap;
+  }
+  table.data-table thead th.sortable { cursor: pointer; user-select: none; }
+  table.data-table thead th.sortable .sort-arrows {
+    display: inline-flex; flex-direction: column;
+    margin-left: 4px; vertical-align: middle; line-height: 0;
+  }
+  table.data-table thead th.sortable .sort-arrows .up,
+  table.data-table thead th.sortable .sort-arrows .down {
+    width: 0; height: 0; border-left: 3px solid transparent; border-right: 3px solid transparent;
+  }
+  table.data-table thead th.sortable .sort-arrows .up { border-bottom: 4px solid #C9CDD4; margin-bottom: 1px; }
+  table.data-table thead th.sortable .sort-arrows .down { border-top: 4px solid #C9CDD4; }
+  table.data-table tbody td {
+    padding: 14px; border-bottom: 1px solid #F2F3F5;
+    font-size: 14px; color: #1D2129; vertical-align: middle;
+    overflow: hidden; text-overflow: ellipsis;
+  }
+  table.data-table tbody tr:hover { background: #F7F8FA; }
+  table.data-table .col-check { width: 40px; }
+
+  .company-cell { display: flex; align-items: center; gap: 8px; min-width: 0; }
+  .company-cell .c-icon {
+    flex-shrink: 0; width: 20px; height: 20px;
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .company-cell .c-icon svg { width: 100%; height: 100%; }
+  .company-cell .c-name {
+    font-size: 15px; color: #1D2129; font-weight: 500;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .company-cell .c-name.link { color: #165DFF; cursor: pointer; }
+
+  .status-alive-tag {
+    display: inline-flex; align-items: center;
+    padding: 2px 8px; border: 1px solid #00B42A;
+    color: #00B42A; font-size: 13px; border-radius: 4px;
+    font-weight: 500; white-space: nowrap;
+  }
+  .status-cancel-text { color: #F53F3F; }
+
+  .opportunity-link {
+    color: #165DFF; font-size: 14px; line-height: 1.6;
+    display: -webkit-box; -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical; overflow: hidden;
+  }
+
+  /* 分页 */
+  .pagination {
+    display: flex; align-items: center; justify-content: center;
+    flex-wrap: wrap; gap: 8px; padding: 16px 24px 24px;
+    font-size: 14px; color: #4E5969;
+  }
+  .pagination .total { margin-right: 16px; white-space: nowrap; }
+  .pagination .page-size {
+    display: inline-flex; align-items: center;
+    margin-right: 16px; cursor: pointer; user-select: none; white-space: nowrap;
+  }
+  .pagination .page-size::after {
+    content: ""; display: inline-block; width: 0; height: 0; margin-left: 6px;
+    border-left: 4px solid transparent; border-right: 4px solid transparent;
+    border-top: 5px solid #86909C;
+  }
+  .pagination .page-btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 36px; height: 36px; padding: 0 10px;
+    border: 1px solid #E5E6EB; border-radius: 4px;
+    background: #FFFFFF; color: #4E5969; font-size: 14px;
+    cursor: pointer; user-select: none; transition: all .15s;
+  }
+  .pagination .page-btn:hover { border-color: #165DFF; color: #165DFF; }
+  .pagination .page-btn.active {
+    background: #F7BA1E; border-color: #F7BA1E;
+    color: #1D2129; font-weight: 600;
+  }
+  .pagination .page-btn.arrow { font-size: 16px; padding: 0 8px; }
+  .pagination .page-ellipsis {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 36px; height: 36px; color: #86909C; user-select: none;
+  }
+  .pagination .jump { display: inline-flex; align-items: center; margin-left: 16px; white-space: nowrap; }
+  .pagination .jump input {
+    width: 48px; height: 32px; margin: 0 6px; padding: 0 8px;
+    border: 1px solid #E5E6EB; border-radius: 4px;
+    text-align: center; font-size: 14px; color: #1D2129; outline: none;
+  }
+
+  /* 集团信息栏 */
+  .group-info-bar {
+    display: flex; align-items: center; flex-wrap: wrap; gap: 40px;
+    padding: 16px 24px; margin: 0 24px 16px;
+    background: #F0F7FF; border-radius: 6px; font-size: 16px;
+  }
+  .group-info-bar .info-item { display: flex; align-items: center; gap: 8px; }
+  .group-info-bar .info-item .label { color: #4E5969; }
+  .group-info-bar .info-item .value { color: #1D2129; font-weight: 500; }
+  .group-info-bar .info-item .value.link { color: #165DFF; }
+  .group-info-bar .info-item .value.blue-num { color: #165DFF; font-weight: 600; }
+  .group-info-bar .more-link { margin-left: auto; color: #165DFF; cursor: pointer; white-space: nowrap; font-weight: 500; }
+
+  /* 集团成员筛选 */
+  .member-filters {
+    display: flex; align-items: center; flex-wrap: wrap; gap: 0; padding: 0 24px 14px;
+  }
+  .member-filter-item {
+    display: inline-flex; align-items: center;
+    padding: 8px 16px; font-size: 15px; color: #4E5969;
+    cursor: pointer; user-select: none; white-space: nowrap;
+  }
+  .member-filter-item.active { color: #165DFF; font-weight: 600; }
+  .member-filter-item::after {
+    content: ""; display: inline-block; width: 0; height: 0; margin-left: 6px;
+    border-left: 4px solid transparent; border-right: 4px solid transparent;
+    border-top: 5px solid #86909C;
+  }
+  .member-filter-item.active::after { border-top-color: #165DFF; }
+
+  .selected-bar {
+    display: flex; align-items: center;
+    padding: 10px 24px; border-top: 1px solid #F2F3F5;
+    border-bottom: 1px solid #F2F3F5; margin-bottom: 16px;
+  }
+  .selected-bar .selected-label { font-size: 15px; color: #1D2129; font-weight: 600; margin-right: 16px; }
+  .selected-bar .selected-tag {
+    display: inline-flex; align-items: center;
+    padding: 4px 12px; background: #E8F3FF; color: #165DFF;
+    font-size: 15px; border-radius: 4px; margin-right: 10px;
+  }
+  .selected-bar .selected-tag .close { margin-left: 8px; cursor: pointer; color: #86909C; font-size: 16px; line-height: 1; }
+  .selected-bar .clear-btn { margin-left: auto; display: inline-flex; align-items: center; color: #165DFF; font-size: 15px; cursor: pointer; }
+
+  /* 工具栏 */
+  .toolbar { display: flex; align-items: center; padding: 0 24px 14px; }
+  .toolbar .result-count { font-size: 16px; color: #4E5969; }
+  .toolbar .result-count .num { color: #FF7D00; font-weight: 600; }
+  .toolbar .right-actions { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+  .toolbar .search-input {
+    display: inline-flex; align-items: center;
+    width: 240px; height: 36px; border: 1px solid #C9CDD4;
+    border-radius: 4px; padding: 0 12px; background: #FFFFFF;
+  }
+  .toolbar .search-input svg { width: 16px; height: 16px; margin-right: 8px; color: #86909C; flex-shrink: 0; }
+  .toolbar .search-input input { flex: 1; border: none; outline: none; font-size: 14px; color: #1D2129; font-family: inherit; }
+  .toolbar .search-input input::placeholder { color: #86909C; }
+  .btn-sm { height: 36px; padding: 0 16px; font-size: 14px; }
+
+  .stars { display: inline-flex; gap: 2px; }
+  .stars .star { color: #165DFF; font-size: 14px; }
+
+  .opp-tag {
+    display: inline-flex; align-items: center;
+    padding: 2px 8px; background: #E8F3FF; color: #165DFF;
+    font-size: 13px; border-radius: 4px; font-weight: 500;
+  }
+
+  /* 位置信息栏 */
+  .location-info-bar {
+    display: flex; align-items: center; flex-wrap: wrap; gap: 40px;
+    padding: 16px 24px; margin: 0 24px 16px;
+    background: #F0F7FF; border-radius: 6px; font-size: 16px;
+  }
+  .location-info-bar .info-item { display: flex; align-items: center; gap: 8px; }
+  .location-info-bar .info-item .label { color: #4E5969; }
+  .location-info-bar .info-item .value { color: #1D2129; font-weight: 500; }
+  .location-info-bar .more-link { margin-left: auto; color: #165DFF; cursor: pointer; white-space: nowrap; font-weight: 500; }
+
+  .sort-by {
+    display: inline-flex; align-items: center;
+    font-size: 16px; color: #165DFF;
+    cursor: pointer; user-select: none; margin-left: 16px;
+  }
+  .sort-by::after {
+    content: ""; display: inline-block; width: 0; height: 0; margin-left: 6px;
+    border-left: 4px solid transparent; border-right: 4px solid transparent;
+    border-top: 5px solid #165DFF;
+  }
+
+  .table-scroll { overflow-x: auto; }
+</style>
 </head>
-<body class="bg-white text-gray-800 font-sans text-sm">
-    <div class="p-4">
-        <!-- 头部企业信息 -->
-        <div class="flex justify-between items-start mb-4">
-            <div class="flex items-start gap-2">
-                <div class="bg-primary text-white px-2 py-1 rounded text-xs font-bold">北京<br>粤十</div>
-                <div>
-                    <div class="flex items-center gap-2">
-                        <span class="font-medium text-base">北京粤十机器人科技有限公司</span>
-                        <span class="tag-item">民营企业</span>
-                        <span class="tag-item">港澳台投资</span>
-                        <span class="tag-item">小微企业</span>
-                    </div>
-                    <div class="text-xs text-gray-500 mt-1">1669.3559万元人民币 | 2022-11-22 | 科技推广和应用服务业</div>
-                </div>
-            </div>
-            <div class="flex gap-4 text-primary">
-                <span class="cursor-pointer">AI触达</span>
-                <span class="cursor-pointer flex items-center gap-1"><i class="fa fa-share-square-o"></i> 分享</span>
-            </div>
-        </div>
+<body>
 
-        <!-- Tab栏 -->
-        <div class="flex border-b border-gray-200 mb-3">
-            <div class="px-3 py-2 cursor-pointer">AI分析</div>
-            <div class="px-3 py-2 cursor-pointer border-b-2 border-amber-400 font-medium">公司商机 5</div>
-        </div>
-
-        <!-- 筛选栏 -->
-        <div class="flex justify-between items-center mb-3">
-            <div class="flex gap-4 text-gray-700">
-                <span class="cursor-pointer flex items-center gap-1">业务机会 <i class="fa fa-chevron-down text-gray-400"></i></span>
-                <span class="cursor-pointer flex items-center gap-1">商机类型 <i class="fa fa-chevron-down text-gray-400"></i></span>
-                <span class="cursor-pointer flex items-center gap-1">商机价值 <i class="fa fa-chevron-down text-gray-400"></i></span>
-            </div>
-            <button class="border border-gray-300 rounded px-3 py-1 text-xs flex items-center gap-1">
-                <i class="fa fa-download"></i> 导出前1千条
-            </button>
-        </div>
-
-        <!-- 商机列表 -->
-        <div class="space-y-4">
-            <!-- 商机1 -->
-            <div class="border border-gray-200 rounded p-3">
-                <div class="flex justify-between">
-                    <div class="text-sm">北京粤十机器人科技有限公司距上次投融资已超过10个月，预计将筹划新一轮创投融资，上次融资时间为2025-10-25，融资轮次为股权投资，融资金额为--万元，投资人为湖北夏创星火创业投资基金合伙企业（有限合伙）。</div>
-                    <div class="text-xs text-gray-500 ml-4 whitespace-nowrap">2026-08-21</div>
-                </div>
-                <div class="mt-2 flex items-center gap-2">
-                    <span class="tag-item">筹划融资（私募）</span>
-                    <span class="tag-item">存款</span>
-                    <span class="tag-item">授信</span>
-                    <span class="star-rating">★★★★★</span>
-                </div>
-                <div class="divider-line"></div>
-                <div class="grid grid-cols-4 gap-2 text-xs">
-                    <div>融资方名称: 北京粤十机器人科技有限公司</div>
-                    <div>最新融资时间: 2025-10-25</div>
-                    <div>最新融资轮次: 股权投资</div>
-                    <div>最新融资金额（万元）: -</div>
-                    <div>最新融资币种: 人民币</div>
-                    <div>最新融资投资人: 湖北夏创星火创业投资基金合伙企业（有限合...</div>
-                    <div>来源地址: -</div>
-                </div>
-            </div>
-
-            <!-- 商机2 -->
-            <div class="border border-gray-200 rounded p-3">
-                <div class="flex justify-between">
-                    <div class="text-sm">2025-10-25新增了一笔股权融资，融资方为北京粤十机器人科技有限公司,投资企业为湖北夏创星火创业投资基金合伙企业（有限合伙）,持股比例为2.64%</div>
-                    <div class="text-xs text-gray-500 ml-4 whitespace-nowrap">2025-10-25</div>
-                </div>
-                <div class="mt-2 flex items-center gap-2">
-                    <span class="tag-item">股权融资</span>
-                    <span class="tag-item">存款</span>
-                    <span class="tag-item">授信</span>
-                    <span class="star-rating">★★★☆☆</span>
-                </div>
-                <div class="divider-line"></div>
-                <div class="grid grid-cols-4 gap-2 text-xs">
-                    <div>融资时间: 2025-10-25</div>
-                    <div>投资方名称: 湖北夏创星火创业投资基金合伙企业（有限合伙）</div>
-                    <div>股份比例: 2.64%</div>
-                    <div>认缴资本: 40.716万元</div>
-                    <div>实缴资本: 40.716万元</div>
-                </div>
-            </div>
-
-            <!-- 商机3 -->
-            <div class="border border-gray-200 rounded p-3">
-                <div class="flex justify-between">
-                    <div class="text-sm">2025-10-25发生了一笔股权融资,轮次为股权投资,金额: --,币种: 人民币,投资方: 湖北夏创星火创业投资基金合伙企业（有限合伙）</div>
-                    <div class="text-xs text-gray-500 ml-4 whitespace-nowrap">2025-10-25</div>
-                </div>
-                <div class="mt-2 flex items-center gap-2">
-                    <span class="tag-item">新获融资</span>
-                    <span class="tag-item">存款</span>
-                    <span class="tag-item">授信</span>
-                    <span class="star-rating">★★★★★</span>
-                </div>
-                <div class="divider-line"></div>
-                <div class="grid grid-cols-4 gap-2 text-xs">
-                    <div>融资轮次: 股权投资</div>
-                    <div>投资方: 湖北夏创星火创业投资基金合伙企业（有限合伙）</div>
-                    <div>融资金额: 未披露</div>
-                    <div>币种: 人民币</div>
-                    <div>融资日期: 2025-10-25</div>
-                </div>
-            </div>
-
-            <!-- 商机4 -->
-            <div class="border border-gray-200 rounded p-3">
-                <div class="flex justify-between">
-                    <div class="text-sm">2025-10-22发生注册资本变更,原注册资本: 1628.64万元,新注册资本: 1669.36万元</div>
-                    <div class="text-xs text-gray-500 ml-4 whitespace-nowrap">2025-10-22</div>
-                </div>
-                <div class="mt-2 flex items-center gap-2">
-                    <span class="tag-item">注册资本增加</span>
-                    <span class="tag-item">存款</span>
-                    <span class="tag-item">授信</span>
-                    <span class="star-rating">★★★☆☆</span>
-                </div>
-                <div class="divider-line"></div>
-                <div class="grid grid-cols-4 gap-2 text-xs">
-                    <div>原注册资本: 1628.64万元</div>
-                    <div>新注册资本: 1669.36万元</div>
-                    <div>变更日期: 2025-10-22</div>
-                </div>
-            </div>
-
-            <!-- 商机5 -->
-            <div class="border border-gray-200 rounded p-3">
-                <div class="flex justify-between">
-                    <div class="text-sm">2025-10-15新增了一笔股权融资，融资方为北京粤十机器人科技有限公司,投资企业为AEF GBA Mainland Limited,持股比例为7.21%</div>
-                    <div class="text-xs text-gray-500 ml-4 whitespace-nowrap">2025-10-15</div>
-                </div>
-                <div class="mt-2 flex items-center gap-2">
-                    <span class="tag-item">股权融资</span>
-                    <span class="tag-item">存款</span>
-                    <span class="tag-item">授信</span>
-                    <span class="star-rating">★★★☆☆</span>
-                </div>
-                <div class="divider-line"></div>
-                <div class="grid grid-cols-4 gap-2 text-xs">
-                    <div>融资时间: 2025-10-15</div>
-                    <div>投资方名称: AEF GBA Mainland Limited</div>
-                    <div>股份比例: 7.21%</div>
-                    <div>认缴资本: 111.1111万元</div>
-                </div>
-            </div>
-        </div>
+<!-- 企业头部 -->
+<div class="company-header">
+  <div class="logo">
+    <svg viewBox="0 0 56 56">
+      <circle cx="28" cy="28" r="26" fill="#FFFFFF" stroke="#C8161D" stroke-width="2"/>
+      <ellipse cx="28" cy="28" rx="22" ry="8" fill="none" stroke="#C8161D" stroke-width="1.5"/>
+      <ellipse cx="28" cy="28" rx="8" ry="22" fill="none" stroke="#C8161D" stroke-width="1.5"/>
+      <line x1="6" y1="28" x2="50" y2="28" stroke="#C8161D" stroke-width="1.5"/>
+      <text x="28" y="32" text-anchor="middle" font-size="11" fill="#C8161D" font-weight="bold" font-family="Arial">CRCC</text>
+    </svg>
+  </div>
+  <div class="info">
+    <div class="name-row">
+      <span class="name">北京中铁建工物资有限公司</span>
+      <span class="status-tag">存续</span>
     </div>
+    <div class="meta">
+      <span class="item">
+        <span class="label">法人：</span>
+        <span class="person-icon">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+        </span>
+        <span>张加宾</span>
+      </span>
+      <span class="item"><span class="label">注册资本：</span><span>50000万元人民币</span></span>
+      <span class="item"><span class="label">成立时间：</span><span>1993-12-31</span></span>
+    </div>
+  </div>
+  <div class="actions">
+    <button class="btn btn-outline">查看工商详情</button>
+    <button class="btn btn-primary">下载商机/风险信息</button>
+  </div>
+</div>
+
+<!-- 营销统计卡片 -->
+<div class="stats-cards">
+  <div class="stat-card">
+    <div class="card-title">关联营销</div>
+    <div class="card-num">242<span class="unit">条</span></div>
+  </div>
+  <div class="stat-card">
+    <div class="card-title">集团营销</div>
+    <div class="card-num">74369<span class="unit">条</span></div>
+  </div>
+  <div class="stat-card">
+    <div class="card-title">相似营销<span class="sub">同类企业</span></div>
+    <div class="card-num">1<span class="unit">条</span></div>
+  </div>
+  <div class="stat-card">
+    <div class="card-title">位置营销<span class="sub">附近企业</span></div>
+    <div class="card-num">6689<span class="unit">条</span></div>
+  </div>
+</div>
+
+<!-- 关联营销 -->
+<div class="section-title">
+  <span class="title-text">关联营销</span>
+  <span class="result-count">找到 <span class="num">242</span> 条结果</span>
+</div>
+
+<div class="tab-filters">
+  <span class="tab-filter active">全部242</span>
+  <span class="tab-filter">董监高法3</span>
+  <span class="tab-filter">个人股东0</span>
+  <span class="tab-filter">法人股东1</span>
+  <span class="tab-filter">投资企业3</span>
+  <span class="tab-filter">供应链企业234</span>
+  <span class="tab-filter">担保企业0</span>
+  <span class="tab-filter">共同知识产权1</span>
+</div>
+
+<!-- 董监高法 3 -->
+<div class="sub-section-title">董监高法 3</div>
+<div class="table-wrap">
+  <table class="data-table">
+    <colgroup><col style="width:12%"><col style="width:18%"><col style="width:10%"><col style="width:10%"><col></colgroup>
+    <thead><tr><th>姓名</th><th>当前任职</th><th>持股比例</th><th>关联企业</th><th>关联企业最新商机</th></tr></thead>
+    <tbody>
+      <tr><td>裴吉星</td><td>经理</td><td>－</td><td>4</td><td><div class="opportunity-link">"裴吉星"任职"经理"的企业"中铁建设集团北京工程有限公司"，于2026-08-20发生国/央企工程类项目招标</div></td></tr>
+      <tr><td>吴金纺</td><td>财务负责人</td><td>－</td><td>2</td><td><div class="opportunity-link">"吴金纺"任职"财务负责人"的企业"中铁建设集团供应链管理（青岛）有限公司"，暂无最新商机</div></td></tr>
+      <tr><td>张加宾</td><td>法定代表人、董事</td><td>－</td><td>3</td><td><div class="opportunity-link">"张加宾"任职"董事长"的企业"中铁建设集团供应链管理（青岛）有限公司"，暂无最新商机</div></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- 法人股东 1 -->
+<div class="sub-section-title">法人股东 1</div>
+<div class="table-wrap">
+  <table class="data-table">
+    <colgroup><col style="width:22%"><col style="width:10%"><col style="width:12%"><col style="width:18%"><col style="width:16%"><col></colgroup>
+    <thead><tr><th>股东名称</th><th>持股比例</th><th>成立日期</th><th>注册资本</th><th>所在区域</th><th>最新商机</th></tr></thead>
+    <tbody>
+      <tr><td><a href="#">中铁建设集团有限公司</a></td><td>100%</td><td>1979-08-01</td><td>420297.09万元人民币</td><td>北京市石景山区</td><td><a href="#">2026-08-20发生中标政府项目</a></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- 投资企业 3 -->
+<div class="sub-section-title">投资企业 3</div>
+<div class="table-wrap">
+  <table class="data-table">
+    <colgroup><col style="width:28%"><col style="width:10%"><col style="width:12%"><col style="width:16%"><col style="width:16%"><col></colgroup>
+    <thead><tr><th>企业名称</th><th>投资比例</th><th>成立日期</th><th>注册资本</th><th>所在区域</th><th>最新商机</th></tr></thead>
+    <tbody>
+      <tr><td><a href="#">中铁建设集团供应链管理（青岛）有限公司</a></td><td>65.00%</td><td>2023-02-27</td><td>5000万元人民币</td><td>山东青岛市城阳区</td><td>－</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- 供应链企业 234 -->
+<div class="sub-section-title">供应链企业 234</div>
+<div class="table-wrap">
+  <table class="data-table">
+    <colgroup><col style="width:28%"><col style="width:10%"><col style="width:12%"><col style="width:16%"><col style="width:16%"><col></colgroup>
+    <thead><tr><th>企业名称</th><th>类型</th><th>成立日期</th><th>注册资本</th><th>所在区域</th><th>最新商机</th></tr></thead>
+    <tbody>
+      <tr><td><a href="#">中交三航局第六工程（厦门）有限公司</a></td><td>采购方</td><td>2015-05-04</td><td>30000万元人民币</td><td>福建厦门市湖里区</td><td><a href="#">2026-08-14发生国/央企工程类项目招标</a></td></tr>
+      <tr><td><a href="#">中交二航局第二工程有限公司</a></td><td>采购方</td><td>2005-09-23</td><td>38010万元人民币</td><td>重庆市渝中区</td><td><a href="#">2026-08-18发生国/央企工程类项目招标</a></td></tr>
+      <tr><td><a href="#">河南奥克斯智能电气有限公司</a></td><td>采购方</td><td>2018-12-06</td><td>60000万元人民币</td><td>河南郑州市上街区</td><td><a href="#">2026-08-11发生新拟建项目</a></td></tr>
+      <tr><td><a href="#">中铁十五局集团有限公司</a></td><td>采购方</td><td>2001-04-02</td><td>303480万元人民币</td><td>上海市静安区</td><td><a href="#">2026-08-19发生新增中标</a></td></tr>
+      <tr><td><a href="#">水发建设集团有限公司</a></td><td>采购方</td><td>2018-11-07</td><td>100000万元人民币</td><td>山东济南市历城区</td><td><a href="#">2025-11-05发生对外投资</a></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="pagination">
+  <span class="total">共 234 条</span><span class="page-size">5条/页</span>
+  <span class="page-btn arrow">&lt;</span><span class="page-btn active">1</span>
+  <span class="page-btn">2</span><span class="page-btn">3</span><span class="page-btn">4</span>
+  <span class="page-ellipsis">···</span><span class="page-btn">47</span><span class="page-btn arrow">&gt;</span>
+  <span class="jump">前往 <input type="text" value="1"> 页</span>
+</div>
+
+<!-- 共同知识产权 1 -->
+<div class="sub-section-title">共同知识产权 1</div>
+<div class="table-wrap">
+  <table class="data-table">
+    <colgroup><col style="width:22%"><col style="width:12%"><col style="width:12%"><col style="width:18%"><col style="width:16%"><col></colgroup>
+    <thead><tr><th>企业名称</th><th>类型</th><th>成立日期</th><th>注册资本</th><th>所在区域</th><th>最新商机</th></tr></thead>
+    <tbody>
+      <tr><td><a href="#">中铁建设集团有限公司</a></td><td>共同专利权人</td><td>1979-08-01</td><td>420297.09万元人民币</td><td>北京市石景山区</td><td><a href="#">2026-08-20发生中标政府项目</a></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- 集团营销 -->
+<div class="section-title">
+  <span class="title-text">集团营销</span>
+  <span class="result-count">找到 <span class="num">74369</span> 条结果</span>
+</div>
+
+<div class="group-info-bar">
+  <span class="info-item"><span class="label">所在集团：</span><span class="value link">中国铁道建筑集团</span></span>
+  <span class="info-item"><span class="label">集团成员数：</span><span class="value blue-num">8252</span></span>
+  <span class="info-item"><span class="label">集团主体企业：</span><span class="value">中国铁道建筑集团有限公司</span></span>
+  <span class="more-link">全国全部央企集团 &gt;</span>
+</div>
+
+<!-- 集团成员 -->
+<div class="sub-section-title">集团成员</div>
+
+<div class="member-filters">
+  <span class="member-filter-item active">企业筛选</span>
+  <span class="member-filter-item">集团筛选</span>
+  <span class="member-filter-item">经营状态</span>
+  <span class="member-filter-item">所在行业</span>
+  <span class="member-filter-item">总部地区</span>
+  <span class="member-filter-item">成员地区</span>
+  <span class="member-filter-item">注册资本</span>
+  <span class="member-filter-item">成立时间</span>
+  <span class="member-filter-item active">集团内级别</span>
+  <span class="member-filter-item">控股等级</span>
+</div>
+
+<div class="selected-bar">
+  <span class="selected-label">已选</span>
+  <span class="selected-tag">实控人控制等级<span class="close">×</span></span>
+  <span class="clear-btn">🗑 清空</span>
+</div>
+
+<div class="toolbar">
+  <span class="result-count">找到 <span class="num">8,252</span> 条结果</span>
+  <div class="right-actions">
+    <div class="search-input">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" placeholder="请输入公司名称">
+    </div>
+    <button class="btn btn-outline btn-sm">
+      <svg style="width:14px;height:14px;margin-right:4px;vertical-align:middle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      导出
+    </button>
+    <button class="btn btn-outline btn-sm">
+      <svg style="width:14px;height:14px;margin-right:4px;vertical-align:middle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg>
+      营销 ▾
+    </button>
+  </div>
+</div>
+
+<div class="table-wrap">
+  <table class="data-table">
+    <colgroup><col class="col-check"><col style="width:26%"><col style="width:10%"><col style="width:18%"><col style="width:12%"><col style="width:14%"><col></colgroup>
+    <thead>
+      <tr>
+        <th><span style="display:inline-block;width:14px;height:14px;border:1px solid #C9CDD4;border-radius:2px;vertical-align:middle"></span></th>
+        <th>公司名称</th><th>经营状态</th>
+        <th class="sortable">注册资本<span class="sort-arrows"><span class="up"></span><span class="down"></span></span></th>
+        <th class="sortable">成立时间<span class="sort-arrows"><span class="up"></span><span class="down"></span></span></th>
+        <th>成员级别(实控人)</th><th>行业</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span style="display:inline-block;width:14px;height:14px;border:1px solid #C9CDD4;border-radius:2px;vertical-align:middle"></span></td>
+        <td><div class="company-cell"><span class="c-icon"><svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="9" fill="#FFFFFF" stroke="#C8161D" stroke-width="1"/><text x="10" y="13" text-anchor="middle" font-size="6" fill="#C8161D" font-weight="bold">CRCC</text></svg></span><span class="c-name link">中国铁建股份有限公司</span></div></td>
+        <td><span class="status-alive-tag">存续</span></td><td>1,357,954.15万元人民币</td><td>2007-11-05</td><td>1级</td><td>土木工程建筑业</td>
+      </tr>
+      <tr>
+        <td><span style="display:inline-block;width:14px;height:14px;border:1px solid #C9CDD4;border-radius:2px;vertical-align:middle"></span></td>
+        <td><div class="company-cell"><span class="c-icon"><svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="9" fill="#FFFFFF" stroke="#C8161D" stroke-width="1"/><text x="10" y="13" text-anchor="middle" font-size="6" fill="#C8161D" font-weight="bold">CRCC</text></svg></span><span class="c-name link">中国铁建投资集团有限公司</span></div></td>
+        <td><span class="status-alive-tag">存续</span></td><td>1,206,708.61万元人民币</td><td>2011-05-04</td><td>2级</td><td>商务服务业</td>
+      </tr>
+      <tr>
+        <td><span style="display:inline-block;width:14px;height:14px;border:1px solid #C9CDD4;border-radius:2px;vertical-align:middle"></span></td>
+        <td><div class="company-cell"><span class="c-icon"><svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="9" fill="#FFFFFF" stroke="#C8161D" stroke-width="1"/><text x="10" y="13" text-anchor="middle" font-size="6" fill="#C8161D" font-weight="bold">CRCC</text></svg></span><span class="c-name link">中国铁道建筑集团有限公司</span></div></td>
+        <td><span class="status-alive-tag">存续</span></td><td>904,629.64万元人民币</td><td>1990-08-28</td><td>0级</td><td>土木工程建筑业</td>
+      </tr>
+      <tr>
+        <td><span style="display:inline-block;width:14px;height:14px;border:1px solid #C9CDD4;border-radius:2px;vertical-align:middle"></span></td>
+        <td><div class="company-cell"><span class="c-icon"><svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="9" fill="#FFFFFF" stroke="#C8161D" stroke-width="1"/><text x="10" y="13" text-anchor="middle" font-size="6" fill="#C8161D" font-weight="bold">CRCC</text></svg></span><span class="c-name link">中国铁建财务有限公司</span></div></td>
+        <td><span class="status-alive-tag">存续</span></td><td>900,000万元人民币</td><td>1988-04-08</td><td>1级</td><td>货币金融服务</td>
+      </tr>
+      <tr>
+        <td><span style="display:inline-block;width:14px;height:14px;border:1px solid #C9CDD4;border-radius:2px;vertical-align:middle"></span></td>
+        <td><div class="company-cell"><span class="c-icon"><svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="9" fill="#FFFFFF" stroke="#C8161D" stroke-width="1"/><text x="10" y="13" text-anchor="middle" font-size="6" fill="#C8161D" font-weight="bold">CRCC</text></svg></span><span class="c-name link">中国铁建房地产集团有限公司</span></div></td>
+        <td><span class="status-alive-tag">存续</span></td><td>700,000万元人民币</td><td>2007-04-20</td><td>2级</td><td>房地产业</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="pagination">
+  <span class="total">共 8252 条</span><span class="page-size">5条/页</span>
+  <span class="page-btn arrow">&lt;</span><span class="page-btn active">1</span>
+  <span class="page-btn">2</span><span class="page-btn">3</span><span class="page-btn">4</span>
+  <span class="page-ellipsis">···</span><span class="page-btn">1651</span><span class="page-btn arrow">&gt;</span>
+  <span class="jump">前往 <input type="text" value="1"> 页</span>
+</div>
+
+<!-- 集团营销商机列表 -->
+<div class="sub-section-title">集团营销</div>
+
+<div class="toolbar">
+  <span class="result-count">找到 <span class="num">30,000</span> 条结果</span>
+  <div class="right-actions">
+    <div class="search-input">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" placeholder="输入企业或集团关键字">
+    </div>
+    <button class="btn btn-outline btn-sm">
+      <svg style="width:14px;height:14px;margin-right:4px;vertical-align:middle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg>
+      营销 ▾
+    </button>
+    <button class="btn btn-outline btn-sm">
+      <svg style="width:14px;height:14px;margin-right:4px;vertical-align:middle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      导出
+    </button>
+  </div>
+</div>
+
+<div class="table-wrap">
+  <table class="data-table">
+    <colgroup><col class="col-check"><col style="width:22%"><col style="width:10%"><col style="width:14%"><col style="width:10%"><col style="width:18%"><col></colgroup>
+    <thead><tr><th><span style="display:inline-block;width:14px;height:14px;border:1px solid #C9CDD4;border-radius:2px;vertical-align:middle"></span></th><th>企业名称</th><th>发生日期</th><th>商机类型</th><th>商机价值</th><th>商机内容</th><th>操作</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><span style="display:inline-block;width:14px;height:14px;border:1px solid #C9CDD4;border-radius:2px;vertical-align:middle"></span></td>
+        <td><div class="company-cell"><span class="c-icon" style="width:20px;height:20px;background:#E8F3FF;border-radius:3px;display:inline-flex;align-items:center;justify-content:center;color:#165DFF;font-size:12px;font-weight:bold">北</span><span class="c-name link">北京中铁建工物资有限公司</span></div></td>
+        <td>2026-08-21</td><td><span class="opp-tag">应收账款融资到期</span></td>
+        <td><span class="stars"><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span></span></td>
+        <td>将于2026-11-19发生应收账...</td>
+        <td><a href="#">授信</a> &nbsp; <a href="#">公司商机 1,795</a></td>
+      </tr>
+      <tr>
+        <td><span style="display:inline-block;width:14px;height:14px;border:1px solid #C9CDD4;border-radius:2px;vertical-align:middle"></span></td>
+        <td><div class="company-cell"><span class="c-icon" style="width:20px;height:20px;background:#E8F3FF;border-radius:3px;display:inline-flex;align-items:center;justify-content:center;color:#165DFF;font-size:12px;font-weight:bold">中</span><span class="c-name link">中铁二十三局集团第四工程有限公司</span></div></td>
+        <td>2026-08-21</td><td><span class="opp-tag">应收账款融资到期</span></td>
+        <td><span class="stars"><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span></span></td>
+        <td>将于2026-11-19发生应收账...</td>
+        <td><a href="#">授信</a> &nbsp; <a href="#">公司商机 164</a></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- 位置营销 -->
+<div class="section-title">
+  <span class="title-text">位置营销</span>
+  <span class="result-count">找到 <span class="num">6689</span> 条结果</span>
+</div>
+
+<div class="location-info-bar">
+  <span class="info-item"><span class="label">所在位置：</span><span class="value">北京市石景山区苹果园路28号院2号楼17层1701至1707室</span></span>
+  <span class="info-item"><span class="label">周边范围：</span><span class="value">1km</span></span>
+  <span class="more-link">查看完整周边企业 &gt;</span>
+</div>
+
+<div class="toolbar">
+  <span class="result-count">找到 <span class="num">6689</span> 条相关结果</span>
+  <span class="sort-by">最近中心距离</span>
+  <div class="right-actions">
+    <button class="btn btn-outline btn-sm">+ 关注</button>
+    <button class="btn btn-outline btn-sm">
+      <svg style="width:14px;height:14px;margin-right:4px;vertical-align:middle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      导出
+    </button>
+  </div>
+</div>
+
+<div class="table-wrap table-scroll">
+  <table class="data-table" style="min-width:1200px">
+    <colgroup><col class="col-check"><col style="width:24%"><col style="width:10%"><col style="width:12%"><col style="width:14%"><col style="width:12%"><col style="width:16%"><col style="width:8%"></colgroup>
+    <thead>
+      <tr>
+        <th><span style="display:inline-block;width:14px;height:14px;border:1px solid #C9CDD4;border-radius:2px;vertical-align:middle"></span></th>
+        <th>企业名称</th><th>法定代表人</th>
+        <th class="sortable">成立时间<span class="sort-arrows"><span class="up"></span><span class="down"></span></span></th>
+        <th>所在行业</th>
+        <th class="sortable">注册资本<span class="sort-arrows"><span class="up"></span><span class="down"></span></span></th>
+        <th>经营状态</th><th>启信分</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span style="display:inline-block;width:14px;height:14px;border:1px solid #C9CDD4;border-radius:2px;vertical-align:middle"></span></td>
+        <td><div class="company-cell"><span class="c-icon"><svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="9" fill="#FFFFFF" stroke="#C8161D" stroke-width="1"/><text x="10" y="13" text-anchor="middle" font-size="6" fill="#C8161D" font-weight="bold">CRCC</text></svg></span><span class="c-name">北京中铁建工物资有限公司</span></div></td>
+        <td>张加宾</td><td>1993-12-31</td><td>批发业</td><td>50000 万人民币</td><td>存续（在营、开业、在册）</td><td>56</td>
+      </tr>
+      <tr>
+        <td><span style="display:inline-block;width:14px;height:14px;border:1px solid #C9CDD4;border-radius:2px;vertical-align:middle"></span></td>
+        <td><div class="company-cell"><span class="c-icon" style="font-size:14px;color:#4E5969">⚙</span><span class="c-name">北京卡宾滑雪体育发展集团股份有限公司</span></div></td>
+        <td>张鸿俊</td><td>2010-07-20</td><td>体育</td><td>7235.3883 万人民币</td><td>存续（在营、开业、在册）</td><td>416</td>
+      </tr>
+      <tr>
+        <td><span style="display:inline-block;width:14px;height:14px;border:1px solid #C9CDD4;border-radius:2px;vertical-align:middle"></span></td>
+        <td><div class="company-cell"><span class="c-icon" style="font-size:14px;color:#F7BA1E">🔥</span><span class="c-name">北京有信怡家科技有限公司</span></div></td>
+        <td>吴相晓</td><td>2015-12-15</td><td>科技推广和应用服务业</td><td>5000 万人民币</td><td><span class="status-cancel-text">吊销</span></td><td>－</td>
+      </tr>
+      <tr>
+        <td><span style="display:inline-block;width:14px;height:14px;border:1px solid #C9CDD4;border-radius:2px;vertical-align:middle"></span></td>
+        <td><div class="company-cell"><span class="c-icon" style="width:20px;height:20px;background:#E8F3FF;border-radius:3px;display:inline-flex;align-items:center;justify-content:center;color:#165DFF;font-size:12px;font-weight:bold">北</span><span class="c-name">北京银建小额贷款股份有限公司</span></div></td>
+        <td>杨华</td><td>2016-04-18</td><td>货币金融服务</td><td>20000 万人民币</td><td>存续（在营、开业、在册）</td><td>47</td>
+      </tr>
+      <tr>
+        <td><span style="display:inline-block;width:14px;height:14px;border:1px solid #C9CDD4;border-radius:2px;vertical-align:middle"></span></td>
+        <td><div class="company-cell"><span class="c-icon"><svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="9" fill="#FFFFFF" stroke="#165DFF" stroke-width="1.5"/><path d="M6 10 L10 6 L14 10 L10 14 Z" fill="none" stroke="#165DFF" stroke-width="1.5"/></svg></span><span class="c-name">中招国信（北京）招标有限公司</span></div></td>
+        <td>陈绪光</td><td>2009-11-09</td><td>专业技术服务业</td><td>400 万人民币</td><td>存续（在营、开业、在册）</td><td>47</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="pagination">
+  <span class="total">共 6689 条</span><span class="page-size">5条/页</span>
+  <span class="page-btn arrow">&lt;</span><span class="page-btn active">1</span>
+  <span class="page-btn">2</span><span class="page-btn">3</span><span class="page-btn">4</span>
+  <span class="page-ellipsis">···</span><span class="page-btn">1338</span><span class="page-btn arrow">&gt;</span>
+  <span class="jump">前往 <input type="text" value="1"> 页</span>
+</div>
+
 </body>
 </html>

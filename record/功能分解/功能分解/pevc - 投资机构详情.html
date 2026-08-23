@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>红杉中国 - 投资机构详情页</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+    <style>
+        /* 全局样式 */
+        body {
+            font-family: "Microsoft Yahei", PingFang SC, sans-serif;
+            font-size: 14px;
+            color: #333;
+            background-color: #fff;
+        }
+        .tab-active {
+            color: #1677ff;
+            border-bottom: 2px solid #1677ff;
+            font-weight: 500;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        table th, table td {
+            border: 1px solid #e5e7eb;
+            padding: 8px 12px;
+            text-align: left;
+        }
+        table th {
+            background-color: #f9fafb;
+        }
+        .word-cloud-wrap {
+            line-height: 2;
+            text-align: center;
+        }
+        .pagination-wrap {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            justify-content: flex-end;
+            margin-top:10px;
+        }
+        .pagination-wrap button {
+            padding: 4px 8px;
+            border:1px solid #d9d9d9;
+            background:#fff;
+            border-radius:2px;
+        }
+        .pagination-wrap button.active {
+            background:#1677ff;
+            color:#fff;
+            border-color:#1677ff;
+        }
+    </style>
+</head>
+<body class="bg-white">
+    <!-- 面包屑 -->
+    <div class="px-4 py-2 text-gray-600">
+        <span>← PE/VC / 投资机构详情页</span>
+    </div>
+    <!-- 头部基础信息 -->
+    <div class="px-4 py-3 border-b">
+        <div class="flex items-center gap-3">
+            <h1 class="text-xl font-bold">红杉中国</h1>
+            <span class="text-gray-500">所属地：北京</span>
+            <span class="text-gray-500">成立时间：2005-09-01</span>
+            <a href="https://www.hongshan.com/" target="_blank" class="text-blue-500">官网：https://www.hongshan.com/</a>
+        </div>
+        <div class="mt-2 text-gray-700">
+            <span class="font-semibold">SEQUOIA</span>
+            <span>红杉中国是专注于投资科技、医疗健康、消费三大领域的私募股权投资机构，始终积极参与和推动以科技为核心的创新经济发展，努力成为各行业最早和最重要的赋能型商业伙 </span>
+            <span class="text-blue-500">更多 ></span>
+        </div>
+    </div>
+    <!-- Tab导航 -->
+    <div class="flex border-b px-4">
+        <div class="tab-active px-4 py-3 cursor-pointer">创投机构指数</div>
+        <div class="px-4 py-3 cursor-pointer hover:text-blue-500">投资偏好</div>
+        <div class="px-4 py-3 cursor-pointer hover:text-blue-500">投资事件 2131</div>
+        <div class="px-4 py-3 cursor-pointer hover:text-blue-500">机构成员</div>
+        <div class="px-4 py-3 cursor-pointer hover:text-blue-500">基金数据</div>
+        <div class="px-4 py-3 cursor-pointer hover:text-blue-500">退出事件</div>
+    </div>
+
+    <!-- 创投机构指数模块 -->
+    <div class="p-4 border-b">
+        <h2 class="text-lg font-semibold mb-3">创投机构指数</h2>
+        <p class="text-gray-600 mb-4">模型采集了创投机构历史所有投资信息，从专注度、资金能力、投资水平、团队能力共计4个维度对机构的综合实力进行量化评估。<br>指数总分100分，分值越大代表机构综合实力越强，跟投的成功率越高。</p>
+        <div class="flex flex-wrap gap-8 items-start">
+            <!-- 雷达图占位 -->
+            <div class="w-64 h-64 border flex items-center justify-center bg-slate-50">
+                <canvas id="radarChart"></canvas>
+            </div>
+            <!-- 综合得分 -->
+            <div>
+                <div class="text-2xl font-bold">创投综合实力95.81分</div>
+                <div class="text-xl font-bold text-orange-600">A级 顶尖</div>
+                <div class="text-sm text-gray-500 mt-1">跑赢100.00%创投机构 <i class="fa fa-info-circle"></i></div>
+                <div class="flex items-center gap-2 mt-2">
+                    <span class="text-sm">实力低</span>
+                    <div class="w-40 h-2 bg-gray-200 rounded-full overflow-hidden">
+                        <div class="h-full bg-green-500 w-full"></div>
+                    </div>
+                    <span class="text-sm">实力高</span>
+                </div>
+            </div>
+            <!-- 维度得分表格 -->
+            <div class="flex-1 min-w-[450px]">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>创投指数维度</th>
+                            <th>满分</th>
+                            <th>得分</th>
+                            <th>得分情况</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>专注度<br><span class="text-xs text-gray-500">专注度包括投资阶段专注度和投资领域专注度，越是专注于某一阶段或领域，说明机构投资风格越稳定，且经验充实，有成熟的方法论。</span></td>
+                            <td>100</td>
+                            <td>68.04</td>
+                            <td>优秀</td>
+                        </tr>
+                        <tr>
+                            <td>资金实力<br><span class="text-xs text-gray-500">资金实力主要考量机构的投资数量和投资规模，两者越大说明机构的基础实力越强，也能一定程度的反映资本市场对其的认可。</span></td>
+                            <td>100</td>
+                            <td>86.94</td>
+                            <td>顶尖</td>
+                        </tr>
+                        <tr>
+                            <td>投资水平<br><span class="text-xs text-gray-500">投资水平主要考量投资项目的退出比例和独角兽企业培育数量，两者都能反映机构的判断力，数值越高代表机构的投资水平越强。</span></td>
+                            <td>100</td>
+                            <td>96.57</td>
+                            <td>顶尖</td>
+                        </tr>
+                        <tr>
+                            <td>团队能力<br><span class="text-xs text-gray-500">团队能力主要考量在职人员中的人才储备情况，从教育背景、就业经历、当前岗位等甄别人才，只有团队实力越强大，机构才能不断成长。</span></td>
+                            <td>100</td>
+                            <td>98.33</td>
+                            <td>顶尖</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- 投资偏好 -->
+    <div class="p-4 border-b">
+        <h2 class="text-lg font-semibold mb-3">投资偏好</h2>
+        <div class="mb-4">
+            <h3 class="font-medium mb-2">投资领域</h3>
+            <div class="word-cloud-wrap text-sm">
+                <span style="font-size:22px;font-weight:bold">医疗 企业服务</span>
+                <span style="font-size:18px">人工智能</span>
+                <span style="font-size:16px">新质生产力新能源</span>
+                <span style="font-size:15px">消费</span>
+                <span style="font-size:14px">人工智能行业应用</span>
+                <span style="font-size:14px">北大系</span>
+                <span style="font-size:13px">物流运输 教育 新基建</span>
+                <span style="font-size:13px">社交与工具</span>
+                <span style="font-size:13px">汽车出行</span>
+                <span style="font-size:13px">AI应用层 集成电路 AI基础设施</span>
+                <span style="font-size:13px">生活服务 机器人 医疗技术</span>
+                <span style="font-size:12px">百度系</span>
+                <span style="font-size:12px">人工智能基础技术 金融</span>
+                <span style="font-size:12px">电商零售 出海 工具类</span>
+                <span style="font-size:12px">大模型</span>
+                <span style="font-size:11px">体育 社交 传统行业</span>
+                <span style="font-size:11px">先进制造</span>
+                <span style="font-size:11px">大数据</span>
+                <span style="font-size:10px">房地产</span>
+                <span style="font-size:10px">信创 区块链</span>
+                <span style="font-size:10px">物联网 清华系</span>
+                <span style="font-size:10px">新一代信息技术 文娱传媒 新兴数字产业 硬科技</span>
+                <span style="font-size:9px">AIGC 生物医药</span>
+                <span style="font-size:9px">旅游</span>
+                <span style="font-size:9px">具身智能 产业互联网 医疗器械 阿里巴巴系 AI大模型</span>
+            </div>
+        </div>
+        <div class="flex flex-wrap gap-8">
+            <div class="w-[48%]">
+                <h3 class="font-medium mb-2">投资阶段</h3>
+                <canvas id="stageBarChart" height="220"></canvas>
+                <div class="flex gap-4 justify-center mt-1 text-xs">
+                    <span class="flex items-center gap-1"><span class="w-3 h-3 bg-green-500 inline-block"></span>种子期</span>
+                    <span class="flex items-center gap-1"><span class="w-3 h-3 bg-blue-500 inline-block"></span>初创期</span>
+                    <span class="flex items-center gap-1"><span class="w-3 h-3 bg-purple-500 inline-block"></span>成长期</span>
+                    <span class="flex items-center gap-1"><span class="w-3 h-3 bg-orange-500 inline-block"></span>成熟期</span>
+                </div>
+            </div>
+            <div class="w-[48%]">
+                <h3 class="font-medium mb-2">投资战绩</h3>
+                <canvas id="investLineChart" height="220"></canvas>
+                <div class="flex flex-wrap gap-2 justify-center mt-1 text-xs">
+                    <span><i class="text-red-500">━</i>已投资公司被收购次数</span>
+                    <span><i class="text-orange-500">━</i>投资次数</span>
+                    <span><i class="text-yellow-500">━</i>投资公司数</span>
+                    <span><i class="text-green-500">━</i>已投资公司上市次数</span>
+                    <span><i class="text-blue-500">━</i>已投资公司获得新融资次数</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 投资事件 -->
+    <div class="p-4 border-b">
+        <h2 class="text-lg font-semibold mb-3">投资事件</h2>
+        <div class="flex gap-3 mb-3 flex-wrap">
+            <select class="border px-2 py-1 rounded">
+                <option>融资轮次</option>
+            </select>
+            <select class="border px-2 py-1 rounded">
+                <option>融资日期</option>
+            </select>
+            <select class="border px-2 py-1 rounded">
+                <option>融资金额</option>
+            </select>
+            <select class="border px-2 py-1 rounded">
+                <option>币种</option>
+            </select>
+            <select class="border px-2 py-1 rounded">
+                <option>融资状态</option>
+            </select>
+            <button class="text-blue-500"><i class="fa fa-download"></i> 导出数据</button>
+        </div>
+        <!-- 已公开事件 -->
+        <div class="mb-4">
+            <h3 class="font-medium mb-2">已公开事件 1655</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>序号</th>
+                        <th>被投资企业</th>
+                        <th>融资轮次</th>
+                        <th>融资日期</th>
+                        <th>融资金额</th>
+                        <th>投资方</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>1</td>
+                        <td>深圳市序影科技有限公司</td>
+                        <td>天使轮</td>
+                        <td>2026-08-21</td>
+                        <td>1000万人民币</td>
+                        <td>顺为资本，红杉中国</td>
+                    </tr>
+                    <tr>
+                        <td>2</td>
+                        <td>北京数美万物科技有限公司</td>
+                        <td>A+轮</td>
+                        <td>2026-08-20</td>
+                        <td>5000万美元</td>
+                        <td>贝塔斯曼亚洲投资基金，华业天成，云晖资本，红杉中国，IDG资本，美团龙珠，清流资本，锦秋基金</td>
+                    </tr>
+                    <tr>
+                        <td>3</td>
+                        <td>上海觅蜂具身智能科技有限公司</td>
+                        <td>股权投资</td>
+                        <td>2026-08-17</td>
+                        <td>1亿人民币</td>
+                        <td>中国电信，张江集团，红杉中国，元启创新</td>
+                    </tr>
+                    <tr>
+                        <td>4</td>
+                        <td>重庆张雪机车工业有限公司</td>
+                        <td>股权投资</td>
+                        <td>2026-08-10</td>
+                        <td>1.5亿人民币</td>
+                        <td>红杉中国</td>
+                    </tr>
+                    <tr>
+                        <td>5</td>
+                        <td>昆山协鑫光电股份有限公司</td>
+                        <td>D轮</td>
+                        <td>2026-08-03</td>
+                        <td>1亿人民币</td>
+                        <td>清控金信资本，红杉中国，翔安招商，苏州资管</td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="pagination-wrap">
+                <span>共 1655 条</span>
+                <span>5条/页</span>
+                <button>&lt;</button>
+                <button class="active">1</button>
+                <button>2</button>
+                <button>3</button>
+                <button>4</button>
+                <span>...</span>
+                <button>331</button>
+                <button>&gt;</button>
+                <span>前往 <input type="text" class="w-8 border px-1"> 页</span>
+            </div>
+        </div>
+        <!-- 未公开事件 -->
+        <div>
+            <h3 class="font-medium mb-2">未公开事件 476</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>序号</th>
+                        <th>被投资企业</th>
+                        <th>融资轮次</th>
+                        <th>融资日期</th>
+                        <th>融资金额</th>
+                        <th>投资方</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>1</td>
+                        <td>深圳市视界之外科技有限公司</td>
+                        <td>股权投资</td>
+                        <td>2026-08-20</td>
+                        <td>-</td>
+                        <td>红杉中国</td>
+                    </tr>
+                    <tr>
+                        <td>2</td>
+                        <td>上海雍邑光电科技有限公司</td>
+                        <td>股权投资</td>
+                        <td>2026-08-19</td>
+                        <td>-</td>
+                        <td>上海科创基金，红杉中国，千乘资本</td>
+                    </tr>
+                    <tr>
+                        <td>3</td>
+                        <td>驰龙动力（深圳）有限公司</td>
+                        <td>股权投资</td>
+                        <td>2026-08-17</td>
+                        <td>-</td>
+                        <td>洪泰基金，深创投，红杉中国，顺为资本</td>
+                    </tr>
+                    <tr>
+                        <td>4</td>
+                        <td>武汉芯博光电有限公司</td>
+                        <td>股权投资</td>
+                        <td>2026-08-13</td>
+                        <td>-</td>
+                        <td>红杉中国，长飞基金，博创科技，国翼投资，长江产业集团</td>
+                    </tr>
+                    <tr>
+                        <td>5</td>
+                        <td>上海熠知电子科技有限公司</td>
+                        <td>股权投资</td>
+                        <td>2026-07-31</td>
+                        <td>-</td>
+                        <td>红杉中国，张江火炬创投</td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="pagination-wrap">
+                <span>共 476 条</span>
+                <span>5条/页</span>
+                <button>&lt;</button>
+                <button class="active">1</button>
+                <button>2</button>
+                <button>3</button>
+                <button>4</button>
+                <span>...</span>
+                <button>96</button>
+                <button>&gt;</button>
+                <span>前往 <input type="text" class="w-8 border px-1"> 页</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 机构成员 -->
+    <div class="p-4 border-b">
+        <h2 class="text-lg font-semibold mb-3">机构成员 131</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>序号</th>
+                    <th>姓名</th>
+                    <th>职务</th>
+                    <th>简介</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>1</td>
+                    <td>刘星</td>
+                    <td>合伙人</td>
+                    <td>刘星，红杉资本中国合伙人。他专注于科技传媒和消费领域的投资，拥有十多年丰富的投资和银行经验。曾在美林集团担任亚洲投资银行部...</td>
+                </tr>
+                <tr>
+                    <td>2</td>
+                    <td>郑庆生</td>
+                    <td>合伙人</td>
+                    <td>郑庆生，红杉资本合伙人，专注于TMT、媒体内容、电子商务和互联网医疗等领域的投资。 在加入红杉之前，郑庆生先生曾任挚信资本合伙...</td>
+                </tr>
+                <tr>
+                    <td>3</td>
+                    <td>周弘璟</td>
+                    <td>投资经理</td>
+                    <td>周弘璟，红杉投资助理。</td>
+                </tr>
+                <tr>
+                    <td>4</td>
+                    <td>周逵</td>
+                    <td>合伙人</td>
+                    <td>周逵，红杉中国合伙人，在2005年加入红杉之前，周逵先生任职于联想投资公司，负责投资中讯软件、深圳讯天、文思创新、开拓科技等...</td>
+                </tr>
+                <tr>
+                    <td>5</td>
+                    <td>李力</td>
+                    <td>投资经理</td>
+                    <td>李力，红杉投资经理。</td>
+                </tr>
+            </tbody>
+        </table>
+        <div class="pagination-wrap">
+            <span>共 131 条</span>
+            <span>5条/页</span>
+            <button>&lt;</button>
+            <button class="active">1</button>
+            <button>2</button>
+            <button>3</button>
+            <button>4</button>
+            <span>...</span>
+            <button>27</button>
+            <button>&gt;</button>
+            <span>前往 <input type="text" class="w-8 border px-1"> 页</span>
+        </div>
+    </div>
+
+    <!-- 基金数据 -->
+    <div class="p-4 border-b">
+        <h2 class="text-lg font-semibold mb-3">基金数据 1537</h2>
+        <h3 class="font-medium mb-2">私募基金管理人 66</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>序号</th>
+                    <th>企业名称</th>
+                    <th>法定代表人</th>
+                    <th>注册资本</th>
+                    <th>成立时间</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>1</td>
+                    <td>海宁瑞璟企业管理咨询合伙企业（有限合伙）</td>
+                    <td>海宁瑞晟信息咨询有限公司</td>
+                    <td>1000万元</td>
+                    <td>2025-05-19</td>
+                </tr>
+                <tr>
+                    <td>2</td>
+                    <td>海宁瑞晟信息咨询有限公司</td>
+                    <td>周逵</td>
+                    <td>1000万元</td>
+                    <td>2025-05-08</td>
+                </tr>
+                <tr>
+                    <td>3</td>
+                    <td>北京红杉桓瑞管理咨询有限公司</td>
+                    <td>周逵</td>
+                    <td>1万元</td>
+                    <td>2023-11-13</td>
+                </tr>
+                <tr>
+                    <td>4</td>
+                    <td>北京安杉共锦管理咨询有限责任公司</td>
+                    <td>周逵</td>
+                    <td>1000万元</td>
+                    <td>2023-08-02</td>
+                </tr>
+                <tr>
+                    <td>5</td>
+                    <td>红创科兴（宁波）科技有限公司</td>
+                    <td>公元</td>
+                    <td>500万元</td>
+                    <td>2022-12-01</td>
+                </tr>
+            </tbody>
+        </table>
+        <div class="pagination-wrap">
+            <span>共 66 条</span>
+            <span>5条/页</span>
+            <button>&lt;</button>
+            <button class="active">1</button>
+            <button>2</button>
+            <button>3</button>
+            <button>4</button>
+            <span>...</span>
+            <button>14</button>
+            <button>&gt;</button>
+            <span>前往 <input type="text" class="w-8 border px-1"> 页</span>
+        </div>
+
+        <h3 class="font-medium mt-6 mb-2">管理基金 1471</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>序号</th>
+                    <th>企业名称</th>
+                    <th>法定代表人</th>
+                    <th>注册资本</th>
+                    <th>成立时间</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>1</td>
+                    <td>杭州红杉坤泰企业管理咨询合伙企业（有限合伙）</td>
+                    <td>深圳市红杉桓宇投资咨询有限公司</td>
+                    <td>2000万元</td>
+                    <td>2026-08-10</td>
+                </tr>
+                <tr>
+                    <td>2</td>
+                    <td>杭州红杉坤曜企业管理咨询合伙企业（有限合伙）</td>
+                    <td>深圳市红杉桓宇投资咨询有限公司</td>
+                    <td>2000万元</td>
+                    <td>2026-08-10</td>
+                </tr>
+                <tr>
+                    <td>3</td>
+                    <td>杭州红杉坤曜企业管理咨询合伙企业（有限合伙）</td>
+                    <td>深圳市红杉桓宇投资咨询有限公司</td>
+                    <td>2000万元</td>
+                    <td>2026-08-10</td>
+                </tr>
+                <tr>
+                    <td>4</td>
+                    <td>杭州红杉坤泰企业管理咨询合伙企业（有限合伙）</td>
+                    <td>深圳市红杉桓宇投资咨询有限公司</td>
+                    <td>2000万元</td>
+                    <td>2026-08-10</td>
+                </tr>
+                <tr>
+                    <td>5</td>
+                    <td>北京朗恒管理咨询中心（有限合伙）</td>
+                    <td>厦门红杉坤腾投资合伙企业（有限合伙）（委派）</td>
+                    <td>1万元</td>
+                    <td>2026-07-27</td>
+                </tr>
+            </tbody>
+        </table>
+        <div class="pagination-wrap">
+            <span>共 1471 条</span>
+            <span>5条/页</span>
+            <button>&lt;</button>
+            <button class="active">1</button>
+            <button>2</button>
+            <button>3</button>
+            <button>4</button>
+            <span>...</span>
+            <button>295</button>
+            <button>&gt;</button>
+            <span>前往 <input type="text" class="w-8 border px-1"> 页</span>
+        </div>
+    </div>
+
+    <!-- 退出事件 -->
+    <div class="p-4">
+        <h2 class="text-lg font-semibold mb-3">退出事件 185</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>序号</th>
+                    <th>融资企业（已退出）</th>
+                    <th>退出方式</th>
+                    <th>退出日期</th>
+                    <th>持有天数</th>
+                    <th>投资总额</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>1</td>
+                    <td>MAIA ACTIVE</td>
+                    <td>被收购</td>
+                    <td>2023-10-13</td>
+                    <td>1936</td>
+                    <td>800万人民币</td>
+                </tr>
+                <tr>
+                    <td>2</td>
+                    <td>十月稻田</td>
+                    <td>IPO</td>
+                    <td>2023-10-12</td>
+                    <td>909</td>
+                    <td>2.9亿人民币</td>
+                </tr>
+                <tr>
+                    <td>3</td>
+                    <td>范式智能</td>
+                    <td>IPO</td>
+                    <td>2023-09-28</td>
+                    <td>2904</td>
+                    <td>3.91111101亿人民币</td>
+                </tr>
+                <tr>
+                    <td>4</td>
+                    <td>途虎养车网</td>
+                    <td>IPO</td>
+                    <td>2023-09-26</td>
+                    <td>1837</td>
+                    <td>1.4610909亿美元</td>
+                </tr>
+                <tr>
+                    <td>5</td>
+                    <td>右划科技、右划</td>
+                    <td>被收购</td>
+                    <td>2023-08-25</td>
+                    <td>1721</td>
+                    <td>1000万美元</td>
+                </tr>
+            </tbody>
+        </table>
+        <div class="pagination-wrap">
+            <span>共 185 条</span>
+            <span>5条/页</span>
+            <button>&lt;</button>
+            <button class="active">1</button>
+            <button>2</button>
+            <button>3</button>
+            <span>...</span>
+            <button>37</button>
+            <button>&gt;</button>
+            <span>前往 <input type="text" class="w-8 border px-1"> 页</span>
+        </div>
+    </div>
+
+<script>
+// 雷达图
+const radarCtx = document.getElementById('radarChart').getContext('2d');
+new Chart(radarCtx, {
+    type: 'radar',
+    data: {
+        labels: ['专注度', '资金实力', '投资水平', '团队能力'],
+        datasets: [{
+            data: [68.04,86.94,96.57,98.33],
+            backgroundColor: 'rgba(22, 119, 255,0.2)',
+            borderColor: '#1677ff',
+            pointBackgroundColor:'#1677ff'
+        }]
+    },
+    options:{
+        scales:{
+            r:{min:0,max:100}
+        },
+        plugins:{legend:{display:false}}
+    }
+})
+
+// 投资阶段柱状图
+const barCtx = document.getElementById('stageBarChart').getContext('2d');
+new Chart(barCtx,{
+    type:'bar',
+    data:{
+        labels:['种子期','初创期','成长期','成熟期'],
+        datasets:[
+            {label:'',data:[140,200,120,40],backgroundColor:['#49cc67','#4088ff','#9254de','#ff7a45']}
+        ]
+    },
+    options:{
+        plugins:{legend:{display:false}}
+    }
+})
+
+// 投资战绩折线图
+const lineCtx = document.getElementById('investLineChart').getContext('2d');
+new Chart(lineCtx,{
+    type:'line',
+    data:{
+        labels:['2016','2017','2018','2019','2020','2021','2022','2023','2024','2025'],
+        datasets:[
+            {label:'已投资公司被收购次数',data:[180,190,200,230,280,380,260,120,110,240],borderColor:'#f5222d',tension:0.3},
+            {label:'投资次数',data:[170,185,195,220,270,370,250,110,100,230],borderColor:'#fa8c16',tension:0.3},
+            {label:'投资公司数',data:[20,30,40,45,60,70,50,25,20,40],borderColor:'#ffd700',tension:0.3},
+            {label:'已投资公司上市次数',data:[10,15,20,22,30,35,28,12,10,22],borderColor:'#36c662',tension:0.3},
+            {label:'已投资公司获得新融资次数',data:[190,200,210,240,290,390,270,130,120,250],borderColor:'#1677ff',tension:0.3}
+        ]
+    },
+    options:{
+        plugins:{legend:{display:false}}
+    }
+})
+</script>
+</body>
+</html>

@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>外资集团列表</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    background: #F5F6F8;
+    color: #1D2129;
+    font-size: 14px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* 顶部导航 */
+  .top-nav {
+    display: flex;
+    align-items: center;
+    padding: 0 24px;
+    height: 56px;
+    background: #FFFFFF;
+    border-bottom: 1px solid #E5E6EB;
+  }
+  .top-nav .nav-tabs { display: flex; align-items: center; }
+  .top-nav .nav-tab {
+    padding: 0 22px; height: 56px;
+    display: flex; align-items: center;
+    font-size: 17px; color: #4E5969;
+    cursor: pointer; position: relative;
+    white-space: nowrap; user-select: none;
+  }
+  .top-nav .nav-tab.active { color: #1D2129; font-weight: 600; }
+  .top-nav .nav-tab.active::after {
+    content: ""; position: absolute; bottom: 0; left: 50%;
+    transform: translateX(-50%); width: 36px; height: 3px;
+    background: #F7BA1E; border-radius: 2px;
+  }
+  .top-nav .search-box {
+    margin-left: auto; display: flex; align-items: center;
+    width: 340px; height: 38px; border: 1px solid #C9CDD4;
+    border-radius: 4px; padding: 0 14px; background: #FFFFFF;
+  }
+  .top-nav .search-box svg {
+    width: 17px; height: 17px; margin-right: 10px;
+    flex-shrink: 0; color: #86909C;
+  }
+  .top-nav .search-box input {
+    flex: 1; border: none; outline: none; font-size: 15px;
+    color: #86909C; background: transparent; font-family: inherit;
+  }
+
+  /* 筛选区域 */
+  .filter-section {
+    background: #FFFFFF; padding: 18px 24px 14px;
+    border-bottom: 1px solid #E5E6EB;
+  }
+  .filter-row {
+    display: flex; align-items: flex-start; margin-bottom: 14px;
+  }
+  .filter-row:last-child { margin-bottom: 0; }
+  .filter-row .filter-label {
+    width: 76px; flex-shrink: 0; font-size: 16px;
+    color: #1D2129; font-weight: 600; padding-top: 7px;
+  }
+  .filter-row .filter-options {
+    display: flex; flex-wrap: wrap; align-items: center;
+    gap: 2px; flex: 1;
+  }
+  .filter-row .filter-option {
+    padding: 7px 14px; font-size: 16px; color: #4E5969;
+    border-radius: 4px; cursor: pointer; white-space: nowrap;
+    transition: all .15s; user-select: none;
+  }
+  .filter-row .filter-option:hover { color: #165DFF; }
+  .filter-row .filter-option.active {
+    background: #E8F3FF; color: #165DFF; font-weight: 500;
+  }
+  .filter-row .filter-more {
+    display: inline-flex; align-items: center; padding: 7px 14px;
+    font-size: 16px; color: #165DFF; cursor: pointer;
+    white-space: nowrap; margin-left: auto; user-select: none; flex-shrink: 0;
+  }
+  .filter-row .filter-more::after {
+    content: ""; display: inline-block; width: 0; height: 0;
+    margin-left: 6px; border-left: 4px solid transparent;
+    border-right: 4px solid transparent; border-top: 5px solid #165DFF;
+  }
+
+  /* 结果标题 */
+  .result-header {
+    padding: 18px 24px 14px; font-size: 20px; font-weight: 700;
+    color: #1D2129; background: #F5F6F8;
+    display: flex; align-items: baseline;
+  }
+  .result-header .count {
+    color: #86909C; font-weight: 400; margin-left: 10px; font-size: 17px;
+  }
+
+  /* 卡片网格 */
+  .card-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 12px; padding: 0 24px 28px; background: #F5F6F8;
+  }
+  .card {
+    background: #FFFFFF; border-radius: 6px; padding: 22px 20px;
+    display: flex; align-items: flex-start; gap: 14px;
+    cursor: pointer; transition: box-shadow .2s, border-color .2s;
+    border: 1px solid transparent; min-height: 92px;
+  }
+  .card:hover {
+    box-shadow: 0 4px 14px rgba(0,0,0,0.07); border-color: #E5E6EB;
+  }
+  .card .logo {
+    width: 50px; height: 50px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .card .logo svg { width: 100%; height: 100%; display: block; }
+  .card .info { flex: 1; min-width: 0; padding-top: 2px; }
+  .card .name {
+    font-size: 18px; font-weight: 600; color: #1D2129;
+    margin-bottom: 10px; white-space: nowrap; overflow: hidden;
+    text-overflow: ellipsis; line-height: 1.3;
+  }
+  .card .stats {
+    font-size: 15px; color: #86909C; display: flex; gap: 24px;
+  }
+  .card .stats .stat-item { white-space: nowrap; }
+  .card .stats .num { color: #4E5969; font-weight: 500; }
+</style>
+</head>
+<body>
+
+<!-- 顶部导航 -->
+<div class="top-nav">
+  <div class="nav-tabs">
+    <div class="nav-tab">关注</div>
+    <div class="nav-tab">央企</div>
+    <div class="nav-tab">国企</div>
+    <div class="nav-tab">民营</div>
+    <div class="nav-tab active">外资</div>
+    <div class="nav-tab">机构</div>
+  </div>
+  <div class="search-box">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input type="text" placeholder="输入企业或集团关键字">
+  </div>
+</div>
+
+<!-- 筛选区域 -->
+<div class="filter-section">
+  <div class="filter-row">
+    <div class="filter-label">选择省份</div>
+    <div class="filter-options">
+      <span class="filter-option active">全国</span>
+      <span class="filter-option">北京市</span>
+      <span class="filter-option">天津市</span>
+      <span class="filter-option">河北省</span>
+      <span class="filter-option">山西省</span>
+      <span class="filter-option">内蒙古自治区</span>
+      <span class="filter-option">辽宁省</span>
+      <span class="filter-option">吉林省</span>
+      <span class="filter-option">黑龙江省</span>
+      <span class="filter-option">上海市</span>
+      <span class="filter-option">江苏省</span>
+      <span class="filter-option">浙江省</span>
+      <span class="filter-option">安徽省</span>
+      <span class="filter-option">福建省</span>
+      <span class="filter-option">江西省</span>
+      <span class="filter-option">山东省</span>
+      <span class="filter-option">河南省</span>
+      <span class="filter-more">更多</span>
+    </div>
+  </div>
+  <div class="filter-row">
+    <div class="filter-label">选择城市</div>
+    <div class="filter-options">
+      <span class="filter-option active">不限</span>
+    </div>
+  </div>
+  <div class="filter-row">
+    <div class="filter-label">选择区域</div>
+    <div class="filter-options">
+      <span class="filter-option active">不限</span>
+    </div>
+  </div>
+</div>
+
+<!-- 结果标题 -->
+<div class="result-header">
+  全国<span class="count">17,101</span>
+</div>
+
+<!-- 卡片网格 -->
+<div class="card-grid">
+
+  <!-- 1. 中国瑞幸咖啡集团 -->
+  <div class="card">
+    <div class="logo">
+      <svg viewBox="0 0 50 50">
+        <path d="M25 8 C20 8 16 12 16 17 C16 20 18 23 21 24 L18 28 C16 30 15 33 15 36 L20 36 C20 34 21 32 23 31 L27 31 C29 32 30 34 30 36 L35 36 C35 33 34 30 32 28 L29 24 C32 23 34 20 34 17 C34 12 30 8 25 8 Z" fill="#002855"/>
+        <path d="M22 16 C23 14 25 13 27 14 C26 16 24 17 22 16 Z" fill="#FFFFFF"/>
+        <path d="M23 20 C25 19 27 20 28 22 C26 23 24 23 23 20 Z" fill="#FFFFFF"/>
+        <text x="25" y="46" text-anchor="middle" font-size="5" fill="#002855" font-weight="bold" font-family="Arial">luckin coffee</text>
+      </svg>
+    </div>
+    <div class="info">
+      <div class="name">中国瑞幸咖啡集团</div>
+      <div class="stats">
+        <span class="stat-item">成员: <span class="num">26,514家</span></span>
+        <span class="stat-item">核心: <span class="num">9家</span></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. 百胜中国集团 -->
+  <div class="card">
+    <div class="logo">
+      <svg viewBox="0 0 50 50">
+        <circle cx="25" cy="20" r="14" fill="#E60012"/>
+        <text x="25" y="20" text-anchor="middle" font-size="9" fill="#FFFFFF" font-weight="bold">百胜</text>
+        <text x="25" y="27" text-anchor="middle" font-size="5" fill="#FFFFFF" font-weight="bold" font-family="Arial">Yum</text>
+        <text x="25" y="44" text-anchor="middle" font-size="6.5" fill="#E60012" font-weight="bold" font-family="Arial">YumChina</text>
+      </svg>
+    </div>
+    <div class="info">
+      <div class="name">百胜中国集团</div>
+      <div class="stats">
+        <span class="stat-item">成员: <span class="num">21,558家</span></span>
+        <span class="stat-item">核心: <span class="num">54家</span></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. 房车宝集团 -->
+  <div class="card">
+    <div class="logo">
+      <svg viewBox="0 0 50 50">
+        <path d="M15 22 L25 12 L35 22 L35 32 L15 32 Z" fill="#E60012"/>
+        <rect x="20" y="24" width="10" height="8" fill="#FFFFFF"/>
+        <rect x="15" y="32" width="20" height="4" fill="#E60012"/>
+        <text x="25" y="46" text-anchor="middle" font-size="7" fill="#E60012" font-weight="bold">房车宝</text>
+      </svg>
+    </div>
+    <div class="info">
+      <div class="name">房车宝集团</div>
+      <div class="stats">
+        <span class="stat-item">成员: <span class="num">20,560家</span></span>
+        <span class="stat-item">核心: <span class="num">16家</span></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. 重庆海外旅业集团 -->
+  <div class="card">
+    <div class="logo">
+      <svg viewBox="0 0 50 50">
+        <text x="25" y="20" text-anchor="middle" font-size="8" fill="#0066B3" font-weight="bold">海外旅业</text>
+        <text x="25" y="30" text-anchor="middle" font-size="7" fill="#0066B3" font-weight="bold" font-family="Arial">OTC</text>
+        <line x1="10" y1="34" x2="40" y2="34" stroke="#0066B3" stroke-width="1"/>
+        <path d="M10 34 C15 30 20 38 25 34 C30 30 35 38 40 34" fill="none" stroke="#0066B3" stroke-width="1.5"/>
+      </svg>
+    </div>
+    <div class="info">
+      <div class="name">重庆海外旅业集团</div>
+      <div class="stats">
+        <span class="stat-item">成员: <span class="num">19,435家</span></span>
+        <span class="stat-item">核心: <span class="num">8家</span></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. 天津高济集团 -->
+  <div class="card">
+    <div class="logo">
+      <svg viewBox="0 0 50 50">
+        <rect x="8" y="8" width="34" height="34" rx="3" fill="#F78A2E"/>
+        <text x="25" y="30" text-anchor="middle" font-size="16" fill="#FFFFFF" font-weight="bold">高济</text>
+      </svg>
+    </div>
+    <div class="info">
+      <div class="name">天津高济集团</div>
+      <div class="stats">
+        <span class="stat-item">成员: <span class="num">15,663家</span></span>
+        <span class="stat-item">核心: <span class="num">10家</span></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6. 天津贝壳投资集团 -->
+  <div class="card">
+    <div class="logo">
+      <svg viewBox="0 0 50 50">
+        <rect x="8" y="8" width="34" height="34" rx="4" fill="#E8F3FF"/>
+        <text x="25" y="24" text-anchor="middle" font-size="11" fill="#165DFF" font-weight="bold">天津</text>
+        <text x="25" y="38" text-anchor="middle" font-size="11" fill="#165DFF" font-weight="bold">贝壳</text>
+      </svg>
+    </div>
+    <div class="info">
+      <div class="name">天津贝壳投资集团</div>
+      <div class="stats">
+        <span class="stat-item">成员: <span class="num">14,930家</span></span>
+        <span class="stat-item">核心: <span class="num">8家</span></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 7. 益丰药房集团 -->
+  <div class="card">
+    <div class="logo">
+      <svg viewBox="0 0 50 50">
+        <path d="M25 8 C22 8 20 10 20 13 C20 16 22 18 25 20 C28 18 30 16 30 13 C30 10 28 8 25 8 Z" fill="#00A651"/>
+        <path d="M25 20 L25 36" stroke="#00A651" stroke-width="3"/>
+        <path d="M18 28 C18 24 21 22 25 22 C29 22 32 24 32 28" fill="none" stroke="#00A651" stroke-width="2.5"/>
+        <text x="25" y="44" text-anchor="middle" font-size="5.5" fill="#00A651" font-weight="bold">益丰大药房</text>
+        <text x="25" y="49" text-anchor="middle" font-size="4" fill="#00A651" font-family="Arial">Yifeng Pharmacy</text>
+      </svg>
+    </div>
+    <div class="info">
+      <div class="name">益丰药房集团</div>
+      <div class="stats">
+        <span class="stat-item">成员: <span class="num">14,766家</span></span>
+        <span class="stat-item">核心: <span class="num">8家</span></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 8. 老百姓集团 -->
+  <div class="card">
+    <div class="logo">
+      <svg viewBox="0 0 50 50">
+        <rect x="8" y="14" width="16" height="10" rx="2" fill="#165DFF"/>
+        <text x="16" y="22" text-anchor="middle" font-size="7" fill="#FFFFFF" font-weight="bold">老百姓</text>
+        <rect x="26" y="14" width="16" height="10" rx="2" fill="#E60012"/>
+        <text x="34" y="22" text-anchor="middle" font-size="7" fill="#FFFFFF" font-weight="bold">大药房</text>
+        <text x="25" y="38" text-anchor="middle" font-size="5" fill="#4E5969" font-family="Arial">LBX PHARMACY</text>
+      </svg>
+    </div>
+    <div class="info">
+      <div class="name">老百姓集团</div>
+      <div class="stats">
+        <span class="stat-item">成员: <span class="num">13,183家</span></span>
+        <span class="stat-item">核心: <span class="num">12家</span></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 9. 上海达疆网络集团 -->
+  <div class="card">
+    <div class="logo">
+      <svg viewBox="0 0 50 50">
+        <circle cx="18" cy="22" r="8" fill="#165DFF"/>
+        <text x="18" y="25" text-anchor="middle" font-size="7" fill="#FFFFFF" font-weight="bold">达达</text>
+        <circle cx="32" cy="22" r="8" fill="#00A651"/>
+        <text x="32" y="25" text-anchor="middle" font-size="7" fill="#FFFFFF" font-weight="bold">集团</text>
+        <text x="25" y="42" text-anchor="middle" font-size="5" fill="#4E5969" font-family="Arial">DADA GROUP</text>
+      </svg>
+    </div>
+    <div class="info">
+      <div class="name">上海达疆网络集团</div>
+      <div class="stats">
+        <span class="stat-item">成员: <span class="num">13,095家</span></span>
+        <span class="stat-item">核心: <span class="num">9家</span></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 10. 星巴克咖啡集团 -->
+  <div class="card">
+    <div class="logo">
+      <svg viewBox="0 0 50 50">
+        <circle cx="25" cy="25" r="17" fill="#00704A"/>
+        <circle cx="25" cy="25" r="13" fill="none" stroke="#FFFFFF" stroke-width="1"/>
+        <path d="M25 12 C22 14 20 17 20 21 C20 24 22 26 25 27 C28 26 30 24 30 21 C30 17 28 14 25 12 Z" fill="#FFFFFF"/>
+        <circle cx="22" cy="19" r="1.5" fill="#00704A"/>
+        <circle cx="28" cy="19" r="1.5" fill="#00704A"/>
+        <path d="M22 23 C23 24 27 24 28 23" fill="none" stroke="#00704A" stroke-width="1"/>
+        <path d="M18 28 C16 30 15 33 16 36 L20 36 C20 34 21 32 23 31 L27 31 C29 32 30 34 30 36 L34 36 C35 33 34 30 32 28" fill="#FFFFFF"/>
+        <text x="25" y="48" text-anchor="middle" font-size="3.5" fill="#00704A" font-weight="bold">TM</text>
+      </svg>
+    </div>
+    <div class="info">
+      <div class="name">星巴克咖啡集团</div>
+      <div class="stats">
+        <span class="stat-item">成员: <span class="num">9,286家</span></span>
+        <span class="stat-item">核心: <span class="num">9家</span></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 11. 莱阳中国网通集团 -->
+  <div class="card">
+    <div class="logo">
+      <svg viewBox="0 0 50 50">
+        <rect x="8" y="8" width="34" height="34" rx="4" fill="#E8F3FF"/>
+        <text x="25" y="24" text-anchor="middle" font-size="11" fill="#165DFF" font-weight="bold">莱阳</text>
+        <text x="25" y="38" text-anchor="middle" font-size="11" fill="#165DFF" font-weight="bold">中国</text>
+      </svg>
+    </div>
+    <div class="info">
+      <div class="name">莱阳中国网通集团</div>
+      <div class="stats">
+        <span class="stat-item">成员: <span class="num">7,959家</span></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 12. 腾越建筑集团 -->
+  <div class="card">
+    <div class="logo">
+      <svg viewBox="0 0 50 50">
+        <path d="M15 20 L25 10 L35 20 L35 24 L15 24 Z" fill="#F78A2E"/>
+        <rect x="15" y="24" width="20" height="14" fill="#004FA3"/>
+        <rect x="20" y="28" width="4" height="4" fill="#FFFFFF"/>
+        <rect x="26" y="28" width="4" height="4" fill="#FFFFFF"/>
+        <rect x="20" y="34" width="4" height="4" fill="#FFFFFF"/>
+        <rect x="26" y="34" width="4" height="4" fill="#FFFFFF"/>
+        <text x="25" y="48" text-anchor="middle" font-size="5.5" fill="#4E5969" font-weight="bold">腾越建科</text>
+      </svg>
+    </div>
+    <div class="info">
+      <div class="name">腾越建筑集团</div>
+      <div class="stats">
+        <span class="stat-item">成员: <span class="num">6,066家</span></span>
+        <span class="stat-item">核心: <span class="num">13家</span></span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>

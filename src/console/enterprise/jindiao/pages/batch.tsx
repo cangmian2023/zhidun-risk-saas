@@ -94,7 +94,7 @@ const seed: Data = {
     saveTemplate: '存为模板',
     tree: [
       { key: 'business', label: '工商信息', checked: true },
-      { key: 'qixin', label: '启信指数', checked: false },
+      { key: 'qixin', label: '企业健康度', checked: false },
       { key: 'relation', label: '企业关系', checked: false },
       { key: 'judicial', label: '司法风险', checked: false },
       { key: 'operation', label: '经营风险', checked: false },
@@ -133,7 +133,7 @@ const seed: Data = {
     right: [
       {
         title: '多维尽调指标',
-        desc: ['工商信息、司法/经营风险、经营信息', '启信慧眼特有指标、启信指数、企业关系等'],
+        desc: ['工商信息、司法/经营风险、经营信息', '企业征信特有指标、企业健康度、企业关系等'],
       },
       {
         title: '尽调指标管理',
@@ -651,7 +651,7 @@ function TemplateLibraryModal({
               padding: '8px 18px',
               borderRadius: 6,
               border: 'none',
-              background: '#F59E0B',
+              background: '#2563EB',
               color: '#fff',
               fontSize: 14,
               cursor: 'pointer',
@@ -824,7 +824,7 @@ function PersonTab({
               padding: '7px 16px',
               borderRadius: 6,
               border: 'none',
-              background: '#ffc53d',
+              background: '#2563EB',
               color: '#fff',
               fontSize: 13,
               fontWeight: 600,

@@ -358,7 +358,7 @@ export default function DmMarketList() {
                     <td className="whitespace-nowrap px-3 py-3 text-slate-500">{r.created}</td>
                     <td className="whitespace-nowrap px-3 py-3 text-slate-600">{r.scope}</td>
                     <td className="whitespace-nowrap px-3 py-3 text-right">
-                      <div className="flex flex-wrap justify-end gap-2 text-xs">
+                      <div className="flex flex-nowrap justify-end gap-2 text-xs whitespace-nowrap">
                         <OpBtn onClick={() => goDetail('/console/dm/market-list-detail', { id: r.id, name: r.name })}>查看详情</OpBtn>
                         <OpBtn onClick={() => openEdit(r)}>编辑名单</OpBtn>
                         <OpBtn onClick={() => copyRow(r)}>复制名单</OpBtn>

@@ -1,4 +1,4 @@
-// 全维搜索 · 真实样例数据（取自 record/qixin 启信宝快照，1:1 复刻，仅 dm 复刻用，不抽 JSON/不走端点）
+// 全维搜索 · 真实样例数据（取自 record/qixin 企业征信快照，1:1 复刻，仅 dm 复刻用，不抽 JSON/不走端点）
 export interface EntCard { name:string; status:string; score:number; tags:string[]; legal:string; regTime:string; regCap:string; paidCap:string; email:string; phone:string; addr:string; former:string; group:string; short:string; shareholder:string; scope:string; stock:string }
 // 商机检索结果（按需求文档结构构造，覆盖四种商机类型；有源快照后可替换为真实数据）
 export interface BizResult {
@@ -10,7 +10,7 @@ export interface BizResult {
   date: string      // 发生日期
   desc: string      // 完整商机描述（项目名称、招标方、中标方、金额、地址、注册信息、网址等）
 }
-// 人员检索结果：同名人员列表（取自启信宝「营销-全维搜索-人员」快照，真实数据）
+// 人员检索结果：同名人员列表（取自企业征信「营销-全维搜索-人员」快照，真实数据）
 export interface PersonResult {
   name: string          // 姓名（同名都为 雷军）
   partners: string[]    // 合作伙伴
@@ -76,6 +76,7 @@ export interface RiskResult {
   parties?: RiskParty[] // 当事人（原告/被告）
   // 兜底 other：未知风险类型通用模板
   desc?: string
+  content?: string      // 公告内容（法院公告/裁判文书正文，详情抽屉展示）
 }
 export const RISK_STATS_TOTAL = 287
 export const RISK_KEYWORD_PLACEHOLDER = '请输入关键词检索风险信息，如：手机'
@@ -83,34 +84,44 @@ export const RISK_RESULTS: RiskResult[] = [
   { type: 'judicial', typeLabel: '司法公告', region: '广东', date: '2026-08-20',
     title: '深圳市南山区人民法院公告（关于某银行与深圳市优算智能科技有限公司金融借款合同纠纷一案）',
     court: '深圳市南山区人民法院', noticeType: '起诉状副本及开庭传票',
-    entities: [{ name: '深圳市优算智能科技有限公司', kind: 'ent' }, { name: '王建国', kind: 'person' }] },
+    entities: [{ name: '深圳市优算智能科技有限公司', kind: 'ent' }, { name: '王建国', kind: 'person' }],
+    content: '深圳市优算智能科技有限公司、王建国：本院受理原告某银行股份有限公司深圳分行诉被告深圳市优算智能科技有限公司、王建国金融借款合同纠纷一案，因用其他方式无法送达，现依法向你们公告送达起诉状副本、证据材料一览表及开庭传票。自本公告刊登之日起经过三十日即视为送达，提出答辩状的期限为公告期满后的十五日内。本院定于举证期满后第三日上午九时三十分（遇法定节假日顺延）在本院第十二审判庭公开开庭审理，逾期将依法缺席裁判。' },
   { type: 'tax', typeLabel: '欠税公告', region: '广东', date: '2026-08-19',
-    title: '东莞市芯启源电子有限公司', taxType: '增值税', balance: '1,286,430.52', newTax: '356,200.00' },
+    title: '东莞市芯启源电子有限公司', taxType: '增值税', balance: '1,286,430.52', newTax: '356,200.00',
+    content: '东莞市芯启源电子有限公司（统一社会信用代码：91441900MA5XXXXXXX）：你单位欠缴增值税合计 1,286,430.52 元，其中本期新发生欠税额 356,200.00 元。限你单位自公告之日起十五日内到主管税务机关补缴税款及滞纳金，逾期将依据《中华人民共和国税收征收管理法》相关规定处理。' },
   { type: 'court', typeLabel: '开庭公告', region: '广东', date: '2026-08-18 09:30',
     caseNo: '（2026）粤0105民初27541号', cause: '手机购销合同纠纷',
-    parties: [{ role: '原告', name: '广州市悦鲜供应链有限公司', kind: 'ent' }, { role: '被告', name: '广州市天河区臻味餐饮店', kind: 'ent' }] },
+    parties: [{ role: '原告', name: '广州市悦鲜供应链有限公司', kind: 'ent' }, { role: '被告', name: '广州市天河区臻味餐饮店', kind: 'ent' }],
+    content: '广州市天河区臻味餐饮店：本院受理原告广州市悦鲜供应链有限公司诉被告广州市天河区臻味餐饮店手机购销合同纠纷一案，因你方下落不明，现依法向你公告送达起诉状副本及开庭传票。本案定于 2026 年 8 月 18 日 9 时 30 分在本院第三法庭公开开庭审理，逾期不到庭将依法缺席判决。' },
   { type: 'judicial', typeLabel: '司法公告', region: '广东', date: '2026-08-15',
     title: '广东省高级人民法院公告（关于深圳华电电气设备股份有限公司与某建设集团工程施工合同纠纷再审一案）',
     court: '广东省高级人民法院', noticeType: '再审开庭公告',
-    entities: [{ name: '深圳华电电气设备股份有限公司', kind: 'ent' }] },
+    entities: [{ name: '深圳华电电气设备股份有限公司', kind: 'ent' }],
+    content: '深圳华电电气设备股份有限公司：本院已受理你方与某建设集团工程施工合同纠纷再审一案。现依法向你方公告送达再审申请书副本、应诉通知书及开庭传票。请于公告期满后七日内向本院提交书面答辩意见及证据材料。本案再审庭审时间另行通知。' },
   { type: 'tax', typeLabel: '欠税公告', region: '广东', date: '2026-08-14',
-    title: '佛山市南海区康达机电工程有限公司', taxType: '企业所得税', balance: '2,458,900.00', newTax: '-' },
+    title: '佛山市南海区康达机电工程有限公司', taxType: '企业所得税', balance: '2,458,900.00', newTax: '-',
+    content: '佛山市南海区康达机电工程有限公司：经核查，你单位欠缴企业所得税 2,458,900.00 元，本期无新发生欠税额。请于公告之日起按规定期限补缴，逾期未缴将依法采取强制执行措施。' },
   { type: 'court', typeLabel: '开庭公告', region: '广东', date: '2026-08-20 15:00',
     caseNo: '（2026）粤0391民初12853号', cause: '金融借款合同纠纷',
-    parties: [{ role: '原告', name: '某银行股份有限公司深圳分行', kind: 'ent' }, { role: '被告', name: '广州云帆信息技术有限公司', kind: 'ent' }, { role: '被告', name: '李秀英', kind: 'person' }] },
+    parties: [{ role: '原告', name: '某银行股份有限公司深圳分行', kind: 'ent' }, { role: '被告', name: '广州云帆信息技术有限公司', kind: 'ent' }, { role: '被告', name: '李秀英', kind: 'person' }],
+    content: '广州云帆信息技术有限公司、李秀英：本院受理原告某银行股份有限公司深圳分行诉被告广州云帆信息技术有限公司、李秀英金融借款合同纠纷一案，依法向你方公告送达起诉状副本及开庭传票。本案定于 2026 年 8 月 20 日 15 时在本庭公开审理，请准时到庭，逾期将依法缺席裁判。' },
   { type: 'judicial', typeLabel: '司法公告', region: '广东', date: '2026-08-13',
     title: '广州市海珠区人民法院公告（关于某银行信用卡纠纷系列案件，含手机消费分期逾期）',
     court: '广州市海珠区人民法院', noticeType: '起诉状副本及开庭传票',
-    entities: [{ name: '广州云帆信息技术有限公司', kind: 'ent' }] },
+    entities: [{ name: '广州云帆信息技术有限公司', kind: 'ent' }],
+    content: '广州云帆信息技术有限公司：本院受理原告某银行信用卡中心诉你方信用卡纠纷系列案件（含手机消费分期逾期），现依法向你方公告送达起诉状副本、证据材料及开庭传票。自公告之日起三十日即视为送达，答辩及举证期限分别为送达期满后十五日、三十日。' },
   { type: 'tax', typeLabel: '欠税公告', region: '广东', date: '2026-08-16',
-    title: '惠州市恒源新材料有限公司', taxType: '增值税', balance: '689,350.18', newTax: '689,350.18' },
+    title: '惠州市恒源新材料有限公司', taxType: '增值税', balance: '689,350.18', newTax: '689,350.18',
+    content: '惠州市恒源新材料有限公司：你单位本期新发生欠缴增值税 689,350.18 元，累计欠税余额 689,350.18 元。请于公告发布之日起十五日内到主管税务机关申报缴纳，并结清相应滞纳金。' },
   { type: 'court', typeLabel: '开庭公告', region: '广东', date: '2026-08-17 10:00',
     caseNo: '（2026）粤0306民初45672号', cause: '民间借贷纠纷',
-    parties: [{ role: '原告', name: '陈志强', kind: 'person' }, { role: '被告', name: '东莞市凯胜精密结构件有限公司', kind: 'ent' }] },
+    parties: [{ role: '原告', name: '陈志强', kind: 'person' }, { role: '被告', name: '东莞市凯胜精密结构件有限公司', kind: 'ent' }],
+    content: '东莞市凯胜精密结构件有限公司：本院受理原告陈志强诉被告东莞市凯胜精密结构件有限公司民间借贷纠纷一案，因你方无法直接送达，现依法公告送达起诉状副本及开庭传票。本案定于 2026 年 8 月 17 日 10 时在本院第二法庭开庭审理。' },
   { type: 'judicial', typeLabel: '司法公告', region: '广东', date: '2026-08-12',
     title: '深圳市龙岗区人民法院公告（关于某电子科技有限公司买卖合同纠纷一案，手机零部件货款）',
     court: '深圳市龙岗区人民法院', noticeType: '起诉状副本及开庭传票',
-    entities: [{ name: '东莞市芯启源电子有限公司', kind: 'ent' }] },
+    entities: [{ name: '东莞市芯启源电子有限公司', kind: 'ent' }],
+    content: '东莞市芯启源电子有限公司：本院受理原告某电子科技有限公司诉被告东莞市芯启源电子有限公司买卖合同纠纷一案（标的为手机零部件货款），现依法向你方公告送达起诉状副本、证据清单及开庭传票。自公告刊登之日起经过三十日即视为送达。' },
 ]
 
 /* ==================== 舆情模块 ==================== */

@@ -115,7 +115,7 @@ export const entMenu: MenuGroup[] = [
     items: [
       { label: '风险预警', key: 'ep:fk-risk-warning', desc: '企业风险预警：已同步企业 3 个月监控动态、剩余额度，预警列表含添加监控 / 解读 / 风险详情 / 案件串联', keep: true },
       { label: '监控列表', key: 'ep:fk-monitor-list', desc: '存量企业监控名单：名单内企业持续监控，风险变化即预警', keep: true },
-      { label: '统计看板', key: 'ep:fk-stats', desc: '风控统计看板：AI 风险报告 / 企业风险排名 / 企业风险动态 / 其他统计多维图表', keep: true },
+      { label: '统计看板', key: 'ep:fk-stats', desc: '风控统计看板：风险报告 / 企业风险排名 / 企业风险动态 / 其他统计多维图表', keep: true },
       { label: '风险地图', key: 'ep:fk-map', desc: '风险地图：按时间维度展示企业风险地理分布', keep: true },
       { label: '监控管理', key: 'ep:fk-monitor-manage', desc: '监控规则与订阅管理：国内 / 境外企业、外部供应链、关键词、微信公众号等监控规则', keep: true },
     ],
@@ -190,10 +190,6 @@ export const dmMenu: MenuGroup[] = [
     section: '专题营销',
     items: [
       { label: '科创金融', key: 'dm:techfin', desc: '科创企业专属金融服务：科创企业库与资质画像' },
-      { label: '产业金融', key: 'dm:industry-fin', desc: '重点产业链式营销：产业概览/产业链图/产业地图/财务分析/企业名单/风险图谱等 11 个维度详情' },
-      { label: '园区金融', key: 'dm:park-fin', desc: '产业园区客群拓展：园区列表、开发区画像与商机线索' },
-      { label: '绿色金融', key: 'dm:green-fin', desc: '绿色金融客群：绿色企业认定与碳账户营销' },
-      { label: '乡村振兴', key: 'dm:rural-revive', keep: true, desc: '乡村振兴客群：涉农企业、新型农业经营主体与惠农金融' },
     ],
   },
   {
@@ -227,13 +223,11 @@ export const dmMenu: MenuGroup[] = [
     ],
   },
   {
-    group: '档案备份',
-    section: '档案备份',
+    group: '档案与金融',
+    section: '档案与金融',
     items: [
-      { label: '企业档案', key: 'dm:ent-archive', keep: true, desc: '企业尽调档案 1:1 原样备份：基本信息 / 企业图谱(8视图) / 历史信息 / 司法风险 / 知识产权 / 经营信息 / 经营风险 / 新闻舆情 / 财产信息 / 集团信息' },
       { label: '企业档案 · 数据复刻', key: 'dm:ent-archive-basic', keep: true, desc: '企业尽调档案 · 数据复刻版（与 DmEntArchiveBasic 同结构，1:1 仿企业档案样式）' },
-      { label: '个人档案', key: 'dm:person-archive', keep: true, desc: '人员尽调档案 1:1 原样备份：基本信息 / 风险信息 / 历史信息 / 关联风险企业 / 个人图谱 / 专利信息' },
-      { label: '个人档案 · 数据复刻', key: 'dm:person-archive-basic', keep: true, desc: '人员尽调档案 · 数据复刻版（6 个主 Tab 1:1 仿企业档案结构：基本信息 779 / 风险信息 13 / 专利信息 46 / 关联企业风险 / 个人图谱 / 历史信息 49）' },
+      { label: '个人档案 · 数据复刻', key: 'dm:person-archive-basic', keep: true, desc: '人员尽调档案 · 数据复刻版（6 个主 Tab 1:1 仿企业档案结构）' },
     ],
   },
 ]

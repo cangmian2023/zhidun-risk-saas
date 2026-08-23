@@ -106,8 +106,8 @@ const seed: Data = {
     columns: ['序号', '文件名', '状态', '申请人', '申请时间', '完成时间', '操作'],
     rows: [
       { id: 1, name: '企业工商信用公示-上海合合信息科技股份有限公司', status: '已完成', applicant: '19156027703', applyTime: '2026-08-20 00:01:37', doneTime: '2026-08-20 00:01:40', action: '查看' },
-      { id: 2, name: '启信慧眼-表决权图谱-上海合合信息科技股份有限公司', status: '已完成', applicant: '19156027703', applyTime: '2026-08-20 00:01:37', doneTime: '2026-08-20 00:01:41', action: '查看' },
-      { id: 3, name: '启信慧眼-股权穿透图谱-上海合合信息科技股份有限公司', status: '已完成', applicant: '19156027703', applyTime: '2026-08-20 00:01:37', doneTime: '2026-08-20 00:01:42', action: '查看' },
+      { id: 2, name: '企业征信-表决权图谱-上海合合信息科技股份有限公司', status: '已完成', applicant: '19156027703', applyTime: '2026-08-20 00:01:37', doneTime: '2026-08-20 00:01:41', action: '查看' },
+      { id: 3, name: '企业征信-股权穿透图谱-上海合合信息科技股份有限公司', status: '已完成', applicant: '19156027703', applyTime: '2026-08-20 00:01:37', doneTime: '2026-08-20 00:01:42', action: '查看' },
     ],
   },
   industry: {
@@ -393,8 +393,8 @@ export default function JdBeneficiaryResult({ params }: { params: URLSearchParam
                   padding: '6px 14px',
                   borderRadius: 6,
                   border: i === 2 ? 'none' : '1px solid #D9D9D9',
-                  background: i === 2 ? '#ffc53d' : '#fff',
-                  color: i === 2 ? '#1F2937' : '#333',
+                  background: i === 2 ? '#2563EB' : '#fff',
+                  color: i === 2 ? '#fff' : '#333',
                   fontWeight: i === 2 ? 600 : 400,
                   fontSize: 12.5,
                   cursor: 'pointer',

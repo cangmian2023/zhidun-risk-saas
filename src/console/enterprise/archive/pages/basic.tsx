@@ -77,7 +77,7 @@ export default function Basic({ params }: { params: URLSearchParams }) {
     { id: 'name', k: '名称', v: r.name },
     { id: 'former', k: '曾用名', v: r.formerName },
     { id: 'tax', k: '税号', v: r.taxNo },
-    { id: 'score', k: '启信分', v: r.qixinScore + '分' },
+    { id: 'score', k: '企业健康度', v: r.qixinScore + '分' },
     { id: 'group', k: '集团', v: r.group },
     { id: 'invoice', k: '发票抬头', v: r.invoiceTitle },
     { id: 'status', k: '登记状态', v: r.regStatus },
@@ -175,7 +175,7 @@ export default function Basic({ params }: { params: URLSearchParams }) {
     >
       {/* 概览统计 */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 12, marginBottom: 16 }}>
-        <EpStat label="启信分" value={r.qixinScore} accent="#2563EB" sub="数据来源：大数据分析引擎" />
+        <EpStat label="企业健康度" value={r.qixinScore} accent="#2563EB" sub="数据来源：大数据分析引擎" />
         <EpStat label="登记状态" value={r.regStatus.replace('（在营、开业、在册）', '')} sub={r.regCapital} />
         <EpStat label="股东数" value={data.shareholders.length} sub={`间接股东 ${data.indirectSh.length}`} />
         <EpStat label="对外投资" value={data.invests.length} sub={`主要人员 ${data.persons.length}`} />

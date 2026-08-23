@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { usePageNav } from './pageNav';
 
 // ====================== 基础Tab配置 ======================
 const tabList = [
@@ -215,6 +216,54 @@ const privateFundData = [
 export default function FinanceInvestTable() {
   const [activeTab, setActiveTab] = useState(tabList[0]);
   const [checkedRows, setCheckedRows] = useState<number[]>([]);
+  const { goDetail } = usePageNav();
+
+  // 筛选状态：key 为筛选项名称
+  const [financeFilters, setFinanceFilters] = useState<Record<string, string>>({});
+  const [orgFilters, setOrgFilters] = useState<Record<string, string>>({});
+
+  // 从投资方串中提取所在地（如「和高资本 B级 深圳」→「深圳」）
+  const extractInvestorArea = (s: string): string => {
+    const m = s.match(/(?:A级|B级|C级|其他)\s*([^\s、]+)/);
+    return m ? m[1] : '';
+  };
+
+  // 投融资事件 筛选后数据
+  const financeFiltered = financeTableData.filter(row => {
+    for (const [label, val] of Object.entries(financeFilters)) {
+      if (!val) continue;
+      if (label === '行业领域' && row.industry !== val) return false;
+      if (label === '最新轮次' && row.round !== val) return false;
+      if (label === '融资时间' && row.financeDate !== val) return false;
+      if (label === '投资机构所在地' && !extractInvestorArea(row.investor).includes(val)) return false;
+    }
+    return true;
+  });
+
+  // 投资机构 筛选后数据
+  const orgFiltered = investOrgData.filter(org => {
+    for (const [label, val] of Object.entries(orgFilters)) {
+      if (!val) continue;
+      if (label === '投资机构所在地' && org.area !== val) return false;
+      if (label === '主投领域' && !org.mainField.includes(val)) return false;
+      if (label === '投资' && !org.investCount.includes(val)) return false;
+      if (label === '综合实力' && !org.tag.includes(val)) return false;
+    }
+    return true;
+  });
+
+  // 各筛选下拉选项
+  const financeFilterOptions: Record<string, string[]> = {
+    '行业领域': [...new Set(financeTableData.map(r => r.industry).filter(Boolean))],
+    '最新轮次': [...new Set(financeTableData.map(r => r.round))],
+    '融资时间': [...new Set(financeTableData.map(r => r.financeDate))],
+    '投资机构所在地': [...new Set(financeTableData.map(r => extractInvestorArea(r.investor)).filter(Boolean))],
+  };
+  const orgFilterOptions: Record<string, string[]> = {
+    '投资机构所在地': [...new Set(investOrgData.map(o => o.area))],
+    '综合实力': [...new Set(investOrgData.map(o => o.tag.split('：')[0]))],
+  };
+  const orgFilterIsSelect = (label: string) => ['投资机构所在地', '综合实力'].includes(label);
 
   // 全选
   const handleCheckAll = (e: React.ChangeEvent<HTMLInputElement>, dataList: {index:number}[]) => {
@@ -270,10 +319,17 @@ export default function FinanceInvestTable() {
         <div style={{ padding: '0 20px 16px', display: 'flex', alignItems: 'center', gap: '24px' }}>
           <span style={{ fontSize: '16px', fontWeight: 500, color: '#1f2937' }}>投融资筛选</span>
           {financeEventFilterList.map(item => (
-            <div key={item} style={{ display: 'flex', alignItems: 'center', fontSize: '15px', color: '#374151' }}>
-              <span>{item}</span>
-              <span style={{ marginLeft: '4px' }}>&darr;</span>
-            </div>
+            <select
+              key={item}
+              value={financeFilters[item] || ''}
+              onChange={(e) => setFinanceFilters({ ...financeFilters, [item]: e.target.value })}
+              style={{ padding: '4px 8px', borderRadius: '4px', border: '1px solid #d1d5db', fontSize: '14px', color: '#374151', backgroundColor: '#fff' }}
+            >
+              <option value="">{item}</option>
+              {(financeFilterOptions[item] || []).map(opt => (
+                <option key={opt} value={opt}>{opt}</option>
+              ))}
+            </select>
           ))}
         </div>
         <div style={{ padding: '0 20px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -287,7 +343,7 @@ export default function FinanceInvestTable() {
             <thead>
               <tr style={{ backgroundColor: '#f9fafb' }}>
                 <th style={{ padding: '12px 8px', textAlign: 'left', border: '1px solid #e5e7eb', width: '40px' }}>
-                  <input type="checkbox" onChange={(e)=>handleCheckAll(e, financeTableData)} checked={checkedRows.length === financeTableData.length && financeTableData.length > 0} />
+                  <input type="checkbox" onChange={(e)=>handleCheckAll(e, financeFiltered)} checked={checkedRows.length === financeFiltered.length && financeFiltered.length > 0} />
                 </th>
                 {financeTableColumns.map(col => (
                   <th key={col} style={{ padding: '12px 8px', textAlign: 'left', border: '1px solid #e5e7eb', fontSize: '15px', color: '#1f2937' }}>
@@ -297,7 +353,7 @@ export default function FinanceInvestTable() {
               </tr>
             </thead>
             <tbody>
-              {financeTableData.map(row => (
+              {financeFiltered.map(row => (
                 <tr key={row.index}>
                   <td style={{ padding: '12px 8px', border: '1px solid #e5e7eb' }}>
                     <input
@@ -307,7 +363,7 @@ export default function FinanceInvestTable() {
                     />
                   </td>
                   <td style={{ padding: '12px 8px', border: '1px solid #e5e7eb', fontSize: '15px' }}>{row.index}</td>
-                  <td style={{ padding: '12px 8px', border: '1px solid #e5e7eb', fontSize: '15px', whiteSpace: 'pre-line' }}>{row.brandName}</td>
+                  <td style={{ padding: '12px 8px', border: '1px solid #e5e7eb', fontSize: '15px', whiteSpace: 'pre-line', color: '#2563eb', cursor: 'pointer' }} onClick={() => goDetail('/console/dm/ent-archive-basic', { name: row.brandName.split('\n')[0] })}>{row.brandName}</td>
                   <td style={{ padding: '12px 8px', border: '1px solid #e5e7eb', fontSize: '15px' }}>{row.financeDate}</td>
                   <td style={{ padding: '12px 8px', border: '1px solid #e5e7eb', fontSize: '15px' }}>{row.round}</td>
                   <td style={{ padding: '12px 8px', border: '1px solid #e5e7eb', fontSize: '15px' }}>{row.amount}</td>
@@ -359,10 +415,27 @@ export default function FinanceInvestTable() {
         <div style={{ padding: '0 20px 16px', display: 'flex', alignItems: 'center', gap: '24px' }}>
           <span style={{ fontSize: '16px', fontWeight: 500, color: '#1f2937' }}>投资机构筛选</span>
           {investOrgFilterList.map(item => (
-            <div key={item} style={{ display: 'flex', alignItems: 'center', fontSize: '15px', color: '#374151' }}>
-              <span>{item}</span>
-              <span style={{ marginLeft: '4px' }}>&darr;</span>
-            </div>
+            orgFilterIsSelect(item) ? (
+              <select
+                key={item}
+                value={orgFilters[item] || ''}
+                onChange={(e) => setOrgFilters({ ...orgFilters, [item]: e.target.value })}
+                style={{ padding: '4px 8px', borderRadius: '4px', border: '1px solid #d1d5db', fontSize: '14px', color: '#374151', backgroundColor: '#fff' }}
+              >
+                <option value="">{item}</option>
+                {(orgFilterOptions[item] || []).map(opt => (
+                  <option key={opt} value={opt}>{opt}</option>
+                ))}
+              </select>
+            ) : (
+              <input
+                key={item}
+                placeholder={item}
+                value={orgFilters[item] || ''}
+                onChange={(e) => setOrgFilters({ ...orgFilters, [item]: e.target.value })}
+                style={{ padding: '4px 8px', borderRadius: '4px', border: '1px solid #d1d5db', fontSize: '14px', color: '#374151', width: '140px' }}
+              />
+            )
           ))}
         </div>
         <div style={{ padding: '0 20px 12px', display: 'flex', alignItems: 'center' }}>
@@ -370,7 +443,7 @@ export default function FinanceInvestTable() {
           <span style={{ fontSize: '15px', color: '#4b5563' }}>找到30000条相关结果</span>
         </div>
         <div style={{ padding: '0 20px' }}>
-          {investOrgData.map((org, idx) => (
+          {orgFiltered.map((org, idx) => (
             <div key={idx} style={{ display: 'flex', gap: '12px', padding: '16px 0', borderBottom: '1px solid #eee' }}>
               <input type="checkbox" style={{marginTop: '4px'}}/>
               <div style={{width: '60px', height: '60px', flexShrink: 0}}>
@@ -378,7 +451,7 @@ export default function FinanceInvestTable() {
               </div>
               <div style={{flex:1}}>
                 <div style={{display:'flex', alignItems:'center', gap:'8px', marginBottom:'8px'}}>
-                  <span style={{fontSize: '18px', fontWeight: 600}}>{org.name}</span>
+                  <span style={{fontSize: '18px', fontWeight: 600, color: '#2563eb', cursor: 'pointer'}} onClick={() => goDetail('/console/dm/pevc-org-detail', { name: org.name })}>{org.name}</span>
                   <span style={{padding:'2px 6px',background:'#eefdf2',color:'#16a34a',borderRadius:'4px',fontSize:'13px'}}>{org.tag}</span>
                 </div>
                 <div style={{fontSize:'15px',color:'#333',marginBottom:'6px'}}>

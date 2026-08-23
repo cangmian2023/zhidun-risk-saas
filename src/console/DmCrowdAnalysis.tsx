@@ -15,7 +15,7 @@ const PERIODS: { label: string; range?: string }[] = [
 const FOCUS_TABS = ['高风险等级', '高违约风险', '事件top20']
 const TABLE_COLS = [
   '企业名称', '注册资本', '成立年限', '企业规模', '企业性质',
-  '上市情况', '所属行业', '所属区域', '信用等级', '启信分', '所属分组',
+  '上市情况', '所属行业', '所属区域', '信用等级', '企业健康度', '所属分组',
 ]
 
 /* ---- 图标（FontAwesome → 内联 SVG） ---- */
@@ -42,19 +42,151 @@ function DownloadIcon() {
   )
 }
 
-/* 空白 echarts 画布（与源一致：echarts.init 后不 setOption） */
-function ChartBox() {
+/* ---- 样例数据（自包含常量） ---- */
+const MONTHS = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月']
+
+const REG_CAP_OPTION: echarts.EChartsOption = {
+  tooltip: {},
+  grid: { left: 36, right: 14, top: 16, bottom: 48 },
+  xAxis: { type: 'category', data: ['100万以下', '100-500万', '500-1000万', '1000万-1亿', '1亿以上'], axisLabel: { fontSize: 10, interval: 0, rotate: 20 } },
+  yAxis: { type: 'value' },
+  series: [{ type: 'bar', data: [12, 35, 28, 18, 7], barWidth: '55%', itemStyle: { color: '#1677ff' } }],
+}
+const AGE_OPTION: echarts.EChartsOption = {
+  tooltip: {},
+  grid: { left: 36, right: 14, top: 16, bottom: 48 },
+  xAxis: { type: 'category', data: ['1年以内', '1-3年', '3-5年', '5-10年', '10年以上'], axisLabel: { fontSize: 10, interval: 0 } },
+  yAxis: { type: 'value' },
+  series: [{ type: 'bar', data: [9, 22, 30, 25, 14], barWidth: '55%', itemStyle: { color: '#52c41a' } }],
+}
+const SCALE_OPTION: echarts.EChartsOption = {
+  tooltip: { trigger: 'item' },
+  legend: { bottom: 0, fontSize: 10 },
+  series: [{ type: 'pie', radius: ['40%', '65%'], data: [
+    { value: 8, name: '微型' }, { value: 26, name: '小型' }, { value: 18, name: '中型' }, { value: 6, name: '大型' },
+  ], label: { fontSize: 10 } }],
+}
+const NATURE_OPTION: echarts.EChartsOption = {
+  tooltip: { trigger: 'item' },
+  legend: { bottom: 0, fontSize: 10 },
+  series: [{ type: 'pie', radius: ['40%', '65%'], data: [
+    { value: 34, name: '有限责任公司' }, { value: 10, name: '股份有限公司' }, { value: 6, name: '国有企业' },
+    { value: 5, name: '个体工商户' }, { value: 3, name: '外商投资企业' },
+  ], label: { fontSize: 10 } }],
+}
+const INDUSTRY_OPTION: echarts.EChartsOption = {
+  tooltip: {},
+  grid: { left: 36, right: 14, top: 16, bottom: 48 },
+  xAxis: { type: 'category', data: ['制造业', '批发零售', '信息技术', '建筑业', '金融业', '其他'], axisLabel: { fontSize: 10, interval: 0, rotate: 20 } },
+  yAxis: { type: 'value' },
+  series: [{ type: 'bar', data: [18, 22, 15, 12, 8, 9], barWidth: '55%', itemStyle: { color: '#722ed1' } }],
+}
+const REGION_OPTION: echarts.EChartsOption = {
+  tooltip: { trigger: 'item' },
+  legend: { bottom: 0, fontSize: 10 },
+  series: [{ type: 'pie', radius: ['40%', '65%'], data: [
+    { value: 20, name: '华东' }, { value: 14, name: '华南' }, { value: 12, name: '华北' },
+    { value: 10, name: '华中' }, { value: 8, name: '西南' }, { value: 6, name: '其他' },
+  ], label: { fontSize: 10 } }],
+}
+const CREDIT_OPTION: echarts.EChartsOption = {
+  tooltip: {},
+  grid: { left: 36, right: 14, top: 16, bottom: 28 },
+  xAxis: { type: 'category', data: ['AAA', 'AA', 'A', 'BBB', 'BB', 'B'], axisLabel: { fontSize: 10 } },
+  yAxis: { type: 'value' },
+  series: [{ type: 'bar', data: [4, 9, 16, 14, 8, 3], barWidth: '55%', itemStyle: { color: '#1677ff' } }],
+}
+const SHELL_OPTION: echarts.EChartsOption = {
+  tooltip: {},
+  grid: { left: 36, right: 14, top: 16, bottom: 28 },
+  xAxis: { type: 'category', data: ['低(0-30)', '中(30-60)', '高(60-100)'], axisLabel: { fontSize: 10 } },
+  yAxis: { type: 'value' },
+  series: [{ type: 'bar', data: [38, 14, 2], barWidth: '55%', itemStyle: { color: '#fa8c16' } }],
+}
+const BREACH_OPTION: echarts.EChartsOption = {
+  tooltip: { trigger: 'item' },
+  legend: { bottom: 0, fontSize: 10 },
+  series: [{ type: 'pie', radius: ['40%', '65%'], data: [
+    { value: 40, name: '低风险' }, { value: 12, name: '中风险' }, { value: 2, name: '高风险' },
+  ], label: { fontSize: 10 } }],
+}
+const EVENT_DYN_OPTION: echarts.EChartsOption = {
+  tooltip: {},
+  grid: { left: 36, right: 14, top: 16, bottom: 28 },
+  xAxis: { type: 'category', data: MONTHS },
+  yAxis: { type: 'value' },
+  series: [{ type: 'line', smooth: true, data: [12, 18, 9, 22, 30, 25, 28, 19], areaStyle: { opacity: 0.15 }, itemStyle: { color: '#1677ff' } }],
+}
+const CHANGE_OPTION: echarts.EChartsOption = {
+  tooltip: {},
+  grid: { left: 36, right: 14, top: 16, bottom: 28 },
+  xAxis: { type: 'category', data: MONTHS },
+  yAxis: { type: 'value' },
+  series: [{ type: 'line', smooth: true, data: [5, 8, 6, 11, 9, 14, 12, 10], areaStyle: { opacity: 0.15 }, itemStyle: { color: '#52c41a' } }],
+}
+const COMPLIANCE_OPTION: echarts.EChartsOption = {
+  tooltip: {},
+  grid: { left: 36, right: 14, top: 16, bottom: 28 },
+  xAxis: { type: 'category', data: ['行政处罚', '责令整改', '经营异常', '其他'], axisLabel: { fontSize: 10 } },
+  yAxis: { type: 'value' },
+  series: [{ type: 'bar', data: [7, 12, 18, 5], barWidth: '55%', itemStyle: { color: '#fa541c' } }],
+}
+const LITIGATION_OPTION: echarts.EChartsOption = {
+  tooltip: {},
+  grid: { left: 36, right: 14, top: 16, bottom: 28 },
+  xAxis: { type: 'category', data: ['立案', '开庭', '判决', '执行'], axisLabel: { fontSize: 10 } },
+  yAxis: { type: 'value' },
+  series: [{ type: 'bar', data: [9, 14, 11, 6], barWidth: '55%', itemStyle: { color: '#722ed1' } }],
+}
+const STRENGTH_OPTION: echarts.EChartsOption = {
+  tooltip: {},
+  legend: { bottom: 0, fontSize: 10 },
+  grid: { left: 36, right: 14, top: 24, bottom: 36 },
+  xAxis: { type: 'category', data: MONTHS },
+  yAxis: { type: 'value' },
+  series: [
+    { name: '营收指数', type: 'line', smooth: true, data: [60, 65, 63, 70, 72, 78, 80, 85] },
+    { name: '利润指数', type: 'line', smooth: true, data: [40, 42, 45, 48, 47, 52, 55, 58] },
+  ],
+}
+function buildFocusOption(tab: string): echarts.EChartsOption {
+  const data =
+    tab === '高风险等级'
+      ? [['XX科技', 96], ['XX贸易', 92], ['XX建设', 88], ['XX能源', 85], ['XX医疗', 81]]
+      : tab === '高违约风险'
+      ? [['XX物流', 78], ['XX实业', 74], ['XX电子', 70], ['XX化工', 66], ['XX食品', 62]]
+      : [['股权冻结', 14], ['行政处罚', 11], ['开庭公告', 9], ['欠税公告', 7], ['经营异常', 5]]
+  const isEvent = tab === '事件top20'
+  return {
+    tooltip: {},
+    grid: { left: 36, right: 14, top: 16, bottom: 28 },
+    xAxis: { type: 'category', data: data.map((d) => d[0]), axisLabel: { fontSize: 10, interval: 0, rotate: 20 } },
+    yAxis: { type: 'value', name: isEvent ? '次数' : '分值' },
+    series: [{ type: 'bar', data: data.map((d) => d[1] as number), barWidth: '45%', itemStyle: { color: '#cf1322' } }],
+  }
+}
+
+/* echarts 画布（init + setOption + resize + dispose） */
+function ChartBox({ option }: { option?: echarts.EChartsOption }) {
   const ref = useRef<HTMLDivElement>(null)
+  const instRef = useRef<echarts.ECharts | null>(null)
   useEffect(() => {
     if (!ref.current) return
     const inst = echarts.init(ref.current)
+    instRef.current = inst
+    if (option) inst.setOption(option)
     const onResize = () => inst.resize()
     window.addEventListener('resize', onResize)
     return () => {
       window.removeEventListener('resize', onResize)
       inst.dispose()
+      instRef.current = null
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+  useEffect(() => {
+    if (instRef.current && option) instRef.current.setOption(option)
+  }, [option])
   return <div ref={ref} className="h-[220px] w-full" />
 }
 
@@ -122,17 +254,17 @@ export default function DmCrowdAnalysis() {
         <div className="mb-6">
           <h3 className="mb-3 font-medium">企业结构</h3>
           <div className="grid grid-cols-3 gap-4">
-            <Card title="注册资本"><ChartBox /></Card>
-            <Card title="成立年限"><ChartBox /></Card>
-            <Card title="企业规模"><ChartBox /></Card>
+            <Card title="注册资本"><ChartBox option={REG_CAP_OPTION} /></Card>
+            <Card title="成立年限"><ChartBox option={AGE_OPTION} /></Card>
+            <Card title="企业规模"><ChartBox option={SCALE_OPTION} /></Card>
           </div>
           <div className="mt-4 grid grid-cols-3 gap-4">
             <Card title="企业性质">
-              <ChartBox />
+              <ChartBox option={NATURE_OPTION} />
               <div className="mt-1 text-center text-xs">● 上市企业0家 ● 非上市企业2家</div>
             </Card>
-            <Card title="行业分布"><ChartBox /></Card>
-            <Card title="区域分布"><ChartBox /></Card>
+            <Card title="行业分布"><ChartBox option={INDUSTRY_OPTION} /></Card>
+            <Card title="区域分布"><ChartBox option={REGION_OPTION} /></Card>
           </div>
         </div>
 
@@ -140,14 +272,14 @@ export default function DmCrowdAnalysis() {
         <div className="mb-6">
           <h3 className="mb-3 font-medium">信用质量</h3>
           <div className="grid grid-cols-3 gap-4">
-            <Card title="信用等级" question><ChartBox /></Card>
-            <Card title="空壳指数" question><ChartBox /></Card>
-            <Card title="合同违约风险" question><ChartBox /></Card>
+            <Card title="信用等级" question><ChartBox option={CREDIT_OPTION} /></Card>
+            <Card title="空壳指数" question><ChartBox option={SHELL_OPTION} /></Card>
+            <Card title="合同违约风险" question><ChartBox option={BREACH_OPTION} /></Card>
           </div>
           <div className="mt-4 grid grid-cols-3 gap-4">
             <div className="col-span-3 rounded bg-white p-3 shadow-sm">
               <h4 className="mb-2 font-medium">事件动态</h4>
-              <ChartBox />
+              <ChartBox option={EVENT_DYN_OPTION} />
             </div>
           </div>
         </div>
@@ -156,15 +288,15 @@ export default function DmCrowdAnalysis() {
         <div className="mb-6">
           <h3 className="mb-3 font-medium">动态分析</h3>
           <div className="grid grid-cols-2 gap-4">
-            <Card title="经营变更"><ChartBox /></Card>
-            <Card title="合规管控"><ChartBox /></Card>
-            <Card title="司法诉讼(审批流程)"><ChartBox /></Card>
+            <Card title="经营变更"><ChartBox option={CHANGE_OPTION} /></Card>
+            <Card title="合规管控"><ChartBox option={COMPLIANCE_OPTION} /></Card>
+            <Card title="司法诉讼(审批流程)"><ChartBox option={LITIGATION_OPTION} /></Card>
             <Card title="负面舆情" question>
               <div className="flex h-[220px] items-center justify-center bg-[#1677ff] text-white">客户投诉 5</div>
             </Card>
           </div>
           <div className="mt-4 grid grid-cols-1 gap-4">
-            <Card title="发展实力"><ChartBox /></Card>
+            <Card title="发展实力"><ChartBox option={STRENGTH_OPTION} /></Card>
           </div>
         </div>
 
@@ -194,6 +326,11 @@ export default function DmCrowdAnalysis() {
                 {t}
               </button>
             ))}
+          </div>
+          {/* 样例图表：重点关注企业 */}
+          <div className="mb-3 rounded bg-gray-50 p-3">
+            <h4 className="mb-2 font-medium">重点关注企业分布（{focusTab}）</h4>
+            <ChartBox option={buildFocusOption(focusTab)} />
           </div>
           {/* 表格 */}
           <div className="overflow-x-auto"><table className="w-full text-xs">

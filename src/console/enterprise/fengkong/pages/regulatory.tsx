@@ -196,7 +196,7 @@ export default function FkRegulatory({ params }: { params: URLSearchParams }) {
             background: '#fff',
           }}
         />
-        <EpBtn variant="primary" style={{ background: '#F5B400', borderColor: '#F5B400', color: '#3A2A00', fontWeight: 600 }}>
+        <EpBtn variant="primary" style={{ background: '#2563EB', borderColor: '#2563EB', color: '#fff', fontWeight: 600 }}>
           {data.searchBtn}
         </EpBtn>
       </div>
@@ -254,7 +254,7 @@ export default function FkRegulatory({ params }: { params: URLSearchParams }) {
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <ViewToggle view={view} onChange={setView} labels={data.viewToggle} />
-          <EpBtn variant="primary" style={{ background: '#F5B400', borderColor: '#F5B400', color: '#3A2A00', fontWeight: 600 }}>
+          <EpBtn variant="primary" style={{ background: '#2563EB', borderColor: '#2563EB', color: '#fff', fontWeight: 600 }}>
             {data.exportBtn}
           </EpBtn>
         </div>

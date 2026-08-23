@@ -67,7 +67,7 @@ export default function DmTenderProduct() {
       {/* ============ 头部 ============ */}
       <div className="mb-3 flex items-center justify-between">
         <h1 className="text-[22px] font-semibold text-[#111827]">{name}</h1>
-        <button className="cursor-pointer rounded-md bg-[#facc15] px-4 py-1.5 text-[15px] hover:opacity-90">☉ 订阅</button>
+        <button className="cursor-pointer rounded-md bg-[#2563EB] px-4 py-1.5 text-[15px] hover:opacity-90">☉ 订阅</button>
       </div>
 
       {/* ============ Tab 计数条 ============ */}
@@ -130,7 +130,7 @@ export default function DmTenderProduct() {
           <input placeholder="Q 请输入关键词" className="w-[220px] rounded-md border border-[#cbd5e1] px-3 py-1.5 outline-none placeholder:text-gray-400" />
           <button className="cursor-pointer rounded-md border border-[#cbd5e1] bg-white px-3.5 py-1.5 hover:bg-gray-50">☑ 批量操作</button>
           <button className="cursor-pointer rounded-md border border-[#cbd5e1] bg-white px-3.5 py-1.5 hover:bg-gray-50">🗂 营销</button>
-          <button className="cursor-pointer rounded-md bg-[#facc15] px-3.5 py-1.5 hover:opacity-90"><DownloadIcon /> 导出</button>
+          <button className="cursor-pointer rounded-md bg-[#2563EB] px-3.5 py-1.5 hover:opacity-90"><DownloadIcon /> 导出</button>
         </div>
       </div>
 

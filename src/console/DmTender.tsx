@@ -304,7 +304,7 @@ export default function DmTender() {
               </div>
               <div className="flex gap-3">
                 <button className="cursor-pointer rounded-md border border-[#9ca3af] bg-white px-3.5 py-1.5 text-[15px] hover:bg-gray-50">添加订阅 ▾</button>
-                <button className="cursor-pointer rounded-md bg-[#facc15] px-4 py-1.5 text-[15px] font-medium hover:opacity-90">更多 ▾</button>
+                <button className="cursor-pointer rounded-md bg-[#2563EB] px-4 py-1.5 text-[15px] font-medium hover:opacity-90">更多 ▾</button>
                 <button onClick={() => setBidOpen(false)} className="cursor-pointer text-2xl leading-none text-gray-400 hover:text-gray-600">×</button>
               </div>
             </div>

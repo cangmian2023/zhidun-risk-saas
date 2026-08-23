@@ -1,0 +1,660 @@
+    <!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>企业搜索结果</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    font-size: 14px;
+    color: #1D2129;
+    background: #FFFFFF;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ========== 顶部筛选条件栏 ========== */
+  .filter-bar {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0;
+    padding: 14px 20px;
+    border-bottom: 1px solid #E5E6EB;
+    background: #FFFFFF;
+  }
+  .filter-bar .filter-label {
+    font-weight: 600;
+    font-size: 16px;
+    color: #1D2129;
+    margin-right: 32px;
+    white-space: nowrap;
+  }
+  .filter-bar .filter-item {
+    display: inline-flex;
+    align-items: center;
+    font-size: 16px;
+    color: #1D2129;
+    margin-right: 32px;
+    cursor: pointer;
+    white-space: nowrap;
+    user-select: none;
+  }
+  .filter-bar .filter-item::after {
+    content: "";
+    display: inline-block;
+    width: 0;
+    height: 0;
+    margin-left: 6px;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-top: 5px solid #86909C;
+    vertical-align: middle;
+  }
+  .filter-bar .filter-more {
+    margin-left: auto;
+    margin-right: 0;
+    color: #165DFF;
+    font-weight: 500;
+  }
+  .filter-bar .filter-more::after {
+    border-top-color: #165DFF;
+  }
+
+  /* ========== 已选条件栏 ========== */
+  .selected-bar {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    padding: 14px 20px;
+    border-bottom: 1px dashed #E5E6EB;
+    background: #FFFFFF;
+  }
+  .selected-bar .selected-label {
+    font-weight: 600;
+    font-size: 16px;
+    color: #1D2129;
+    margin-right: 16px;
+    white-space: nowrap;
+  }
+  .selected-bar .tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 12px;
+    margin-right: 10px;
+    background: #E8F3FF;
+    color: #165DFF;
+    font-size: 16px;
+    border-radius: 4px;
+    white-space: nowrap;
+    line-height: 1.6;
+  }
+  .selected-bar .clear-btn {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    color: #4E5969;
+    font-size: 16px;
+    cursor: pointer;
+    white-space: nowrap;
+    user-select: none;
+  }
+  .selected-bar .clear-btn .trash-icon {
+    display: inline-block;
+    width: 16px;
+    height: 18px;
+    margin-right: 6px;
+    position: relative;
+  }
+  .selected-bar .clear-btn .trash-icon::before {
+    content: "";
+    position: absolute;
+    top: 2px;
+    left: 3px;
+    width: 10px;
+    height: 2px;
+    background: #86909C;
+    border-radius: 1px;
+  }
+  .selected-bar .clear-btn .trash-icon::after {
+    content: "";
+    position: absolute;
+    top: 4px;
+    left: 2px;
+    width: 12px;
+    height: 12px;
+    border: 1.5px solid #86909C;
+    border-top: none;
+    border-radius: 0 0 2px 2px;
+  }
+
+  /* ========== 结果统计 + 操作工具栏 ========== */
+  .toolbar {
+    display: flex;
+    align-items: center;
+    padding: 16px 20px;
+    background: #FFFFFF;
+  }
+  .toolbar .result-count {
+    font-size: 16px;
+    color: #1D2129;
+    white-space: nowrap;
+  }
+  .toolbar .result-count .num {
+    color: #FF7D00;
+    font-weight: 600;
+  }
+  .toolbar .sort-by {
+    display: inline-flex;
+    align-items: center;
+    margin-left: 24px;
+    font-size: 16px;
+    color: #165DFF;
+    cursor: pointer;
+    white-space: nowrap;
+    user-select: none;
+  }
+  .toolbar .sort-by::after {
+    content: "";
+    display: inline-block;
+    width: 0;
+    height: 0;
+    margin-left: 6px;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-top: 5px solid #165DFF;
+    vertical-align: middle;
+  }
+  .toolbar .actions {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .toolbar .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 36px;
+    padding: 0 18px;
+    border: 1px solid #C9CDD4;
+    border-radius: 4px;
+    background: #FFFFFF;
+    color: #1D2129;
+    font-size: 15px;
+    cursor: pointer;
+    white-space: nowrap;
+    user-select: none;
+    transition: border-color .15s;
+  }
+  .toolbar .btn:hover { border-color: #165DFF; color: #165DFF; }
+  .toolbar .btn .btn-icon {
+    margin-right: 6px;
+    font-size: 14px;
+    display: inline-flex;
+    align-items: center;
+  }
+  .toolbar .btn.has-caret::after {
+    content: "";
+    display: inline-block;
+    width: 0;
+    height: 0;
+    margin-left: 6px;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-top: 5px solid currentColor;
+    vertical-align: middle;
+  }
+  .toolbar .btn.follow-btn .plus {
+    font-size: 18px;
+    margin-right: 4px;
+    line-height: 1;
+    font-weight: 300;
+  }
+
+  /* ========== 表格区域 ========== */
+  .table-wrap {
+    overflow-x: auto;
+    background: #FFFFFF;
+  }
+  table.result-table {
+    width: 100%;
+    min-width: 1400px;
+    border-collapse: collapse;
+    table-layout: fixed;
+  }
+  table.result-table thead th {
+    background: #F2F3F5;
+    color: #1D2129;
+    font-weight: 600;
+    font-size: 15px;
+    text-align: left;
+    padding: 12px 12px;
+    border-bottom: 1px solid #E5E6EB;
+    white-space: nowrap;
+    position: sticky;
+    top: 0;
+  }
+  table.result-table thead th.sortable {
+    cursor: pointer;
+    user-select: none;
+  }
+  table.result-table thead th.sortable .sort-arrows {
+    display: inline-flex;
+    flex-direction: column;
+    margin-left: 4px;
+    vertical-align: middle;
+    line-height: 0;
+  }
+  table.result-table thead th.sortable .sort-arrows .up,
+  table.result-table thead th.sortable .sort-arrows .down {
+    width: 0;
+    height: 0;
+    border-left: 3px solid transparent;
+    border-right: 3px solid transparent;
+  }
+  table.result-table thead th.sortable .sort-arrows .up {
+    border-bottom: 4px solid #C9CDD4;
+    margin-bottom: 1px;
+  }
+  table.result-table thead th.sortable .sort-arrows .down {
+    border-top: 4px solid #C9CDD4;
+  }
+  table.result-table tbody td {
+    padding: 14px 12px;
+    border-bottom: 1px solid #F2F3F5;
+    font-size: 14px;
+    color: #1D2129;
+    vertical-align: middle;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  table.result-table tbody tr:hover {
+    background: #F7F8FA;
+  }
+  col.col-check   { width: 44px; }
+  col.col-name    { width: 34%; }
+  col.col-legal   { width: 11%; }
+  col.col-found   { width: 13%; }
+  col.col-industry{ width: 17%; }
+  col.col-capital { width: 12%; }
+  col.col-status  { width: 13%; }
+
+  .checkbox {
+    width: 16px;
+    height: 16px;
+    border: 1px solid #C9CDD4;
+    border-radius: 2px;
+    background: #FFFFFF;
+    cursor: pointer;
+    display: inline-block;
+    vertical-align: middle;
+    position: relative;
+  }
+  .checkbox.checked {
+    background: #165DFF;
+    border-color: #165DFF;
+  }
+  .checkbox.checked::after {
+    content: "";
+    position: absolute;
+    left: 4px;
+    top: 1px;
+    width: 5px;
+    height: 9px;
+    border: solid #FFFFFF;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+  }
+
+  .company-cell {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+  }
+  .company-cell .company-icon {
+    flex-shrink: 0;
+    width: 22px;
+    height: 22px;
+    border-radius: 3px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #FFFFFF;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1;
+  }
+  .company-cell .icon-shang { background: #4080FF; }
+  .company-cell .icon-hei   { background: #1D2129; }
+  .company-cell .icon-red   { background: #F53F3F; }
+
+  .company-cell .found-tag {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    padding: 1px 6px;
+    background: #165DFF;
+    color: #FFFFFF;
+    font-size: 12px;
+    border-radius: 3px;
+    line-height: 1.6;
+    font-weight: 500;
+  }
+  .company-cell .tilde-prefix {
+    flex-shrink: 0;
+    color: #86909C;
+    font-size: 14px;
+    letter-spacing: -1px;
+  }
+  .company-cell .company-name {
+    font-size: 15px;
+    color: #1D2129;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: pointer;
+  }
+  .company-cell .company-name:hover { color: #165DFF; }
+  .company-cell .company-name.multi-line {
+    white-space: normal;
+    line-height: 1.4;
+  }
+
+  .status-cancel { color: #86909C; }
+  .status-alive  { color: #1D2129; }
+
+  tr.empty-row td { padding: 22px 12px; }
+
+  /* ========== 分页 ========== */
+  .pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 20px 20px 24px;
+    background: #FFFFFF;
+    font-size: 14px;
+    color: #4E5969;
+  }
+  .pagination .total {
+    margin-right: 16px;
+    color: #4E5969;
+    white-space: nowrap;
+  }
+  .pagination .page-size {
+    display: inline-flex;
+    align-items: center;
+    margin-right: 16px;
+    color: #4E5969;
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+  }
+  .pagination .page-size::after {
+    content: "";
+    display: inline-block;
+    width: 0;
+    height: 0;
+    margin-left: 6px;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-top: 5px solid #86909C;
+    vertical-align: middle;
+  }
+  .pagination .page-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 36px;
+    height: 36px;
+    padding: 0 10px;
+    border: 1px solid #E5E6EB;
+    border-radius: 4px;
+    background: #FFFFFF;
+    color: #4E5969;
+    font-size: 14px;
+    cursor: pointer;
+    user-select: none;
+    transition: all .15s;
+  }
+  .pagination .page-btn:hover {
+    border-color: #165DFF;
+    color: #165DFF;
+  }
+  .pagination .page-btn.active {
+    background: #FF7D00;
+    border-color: #FF7D00;
+    color: #FFFFFF;
+    font-weight: 600;
+  }
+  .pagination .page-btn.arrow {
+    font-size: 16px;
+    padding: 0 8px;
+  }
+  .pagination .page-ellipsis {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 36px;
+    height: 36px;
+    color: #86909C;
+    user-select: none;
+  }
+  .pagination .jump {
+    display: inline-flex;
+    align-items: center;
+    margin-left: 16px;
+    color: #4E5969;
+    white-space: nowrap;
+  }
+  .pagination .jump input {
+    width: 48px;
+    height: 32px;
+    margin: 0 6px;
+    padding: 0 8px;
+    border: 1px solid #E5E6EB;
+    border-radius: 4px;
+    text-align: center;
+    font-size: 14px;
+    color: #1D2129;
+    outline: none;
+  }
+  .pagination .jump input:focus { border-color: #165DFF; }
+</style>
+</head>
+<body>
+
+<!-- 顶部筛选条件栏 -->
+<div class="filter-bar">
+  <span class="filter-label">筛选条件</span>
+  <span class="filter-item">成立时间</span>
+  <span class="filter-item">所在行业</span>
+  <span class="filter-item">注册资本</span>
+  <span class="filter-item">经营状态</span>
+  <span class="filter-item">启信分</span>
+  <span class="filter-item">企业规模</span>
+  <span class="filter-item">资质标签</span>
+  <span class="filter-item">企业类型</span>
+  <span class="filter-item filter-more">更多</span>
+</div>
+
+<!-- 已选条件栏 -->
+<div class="selected-bar">
+  <span class="selected-label">已选</span>
+  <span class="tag">上海</span>
+  <span class="tag">上海合合信息科技股份有限公司</span>
+  <span class="tag">范围：1km</span>
+  <span class="clear-btn">
+    <span class="trash-icon"></span>
+    清空
+  </span>
+</div>
+
+<!-- 结果统计 + 操作工具栏 -->
+<div class="toolbar">
+  <span class="result-count">找到 <span class="num">16,882</span> 条相关结果</span>
+  <span class="sort-by">最近中心距离</span>
+  <div class="actions">
+    <button class="btn has-caret">
+      <span class="btn-icon">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg>
+      </span>
+      营销
+    </button>
+    <button class="btn follow-btn">
+      <span class="plus">+</span>关注
+    </button>
+    <button class="btn">
+      <span class="btn-icon">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      </span>
+      导出
+    </button>
+  </div>
+</div>
+
+<!-- 表格区域 -->
+<div class="table-wrap">
+  <table class="result-table">
+    <colgroup>
+      <col class="col-check">
+      <col class="col-name">
+      <col class="col-legal">
+      <col class="col-found">
+      <col class="col-industry">
+      <col class="col-capital">
+      <col class="col-status">
+    </colgroup>
+    <thead>
+      <tr>
+        <th><span class="checkbox"></span></th>
+        <th>企业名称</th>
+        <th>法定代表人</th>
+        <th class="sortable">成立时间<span class="sort-arrows"><span class="up"></span><span class="down"></span></span></th>
+        <th>所在行业</th>
+        <th class="sortable">注册资本<span class="sort-arrows"><span class="up"></span><span class="down"></span></span></th>
+        <th>经营状态</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span class="checkbox checked"></span></td>
+        <td><div class="company-cell"><span class="company-icon icon-hei">数</span><span class="company-name">数宣数据技术（上海）有限公司</span></div></td>
+        <td>贺平</td>
+        <td>2016-09-14</td>
+        <td>专业技术服务业</td>
+        <td>57.0175 万人民币</td>
+        <td><span class="status-cancel">注销</span></td>
+      </tr>
+      <tr>
+        <td><span class="checkbox checked"></span></td>
+        <td><div class="company-cell"><span class="company-icon icon-shang">上</span><span class="company-name">上海尚恩华科网络科技股份有限公司</span></div></td>
+        <td>黄正</td>
+        <td>2000-07-19</td>
+        <td>软件和信息技术服务业</td>
+        <td>2,500 万人民币</td>
+        <td><span class="status-cancel">注销</span></td>
+      </tr>
+      <tr>
+        <td><span class="checkbox checked"></span></td>
+        <td><div class="company-cell"><span class="found-tag">找到</span><span class="company-name">上海找齐科技有限公司</span></div></td>
+        <td>张栋</td>
+        <td>2020-08-11</td>
+        <td>软件和信息技术服务业</td>
+        <td>153.85 万人民币</td>
+        <td><span class="status-cancel">注销</span></td>
+      </tr>
+      <tr>
+        <td><span class="checkbox checked"></span></td>
+        <td><div class="company-cell"><span class="company-icon icon-shang">上</span><span class="company-name">上海驰久信息科技发展有限公司</span></div></td>
+        <td>黄小娟</td>
+        <td>2011-11-17</td>
+        <td>科技推广和应用服务业</td>
+        <td>10 万人民币</td>
+        <td><span class="status-alive">存续（在营、开业、在册）</span></td>
+      </tr>
+      <tr class="empty-row">
+        <td><span class="checkbox"></span></td>
+        <td></td><td></td><td></td><td></td><td></td><td></td>
+      </tr>
+      <tr>
+        <td><span class="checkbox"></span></td>
+        <td><div class="company-cell"><span class="tilde-prefix">~~~</span><span class="company-name">上海坤元数智技术有限公司</span></div></td>
+        <td>王玉森</td>
+        <td>2002-10-17</td>
+        <td>软件和信息技术服务业</td>
+        <td>3,000 万人民币</td>
+        <td><span class="status-alive">存续（在营、开业、在册）</span></td>
+      </tr>
+      <tr>
+        <td><span class="checkbox"></span></td>
+        <td><div class="company-cell"><span class="company-icon icon-shang">上</span><span class="company-name">上海复交智连科技有限公司</span></div></td>
+        <td>缪增誉</td>
+        <td>2018-08-01</td>
+        <td>软件和信息技术服务业</td>
+        <td>1,250 万人民币</td>
+        <td><span class="status-alive">存续（在营、开业、在册）</span></td>
+      </tr>
+      <tr>
+        <td><span class="checkbox"></span></td>
+        <td><div class="company-cell"><span class="company-icon icon-red">越</span><span class="company-name">越橘信息科技（上海）有限公司</span></div></td>
+        <td>任海莉</td>
+        <td>2020-12-02</td>
+        <td>科技推广和应用服务业</td>
+        <td>100 万人民币</td>
+        <td><span class="status-cancel">注销</span></td>
+      </tr>
+      <tr>
+        <td><span class="checkbox"></span></td>
+        <td><div class="company-cell"><span class="company-icon icon-shang">上</span><span class="company-name multi-line">上海悟瑜企业管理咨询合伙企业（有限合伙）</span></div></td>
+        <td>许正</td>
+        <td>2015-12-14</td>
+        <td>商务服务业</td>
+        <td>22.9039 万人民币</td>
+        <td><span class="status-cancel">注销</span></td>
+      </tr>
+      <tr>
+        <td><span class="checkbox"></span></td>
+        <td><div class="company-cell"><span class="company-icon icon-shang">上</span><span class="company-name">上海数臻信息科技有限公司</span></div></td>
+        <td>宣晓华</td>
+        <td>2016-12-09</td>
+        <td>专业技术服务业</td>
+        <td>100 万人民币</td>
+        <td><span class="status-cancel">注销</span></td>
+      </tr>
+      <tr>
+        <td><span class="checkbox"></span></td>
+        <td><div class="company-cell"><span class="company-icon icon-shang">上</span><span class="company-name">上海百纯金融信息服务有限公司</span></div></td>
+        <td>宣晓华</td>
+        <td>2014-06-30</td>
+        <td>商务服务业</td>
+        <td>100 万人民币</td>
+        <td><span class="status-cancel">注销</span></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- 分页 -->
+<div class="pagination">
+  <span class="total">共 16882 条</span>
+  <span class="page-size">10条/页</span>
+  <span class="page-btn arrow">&lt;</span>
+  <span class="page-btn active">1</span>
+  <span class="page-btn">2</span>
+  <span class="page-btn">3</span>
+  <span class="page-btn">4</span>
+  <span class="page-ellipsis">···</span>
+  <span class="page-btn">1689</span>
+  <span class="page-btn arrow">&gt;</span>
+  <span class="jump">前往 <input type="text" value="1"> 页</span>
+</div>
+
+</body>
+</html>

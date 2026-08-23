@@ -10,9 +10,9 @@ type MonData = typeof seed
 const seed = {
   rules: [
     { id: 1, name: '外部供应链风险', type: '外部供应链风险', target: '北京首都国际机场，PEK BEIJING CAPITAL INTERNATIONAL AIRPORT）等共计59个', desc: '-', creator: '19156027703', createTime: '2026-08-17' },
-    { id: 2, name: '启信慧眼推荐关键词', type: '关键词', target: '关键词舆情', desc: '-', creator: '19156027703', createTime: '2026-08-17' },
-    { id: 3, name: '启信慧眼默认规则(国内)', type: '国内企业', target: '抖音有限公司等共计13家企业', desc: '-', creator: '启信慧眼', createTime: '2026-08-17' },
-    { id: 4, name: '启信慧眼默认规则(境外)', type: '境外企业', target: 'Tesla, Inc.等共计3家海外企业', desc: '-', creator: '启信慧眼', createTime: '2026-08-17' },
+    { id: 2, name: '企业征信推荐关键词', type: '关键词', target: '关键词舆情', desc: '-', creator: '19156027703', createTime: '2026-08-17' },
+    { id: 3, name: '企业征信默认规则(国内)', type: '国内企业', target: '抖音有限公司等共计13家企业', desc: '-', creator: '企业征信', createTime: '2026-08-17' },
+    { id: 4, name: '企业征信默认规则(境外)', type: '境外企业', target: 'Tesla, Inc.等共计3家海外企业', desc: '-', creator: '企业征信', createTime: '2026-08-17' },
   ],
   subscriptions: {
     国内企业: [
@@ -29,11 +29,11 @@ const seed = {
       { id: 1, name: '债务违约', subscriber: '19156027703', time: '2026-08-14 16:40' },
     ],
     微信公众号: [
-      { id: 1, name: '启信慧眼风险观察', subscriber: '19156027703', time: '2026-08-13 11:30' },
+      { id: 1, name: '企业征信风险观察', subscriber: '19156027703', time: '2026-08-13 11:30' },
     ],
   },
   detail: {
-    ruleName: '启信慧眼默认规则(国内)',
+    ruleName: '企业征信默认规则(国内)',
     ruleNameMax: 20,
     ruleDesc: '默认工商 / 司法 / 经营风险监控',
     ruleDescMax: 150,
@@ -190,7 +190,7 @@ export default function FkMonitorManage({ params }: { params: URLSearchParams })
             <EpBtn variant="default" size="sm" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
               <IconBell /> 监控订阅
             </EpBtn>
-            <EpBtn variant="primary" size="sm" onClick={() => goDetail('/console/ep/fk-monitor-rule-create')} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: '#F59E0B', borderColor: '#F59E0B' }}>
+            <EpBtn variant="primary" size="sm" onClick={() => goDetail('/console/ep/fk-monitor-rule-create')} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: '#2563EB', borderColor: '#2563EB' }}>
               创建新规则 <IconDown />
             </EpBtn>
           </div>

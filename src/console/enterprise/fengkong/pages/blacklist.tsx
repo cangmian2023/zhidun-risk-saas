@@ -106,7 +106,7 @@ export default function FkBlacklist({ params }: { params: URLSearchParams }) {
             placeholder="请输入企业名称"
             style={{ flex: 1, maxWidth: 420, padding: '9px 12px', border: '1px solid #CBD5E1', borderRadius: 8, fontSize: 13 }}
           />
-          <EpBtn variant="primary" size="sm" onClick={() => alert('搜索黑名单')} style={{ background: '#F59E0B', borderColor: '#F59E0B', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+          <EpBtn variant="primary" size="sm" onClick={() => alert('搜索黑名单')} style={{ background: '#2563EB', borderColor: '#2563EB', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
             <IconSearch /> 搜索
           </EpBtn>
         </div>

@@ -119,7 +119,7 @@ const seed: Data = {
   source: 'fkSam',
   pageTitle: '关系尽调',
   tabs: [
-    { key: 'central', label: '集中排查', badge: 'AI' },
+    { key: 'central', label: '集中排查' },
     { key: 'group', label: '组与组排查' },
     { key: 'related', label: '关联方识别' },
   ],
@@ -192,7 +192,7 @@ const seed: Data = {
         { text: '条低风险路径', highlight: false },
       ],
     },
-    aiBtn: 'AI 分析',
+    aiBtn: '分析',
     legend: [
       { label: '公司', color: '#3B82F6' },
       { label: '人员', color: '#F43F5E' },
@@ -343,7 +343,7 @@ const seed: Data = {
           { from: 'gc6', to: 'gn2', label: '历史法定代表人' },
         ],
       },
-      watermark: '启信慧眼',
+      watermark: '企业征信',
       disclaimer: '数据基于公开数据动态分析，仅供参考',
     },
   },
@@ -540,7 +540,7 @@ function GroupGraphView({ data }: { data: { width: number; height: number; nodes
             textAnchor="middle"
             style={{ fontSize: 72, fill: '#F1F5F9', fontWeight: 800, userSelect: 'none' }}
           >
-            启信慧眼
+            企业征信
           </text>
 
           {data.edges.map((e, idx) => {
@@ -784,9 +784,9 @@ function GroupTab({ data }: { data: GroupData }) {
             height: 42,
             fontSize: 15,
             fontWeight: 600,
-            background: '#F59E0B',
-            borderColor: '#F59E0B',
-            color: '#1F2937',
+            background: '#2563EB',
+            borderColor: '#2563EB',
+            color: '#fff',
           }}
         >
           {cfg.startCheck}
@@ -1117,8 +1117,8 @@ function RelatedTab({ data, onSearch }: { data: RelatedData; onSearch: () => voi
               padding: '0 22px',
               borderRadius: '0 8px 8px 0',
               border: 'none',
-              background: '#ffc53d',
-              color: '#1F2937',
+              background: '#2563EB',
+              color: '#fff',
               fontSize: 14,
               fontWeight: 600,
               cursor: 'pointer',
@@ -1577,8 +1577,8 @@ export default function JdRelation() {
                 height: 42,
                 fontSize: 15,
                 fontWeight: 600,
-                background: '#F59E0B',
-                borderColor: '#F59E0B',
+                background: '#2563EB',
+                borderColor: '#2563EB',
               }}
             >
               {data.left.startCheck}

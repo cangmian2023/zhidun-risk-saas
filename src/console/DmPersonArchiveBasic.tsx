@@ -22,7 +22,7 @@ const PERSON_TAGS: { text: string; link?: boolean; dropdown?: boolean }[] = [
 ]
 
 const RISK_ROW: { label: string; value: number | string; warn?: boolean }[] = [
-  { label: '启信风险', value: 22 },
+  { label: '企业风险', value: 22 },
   { label: '失信被执行人', value: 0, warn: true },
   { label: '被执行人', value: 0, warn: true },
   { label: '限制高消费', value: 0, warn: true },
@@ -1073,7 +1073,7 @@ export default function DmPersonArchiveBasic() {
           <div style={{ background: '#fff7f5', border: '1px solid #ffe2dc', borderRadius: 8, padding: '12px 18px', marginBottom: 16, fontSize: 13 }}>
             <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                <span style={{ padding: '2px 8px', borderRadius: 4, background: '#ff9900', color: '#fff', fontSize: 12, fontWeight: 600 }}>启信风险</span>
+                <span style={{ padding: '2px 8px', borderRadius: 4, background: '#ff9900', color: '#fff', fontSize: 12, fontWeight: 600 }}>企业风险</span>
                 <span style={{ fontSize: 18, fontWeight: 700, color: '#ff9900' }}>{RISK_ROW[0].value}</span>
               </span>
               {RISK_ROW.slice(1).map(r => (

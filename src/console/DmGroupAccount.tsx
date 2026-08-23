@@ -7,7 +7,7 @@ import { PageShell } from './PageShell'
  * 国企：record/qixin/营销 - 集团户 - 国企.html（100 家）+ 截图前 12 条实时数字修正
  */
 
-type GroupRow = { name: string; member: string; core: string; logo: string }
+type GroupRow = { name: string; member: string; core?: string; logo?: string; logoSvg?: React.ReactNode }
 
 type TabDef = { key: string; label: string }
 
@@ -340,6 +340,157 @@ const MINYING_GROUPS: GroupRow[] = [
 
 const PROVINCES = ['全国', '北京市', '天津市', '河北省', '山西省', '内蒙古自治区', '辽宁省', '吉林省', '黑龙江省', '上海市', '江苏省', '浙江省', '安徽省', '福建省', '江西省', '山东省', '河南省', '湖北省', '湖南省', '广东省', '广西壮族自治区', '海南省', '重庆市', '四川省', '贵州省', '云南省', '西藏自治区', '陕西省', '甘肃省', '青海省', '宁夏回族自治区', '新疆维吾尔自治区', '台湾省', '香港特别行政区', '澳门特别行政区']
 
+/* ============ 外资 tab · 品牌标识（设计稿 1:1） ============ */
+const WZ_LOGO = 'h-10 w-10'
+
+const WzLuckin = () => (
+  <svg viewBox="0 0 50 50" className={WZ_LOGO}>
+    <path d="M25 8 C20 8 16 12 16 17 C16 20 18 23 21 24 L18 28 C16 30 15 33 15 36 L20 36 C20 34 21 32 23 31 L27 31 C29 32 30 34 30 36 L35 36 C35 33 34 30 32 28 L29 24 C32 23 34 20 34 17 C34 12 30 8 25 8 Z" fill="#002855" />
+    <path d="M22 16 C23 14 25 13 27 14 C26 16 24 17 22 16 Z" fill="#FFFFFF" />
+    <path d="M23 20 C25 19 27 20 28 22 C26 23 24 23 23 20 Z" fill="#FFFFFF" />
+    <text x="25" y="46" textAnchor="middle" fontSize="5" fill="#002855" fontWeight="bold" fontFamily="Arial">luckin coffee</text>
+  </svg>
+)
+
+const WzYum = () => (
+  <svg viewBox="0 0 50 50" className={WZ_LOGO}>
+    <circle cx="25" cy="20" r="14" fill="#E60012" />
+    <text x="25" y="20" textAnchor="middle" fontSize="9" fill="#FFFFFF" fontWeight="bold">百胜</text>
+    <text x="25" y="27" textAnchor="middle" fontSize="5" fill="#FFFFFF" fontWeight="bold" fontFamily="Arial">Yum</text>
+    <text x="25" y="44" textAnchor="middle" fontSize="6.5" fill="#E60012" fontWeight="bold" fontFamily="Arial">YumChina</text>
+  </svg>
+)
+
+const WzFangchebao = () => (
+  <svg viewBox="0 0 50 50" className={WZ_LOGO}>
+    <path d="M15 22 L25 12 L35 22 L35 32 L15 32 Z" fill="#E60012" />
+    <rect x="20" y="24" width="10" height="8" fill="#FFFFFF" />
+    <rect x="15" y="32" width="20" height="4" fill="#E60012" />
+    <text x="25" y="46" textAnchor="middle" fontSize="7" fill="#E60012" fontWeight="bold">房车宝</text>
+  </svg>
+)
+
+const WzHaiwai = () => (
+  <svg viewBox="0 0 50 50" className={WZ_LOGO}>
+    <text x="25" y="20" textAnchor="middle" fontSize="8" fill="#0066B3" fontWeight="bold">海外旅业</text>
+    <text x="25" y="30" textAnchor="middle" fontSize="7" fill="#0066B3" fontWeight="bold" fontFamily="Arial">OTC</text>
+    <line x1="10" y1="34" x2="40" y2="34" stroke="#0066B3" strokeWidth="1" />
+    <path d="M10 34 C15 30 20 38 25 34 C30 30 35 38 40 34" fill="none" stroke="#0066B3" strokeWidth="1.5" />
+  </svg>
+)
+
+const WzGaoji = () => (
+  <svg viewBox="0 0 50 50" className={WZ_LOGO}>
+    <rect x="8" y="8" width="34" height="34" rx="3" fill="#F78A2E" />
+    <text x="25" y="30" textAnchor="middle" fontSize="16" fill="#FFFFFF" fontWeight="bold">高济</text>
+  </svg>
+)
+
+const WzBeike = () => (
+  <svg viewBox="0 0 50 50" className={WZ_LOGO}>
+    <rect x="8" y="8" width="34" height="34" rx="4" fill="#E8F3FF" />
+    <text x="25" y="24" textAnchor="middle" fontSize="11" fill="#165DFF" fontWeight="bold">天津</text>
+    <text x="25" y="38" textAnchor="middle" fontSize="11" fill="#165DFF" fontWeight="bold">贝壳</text>
+  </svg>
+)
+
+const WzYifeng = () => (
+  <svg viewBox="0 0 50 50" className={WZ_LOGO}>
+    <path d="M25 8 C22 8 20 10 20 13 C20 16 22 18 25 20 C28 18 30 16 30 13 C30 10 28 8 25 8 Z" fill="#00A651" />
+    <path d="M25 20 L25 36" stroke="#00A651" strokeWidth="3" />
+    <path d="M18 28 C18 24 21 22 25 22 C29 22 32 24 32 28" fill="none" stroke="#00A651" strokeWidth="2.5" />
+    <text x="25" y="44" textAnchor="middle" fontSize="5.5" fill="#00A651" fontWeight="bold">益丰大药房</text>
+    <text x="25" y="49" textAnchor="middle" fontSize="4" fill="#00A651" fontFamily="Arial">Yifeng Pharmacy</text>
+  </svg>
+)
+
+const WzLaobaixing = () => (
+  <svg viewBox="0 0 50 50" className={WZ_LOGO}>
+    <rect x="8" y="14" width="16" height="10" rx="2" fill="#165DFF" />
+    <text x="16" y="22" textAnchor="middle" fontSize="7" fill="#FFFFFF" fontWeight="bold">老百姓</text>
+    <rect x="26" y="14" width="16" height="10" rx="2" fill="#E60012" />
+    <text x="34" y="22" textAnchor="middle" fontSize="7" fill="#FFFFFF" fontWeight="bold">大药房</text>
+    <text x="25" y="38" textAnchor="middle" fontSize="5" fill="#4E5969" fontFamily="Arial">LBX PHARMACY</text>
+  </svg>
+)
+
+const WzDada = () => (
+  <svg viewBox="0 0 50 50" className={WZ_LOGO}>
+    <circle cx="18" cy="22" r="8" fill="#165DFF" />
+    <text x="18" y="25" textAnchor="middle" fontSize="7" fill="#FFFFFF" fontWeight="bold">达达</text>
+    <circle cx="32" cy="22" r="8" fill="#00A651" />
+    <text x="32" y="25" textAnchor="middle" fontSize="7" fill="#FFFFFF" fontWeight="bold">集团</text>
+    <text x="25" y="42" textAnchor="middle" fontSize="5" fill="#4E5969" fontFamily="Arial">DADA GROUP</text>
+  </svg>
+)
+
+const WzStarbucks = () => (
+  <svg viewBox="0 0 50 50" className={WZ_LOGO}>
+    <circle cx="25" cy="25" r="17" fill="#00704A" />
+    <circle cx="25" cy="25" r="13" fill="none" stroke="#FFFFFF" strokeWidth="1" />
+    <path d="M25 12 C22 14 20 17 20 21 C20 24 22 26 25 27 C28 26 30 24 30 21 C30 17 28 14 25 12 Z" fill="#FFFFFF" />
+    <circle cx="22" cy="19" r="1.5" fill="#00704A" />
+    <circle cx="28" cy="19" r="1.5" fill="#00704A" />
+    <path d="M22 23 C23 24 27 24 28 23" fill="none" stroke="#00704A" strokeWidth="1" />
+    <path d="M18 28 C16 30 15 33 16 36 L20 36 C20 34 21 32 23 31 L27 31 C29 32 30 34 30 36 L34 36 C35 33 34 30 32 28" fill="#FFFFFF" />
+    <text x="25" y="48" textAnchor="middle" fontSize="3.5" fill="#00704A" fontWeight="bold">TM</text>
+  </svg>
+)
+
+const WzLaiyang = () => (
+  <svg viewBox="0 0 50 50" className={WZ_LOGO}>
+    <rect x="8" y="8" width="34" height="34" rx="4" fill="#E8F3FF" />
+    <text x="25" y="24" textAnchor="middle" fontSize="11" fill="#165DFF" fontWeight="bold">莱阳</text>
+    <text x="25" y="38" textAnchor="middle" fontSize="11" fill="#165DFF" fontWeight="bold">中国</text>
+  </svg>
+)
+
+const WzTengyue = () => (
+  <svg viewBox="0 0 50 50" className={WZ_LOGO}>
+    <path d="M15 20 L25 10 L35 20 L35 24 L15 24 Z" fill="#F78A2E" />
+    <rect x="15" y="24" width="20" height="14" fill="#004FA3" />
+    <rect x="20" y="28" width="4" height="4" fill="#FFFFFF" />
+    <rect x="26" y="28" width="4" height="4" fill="#FFFFFF" />
+    <rect x="20" y="34" width="4" height="4" fill="#FFFFFF" />
+    <rect x="26" y="34" width="4" height="4" fill="#FFFFFF" />
+    <text x="25" y="48" textAnchor="middle" fontSize="5.5" fill="#4E5969" fontWeight="bold">腾越建科</text>
+  </svg>
+)
+
+const WAIZI_GROUPS: GroupRow[] = [
+  { name: '中国瑞幸咖啡集团', member: '26,514', core: '9', logoSvg: <WzLuckin /> },
+  { name: '百胜中国集团', member: '21,558', core: '54', logoSvg: <WzYum /> },
+  { name: '房车宝集团', member: '20,560', core: '16', logoSvg: <WzFangchebao /> },
+  { name: '重庆海外旅业集团', member: '19,435', core: '8', logoSvg: <WzHaiwai /> },
+  { name: '天津高济集团', member: '15,663', core: '10', logoSvg: <WzGaoji /> },
+  { name: '天津贝壳投资集团', member: '14,930', core: '8', logoSvg: <WzBeike /> },
+  { name: '益丰药房集团', member: '14,766', core: '8', logoSvg: <WzYifeng /> },
+  { name: '老百姓集团', member: '13,183', core: '12', logoSvg: <WzLaobaixing /> },
+  { name: '上海达疆网络集团', member: '13,095', core: '9', logoSvg: <WzDada /> },
+  { name: '星巴克咖啡集团', member: '9,286', core: '9', logoSvg: <WzStarbucks /> },
+  { name: '莱阳中国网通集团', member: '7,959', logoSvg: <WzLaiyang /> },
+  { name: '腾越建筑集团', member: '6,066', core: '13', logoSvg: <WzTengyue /> },
+]
+
+/* ============ 机构 tab · 政府部门（设计稿 1:1） ============ */
+const JIGOU_GROUPS: GroupRow[] = [
+  { name: '北京发改委' },
+  { name: '北京经济和信息化局' },
+  { name: '北京科学技术局' },
+  { name: '北京公安局' },
+  { name: '北京民政局' },
+  { name: '北京司法局' },
+  { name: '北京财政局' },
+  { name: '北京人社局' },
+  { name: '北京规划和自然资源局' },
+  { name: '北京生态环境局' },
+  { name: '北京城乡建设委员会' },
+  { name: '北京住房保障和房产管理局' },
+  { name: '北京园林文物局' },
+  { name: '北京交通运输局' },
+  { name: '北京林业水利局' },
+]
+
 function SearchIcon({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 1024 1024" fill="none" width="16" height="16">
@@ -355,7 +506,9 @@ function GroupCard({ row, onClick }: { row: GroupRow; onClick: () => void }) {
       onClick={onClick}
       className="group relative flex cursor-pointer items-center rounded-[4px] bg-white p-3 transition-shadow hover:shadow-[0_4px_12px_4px_rgba(27,28,46,.06)]"
     >
-      {imgErr || !row.logo ? (
+      {row.logoSvg ? (
+        <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center">{row.logoSvg}</div>
+      ) : imgErr || !row.logo ? (
         <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-[4px] bg-[#e5eeff] text-base font-semibold text-[#1a53ff]">
           {row.name.slice(0, 1)}
         </div>
@@ -379,8 +532,33 @@ function GroupCard({ row, onClick }: { row: GroupRow; onClick: () => void }) {
         </div>
         <div className="mt-1 text-[13px] leading-[18px] text-[#76788b]">
           <span className="mr-3">成员: {row.member}家</span>
-          <span>核心: {row.core}家</span>
+          {row.core !== undefined && row.core !== '' && <span>核心: {row.core}家</span>}
         </div>
+      </div>
+    </div>
+  )
+}
+
+/* 机构卡片：蓝底部门标识（每行 2 字）+ 机构名称，无成员/核心数 */
+function deptTag(name: string): [string, string] {
+  const rest = name.replace(/^北京/, '')
+  return [rest.slice(0, 2), rest.slice(2, 4)]
+}
+
+function JigouCard({ name, onClick }: { name: string; onClick: () => void }) {
+  const [l1, l2] = deptTag(name)
+  return (
+    <div
+      onClick={onClick}
+      className="group flex cursor-pointer items-center rounded-[4px] bg-white p-3 transition-shadow hover:shadow-[0_4px_12px_4px_rgba(27,28,46,.06)]"
+    >
+      <div className="flex h-[56px] w-[56px] flex-shrink-0 items-center justify-center rounded-[4px] bg-[#e8f3ff] text-center text-[15px] font-semibold leading-tight text-[#165DFF]">
+        {l1}
+        <br />
+        {l2}
+      </div>
+      <div className="ml-3 min-w-0 flex-1">
+        <div className="truncate text-sm font-semibold leading-5 text-slate-800">{name}</div>
       </div>
     </div>
   )
@@ -433,6 +611,8 @@ export default function DmGroupAccount() {
     if (tab === 'yangqi') return YANGQI_GROUPS
     if (tab === 'guoqi') return GUOQI_GROUPS
     if (tab === 'minying') return MINYING_GROUPS
+    if (tab === 'waizi') return WAIZI_GROUPS
+    if (tab === 'jigou') return JIGOU_GROUPS
     return []
   }, [tab])
 
@@ -446,8 +626,8 @@ export default function DmGroupAccount() {
     nav(`/console/dm/group-account-detail?name=${encodeURIComponent(name)}&back=/console/dm/group-account`)
   }
 
-  const showFilters = tab === 'guoqi' || tab === 'minying'
-  const totalLabel = tab === 'guoqi' ? '17,490' : tab === 'minying' ? '202,399' : undefined
+  const showFilters = tab === 'guoqi' || tab === 'minying' || tab === 'waizi' || tab === 'jigou'
+  const totalLabel = tab === 'guoqi' ? '17,490' : tab === 'minying' ? '202,399' : tab === 'waizi' ? '17,101' : undefined
 
   return (
     <>
@@ -461,7 +641,12 @@ export default function DmGroupAccount() {
             return (
               <button
                 key={t.key}
-                onClick={() => { setTab(t.key); setProvince('全国'); setCity('不限'); setRegion('不限'); setKw('') }}
+                onClick={() => {
+                  setTab(t.key)
+                  if (t.key === 'jigou') { setProvince('北京市'); setCity('直辖市') }
+                  else { setProvince('全国'); setCity('不限') }
+                  setRegion('不限'); setKw('')
+                }}
                 className={`relative px-4 py-3 text-base font-medium transition-colors ${
                   active ? 'text-[#1a53ff]' : 'text-[#76788b] hover:text-[#393a51]'
                 }`}
@@ -476,16 +661,20 @@ export default function DmGroupAccount() {
 
       {/* 内容区 */}
       <div className="min-h-[600px] bg-[#f4f5fc] px-6 py-3">
-        {tab === 'yangqi' || tab === 'guoqi' || tab === 'minying' ? (
+        {tab === 'yangqi' || tab === 'guoqi' || tab === 'minying' || tab === 'waizi' || tab === 'jigou' ? (
           <>
             {/* 筛选器（仅国企 tab 显示） */}
             {showFilters && (
               <div className="mb-3 rounded-[4px] bg-white px-4">
-                <FilterRow label="选择省份" options={PROVINCES.slice(0, 16)} value={province} onChange={(v) => { setProvince(v); setCity('不限'); setRegion('不限') }} showMore />
+                <FilterRow label="选择省份" options={PROVINCES.slice(0, 16)} value={province} onChange={(v) => { setProvince(v); setCity(tab === 'jigou' ? '直辖市' : '不限'); setRegion('不限') }} showMore />
                 <div className="border-t border-dashed border-slate-100" />
-                <FilterRow label="选择城市" options={['不限']} value={city} onChange={setCity} />
-                <div className="border-t border-dashed border-slate-100" />
-                <FilterRow label="选择区域" options={['不限']} value={region} onChange={setRegion} />
+                <FilterRow label="选择城市" options={tab === 'jigou' ? ['直辖市'] : ['不限']} value={city} onChange={setCity} />
+                {tab !== 'jigou' && (
+                  <>
+                    <div className="border-t border-dashed border-slate-100" />
+                    <FilterRow label="选择区域" options={['不限']} value={region} onChange={setRegion} />
+                  </>
+                )}
               </div>
             )}
 
@@ -510,12 +699,16 @@ export default function DmGroupAccount() {
 
             {/* 卡片网格 */}
             <div className="grid grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-3">
-              {filtered.map((g) => (
-                <GroupCard key={`${tab}-${g.name}`} row={g} onClick={() => onCardClick(g.name)} />
-              ))}
+              {filtered.map((g) =>
+                tab === 'jigou' ? (
+                  <JigouCard key={`${tab}-${g.name}`} name={g.name} onClick={() => onCardClick(g.name)} />
+                ) : (
+                  <GroupCard key={`${tab}-${g.name}`} row={g} onClick={() => onCardClick(g.name)} />
+                ),
+              )}
             </div>
             {filtered.length === 0 && (
-              <div className="py-20 text-center text-sm text-[#76788b]">未找到匹配「{kw}」的集团</div>
+              <div className="py-20 text-center text-sm text-[#76788b]">未找到匹配「{kw}」的结果</div>
             )}
           </>
         ) : (

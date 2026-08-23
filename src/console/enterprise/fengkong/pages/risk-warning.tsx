@@ -3,7 +3,9 @@
 import { useState } from 'react'
 import { EpPage, EpCard, EpStat, EpTag, EpBtn, EpDrawer, DataTable, useSample, Sam } from '../../epCommon'
 import { AddMonitorDrawer } from '../components/AddMonitorDrawer'
+import { RiskContentDrawer } from '../components/RiskContentDrawer'
 import type { Row, Column } from '../../../../components/ui'
+import { usePageNav } from '../../../pageNav'
 import seedJson from '../../../fkRisk.json'
 
 type RiskRow = (typeof seedJson.rows)[number]
@@ -19,9 +21,11 @@ const LEVEL: Record<string, { c: string; b: string }> = {
 export default function FkRiskWarning({ params }: { params: URLSearchParams }) {
   const [data] = useSample('fkRisk.json', seedJson)
   const [kw, setKw] = useState(params.get('kw') || '')
+  const { goDetail } = usePageNav()
 
   // 监控筛选
   const [timeMode, setTimeMode] = useState<'推送时间' | '发生时间'>('推送时间')
+  const [range, setRange] = useState('近30天')
   const [levels, setLevels] = useState<string[]>([])
   const [readState, setReadState] = useState<string[]>([])
   const [followState, setFollowState] = useState<string[]>([])
@@ -33,21 +37,22 @@ export default function FkRiskWarning({ params }: { params: URLSearchParams }) {
   const [region, setRegion] = useState<string[]>([])
   const [epTag, setEpTag] = useState<string[]>([])
   const [epGroup, setEpGroup] = useState<string[]>([])
-  const [owner, setOwner] = useState('')
-  const [adder, setAdder] = useState('')
-  const [related, setRelated] = useState('')
+  const [owner, setOwner] = useState<string[]>([])
+  const [adder, setAdder] = useState<string[]>([])
+  const [related, setRelated] = useState<string[]>([])
 
-  // 风险类型
+  // 风险类型（含子维度）
   const [riskTypes, setRiskTypes] = useState<string[]>(['不限'])
+  const [riskDims, setRiskDims] = useState<Record<string, string[]>>({})
 
   const [selected, setSelected] = useState<string[]>([])
 
+  // 筛选下拉：同一时间只开一个
+  const [openKey, setOpenKey] = useState('')
+
   const [addOpen, setAddOpen] = useState(false)
-  const [cfgOpen, setCfgOpen] = useState(false)
-  const [readOpen, setReadOpen] = useState(false)
   const [detailOpen, setDetailOpen] = useState(false)
   const [riskDetailOpen, setRiskDetailOpen] = useState(false)
-  const [aiExpand, setAiExpand] = useState(true)
   const [caseOpen, setCaseOpen] = useState(false)
   const [cur, setCur] = useState<RiskRow | null>(null)
 
@@ -60,11 +65,50 @@ export default function FkRiskWarning({ params }: { params: URLSearchParams }) {
     setList(next)
   }
 
+  // 风险类型子维度选项
+  const RISK_DIMS: Record<string, string[]> = {
+    基本信息: ['地址信息', '经营范围', '法定代表人', '注册资本', '经营期限'],
+    经营风险: ['股东信息', '大股东变更', '主要人员', '企业名称', '企业类型'],
+    司法风险: ['被告/被上诉人/被申请人', '新增开庭公告', '新增法院公告', '被执行'],
+    经营信息: ['邮箱变更', '电话变更', '网址变更'],
+    企业舆情: ['业绩亏损/下降', '现金流恶化', '负面报道', '高管舆情'],
+    供应链风险: ['供应商变更', '大客户流失', '供应链中断'],
+    关联方风险: ['新增地址', '注册地址变更', '新增对外投资'],
+    关键词舆情: ['企业征信推荐关键词', '自定义关键词'],
+  }
+
   const rows = data.rows.filter((r) => {
-    if (kw && !r.subject.includes(kw) && !r.content.includes(kw) && !r.title.includes(kw)) return false
-    if (levels.length && !levels.includes(r.level)) return false
+    if (kw && !`${r.title ?? ''}`.includes(kw) && !`${r.content ?? ''}`.includes(kw)) return false
+    if (levels.length && !levels.includes(String(r.level))) return false
+    if (followState.length && !followState.includes(String(r.status))) return false
+    if (riskTypes.length && !riskTypes.includes('不限') && !riskTypes.includes(String(r.type))) return false
     return true
   })
+
+  const resetFilters = () => {
+    setLevels([]); setReadState([]); setFollowState([]); setMarkState([]); setRuleState([])
+    setScope([]); setRegion([]); setEpTag([]); setEpGroup([]); setOwner([]); setAdder([]); setRelated([])
+    setRiskTypes(['不限']); setRiskDims({}); setKw(''); setRange('近30天')
+  }
+
+  // 已选条件 chips
+  const chips: { label: string; text: string; onRemove: () => void }[] = [
+    { label: timeMode, text: range, onRemove: () => { setTimeMode('推送时间'); setRange('近30天') } },
+    ...(levels.length ? [{ label: '风险等级', text: levels.join('、'), onRemove: () => setLevels([]) }] : []),
+    ...(readState.length ? [{ label: '阅读状态', text: readState.join('、'), onRemove: () => setReadState([]) }] : []),
+    ...(followState.length ? [{ label: '跟进状态', text: followState.join('、'), onRemove: () => setFollowState([]) }] : []),
+    ...(markState.length ? [{ label: '标记动态', text: markState.join('、'), onRemove: () => setMarkState([]) }] : []),
+    ...(ruleState.length ? [{ label: '监控规则', text: ruleState.join('、'), onRemove: () => setRuleState([]) }] : []),
+    ...(scope.length ? [{ label: '国内/境外', text: scope.join('、'), onRemove: () => setScope([]) }] : []),
+    ...(region.length ? [{ label: '国家地区', text: region.join('、'), onRemove: () => setRegion([]) }] : []),
+    ...(epTag.length ? [{ label: '企业标签', text: epTag.join('、'), onRemove: () => setEpTag([]) }] : []),
+    ...(epGroup.length ? [{ label: '企业分组', text: epGroup.join('、'), onRemove: () => setEpGroup([]) }] : []),
+    ...(owner.length ? [{ label: '负责人/部门', text: owner.join('、'), onRemove: () => setOwner([]) }] : []),
+    ...(adder.length ? [{ label: '添加人', text: adder.join('、'), onRemove: () => setAdder([]) }] : []),
+    ...(related.length ? [{ label: '关联企业', text: related.join('、'), onRemove: () => setRelated([]) }] : []),
+    ...(riskTypes.filter((t) => t !== '不限').length ? [{ label: '风险类型', text: riskTypes.filter((t) => t !== '不限').join('、'), onRemove: () => setRiskTypes(['不限']) }] : []),
+    ...(Object.entries(riskDims).filter(([, v]) => v.length).map(([k, v]) => ({ label: k, text: v.join('、'), onRemove: () => { const n = { ...riskDims }; delete n[k]; setRiskDims(n) } }))),
+  ]
 
   const levelCell = (r: Row) => {
     const l = String(r.level)
@@ -82,21 +126,17 @@ export default function FkRiskWarning({ params }: { params: URLSearchParams }) {
 
   const contentCell = (r: Row) => (
     <div
-      style={{ maxWidth: 520, whiteSpace: 'normal', lineHeight: 1.6, cursor: 'pointer' }}
+      style={{ maxWidth: 640, minWidth: 380, whiteSpace: 'normal', lineHeight: 1.7, cursor: 'pointer' }}
       onClick={() => { setCur(r as unknown as RiskRow); setRiskDetailOpen(true) }}
     >
-      <div style={{ color: '#0F172A', fontWeight: 500, fontSize: 13 }}>{String(r.title)}</div>
-      <div style={{ color: '#64748B', fontSize: 12, marginTop: 2 }}>{String(r.content)}</div>
+      <div style={{ color: '#0F172A', fontWeight: 500, fontSize: 13, display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{String(r.title)}</div>
+      <div style={{ color: '#64748B', fontSize: 12, marginTop: 3, display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{String(r.content)}</div>
     </div>
   )
 
   const opCell = (r: Row) => (
     <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap', fontSize: 13 }}>
-      <a style={lk} onClick={() => { setCur(r as unknown as RiskRow); setReadOpen(true) }}>AI 解读</a>
-      <span style={{ color: '#CBD5E1' }}>|</span>
-      <a style={lk}>推送</a>
-      <span style={{ color: '#CBD5E1' }}>|</span>
-      <a style={lk}>更多</a>
+      <a style={lk} onClick={() => { setCur(r as unknown as RiskRow); setRiskDetailOpen(true) }}>解读</a>
     </span>
   )
 
@@ -113,29 +153,16 @@ export default function FkRiskWarning({ params }: { params: URLSearchParams }) {
     { key: 'status', label: '处理状态', width: '100px' },
     { key: 'doneTime', label: '处理完成时间', width: '130px' },
     { key: 'cycle', label: '处理周期（天）', width: '120px', align: 'center' },
-    { key: 'op', label: '操作', width: '150px', fixed: 'right', render: opCell },
+    { key: 'op', label: '操作', width: '90px', fixed: 'right', render: opCell },
   ]
-
-  const filterChip = (on: boolean) => ({
-    cursor: 'pointer',
-    padding: '2px 10px',
-    borderRadius: 12,
-    fontSize: 12,
-    border: `1px solid ${on ? '#2563EB' : '#E2E8F0'}`,
-    background: on ? '#EFF6FF' : '#fff',
-    color: on ? '#2563EB' : '#475569',
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: 4,
-  } as React.CSSProperties)
 
   return (
     <EpPage
-      title="风险预警 AI"
+      title="风险预警"
       crumb="风控中心 / 风险预警"
       actions={
         <span style={{ display: 'inline-flex', gap: 8 }}>
-          <EpBtn variant="default" onClick={() => setCfgOpen(true)}>风险和推送设置</EpBtn>
+          <EpBtn variant="default" onClick={() => goDetail('/console/ep/fk-monitor-manage')}>风险和推送设置</EpBtn>
           <EpBtn variant="primary" onClick={() => setAddOpen(true)}>+ 添加监控</EpBtn>
         </span>
       }
@@ -144,64 +171,215 @@ export default function FkRiskWarning({ params }: { params: URLSearchParams }) {
       <EpCard pad={false}>
         <div style={{ padding: '14px 18px', display: 'flex', flexDirection: 'column', gap: 12, fontSize: 13 }}>
           {/* 监控筛选 */}
-          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '8px 16px' }}>
-            <span style={{ color: '#0F172A', fontWeight: 600, marginRight: 4 }}>监控筛选</span>
-            <RadioGroup label="" options={['推送时间', '发生时间']} value={timeMode} onChange={(v) => setTimeMode(v as typeof timeMode)} />
-            <CheckboxGroup label="风险等级" options={['高风险', '中风险', '低风险', '轻微风险']} value={levels} onChange={(v) => toggle(levels, setLevels, v)} />
-            <CheckboxGroup label="阅读状态" options={['已读', '未读']} value={readState} onChange={(v) => toggle(readState, setReadState, v)} />
-            <CheckboxGroup label="跟进状态" options={['未处理', '处理中', '已处理', '无需处理']} value={followState} onChange={(v) => toggle(followState, setFollowState, v)} />
-            <CheckboxGroup label="标记动态" options={['重点关注风险', '存在信用风险', '重大工商变更', '外部供应链风险']} value={markState} onChange={(v) => toggle(markState, setMarkState, v)} />
-            <CheckboxGroup label="监控规则" options={['启信慧眼默认规则(国内)', '启信慧眼默认规则(境外)', '外部供应链风险']} value={ruleState} onChange={(v) => toggle(ruleState, setRuleState, v)} />
+          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '8px 18px' }}>
+            <span style={{ color: '#0F172A', fontWeight: 600, marginRight: 2, minWidth: 64 }}>监控筛选</span>
+            <FilterChip
+              k="push" kind="radio" label="推送时间" active={timeMode === '推送时间'} open={openKey === 'push'}
+              onOpen={(kk) => setOpenKey(openKey === kk ? '' : kk)}
+              onLabel={() => { setTimeMode('推送时间'); setOpenKey('push') }}
+              panel={
+                <>
+                  {['近7天', '近30天', '自定义'].map((r) => (
+                    <FilterRadioOpt key={r} label={r} checked={range === r} onChange={() => { setRange(r); setOpenKey('') }} />
+                  ))}
+                </>
+              }
+            />
+            <FilterChip
+              k="happen" kind="radio" label="发生时间" active={timeMode === '发生时间'} open={openKey === 'happen'}
+              onOpen={(kk) => setOpenKey(openKey === kk ? '' : kk)}
+              onLabel={() => { setTimeMode('发生时间'); setOpenKey('happen') }}
+              panel={
+                <>
+                  {['近7天', '近30天', '自定义'].map((r) => (
+                    <FilterRadioOpt key={r} label={r} checked={range === r} onChange={() => { setRange(r); setOpenKey('') }} />
+                  ))}
+                </>
+              }
+            />
+            <FilterChip
+              k="level" kind="check" label="风险等级" active={levels.length > 0} open={openKey === 'level'}
+              onOpen={(kk) => setOpenKey(openKey === kk ? '' : kk)}
+              panel={
+                <>
+                  {['高风险', '中风险', '低风险', '轻微风险'].map((o) => (
+                    <FilterOpt key={o} label={o} checked={levels.includes(o)} onChange={() => toggle(levels, setLevels, o)} />
+                  ))}
+                </>
+              }
+            />
+            <FilterChip
+              k="read" kind="check" label="阅读状态" active={readState.length > 0} open={openKey === 'read'}
+              onOpen={(kk) => setOpenKey(openKey === kk ? '' : kk)}
+              panel={
+                <>
+                  {['已读', '未读'].map((o) => (
+                    <FilterOpt key={o} label={o} checked={readState.includes(o)} onChange={() => toggle(readState, setReadState, o)} />
+                  ))}
+                </>
+              }
+            />
+            <FilterChip
+              k="follow" kind="check" label="跟进状态" active={followState.length > 0} open={openKey === 'follow'}
+              onOpen={(kk) => setOpenKey(openKey === kk ? '' : kk)}
+              panel={
+                <>
+                  {['未处理', '处理中', '已处理', '无需处理'].map((o) => (
+                    <FilterOpt key={o} label={o} checked={followState.includes(o)} onChange={() => toggle(followState, setFollowState, o)} />
+                  ))}
+                </>
+              }
+            />
+            <FilterChip
+              k="mark" kind="check" label="标记动态" active={markState.length > 0} open={openKey === 'mark'}
+              onOpen={(kk) => setOpenKey(openKey === kk ? '' : kk)}
+              panel={
+                <>
+                  {['重点关注风险', '存在信用风险', '重大工商变更', '外部供应链风险'].map((o) => (
+                    <FilterOpt key={o} label={o} checked={markState.includes(o)} onChange={() => toggle(markState, setMarkState, o)} />
+                  ))}
+                </>
+              }
+            />
+            <FilterChip
+              k="rule" kind="check" label="监控规则" active={ruleState.length > 0} open={openKey === 'rule'}
+              onOpen={(kk) => setOpenKey(openKey === kk ? '' : kk)}
+              panel={
+                <>
+                  {['企业征信默认规则(国内)', '企业征信默认规则(境外)', '外部供应链风险'].map((o) => (
+                    <FilterOpt key={o} label={o} checked={ruleState.includes(o)} onChange={() => toggle(ruleState, setRuleState, o)} />
+                  ))}
+                </>
+              }
+            />
           </div>
 
           {/* 企业筛选 */}
-          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '8px 16px' }}>
-            <span style={{ color: '#0F172A', fontWeight: 600, marginRight: 4 }}>企业筛选</span>
-            <CheckboxGroup label="" options={['国内', '境外']} value={scope} onChange={(v) => toggle(scope, setScope, v)} />
-            <CheckboxGroup label="国家地区" options={['中国', '德国', '美国']} value={region} onChange={(v) => toggle(region, setRegion, v)} />
-            <CheckboxGroup label="企业标签" options={['全选', '默认分组']} value={epTag} onChange={(v) => toggle(epTag, setEpTag, v)} />
-            <CheckboxGroup label="企业分组" options={['未分组', '长时间未联系', '重点维护']} value={epGroup} onChange={(v) => toggle(epGroup, setEpGroup, v)} />
-            <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: '#475569' }}>
-              负责人/部门
-              <select style={{ ...inp, width: 130 }} value={owner} onChange={(e) => setOwner(e.target.value)}>
-                <option value="">请选择</option>
-                <option>19156027703</option>
-              </select>
-            </label>
-            <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: '#475569' }}>
-              添加人
-              <select style={{ ...inp, width: 130 }} value={adder} onChange={(e) => setAdder(e.target.value)}>
-                <option value="">请选择</option>
-                <option>19156027703</option>
-              </select>
-            </label>
-            <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: '#475569' }}>
-              关联企业
-              <input placeholder="请输入企业名称" style={{ ...inp, width: 160 }} value={related} onChange={(e) => setRelated(e.target.value)} />
-            </label>
+          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '8px 18px' }}>
+            <span style={{ color: '#0F172A', fontWeight: 600, marginRight: 2, minWidth: 64 }}>企业筛选</span>
+            <FilterChip
+              k="scope" kind="check" label="国内/境外" active={scope.length > 0} open={openKey === 'scope'}
+              onOpen={(kk) => setOpenKey(openKey === kk ? '' : kk)}
+              panel={
+                <>
+                  {['国内', '境外'].map((o) => (
+                    <FilterOpt key={o} label={o} checked={scope.includes(o)} onChange={() => toggle(scope, setScope, o)} />
+                  ))}
+                </>
+              }
+            />
+            <FilterChip
+              k="region" kind="check" label="国家地区" active={region.length > 0} open={openKey === 'region'}
+              onOpen={(kk) => setOpenKey(openKey === kk ? '' : kk)}
+              panel={
+                <>
+                  {['中国', '德国', '美国'].map((o) => (
+                    <FilterOpt key={o} label={o} checked={region.includes(o)} onChange={() => toggle(region, setRegion, o)} />
+                  ))}
+                </>
+              }
+            />
+            <FilterChip
+              k="tag" kind="check" label="企业标签" active={epTag.length > 0} open={openKey === 'tag'}
+              onOpen={(kk) => setOpenKey(openKey === kk ? '' : kk)}
+              panel={
+                <>
+                  {['存款', '贷款', '战略客户', '睡眠户', '招采贷', '科技贷'].map((o) => (
+                    <FilterOpt key={o} label={o} checked={epTag.includes(o)} onChange={() => toggle(epTag, setEpTag, o)} />
+                  ))}
+                </>
+              }
+            />
+            <FilterChip
+              k="group" kind="check" label="企业分组" active={epGroup.length > 0} open={openKey === 'group'}
+              onOpen={(kk) => setOpenKey(openKey === kk ? '' : kk)}
+              panel={
+                <>
+                  {['未分组', '长时间未联系', '重点维护'].map((o) => (
+                    <FilterOpt key={o} label={o} checked={epGroup.includes(o)} onChange={() => toggle(epGroup, setEpGroup, o)} />
+                  ))}
+                </>
+              }
+            />
+            <FilterChip
+              k="owner" kind="check" label="负责人/部门" active={owner.length > 0} open={openKey === 'owner'}
+              onOpen={(kk) => setOpenKey(openKey === kk ? '' : kk)}
+              panel={
+                <>
+                  {['19156027703'].map((o) => (
+                    <FilterOpt key={o} label={o} checked={owner.includes(o)} onChange={() => toggle(owner, setOwner, o)} />
+                  ))}
+                </>
+              }
+            />
+            <FilterChip
+              k="adder" kind="check" label="添加人" active={adder.length > 0} open={openKey === 'adder'}
+              onOpen={(kk) => setOpenKey(openKey === kk ? '' : kk)}
+              panel={
+                <>
+                  {['19156027703'].map((o) => (
+                    <FilterOpt key={o} label={o} checked={adder.includes(o)} onChange={() => toggle(adder, setAdder, o)} />
+                  ))}
+                </>
+              }
+            />
+            <FilterChip
+              k="related" kind="check" label="关联企业" active={related.length > 0} open={openKey === 'related'}
+              onOpen={(kk) => setOpenKey(openKey === kk ? '' : kk)}
+              panel={
+                <>
+                  {['比亚迪股份有限公司', '宁德时代新能源科技股份有限公司', '华为技术有限公司'].map((o) => (
+                    <FilterOpt key={o} label={o} checked={related.includes(o)} onChange={() => toggle(related, setRelated, o)} />
+                  ))}
+                </>
+              }
+            />
           </div>
 
           {/* 风险类型 */}
-          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '8px 16px' }}>
-            <span style={{ color: '#0F172A', fontWeight: 600, marginRight: 4 }}>风险类型</span>
-            <CheckboxGroup label="" options={['不限', '基本信息', '经营风险', '司法风险', '经营信息', '企业舆情', '供应链风险', '关联方风险', '关键词舆情']} value={riskTypes} onChange={(v) => toggle(riskTypes, setRiskTypes, v)} />
+          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '8px 18px' }}>
+            <span style={{ color: '#0F172A', fontWeight: 600, marginRight: 2, minWidth: 64 }}>风险类型</span>
+            {RISK_TYPE_LIST.map((t) =>
+              t === '不限' ? (
+                <FilterChip
+                  key={t} k={`t-${t}`} kind="check" label={t} active={riskTypes.includes(t)} open={false}
+                  onOpen={() => {}} onLabel={() => toggle(riskTypes, setRiskTypes, t)}
+                />
+              ) : (
+                <FilterChip
+                  key={t} k={`t-${t}`} kind="check" label={t} active={riskTypes.includes(t)} open={openKey === `t-${t}`}
+                  onOpen={(kk) => setOpenKey(openKey === kk ? '' : kk)}
+                  onLabel={() => toggle(riskTypes, setRiskTypes, t)}
+                  panel={
+                    <>
+                      {(RISK_DIMS[t] ?? []).map((dim) => {
+                        const dims = riskDims[t] ?? []
+                        return (
+                          <FilterOpt key={dim} label={dim} checked={dims.includes(dim)} onChange={() => {
+                            const n = { ...riskDims, [t]: dims.includes(dim) ? dims.filter((x) => x !== dim) : [...dims, dim] }
+                            setRiskDims(n)
+                          }} />
+                        )
+                      })}
+                    </>
+                  }
+                />
+              )
+            )}
           </div>
 
           {/* 已选条件 */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, borderTop: '1px dashed #E2E8F0', paddingTop: 12, flexWrap: 'wrap' }}>
             <span style={{ color: '#475569' }}>已选条件</span>
-            <EpTag>
-              <span style={{ color: '#475569' }}>{timeMode}：</span>
-              <span style={{ color: '#2563EB' }}>{data.range}</span>
-              <span style={{ marginLeft: 6, cursor: 'pointer', color: '#94A3B8' }}>×</span>
-            </EpTag>
+            {chips.map((c, i) => (
+              <span key={i} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '3px 10px', background: '#F2F3F5', borderRadius: 4, fontSize: 12, color: '#4E5969' }}>
+                {c.label}：{c.text}
+                <span style={{ marginLeft: 2, cursor: 'pointer', color: '#86909C' }} onClick={c.onRemove}>×</span>
+              </span>
+            ))}
             <span style={{ marginLeft: 'auto', display: 'inline-flex', gap: 10 }}>
               <a style={lk}>保存条件</a>
-              <a style={lk} onClick={() => {
-                setLevels([]); setReadState([]); setFollowState([]); setMarkState([]); setRuleState([])
-                setScope([]); setRegion([]); setEpTag([]); setEpGroup([]); setOwner(''); setAdder(''); setRelated('')
-                setRiskTypes(['不限']); setKw('')
-              }}>清空</a>
+              <a style={lk} onClick={resetFilters}>清空</a>
             </span>
           </div>
         </div>
@@ -256,79 +434,6 @@ export default function FkRiskWarning({ params }: { params: URLSearchParams }) {
 
       {/* 添加监控 · 与监控列表页共用同一弹窗 */}
       <AddMonitorDrawer open={addOpen} onClose={() => setAddOpen(false)} />
-
-      {/* 风险和推送设置 */}
-      <EpDrawer open={cfgOpen} onClose={() => setCfgOpen(false)} title="风险和推送设置" width={560}>
-        <div style={{ background: '#EFF6FF', border: '1px solid #DBEAFE', borderRadius: 10, padding: '12px 14px', fontSize: 13, color: '#1E3A8A' }}>
-          该入口跳转到「监控管理」，在监控规则中统一维护风险项与推送方式。
-        </div>
-        <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 12, fontSize: 13 }}>
-          <div>
-            <div style={{ color: '#64748B', fontSize: 12, marginBottom: 6 }}>监控规则</div>
-            <select style={inp}>
-              <option>启信慧眼默认规则(国内)</option>
-              <option>启信慧眼默认规则(境外)</option>
-            </select>
-          </div>
-          <div>
-            <div style={{ color: '#64748B', fontSize: 12, marginBottom: 6 }}>推送风险等级</div>
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              {['高风险', '中风险', '低风险', '轻微风险', '日常资讯'].map((l) => <span key={l} style={filterChip(l !== '日常资讯')}>{l}</span>)}
-            </div>
-          </div>
-          <div>
-            <div style={{ color: '#64748B', fontSize: 12, marginBottom: 6 }}>推送方式</div>
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              {['站内消息', '邮件', '短信', '企业微信'].map((l) => <span key={l} style={filterChip(l === '站内消息')}>{l}</span>)}
-            </div>
-          </div>
-          <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-            <EpBtn variant="default" onClick={() => setCfgOpen(false)}>取 消</EpBtn>
-            <EpBtn variant="primary" onClick={() => setCfgOpen(false)}>确 定</EpBtn>
-          </div>
-        </div>
-      </EpDrawer>
-
-      {/* AI 解读 */}
-      <EpDrawer open={readOpen} onClose={() => setReadOpen(false)} title={cur ? `${cur.subject}-${cur.type}` : data.read.title} width={680}>
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>
-          {['标记动态', '收藏动态', '下载动态', '风险推送', '供应商', '企业风险'].map((b) => (
-            <EpBtn key={b} variant="default" size="sm">{b}</EpBtn>
-          ))}
-          {cur?.caseLink && <EpBtn variant="primary" size="sm" onClick={() => setCaseOpen(true)}>案件串联</EpBtn>}
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, fontSize: 13 }}>
-          <div><span style={dt}>风险等级：</span><EpTag color={LEVEL[cur?.level ?? data.read.level]?.c} bg={LEVEL[cur?.level ?? data.read.level]?.b}>{cur?.level ?? data.read.level}</EpTag></div>
-          <div><span style={dt}>风险评分：</span>{cur ? `${cur.score}分` : data.read.score}</div>
-          <div><span style={dt}>负责人/部门：</span>{cur?.owner ?? data.read.owner}</div>
-          <div><span style={dt}>风险概览：</span><span style={{ color: '#334155' }}>{cur?.content ?? data.read.overview}</span></div>
-          <div><span style={dt}>监控企业：</span><a style={lk}>{cur?.subject ?? data.read.monitorEp}</a></div>
-        </div>
-        <EpCard title="风险解读" desc={`深度思考 ${data.read.think}`} className="mt-3.5">
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: 13, lineHeight: 1.8 }}>
-            {data.read.items.map((it) => (
-              <div key={it.k}>
-                <b style={{ color: '#0F172A' }}>{it.k}</b>
-                <span style={{ color: '#334155' }}>：{it.v}</span>
-              </div>
-            ))}
-          </div>
-          <div style={{ marginTop: 12, fontSize: 12, color: '#94A3B8' }}>{data.read.footer}</div>
-        </EpCard>
-        <EpCard title={data.read.notice.type} className="mt-3.5">
-          <dl style={{ margin: 0, fontSize: 13, display: 'grid', gridTemplateColumns: '90px 1fr', rowGap: 8 }}>
-            <dt style={dt}>案号</dt><dd style={{ margin: 0 }}>{data.read.notice.caseNo}</dd>
-            <dt style={dt}>公告日期</dt><dd style={{ margin: 0 }}>{data.read.notice.date}</dd>
-            <dt style={dt}>案由</dt><dd style={{ margin: 0 }}>{data.read.notice.cause}</dd>
-            <dt style={dt}>当事人</dt>
-            <dd style={{ margin: 0 }}>
-              {data.read.notice.parties.map((p) => (
-                <div key={p.name}><EpTag color="#475569" bg="#F1F5F9">{p.role}</EpTag> <span style={{ marginLeft: 6 }}>{p.name}</span></div>
-              ))}
-            </dd>
-          </dl>
-        </EpCard>
-      </EpDrawer>
 
       {/* 风险详情 */}
       <EpDrawer open={detailOpen} onClose={() => setDetailOpen(false)} title={`${cur?.subject ?? data.detail.name} 风险详情`} width={760}>
@@ -413,154 +518,102 @@ export default function FkRiskWarning({ params }: { params: URLSearchParams }) {
         </div>
       </EpDrawer>
 
-      {/* 风险预警详情（点击列表「风险内容」字段弹出） */}
-      <EpDrawer open={riskDetailOpen} onClose={() => setRiskDetailOpen(false)} width={760}>
-        {cur && (() => {
-          const d = (cur as unknown as Record<string, any>).detail as
-            | {
-                tag?: string
-                overview?: string
-                aiReading?: { status?: string; generating?: boolean; items?: string[] }
-                happenTime?: string
-                riskType?: string
-                affectRegions?: string[]
-                articleTitle?: string
-                article?: string
-              }
-            | undefined
-          return (
-            <div>
-              {/* 顶部：类型标签 + 标题 + 操作按钮 */}
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, flexWrap: 'wrap', marginBottom: 14 }}>
-                {d?.tag && <EpTag color="#C2410C" bg="#FFEDD5">{d.tag}</EpTag>}
-                <div style={{ flex: 1, minWidth: 280, fontSize: 16, fontWeight: 700, color: '#0F172A', lineHeight: 1.5 }}>{String(cur.title)}</div>
-                <span style={{ marginLeft: 'auto', display: 'inline-flex', gap: 8 }}>
-                  <EpBtn variant="ghost" size="sm">更多</EpBtn>
-                  <EpBtn variant="ghost" size="sm">风险推送</EpBtn>
-                  <EpBtn variant="primary" size="sm" onClick={() => { setRiskDetailOpen(false); setDetailOpen(true) }}>企业风险</EpBtn>
-                </span>
-              </div>
-
-              {/* 中部：风险等级 / 评分 / 负责人 */}
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, fontSize: 13, marginBottom: 12 }}>
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                  <span style={{ color: '#94A3B8' }}>风险等级：</span>
-                  <EpTag color={LEVEL[String(cur.level)]?.c} bg={LEVEL[String(cur.level)]?.b}>{String(cur.level)}</EpTag>
-                </span>
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                  <span style={{ color: '#94A3B8' }}>风险评分：</span>
-                  <b style={{ color: '#0F172A' }}>{cur.score}分</b>
-                </span>
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                  <span style={{ color: '#94A3B8' }}>负责人：</span>
-                  <span style={{ color: '#0F172A' }}>{String(cur.owner)}</span>
-                </span>
-              </div>
-              <div style={{ fontSize: 13, color: '#334155', lineHeight: 1.8, background: '#F8FAFC', border: '1px solid #F1F5F9', borderRadius: 10, padding: '12px 14px', marginBottom: 14, whiteSpace: 'normal' }}>
-                {d?.overview ?? String(cur.content)}
-              </div>
-
-              {/* AI 风险解读折叠面板 */}
-              <EpCard
-                title={
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-                    <span>AI 风险解读</span>
-                    <span style={{ padding: '1px 8px', borderRadius: 10, fontSize: 11, background: d?.aiReading?.generating ? '#FEF3C7' : '#DCFCE7', color: d?.aiReading?.generating ? '#92400E' : '#166534' }}>
-                      {d?.aiReading?.generating ? '解读中...' : 'AI生成'}
-                    </span>
-                  </span>
-                }
-                desc={
-                  <span style={{ cursor: 'pointer', fontSize: 12, color: '#2563EB' }} onClick={() => setAiExpand((v) => !v)}>
-                    {aiExpand ? '收起' : '展开'}
-                  </span>
-                }
-              >
-                {aiExpand && (
-                  <div style={{ fontSize: 13, color: '#334155', lineHeight: 1.9 }}>
-                    {(d?.aiReading?.items ?? ['正在为您解读']).map((it, i) => (
-                      <div key={i} style={{ display: 'flex', gap: 8 }}>
-                        <span style={{ color: '#94A3B8' }}>·</span>
-                        <span>{it}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </EpCard>
-
-              {/* 底部分栏：发生时间 / 风险类型 / 风险等级 / 影响范围 */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 10, margin: '14px 0' }}>
-                <div style={{ border: '1px solid #F1F5F9', borderRadius: 10, padding: '10px 12px' }}>
-                  <div style={{ fontSize: 12, color: '#94A3B8' }}>发生时间</div>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: '#0F172A', marginTop: 4 }}>{d?.happenTime ?? String(cur.happen)}</div>
-                </div>
-                <div style={{ border: '1px solid #F1F5F9', borderRadius: 10, padding: '10px 12px' }}>
-                  <div style={{ fontSize: 12, color: '#94A3B8' }}>风险类型</div>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: '#0F172A', marginTop: 4 }}>{d?.riskType ?? String(cur.type)}</div>
-                </div>
-                <div style={{ border: '1px solid #F1F5F9', borderRadius: 10, padding: '10px 12px' }}>
-                  <div style={{ fontSize: 12, color: '#94A3B8' }}>风险等级</div>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: '#0F172A', marginTop: 4 }}>
-                    <EpTag color={LEVEL[String(cur.level)]?.c} bg={LEVEL[String(cur.level)]?.b}>{String(cur.level)}</EpTag>
-                  </div>
-                </div>
-                <div style={{ border: '1px solid #F1F5F9', borderRadius: 10, padding: '10px 12px' }}>
-                  <div style={{ fontSize: 12, color: '#94A3B8' }}>影响范围</div>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: '#0F172A', marginTop: 4 }}>{(d?.affectRegions ?? []).join('、') || '-'}</div>
-                </div>
-              </div>
-
-              {/* 正文区：详细原文 + 查看原文 */}
-              <EpCard title={d?.articleTitle ?? String(cur.title)}>
-                <div style={{ fontSize: 13, color: '#334155', lineHeight: 1.9, whiteSpace: 'pre-wrap' }}>{d?.article ?? String(cur.content)}</div>
-                <a style={{ ...lk, fontSize: 12, marginTop: 8, display: 'inline-block' }}>查看原文 &gt;</a>
-              </EpCard>
-            </div>
-          )
-        })()}
-      </EpDrawer>
+      {/* 风险内容 / AI 解读 共用最终版弹窗 */}
+      <RiskContentDrawer
+        open={riskDetailOpen}
+        row={cur ? (cur as unknown as Record<string, any>) : null}
+        read={data.read as any}
+        onClose={() => setRiskDetailOpen(false)}
+        onCase={() => setCaseOpen(true)}
+        onCompanyRisk={() => { setRiskDetailOpen(false); setDetailOpen(true) }}
+      />
     </EpPage>
   )
 }
 
-function RadioGroup({ label, options, value, onChange }: { label?: string; options: string[]; value: string; onChange: (v: string) => void }) {
+function CareIcon() {
   return (
-    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-      {label && <span style={{ color: '#475569' }}>{label}</span>}
-      {options.map((o) => (
-        <label key={o} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, cursor: 'pointer', fontSize: 13, color: '#475569' }}>
-          <span style={{ width: 14, height: 14, borderRadius: '50%', border: `1px solid ${value === o ? '#2563EB' : '#CBD5E1'}`, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
-            {value === o && <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#2563EB' }} />}
+    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="6 9 12 15 18 9" />
+    </svg>
+  )
+}
+
+/* 文档风筛选条件：图标 + 标签 + 下拉面板 */
+function FilterChip({ k, kind, label, active, open, onOpen, onLabel, panel }: {
+  k: string
+  kind: 'radio' | 'check'
+  label: string
+  active: boolean
+  open: boolean
+  onOpen: (k: string) => void
+  onLabel?: () => void
+  panel?: React.ReactNode
+}) {
+  return (
+    <span style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
+      <span
+        onClick={() => (onLabel ? onLabel() : onOpen(k))}
+        style={{ display: 'inline-flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: 13, color: '#4E5969', userSelect: 'none', whiteSpace: 'nowrap' }}
+      >
+        {kind === 'radio' ? (
+          <span style={{ width: 14, height: 14, borderRadius: '50%', border: `1px solid ${active ? '#165DFF' : '#C9CDD4'}`, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: '#fff' }}>
+            {active && <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#165DFF' }} />}
           </span>
-          <span onClick={() => onChange(o)}>{o}</span>
-        </label>
-      ))}
+        ) : (
+          <span style={{ width: 14, height: 14, borderRadius: 3, border: `1px solid ${active ? '#165DFF' : '#C9CDD4'}`, background: active ? '#165DFF' : '#fff', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+            {active && (
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+            )}
+          </span>
+        )}
+        <span style={{ color: active ? '#165DFF' : '#4E5969' }}>{label}</span>
+        {panel !== undefined && <span style={{ display: 'inline-flex', color: active ? '#165DFF' : '#C9CDD4' }}><CareIcon /></span>}
+      </span>
+      {open && panel !== undefined && (
+        <>
+          <div style={{ position: 'fixed', inset: 0, zIndex: 39 }} onClick={() => onOpen('')} />
+          <div style={{ position: 'absolute', top: '100%', left: 0, zIndex: 40, minWidth: 176, marginTop: 4, background: '#fff', border: '1px solid #E5E6EB', borderRadius: 6, boxShadow: '0 4px 16px rgba(0,0,0,0.12)', padding: 6 }}>
+            {panel}
+          </div>
+        </>
+      )}
     </span>
   )
 }
 
-function CheckboxGroup({ label, options, value, onChange }: { label?: string; options: string[]; value: string[]; onChange: (v: string) => void }) {
+function FilterOpt({ label, checked, onChange, indent }: { label: string; checked: boolean; onChange: () => void; indent?: boolean }) {
   return (
-    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-      {label && <span style={{ color: '#475569' }}>{label}</span>}
-      {options.map((o) => {
-        const checked = value.includes(o)
-        return (
-          <label key={o} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, cursor: 'pointer', fontSize: 13, color: '#475569' }}>
-            <span style={{ width: 14, height: 14, borderRadius: 3, border: `1px solid ${checked ? '#2563EB' : '#CBD5E1'}`, background: checked ? '#2563EB' : '#fff', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
-              {checked && (
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="20 6 9 17 4 12" />
-                </svg>
-              )}
-            </span>
-            <span onClick={() => onChange(o)}>{o}</span>
-          </label>
-        )
-      })}
-    </span>
+    <div
+      onClick={onChange}
+      style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 8px', borderRadius: 4, cursor: 'pointer', fontSize: 13, color: checked ? '#165DFF' : '#1D2129', marginLeft: indent ? 14 : 0 }}
+    >
+      <span style={{ width: 14, height: 14, borderRadius: 3, border: `1px solid ${checked ? '#165DFF' : '#C9CDD4'}`, background: checked ? '#165DFF' : '#fff', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+        {checked && (
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
+        )}
+      </span>
+      <span>{label}</span>
+    </div>
   )
 }
+
+function FilterRadioOpt({ label, checked, onChange }: { label: string; checked: boolean; onChange: () => void }) {
+  return (
+    <div onClick={onChange} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 8px', borderRadius: 4, cursor: 'pointer', fontSize: 13, color: checked ? '#165DFF' : '#1D2129' }}>
+      <span style={{ width: 14, height: 14, borderRadius: '50%', border: `1px solid ${checked ? '#165DFF' : '#C9CDD4'}`, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+        {checked && <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#165DFF' }} />}
+      </span>
+      <span>{label}</span>
+    </div>
+  )
+}
+
+const RISK_TYPE_LIST = ['不限', '基本信息', '经营风险', '司法风险', '经营信息', '企业舆情', '供应链风险', '关联方风险', '关键词舆情']
 
 const tab = (on: boolean): React.CSSProperties => ({
   cursor: 'pointer',

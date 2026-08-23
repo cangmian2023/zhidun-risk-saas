@@ -9,7 +9,7 @@ const seed = {
     status: '存续',
     logoText: '博',
     qixinScore: '362',
-    tags: ['启信分：362分', '发票抬头', '集团', '小微企业(官方）', '民营企业', '园区企业', '失信被执行人', '被执行人', '终本案件', '限制高消费', '司法拍卖', '破产案件', '非正常户', '网红经济', '有商标', '全部标签(26)'],
+    tags: ['企业健康度：362分', '发票抬头', '集团', '小微企业(官方）', '民营企业', '园区企业', '失信被执行人', '被执行人', '终本案件', '限制高消费', '司法拍卖', '破产案件', '非正常户', '网红经济', '有商标', '全部标签(26)'],
     info: {
       '统一社会信用代码': '91440106074639077N',
       '电话': '13360551699',
@@ -106,7 +106,7 @@ export default function FkProperty({ params }: { params: URLSearchParams }) {
           variant="primary"
           size="sm"
           onClick={() => alert('开始查询')}
-          style={{ background: '#F59E0B', borderColor: '#F59E0B', display: 'inline-flex', alignItems: 'center', gap: 6 }}
+          style={{ background: '#2563EB', borderColor: '#2563EB', display: 'inline-flex', alignItems: 'center', gap: 6 }}
         >
           <IconSearch />
           开始查询
@@ -285,7 +285,7 @@ export default function FkProperty({ params }: { params: URLSearchParams }) {
 function CompanyTag({ text }: { text: string }) {
   const riskTags = ['失信被执行人', '被执行人', '终本案件', '限制高消费', '司法拍卖', '破产案件', '非正常户']
   const isRisk = riskTags.includes(text)
-  const isMain = text.startsWith('启信分')
+  const isMain = text.startsWith('企业健康度')
   return (
     <span style={{
       fontSize: 12, padding: '2px 8px', borderRadius: 4,

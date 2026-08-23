@@ -96,7 +96,7 @@ export default function FkHealthCheck({ params }: { params: URLSearchParams }) {
             <a style={{ ...lk, marginLeft: 6 }}>更多</a>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 10, marginTop: 12 }}>
-            <EpStat label="启信分 · 信用等级" value={data.company.score} sub={data.company.scoreRank} accent="#0F766E" />
+            <EpStat label="企业健康度 · 信用等级" value={data.company.score} sub={data.company.scoreRank} accent="#0F766E" />
             <EpStat label="空壳指数" value={`${data.company.shell}（${data.company.shellLevel}）`} sub="空壳风险 / 空壳等级" />
             <EpStat label="合同违约指数" value={data.company.default} sub={`合同诉讼：${data.company.defaultAmount}`} />
           </div>

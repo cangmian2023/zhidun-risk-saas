@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>启信慧眼 企业对比</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Microsoft YaHei", system-ui, sans-serif;
+            font-size: 12px;
+        }
+        body {
+            background-color: #f5f6fe;
+            color: #333;
+        }
+        /* 顶部导航栏 */
+        .top-nav {
+            display: flex;
+            align-items: center;
+            background: #fff;
+            padding: 8px 16px;
+            gap: 8px;
+            border-bottom: 1px solid #e8e8f0;
+        }
+        .logo-box {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 8px;
+            font-weight: bold;
+            color: #165DFF;
+        }
+        .tab-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            background: #fff;
+        }
+        .tab-item.active {
+            background: #edf2ff;
+            border-color: #c7d2fe;
+        }
+        .tab-close {
+            cursor: pointer;
+            color: #999;
+            margin-left: 4px;
+        }
+        .add-tab {
+            color: #165DFF;
+            border: 1px solid #e2e8f0;
+            padding: 4px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        /* 主体布局 */
+        .container {
+            display: flex;
+            padding: 16px;
+            gap: 16px;
+        }
+        /* 左侧侧边菜单 */
+        .sidebar {
+            width: 80px;
+            background: #fff;
+            border-radius: 6px;
+            padding: 8px 0;
+        }
+        .sidebar-item {
+            text-align: center;
+            padding: 8px 0;
+            color: #666;
+            cursor: pointer;
+        }
+        .sidebar-item.active {
+            color: #165DFF;
+            font-weight: 500;
+        }
+        /* 右侧主内容 */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .panel {
+            background: #fff;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        .panel-header {
+            padding: 8px 12px;
+            font-weight: bold;
+            font-size: 13px;
+            border-bottom: 1px solid #e8e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .toggle-row {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            color: #666;
+            font-weight: normal;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        td {
+            border: 1px solid #eee;
+            padding: 7px 10px;
+            vertical-align: top;
+        }
+        td:first-child {
+            background-color: #fafafc;
+            width: 120px;
+            color: #555;
+        }
+        .tag-green {
+            color: #009944;
+            background: #e8f8ee;
+            padding: 1px 4px;
+            border-radius: 3px;
+        }
+        .tag-blue {
+            color: #165DFF;
+        }
+        .tag-orange {
+            color: #ff7d00;
+            background: #fff3e8;
+            padding: 1px 4px;
+            border-radius: 3px;
+        }
+        .link-text {
+            color: #165DFF;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="top-nav">
+        <div class="logo-box">
+            <span>启信慧眼</span>
+        </div>
+        <div class="tab-item">福建新意科技有限公司 <span class="tab-close">×</span></div>
+        <div class="tab-item active">天衍医疗器材有限公司 <span class="tab-close">×</span></div>
+        <div class="add-tab">+ 添加企业</div>
+    </div>
+    <div class="container">
+        <div class="sidebar">
+            <div class="sidebar-item active">工商信息</div>
+            <div class="sidebar-item">实力扫描</div>
+            <div class="sidebar-item">司法风险</div>
+            <div class="sidebar-item">经营风险</div>
+            <div class="sidebar-item">经营信息</div>
+            <div class="sidebar-item">资质许可</div>
+            <div class="sidebar-item">知识产权</div>
+            <div class="sidebar-item">新闻舆情</div>
+        </div>
+        <div class="main-content">
+            <!-- 工商信息 -->
+            <div class="panel">
+                <div class="panel-header">
+                    |工商信息
+                    <div class="toggle-row">隐藏相同数据 <input type="checkbox"></div>
+                </div>
+                <table>
+                    <tr>
+                        <td>成立日期</td>
+                        <td>1997-12-02</td>
+                        <td>2016-03-28</td>
+                        <td>-</td>
+                        <td>-</td>
+                    </tr>
+                    <tr>
+                        <td>经营状态</td>
+                        <td>存续（在营、开业、在册）</td>
+                        <td>存续（在营、开业、在册）</td>
+                        <td>-</td>
+                        <td>-</td>
+                    </tr>
+                    <tr>
+                        <td>注册资本</td>
+                        <td>5000 万人民币</td>
+                        <td>1820 万美元</td>
+                        <td>-</td>
+                        <td>-</td>
+                    </tr>
+                    <tr>
+                        <td>实缴资本</td>
+                        <td>5000 万人民币</td>
+                        <td>1820 万美元</td>
+                        <td>-</td>
+                        <td>-</td>
+                    </tr>
+                    <tr>
+                        <td>企业标签</td>
+                        <td>高新企业,新意科技集团,股权投资,A级纳税人,外资背景企业</td>
+                        <td>高新企业,爱康醫療國際集團,小微企业,A级纳税人,港澳台背景企业</td>
+                        <td>-</td>
+                        <td>-</td>
+                    </tr>
+                    <tr>
+                        <td>企业类型</td>
+                        <td>有限责任公司（外商投资、非独资）</td>
+                        <td>有限责任公司（港澳台法人独资）</td>
+                        <td>-</td>
+                        <td>-</td>
+                    </tr>
+                    <tr>
+                        <td>所属行业</td>
+                        <td>其他软件开发</td>
+                        <td>医药及医疗器材批发</td>
+                        <td>-</td>
+                        <td>-</td>
+                    </tr>
+                    <tr>
+                        <td>工商变更</td>
+                        <td>19</td>
+                        <td>8</td>
+                        <td>-</td>
+                        <td>-</td>
+                    </tr>
+                    <tr>
+                        <td>法定代表人</td>
+                        <td>邱一心 <br>他有9家企业</td>
+                        <td>赖湧斌 <br>他有2家企业</td>
+                        <td>-</td>
+                        <td>-</td>
+                    </tr>
+                    <tr>
+                        <td>社保人数</td>
+                        <td>383</td>
+                        <td>209</td>
+                        <td>-</td>
+                        <td>-</td>
+                    </tr>
+                    <tr>
+                        <td>企业地址</td>
+                        <td>福州市鼓楼区六一北路558号金三桥大厦8层 <span class="link-text">查看地图</span></td>
+                        <td>常州西太湖科技产业园长顺路506号 <span class="link-text">查看地图</span></td>
+                        <td>-</td>
+                        <td>-</td>
+                    </tr>
+                    <tr>
+                        <td>分支机构</td>
+                        <td>7</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>-</td>
+                    </tr>
+                    <tr>
+                        <td>参股控股</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>-</td>
+                    </tr>
+                    <tr>
+                        <td>对外投资</td>
+                        <td>5</td>
+                        <td>2</td>
+                        <td>-</td>
+                        <td>-</td>
+                    </tr>
+                    <tr>
+                        <td>主要人员</td>
+                        <td>7</td>
+                        <td>3</td>
+                        <td>-</td>
+                        <td>-</td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- 实力扫描 -->
+            <div class="panel">
+                <div class="panel-header">|实力扫描</div>
+                <table>
+                    <tr>
+                        <td>启信分</td>
+                        <td>742 <span class="tag-green">企业实力 优秀</span></td>
+                        <td>712 <span class="tag-green">企业实力 优秀</span></td>
+                        <td>-</td>
+                        <td>-</td>
+                    </tr>
+                    <tr>
+                        <td>司法风险</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>-</td>
+                    </tr>
+                    <tr>
+                        <td>合同违约指数</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>-</td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- 司法风险 -->
+            <div class="panel">
+                <div class="panel-header">|司法风险</div>
+                <table>
+                    <tr>
+                        <td>立案信息</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>-</td>
+                    </tr>
+                    <tr>
+                        <td>开庭公告</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>-</td>
+                    </tr>
+                    <tr>
+                        <td>裁判文书</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>-</td>
+                    </tr>
+                    <tr>
+                        <td>被执行人</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>-</td>
+                    </tr>
+                    <tr>
+                        <td>失信被执行人</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>-</td>
+                    </tr>
+                    <tr>
+                        <td>股权冻结</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>-</td>
+                    </tr>
+                    <tr>
+                        <td>限高消费</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>-</td>
+                    </tr>
+                    <tr>
+                        <td>终本案件</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>-</td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- 经营风险 -->
+            <div class="panel">
+                <div class="panel-header">|经营风险</div>
+                <table>
+                    <tr>
+                        <td>经营异常</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>-</td>
+                    </tr>
+                    <tr>
+                        <td>严重违法失信</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>-</td>
+                    </tr>
+                    <tr>
+                        <td>行政处罚</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>-</td>
+                    </tr>
+                    <tr>
+                        <td>违法违规建设</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>-</td>
+                    </tr>
+                    <tr>
+                        <td>环保处罚</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>-</td>
+                    </tr>
+                    <tr>
+                        <td>股权出质</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>-</td>
+                    </tr>
+                    <tr>
+                        <td>动产抵押</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>-</td>
+                    </tr>
+                    <tr>
+                        <td>欠税信息</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>-</td>
+                    </tr>
+                    <tr>
+                        <td>重大税收违法</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>-</td>
+                    </tr>
+                    <tr>
+                        <td>土地质押</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>-</td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- 经营信息 -->
+            <div class="panel">
+                <div class="panel-header">|经营信息</div>
+                <table>
+                    <tr>
+                        <td>企业年报</td>
+                        <td>13</td>
+                        <td>10</td>
+                        <td>-</td>
+                        <td>-</td>
+                    </tr>
+                    <tr>
+                        <td>融资信息</td>
+                        <td>2</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>-</td>
+                    </tr>
+                    <tr>
+                        <td>供应商</td>
+                        <td>1</td>
+                        <td>29</td>
+                        <td>-</td>
+                        <td>-</td>
+                    </tr>
+                    <tr>
+                        <td>客户</td>
+                        <td>30</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>-</td>
+                    </tr>
+                    <tr>
+                        <td>竞争对手</td>
+                        <td>29</td>
+                        <td>900</td>
+                        <td>-</td>
+                        <td>-</td>
+                    </tr>
+                    <tr>
+                        <td>债券信息</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>-</td>
+                    </tr>
+                    <tr>
+                        <td>空壳指数</td>
+                        <td><span class="tag-orange">低风险</span></td>
+                        <td><span class="tag-orange">低风险</span></td>
+                        <td>-</td>
+                        <td>-</td>
+                    </tr>
+                    <tr>
+                        <td>招投标</td>
+                        <td>518</td>
+                        <td>76</td>
+                        <td>-</td>
+                        <td>-</td>
+                    </tr>
+                    <tr>
+                        <td>品牌产品</td>
+                        <td>1</td>
+                        <td>1</td>
+                        <td>-</td>
+                        <td>-</td>
+                    </tr>
+                    <tr>
+                        <td>微信公众号</td>
+                        <td>1</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>-</td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- 资质许可 -->
+            <div class="panel">
+                <div class="panel-header">|资质许可</div>
+                <table>
+                    <tr>
+                        <td>资质证书</td>
+                        <td>5</td>
+                        <td>32</td>
+                        <td>-</td>
+                        <td>-</td>
+                    </tr>
+                    <tr>
+                        <td>行政许可</td>
+                        <td>4</td>
+                        <td>13</td>
+                        <td>-</td>
+                        <td>-</td>
+                    </tr>
+                    <tr>
+                        <td>A级纳税人</td>
+                        <td>是 <span class="link-text">查看历史</span></td>
+                        <td>否 <span class="link-text">查看历史</span></td>
+                        <td>-</td>
+                        <td>-</td>
+                    </tr>
+                    <tr>
+                        <td>一般纳税人资格</td>
+                        <td>是</td>
+                        <td>是</td>
+                        <td>-</td>
+                        <td>-</td>
+                    </tr>
+                    <tr>
+                        <td>小微企业</td>
+                        <td>否</td>
+                        <td>是</td>
+                        <td>-</td>
+                        <td>-</td>
+                    </tr>
+                    <tr>
+                        <td>高新企业</td>
+                        <td>是</td>
+                        <td>是</td>
+                        <td>-</td>
+                        <td>-</td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- 知识产权 -->
+            <div class="panel">
+                <div class="panel-header">|知识产权</div>
+                <table>
+                    <tr>
+                        <td>专利信息</td>
+                        <td>5</td>
+                        <td>149</td>
+                        <td>-</td>
+                        <td>-</td>
+                    </tr>
+                    <tr>
+                        <td>商标信息</td>
+                        <td>23</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>-</td>
+                    </tr>
+                    <tr>
+                        <td>著作权信息</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>-</td>
+                    </tr>
+                    <tr>
+                        <td>域名信息</td>
+                        <td>2</td>
+                        <td>1</td>
+                        <td>-</td>
+                        <td>-</td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- 新闻舆情 -->
+            <div class="panel">
+                <div class="panel-header">|新闻舆情</div>
+                <table>
+                    <tr>
+                        <td>舆情动态</td>
+                        <td>82</td>
+                        <td>45</td>
+                        <td>-</td>
+                        <td>-</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

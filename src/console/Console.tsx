@@ -270,8 +270,6 @@ export default function Console() {
     'dm:park-portrait': 'pie',
     'dm:park-detail': 'eye',
     'dm:park-clue': 'zoom',
-    'dm:green-fin': 'trend',
-    'dm:rural-revive': 'pulse',
     'dm:market-list': 'list',
     'dm:market-list-detail': 'eye',
     'dm:market-list-board': 'dashboard',
@@ -430,15 +428,21 @@ export default function Console() {
     logout()
     nav('/login')
   }
+  // 各子系统默认首页：管理中心=规则合集｜企业风控=风险预警｜数字营销=AI营销
+  const subHome = (key: string) =>
+    key === 'cm' ? 'rule-hub' : key === 'ep' ? 'fk-risk-warning' : key === 'dm' ? 'ai-marketing' : 'overview'
   function switchSub(key: string) {
-    // 管理中心默认落到「规则合集」（原 pre-verify-config 旧规则配置页已删除）
-    nav(`/console/${key}/${key === 'cm' ? 'rule-hub' : 'overview'}`)
+    nav(`/console/${key}/${subHome(key)}`)
   }
 
-  // 管理中心：访问 /console/cm/overview（旧入口/书签）时重定向到规则合集
+  // 旧 overview 入口（书签/旧链接）重定向到各子系统新首页
   useEffect(() => {
     if (sub === 'cm' && cur === 'overview') {
       nav('/console/cm/rule-hub', { replace: true })
+    } else if (sub === 'ep' && cur === 'overview') {
+      nav('/console/ep/fk-risk-warning', { replace: true })
+    } else if (sub === 'dm' && cur === 'overview') {
+      nav('/console/dm/ai-marketing', { replace: true })
     }
   }, [sub, cur, nav])
 

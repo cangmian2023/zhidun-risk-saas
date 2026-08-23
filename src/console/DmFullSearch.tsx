@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { PageShell } from './PageShell'
+import { RightDrawer } from '../components/ui'
 import {
   SEARCH_KEYWORD, STATS, ENTERPRISES,
   PERSON_RESULTS, PERSON_SEARCH_KEYWORD, PERSON_STATS_TOTAL,
@@ -145,7 +146,7 @@ function EntCardView({ card, go }: { card: EntCard; go: ReturnType<typeof useGo>
 
       {/* 标签行 */}
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, margin: '10px 0' }}>
-        <span style={{ fontSize: 12, color: C.primary, background: '#eef3ff', border: `1px solid ${C.primary}33`, padding: '2px 8px', borderRadius: 4, fontWeight: 600 }}>启信分 {card.score}</span>
+        <span style={{ fontSize: 12, color: C.primary, background: '#eef3ff', border: `1px solid ${C.primary}33`, padding: '2px 8px', borderRadius: 4, fontWeight: 600 }}>企业健康度 {card.score}</span>
         {card.tags.map((t, i) => (
           <span key={i} style={{ fontSize: 12, color: C.sub, background: '#f5f5f5', border: `1px solid ${C.border}`, padding: '2px 8px', borderRadius: 4 }}>{t}</span>
         ))}
@@ -306,7 +307,7 @@ const BIZ_FILTERS: BizFilterDef[] = [
   { key: 'insured', label: '参保人数', type: 'range', unit: '人' },
   { key: 'regCap', label: '注册资本', type: 'range', unit: '万元' },
   { key: 'estab', label: '成立时间', type: 'date' },
-  { key: 'score', label: '启信分', type: 'range', unit: '分' },
+  { key: 'score', label: '企业健康度', type: 'range', unit: '分' },
   { key: 'dishonest', label: '失信被执行人', type: 'yn' },
   { key: 'executed', label: '被执行人', type: 'yn' },
   { key: 'ended', label: '终本案件', type: 'yn' },
@@ -464,18 +465,19 @@ function RiskField({ label, children }: { label: string; children?: ReactNode })
 }
 
 /* 风险条目多模板动态渲染：judicial / tax / court / other 兜底 */
-function RiskCard({ r, kw, checked, onToggle, go }: { r: RiskResult; kw: string; checked: boolean; onToggle: () => void; go: ReturnType<typeof useGo> }) {
+function RiskCard({ r, kw, checked, onToggle, go, onTitleClick }: { r: RiskResult; kw: string; checked: boolean; onToggle: () => void; go: ReturnType<typeof useGo>; onTitleClick?: () => void }) {
+  const titleText = r.type === 'court' ? (r.caseNo || '') : (r.title || (r.type === 'other' ? '未知风险类型条目' : ''))
   return (
     <div style={{ display: 'flex', gap: 10, padding: '13px 16px', background: '#fff', borderBottom: `1px solid ${C.border}`, transition: 'background .15s' }}
       onMouseEnter={(e) => (e.currentTarget.style.background = '#fafcff')}
       onMouseLeave={(e) => (e.currentTarget.style.background = '#fff')}>
       <input type="checkbox" checked={checked} onChange={onToggle} style={{ marginTop: 4, accentColor: C.primary }} />
       <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 15, fontWeight: 700, color: C.text, marginBottom: 6, wordBreak: 'break-all', cursor: onTitleClick ? 'pointer' : 'default' }} title={titleText} onClick={onTitleClick}>
+          <Highlight text={titleText} kw={kw} />
+        </div>
         {r.type === 'judicial' && (
           <>
-            <div style={{ fontSize: 15, fontWeight: 700, color: C.text, marginBottom: 6, wordBreak: 'break-all' }} title={r.title}>
-              <Highlight text={r.title || ''} kw={kw} />
-            </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '2px 0', marginBottom: 4 }}>
               <RiskField label="发布日期">{r.date}</RiskField>
               <RiskField label="公告法院">{r.court}</RiskField>
@@ -491,9 +493,6 @@ function RiskCard({ r, kw, checked, onToggle, go }: { r: RiskResult; kw: string;
         )}
         {r.type === 'tax' && (
           <>
-            <div style={{ fontSize: 15, fontWeight: 700, color: C.text, marginBottom: 6, wordBreak: 'break-all' }} title={r.title}>
-              <Highlight text={r.title || ''} kw={kw} />
-            </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '2px 0', marginBottom: 4 }}>
               <RiskField label="欠税类型">{r.taxType}</RiskField>
               <RiskField label="欠税余额">{r.balance ? r.balance + ' 元' : undefined}</RiskField>
@@ -504,9 +503,6 @@ function RiskCard({ r, kw, checked, onToggle, go }: { r: RiskResult; kw: string;
         )}
         {r.type === 'court' && (
           <>
-            <div style={{ fontSize: 15, fontWeight: 700, color: C.text, marginBottom: 6, wordBreak: 'break-all' }} title={r.caseNo}>
-              <Highlight text={r.caseNo || ''} kw={kw} />
-            </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '2px 0', marginBottom: 4 }}>
               <RiskField label="开庭日期">{r.date}</RiskField>
               <RiskField label="案由"><Highlight text={r.cause || ''} kw={kw} /></RiskField>
@@ -525,9 +521,6 @@ function RiskCard({ r, kw, checked, onToggle, go }: { r: RiskResult; kw: string;
         )}
         {r.type === 'other' && (
           <>
-            <div style={{ fontSize: 15, fontWeight: 700, color: C.text, marginBottom: 6, wordBreak: 'break-all' }} title={r.title}>
-              <Highlight text={r.title || '未知风险类型条目'} kw={kw} />
-            </div>
             <div style={{ fontSize: 13, color: C.text, wordBreak: 'break-all' }} title={r.desc}>
               {r.desc ?? '该风险源暂不支持结构化展示，点击查看详情。'}
             </div>
@@ -535,6 +528,69 @@ function RiskCard({ r, kw, checked, onToggle, go }: { r: RiskResult; kw: string;
           </>
         )}
       </div>
+    </div>
+  )
+}
+
+/* 风险详情抽屉表格单元 */
+function DTh({ children, style }: { children?: React.ReactNode; style?: React.CSSProperties }) {
+  return <th style={{ border: '1px solid #E5E6EB', padding: '18px 20px', background: '#F7F8FA', color: '#4E5969', fontSize: 17, fontWeight: 600, width: 110, whiteSpace: 'nowrap', verticalAlign: 'middle', textAlign: 'left', ...style }}>{children}</th>
+}
+function DTd({ children, colSpan, style }: { children?: React.ReactNode; colSpan?: number; style?: React.CSSProperties }) {
+  return <td colSpan={colSpan} style={{ border: '1px solid #E5E6EB', padding: '18px 20px', color: '#1D2129', fontSize: 17, lineHeight: 1.6, verticalAlign: 'middle', textAlign: 'left', ...style }}>{children}</td>
+}
+
+/* 风险详情抽屉内容：法院公告明细（设计稿 1:1） */
+function RiskDetailContent({ r, go }: { r: RiskResult; go: ReturnType<typeof useGo> }) {
+  const parties = r.parties || []
+  const entities = r.entities || []
+  const content = r.content || r.desc || '（暂无详细公告内容）'
+  return (
+    <div style={{ padding: 24 }}>
+      <table style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
+        <colgroup>
+          <col style={{ width: 110 }} /><col /><col style={{ width: 110 }} /><col />
+        </colgroup>
+        <tbody>
+          <tr>
+            <DTh>案号</DTh><DTd>{r.caseNo || '-'}</DTd>
+            <DTh>公告日期</DTh><DTd>{r.date || '-'}</DTd>
+          </tr>
+          <tr>
+            <DTh>案由</DTh><DTd>{r.cause || '-'}</DTd>
+            <DTh>当事人</DTh>
+            <DTd>
+              {parties.length > 0 ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {parties.map((p, i) => (
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <span style={{ display: 'inline-flex', padding: '2px 10px', borderRadius: 4, fontSize: 15, fontWeight: 500, whiteSpace: 'nowrap', flexShrink: 0, background: p.role === '被告' ? '#FFECE8' : '#E8F3FF', color: p.role === '被告' ? '#F53F3F' : '#165DFF' }}>{p.role}</span>
+                      {p.kind === 'person' && (
+                        <span style={{ width: 24, height: 24, borderRadius: '50%', background: '#E8F3FF', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, overflow: 'hidden' }}>
+                          <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16" style={{ color: '#165DFF' }}><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" /></svg>
+                        </span>
+                      )}
+                      <a style={{ color: C.primary, cursor: 'pointer', fontWeight: 600 }} onClick={() => (p.kind === 'ent' ? go.ent(p.name) : go.person(p.name))}>{p.name}</a>
+                    </div>
+                  ))}
+                </div>
+              ) : entities.length > 0 ? (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                  {entities.map((e, i) => <a key={i} style={{ color: C.primary, cursor: 'pointer' }} onClick={() => (e.kind === 'ent' ? go.ent(e.name) : go.person(e.name))}>{e.name}</a>)}
+                </div>
+              ) : '-'}
+            </DTd>
+          </tr>
+          <tr>
+            <DTh>公告类型</DTh><DTd>{r.noticeType || '-'}</DTd>
+            <DTh>公告法院</DTh><DTd>{r.court || '-'}</DTd>
+          </tr>
+          <tr>
+            <DTh style={{ verticalAlign: 'top', paddingTop: 24 }}>公告内容</DTh>
+            <DTd colSpan={3} style={{ verticalAlign: 'top', padding: '20px 24px', fontSize: 17, lineHeight: 1.85, textAlign: 'justify' }}>{content}</DTd>
+          </tr>
+        </tbody>
+      </table>
     </div>
   )
 }
@@ -592,6 +648,26 @@ function hl(text: string, kw: string): ReactNode {
   </>)
 }
 
+/* ---------- Font Awesome → 内联 SVG 图标（CDN 不可用，转内联） ---------- */
+const FA_PATHS: Record<string, string> = {
+  save: 'M17 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7l-4-4zm-5 16a3 3 0 1 1 0-6 3 3 0 0 1 0 6zm3-10H5V5h10v4z',
+  trash: 'M6 7h12l-1 14H7L6 7zm3-4h6l1 2H8l1-2z',
+  plus: 'M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z',
+  info: 'M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z',
+  caretDown: 'M7 10l5 5 5-5z',
+  search: 'M15.5 14h-.79l-.28-.27a6.5 6.5 0 1 0-.7.7l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0A4.5 4.5 0 1 1 14 9.5 4.5 4.5 0 0 1 9.5 14z',
+  fileText: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z',
+  download: 'M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z',
+  user: 'M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10zm0 2c-4 0-8 2-8 5v1h16v-1c0-3-4-5-8-5z',
+}
+function FaIcon({ name, size = 14, color }: { name: string; size?: number; color?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" width={size} height={size} fill={color || 'currentColor'} aria-hidden style={{ display: 'inline-block', verticalAlign: 'middle' }}>
+      <path d={FA_PATHS[name] || ''} />
+    </svg>
+  )
+}
+
 /* ---------- 多选筛选下拉（舆情/研报通用） ---------- */
 function MultiFilterDropdown({ label, options, value, onChange, accent }: { label: string; options: string[]; value: string[]; onChange: (n: string[]) => void; accent: string }) {
   const [open, setOpen] = useState(false)
@@ -622,33 +698,39 @@ function MultiFilterDropdown({ label, options, value, onChange, accent }: { labe
 
 /* ---------- 舆情条目卡片 ---------- */
 const PUB_SENT_COLOR: Record<PubSentiment, { c: string; bg: string }> = {
-  积极: { c: C.green, bg: C.greenBg },
-  中立: { c: C.primary, bg: '#eef3ff' },
-  消极: { c: C.red, bg: '#fff1f0' },
-  未知: { c: C.ph, bg: '#fafafa' },
+  积极: { c: '#166534', bg: '#86EFAC' },
+  中立: { c: '#1e40af', bg: '#BFDBFE' },
+  消极: { c: '#991b1b', bg: '#fecaca' },
+  未知: { c: '#555', bg: '#e5e7eb' },
 }
-function PubCard({ item, kw }: { item: PublicOpinion; kw: string }) {
+const PUB_CAT_COLOR: Record<string, { c: string; bg: string }> = {
+  科技: { c: '#fff', bg: '#84CC16' },
+}
+const PUB_AUTH_COLOR: Record<string, { c: string; bg: string }> = {
+  'A级': { c: '#fff', bg: '#3B82F6' },
+  'B级': { c: '#fff', bg: '#6366F1' },
+  'C级': { c: '#fff', bg: '#9CA3AF' },
+}
+function PubCard({ item, kw, onOpen }: { item: PublicOpinion; kw: string; onOpen?: () => void }) {
   const sc = PUB_SENT_COLOR[item.sentiment]
+  const cat = PUB_CAT_COLOR[item.category] || { c: C.sub, bg: '#d1d5db' }
+  const auth = PUB_AUTH_COLOR[item.authority] || { c: '#fff', bg: '#9CA3AF' }
   return (
-    <div style={{ background: '#fafbfc', border: `1px solid ${C.border}`, borderRadius: 8, padding: '12px 16px', marginBottom: 12, transition: 'background .2s' }}
-      onMouseEnter={(e) => (e.currentTarget.style.background = '#f0f3f7')}
-      onMouseLeave={(e) => (e.currentTarget.style.background = '#fafbfc')}>
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ color: C.text, fontWeight: 700, fontSize: 15, cursor: 'pointer' }} title={item.title}>{hl(item.title, kw)}</span>
-            <span style={{ fontSize: 12, color: sc.c, background: sc.bg, border: `1px solid ${sc.c}33`, padding: '1px 8px', borderRadius: 4, flexShrink: 0 }}>{item.sentiment}</span>
-          </div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, margin: '8px 0' }}>
-            <span style={{ fontSize: 12, color: C.green, background: C.greenBg, border: `1px solid ${C.green}33`, padding: '2px 8px', borderRadius: 4 }}>{item.category}</span>
-            <span style={{ fontSize: 12, color: C.primary, background: '#eef3ff', border: `1px solid ${C.primary}33`, padding: '2px 8px', borderRadius: 4 }}>{item.authority}</span>
-            {item.topics.map((t) => (
-              <span key={t} style={{ fontSize: 12, color: C.sub, background: '#f5f5f5', border: `1px solid ${C.border}`, padding: '2px 8px', borderRadius: 4, cursor: 'pointer' }}>#{t}</span>
-            ))}
-          </div>
+    <div onClick={onOpen} style={{ borderBottom: `1px solid ${C.border}`, padding: '12px 4px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16, cursor: 'pointer', transition: 'background .2s' }}
+      onMouseEnter={(e) => (e.currentTarget.style.background = '#f7f9fc')}
+      onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ fontSize: 16, color: C.text }} title={item.title}>{hl(item.title, kw)}</span>
+          <span style={{ fontSize: 12, color: sc.c, background: sc.bg, padding: '1px 8px', borderRadius: 4, flexShrink: 0 }}>{item.sentiment}</span>
         </div>
-        <div style={{ fontSize: 13, color: C.ph, flexShrink: 0, paddingTop: 2, whiteSpace: 'nowrap' }}>{item.date.slice(5)}</div>
+        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 6, marginTop: 8 }}>
+          <span style={{ fontSize: 12, color: cat.c, background: cat.bg, padding: '1px 6px', borderRadius: 4 }}>{item.category}</span>
+          <span style={{ fontSize: 12, color: auth.c, background: auth.bg, padding: '1px 6px', borderRadius: 4 }}>{item.authority}</span>
+          <span style={{ fontSize: 12, color: C.sub }}>{item.topics.map((t) => `#${t}`).join(' ')}</span>
+        </div>
       </div>
+      <span style={{ fontSize: 13, color: C.ph, flexShrink: 0, paddingTop: 2, whiteSpace: 'nowrap' }}>{item.date.slice(5)}</span>
     </div>
   )
 }
@@ -662,12 +744,15 @@ function ReportCard({ item, kw }: { item: ResearchReport; kw: string }) {
       onMouseLeave={(e) => (e.currentTarget.style.background = '#fff')}>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          {item.isNew && <span style={{ fontSize: 12, color: C.green, background: C.greenBg, border: `1px solid ${C.green}33`, padding: '1px 6px', borderRadius: 4, flexShrink: 0 }}>新</span>}
-          <span style={{ color: C.text, fontWeight: 700, fontSize: 15, cursor: 'pointer' }} title={item.title}>{hl(item.title, kw)}</span>
+          {item.isNew && <span style={{ fontSize: 12, color: '#166534', background: '#BBF7D0', padding: '1px 6px', borderRadius: 4, flexShrink: 0 }}>新</span>}
+          <span style={{ color: C.text, fontWeight: 600, fontSize: 16, cursor: 'pointer' }} title={item.title}>{hl(item.title, kw)}</span>
         </div>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px 14px', marginTop: 8, fontSize: 13, color: C.sub }}>
-          <span style={{ color: C.orange, background: C.orangeBg, border: `1px solid ${C.orange}33`, padding: '1px 8px', borderRadius: 4 }}>{item.category}</span>
-          <span style={{ color: C.primary, background: '#eef3ff', border: `1px solid ${C.primary}33`, padding: '1px 8px', borderRadius: 4 }}>{item.reportType}</span>
+        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 6, marginTop: 8, fontSize: 13, color: C.sub }}>
+          <span style={{ color: '#5c3d00', background: '#FBBF24', padding: '1px 8px', borderRadius: 4 }}>{item.category}</span>
+          <span style={{ color: '#1e3a8a', background: '#93C5FD', padding: '1px 8px', borderRadius: 4 }}>{item.reportType}</span>
+          {(item.features || []).map((f) => (
+            <span key={f} style={{ color: '#1e3a8a', background: '#93C5FD', padding: '1px 8px', borderRadius: 4 }}>{f}</span>
+          ))}
           <span>{item.date}</span>
           <span>{item.org}</span>
           <span>共{item.pages}页</span>
@@ -704,6 +789,17 @@ export default function DmFullSearch() {
   const [bizCond, setBizCond] = useState<Record<string, any>>({})
   const [bizChecked, setBizChecked] = useState<Record<number, boolean>>({})
   const [bizPage, setBizPage] = useState(1)
+  // 高级搜索（条件组合构造器）
+  const [bizAdvOuter, setBizAdvOuter] = useState<'全部' | '任一'>('全部')
+  const [bizAdvOuterConds, setBizAdvOuterConds] = useState<{ field: string; op: string; value: string }[]>([
+    { field: '企业名称', op: '包含', value: '' },
+    { field: '法人代表', op: '不包含', value: '' },
+  ])
+  const [bizAdvInner, setBizAdvInner] = useState<'任一' | '全部'>('任一')
+  const [bizAdvInnerConds, setBizAdvInnerConds] = useState<{ field: string; op: string }[]>([
+    { field: '进出口信息', op: '请选择' },
+    { field: '动产抵押', op: '请选择' },
+  ])
   // 风险模块状态
   const [riskKeyword, setRiskKeyword] = useState('')
   const [riskSearchPanel, setRiskSearchPanel] = useState<'batch' | 'advanced' | null>(null)
@@ -719,6 +815,7 @@ export default function DmFullSearch() {
   const [riskMoreOpen, setRiskMoreOpen] = useState(false)
   const [riskExportFormat, setRiskExportFormat] = useState<'csv' | 'json'>('csv')
   const [riskExportFields, setRiskExportFields] = useState<Record<string, boolean>>(Object.fromEntries(RISK_EXPORT_FIELDS.map((f) => [f, true])))
+  const [riskDetail, setRiskDetail] = useState<RiskResult | null>(null) // 点击风险标题打开的法院公告详情
 
   const toggleAllFilters = () => {
     if (filterPanelOpen) {
@@ -776,6 +873,7 @@ export default function DmFullSearch() {
   const [pubAuth, setPubAuth] = useState<string[]>([])
   const [pubPage, setPubPage] = useState(1)
   const [pubLoading, setPubLoading] = useState(false)
+  const [pubDetail, setPubDetail] = useState<PublicOpinion | null>(null)
   const doPubSearch = () => { setPubPage(1); setPubLoading(true); window.setTimeout(() => setPubLoading(false), 450) }
   const resetPub = () => { setPubKeyword(''); setPubSearchPanel(null); setPubTime(''); setPubDate({ from: '', to: '' }); setPubCat([]); setPubSent([]); setPubTopic([]); setPubAuth([]); setPubPage(1); setPubLoading(false) }
 
@@ -931,8 +1029,8 @@ export default function DmFullSearch() {
                 <span style={{ fontSize: 13, color: C.sub }}>排序：</span>
                 <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} style={{ border: `1px solid ${C.border}`, borderRadius: 4, padding: '6px 8px', color: C.text }}>
                   <option value="default">默认排序</option>
-                  <option value="scoreDesc">启信分从高到低</option>
-                  <option value="scoreAsc">启信分从低到高</option>
+                  <option value="scoreDesc">企业健康度从高到低</option>
+                  <option value="scoreAsc">企业健康度从低到高</option>
                   <option value="regNew">注册时间最新</option>
                 </select>
               </div>
@@ -945,7 +1043,7 @@ export default function DmFullSearch() {
                       <tr style={{ background: '#fafafa', color: C.sub }}>
                         <th style={{ borderBottom: `1px solid ${C.border}`, padding: '8px 10px', textAlign: 'left' }}>企业名称</th>
                         <th style={{ borderBottom: `1px solid ${C.border}`, padding: '8px 10px', textAlign: 'left' }}>状态</th>
-                        <th style={{ borderBottom: `1px solid ${C.border}`, padding: '8px 10px', textAlign: 'left' }}>启信分</th>
+                        <th style={{ borderBottom: `1px solid ${C.border}`, padding: '8px 10px', textAlign: 'left' }}>企业健康度</th>
                         <th style={{ borderBottom: `1px solid ${C.border}`, padding: '8px 10px', textAlign: 'left' }}>法定代表人</th>
                         <th style={{ borderBottom: `1px solid ${C.border}`, padding: '8px 10px', textAlign: 'left' }}>注册资本</th>
                       </tr>
@@ -985,7 +1083,7 @@ export default function DmFullSearch() {
           <div style={{ background: '#fff', border: `1px solid ${C.border}`, borderRadius: 8, padding: 14, marginBottom: 12 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
               <input value={keyword} onChange={(e) => setKeyword(e.target.value)} placeholder="请输入自然人姓名，检索同名人员主体" style={{ flex: 1, minWidth: 220, maxWidth: 420, border: `1px solid ${C.border}`, borderRadius: 4, padding: '7px 10px' }} />
-              <button onClick={() => setPage(1)} style={{ background: C.yellow, color: C.yellowText, border: 'none', borderRadius: 4, padding: '8px 18px', cursor: 'pointer', fontSize: 14, fontWeight: 600 }}>查询</button>
+              <button onClick={() => setPage(1)} style={{ background: C.primary, color: '#fff', border: 'none', borderRadius: 4, padding: '8px 18px', cursor: 'pointer', fontSize: 14, fontWeight: 600 }}>查询</button>
               <div style={{ display: 'flex', gap: 12 }}>
                 <a style={{ color: C.sub, fontSize: 13, cursor: 'pointer' }}>批量搜索</a>
                 <a style={{ color: C.sub, fontSize: 13, cursor: 'pointer' }}>高级搜索</a>
@@ -1027,7 +1125,7 @@ export default function DmFullSearch() {
           <div style={{ background: '#fff', border: `1px solid ${C.border}`, borderRadius: 8, padding: 14, marginBottom: 12 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
               <input value={bizKeyword} onChange={(e) => setBizKeyword(e.target.value)} placeholder={BIZ_KEYWORD_PLACEHOLDER} style={{ flex: 1, minWidth: 240, maxWidth: 420, border: `1px solid ${C.border}`, borderRadius: 4, padding: '7px 10px' }} />
-              <button onClick={() => { setBizPage(1); setActiveBizFilter(null) }} style={{ background: C.yellow, color: C.yellowText, border: 'none', borderRadius: 4, padding: '8px 18px', cursor: 'pointer', fontSize: 14, fontWeight: 600 }}>查询</button>
+              <button onClick={() => { setBizPage(1); setActiveBizFilter(null) }} style={{ background: C.primary, color: '#fff', border: 'none', borderRadius: 4, padding: '8px 18px', cursor: 'pointer', fontSize: 14, fontWeight: 600 }}>查询</button>
               <div style={{ display: 'flex', gap: 14, marginLeft: 6 }}>
                 <a onClick={() => setBizSearchPanel(bizSearchPanel === 'batch' ? null : 'batch')} style={{ color: bizSearchPanel === 'batch' ? C.primary : C.sub, fontSize: 13, cursor: 'pointer' }}>批量搜索</a>
                 <a onClick={() => setBizSearchPanel(bizSearchPanel === 'advanced' ? null : 'advanced')} style={{ color: bizSearchPanel === 'advanced' ? C.primary : C.sub, fontSize: 13, cursor: 'pointer' }}>高级搜索</a>
@@ -1045,22 +1143,86 @@ export default function DmFullSearch() {
                     </div>
                   </>
                 ) : (
-                  <>
-                    <div style={{ fontWeight: 600, color: C.text, marginBottom: 8 }}>高级搜索：组合多维度条件精准定位商机</div>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px 16px', marginBottom: 8 }}>
-                      <select style={{ border: `1px solid ${C.border}`, borderRadius: 4, padding: '6px 8px', color: C.text }}><option>商机类型</option><option>新成立公司</option><option>备案核投资项目-进程</option><option>新增中标</option><option>新增供应商/项目</option></select>
-                      <select style={{ border: `1px solid ${C.border}`, borderRadius: 4, padding: '6px 8px', color: C.text }}><option>所在行业</option><option>制造业</option><option>软件和信息技术服务业</option><option>批发和零售业</option><option>建筑业</option></select>
-                      <select style={{ border: `1px solid ${C.border}`, borderRadius: 4, padding: '6px 8px', color: C.text }}><option>省份地区</option><option>广东</option><option>江苏</option><option>浙江</option><option>北京</option></select>
-                      <select style={{ border: `1px solid ${C.border}`, borderRadius: 4, padding: '6px 8px', color: C.text }}><option>企业类型</option><option>有限责任公司</option><option>股份有限公司</option><option>个体工商户</option></select>
-                      <input type="date" style={{ border: `1px solid ${C.border}`, borderRadius: 4, padding: '5px 8px' }} />
-                      <span style={{ color: C.sub, lineHeight: '30px' }}>—</span>
-                      <input type="date" style={{ border: `1px solid ${C.border}`, borderRadius: 4, padding: '5px 8px' }} />
+                  <div style={{ fontSize: 13, color: C.text }}>
+                    {/* 查询条件标题 + 保存 */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                      <div style={{ fontWeight: 600 }}>查询条件</div>
+                      <button onClick={() => setBizSearchPanel(null)} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: '#FFC107', color: '#5c3d00', border: 'none', borderRadius: 4, padding: '6px 12px', cursor: 'pointer', fontWeight: 600 }}>
+                        <FaIcon name="save" size={13} /> 保存查询条件
+                      </button>
                     </div>
-                    <div style={{ display: 'flex', gap: 8 }}>
-                      <button onClick={() => setBizSearchPanel(null)} style={{ background: C.primary, color: '#fff', border: 'none', borderRadius: 4, padding: '5px 16px', cursor: 'pointer' }}>确定检索</button>
-                      <button onClick={() => setBizSearchPanel(null)} style={{ background: '#fff', border: `1px solid ${C.border}`, color: C.sub, borderRadius: 4, padding: '5px 16px', cursor: 'pointer' }}>取消</button>
+
+                    {/* 关键词行 */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                      <span style={{ width: 64, color: C.sub, flexShrink: 0 }}>关键词</span>
+                      <input placeholder="请输入主营业务/产品关键词，最多5个" style={{ width: 360, border: `1px solid ${C.border}`, borderRadius: 4, padding: '6px 8px', boxSizing: 'border-box' }} />
                     </div>
-                  </>
+
+                    <hr style={{ border: 'none', borderTop: '1px dashed #e8e8e8', margin: '12px 0' }} />
+
+                    {/* 外层条件组 */}
+                    <div style={{ marginBottom: 4 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                        <span style={{ color: C.sub }}>满足下列</span>
+                        <select value={bizAdvOuter} onChange={(e) => setBizAdvOuter(e.target.value as '全部' | '任一')} style={{ border: `1px solid ${C.border}`, borderRadius: 4, padding: '5px 8px', color: C.text }}>
+                          <option>全部</option><option>任一</option>
+                        </select>
+                        <span style={{ color: C.sub }}>条件</span>
+                        <FaIcon name="info" size={13} color="#bbb" />
+                      </div>
+                      <div style={{ paddingLeft: 24, borderLeft: `1px solid ${C.border}` }}>
+                        {bizAdvOuterConds.map((c, i) => (
+                          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '12px 0' }}>
+                            <select value={c.field} onChange={(e) => setBizAdvOuterConds((s) => s.map((x, j) => j === i ? { ...x, field: e.target.value } : x))} style={{ width: 120, border: `1px solid ${C.border}`, borderRadius: 4, padding: '6px 8px', color: C.text }}>
+                              {['企业名称', '法人代表', '经营范围', '注册资本', '成立日期', '注册地址'].map((o) => <option key={o}>{o}</option>)}
+                            </select>
+                            <select value={c.op} onChange={(e) => setBizAdvOuterConds((s) => s.map((x, j) => j === i ? { ...x, op: e.target.value } : x))} style={{ width: 100, border: `1px solid ${C.border}`, borderRadius: 4, padding: '6px 8px', color: C.text }}>
+                              {['包含', '不包含'].map((o) => <option key={o}>{o}</option>)}
+                            </select>
+                            <input value={c.value} onChange={(e) => setBizAdvOuterConds((s) => s.map((x, j) => j === i ? { ...x, value: e.target.value } : x))} placeholder="请输入关键字" style={{ width: 220, border: `1px solid ${C.border}`, borderRadius: 4, padding: '6px 8px' }} />
+                            <button onClick={() => setBizAdvOuterConds((s) => s.filter((_, j) => j !== i))} style={{ color: '#bbb', background: 'none', border: 'none', cursor: 'pointer' }}><FaIcon name="trash" size={15} /></button>
+                          </div>
+                        ))}
+
+                        {/* 内层条件组 */}
+                        <div style={{ margin: '16px 0' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                            <span style={{ color: C.sub }}>满足下列</span>
+                            <select value={bizAdvInner} onChange={(e) => setBizAdvInner(e.target.value as '任一' | '全部')} style={{ border: `1px solid ${C.border}`, borderRadius: 4, padding: '5px 8px', color: C.text }}>
+                              <option>任一</option><option>全部</option>
+                            </select>
+                            <span style={{ color: C.sub }}>条件</span>
+                          </div>
+                          <div style={{ paddingLeft: 24, borderLeft: `1px solid ${C.border}` }}>
+                            {bizAdvInnerConds.map((c, i) => (
+                              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '12px 0' }}>
+                                <select value={c.field} onChange={(e) => setBizAdvInnerConds((s) => s.map((x, j) => j === i ? { ...x, field: e.target.value } : x))} style={{ width: 120, border: `1px solid ${C.border}`, borderRadius: 4, padding: '6px 8px', color: C.text }}>
+                                  {['进出口信息', '动产抵押', '股权冻结', '欠税信息', '行政处罚', '司法案件'].map((o) => <option key={o}>{o}</option>)}
+                                </select>
+                                <select value={c.op} onChange={(e) => setBizAdvInnerConds((s) => s.map((x, j) => j === i ? { ...x, op: e.target.value } : x))} style={{ width: 140, border: `1px solid ${C.border}`, borderRadius: 4, padding: '6px 8px', color: C.text }}>
+                                  {['请选择', '有', '无'].map((o) => <option key={o}>{o}</option>)}
+                                </select>
+                                <button onClick={() => setBizAdvInnerConds((s) => s.filter((_, j) => j !== i))} style={{ color: '#bbb', background: 'none', border: 'none', cursor: 'pointer' }}><FaIcon name="trash" size={15} /></button>
+                              </div>
+                            ))}
+                            <button onClick={() => setBizAdvInnerConds((s) => [...s, { field: '进出口信息', op: '请选择' }])} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: '#fff', border: `1px solid ${C.border}`, borderRadius: 4, padding: '5px 12px', color: C.sub, cursor: 'pointer', marginTop: 4 }}>
+                              <FaIcon name="plus" size={12} /> 添加条件 <FaIcon name="caretDown" size={12} />
+                            </button>
+                          </div>
+                        </div>
+
+                        <button onClick={() => setBizAdvOuterConds((s) => [...s, { field: '企业名称', op: '包含', value: '' }])} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: '#fff', border: `1px solid ${C.border}`, borderRadius: 4, padding: '5px 12px', color: C.sub, cursor: 'pointer', marginTop: 4 }}>
+                          <FaIcon name="plus" size={12} /> 添加条件 <FaIcon name="caretDown" size={12} />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* 底部按钮 */}
+                    <div style={{ display: 'flex', gap: 12, marginTop: 24 }}>
+                      <button onClick={() => setBizSearchPanel(null)} style={{ background: '#FFC107', color: '#5c3d00', border: 'none', borderRadius: 4, padding: '7px 24px', cursor: 'pointer', fontWeight: 600 }}>查询</button>
+                      <button onClick={() => { setBizAdvOuterConds([{ field: '企业名称', op: '包含', value: '' }, { field: '法人代表', op: '不包含', value: '' }]); setBizAdvInnerConds([{ field: '进出口信息', op: '请选择' }, { field: '动产抵押', op: '请选择' }]); setBizAdvOuter('全部'); setBizAdvInner('任一') }} style={{ background: '#fff', border: `1px solid ${C.border}`, color: C.sub, borderRadius: 4, padding: '7px 24px', cursor: 'pointer' }}>清空</button>
+                    </div>
+                  </div>
                 )}
               </div>
             )}
@@ -1132,7 +1294,7 @@ export default function DmFullSearch() {
           <div style={{ background: '#fff', border: `1px solid ${C.border}`, borderRadius: 8, padding: 14, marginBottom: 12 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
               <input value={riskKeyword} onChange={(e) => setRiskKeyword(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && doRiskSearch()} placeholder={RISK_KEYWORD_PLACEHOLDER} style={{ flex: 1, minWidth: 240, maxWidth: 420, border: `1px solid ${C.border}`, borderRadius: 4, padding: '7px 10px' }} />
-              <button onClick={doRiskSearch} style={{ background: C.yellow, color: C.yellowText, border: 'none', borderRadius: 4, padding: '8px 18px', cursor: 'pointer', fontSize: 14, fontWeight: 600 }}>查询</button>
+              <button onClick={doRiskSearch} style={{ background: C.primary, color: '#fff', border: 'none', borderRadius: 4, padding: '8px 18px', cursor: 'pointer', fontSize: 14, fontWeight: 600 }}>查询</button>
               <div style={{ display: 'flex', gap: 14, marginLeft: 6 }}>
                 <a onClick={() => setRiskSearchPanel(riskSearchPanel === 'batch' ? null : 'batch')} style={{ color: riskSearchPanel === 'batch' ? C.primary : C.sub, fontSize: 13, cursor: 'pointer' }}>批量搜索</a>
                 <a onClick={() => setRiskSearchPanel(riskSearchPanel === 'advanced' ? null : 'advanced')} style={{ color: riskSearchPanel === 'advanced' ? C.primary : C.sub, fontSize: 13, cursor: 'pointer' }}>高级搜索</a>
@@ -1272,7 +1434,8 @@ export default function DmFullSearch() {
                 const idx = RISK_RESULTS.indexOf(r)
                 return (
                   <RiskCard key={idx} r={r} kw={riskKeyword.trim()} checked={!!riskChecked[idx]}
-                    onToggle={() => setRiskChecked((s) => ({ ...s, [idx]: !s[idx] }))} go={go} />
+                    onToggle={() => setRiskChecked((s) => ({ ...s, [idx]: !s[idx] }))} go={go}
+                    onTitleClick={() => setRiskDetail(r)} />
                 )
               })}
             </div>
@@ -1298,7 +1461,7 @@ export default function DmFullSearch() {
           <div style={{ background: '#fff', border: `1px solid ${C.border}`, borderRadius: 8, padding: 14, marginBottom: 12 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
               <input value={pubKeyword} onChange={(e) => setPubKeyword(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && doPubSearch()} placeholder={PUBLIC_KEYWORD_PLACEHOLDER} style={{ flex: 1, minWidth: 240, maxWidth: 420, border: `1px solid ${C.border}`, borderRadius: 4, padding: '7px 10px' }} />
-              <button onClick={doPubSearch} style={{ background: C.yellow, color: C.yellowText, border: 'none', borderRadius: 4, padding: '8px 18px', cursor: 'pointer', fontSize: 14, fontWeight: 600 }}>查询</button>
+              <button onClick={doPubSearch} style={{ background: C.primary, color: '#fff', border: 'none', borderRadius: 4, padding: '8px 18px', cursor: 'pointer', fontSize: 14, fontWeight: 600 }}>查询</button>
               <div style={{ display: 'flex', gap: 14, marginLeft: 6 }}>
                 <a onClick={() => setPubSearchPanel(pubSearchPanel === 'batch' ? null : 'batch')} style={{ color: pubSearchPanel === 'batch' ? accent : C.sub, fontSize: 13, cursor: 'pointer' }}>批量搜索</a>
                 <a onClick={() => setPubSearchPanel(pubSearchPanel === 'advanced' ? null : 'advanced')} style={{ color: pubSearchPanel === 'advanced' ? accent : C.sub, fontSize: 13, cursor: 'pointer' }}>高级搜索</a>
@@ -1311,7 +1474,7 @@ export default function DmFullSearch() {
                     <div style={{ fontWeight: 600, color: C.text, marginBottom: 6 }}>批量搜索：每行输入一个关键词，提交后逐条检索舆情资讯</div>
                     <textarea rows={3} style={{ width: '100%', border: `1px solid ${C.border}`, borderRadius: 4, padding: 8, resize: 'vertical', boxSizing: 'border-box' }} placeholder={'手机\n华为\n小米'} />
                     <div style={{ marginTop: 8, display: 'flex', gap: 8 }}>
-                      <button onClick={() => { setPubSearchPanel(null); doPubSearch() }} style={{ background: C.yellow, color: C.yellowText, border: 'none', borderRadius: 4, padding: '5px 16px', cursor: 'pointer', fontWeight: 600 }}>开始批量检索</button>
+                      <button onClick={() => { setPubSearchPanel(null); doPubSearch() }} style={{ background: C.primary, color: '#fff', border: 'none', borderRadius: 4, padding: '5px 16px', cursor: 'pointer', fontWeight: 600 }}>开始批量检索</button>
                       <button onClick={() => setPubSearchPanel(null)} style={{ background: '#fff', border: `1px solid ${C.border}`, color: C.sub, borderRadius: 4, padding: '5px 16px', cursor: 'pointer' }}>取消</button>
                     </div>
                   </>
@@ -1324,7 +1487,7 @@ export default function DmFullSearch() {
                       <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><input type="number" placeholder="最少字数" style={{ border: `1px solid ${C.border}`, borderRadius: 4, padding: '6px 8px', width: 100 }} />—<input type="number" placeholder="最多字数" style={{ border: `1px solid ${C.border}`, borderRadius: 4, padding: '6px 8px', width: 100 }} /></span>
                     </div>
                     <div style={{ display: 'flex', gap: 8 }}>
-                      <button onClick={() => { setPubSearchPanel(null); doPubSearch() }} style={{ background: C.yellow, color: C.yellowText, border: 'none', borderRadius: 4, padding: '5px 16px', cursor: 'pointer', fontWeight: 600 }}>确定检索</button>
+                      <button onClick={() => { setPubSearchPanel(null); doPubSearch() }} style={{ background: C.primary, color: '#fff', border: 'none', borderRadius: 4, padding: '5px 16px', cursor: 'pointer', fontWeight: 600 }}>确定检索</button>
                       <button onClick={() => setPubSearchPanel(null)} style={{ background: '#fff', border: `1px solid ${C.border}`, color: C.sub, borderRadius: 4, padding: '5px 16px', cursor: 'pointer' }}>取消</button>
                     </div>
                   </>
@@ -1380,7 +1543,7 @@ export default function DmFullSearch() {
             </div>
           ) : (
             <div>
-              {pubFiltered.map((r, i) => <PubCard key={i} item={r} kw={pubKeyword.trim()} />)}
+              {pubFiltered.map((r, i) => <PubCard key={i} item={r} kw={pubKeyword.trim()} onOpen={() => setPubDetail(r)} />)}
             </div>
           )}
 
@@ -1404,7 +1567,7 @@ export default function DmFullSearch() {
           <div style={{ background: '#fff', border: `1px solid ${C.border}`, borderRadius: 8, padding: 14, marginBottom: 12 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
               <input value={repKeyword} onChange={(e) => setRepKeyword(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && doRepSearch()} placeholder={REPORT_KEYWORD_PLACEHOLDER} style={{ flex: 1, minWidth: 240, maxWidth: 420, border: `1px solid ${C.border}`, borderRadius: 4, padding: '7px 10px' }} />
-              <button onClick={doRepSearch} style={{ background: C.yellow, color: C.yellowText, border: 'none', borderRadius: 4, padding: '8px 18px', cursor: 'pointer', fontSize: 14, fontWeight: 600 }}>查询</button>
+              <button onClick={doRepSearch} style={{ background: C.primary, color: '#fff', border: 'none', borderRadius: 4, padding: '8px 18px', cursor: 'pointer', fontSize: 14, fontWeight: 600 }}>查询</button>
               <div style={{ display: 'flex', gap: 14, marginLeft: 6 }}>
                 <a onClick={() => setRepSearchPanel(repSearchPanel === 'batch' ? null : 'batch')} style={{ color: repSearchPanel === 'batch' ? accent : C.sub, fontSize: 13, cursor: 'pointer' }}>批量搜索</a>
                 <a onClick={() => setRepSearchPanel(repSearchPanel === 'advanced' ? null : 'advanced')} style={{ color: repSearchPanel === 'advanced' ? accent : C.sub, fontSize: 13, cursor: 'pointer' }}>高级搜索</a>
@@ -1417,7 +1580,7 @@ export default function DmFullSearch() {
                     <div style={{ fontWeight: 600, color: C.text, marginBottom: 6 }}>批量搜索：每行输入一个关键词，提交后逐条检索研报数据</div>
                     <textarea rows={3} style={{ width: '100%', border: `1px solid ${C.border}`, borderRadius: 4, padding: 8, resize: 'vertical', boxSizing: 'border-box' }} placeholder={'小米\n华为\n腾讯'} />
                     <div style={{ marginTop: 8, display: 'flex', gap: 8 }}>
-                      <button onClick={() => { setRepSearchPanel(null); doRepSearch() }} style={{ background: C.yellow, color: C.yellowText, border: 'none', borderRadius: 4, padding: '5px 16px', cursor: 'pointer', fontWeight: 600 }}>开始批量检索</button>
+                      <button onClick={() => { setRepSearchPanel(null); doRepSearch() }} style={{ background: C.primary, color: '#fff', border: 'none', borderRadius: 4, padding: '5px 16px', cursor: 'pointer', fontWeight: 600 }}>开始批量检索</button>
                       <button onClick={() => setRepSearchPanel(null)} style={{ background: '#fff', border: `1px solid ${C.border}`, color: C.sub, borderRadius: 4, padding: '5px 16px', cursor: 'pointer' }}>取消</button>
                     </div>
                   </>
@@ -1430,7 +1593,7 @@ export default function DmFullSearch() {
                       <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><input type="number" placeholder="最小(MB)" style={{ border: `1px solid ${C.border}`, borderRadius: 4, padding: '6px 8px', width: 90 }} />—<input type="number" placeholder="最大(MB)" style={{ border: `1px solid ${C.border}`, borderRadius: 4, padding: '6px 8px', width: 90 }} /></span>
                     </div>
                     <div style={{ display: 'flex', gap: 8 }}>
-                      <button onClick={() => { setRepSearchPanel(null); doRepSearch() }} style={{ background: C.yellow, color: C.yellowText, border: 'none', borderRadius: 4, padding: '5px 16px', cursor: 'pointer', fontWeight: 600 }}>确定检索</button>
+                      <button onClick={() => { setRepSearchPanel(null); doRepSearch() }} style={{ background: C.primary, color: '#fff', border: 'none', borderRadius: 4, padding: '5px 16px', cursor: 'pointer', fontWeight: 600 }}>确定检索</button>
                       <button onClick={() => setRepSearchPanel(null)} style={{ background: '#fff', border: `1px solid ${C.border}`, color: C.sub, borderRadius: 4, padding: '5px 16px', cursor: 'pointer' }}>取消</button>
                     </div>
                   </>
@@ -1542,6 +1705,105 @@ export default function DmFullSearch() {
           ↑
         </button>
       )}
+
+      {/* 舆情明细（点击舆情条目打开） */}
+      <RightDrawer open={!!pubDetail} onClose={() => setPubDetail(null)} title="舆情详情" width={900} level={2}>
+        {pubDetail && (() => {
+          const dLink = '#165DFF'
+          const dsc = { 积极: { bg: '#86EFAC', c: '#166534' }, 中立: { bg: '#dbeafe', c: '#2563eb' }, 消极: { bg: '#fecaca', c: '#991b1b' }, 未知: { bg: '#e5e7eb', c: '#555' } }[pubDetail.sentiment]
+          const dCat = pubDetail.category === '科技' ? { bg: '#84CC16', c: '#fff' } : { bg: '#d1d5db', c: C.sub }
+          const dAuth = { 'A级': { bg: '#3B82F6', c: '#fff' }, 'B级': { bg: '#6366F1', c: '#fff' }, 'C级': { bg: '#9CA3AF', c: '#fff' } }[pubDetail.authority] || { bg: '#9CA3AF', c: '#fff' }
+          const themeWords = ['#查看(26)', '#详情(26)', '#发布(19)', '#华为(17)', '#鸿蒙(17)']
+          const relatedOrgs = ['华为技术有限公司', '比亚迪股份有限公司', '阿里巴巴（中国）有限公司', '上海寻梦信息技术有限公司', '北京京东世纪贸易有限公司', '武汉联动设计股份有限公司', '京东物流股份有限公司']
+          const relatedPersons = ['余承东', '周杰伦', '冯骥', '曾清林', '古尔曼', '弗里亚尔', '王兴']
+          return (
+            <div style={{ display: 'flex', gap: 0 }}>
+              {/* 左侧详情主体 */}
+              <div style={{ flex: 1, minWidth: 0, paddingRight: 16 }}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+                  <h1 style={{ fontSize: 16, fontWeight: 400, color: C.text, margin: 0, flex: 1, minWidth: 280 }}>{pubDetail.title}</h1>
+                  <div style={{ display: 'flex', gap: 4 }}>
+                    <span style={{ fontSize: 12, color: dsc.c, background: dsc.bg, padding: '2px 8px', borderRadius: 4 }}>{pubDetail.sentiment}</span>
+                    <span style={{ fontSize: 12, color: dCat.c, background: dCat.bg, padding: '2px 8px', borderRadius: 4 }}>{pubDetail.category}</span>
+                    <span style={{ fontSize: 12, color: dAuth.c, background: dAuth.bg, padding: '2px 8px', borderRadius: 4 }}>{pubDetail.authority}</span>
+                  </div>
+                </div>
+
+                {/* 标签 + 来源时间 */}
+                <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 6, margin: '8px 0' }}>
+                  {pubDetail.topics.map((t) => (
+                    <span key={t} style={{ fontSize: 12, color: '#2563eb', background: '#eff6ff', border: '1px solid #dbeafe', padding: '1px 6px', borderRadius: 4 }}>{t}</span>
+                  ))}
+                  <span style={{ fontSize: 13, color: C.ph }}>{(pubDetail.date || '') + (pubDetail.source ? '  ' + pubDetail.source : '')}</span>
+                  <span style={{ marginLeft: 'auto', color: dLink, fontSize: 12, display: 'inline-flex', alignItems: 'center', gap: 4, cursor: 'pointer' }}>
+                    <FaIcon name="caretDown" size={12} color={dLink} />相关组织/人物/企业
+                  </span>
+                </div>
+
+                {/* 主题词栏 */}
+                <div style={{ background: '#f8fafc', padding: 8, borderRadius: 4, margin: '12px 0', display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
+                  <span style={{ color: C.ph, fontSize: 13 }}>主题词：</span>
+                  {themeWords.map((w) => (
+                    <span key={w} style={{ color: dLink, fontSize: 13, cursor: 'pointer' }}>{w}</span>
+                  ))}
+                </div>
+
+                {/* 查看原文 */}
+                <div style={{ margin: '8px 0' }}>
+                  <a style={{ color: dLink, fontSize: 13, cursor: 'pointer' }}>查看原文&gt;</a>
+                </div>
+
+                {/* 正文 */}
+                <div style={{ marginTop: 12, lineHeight: 1.8, fontSize: 14, color: C.text }}>
+                  <p style={{ marginBottom: 12 }}>“IT早报”时间，大家好，现在是 2026 年 8 月 21 日星期五，今天的重要科技资讯有：</p>
+                  <div style={{ marginBottom: 16 }}>
+                    <p style={{ fontSize: 15, fontWeight: 500, margin: '0 0 4px' }}>1. 曝奕境汽车南昌门店活动送仿版 Labubu，品牌总经理<span style={{ color: dLink }}>曾清林</span>发文回应</p>
+                    <p style={{ color: C.sub, margin: 0 }}>有网友反映奕境汽车南昌门店活动送出了仿版 Labubu。奕境汽车品牌总经理曾清林 8 月 20 日发文就此事进行了回应，称礼品管控、风险审核这套管理体系没有跟上业务增长的节奏，才造成这次失误，将向公司报告，申请采购一万件正版 Labubu，用于全国门店到店 / 试驾权益。&gt;&gt; 查看详情</p>
+                  </div>
+                  <div style={{ marginBottom: 16 }}>
+                    <p style={{ fontSize: 15, fontWeight: 500, margin: '0 0 4px' }}>2. 享界 G9 及鸿蒙智行新品发布会一文汇总：<span style={{ color: '#ef4444' }}>华为</span>首款阔直板惊喜亮相，<span style={{ color: dLink }}>余承东</span>狂甩“四张车牌”</p>
+                    <p style={{ color: C.sub, margin: 0 }}>在 8 月 20 日的鸿蒙智行新品发布会上，<span style={{ color: dLink }}>余承东</span>不仅带来了全新硬派 SUV 享界 G9，还预告了智界 RX、享界 V8，并发布了问界 M6 新版本。最令人惊喜的是，全球首款阔直板手机<span style={{ color: dLink }}>华为</span> Pura X View 也一同亮相，首发鸿蒙 HarmonyOS 7 系统。&gt;&gt; 查看详情</p>
+                  </div>
+                  <div style={{ marginBottom: 16 }}>
+                    <p style={{ fontSize: 15, fontWeight: 500, margin: '0 0 4px' }}>3. 《黑神话：钟馗》全新 15 分钟游戏实机演示公布，首次展示主角战斗与部分剧情片段</p>
+                    <p style={{ color: C.sub, margin: 0 }}>由游戏科学开发的黑神话系列第二部作品《黑神话：钟馗》，8 月 20 日带来全新 15 分钟游戏实机演示，首次展示主角战斗与部分剧情片段。&gt;&gt; 查看详情</p>
+                  </div>
+                  <div style={{ marginBottom: 16 }}>
+                    <p style={{ fontSize: 15, fontWeight: 500, margin: '0 0 4px' }}>4. 曝<span style={{ color: dLink }}>周杰伦</span>将代言 vivo 手机，广告片拍摄现场画面曝光</p>
+                    <p style={{ color: C.sub, margin: 0 }}>据博主 @周杰伦的床边故事推广大使 分享，<span style={{ color: dLink }}>周杰伦</span>正在给 vivo 手机拍摄广告片。有网友询问<span style={{ color: dLink }}>周杰伦</span>是否会代言 vivo 手机，博主称：“应该是，等官宣。” &gt;&gt; 查看详情</p>
+                  </div>
+                  <div>
+                    <p style={{ fontSize: 15, fontWeight: 500, margin: '0 0 4px' }}>5. 骁龙 8 Elite Gen 6/Pro？高通称将在骁龙峰会推出两款芯片</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* 右侧边栏 */}
+              <div style={{ width: 320, borderLeft: `1px solid ${C.border}`, paddingLeft: 16, flexShrink: 0 }}>
+                <div style={{ marginBottom: 24 }}>
+                  <h3 style={{ fontWeight: 500, paddingBottom: 8, borderBottom: `1px solid ${C.border}`, marginBottom: 12, fontSize: 14 }}>相关企业</h3>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8, fontSize: 13, color: C.text }}>
+                    {relatedOrgs.map((o) => <div key={o}>{o}</div>)}
+                  </div>
+                </div>
+                <div style={{ background: '#f8fafc', borderRadius: 4, padding: 12 }}>
+                  <h3 style={{ fontWeight: 500, paddingBottom: 8, borderBottom: `1px solid ${C.border}`, marginBottom: 12, fontSize: 14 }}>相关人物</h3>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12, fontSize: 13, color: C.text }}>
+                    {relatedPersons.map((p) => (
+                      <div key={p} style={{ display: 'flex', alignItems: 'center', gap: 8 }}><FaIcon name="user" size={14} color="#999" />{p}</div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )
+        })()}
+      </RightDrawer>
+
+      {/* 风险明细（点击风险条目标题打开 · 法院公告详情） */}
+      <RightDrawer open={!!riskDetail} onClose={() => setRiskDetail(null)} title="法院公告" width={820} level={2}>
+        {riskDetail && <RiskDetailContent r={riskDetail} go={go} />}
+      </RightDrawer>
     </div>
   )
 }

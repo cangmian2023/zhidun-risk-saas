@@ -51,7 +51,7 @@ export default function DmSupplyChain() {
       {/* ============ 筛选栏 ============ */}
       <div className="mb-4 flex items-center gap-9 bg-[#f5f6fa] px-4 py-3.5">
         <span className="cursor-pointer text-[16px] font-medium">基础信息</span>
-        {['启信分', '企业关系', '成立时间', '省份地区', '企业类型'].map((f) => (
+        {['企业健康度', '企业关系', '成立时间', '省份地区', '企业类型'].map((f) => (
           <span key={f} className="flex cursor-pointer items-center gap-1 text-[16px]">
             {f} <ArrowDown />
           </span>
@@ -78,7 +78,7 @@ export default function DmSupplyChain() {
             <th className={thCls}>供应商/客户</th>
             <th className={thCls}>查询/上传企业</th>
             <th className={thCls}>企业关系</th>
-            <th className={thCls}>启信分</th>
+            <th className={thCls}>企业健康度</th>
             <th className={thCls}>成立时间</th>
             <th className={thCls}>地区</th>
             <th className={thCls}>企业类型</th>

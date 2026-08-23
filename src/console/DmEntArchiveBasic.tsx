@@ -19,7 +19,7 @@ import EntIntellectualProperty from './EntIntellectualProperty'
 // ============ 企业摘要数据（比亚迪样例） ============
 const TAG_LINKS: { text: string; link?: boolean; badge?: string; dropdown?: boolean }[] = [
   { text: '曾用名', link: true },
-  { text: '启信分：840分' },
+  { text: '企业健康度：840分' },
   { text: '比亚迪 (002594.SZ)', link: true },
   { text: '比亚迪股份 (01211.HK)', link: true, badge: '港' },
   { text: '发票抬头', link: true },
@@ -71,7 +71,7 @@ const TABS = [
   {
     key: 'basic', label: '基本信息', count: '492',
     children: [
-      { key: 'qixin-map', label: '启信图谱' },
+      { key: 'qixin-map', label: '企业图谱' },
       { key: 'ic-info', label: '工商信息' },
       { key: 'shareholder', label: '股东信息', count: '12', history: true },
       { key: 'indirect-shareholder', label: '间接股东', count: '44' },
@@ -484,7 +484,7 @@ function M0QixinMap() {
   ]
   return (
     <div style={{ marginBottom: 40 }} id="section-qixin-map">
-      <ModuleTitle title="启信图谱" right={<span style={{ fontSize: 12, color: '#999' }}>企业关系图谱 · 数据来源：公开数据</span>} />
+      <ModuleTitle title="企业图谱" right={<span style={{ fontSize: 12, color: '#999' }}>企业关系图谱 · 数据来源：公开数据</span>} />
       <TableShell headers={['信息项', '内容', '信息项', '内容']}>
         {rows.map((r, i) => (
           <tr key={i}>

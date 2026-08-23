@@ -6,6 +6,7 @@ import { LineChart, DonutChart } from '../../../../components/charts'
 import type { Row, Column } from '../../../../components/ui'
 import seedJson from '../../../fkMonitorDetail.json'
 import { usePageNav } from '../../../pageNav'
+import { RiskContentDrawer } from '../components/RiskContentDrawer'
 
 type Data = typeof seedJson
 type Risk = Data['risks'][number]
@@ -32,7 +33,23 @@ export default function FkMonitorDetail({ params }: { params: URLSearchParams })
   const [markState, setMarkState] = useState<string[]>([])
   const [ruleState, setRuleState] = useState<string[]>([])
   const [riskTypes, setRiskTypes] = useState<string[]>(['不限'])
+  const [riskOpen, setRiskOpen] = useState(false)
+  const [cur, setCur] = useState<Risk | null>(null)
   const { back } = usePageNav()
+
+  // 已选条件 chips
+  const chips: { label: string; text: string; onRemove: () => void }[] = [
+    { label: timeKind, text: period, onRemove: () => { setTimeKind('推送时间'); setPeriod('近30天') } },
+    ...(levels.length ? [{ label: '风险等级', text: levels.join('、'), onRemove: () => setLevels([]) }] : []),
+    ...(readState.length ? [{ label: '阅读状态', text: readState.join('、'), onRemove: () => setReadState([]) }] : []),
+    ...(followState.length ? [{ label: '跟进状态', text: followState.join('、'), onRemove: () => setFollowState([]) }] : []),
+    ...(markState.length ? [{ label: '标记动态', text: markState.join('、'), onRemove: () => setMarkState([]) }] : []),
+    ...(ruleState.length ? [{ label: '监控规则', text: ruleState.join('、'), onRemove: () => setRuleState([]) }] : []),
+    ...(riskTypes.filter((t) => t !== '不限').length ? [{ label: '风险类型', text: riskTypes.filter((t) => t !== '不限').join('、'), onRemove: () => setRiskTypes(['不限']) }] : []),
+  ]
+  const resetFilters = () => {
+    setLevels([]); setReadState([]); setFollowState([]); setMarkState([]); setRuleState([]); setRiskTypes(['不限'])
+  }
 
   const toggle = (list: string[], setList: (v: string[]) => void, v: string) => {
     if (v === '不限') {
@@ -64,9 +81,12 @@ export default function FkMonitorDetail({ params }: { params: URLSearchParams })
   )
 
   const contentCell = (r: Row) => (
-    <div style={{ maxWidth: 520, whiteSpace: 'normal', lineHeight: 1.6 }}>
-      <div style={{ color: '#0F172A', fontWeight: 500, fontSize: 13 }}>{String(r.title)}</div>
-      <div style={{ color: '#64748B', fontSize: 12, marginTop: 2 }}>{String(r.content)}</div>
+    <div
+      style={{ maxWidth: 620, whiteSpace: 'normal', lineHeight: 1.7, cursor: 'pointer' }}
+      onClick={() => { setCur(r as unknown as Risk); setRiskOpen(true) }}
+    >
+      <div style={{ color: '#0F172A', fontWeight: 500, fontSize: 13, display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{String(r.title)}</div>
+      <div style={{ color: '#64748B', fontSize: 12, marginTop: 2, display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{String(r.content)}</div>
       {r.related && <span style={{ marginTop: 4, display: 'inline-block', padding: '1px 6px', borderRadius: 4, background: '#FEF3C7', color: '#B45309', fontSize: 11 }}>{String(r.related)}</span>}
     </div>
   )
@@ -150,6 +170,32 @@ export default function FkMonitorDetail({ params }: { params: URLSearchParams })
 
         {/* 右侧：原有风险内容 */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {/* 页面级时间筛选 */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: '#fff', border: '1px solid #F1F5F9', borderRadius: 10, padding: '10px 16px', flexWrap: 'wrap' }}>
+            <span style={{ fontSize: 13, color: '#0F172A', fontWeight: 600 }}>时间筛选</span>
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+              {TIMES.map((t) => (
+                <button
+                  key={t}
+                  onClick={() => setPeriod(t)}
+                  style={{
+                    padding: '4px 12px', borderRadius: 14, border: '1px solid ' + (period === t ? '#2563EB' : '#E2E8F0'),
+                    background: period === t ? '#EFF6FF' : '#fff', color: period === t ? '#2563EB' : '#64748B', fontSize: 12, cursor: 'pointer',
+                  }}
+                >
+                  {t}
+                </button>
+              ))}
+            </div>
+            <span style={{ width: 1, height: 18, background: '#E2E8F0', margin: '0 4px' }} />
+            <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#475569', cursor: 'pointer' }}>
+              <input type="radio" checked={timeKind === '推送时间'} onChange={() => setTimeKind('推送时间')} /> 推送时间
+            </label>
+            <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#475569', cursor: 'pointer' }}>
+              <input type="radio" checked={timeKind === '发生时间'} onChange={() => setTimeKind('发生时间')} /> 发生时间
+            </label>
+          </div>
+
           {/* 风险概览 */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14 }}>
         <EpCard>
@@ -179,31 +225,15 @@ export default function FkMonitorDetail({ params }: { params: URLSearchParams })
           </div>
         </EpCard>
         <EpCard>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-              <div style={{ width: 80, height: 80, borderRadius: '50%', background: 'conic-gradient(#EF4444 0% 0%, #EFF6FF 0% 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
-                <div style={{ width: 66, height: 66, borderRadius: '50%', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <span style={{ fontSize: 20, fontWeight: 700, color: '#EF4444' }}>{data.highRisk}</span>
-                </div>
-              </div>
-              <div>
-                <div style={{ fontSize: 13, color: '#64748B' }}>高风险</div>
-                <div style={{ fontSize: 24, fontWeight: 700, color: '#0F172A' }}>{data.highRisk}</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+            <div style={{ width: 80, height: 80, borderRadius: '50%', background: 'conic-gradient(#EF4444 0% 0%, #EFF6FF 0% 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+              <div style={{ width: 66, height: 66, borderRadius: '50%', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <span style={{ fontSize: 20, fontWeight: 700, color: '#EF4444' }}>{data.highRisk}</span>
               </div>
             </div>
-            <div style={{ display: 'flex', gap: 6 }}>
-              {TIMES.map((t) => (
-                <button
-                  key={t}
-                  onClick={() => setPeriod(t)}
-                  style={{
-                    padding: '4px 10px', borderRadius: 14, border: '1px solid ' + (period === t ? '#2563EB' : '#E2E8F0'),
-                    background: period === t ? '#EFF6FF' : '#fff', color: period === t ? '#2563EB' : '#64748B', fontSize: 12, cursor: 'pointer',
-                  }}
-                >
-                  {t}
-                </button>
-              ))}
+            <div>
+              <div style={{ fontSize: 13, color: '#64748B' }}>高风险</div>
+              <div style={{ fontSize: 24, fontWeight: 700, color: '#0F172A' }}>{data.highRisk}</div>
             </div>
           </div>
         </EpCard>
@@ -221,35 +251,39 @@ export default function FkMonitorDetail({ params }: { params: URLSearchParams })
 
       {/* 风险传导 */}
       <EpCard title="风险传导" style={{ marginBottom: 16 }}>
-        <div style={{ position: 'relative', height: 220 }}>
-          <svg width="100%" height="100%" viewBox="0 0 800 220">
-            {/* 连接线 */}
+        <div style={{ position: 'relative', height: 240 }}>
+          <svg width="100%" height="100%" viewBox="0 0 640 240">
+            {/* 连接线（整体居中偏移） */}
             {data.chain.links.map((l, i) => {
               const from = data.chain.nodes.find((n) => n.id === l.from)
               const to = data.chain.nodes.find((n) => n.id === l.to)
               if (!from || !to) return null
+              const fx = from.x + 80, fy = from.y + 40, tx = to.x + 80, ty = to.y + 40
               return (
                 <g key={i}>
-                  <line x1={from.x} y1={from.y} x2={to.x} y2={to.y} stroke="#CBD5E1" strokeWidth={2} strokeDasharray="6 4" />
-                  <rect x={(from.x + to.x) / 2 - 45} y={(from.y + to.y) / 2 - 11} width={90} height={22} rx={11} fill="#EFF6FF" stroke="#93C5FD" />
-                  <text x={(from.x + to.x) / 2} y={(from.y + to.y) / 2 + 4} textAnchor="middle" fontSize={11} fill="#2563EB">{l.label}</text>
+                  <line x1={fx} y1={fy} x2={tx} y2={ty} stroke="#CBD5E1" strokeWidth={2} strokeDasharray="6 4" />
+                  <rect x={(fx + tx) / 2 - 48} y={(fy + ty) / 2 - 12} width={96} height={24} rx={12} fill="#EFF6FF" stroke="#93C5FD" />
+                  <text x={(fx + tx) / 2} y={(fy + ty) / 2 + 4} textAnchor="middle" fontSize={11} fill="#2563EB">{l.label}</text>
                 </g>
               )
             })}
-            {/* 节点 */}
-            {data.chain.nodes.map((n) => (
-              <g key={n.id}>
-                <rect x={n.x - 70} y={n.y - 28} width={140} height={56} rx={8} fill="#fff" stroke="#E2E8F0" strokeWidth={1} />
-                <text x={n.x} y={n.y - 8} textAnchor="middle" fontSize={13} fontWeight={600} fill="#0F172A">{n.name}</text>
-                {n.tag && <text x={n.x} y={n.y + 12} textAnchor="middle" fontSize={11} fill="#2563EB">{n.tag}</text>}
-                {n.risk != null && (
-                  <text x={n.x} y={n.y + 12} textAnchor="middle" fontSize={11} fill="#64748B">
-                    风险分：<tspan fill="#F59E0B">{n.risk}</tspan> · 关联风险：<tspan fill="#F59E0B">{n.court}</tspan>
-                  </text>
-                )}
-                {n.date && <text x={n.x} y={n.y + 26} textAnchor="middle" fontSize={10} fill="#94A3B8">{n.date} · {n.person}</text>}
-              </g>
-            ))}
+            {/* 节点（放大并居中） */}
+            {data.chain.nodes.map((n) => {
+              const nx = n.x + 80, ny = n.y + 40
+              return (
+                <g key={n.id}>
+                  <rect x={nx - 80} y={ny - 31} width={160} height={62} rx={8} fill="#fff" stroke="#E2E8F0" strokeWidth={1} />
+                  <text x={nx} y={ny - 9} textAnchor="middle" fontSize={14} fontWeight={600} fill="#0F172A">{n.name}</text>
+                  {n.tag && <text x={nx} y={ny + 13} textAnchor="middle" fontSize={12} fill="#2563EB">{n.tag}</text>}
+                  {n.risk != null && (
+                    <text x={nx} y={ny + 13} textAnchor="middle" fontSize={12} fill="#64748B">
+                      风险分：<tspan fill="#F59E0B">{n.risk}</tspan> · 关联风险：<tspan fill="#F59E0B">{n.court}</tspan>
+                    </text>
+                  )}
+                  {n.date && <text x={nx} y={ny + 28} textAnchor="middle" fontSize={11} fill="#94A3B8">{n.date} · {n.person}</text>}
+                </g>
+              )
+            })}
           </svg>
         </div>
       </EpCard>
@@ -261,17 +295,11 @@ export default function FkMonitorDetail({ params }: { params: URLSearchParams })
           <div style={{ display: 'flex', gap: 20, marginBottom: 10 }}>
             <span style={{ fontSize: 13, color: '#0F172A', fontWeight: 500, whiteSpace: 'nowrap' }}>监控筛选</span>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px 18px', flex: 1 }}>
-              <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#475569', cursor: 'pointer' }}>
-                <input type="radio" checked={timeKind === '推送时间'} onChange={() => setTimeKind('推送时间')} /> 推送时间
-              </label>
-              <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#475569', cursor: 'pointer' }}>
-                <input type="radio" checked={timeKind === '发生时间'} onChange={() => setTimeKind('发生时间')} /> 发生时间
-              </label>
-              {['风险等级', '阅读状态', '跟进状态', '标记动态', '监控规则'].map((label) => (
-                <span key={label} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 13, color: '#475569', cursor: 'pointer' }}>
-                  <input type="checkbox" /> {label}
-                </span>
-              ))}
+              <FilterChip2 kind="check" label="风险等级" active={levels.length > 0} options={['高风险', '中风险', '低风险', '轻微风险']} value={levels} onChange={(v) => toggle(levels, setLevels, v)} />
+              <FilterChip2 kind="check" label="阅读状态" active={readState.length > 0} options={['已读', '未读']} value={readState} onChange={(v) => toggle(readState, setReadState, v)} />
+              <FilterChip2 kind="check" label="跟进状态" active={followState.length > 0} options={['未处理', '处理中', '已处理', '无需处理']} value={followState} onChange={(v) => toggle(followState, setFollowState, v)} />
+              <FilterChip2 kind="check" label="标记动态" active={markState.length > 0} options={['重点关注风险', '存在信用风险', '重大工商变更', '外部供应链风险']} value={markState} onChange={(v) => toggle(markState, setMarkState, v)} />
+              <FilterChip2 kind="check" label="监控规则" active={ruleState.length > 0} options={['企业征信默认规则(国内)', '企业征信默认规则(境外)', '外部供应链风险']} value={ruleState} onChange={(v) => toggle(ruleState, setRuleState, v)} />
             </div>
           </div>
           <div style={{ display: 'flex', gap: 20 }}>
@@ -287,10 +315,15 @@ export default function FkMonitorDetail({ params }: { params: URLSearchParams })
         </div>
 
         {/* 已选条件 */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12, fontSize: 13, color: '#64748B' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12, fontSize: 13, color: '#64748B', flexWrap: 'wrap' }}>
           <span>已选条件：</span>
-          <span style={{ padding: '3px 10px', background: '#F1F5F9', borderRadius: 12, color: '#0F172A', fontSize: 12 }}>推送时间：2026-07-20 至 2026-08-19 ×</span>
-          <button style={{ marginLeft: 'auto', color: '#64748B', fontSize: 12, border: 'none', background: 'transparent', cursor: 'pointer' }}>清空</button>
+          {chips.map((c, i) => (
+            <span key={i} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '3px 10px', background: '#F1F5F9', borderRadius: 12, color: '#0F172A', fontSize: 12 }}>
+              {c.label}：{c.text}
+              <span style={{ cursor: 'pointer', color: '#94A3B8' }} onClick={c.onRemove}>×</span>
+            </span>
+          ))}
+          <button style={{ marginLeft: 'auto', color: '#64748B', fontSize: 12, border: 'none', background: 'transparent', cursor: 'pointer' }} onClick={resetFilters}>清空</button>
         </div>
 
         {/* 表格 */}
@@ -298,6 +331,77 @@ export default function FkMonitorDetail({ params }: { params: URLSearchParams })
       </EpCard>
         </div>
       </div>
+
+      {/* 风险内容点击弹窗（与风险预警页共用同一弹窗） */}
+      <RiskContentDrawer
+        open={riskOpen}
+        row={cur ? (cur as unknown as Record<string, any>) : null}
+        onClose={() => setRiskOpen(false)}
+      />
     </EpPage>
+  )
+}
+
+/* ---------------- 筛选下拉组件 ---------------- */
+function FilterChip2({ kind, label, active, options, value, onChange }: {
+  kind: 'radio' | 'check'
+  label: string
+  active: boolean
+  options: string[]
+  value: string[]
+  onChange: (v: string) => void
+}) {
+  const [open, setOpen] = useState(false)
+  return (
+    <span style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
+      <span
+        onClick={() => setOpen((v) => !v)}
+        style={{ display: 'inline-flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: 13, color: '#4E5969', userSelect: 'none', whiteSpace: 'nowrap' }}
+      >
+        {kind === 'radio' ? (
+          <span style={{ width: 14, height: 14, borderRadius: '50%', border: `1px solid ${active ? '#165DFF' : '#C9CDD4'}`, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: '#fff' }}>
+            {active && <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#165DFF' }} />}
+          </span>
+        ) : (
+          <span style={{ width: 14, height: 14, borderRadius: 3, border: `1px solid ${active ? '#165DFF' : '#C9CDD4'}`, background: active ? '#165DFF' : '#fff', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+            {active && (
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+            )}
+          </span>
+        )}
+        <span style={{ color: active ? '#165DFF' : '#4E5969' }}>{label}</span>
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: active ? '#165DFF' : '#C9CDD4' }}>
+          <polyline points="6 9 12 15 18 9" />
+        </svg>
+      </span>
+      {open && (
+        <>
+          <div style={{ position: 'fixed', inset: 0, zIndex: 39 }} onClick={() => setOpen(false)} />
+          <div style={{ position: 'absolute', top: '100%', left: 0, zIndex: 40, minWidth: 176, marginTop: 4, background: '#fff', border: '1px solid #E5E6EB', borderRadius: 6, boxShadow: '0 4px 16px rgba(0,0,0,0.12)', padding: 6 }}>
+            {options.map((o) => {
+              const checked = value.includes(o)
+              return (
+                <div
+                  key={o}
+                  onClick={() => { onChange(o) }}
+                  style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 8px', borderRadius: 4, cursor: 'pointer', fontSize: 13, color: checked ? '#165DFF' : '#1D2129' }}
+                >
+                  <span style={{ width: 14, height: 14, borderRadius: 3, border: `1px solid ${checked ? '#165DFF' : '#C9CDD4'}`, background: checked ? '#165DFF' : '#fff', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    {checked && (
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                    )}
+                  </span>
+                  <span>{o}</span>
+                </div>
+              )
+            })}
+          </div>
+        </>
+      )}
+    </span>
   )
 }

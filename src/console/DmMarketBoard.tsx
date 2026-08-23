@@ -1,3 +1,5 @@
+import { useEffect, useRef, useState } from 'react'
+import * as echarts from 'echarts'
 import { PageShell } from './PageShell'
 
 /* ============ 图标（系统未引入 FontAwesome，按 HTML 视觉等价替换为内联 SVG） ============ */
@@ -33,6 +35,42 @@ const SortDescIcon = () => (
 const RANK_COLORS = ['#f56c6c', '#e6a23c', '#409eff', '#909399']
 const rankColor = (r: number) => RANK_COLORS[r - 1]
 
+/* ============ 数值解析：将 "1 5.00%" / "-" 解析为整数 ============ */
+const numOf = (s: string) => {
+  const m = s.trim().match(/^(\d+)/)
+  return m ? Number(m[1]) : 0
+}
+
+/* ============ ECharts 画布（init + setOption + resize + dispose） ============ */
+function EChart({ option, height = 300 }: { option: echarts.EChartsOption; height?: number }) {
+  const ref = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!ref.current) return
+    const inst = echarts.init(ref.current)
+    inst.setOption(option)
+    const onResize = () => inst.resize()
+    window.addEventListener('resize', onResize)
+    return () => {
+      window.removeEventListener('resize', onResize)
+      inst.dispose()
+    }
+  }, [option])
+  return <div ref={ref} style={{ width: '100%', height }} />
+}
+
+/* ============ 柱状图配置：各部门/各人 待营销/营销中/营销成功 ============ */
+type BarSeries = { name: string; data: number[] }
+function buildBarOption(categories: string[], series: BarSeries[]): echarts.EChartsOption {
+  return {
+    tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+    legend: { data: series.map((s) => s.name) },
+    grid: { left: 48, right: 24, bottom: 56, top: 40 },
+    xAxis: { type: 'category', data: categories, axisLabel: { interval: 0, rotate: 18 } },
+    yAxis: { type: 'value', minInterval: 1 },
+    series: series.map((s) => ({ name: s.name, type: 'bar', data: s.data, barMaxWidth: 28 })),
+  }
+}
+
 /* ============ 顶部指标卡（等价 HTML .stat-card / .stat-arrow） ============ */
 function StatCard({ children, last }: { children: React.ReactNode; last?: boolean }) {
   return (
@@ -60,6 +98,26 @@ const PERSON_ROWS: PersonRow[] = [
 ]
 
 export default function DmMarketBoard() {
+  const [deptChart, setDeptChart] = useState(false)
+  const [userChart, setUserChart] = useState(false)
+
+  const deptOption = buildBarOption(
+    DEPT_ROWS.map((d) => d.dept),
+    [
+      { name: '待营销', data: DEPT_ROWS.map((d) => numOf(d.wait)) },
+      { name: '营销中', data: DEPT_ROWS.map((d) => numOf(d.ing)) },
+      { name: '营销成功', data: DEPT_ROWS.map((d) => numOf(d.succ)) },
+    ],
+  )
+  const userOption = buildBarOption(
+    PERSON_ROWS.map((p) => p.name),
+    [
+      { name: '待营销', data: PERSON_ROWS.map((p) => numOf(p.wait)) },
+      { name: '营销中', data: PERSON_ROWS.map((p) => numOf(p.ing)) },
+      { name: '营销成功', data: PERSON_ROWS.map((p) => numOf(p.succ)) },
+    ],
+  )
+
   return (
     <div style={{ padding: 24, maxWidth: 2800, margin: '0 auto' }}>
       <PageShell title="营销看板" crumb="数字营销 / 营销管理" subtitle="营销核心指标实时看板：触达、转化与 ROI" legend={false} />
@@ -97,7 +155,10 @@ export default function DmMarketBoard() {
         <div className="flex items-center justify-between border-b px-4 py-3">
           <div className="flex items-center gap-3">
             <span className="font-medium">部门营销数据</span>
-            <button className="flex items-center gap-1 text-sm text-blue-500">
+            <button
+              className="flex items-center gap-1 text-sm text-blue-500"
+              onClick={() => setDeptChart((v) => !v)}
+            >
               <PieChartIcon /> 图表分析
             </button>
             <span className="text-sm text-gray-500">统计口径: 全部名单及线索，其中包含了个人可见的名单及线索。</span>
@@ -106,6 +167,11 @@ export default function DmMarketBoard() {
             <DownloadIcon /> 导出
           </button>
         </div>
+        {deptChart && (
+          <div className="border-t px-4 py-3">
+            <EChart option={deptOption} />
+          </div>
+        )}
         <table className="w-full text-sm">
           <thead className="bg-[#f7f8fc]">
             <tr>
@@ -141,7 +207,10 @@ export default function DmMarketBoard() {
         <div className="flex items-center justify-between border-b px-4 py-3">
           <div className="flex items-center gap-3">
             <span className="font-medium">个人排行榜</span>
-            <button className="flex items-center gap-1 text-sm text-blue-500">
+            <button
+              className="flex items-center gap-1 text-sm text-blue-500"
+              onClick={() => setUserChart((v) => !v)}
+            >
               <PieChartIcon /> 图表分析
             </button>
             <span className="text-sm text-gray-500">统计口径: 全部名单及线索，其中包含了个人可见的名单及线索。</span>
@@ -185,6 +254,11 @@ export default function DmMarketBoard() {
             ))}
           </tbody>
         </table>
+        {userChart && (
+          <div className="border-t px-4 py-3">
+            <EChart option={userOption} />
+          </div>
+        )}
       </div>
     </div>
   )

@@ -1,4 +1,4 @@
-// 企业尽调 · 常规筛查 + AI 尽调助手双 Tab（jd-company）
+// 企业尽调 · 常规筛查 + 尽调助手双 Tab（jd-company）
 // 数据：本地样例 jdCompany.json（橘 Sam）
 import { useState } from 'react'
 import { EpPage, EpCard, EpTag, EpBtn, useSample, Sam } from '../../epCommon'
@@ -36,7 +36,7 @@ const seed: Data = {
   pageTitle: '企业尽调',
   tabs: [
     { key: 'normal', label: '常规筛查' },
-    { key: 'ai', label: 'AI 尽调助手', badge: 'beta' },
+    { key: 'ai', label: '尽调助手' },
   ],
   activeTab: 'normal',
   topActions: { batchScreen: '批量筛查', settings: '筛查设置' },
@@ -342,7 +342,7 @@ export default function JdCompany({ params }: { params: URLSearchParams }) {
           </>
         )}
 
-        {/* AI 尽调助手 */}
+        {/* 尽调助手 */}
         {!isNormal && (
           <>
             {/* 输入卡片 */}

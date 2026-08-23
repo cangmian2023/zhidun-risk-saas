@@ -302,9 +302,9 @@ export default function FkInterest({ params }: { params: URLSearchParams }) {
           variant="primary"
           onClick={onCheck}
           style={{
-            background: '#F5B400',
-            borderColor: '#F5B400',
-            color: '#3A2A00',
+            background: '#2563EB',
+            borderColor: '#2563EB',
+            color: '#fff',
             fontWeight: 600,
             padding: '8px 28px',
             fontSize: 14,
@@ -338,7 +338,7 @@ export default function FkInterest({ params }: { params: URLSearchParams }) {
                     outline: 'none',
                   }}
                 />
-                <EpBtn variant="primary" style={{ background: '#F5B400', borderColor: '#F5B400', color: '#3A2A00' }}>
+                <EpBtn variant="primary" style={{ background: '#2563EB', borderColor: '#2563EB', color: '#fff' }}>
                   {data.table.exportBtn}
                 </EpBtn>
               </div>
@@ -528,7 +528,7 @@ function DetailModal({ row, labels, onClose }: { row: TableRow; labels: Data['de
           </EpBtn>
           <EpBtn
             variant="primary"
-            style={{ background: '#F5B400', borderColor: '#F5B400', color: '#3A2A00', fontWeight: 600 }}
+            style={{ background: '#2563EB', borderColor: '#2563EB', color: '#fff', fontWeight: 600 }}
           >
             {labels.download}
           </EpBtn>

@@ -2,7 +2,7 @@
   "pageTitle": "企业尽调",
   "tabs": [
     { "key": "normal", "label": "常规筛查" },
-    { "key": "ai", "label": "AI 尽调助手", "badge": "beta" }
+    { "key": "ai", "label": "尽调助手", "badge": "beta" }
   ],
   "activeTab": "normal",
   "normal": {

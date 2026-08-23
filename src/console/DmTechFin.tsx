@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { PageShell } from './PageShell'
 
@@ -36,7 +37,7 @@ const FILTER_GROUPS: FilterGroup[] = [
   { label: '注册资本', items: ['不限', '0-100万', '100-200万', '200-500万', '500-1000万', '100万以上', '200万以上', '500万以上', '1000万以上', '自定义 ▾'] },
   { label: '成立年限', items: ['不限', '1年内', '1-5年', '5-10年', '10-15年', '15年以上', '3年以上', '5年以上', '10年以上', '自定义 ▾'] },
   { label: '经营状态', items: ['不限', '存续', '迁出'] },
-  { label: '启信分', items: ['不限', '200-400分', '401-500分', '501-600分', '601-700分', '700分以上', '自定义 ▾'] },
+  { label: '企业健康度', items: ['不限', '200-400分', '401-500分', '501-600分', '601-700分', '700分以上', '自定义 ▾'] },
   { label: '经营信息', items: ['商机信息 ▾', '参保人数 ▾'] },
   { label: '经营标签', items: ['资金扩张 ▾', '业务扩张 ▾', '人员扩张 ▾', '地域扩张 ▾', '业务概念 ▾', '技术领先 ▾', '政府扶持和奖励 ▾'] },
 ]
@@ -47,6 +48,7 @@ const btnViewCls = 'cursor-pointer rounded border border-[#d1d5e0] bg-white px-3
 
 export default function DmTechFin() {
   const nav = useNavigate()
+  const [filterOpen, setFilterOpen] = useState(true)
   return (
     <div style={{ padding: 12 }} className="bg-white text-sm text-[#222]">
       <PageShell title="科创金融" crumb="数字营销 / 产业金融" subtitle="科创企业专属金融服务：科创企业库与资质画像" legend={false} />
@@ -66,17 +68,31 @@ export default function DmTechFin() {
         ))}
       </div>
 
-      {/* ============ 筛选面板 ============ */}
-      <div className="rounded-md border border-[#e5e7f0] px-3.5 py-2.5">
-        {FILTER_GROUPS.map((g) => (
-          <div key={g.label} className="my-1.5 flex flex-wrap items-center leading-7">
-            <div className="w-[80px] shrink-0 text-[#444]">{g.label}</div>
-            {g.items.map((it) => (
-              <span key={it} className="mx-2 cursor-pointer hover:text-[#2b63e6]">{it}</span>
+      {/* ============ 筛选面板（可收起/展开） ============ */}
+      <div className="rounded-md border border-[#e5e7f0]">
+        <div className="flex items-center justify-between border-b border-[#eef0f6] px-3.5 py-2">
+          <span className="text-[13px] font-medium text-[#333]">筛选条件</span>
+          <button
+            type="button"
+            onClick={() => setFilterOpen((o) => !o)}
+            className="cursor-pointer rounded border border-[#d1d5e0] px-2.5 py-1 text-xs text-[#2b63e6] hover:bg-[#f4f7ff]"
+          >
+            {filterOpen ? '收起筛选 ▴' : '展开筛选 ▾'}
+          </button>
+        </div>
+        {filterOpen && (
+          <div className="px-3.5 py-2.5">
+            {FILTER_GROUPS.map((g) => (
+              <div key={g.label} className="my-1.5 flex flex-wrap items-center leading-7">
+                <div className="w-[80px] shrink-0 text-[#444]">{g.label}</div>
+                {g.items.map((it) => (
+                  <span key={it} className="mx-2 cursor-pointer hover:text-[#2b63e6]">{it}</span>
+                ))}
+                {g.more && <span className="cursor-pointer text-[#2b63e6]">更多 <ArrowDown /></span>}
+              </div>
             ))}
-            {g.more && <span className="cursor-pointer text-[#2b63e6]">更多 <ArrowDown /></span>}
           </div>
-        ))}
+        )}
       </div>
 
       {/* ============ 结果栏 ============ */}
@@ -116,7 +132,7 @@ export default function DmTechFin() {
               </span>
             </div>
             <div className="mb-1">
-              {['启信分：825分', '发票抬头', '集团', '大型企业(挖掘)', '国有企业', '央企子公司', '国有绝对控股', '园区企业', '行政处罚', '高新技术企业', '标准起草单位', '有商标', '全部标签(35)'].map((t) => (
+              {['企业健康度：825分', '发票抬头', '集团', '大型企业(挖掘)', '国有企业', '央企子公司', '国有绝对控股', '园区企业', '行政处罚', '高新技术企业', '标准起草单位', '有商标', '全部标签(35)'].map((t) => (
                 <span key={t} className="mx-0.5 my-0.5 inline-block rounded border border-[#c9d2e8] px-1.5 py-0.5 text-xs">{t}</span>
               ))}
             </div>
