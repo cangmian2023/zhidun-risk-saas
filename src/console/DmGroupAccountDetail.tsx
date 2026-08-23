@@ -242,18 +242,7 @@ export default function DmGroupAccountDetail() {
 
   return (
     <div className="font-sans text-[14px] text-gray-800 bg-white">
-      {/* 返回按钮（保留 qixinRuntime 时期的返回入口） */}
-      <div className="px-6 pt-4">
-        <button
-          type="button"
-          onClick={() => nav(backUrl)}
-          className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm text-gray-600 transition hover:bg-gray-100"
-        >
-          ← 返回
-        </button>
-      </div>
-
-      <PageShell title="集团户详情" crumb="数字营销 / 潜客挖掘 / 集团户" legend={false} />
+      <PageShell title={name} crumb="数字营销 / 潜客挖掘 / 集团户" legend={false} onBack={() => nav(backUrl)} />
 
       <div className="px-6 py-4 max-w-[1440px] mx-auto">
         {/* ========== 集团头部信息（两 tab 共用） ========== */}

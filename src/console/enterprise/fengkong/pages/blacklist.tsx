@@ -63,7 +63,7 @@ export default function FkBlacklist({ params }: { params: URLSearchParams }) {
 
   const columns: Column[] = [
     { key: 'name', label: '企业名称', width: 240, render: (r: Row) => (
-      <span style={{ color: '#2563EB', cursor: 'pointer' }} onClick={() => nav(`/console/ep/archive?base=arc-basic&name=${encodeURIComponent(String(r.name))}`)}>
+      <span style={{ color: '#2563EB', cursor: 'pointer' }} onClick={() => nav(`/console/dm/ent-archive-basic?name=${encodeURIComponent(String(r.name))}`)}>
         {String(r.name)}
       </span>
     ) },

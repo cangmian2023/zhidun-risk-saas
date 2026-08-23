@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { PageShell } from './PageShell'
 import { usePageNav } from './pageNav'
-import { RightDrawer } from './components/ui'
+import { RightDrawer } from '../components/ui'
 
 /* ============ 图标（等价 HTML：搜索/营销/导出/下载报告） ============ */
 const SearchIcon = () => (
@@ -31,11 +31,11 @@ const ArrowDown = () => (
 const ReportIcon = ({ orange }: { orange?: boolean }) =>
   orange ? (
     <svg viewBox="0 0 24 28" fill="none" className="h-7 w-6">
-      <path d="M4 2h12l4 4v20H4V2z" fill="#fff1e6" stroke="#f5b82e" strokeWidth="1" />
-      <path d="M16 2v4h4" fill="#ffe4c4" stroke="#f5b82e" strokeWidth="1" />
-      <path d="M7 12h10M7 16h10M7 20h6" stroke="#e8a820" strokeWidth="1.2" strokeLinecap="round" />
-      <path d="M18 18l3 3-3 3" stroke="#f57c00" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-      <path d="M21 21h-6" stroke="#f57c00" strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M4 2h12l4 4v20H4V2z" fill="#eff6ff" stroke="#2563EB" strokeWidth="1" />
+      <path d="M16 2v4h4" fill="#dbeafe" stroke="#2563EB" strokeWidth="1" />
+      <path d="M7 12h10M7 16h10M7 20h6" stroke="#1d4ed8" strokeWidth="1.2" strokeLinecap="round" />
+      <path d="M18 18l3 3-3 3" stroke="#1e40af" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+      <path d="M21 21h-6" stroke="#1e40af" strokeWidth="1.5" strokeLinecap="round" />
     </svg>
   ) : (
     <svg viewBox="0 0 24 28" fill="none" className="h-7 w-6">
@@ -115,7 +115,7 @@ export default function DmRating() {
             placeholder="可输入企业名称/评级公司名称进行搜索"
             className="h-11 flex-1 bg-white px-4 text-[15px] text-[#333] outline-none placeholder:text-[#999]"
           />
-          <button className="flex h-11 cursor-pointer items-center gap-1.5 bg-[#f5b82e] px-7 text-[15px] font-medium text-[#333] transition hover:bg-[#e8a820]">
+          <button className="flex h-11 cursor-pointer items-center gap-1.5 bg-[#2563EB] px-7 text-[15px] font-medium text-white transition hover:bg-[#1d4ed8]">
             <SearchIcon /> 查询
           </button>
         </div>

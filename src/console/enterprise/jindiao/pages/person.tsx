@@ -437,9 +437,9 @@ export default function JdPerson({ params }: { params: URLSearchParams }) {
                       {r.name}
                     </div>
                     <InfoLine label="合作伙伴：" values={r.partners} onValue={(v) => rnav('/console/dm/person-archive-basic?name=' + encodeURIComponent(v))} />
-                    <InfoLine label="担任法定代表人的企业：" values={r.legalRep} onValue={(v) => rnav('/console/ep/archive?base=arc-basic&name=' + encodeURIComponent(v))} />
-                    <InfoLine label="担任股东的企业：" values={r.shareholder} onValue={(v) => rnav('/console/ep/archive?base=arc-basic&name=' + encodeURIComponent(v))} />
-                    <InfoLine label="担任高管的企业：" values={r.executive} onValue={(v) => rnav('/console/ep/archive?base=arc-basic&name=' + encodeURIComponent(v))} />
+                    <InfoLine label="担任法定代表人的企业：" values={r.legalRep} onValue={(v) => rnav('/console/dm/ent-archive-basic?name=' + encodeURIComponent(v))} />
+                    <InfoLine label="担任股东的企业：" values={r.shareholder} onValue={(v) => rnav('/console/dm/ent-archive-basic?name=' + encodeURIComponent(v))} />
+                    <InfoLine label="担任高管的企业：" values={r.executive} onValue={(v) => rnav('/console/dm/ent-archive-basic?name=' + encodeURIComponent(v))} />
                   </div>
                 </div>
               ))}

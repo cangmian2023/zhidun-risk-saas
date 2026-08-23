@@ -1,6 +1,7 @@
 // 风控中心 · 监控列表（ep:fk-monitor-list）· 1:1 复刻「企业征信 - 监控列表」截图
 // 布局：顶部标题栏 → 两行筛选条 → 操作条 → 表格 → 分页
 import { useState } from 'react'
+import { EpPage } from '../../epCommon'
 import { Sam } from '../../../SourceTag'
 import { usePageNav } from '../../../pageNav'
 import { AddMonitorDrawer } from '../components/AddMonitorDrawer'
@@ -130,11 +131,11 @@ export default function FkMonitorList(_: { params?: URLSearchParams } = {}) {
   }
 
   return (
-    <>
-    <div style={{ padding: '16px 20px 60px', background: '#F5F6F7', minHeight: '100vh' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-        <h1 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: '#1D2129' }}>监控列表</h1>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+    <EpPage
+      title="监控列表"
+      crumb="风控中心 / 监控列表"
+      actions={
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10 }}>
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 13, color: '#4E5969' }}>
             <BellIcon /> 剩余额度 <span style={{ color: '#F53F3F', fontWeight: 600 }}>{QUOTA}</span>
           </span>
@@ -144,9 +145,9 @@ export default function FkMonitorList(_: { params?: URLSearchParams } = {}) {
           <button type="button" style={btnPrimary} onClick={() => setAddOpen(true)}>
             <PlusIcon /> 添加监控
           </button>
-        </div>
-      </div>
-
+        </span>
+      }
+    >
       <div style={{ background: '#fff', borderRadius: 2, border: '1px solid #E5E6EB' }}>
         <div style={{ padding: '14px 16px 6px', borderBottom: '1px solid #F2F3F5' }}>
           <FilterRow label="企业信息">
@@ -262,7 +263,7 @@ export default function FkMonitorList(_: { params?: URLSearchParams } = {}) {
           <Sam value="fkMonitor.json" />
         </div>
       </div>
-    </div>
+
       <AddMonitorDrawer open={addOpen} onClose={() => setAddOpen(false)} />
 
       {/* 设置标签 */}
@@ -350,7 +351,7 @@ export default function FkMonitorList(_: { params?: URLSearchParams } = {}) {
           </div>
         )}
       </Modal>
-    </>
+    </EpPage>
   )
 }
 

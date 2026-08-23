@@ -336,7 +336,19 @@ export default function FkMonitorDetail({ params }: { params: URLSearchParams })
       <RiskContentDrawer
         open={riskOpen}
         row={cur ? (cur as unknown as Record<string, any>) : null}
+        read={cur ? {
+          think: '(0.0s)',
+          items: [
+            { k: '影响程度', v: cur.level === '高风险' ? '高' : cur.level === '中风险' ? '中' : '低' },
+            { k: '风险类型', v: String(cur.type) },
+            { k: '风险摘要', v: String(cur.content).slice(0, 120) },
+            { k: '关联企业', v: String(cur.title) },
+            { k: '行动建议', v: '建议进一步核查该风险事件的具体案情与进展，评估对监控企业的实际影响程度，必要时启动关联风险排查并制定应对措施。' },
+          ],
+          footer: '本次分析由AI生成，仅供参考，不构成法律或投资建议。',
+        } : undefined}
         onClose={() => setRiskOpen(false)}
+        title="风险详情"
       />
     </EpPage>
   )

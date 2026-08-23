@@ -40,7 +40,8 @@ export function EpPage({
   crumb,
   actions,
   children,
-  maxWidth = 1180,
+  maxWidth = 1440,
+  onBack,
 }: {
   title: string
   subtitle?: string
@@ -48,10 +49,11 @@ export function EpPage({
   actions?: ReactNode
   children: ReactNode
   maxWidth?: number
+  onBack?: () => void
 }) {
   return (
     <div style={{ padding: '24px 24px 60px', maxWidth }}>
-      <PageShell title={title} subtitle={subtitle} crumb={crumb} actions={actions} />
+      <PageShell title={title} subtitle={subtitle} crumb={crumb} actions={actions} onBack={onBack} />
       <div style={{ marginTop: 18 }}>{children}</div>
     </div>
   )

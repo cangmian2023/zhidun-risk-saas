@@ -18,13 +18,14 @@ export type ReadLike = {
   notice?: { type: string; caseNo: string; date: string; cause: string; parties: { role: string; name: string }[] }
 }
 
-export function RiskContentDrawer({ open, row, read, onClose, onCase, onCompanyRisk }: {
+export function RiskContentDrawer({ open, row, read, onClose, onCase, onCompanyRisk, title }: {
   open: boolean
   row: Record<string, any> | null
   read?: ReadLike
   onClose: () => void
   onCase?: () => void
   onCompanyRisk?: () => void
+  title?: React.ReactNode
 }) {
   const [aiExpand, setAiExpand] = useState(true)
   const dt: React.CSSProperties = { color: '#94A3B8', flexShrink: 0 }
@@ -34,7 +35,7 @@ export function RiskContentDrawer({ open, row, read, onClose, onCase, onCompanyR
   const readItems = read?.items ?? []
   const notice = read?.notice
   return (
-    <EpDrawer open={open} onClose={onClose} width={760}>
+    <EpDrawer open={open} onClose={onClose} width={760} title={title ?? '风险详情'}>
       <div>
         {/* 顶部：类型标签 + 标题 */}
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, flexWrap: 'wrap', marginBottom: 14 }}>

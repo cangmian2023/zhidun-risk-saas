@@ -27,6 +27,7 @@ export default function FkHealthCheck({ params }: { params: URLSearchParams }) {
   const [started, setStarted] = useState(false)
   const [loading, setLoading] = useState(false)
   const [cfgOpen, setCfgOpen] = useState(false)
+  const [scopeOpen, setScopeOpen] = useState(false)
   // 已选体检事项（默认全选）
   const [selected, setSelected] = useState<Set<string>>(
     () => new Set(Object.values(data.settings).flatMap((arr: string[]) => arr)),
@@ -124,8 +125,10 @@ export default function FkHealthCheck({ params }: { params: URLSearchParams }) {
               </div>
               <div style={{ marginTop: 10, fontSize: 12, color: '#64748B', lineHeight: 1.8 }}>
                 <span style={{ color: '#94A3B8' }}>经营范围：</span>
-                {data.company.scope}
-                <a style={{ ...lk, marginLeft: 6 }}>更多</a>
+                {scopeOpen ? data.company.scope : (data.company.scope.length > 120 ? data.company.scope.slice(0, 120) + '...' : data.company.scope)}
+                {data.company.scope.length > 120 && (
+                  <a style={{ ...lk, marginLeft: 6 }} onClick={() => setScopeOpen(!scopeOpen)}>{scopeOpen ? '收起' : '更多'}</a>
+                )}
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 10, marginTop: 12 }}>
                 <EpStat label="企业健康度 · 信用等级" value={data.company.score} sub={data.company.scoreRank} accent="#0F766E" />

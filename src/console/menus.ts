@@ -130,15 +130,6 @@ export const entMenu: MenuGroup[] = [
       { label: '黑名单', key: 'ep:fk-blacklist', desc: '黑名单排查 / 内部黑名单 / 历史黑名单：企业黑名单来源说明与排查', keep: true },
     ],
   },
-  {
-    group: '内控合规',
-    section: '内控合规',
-    items: [
-      { label: '利益排查', key: 'ep:fk-interest', desc: '合作方利益排查：上传员工 / 企业名单，识别疑似利益冲突企业与人员', keep: true },
-      { label: '员工列表', key: 'ep:fk-employee', desc: '员工信息管理：维护员工电话、关联企业，用于合作方利益排查（上限 2000 名）', keep: true },
-      { label: '监管合规', key: 'ep:fk-regulatory', desc: '监管合规：按范围 / 主体 / 判决机构 / 违规类型查询企业合规情况', keep: true },
-    ],
-  },
   /* ============ 来源：尽调目录 ============ */
   {
     group: '企业尽调',
@@ -148,6 +139,15 @@ export const entMenu: MenuGroup[] = [
       { label: '批量尽调', key: 'ep:jd-batch', desc: '批量尽调：查企业 / 查人员 / 选择指标 / 模板，批量企业画像分析', keep: true },
       { label: '关系尽调', key: 'ep:jd-relation', desc: '关系尽调：集中排查 AI / 组与组排查 / 关联方识别（含识别结果）', keep: true },
       { label: '人员尽调', key: 'ep:jd-person', desc: '人员尽调：查人员风险，进入人员详情（基本信息 / 历史 / 风险 / 专利 / 关联企业 / 个人图谱）', keep: true },
+    ],
+  },
+  {
+    group: '内控合规',
+    section: '内控合规',
+    items: [
+      { label: '利益排查', key: 'ep:fk-interest', desc: '合作方利益排查：上传员工 / 企业名单，识别疑似利益冲突企业与人员', keep: true },
+      { label: '员工列表', key: 'ep:fk-employee', desc: '员工信息管理：维护员工电话、关联企业，用于合作方利益排查（上限 2000 名）', keep: true },
+      { label: '监管合规', key: 'ep:fk-regulatory', desc: '监管合规：按范围 / 主体 / 判决机构 / 违规类型查询企业合规情况', keep: true },
     ],
   },
   {

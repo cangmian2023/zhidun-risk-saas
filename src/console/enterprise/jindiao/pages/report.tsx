@@ -92,7 +92,7 @@ function kv(k: string, v: React.ReactNode) {
 }
 
 export default function JdReport() {
-  const d = useSample('jdReport.json', SEED)
+  const [d] = useSample('jdReport.json', SEED) as any
   const nav = usePageNav()
   const rnav = useNavigate()
   const [reviewOpen, setReviewOpen] = useState(false)

@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { RightDrawer } from '../components/ui';
+import { PageShell } from './PageShell';
 
 /* ===================== 筛选项配置（每个都是多选下拉） ===================== */
 const FILTER_CONFIG: { key: string; label: string; options: string[] }[] = [
@@ -816,7 +817,8 @@ export default function CustomerList() {
   const hasFilter = Object.values(filters).some((v) => v.length > 0) || keyword.trim() !== '';
 
   return (
-    <div style={{ width: '100%', height: '100vh', backgroundColor: '#ffffff', overflow: 'auto' }}>
+    <div style={{ width: '100%', minHeight: '100vh', backgroundColor: '#ffffff' }}>
+      <PageShell title="存客商机" crumb="数字营销 / 潜客挖掘 / 存客商机" legend={false} />
       {/* 顶部客商筛选栏 */}
       <div style={{ padding: '16px 20px', borderBottom: '1px solid #f0f2f5' }}>
         <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '20px' }}>

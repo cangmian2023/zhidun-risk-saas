@@ -2,7 +2,7 @@
 // 数据：本地样例 fkStats.json（橘 Sam）
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { EpPage, EpCard, EpStat, EpTag, EpBtn, EpDrawer, PhotonImg, DataTable, useSample, Sam, Cal, Cfg } from '../../epCommon'
+import { EpPage, EpCard, EpStat, EpTag, EpBtn, EpDrawer, DataTable, useSample, Sam, Cal, Cfg } from '../../epCommon'
 import { LineChart, BarChart, DonutChart } from '../../../../components/charts'
 import type { Row, Column } from '../../../../components/ui'
 import { usePageNav } from '../../../pageNav'
@@ -24,6 +24,21 @@ const LEVEL_COLOR: Record<string, string> = {
   低风险: '#1D4ED8',
   轻微风险: '#0F766E',
 }
+
+// 修复 JSON 中 "render": "tag" 字符串 → 转成实际渲染函数（DataTable 要求 render 为函数）
+const fixCols = (cols: any[]): Column[] => cols.map((c) => {
+  if (c.render === 'tag') {
+    return {
+      ...c,
+      render: (r: Row) => {
+        const v = String(r[c.key] ?? '-')
+        const color = LEVEL_COLOR[v] ?? '#475569'
+        return <span style={{ padding: '2px 8px', borderRadius: 4, background: color + '18', color, fontSize: 12, fontWeight: 500 }}>{v}</span>
+      },
+    }
+  }
+  return c as Column
+})
 
 export default function FkStats({ params }: { params: URLSearchParams }) {
   const [data] = useSample('fkStats.json', seedJson)
@@ -76,7 +91,7 @@ export default function FkStats({ params }: { params: URLSearchParams }) {
       actions={<Sam value="fkStats.json" />}
     >
       {/* 吸顶 tab 工具条 + 筛选控件（筛选置于 tab 工具条下方） */}
-      <div className="sticky top-0 z-30 -mx-6 -mt-[18px] mb-4 border-b border-slate-200 bg-white/95 px-6 pt-3 backdrop-blur">
+      <div className="sticky top-[128px] z-30 -mx-6 -mt-[18px] mb-4 border-b border-slate-200 bg-white/95 px-6 pt-3 backdrop-blur">
         <div className="flex items-center gap-1">
           {TABS.map((t) => (
             <button
@@ -139,50 +154,6 @@ export default function FkStats({ params }: { params: URLSearchParams }) {
           </EpBtn>
         </div>
       </div>
-        <label className="flex flex-col gap-1 text-xs text-slate-500">
-          企业范围
-          <select className="h-9 rounded-lg border border-slate-300 bg-white px-2 text-sm text-slate-700">
-            <option>50家</option>
-            <option>100家</option>
-            <option>全量</option>
-          </select>
-        </label>
-        <label className="flex flex-col gap-1 text-xs text-slate-500">
-          抵达时间
-          <div className="flex items-center gap-1">
-            <select className="h-9 rounded-lg border border-slate-300 bg-white px-2 text-sm text-slate-700">
-              <option>年</option><option>月</option><option>日</option>
-            </select>
-            <span className="text-slate-400">至</span>
-            <select className="h-9 rounded-lg border border-slate-300 bg-white px-2 text-sm text-slate-700">
-              <option>年</option><option>月</option><option>日</option>
-            </select>
-          </div>
-        </label>
-        <label className="flex flex-col gap-1 text-xs text-slate-500">
-          风险等级
-          <select className="h-9 rounded-lg border border-slate-300 bg-white px-2 text-sm text-slate-700">
-            <option>全部</option>
-            <option>高风险</option>
-            <option>中风险</option>
-            <option>低风险</option>
-            <option>轻微风险</option>
-          </select>
-        </label>
-        <label className="flex flex-col gap-1 text-xs text-slate-500">
-          标签
-          <select className="h-9 rounded-lg border border-slate-300 bg-white px-2 text-sm text-slate-700">
-            <option>全部标签</option>
-            <option>失信被执行人</option>
-            <option>经营异常</option>
-            <option>行政处罚</option>
-            <option>股权冻结</option>
-          </select>
-        </label>
-        <EpBtn variant="primary" size="sm" className="ml-auto" onClick={() => alert('已下载样例数据')}>
-          下载数据
-        </EpBtn>
-      </div>
 
       {/* 区块一：AI 风险报告 */}
       <div ref={refs.report} data-tab="report" className="scroll-mt-[112px]">
@@ -239,7 +210,7 @@ export default function FkStats({ params }: { params: URLSearchParams }) {
               ))}
             </ul>
             <div className="mt-4">
-              <PhotonImg src={data.aiReport.cover} alt="AI 风险报告封面" />
+              <img src={data.aiReport.cover} alt="AI 风险报告封面" style={{ width: '100%', borderRadius: 8, display: 'block' }} />
             </div>
           </EpCard>
         </div>
@@ -247,7 +218,7 @@ export default function FkStats({ params }: { params: URLSearchParams }) {
         <div className="mt-4">
           <DataTable
             rows={data.aiReport.list as Row[]}
-            columns={data.aiReport.cols as Column[]}
+            columns={fixCols(data.aiReport.cols)}
             pager
             defaultPageSize={5}
             actions={(r) => (
@@ -271,7 +242,7 @@ export default function FkStats({ params }: { params: URLSearchParams }) {
         <EpCard>
           <DataTable
             rows={data.rankRows as Row[]}
-            columns={data.rankCols as Column[]}
+            columns={fixCols(data.rankCols)}
             pager
             defaultPageSize={8}
             actions={(r) => (
@@ -359,7 +330,7 @@ export default function FkStats({ params }: { params: URLSearchParams }) {
               <h3 className="text-sm font-semibold text-slate-700">港口 / 航线风险</h3>
               <Sam value="fkStats.json" />
             </div>
-            <DataTable rows={data.portRisk.rows as Row[]} columns={data.portRisk.cols as Column[]} pager defaultPageSize={6} />
+            <DataTable rows={data.portRisk.rows as Row[]} columns={fixCols(data.portRisk.cols)} pager defaultPageSize={6} />
           </EpCard>
         </div>
       </div>
@@ -374,7 +345,7 @@ export default function FkStats({ params }: { params: URLSearchParams }) {
           ))}
         </ul>
         <div className="mt-4">
-          <PhotonImg src={data.aiReport.cover} alt="AI 风险报告封面" />
+          <img src={data.aiReport.cover} alt="AI 风险报告封面" style={{ width: '100%', borderRadius: 8, display: 'block' }} />
         </div>
       </EpDrawer>
 
@@ -383,7 +354,7 @@ export default function FkStats({ params }: { params: URLSearchParams }) {
           <>
             {drill.tag === 'sam' && <Sam value="fkStats.json" />}
             <div className="mt-2">
-              <DataTable rows={drill.rows} columns={drill.cols} pager defaultPageSize={8} />
+              <DataTable rows={drill.rows} columns={fixCols(drill.cols)} pager defaultPageSize={8} />
             </div>
           </>
         )}

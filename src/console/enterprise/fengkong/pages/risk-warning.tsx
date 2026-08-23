@@ -41,9 +41,14 @@ export default function FkRiskWarning({ params }: { params: URLSearchParams }) {
   const [adder, setAdder] = useState<string[]>([])
   const [related, setRelated] = useState<string[]>([])
 
-  // 风险类型（含子维度）
+  // 风险类型（级联筛选）
   const [riskTypes, setRiskTypes] = useState<string[]>(['不限'])
-  const [riskDims, setRiskDims] = useState<Record<string, string[]>>({})
+  // 每个大类下选中的面板内一级分类：第1级大类 → 选中的一级分类[]
+  const [riskCats, setRiskCats] = useState<Record<string, string[]>>({})
+  // 每个大类下选中的二级子项：第1级大类 → 一级分类 → 选中的二级子项[]
+  const [riskItems, setRiskItems] = useState<Record<string, Record<string, string[]>>>({})
+  // 面板内搜索关键词（每个大类独立）
+  const [riskSearch, setRiskSearch] = useState<Record<string, string>>({})
 
   const [selected, setSelected] = useState<string[]>([])
 
@@ -65,16 +70,57 @@ export default function FkRiskWarning({ params }: { params: URLSearchParams }) {
     setList(next)
   }
 
-  // 风险类型子维度选项
-  const RISK_DIMS: Record<string, string[]> = {
-    基本信息: ['地址信息', '经营范围', '法定代表人', '注册资本', '经营期限'],
-    经营风险: ['股东信息', '大股东变更', '主要人员', '企业名称', '企业类型'],
-    司法风险: ['被告/被上诉人/被申请人', '新增开庭公告', '新增法院公告', '被执行'],
-    经营信息: ['邮箱变更', '电话变更', '网址变更'],
-    企业舆情: ['业绩亏损/下降', '现金流恶化', '负面报道', '高管舆情'],
-    供应链风险: ['供应商变更', '大客户流失', '供应链中断'],
-    关联方风险: ['新增地址', '注册地址变更', '新增对外投资'],
-    关键词舆情: ['企业征信推荐关键词', '自定义关键词'],
+  // 风险类型级联数据：第1级大类 → 面板内一级分类[]（每个分类含二级子项）
+  const RISK_CASCADE: Record<string, { cat: string; items: string[] }[]> = {
+    基本信息: [
+      { cat: '地址信息', items: ['注册地址变更', '经营地址变更', '地址异常名录', '地址迁入', '地址迁出'] },
+      { cat: '经营范围', items: ['经营范围变更', '经营范围新增', '经营范围删减', '经营异常名录'] },
+      { cat: '法定代表人', items: ['法定代表人变更', '法定代表人限制高消费', '法定代表人失信被执行', '法定代表人涉案'] },
+      { cat: '注册资本', items: ['注册资本增加', '注册资本减少', '实缴资本变更', '出资异常'] },
+      { cat: '经营期限', items: ['经营期限变更', '经营期限到期预警', '经营期限续期'] },
+    ],
+    经营风险: [
+      { cat: '经营异常', items: ['列入经营异常', '移出经营异常', '经营异常届满'] },
+      { cat: '严重违法失信', items: ['列入严重违法失信', '移出严重违法失信'] },
+      { cat: '股权出质', items: ['新增股权出质', '股权出质注销', '股权出质撤销'] },
+      { cat: '行政处罚', items: ['新增行政处罚', '行政处罚公示', '行政处罚撤销'] },
+      { cat: '环保处罚', items: ['新增环保处罚', '环保处罚公示', '环保处罚撤销'] },
+      { cat: '知识产权出质', items: ['新增知识产权出质', '知识产权出质注销', '知识产权出质撤销'] },
+      { cat: '清算信息', items: ['新增清算信息', '清算组成员备案', '清算结束'] },
+      { cat: '简易注销', items: ['简易注销公告', '简易注销撤销', '简易注销完成'] },
+    ],
+    司法风险: [
+      { cat: '被告/被上诉人', items: ['新增被告', '新增被上诉人', '新增被申请人', '被告身份变更'] },
+      { cat: '开庭公告', items: ['民事开庭', '刑事开庭', '行政开庭', '执行听证'] },
+      { cat: '法院公告', items: ['送达公告', '裁判文书公告', '执行公告', '破产公告'] },
+      { cat: '被执行', items: ['新增被执行人', '被执行金额变更', '终本案件', '执行完毕'] },
+      { cat: '失信被执行', items: ['新增失信', '失信解除', '失信纠正'] },
+    ],
+    经营信息: [
+      { cat: '邮箱变更', items: ['企业邮箱变更', '联系邮箱新增', '邮箱注销'] },
+      { cat: '电话变更', items: ['联系电话变更', '联系电话新增', '电话注销', '号码异常'] },
+      { cat: '网址变更', items: ['官网地址变更', '官网新增', '官网注销', '域名异常'] },
+    ],
+    企业舆情: [
+      { cat: '业绩亏损/下降', items: ['季度亏损', '年度亏损', '营收下降', '利润下滑'] },
+      { cat: '现金流恶化', items: ['经营现金流为负', '现金流断裂', '债务违约', '资金链紧张'] },
+      { cat: '负面报道', items: ['媒体负面报道', '监管处罚报道', '产品质量问题', '安全事故'] },
+      { cat: '高管舆情', items: ['高管负面新闻', '高管被调查', '高管离职', '高管涉案'] },
+    ],
+    供应链风险: [
+      { cat: '供应商变更', items: ['核心供应商变更', '供应商新增', '供应商退出', '供应商集中度变化'] },
+      { cat: '大客户流失', items: ['核心客户流失', '客户集中度下降', '大客户订单减少', '客户违约'] },
+      { cat: '供应链中断', items: ['原材料短缺', '物流中断', '产能受限', '上游风险传导'] },
+    ],
+    关联方风险: [
+      { cat: '新增地址', items: ['关联企业新增地址', '关联方地址异常', '关联地址重合'] },
+      { cat: '注册地址变更', items: ['关联企业注册地址变更', '关联方地址迁移', '地址集群变更'] },
+      { cat: '新增对外投资', items: ['新增子公司', '新增参股企业', '新增分支机构', '投资金额异常'] },
+    ],
+    关键词舆情: [
+      { cat: '企业征信推荐关键词', items: ['失信被执行人', '限制高消费', '行政处罚', '经营异常', '严重违法'] },
+      { cat: '自定义关键词', items: ['自定义关键词组1', '自定义关键词组2', '自定义关键词组3'] },
+    ],
   }
 
   const rows = data.rows.filter((r) => {
@@ -88,7 +134,7 @@ export default function FkRiskWarning({ params }: { params: URLSearchParams }) {
   const resetFilters = () => {
     setLevels([]); setReadState([]); setFollowState([]); setMarkState([]); setRuleState([])
     setScope([]); setRegion([]); setEpTag([]); setEpGroup([]); setOwner([]); setAdder([]); setRelated([])
-    setRiskTypes(['不限']); setRiskDims({}); setKw(''); setRange('近30天')
+    setRiskTypes(['不限']); setRiskCats({}); setRiskItems({}); setRiskSearch({}); setKw(''); setRange('近30天')
   }
 
   // 已选条件 chips
@@ -106,8 +152,26 @@ export default function FkRiskWarning({ params }: { params: URLSearchParams }) {
     ...(owner.length ? [{ label: '负责人/部门', text: owner.join('、'), onRemove: () => setOwner([]) }] : []),
     ...(adder.length ? [{ label: '添加人', text: adder.join('、'), onRemove: () => setAdder([]) }] : []),
     ...(related.length ? [{ label: '关联企业', text: related.join('、'), onRemove: () => setRelated([]) }] : []),
-    ...(riskTypes.filter((t) => t !== '不限').length ? [{ label: '风险类型', text: riskTypes.filter((t) => t !== '不限').join('、'), onRemove: () => setRiskTypes(['不限']) }] : []),
-    ...(Object.entries(riskDims).filter(([, v]) => v.length).map(([k, v]) => ({ label: k, text: v.join('、'), onRemove: () => { const n = { ...riskDims }; delete n[k]; setRiskDims(n) } }))),
+    ...(riskTypes.filter((t) => t !== '不限').length ? [{ label: '风险类型', text: riskTypes.filter((t) => t !== '不限').join('、'), onRemove: () => { setRiskTypes(['不限']); setRiskCats({}); setRiskItems({}) } }] : []),
+    ...(Object.entries(riskCats).filter(([, v]) => v.length).map(([type, cats]) => ({ label: type, text: cats.join('、'), onRemove: () => {
+      const n = { ...riskCats }; delete n[type]; setRiskCats(n)
+      const hasItem = Object.values(riskItems[type] ?? {}).some((arr) => arr.length > 0)
+      if (!hasItem) setRiskTypes((prev) => { const f = prev.filter((x) => x !== '不限' && x !== type); return f.length === 0 ? ['不限'] : f })
+    } }))),
+    ...(Object.entries(riskItems).flatMap(([type, catMap]) =>
+      Object.entries(catMap).filter(([, v]) => v.length).map(([cat, v]) => ({
+        label: `${type} / ${cat}`,
+        text: v.join('、'),
+        onRemove: () => {
+          const n = { ...riskItems }
+          if (n[type]) { const nc = { ...n[type] }; delete nc[cat]; n[type] = nc }
+          setRiskItems(n)
+          const hasCat = (riskCats[type]?.length ?? 0) > 0
+          const hasItem = Object.values(n[type] ?? {}).some((arr) => arr.length > 0)
+          if (!hasCat && !hasItem) setRiskTypes((prev) => { const f = prev.filter((x) => x !== '不限' && x !== type); return f.length === 0 ? ['不限'] : f })
+        },
+      }))
+    )),
   ]
 
   const levelCell = (r: Row) => {
@@ -347,21 +411,143 @@ export default function FkRiskWarning({ params }: { params: URLSearchParams }) {
                 />
               ) : (
                 <FilterChip
-                  key={t} k={`t-${t}`} kind="check" label={t} active={riskTypes.includes(t)} open={openKey === `t-${t}`}
+                  key={t} k={`t-${t}`} kind="check" label={t}
+                  active={(riskCats[t]?.length ?? 0) > 0 || Object.keys(riskItems[t] ?? {}).length > 0}
+                  open={openKey === `t-${t}`}
                   onOpen={(kk) => setOpenKey(openKey === kk ? '' : kk)}
-                  onLabel={() => toggle(riskTypes, setRiskTypes, t)}
                   panel={
-                    <>
-                      {(RISK_DIMS[t] ?? []).map((dim) => {
-                        const dims = riskDims[t] ?? []
-                        return (
-                          <FilterOpt key={dim} label={dim} checked={dims.includes(dim)} onChange={() => {
-                            const n = { ...riskDims, [t]: dims.includes(dim) ? dims.filter((x) => x !== dim) : [...dims, dim] }
-                            setRiskDims(n)
-                          }} />
-                        )
-                      })}
-                    </>
+                    (() => {
+                      const cascade = RISK_CASCADE[t] ?? []
+                      const selCats = riskCats[t] ?? []
+                      const selItemsMap = riskItems[t] ?? {}
+                      const kw = (riskSearch[t] ?? '').trim().toLowerCase()
+                      const filteredCats = kw
+                        ? cascade.filter((g) => g.cat.toLowerCase().includes(kw) || g.items.some((it) => it.toLowerCase().includes(kw)))
+                        : cascade
+                      const rightCats = filteredCats.filter((g) => selCats.includes(g.cat))
+                      const allSelItems: { cat: string; item: string }[] = []
+                      Object.entries(selItemsMap).forEach(([cat, items]) => { items.forEach((item) => allSelItems.push({ cat, item })) })
+                      // 同步大类选中状态到 riskTypes
+                      const syncType = (hasCat: boolean, itemMap: Record<string, string[]>) => {
+                        const hasItem = Object.values(itemMap).some((arr) => arr.length > 0)
+                        const has = hasCat || hasItem
+                        setRiskTypes((prev) => {
+                          const filtered = prev.filter((x) => x !== '不限' && x !== t)
+                          if (has) filtered.push(t)
+                          return filtered.length === 0 ? ['不限'] : filtered
+                        })
+                      }
+                      const toggleCat = (cat: string) => {
+                        const cur = riskCats[t] ?? []
+                        const nextCats = cur.includes(cat) ? cur.filter((x) => x !== cat) : [...cur, cat]
+                        setRiskCats({ ...riskCats, [t]: nextCats })
+                        syncType(nextCats.length > 0, riskItems[t] ?? {})
+                      }
+                      const toggleItem = (cat: string, item: string) => {
+                        const cur = (riskItems[t]?.[cat]) ?? []
+                        const next = cur.includes(item) ? cur.filter((x) => x !== item) : [...cur, item]
+                        const newItemMap = { ...(riskItems[t] ?? {}), [cat]: next }
+                        if (next.length === 0) delete newItemMap[cat]
+                        setRiskItems({ ...riskItems, [t]: newItemMap })
+                        // 选中子项时自动选中所属分类
+                        const cats = riskCats[t] ?? []
+                        let newCats = cats
+                        if (next.length > 0 && !cats.includes(cat)) {
+                          newCats = [...cats, cat]
+                          setRiskCats({ ...riskCats, [t]: newCats })
+                        }
+                        syncType(newCats.length > 0, newItemMap)
+                      }
+                      const removeItem = (cat: string, item: string) => {
+                        const cur = (riskItems[t]?.[cat]) ?? []
+                        const next = cur.filter((x) => x !== item)
+                        const newItemMap = { ...(riskItems[t] ?? {}), [cat]: next }
+                        if (next.length === 0) delete newItemMap[cat]
+                        setRiskItems({ ...riskItems, [t]: newItemMap })
+                        syncType((riskCats[t]?.length ?? 0) > 0, newItemMap)
+                      }
+                      return (
+                        <div style={{ width: 520 }}>
+                          {/* 顶部搜索框 */}
+                          <div style={{ padding: '8px 10px', borderBottom: '1px solid #F1F5F9' }}>
+                            <div style={{ position: 'relative' }}>
+                              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" strokeWidth="2" style={{ position: 'absolute', left: 8, top: '50%', transform: 'translateY(-50%)' }}><circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" /></svg>
+                              <input
+                                placeholder="搜索风险分类 / 子项"
+                                value={riskSearch[t] ?? ''}
+                                onChange={(e) => setRiskSearch({ ...riskSearch, [t]: e.target.value })}
+                                style={{ width: '100%', padding: '6px 10px 6px 28px', border: '1px solid #E2E8F0', borderRadius: 6, fontSize: 12, outline: 'none', boxSizing: 'border-box' }}
+                              />
+                            </div>
+                          </div>
+                          {/* 已选二级子项标签 */}
+                          {allSelItems.length > 0 && (
+                            <div style={{ padding: '6px 10px', borderBottom: '1px solid #F1F5F9', display: 'flex', flexWrap: 'wrap', gap: 6, maxHeight: 60, overflowY: 'auto' }}>
+                              {allSelItems.map(({ cat, item }) => (
+                                <span key={`${cat}-${item}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '2px 8px', background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: 4, fontSize: 11, color: '#1D4ED8', whiteSpace: 'nowrap' }}>
+                                  {item.length > 8 ? item.slice(0, 8) + '…' : item}
+                                  <span style={{ cursor: 'pointer', color: '#93C5FD', fontSize: 13, lineHeight: 1 }} onClick={() => removeItem(cat, item)}>×</span>
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                          {/* 左右两栏 */}
+                          <div style={{ display: 'flex', maxHeight: 300 }}>
+                            {/* 左侧：一级分类 */}
+                            <div style={{ width: 170, borderRight: '1px solid #F1F5F9', overflowY: 'auto', padding: '4px 0' }}>
+                              {filteredCats.length === 0 ? (
+                                <div style={{ padding: 24, textAlign: 'center', color: '#94A3B8', fontSize: 12 }}>无匹配分类</div>
+                              ) : filteredCats.map((g) => {
+                                const checked = selCats.includes(g.cat)
+                                return (
+                                  <div key={g.cat} onClick={() => toggleCat(g.cat)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 10px', cursor: 'pointer', fontSize: 12, color: checked ? '#165DFF' : '#1D2129', background: checked ? '#F0F7FF' : 'transparent' }}>
+                                    <span style={{ width: 13, height: 13, borderRadius: 3, border: `1px solid ${checked ? '#165DFF' : '#C9CDD4'}`, background: checked ? '#165DFF' : '#fff', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                      {checked && <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>}
+                                    </span>
+                                    <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{g.cat}</span>
+                                    <span style={{ color: '#CBD5E1', fontSize: 10 }}>{g.items.length}</span>
+                                  </div>
+                                )
+                              })}
+                            </div>
+                            {/* 右侧：二级子项 */}
+                            <div style={{ flex: 1, overflowY: 'auto', padding: '4px 0' }}>
+                              {rightCats.length === 0 ? (
+                                <div style={{ padding: 40, textAlign: 'center', color: '#94A3B8', fontSize: 12 }}>
+                                  {kw ? '无匹配子项' : '请在左侧勾选风险分类'}
+                                </div>
+                              ) : rightCats.map((g) => {
+                                const items = kw ? g.items.filter((it) => it.toLowerCase().includes(kw) || g.cat.toLowerCase().includes(kw)) : g.items
+                                const sel = selItemsMap[g.cat] ?? []
+                                return (
+                                  <div key={g.cat}>
+                                    <div style={{ padding: '4px 10px', fontSize: 11, color: '#94A3B8', fontWeight: 600, background: '#F8FAFC', position: 'sticky', top: 0 }}>{g.cat}</div>
+                                    {items.map((item) => {
+                                      const checked = sel.includes(item)
+                                      return (
+                                        <div key={item} onClick={() => toggleItem(g.cat, item)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 10px', cursor: 'pointer', fontSize: 12, color: checked ? '#165DFF' : '#4E5969' }}>
+                                          <span style={{ width: 12, height: 12, borderRadius: 3, border: `1px solid ${checked ? '#165DFF' : '#C9CDD4'}`, background: checked ? '#165DFF' : '#fff', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                            {checked && <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>}
+                                          </span>
+                                          <span>{item}</span>
+                                        </div>
+                                      )
+                                    })}
+                                  </div>
+                                )
+                              })}
+                            </div>
+                          </div>
+                          {/* 底部风险等级图例 */}
+                          <div style={{ padding: '6px 10px', borderTop: '1px solid #F1F5F9', display: 'flex', gap: 14, fontSize: 11, color: '#64748B', alignItems: 'center' }}>
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><span style={{ width: 8, height: 8, borderRadius: '50%', background: '#B91C1C' }} />高</span>
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><span style={{ width: 8, height: 8, borderRadius: '50%', background: '#C2410C' }} />中</span>
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><span style={{ width: 8, height: 8, borderRadius: '50%', background: '#CA8A04' }} />低</span>
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><span style={{ width: 8, height: 8, borderRadius: '50%', background: '#0F766E' }} />轻微</span>
+                          </div>
+                        </div>
+                      )
+                    })()
                   }
                 />
               )
@@ -526,6 +712,7 @@ export default function FkRiskWarning({ params }: { params: URLSearchParams }) {
         onClose={() => setRiskDetailOpen(false)}
         onCase={() => setCaseOpen(true)}
         onCompanyRisk={() => { setRiskDetailOpen(false); setDetailOpen(true) }}
+        title="风险详情"
       />
     </EpPage>
   )

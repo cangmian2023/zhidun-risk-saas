@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { PageShell } from './PageShell'
 import { usePageNav } from './pageNav'
-import { RightDrawer } from './components/ui'
+import { RightDrawer } from '../components/ui'
 
 /* ============ 图标（系统未引入 FontAwesome，按 HTML 视觉等价替换为内联 SVG） ============ */
 const ChevronDown = () => (
@@ -42,7 +42,7 @@ function SearchRow({ label, placeholder }: { label: string; placeholder: string 
         placeholder={placeholder}
         className="w-[340px] rounded-md border border-[#e2e2eb] bg-[#f7f7fc] px-3 py-2.5 text-sm outline-none placeholder:text-gray-400"
       />
-      <button className="flex items-center gap-1 rounded-md bg-[#f7c030] px-5 py-2.5 text-sm font-medium text-[#111] hover:opacity-90">
+      <button className="flex items-center gap-1 rounded-md bg-[#2563EB] px-5 py-2.5 text-sm font-medium text-white hover:opacity-90">
         <SearchIcon /> 搜索
       </button>
     </div>
@@ -252,7 +252,7 @@ export default function DmBond() {
             }`}
           >
             {t}
-            {tab === t && <span className="absolute -bottom-px left-0 h-[3px] w-full bg-[#f7c030]" />}
+            {tab === t && <span className="absolute -bottom-px left-0 h-[3px] w-full bg-[#2563EB]" />}
           </span>
         ))}
       </div>
@@ -530,7 +530,7 @@ export default function DmBond() {
             </div>
             <div className="flex gap-3">
               <button className="cursor-pointer rounded-md border border-[#ddd] bg-white px-4 py-2 text-sm">＋批量添加</button>
-              <button className="flex cursor-pointer items-center gap-1.5 rounded-md bg-[#f7c030] px-4 py-2 text-sm font-medium text-[#111] hover:opacity-90">
+              <button className="flex cursor-pointer items-center gap-1.5 rounded-md bg-[#2563EB] px-4 py-2 text-sm font-medium text-white hover:opacity-90">
                 <DownloadIcon /> 下载
               </button>
             </div>

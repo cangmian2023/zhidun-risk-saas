@@ -161,7 +161,7 @@ export default function FkMap({ params }: { params: URLSearchParams }) {
         ))}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: 16, alignItems: 'start' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) 300px', gap: 16, alignItems: 'start' }}>
         {/* 地图 */}
         <EpCard pad={false}>
           <div style={{ position: 'relative' }}>

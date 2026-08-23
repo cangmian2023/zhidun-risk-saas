@@ -10,11 +10,13 @@ export function PageHeader({
   subtitle,
   actions,
   crumb,
+  onBack,
 }: {
   title: string
   subtitle?: string
   actions?: ReactNode
   crumb?: string
+  onBack?: () => void
 }) {
   return (
     <div className="sticky top-14 z-30 -mx-4 border-b border-slate-100 bg-slate-50 px-4 pb-5 pt-1 lg:-mx-8 lg:px-8">
@@ -22,9 +24,22 @@ export function PageHeader({
       {crumb && <div className="text-xs text-slate-400">{crumb}</div>}
       {/* 第二行：标题 + 右侧操作 */}
       <div className="mt-2 flex flex-wrap items-start justify-between gap-4">
-        <div className="min-w-0 flex-1">
-          <h1 className="text-2xl font-bold tracking-tight text-ink-900">{title}</h1>
-          {subtitle && <p className="mt-1.5 max-w-3xl text-sm leading-relaxed text-slate-500">{subtitle}</p>}
+        <div className="min-w-0 flex-1 flex items-center gap-2">
+          {onBack && (
+            <button
+              onClick={onBack}
+              style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: '#64748B', padding: '6px', borderRadius: 6, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = '#E2E8F0'; e.currentTarget.style.color = '#0F172A' }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#64748B' }}
+              title="返回"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
+            </button>
+          )}
+          <div className="min-w-0">
+            <h1 className="text-2xl font-bold tracking-tight text-ink-900">{title}</h1>
+            {subtitle && <p className="mt-1.5 max-w-3xl text-sm leading-relaxed text-slate-500">{subtitle}</p>}
+          </div>
         </div>
         {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
       </div>
@@ -418,16 +433,16 @@ export function DataTable({
       <div className="overflow-x-auto">
         <table className="w-full border-collapse text-sm">
           <thead>
-            <tr className="border-b border-slate-200 text-left text-xs font-medium uppercase tracking-wide text-slate-400">
+            <tr className="border-b border-slate-200 text-left text-xs font-semibold text-slate-600">
               {selectable && (
-                <th className="whitespace-nowrap px-3 py-3 bg-white" style={{ width: 40 }}>
+                <th className="whitespace-nowrap px-3 py-3 bg-slate-50" style={{ width: 40 }}>
                   <input type="checkbox" checked={allOn} onChange={toggleAll} className="accent-blue-600" />
                 </th>
               )}
               {columns.map((c, i) => (
                 <th
                   key={c.key}
-                  className={`whitespace-nowrap px-3 py-3 bg-white ${c.fixed === 'left' || i === 0 ? 'sticky left-0 z-20' : ''} ${c.fixed === 'right' ? 'sticky z-20' : ''}`}
+                  className={`whitespace-nowrap px-3 py-3 bg-slate-50 ${c.fixed === 'left' || i === 0 ? 'sticky left-0 z-20' : ''} ${c.fixed === 'right' ? 'sticky z-20' : ''}`}
                   style={{ width: c.width, textAlign: c.align ?? 'left', ...(c.fixed === 'right' ? { right: actionsW } : {}) }}
                 >
                   <div className="flex items-center gap-1.5">
@@ -437,7 +452,7 @@ export function DataTable({
                 </th>
               ))}
               {actions && (
-                <th ref={actionsRef} className="whitespace-nowrap px-3 py-3 bg-white sticky right-0 z-20 text-left">操作</th>
+                <th ref={actionsRef} className="whitespace-nowrap px-3 py-3 bg-slate-50 sticky right-0 z-20 text-left">操作</th>
               )}
             </tr>
           </thead>
@@ -449,19 +464,22 @@ export function DataTable({
                 </td>
               </tr>
             ) : (
-              view.map((r) => (
-                <tr key={r.id} className="group border-b border-slate-50 transition hover:bg-slate-50/60">
+              view.map((r, rowIdx) => (
+                <tr key={r.id} className={`group border-b border-slate-50 transition hover:bg-slate-100/60 ${rowIdx % 2 === 1 ? 'bg-slate-50/50' : 'bg-white'}`}>
                   {selectable && (
-                    <td className="whitespace-nowrap px-3 py-3 bg-white group-hover:bg-slate-50/60">
+                    <td className={`whitespace-nowrap px-3 py-3 group-hover:bg-slate-100/60 ${rowIdx % 2 === 1 ? 'bg-slate-50/50' : 'bg-white'}`}>
                       <input type="checkbox" checked={selected.includes(r.id)} onChange={() => toggleOne(r.id)} className="accent-blue-600" />
                     </td>
                   )}
                   {columns.map((c, i) => {
                     const clickable = !!clickableKey && c.key === clickableKey
+                    const isFixed = c.fixed === 'left' || i === 0
+                    const isFixedRight = c.fixed === 'right'
+                    const rowBg = rowIdx % 2 === 1 ? 'bg-slate-50/50' : 'bg-white'
                     return (
                       <td
                         key={c.key}
-                        className={`whitespace-nowrap px-3 py-3 text-slate-600 ${c.fixed === 'left' || i === 0 ? 'sticky left-0 z-10 bg-white group-hover:bg-slate-50/60' : ''} ${c.fixed === 'right' ? 'sticky z-10 bg-white group-hover:bg-slate-50/60' : ''}`}
+                        className={`whitespace-nowrap px-3 py-3 text-slate-600 ${isFixed ? `sticky left-0 z-10 ${rowBg} group-hover:bg-slate-100/60` : ''} ${isFixedRight ? `sticky z-10 ${rowBg} group-hover:bg-slate-100/60` : ''}`}
                         style={{ textAlign: c.align ?? 'left', ...(c.fixed === 'right' ? { right: actionsW } : {}) }}
                       >
                         {clickable ? (
@@ -479,7 +497,7 @@ export function DataTable({
                     )
                   })}
                   {actions && (
-                    <td className="whitespace-nowrap px-3 py-3 text-left sticky right-0 z-10 bg-white group-hover:bg-slate-50/60">
+                    <td className={`whitespace-nowrap px-3 py-3 text-left sticky right-0 z-10 group-hover:bg-slate-100/60 ${rowIdx % 2 === 1 ? 'bg-slate-50/50' : 'bg-white'}`}>
                       {actions(r)}
                     </td>
                   )}

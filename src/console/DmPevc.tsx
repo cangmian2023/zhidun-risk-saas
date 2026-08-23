@@ -303,7 +303,7 @@ export default function FinanceInvestTable() {
             <button
               style={{
                 padding: '12px 24px',
-                backgroundColor: '#f5b82e',
+                backgroundColor: '#2563EB',
                 border: 'none',
                 borderRadius: '0 6px 6px 0',
                 color: '#fff',
@@ -399,7 +399,7 @@ export default function FinanceInvestTable() {
             <button
               style={{
                 padding: '12px 24px',
-                backgroundColor: '#f5b82e',
+                backgroundColor: '#2563EB',
                 border: 'none',
                 borderRadius: '0 6px 6px 0',
                 color: '#fff',
@@ -490,7 +490,7 @@ export default function FinanceInvestTable() {
             <button
               style={{
                 padding: '12px 24px',
-                backgroundColor: '#f5b82e',
+                backgroundColor: '#2563EB',
                 border: 'none',
                 borderRadius: '0 6px 6px 0',
                 color: '#fff',
@@ -576,7 +576,7 @@ export default function FinanceInvestTable() {
               <option>10条/页</option>
             </select>
             <button style={{padding:'4px 8px'}}>&lt;</button>
-            <button style={{padding:'4px 8px', background:'#f5b82e', border:'none', borderRadius:'4px'}}>1</button>
+            <button style={{padding:'4px 8px', background:'#2563EB', border:'none', borderRadius:'4px'}}>1</button>
             <button style={{padding:'4px 8px'}}>2</button>
             <button style={{padding:'4px 8px'}}>3</button>
             <button style={{padding:'4px 8px'}}>4</button>
@@ -650,7 +650,7 @@ export default function FinanceInvestTable() {
               fontSize: '16px',
               cursor: 'pointer',
               color: activeTab === tab ? '#1f2937' : '#6b7280',
-              borderBottom: activeTab === tab ? '2px solid #f59e0b' : '2px solid transparent',
+              borderBottom: activeTab === tab ? '2px solid #2563EB' : '2px solid transparent',
               fontWeight: activeTab === tab ? 500 : 400,
             }}
           >

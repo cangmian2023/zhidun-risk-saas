@@ -31,10 +31,10 @@
     "risk": [2, 3, 4, 6, 5, 7, 8, 9]
   },
   "distribution": [
-    { "label": "关联方", "value": 9, "color": "#F59E0B" },
-    { "label": "司法风险", "value": 0, "color": "#3B82F6" },
-    { "label": "经营风险", "value": 0, "color": "#10B981" },
-    { "label": "其他", "value": 0, "color": "#94A3B8" }
+    { "label": "关联方风险", "value": 4, "color": "#F59E0B" },
+    { "label": "司法风险", "value": 3, "color": "#3B82F6" },
+    { "label": "经营风险", "value": 1, "color": "#10B981" },
+    { "label": "基本信息", "value": 1, "color": "#8B5CF6" }
   ],
   "chain": {
     "nodes": [

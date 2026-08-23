@@ -13,6 +13,7 @@ export function PageShell({
   actions,
   header,
   legend = true,
+  onBack,
 }: {
   title?: string;
   subtitle?: string;
@@ -20,10 +21,11 @@ export function PageShell({
   actions?: ReactNode;
   header?: ReactNode;
   legend?: boolean;
+  onBack?: () => void;
 }) {
   return (
     <>
-      {header ?? <PageHeader title={title ?? ''} subtitle={subtitle} crumb={crumb} actions={actions} />}
+      {header ?? <PageHeader title={title ?? ''} subtitle={subtitle} crumb={crumb} actions={actions} onBack={onBack} />}
       {legend && <SourceTagLegend />}
     </>
   );
