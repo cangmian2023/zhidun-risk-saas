@@ -262,7 +262,7 @@ export default function DmPevcOrgDetail() {
   const [activeTab, setActiveTab] = useState(TABS[0]);
 
   return (
-    <div style={{ width: '100%', minHeight: '100vh', backgroundColor: '#fff', overflow: 'auto', fontFamily: '"Microsoft Yahei", PingFang SC, sans-serif', fontSize: 14, color: '#333' }}>
+    <div style={{ width: '100%', minHeight: '100vh', backgroundColor: '#fff', overflow: 'auto', fontFamily: '"Microsoft Yahei", PingFang SC, sans-serif', fontSize: 14, color: '#333', paddingTop: 80, paddingLeft: 16, paddingRight: 16 }}>
       <PageShell title={orgName} crumb="数字营销 / 金融工具 / PE/VC / 投资机构详情" legend={false} onBack={() => back('/console/dm/pevc')} />
 
       {/* 头部基础信息 */}
