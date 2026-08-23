@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>研报页面复刻</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#165DFF',
+                        tabActive: '#165DFF',
+                        tabBorder: '#FFD100',
+                        btnYellow: '#FFC500',
+                        tagOrange: '#FBBF24',
+                        tagBlue: '#93C5FD',
+                        tagNew: '#BBF7D0',
+                    }
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .tab-active-border {
+                border-bottom: 2px solid #FFD100;
+            }
+        }
+    </style>
+</head>
+<body class="bg-white text-gray-800 font-sans text-sm">
+    <!-- 顶部Tab导航 -->
+    <div class="flex border-b border-gray-200">
+        <div class="px-4 py-2 cursor-pointer hover:text-primary">企业 AI</div>
+        <div class="px-4 py-2 cursor-pointer hover:text-primary">人员</div>
+        <div class="px-4 py-2 cursor-pointer hover:text-primary">商机</div>
+        <div class="px-4 py-2 cursor-pointer hover:text-primary">风险</div>
+        <div class="px-4 py-2 cursor-pointer hover:text-primary">舆情</div>
+        <div class="px-4 py-2 cursor-pointer tab-active-border text-primary font-medium">研报</div>
+    </div>
+
+    <!-- 搜索栏区域 -->
+    <div class="p-4 flex flex-wrap items-center gap-2 border-b border-gray-100">
+        <input type="text" value="小米" class="border border-gray-300 rounded px-3 py-1.5 w-64 outline-none focus:border-primary">
+        <button class="bg-btnYellow px-4 py-1.5 rounded flex items-center gap-1 font-medium">
+            <i class="fa fa-search"></i> 查询
+        </button>
+        <button class="px-3 py-1.5 rounded border border-gray-300 flex items-center gap-1">
+            <i class="fa fa-file-text-o"></i> 批量搜索
+        </button>
+        <button class="px-3 py-1.5 rounded border border-gray-300 flex items-center gap-1">
+            <i class="fa fa-search-plus"></i> 高级搜索
+        </button>
+    </div>
+
+    <!-- 时间筛选行 -->
+    <div class="px-4 py-2 flex flex-wrap items-center gap-2">
+        <span>发生时间</span>
+        <button class="px-2 py-1 rounded hover:bg-gray-100">今日</button>
+        <button class="px-2 py-1 rounded hover:bg-gray-100">昨日</button>
+        <button class="px-2 py-1 rounded hover:bg-gray-100">最近7天</button>
+        <button class="px-2 py-1 rounded bg-blue-100 text-primary">最近30天</button>
+        <div class="flex items-center gap-1">
+            <input type="text" placeholder="开始日期" class="border border-gray-300 rounded px-2 py-1 w-28">
+            <span>-</span>
+            <input type="text" placeholder="结束日期" class="border border-gray-300 rounded px-2 py-1 w-28">
+        </div>
+    </div>
+
+    <!-- 更多筛选下拉行 -->
+    <div class="px-4 py-2 flex flex-wrap items-center gap-3 border-b border-gray-200">
+        <span>更多筛选</span>
+        <div class="flex items-center gap-1 cursor-pointer">报告类型 <i class="fa fa-caret-down text-gray-500"></i></div>
+        <div class="flex items-center gap-1 cursor-pointer">行业分类 <i class="fa fa-caret-down text-gray-500"></i></div>
+        <div class="flex items-center gap-1 cursor-pointer">特色标签 <i class="fa fa-caret-down text-gray-500"></i></div>
+        <div class="flex items-center gap-1 cursor-pointer">报告页数 <i class="fa fa-caret-down text-gray-500"></i></div>
+        <div class="flex items-center gap-1 cursor-pointer">发布机构 <i class="fa fa-caret-down text-gray-500"></i></div>
+    </div>
+
+    <!-- 结果统计 -->
+    <div class="px-4 py-3 text-gray-500">找到7条相关结果</div>
+    <hr class="mx-4 border-dashed border-gray-200">
+
+    <!-- 研报列表 -->
+    <div class="px-4 py-4 flex flex-col gap-6">
+        <!-- 条目1 -->
+        <div class="flex justify-between items-start">
+            <div>
+                <div class="flex items-center gap-2">
+                    <span class="text-base">智能汽车系列报告（十一）：小米澎程入局增程，有望激活家庭SUV增量</span>
+                    <span class="px-2 py-0.5 rounded bg-tagNew text-xs">新</span>
+                </div>
+                <div class="mt-2 flex flex-wrap gap-2 text-xs">
+                    <span class="px-1.5 py-0.5 rounded bg-tagOrange">大消费</span>
+                    <span class="px-1.5 py-0.5 rounded bg-tagBlue">行业研究</span>
+                    <span class="text-gray-600">2026-08-13 爱建证券 共15页</span>
+                </div>
+            </div>
+            <button class="border border-gray-300 rounded px-3 py-1 text-xs">
+                <i class="fa fa-download mr-1"></i>2M
+            </button>
+        </div>
+        <!-- 条目2 -->
+        <div class="flex justify-between items-start">
+            <div>
+                <div class="flex items-center gap-2">
+                    <span class="text-base">汽车行业周报：小米增程首车发布，优质供给撬动需求</span>
+                    <span class="px-2 py-0.5 rounded bg-tagNew text-xs">新</span>
+                </div>
+                <div class="mt-2 flex flex-wrap gap-2 text-xs">
+                    <span class="px-1.5 py-0.5 rounded bg-tagBlue">综合其他</span>
+                    <span class="px-1.5 py-0.5 rounded bg-tagBlue">行业研究</span>
+                    <span class="text-gray-600">2026-08-13 爱建证券 共10页</span>
+                </div>
+            </div>
+            <button class="border border-gray-300 rounded px-3 py-1 text-xs">
+                <i class="fa fa-download mr-1"></i>1M
+            </button>
+        </div>
+        <!-- 条目3 -->
+        <div class="flex justify-between items-start">
+            <div>
+                <div class="flex items-center gap-2">
+                    <span class="text-base text-primary">小米集团-W（01810）：积极应对手机市场扰动，迭代AI能力</span>
+                    <span class="px-2 py-0.5 rounded bg-tagNew text-xs">新</span>
+                </div>
+                <div class="mt-2 flex flex-wrap gap-2 text-xs">
+                    <span class="px-1.5 py-0.5 rounded bg-tagBlue">综合其他</span>
+                    <span class="px-1.5 py-0.5 rounded bg-tagBlue">公司研究</span>
+                    <span class="px-1.5 py-0.5 rounded bg-tagBlue">小米集团 - W</span>
+                    <span class="text-gray-600">2026-08-10 国盛证券 共5页</span>
+                </div>
+            </div>
+            <button class="border border-gray-300 rounded px-3 py-1 text-xs">
+                <i class="fa fa-download mr-1"></i>1M
+            </button>
+        </div>
+    </div>
+</body>
+</html>

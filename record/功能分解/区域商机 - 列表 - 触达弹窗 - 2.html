@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>存客触达页面</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#165DFF',
+                        borderLine: '#e5e6eb',
+                        grayBg: '#f7f8fa',
+                        tagWarn: '#FFECE5',
+                        tagWarnText: '#F53F3F',
+                    }
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .card-wrap {
+                @apply border border-borderLine rounded p-4 mb-4 bg-white;
+            }
+            .btn-default {
+                @apply border border-borderLine rounded px-3 py-1 text-xs flex items-center gap-1;
+            }
+            .btn-primary-outline {
+                @apply border border-primary text-primary rounded px-3 py-1 text-xs flex items-center gap-1;
+            }
+            .empty-icon-wrap {
+                @apply w-[120px] h-[120px] mx-auto text-gray-300 flex flex-col items-center justify-center;
+            }
+        }
+    </style>
+</head>
+<body class="bg-white text-sm">
+    <div class="p-4 space-y-4">
+        <!-- 存客触达 -->
+        <div class="card-wrap">
+            <div class="flex justify-between items-start mb-2">
+                <div class="text-base font-medium flex items-center gap-1">
+                    <span class="w-1 h-4 bg-primary inline-block"></span>
+                    存客触达
+                </div>
+                <div class="flex gap-2">
+                    <button class="btn-default">
+                        <i class="fa fa-filter"></i> 关系类型
+                    </button>
+                    <button class="btn-primary-outline">
+                        AI 分析
+                    </button>
+                    <button class="btn-default">
+                        <i class="fa fa-download"></i> 下载
+                    </button>
+                </div>
+            </div>
+            <div class="text-xs text-gray-600">
+                您的存客中暂未发现与该企业的关联关系。可<a href="#" class="text-primary">上传更多存客名单</a>，查看更多触达路径（上传后，第二天凌晨生效）
+            </div>
+        </div>
+
+        <!-- 企业商机 -->
+        <div class="card-wrap">
+            <div class="font-medium mb-3">企业商机(0)</div>
+            <div class="flex justify-between items-center mb-4">
+                <div class="flex gap-4 text-xs">
+                    <span class="flex items-center gap-1">业务机会 <i class="fa fa-angle-down text-gray-400"></i></span>
+                    <span class="flex items-center gap-1">商机类型 <i class="fa fa-angle-down text-gray-400"></i></span>
+                    <span class="flex items-center gap-1">商机价值 <i class="fa fa-angle-down text-gray-400"></i></span>
+                </div>
+                <button class="btn-default">
+                    <i class="fa fa-download"></i> 导出前1万条
+                </button>
+            </div>
+            <!-- 暂无数据 -->
+            <div class="py-10">
+                <div class="empty-icon-wrap">
+                    <i class="fa fa-server text-5xl"></i>
+                    <div class="mt-2 text-xs text-gray-500">暂无数据</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 跟进记录 -->
+        <div class="card-wrap">
+            <div class="font-medium flex items-center gap-2">
+                跟进记录(0)
+                <span class="px-2 py-0.5 rounded text-xs bg-tagWarn text-tagWarnText">需走访</span>
+            </div>
+        </div>
+
+        <!-- 操作记录 -->
+        <div class="card-wrap">
+            <div class="font-medium mb-3">操作记录(1)</div>
+            <div class="flex items-center gap-2 text-xs text-gray-600">
+                <span class="w-2 h-2 rounded-full bg-primary"></span>
+                2026年08月17日 14:25 &nbsp; 19156027703 &nbsp; 创建线索
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>风险分析</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#165DFF',
+                        tabActiveBorder: '#FFC53D',
+                        grayBg: '#f7f8fa',
+                        borderLine: '#e5e6eb',
+                    }
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .tab-top {
+                @apply px-4 py-3 cursor-pointer text-sm text-gray-800;
+            }
+            .tab-top-active {
+                @apply border-b-2 border-tabActiveBorder font-medium;
+            }
+            .tab-sub {
+                @apply px-3 py-2 cursor-pointer text-xs rounded;
+            }
+            .tab-sub-active {
+                @apply bg-primary text-white;
+            }
+            .tab-sub-normal {
+                @apply text-gray-500;
+            }
+            .table-cell-xs {
+                @apply px-3 py-2 text-xs border border-borderLine;
+            }
+            .btn-page {
+                @apply border border-borderLine rounded w-8 h-8 flex items-center justify-center text-xs;
+            }
+            .btn-page-active {
+                @apply bg-[#FFC53D] text-white border-[#FFC53D];
+            }
+        }
+    </style>
+</head>
+<body class="bg-white text-sm">
+    <!-- 一级顶部Tab -->
+    <div class="flex border-b border-borderLine">
+        <div class="tab-top">企业概览</div>
+        <div class="tab-top">科创力分析</div>
+        <div class="tab-top">科创成果分析</div>
+        <div class="tab-top">科研团队分析</div>
+        <div class="tab-top">荣誉资质</div>
+        <div class="tab-top">资产分析</div>
+        <div class="tab-top tab-top-active">风险分析</div>
+    </div>
+    <!-- 二级子Tab -->
+    <div class="flex gap-1 p-2 bg-grayBg">
+        <div class="tab-sub tab-sub-normal">债务分析</div>
+        <div class="tab-sub tab-sub-normal">知识产权诉讼</div>
+        <div class="tab-sub tab-sub-active">专利转让 29</div>
+        <div class="tab-sub tab-sub-normal">专利保全</div>
+        <div class="tab-sub tab-sub-normal">专利被无效</div>
+        <div class="tab-sub tab-sub-normal">专利质押</div>
+        <div class="tab-sub tab-sub-normal">专利舆情</div>
+    </div>
+
+    <div class="p-4">
+        <!-- 标题栏 + 筛选&下载按钮 -->
+        <div class="flex justify-between items-center mb-3">
+            <div class="text-sm font-medium">专利转让 29</div>
+            <div class="flex gap-2 items-center">
+                <div class="border border-borderLine rounded px-2 py-1 text-xs flex items-center gap-1">
+                    <i class="fa fa-calendar-o"></i>
+                    登记生效日期开始 - 登记生效日期结束
+                </div>
+                <button class="border border-borderLine rounded px-2 py-1 text-xs flex items-center gap-1">
+                    <i class="fa fa-download"></i> 下载数据
+                </button>
+            </div>
+        </div>
+
+        <!-- 专利转让表格 -->
+        <div class="overflow-x-auto">
+            <table class="w-full border-collapse">
+                <thead>
+                    <tr class="bg-grayBg">
+                        <th class="table-cell-xs text-center">序号</th>
+                        <th class="table-cell-xs text-center whitespace-nowrap">登记生效日 <i class="fa fa-sort-asc text-gray-400"></i></th>
+                        <th class="table-cell-xs text-left">专利名称</th>
+                        <th class="table-cell-xs text-center">申请号</th>
+                        <th class="table-cell-xs text-left">变更事项</th>
+                        <th class="table-cell-xs text-left">转让人</th>
+                        <th class="table-cell-xs text-left">受让人</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="table-cell-xs text-center">1</td>
+                        <td class="table-cell-xs text-center">2023-08-28</td>
+                        <td class="table-cell-xs">反射型掩模以及反射型掩模的制造方法</td>
+                        <td class="table-cell-xs text-center">CN202080072898.7</td>
+                        <td class="table-cell-xs">专利申请权的转移 IPC(主分类):G03F 1/24 登记生效... <span class="text-primary">展开</span></td>
+                        <td class="table-cell-xs">凸版印刷株式会社</td>
+                        <td class="table-cell-xs">凸版光掩模有限公司</td>
+                    </tr>
+                    <tr>
+                        <td class="table-cell-xs text-center">2</td>
+                        <td class="table-cell-xs text-center">2022-12-27</td>
+                        <td class="table-cell-xs">电子器件的印刷制造系统</td>
+                        <td class="table-cell-xs text-center">CN201480070549.6</td>
+                        <td class="table-cell-xs">专利权的转移 IPC(主分类):H01L21/02 登记生效日:... <span class="text-primary">展开</span></td>
+                        <td class="table-cell-xs">株式会社理光 凸版印刷株式会社</td>
+                        <td class="table-cell-xs">柯尼卡美能达株式会社</td>
+                    </tr>
+                    <tr>
+                        <td class="table-cell-xs text-center">3</td>
+                        <td class="table-cell-xs text-center">2022-11-14</td>
+                        <td class="table-cell-xs">光掩模坯料和制造方法、光掩模、光图案...</td>
+                        <td class="table-cell-xs text-center">CN201510140000.6</td>
+                        <td class="table-cell-xs">专利权的转移 IPC(主分类):G03F1/32 登记生效日:2... <span class="text-primary">展开</span></td>
+                        <td class="table-cell-xs">凸版印刷株式会社</td>
+                        <td class="table-cell-xs">凸版光掩模有限公司</td>
+                    </tr>
+                    <tr>
+                        <td class="table-cell-xs text-center">4</td>
+                        <td class="table-cell-xs text-center">2022-11-14</td>
+                        <td class="table-cell-xs">光掩模基板以及光掩模制作方法</td>
+                        <td class="table-cell-xs text-center">CN201310245719.7</td>
+                        <td class="table-cell-xs">专利权的转移 IPC(主分类):G03F1/32 登记生效日:2... <span class="text-primary">展开</span></td>
+                        <td class="table-cell-xs">凸版印刷株式会社</td>
+                        <td class="table-cell-xs">凸版光掩模有限公司</td>
+                    </tr>
+                    <tr>
+                        <td class="table-cell-xs text-center">5</td>
+                        <td class="table-cell-xs text-center">2022-11-11</td>
+                        <td class="table-cell-xs">光掩模基板以及光掩模制作方法</td>
+                        <td class="table-cell-xs text-center">CN200710136300.2</td>
+                        <td class="table-cell-xs">专利权的转移 IPC(主分类):G03F1/32 登记生效日:2... <span class="text-primary">展开</span></td>
+                        <td class="table-cell-xs">凸版印刷株式会社</td>
+                        <td class="table-cell-xs">凸版光掩模有限公司</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 分页区域 -->
+        <div class="flex justify-end items-center mt-3 gap-2 text-xs">
+            <span class="text-gray-500 mr-4">共 29 条 &nbsp; 5条/页</span>
+            <button class="btn-page">&lt;</button>
+            <button class="btn-page btn-page-active">1</button>
+            <button class="btn-page">2</button>
+            <button class="btn-page">3</button>
+            <button class="btn-page">4</button>
+            <span>…</span>
+            <button class="btn-page">6</button>
+            <button class="btn-page">&gt;</button>
+            <span class="ml-2">前往 <input class="w-8 border border-borderLine rounded text-center h-6 mx-1" value="1"> 页</span>
+        </div>
+    </div>
+</body>
+</html>

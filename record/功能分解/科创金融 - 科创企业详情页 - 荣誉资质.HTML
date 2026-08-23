@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>荣誉资质</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#165DFF',
+                        tabActiveBorder: '#FFC53D',
+                        grayBg: '#f7f8fa',
+                        borderLine: '#e5e6eb',
+                        topTagGreen: '#00b42a',
+                        topTagBlue: '#165DFF',
+                    }
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .tab-top {
+                @apply px-4 py-3 cursor-pointer text-sm text-gray-800;
+            }
+            .tab-top-active {
+                @apply border-b-2 border-tabActiveBorder font-medium;
+            }
+            .tab-sub {
+                @apply px-3 py-2 cursor-pointer text-xs rounded;
+            }
+            .tab-sub-active {
+                @apply bg-primary text-white;
+            }
+            .tab-sub-normal {
+                @apply text-gray-500;
+            }
+            .table-cell-xs {
+                @apply px-2 py-2 text-xs border border-borderLine;
+            }
+            .btn-page {
+                @apply border border-borderLine rounded w-7 h-7 flex items-center justify-center text-xs;
+            }
+            .btn-page-active {
+                @apply bg-[#FFC53D] text-white border-[#FFC53D];
+            }
+        }
+    </style>
+</head>
+<body class="bg-white text-sm">
+    <!-- 一级顶部Tab -->
+    <div class="flex border-b border-borderLine">
+        <div class="tab-top">企业概览</div>
+        <div class="tab-top">科创力分析</div>
+        <div class="tab-top">科创成果分析</div>
+        <div class="tab-top">科研团队分析</div>
+        <div class="tab-top tab-top-active">荣誉资质</div>
+        <div class="tab-top">资产分析</div>
+        <div class="tab-top">风险分析</div>
+    </div>
+    <!-- 二级子Tab -->
+    <div class="flex gap-1 p-2 bg-grayBg">
+        <div class="tab-sub tab-sub-active">科创榜单</div>
+        <div class="tab-sub tab-sub-normal">荣誉标签画像</div>
+        <div class="tab-sub tab-sub-normal">科技认定</div>
+        <div class="tab-sub tab-sub-normal">标准制定</div>
+        <div class="tab-sub tab-sub-normal">信用评级</div>
+        <div class="tab-sub tab-sub-normal">税务资质</div>
+        <div class="tab-sub tab-sub-normal">税务荣誉等级</div>
+        <div class="tab-sub tab-sub-normal">进出口信用等级 1</div>
+        <div class="tab-sub tab-sub-normal">游戏审批</div>
+        <div class="tab-sub tab-sub-normal">其他资质</div>
+    </div>
+
+    <div class="p-4 space-y-6">
+        <!-- 科创榜单区域 -->
+        <div>
+            <div class="text-sm font-medium mb-2">科创榜单</div>
+            <div class="text-xs text-gray-600 mb-3">该企业入选了2026年度，朝阳区，全行业的科创企业榜单第267名</div>
+            <div class="flex gap-3 mb-3">
+                <div class="flex items-center border border-borderLine rounded px-2 py-1 text-xs">
+                    朝阳区 <i class="fa fa-times ml-1 text-gray-400"></i>
+                    <i class="fa fa-angle-down ml-2"></i>
+                </div>
+                <div class="flex items-center border border-borderLine rounded px-2 py-1 text-xs">
+                    所在行业 <i class="fa fa-angle-down ml-2"></i>
+                </div>
+            </div>
+            <!-- 榜单列表 -->
+            <div class="border border-borderLine rounded overflow-hidden">
+                <div class="flex justify-between items-center px-3 py-2 border-b border-borderLine">
+                    <div class="flex items-center gap-2 text-xs">
+                        <i class="fa fa-file-text-o text-primary"></i>
+                        <span>凸版印刷株式会社北京办事处</span>
+                        <span class="bg-topTagGreen text-white px-1 rounded">TOP 267</span>
+                    </div>
+                    <div class="text-xs bg-gray-100 px-2 py-0.5 rounded">科创能力分 80</div>
+                </div>
+                <div class="flex justify-between items-center px-3 py-2 border-b border-borderLine">
+                    <div class="flex items-center gap-2 text-xs">
+                        <span>天地科技股份有限公司</span>
+                        <span class="bg-topTagGreen text-white px-1 rounded">TOP 1</span>
+                    </div>
+                    <div class="text-xs bg-gray-100 px-2 py-0.5 rounded">科创能力分 98</div>
+                </div>
+                <div class="flex justify-between items-center px-3 py-2 border-b border-borderLine">
+                    <div class="flex items-center gap-2 text-xs">
+                        <span>北方华创科技集团股份有限公司</span>
+                        <span class="bg-topTagGreen text-white px-1 rounded">TOP 2</span>
+                    </div>
+                    <div class="text-xs bg-gray-100 px-2 py-0.5 rounded">科创能力分 98</div>
+                </div>
+                <div class="flex justify-between items-center px-3 py-2 border-b border-borderLine">
+                    <div class="flex items-center gap-2 text-xs">
+                        <span>京东方科技集团股份有限公司</span>
+                        <span class="bg-topTagBlue text-white px-1 rounded">TOP 3</span>
+                    </div>
+                    <div class="text-xs bg-gray-100 px-2 py-0.5 rounded">科创能力分 98</div>
+                </div>
+                <div class="flex justify-between items-center px-3 py-2 border-b border-borderLine">
+                    <div class="flex items-center gap-2 text-xs">
+                        <span>中国生物技术股份有限公司</span>
+                        <span class="bg-topTagBlue text-white px-1 rounded">TOP 4</span>
+                    </div>
+                    <div class="text-xs bg-gray-100 px-2 py-0.5 rounded">科创能力分 97</div>
+                </div>
+                <div class="flex justify-between items-center px-3 py-2">
+                    <div class="flex items-center gap-2 text-xs">
+                        <span>北京奇虎科技有限公司</span>
+                        <span class="bg-topTagBlue text-white px-1 rounded">TOP 5</span>
+                    </div>
+                    <div class="text-xs bg-gray-100 px-2 py-0.5 rounded">科创能力分 97</div>
+                </div>
+            </div>
+            <!-- 榜单分页 -->
+            <div class="flex justify-end items-center mt-3 gap-2 text-xs">
+                <span class="text-gray-500">共 500 条</span>
+                <button class="btn-page">&lt;</button>
+                <button class="btn-page btn-page-active">1</button>
+                <button class="btn-page">2</button>
+                <button class="btn-page">3</button>
+                <button class="btn-page">4</button>
+                <span>…</span>
+                <button class="btn-page">100</button>
+                <button class="btn-page">&gt;</button>
+            </div>
+        </div>
+
+        <!-- 进出口信用等级 1 -->
+        <div>
+            <div class="text-sm font-medium mb-2">进出口信用等级 1</div>
+            <div class="overflow-x-auto">
+                <table class="w-full border-collapse">
+                    <thead>
+                        <tr class="bg-grayBg">
+                            <th class="table-cell-xs text-center">序号</th>
+                            <th class="table-cell-xs text-center">注册日期</th>
+                            <th class="table-cell-xs text-center">海关信用等级</th>
+                            <th class="table-cell-xs text-center">注册海关</th>
+                            <th class="table-cell-xs text-center">年报情况</th>
+                            <th class="table-cell-xs text-center">信息来源</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="table-cell-xs text-center">1</td>
+                            <td class="table-cell-xs text-center">2012-12-03</td>
+                            <td class="table-cell-xs text-center">注册登记和备案企业</td>
+                            <td class="table-cell-xs text-center">京会展关</td>
+                            <td class="table-cell-xs text-center">不需要</td>
+                            <td class="table-cell-xs text-center"><a href="#" class="text-primary">查看</a></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 其他资质 -->
+        <div>
+            <div class="text-sm font-medium mb-2 flex items-center gap-1">
+                其他资质
+                <span class="text-xs text-primary"><i class="fa fa-external-link"></i> 去企业详情页查看详情</span>
+            </div>
+            <div class="border border-borderLine rounded py-6 text-center text-xs text-gray-500">
+                <div class="text-base mb-1">1 个</div>
+                <div>行政许可</div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

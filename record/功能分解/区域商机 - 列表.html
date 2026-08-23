@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的产品模型 - 商机列表</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#165DFF',
+                        tabActive: '#FFC107',
+                        tagBlue: '#93C5FD',
+                        tagRed: '#FCA5A5',
+                        tagGreen: '#86EFAC',
+                    }
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .tab-active-border {
+                border-bottom: 2px solid #FFC107;
+            }
+            .filter-tag {
+                @apply bg-gray-100 rounded px-2 py-0.5 text-xs flex items-center gap-1;
+            }
+            .table-header-sort {
+                @apply flex items-center gap-1 cursor-pointer hover:text-primary;
+            }
+        }
+    </style>
+</head>
+<body class="bg-white text-gray-800 font-sans text-sm">
+    <!-- 顶部Tab -->
+    <div class="flex items-center border-b border-gray-200">
+        <div class="px-4 py-3 cursor-pointer">AI推荐</div>
+        <div class="px-4 py-3 cursor-pointer tab-active-border font-medium">我的产品模型</div>
+        <div class="ml-auto px-4 py-3 text-primary cursor-pointer">管理产品模型</div>
+    </div>
+
+    <!-- 样例模型卡片 -->
+    <div class="p-4">
+        <div class="border border-gray-200 rounded p-3 inline-block max-w-xs">
+            <div class="flex justify-between items-center">
+                <span class="font-medium">样例模型</span>
+                <span class="text-gray-500">商机:615</span>
+            </div>
+            <div class="text-xs text-gray-500 mt-1">中标政府项目、新增拿地公告、新增中标...</div>
+        </div>
+    </div>
+
+    <!-- 筛选栏 -->
+    <div class="px-4 py-2 border-y border-gray-200">
+        <div class="flex flex-wrap gap-x-4 gap-y-2 items-center mb-2">
+            <span>选择商机</span>
+            <div class="table-header-sort">发生日期 <i class="fa fa-chevron-down text-gray-400"></i></div>
+            <div class="table-header-sort">商机价值 <i class="fa fa-chevron-down text-gray-400"></i></div>
+            <div class="table-header-sort">业务机会 <i class="fa fa-chevron-down text-gray-400"></i></div>
+            <div class="table-header-sort">商机类型 <i class="fa fa-chevron-down text-gray-400"></i></div>
+        </div>
+        <div class="flex flex-wrap gap-x-4 gap-y-2 items-center mb-2">
+            <span class="text-gray-500">更多筛选</span>
+            <div class="table-header-sort">省份地区 <i class="fa fa-chevron-down text-gray-400"></i></div>
+            <div class="table-header-sort">所在行业 <i class="fa fa-chevron-down text-gray-400"></i></div>
+            <div class="table-header-sort">资本背景 <i class="fa fa-chevron-down text-gray-400"></i></div>
+            <div class="table-header-sort">企业类型 <i class="fa fa-chevron-down text-gray-400"></i></div>
+            <div class="table-header-sort">其他组织 <i class="fa fa-chevron-down text-gray-400"></i></div>
+            <div class="table-header-sort">资质标签 <i class="fa fa-chevron-down text-gray-400"></i></div>
+            <div class="table-header-sort">上市信息 <i class="fa fa-chevron-down text-gray-400"></i></div>
+            <div class="table-header-sort">企业规模 <i class="fa fa-chevron-down text-gray-400"></i></div>
+            <div class="table-header-sort">参保人数 <i class="fa fa-chevron-down text-gray-400"></i></div>
+            <div class="table-header-sort">注册资本 <i class="fa fa-chevron-down text-gray-400"></i></div>
+            <div class="table-header-sort">成立时间 <i class="fa fa-chevron-down text-gray-400"></i></div>
+            <div class="table-header-sort">启信分 <i class="fa fa-chevron-down text-gray-400"></i></div>
+            <div class="table-header-sort">失信被执行人 <i class="fa fa-chevron-down text-gray-400"></i></div>
+            <div class="table-header-sort">被执行人 <i class="fa fa-chevron-down text-gray-400"></i></div>
+            <div class="table-header-sort">终本案件 <i class="fa fa-chevron-down text-gray-400"></i></div>
+            <div class="ml-auto text-primary cursor-pointer">更多 <i class="fa fa-chevron-down"></i></div>
+        </div>
+        <!-- 已选标签 -->
+        <div class="flex items-center gap-2 mt-2">
+            <span>已选</span>
+            <div class="filter-tag">北京 <i class="fa fa-times cursor-pointer"></i></div>
+            <div class="filter-tag">发生日期: 最近1个月 <i class="fa fa-times cursor-pointer"></i></div>
+            <div class="ml-auto text-primary cursor-pointer flex items-center gap-1">
+                <i class="fa fa-refresh"></i> 清空
+            </div>
+        </div>
+    </div>
+
+    <!-- 工具栏 -->
+    <div class="px-4 py-3 flex justify-between items-center">
+        <span>找到 <b>30,000</b> 条结果</span>
+        <div class="flex gap-3 items-center">
+            <div class="relative">
+                <i class="fa fa-search absolute left-2 top-1.5 text-gray-400"></i>
+                <input type="text" placeholder="输入企业名称" class="border border-gray-300 rounded pl-8 pr-2 py-1.5 w-56">
+            </div>
+            <button class="border border-gray-300 rounded px-3 py-1.5 flex items-center gap-1">AI分析商机 ▾</button>
+            <button class="border border-gray-300 rounded px-3 py-1.5 flex items-center gap-1">营销 ▾</button>
+        </div>
+    </div>
+
+    <!-- 表格 -->
+    <div class="px-4 pb-4 overflow-x-auto">
+        <table class="w-full border-collapse border border-gray-200">
+            <thead>
+                <tr class="bg-gray-50">
+                    <th class="border border-gray-200 p-2 w-8"><input type="checkbox"></th>
+                    <th class="border border-gray-200 p-2 text-left">企业名称</th>
+                    <th class="border border-gray-200 p-2 text-left">发生日期</th>
+                    <th class="border border-gray-200 p-2 text-left">商机类型</th>
+                    <th class="border border-gray-200 p-2 text-left">商机价值</th>
+                    <th class="border border-gray-200 p-2 text-left">商机内容</th>
+                    <th class="border border-gray-200 p-2 text-left">操作 <span class="text-primary">AI</span></th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="border border-gray-200 p-2"><input type="checkbox"></td>
+                    <td class="border border-gray-200 p-2">
+                        <div><i class="fa fa-building text-red-500 mr-1"></i>北京科安达消防工程有限公司</div>
+                        <div class="text-xs mt-1 text-blue-600">中型企业 &nbsp;民营企业</div>
+                    </td>
+                    <td class="border border-gray-200 p-2">2026-08-21</td>
+                    <td class="border border-gray-200 p-2"><span class="bg-tagRed px-1 rounded text-xs">应收账款转让（...</span></td>
+                    <td class="border border-gray-200 p-2 text-amber-400">★★★☆☆</td>
+                    <td class="border border-gray-200 p-2 text-xs">将于2026-08-21发生应收账款转让（保理）到期事件，出让人为北京科安达消防工程有限公司，受让人为中国建设银行股份有限公司天津海益国际中心支行，该笔质押的金额为921516.46元，对应财产价值为921516.46元，登记类型为初始登记，... <span class="text-primary">授信</span></td>
+                    <td class="border border-gray-200 p-2 text-xs text-primary">公司商机65 &nbsp;关联营销 &nbsp;AI触达</td>
+                </tr>
+                <tr>
+                    <td class="border border-gray-200 p-2"><input type="checkbox"></td>
+                    <td class="border border-gray-200 p-2">
+                        <div><i class="fa fa-square text-gray-800 mr-1"></i>北京丽都嘉业装饰工程有限公司</div>
+                        <div class="text-xs mt-1 text-blue-600">民营企业</div>
+                    </td>
+                    <td class="border border-gray-200 p-2">2026-08-21</td>
+                    <td class="border border-gray-200 p-2"><span class="bg-tagRed px-1 rounded text-xs">应收账款转让（...</span></td>
+                    <td class="border border-gray-200 p-2 text-amber-400">★★★☆☆</td>
+                    <td class="border border-gray-200 p-2 text-xs">将于2026-08-21发生应收账款转让（保理）到期事件，出让人为北京丽都嘉业装饰工程有限公司，受让人为保利商业保理有限公司，该笔质押的金额为0元，对应财产价值为28012899.27元，登记类型为初始登记，期限为1.083333333333333年 ... <span class="text-primary">授信</span></td>
+                    <td class="border border-gray-200 p-2 text-xs text-primary">公司商机6 &nbsp;关联营销 &nbsp;AI触达</td>
+                </tr>
+                <tr>
+                    <td class="border border-gray-200 p-2"><input type="checkbox"></td>
+                    <td class="border border-gray-200 p-2">
+                        <div><span class="bg-blue-500 text-white px-1 rounded text-xs mr-1">北</span>北京粤十机器人科技有限公司</div>
+                        <div class="text-xs mt-1 text-blue-600">民营企业 &nbsp;港澳台投资 &nbsp;小微企业</div>
+                    </td>
+                    <td class="border border-gray-200 p-2">2026-08-21</td>
+                    <td class="border border-gray-200 p-2"><span class="bg-tagBlue px-1 rounded text-xs">筹划融资（私募）</span></td>
+                    <td class="border border-gray-200 p-2 text-amber-400">★★★★★</td>
+                    <td class="border border-gray-200 p-2 text-xs">北京粤十机器人科技有限公司距上次投融资已超过10个月，预计将筹划新一轮创投融资，上次融资时间为2025-10-25，融资轮次为股权投资，融资金额为--万元，投资人为湖北夏创星火创业投资基金合伙企业（有限合伙）。 <span class="text-primary">存款 授信</span></td>
+                    <td class="border border-gray-200 p-2 text-xs text-primary">公司商机5 &nbsp;关联营销 &nbsp;AI触达</td>
+                </tr>
+                <tr>
+                    <td class="border border-gray-200 p-2"><input type="checkbox"></td>
+                    <td class="border border-gray-200 p-2">
+                        <div><i class="fa fa-link text-red-500 mr-1"></i>北京中铁建工物资有限公司</div>
+                        <div class="text-xs mt-1 text-blue-600">大型企业 &nbsp;国有企业</div>
+                    </td>
+                    <td class="border border-gray-200 p-2">2026-08-21</td>
+                    <td class="border border-gray-200 p-2"><span class="bg-tagRed px-1 rounded text-xs">应收账款融资到期</span></td>
+                    <td class="border border-gray-200 p-2 text-amber-400">★★★★☆</td>
+                    <td class="border border-gray-200 p-2 text-xs">将于2026-11-19发生应收账款融资到期事件,质权人/受让人为交通银行股份有限公司武汉东湖新技术开发区支行,该笔融资的融资额为0万,财产价值为4690520.97元,类型为应收账款转让（保理）,起始日为2025-11-20,截止日为2026-11-19,期限为1.... <span class="text-primary">授信</span></td>
+                    <td class="border border-gray-200 p-2 text-xs text-primary">公司商机1797 &nbsp;关联营销 &nbsp;AI触达</td>
+                </tr>
+                <tr>
+                    <td class="border border-gray-200 p-2"><input type="checkbox"></td>
+                    <td class="border border-gray-200 p-2">
+                        <div><span class="bg-blue-500 text-white px-1 rounded text-xs mr-1">北</span>北京鸿佳建筑工程有限公司</div>
+                        <div class="text-xs mt-1 text-blue-600">民营企业 &nbsp;小微企业</div>
+                    </td>
+                    <td class="border border-gray-200 p-2">2026-08-21</td>
+                    <td class="border border-gray-200 p-2"><span class="bg-tagRed px-1 rounded text-xs">应收账款融资到期</span></td>
+                    <td class="border border-gray-200 p-2 text-amber-400">★★★★☆</td>
+                    <td class="border border-gray-200 p-2 text-xs">将于2026-11-19发生应收账款融资到期事件,质权人/受让人为中国农业银行股份有限公司北京海淀区支行,该笔融资的融资额为2.2103645万,人民币,财产价值为0元,类型为应收账款转让（保理）,起始日为2022-12-20,截止日为2026-11-19,期限为3.... <span class="text-primary">授信</span></td>
+                    <td class="border border-gray-200 p-2 text-xs text-primary">公司商机7 &nbsp;关联营销 &nbsp;AI触达</td>
+                </tr>
+                <tr>
+                    <td class="border border-gray-200 p-2"><input type="checkbox"></td>
+                    <td class="border border-gray-200 p-2">
+                        <div><i class="fa fa-leaf text-green-600 mr-1"></i>北京艺苑风景园林工程有限公司</div>
+                        <div class="text-xs mt-1 text-blue-600">民营企业 &nbsp;小微企业</div>
+                    </td>
+                    <td class="border border-gray-200 p-2">2026-08-21</td>
+                    <td class="border border-gray-200 p-2"><span class="bg-tagRed px-1 rounded text-xs">应收账款转让（...</span></td>
+                    <td class="border border-gray-200 p-2 text-amber-400">★★★☆☆</td>
+                    <td class="border border-gray-200 p-2 text-xs">将于2026-08-21发生应收账款转让（保理）到期事件，出让人为北京艺苑风景园林工程有限公司，受让人为保利商业保理有限公司，该笔质押的金额为0元，对应财产价值为27910107.62元，登记类型为初始登记，期限为1.083333333333333年 ...</td>
+                    <td class="border border-gray-200 p-2 text-xs text-primary">公司商机11 &nbsp;关联营销 &nbsp;AI触达</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

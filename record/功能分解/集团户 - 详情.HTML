@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>国家能源投资集团 - 集团户</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#165DFF',
+                        yellowBtn: '#FFC107',
+                        greenStatus: '#36c66d',
+                    }
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .table-header {
+                @apply bg-gray-50 text-left p-2 border border-gray-200 text-xs whitespace-nowrap;
+            }
+            .table-cell {
+                @apply p-2 border border-gray-200 text-xs align-top whitespace-nowrap;
+            }
+        }
+    </style>
+</head>
+<body class="bg-white text-gray-800 font-sans text-sm">
+    <div class="p-4">
+        <!-- 面包屑 -->
+        <div class="flex items-center gap-1 mb-4 text-xs text-gray-600">
+            <i class="fa fa-angle-left"></i>
+            <span>集团户 / </span>
+            <span class="font-medium">国家能源投资集团</span>
+        </div>
+
+        <!-- 头部集团信息 -->
+        <div class="flex justify-between items-start mb-4">
+            <div>
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 bg-red-600 text-white flex items-center justify-center">
+                        <i class="fa fa-fire"></i>
+                    </div>
+                    <h1 class="text-lg font-bold">国家能源投资集团</h1>
+                    <span class="text-xs">主体企业：<a class="text-primary">国家能源投资集团有限责任公司</a></span>
+                    <span class="text-xs">全部企业(5,448)</span>
+                    <span class="text-xs">核心企业(157)</span>
+                </div>
+                <p class="text-xs text-gray-600 mt-1 max-w-5xl">
+                    国家能源投资集团有限责任公司是经党中央、国务院批准,由中国国电集团公司和神华集团有限责任公司两家世界500强企业合并重组而成,于2017年11月28日正式挂牌成立,是中央直管国有重要骨干企业、国有资本投资公司改革试点企业,2018年世界500强排名第101位。国家 ...
+                    <a class="text-primary">更多∨</a>
+                </p>
+            </div>
+            <button class="bg-yellowBtn px-3 py-1 rounded text-xs font-medium flex items-center gap-1">
+                <i class="fa fa-plus"></i> 关注
+            </button>
+        </div>
+
+        <!-- Tab栏 -->
+        <div class="flex border-b border-gray-200 mb-3">
+            <div class="px-3 py-2 border-b-2 border-primary font-medium">集团信息</div>
+            <div class="px-3 py-2 text-gray-600">商机信息 66,891</div>
+        </div>
+
+        <!-- 筛选栏 -->
+        <div class="flex flex-wrap gap-2 mb-3 text-xs">
+            <span>企业筛选</span>
+            <a class="text-primary">集团筛选 ∨</a>
+            <a class="text-primary">经营状态 ∨</a>
+            <a class="text-primary">所在行业 ∨</a>
+            <a class="text-primary">总部地区 ∨</a>
+            <a class="text-primary">成员地区 ∨</a>
+            <a class="text-primary">注册资本 ∨</a>
+            <a class="text-primary">成立时间 ∨</a>
+            <a class="text-primary">集团内级别 ∨</a>
+            <a class="text-primary">控股等级 ∨</a>
+        </div>
+
+        <!-- 已选筛选标签 -->
+        <div class="flex items-center gap-2 mb-3 text-xs">
+            <span>已选</span>
+            <span class="bg-gray-100 px-2 py-0.5 rounded flex items-center gap-1">
+                实控人控制等级 <i class="fa fa-times"></i>
+            </span>
+            <span class="ml-auto"><a class="text-primary">清空</a></span>
+        </div>
+
+        <!-- 结果操作栏 -->
+        <div class="flex justify-between items-center mb-3 text-xs">
+            <span>找到 5,448 条结果</span>
+            <div class="flex gap-2">
+                <input type="text" placeholder="请输入公司名称" class="border border-gray-200 rounded px-2 py-1 w-48">
+                <button class="border border-gray-300 rounded px-3 py-1 flex items-center gap-1">
+                    <i class="fa fa-download"></i> 导出
+                </button>
+                <button class="border border-gray-300 rounded px-3 py-1 flex items-center gap-1">
+                    营销 ∨
+                </button>
+            </div>
+        </div>
+
+        <!-- 企业列表表格 -->
+        <div class="overflow-x-auto">
+            <table class="w-full border-collapse">
+                <thead>
+                    <tr>
+                        <th class="table-header w-8"><input type="checkbox"/></th>
+                        <th class="table-header">公司名称</th>
+                        <th class="table-header">经营状态</th>
+                        <th class="table-header">注册资本↕</th>
+                        <th class="table-header">成立时间↕</th>
+                        <th class="table-header">成员级别(实控人)</th>
+                        <th class="table-header">行业</th>
+                        <th class="table-header">地区</th>
+                        <th class="table-header">实控人控股比例↕</th>
+                        <th class="table-header">营业收入↕</th>
+                        <th class="table-header">资产总额↕</th>
+                        <th class="table-header">净利润↕</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="table-cell"><input type="checkbox"/></td>
+                        <td class="table-cell">国家能源投资集团有限责任公司</td>
+                        <td class="table-cell"><span class="bg-green-100 text-greenStatus px-1 rounded">存续</span></td>
+                        <td class="table-cell">13,209,466.11498万元人民币</td>
+                        <td class="table-cell">1995-10-23</td>
+                        <td class="table-cell">0级</td>
+                        <td class="table-cell">商务服务业</td>
+                        <td class="table-cell">北京东城</td>
+                        <td class="table-cell">100.00%</td>
+                        <td class="table-cell">7,068.64亿</td>
+                        <td class="table-cell">23,621.12亿</td>
+                        <td class="table-cell">964.87亿</td>
+                    </tr>
+                    <tr>
+                        <td class="table-cell"><input type="checkbox"/></td>
+                        <td class="table-cell">国能国源电力（北京）有限公司</td>
+                        <td class="table-cell"><span class="bg-green-100 text-greenStatus px-1 rounded">存续</span></td>
+                        <td class="table-cell">4,726,135.91158万元人民币</td>
+                        <td class="table-cell">2008-04-29</td>
+                        <td class="table-cell">2级</td>
+                        <td class="table-cell">电力、热力生产和供应业</td>
+                        <td class="table-cell">北京西城</td>
+                        <td class="table-cell">69.97%</td>
+                        <td class="table-cell">258.44亿</td>
+                        <td class="table-cell">615.62亿</td>
+                        <td class="table-cell">34.25亿</td>
+                    </tr>
+                    <tr>
+                        <td class="table-cell"><input type="checkbox"/></td>
+                        <td class="table-cell">中国神华煤制油化工有限公司</td>
+                        <td class="table-cell"><span class="bg-green-100 text-greenStatus px-1 rounded">存续</span></td>
+                        <td class="table-cell">3,616,431.585277万元人民币</td>
+                        <td class="table-cell">2003-06-12</td>
+                        <td class="table-cell">2级</td>
+                        <td class="table-cell">其他制造业</td>
+                        <td class="table-cell">北京东城</td>
+                        <td class="table-cell">69.97%</td>
+                        <td class="table-cell">264.29亿</td>
+                        <td class="table-cell">370.34亿</td>
+                        <td class="table-cell">12.6亿</td>
+                    </tr>
+                    <tr>
+                        <td class="table-cell"><input type="checkbox"/></td>
+                        <td class="table-cell">国能（乌海）能源有限公司</td>
+                        <td class="table-cell"><span class="bg-green-100 text-greenStatus px-1 rounded">存续</span></td>
+                        <td class="table-cell">2,692,703万元人民币</td>
+                        <td class="table-cell">2002-04-11</td>
+                        <td class="table-cell">2级</td>
+                        <td class="table-cell">煤炭开采和洗选业</td>
+                        <td class="table-cell">内蒙古乌海海勃湾</td>
+                        <td class="table-cell">69.97%</td>
+                        <td class="table-cell">97.7亿</td>
+                        <td class="table-cell">224.98亿</td>
+                        <td class="table-cell">13.11亿</td>
+                    </tr>
+                    <tr>
+                        <td class="table-cell"><input type="checkbox"/></td>
+                        <td class="table-cell">国家能源集团资本控股有限公司</td>
+                        <td class="table-cell"><span class="bg-green-100 text-greenStatus px-1 rounded">存续</span></td>
+                        <td class="table-cell">2,284,100万元人民币</td>
+                        <td class="table-cell">2009-11-17</td>
+                        <td class="table-cell">1级</td>
+                        <td class="table-cell">商务服务业</td>
+                        <td class="table-cell">北京西城</td>
+                        <td class="table-cell">100.00%</td>
+                        <td class="table-cell">25.66亿</td>
+                        <td class="table-cell">1,534.75亿</td>
+                        <td class="table-cell">15.69亿</td>
+                    </tr>
+                    <tr>
+                        <td class="table-cell"><input type="checkbox"/></td>
+                        <td class="table-cell">国家能源集团宁夏煤业有限责任公司</td>
+                        <td class="table-cell"><span class="bg-green-100 text-greenStatus px-1 rounded">存续</span></td>
+                        <td class="table-cell">2,111,146.64万元人民币</td>
+                        <td class="table-cell">2002-12-28</td>
+                        <td class="table-cell">1级</td>
+                        <td class="table-cell">石油、煤炭及其他燃料加工业</td>
+                        <td class="table-cell">宁夏银川金凤</td>
+                        <td class="table-cell">51.00%</td>
+                        <td class="table-cell">539.48亿</td>
+                        <td class="table-cell">1,180.97亿</td>
+                        <td class="table-cell">48.25亿</td>
+                    </tr>
+                    <tr>
+                        <td class="table-cell"><input type="checkbox"/></td>
+                        <td class="table-cell">中国神华能源股份有限公司</td>
+                        <td class="table-cell"><span class="bg-green-100 text-greenStatus px-1 rounded">存续</span></td>
+                        <td class="table-cell">1,986,851.9955万元人民币</td>
+                        <td class="table-cell">2004-11-08</td>
+                        <td class="table-cell">1级</td>
+                        <td class="table-cell">煤炭开采和洗选业</td>
+                        <td class="table-cell">北京东城</td>
+                        <td class="table-cell">69.97%</td>
+                        <td class="table-cell">2,949.16亿</td>
+                        <td class="table-cell">6,277.61亿</td>
+                        <td class="table-cell">627.83亿</td>
+                    </tr>
+                    <tr>
+                        <td class="table-cell"><input type="checkbox"/></td>
+                        <td class="table-cell">国能大渡河流域水电开发有限公司</td>
+                        <td class="table-cell"><span class="bg-green-100 text-greenStatus px-1 rounded">存续</span></td>
+                        <td class="table-cell">1,962,208.882222万元人民币</td>
+                        <td class="table-cell">2000-11-16</td>
+                        <td class="table-cell">2级</td>
+                        <td class="table-cell">电力、热力生产和供应业</td>
+                        <td class="table-cell">四川成都武侯</td>
+                        <td class="table-cell">41.06%</td>
+                        <td class="table-cell">95.85亿</td>
+                        <td class="table-cell">1,375.86亿</td>
+                        <td class="table-cell">16.9亿</td>
+                    </tr>
+                    <tr>
+                        <td class="table-cell"><input type="checkbox"/></td>
+                        <td class="table-cell">国电电力发展股份有限公司</td>
+                        <td class="table-cell"><span class="bg-green-100 text-greenStatus px-1 rounded">存续</span></td>
+                        <td class="table-cell">1,783,561.9082万元人民币</td>
+                        <td class="table-cell">1992-12-31</td>
+                        <td class="table-cell">1级</td>
+                        <td class="table-cell">电力、热力生产和供应业</td>
+                        <td class="table-cell">辽宁大连金州</td>
+                        <td class="table-cell">51.32%</td>
+                        <td class="table-cell">1,702.44亿</td>
+                        <td class="table-cell">5,201.52亿</td>
+                        <td class="table-cell">137.27亿</td>
+                    </tr>
+                    <tr>
+                        <td class="table-cell"><input type="checkbox"/></td>
+                        <td class="table-cell">国家能源集团财务有限公司</td>
+                        <td class="table-cell"><span class="bg-green-100 text-greenStatus px-1 rounded">存续</span></td>
+                        <td class="table-cell">1,750,000万元人民币</td>
+                        <td class="table-cell">2000-11-27</td>
+                        <td class="table-cell">1级</td>
+                        <td class="table-cell">货币金融服务</td>
+                        <td class="table-cell">北京西城</td>
+                        <td class="table-cell">87.99%</td>
+                        <td class="table-cell">31.31亿</td>
+                        <td class="table-cell">1,182.51亿</td>
+                        <td class="table-cell">10.77亿</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>

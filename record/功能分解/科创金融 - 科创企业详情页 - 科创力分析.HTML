@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>凸版印刷株式会社北京办事处 - 科创企业详情页</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#165DFF',
+                        blueTop: '#3670c9',
+                        tabActive: '#165DFF',
+                        grayBg: '#f7f8fa',
+                        borderLine: '#e5e6eb',
+                        greenHigh: '#00b42a',
+                        orangeMid: '#ff7d00',
+                        redLow: '#f53f3f',
+                        chartBlue: '#4080FF',
+                        chartGreen: '#00B42A',
+                        chartOrange: '#FF7D00',
+                        chartPurple: '#722ED1',
+                    }
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .tab-item {
+                @apply px-3 py-2 text-xs whitespace-nowrap cursor-pointer border-b-2 border-transparent;
+            }
+            .tab-active {
+                @apply border-tabActive text-tabActive font-medium;
+            }
+            .card-wrap {
+                @apply bg-white border border-borderLine rounded p-3 mb-3;
+            }
+            .text-desc-xs {
+                @apply text-xs text-gray-500;
+            }
+            .flex-row-between {
+                @apply flex flex-row justify-between items-center;
+            }
+        }
+    </style>
+</head>
+<body class="bg-grayBg text-gray-800 text-sm">
+    <div class="max-w-[980px] mx-auto bg-white min-h-screen">
+        <!-- 面包屑 -->
+        <div class="px-4 py-2 flex items-center gap-1 text-xs text-gray-500">
+            <span>科创首页</span>
+            <i class="fa fa-angle-right"></i>
+            <span>科创企业详情页</span>
+        </div>
+
+        <!-- 头部企业标题栏 -->
+        <div class="px-4 py-3 flex-row-between border-b border-borderLine">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 bg-blueTop text-white flex items-center justify-center font-bold">凸</div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h1 class="text-base font-bold">凸版印刷株式会社北京办事处</h1>
+                        <span class="text-xs bg-gray-100 px-1 rounded">存续</span>
+                        <a href="#" class="text-primary text-xs">完整企业详情</a>
+                    </div>
+                    <div class="flex gap-3 mt-1 text-xs text-gray-500">
+                        <span>科创等级 AA</span>
+                        <span>关联商机11条</span>
+                    </div>
+                    <div class="flex gap-3 mt-1 text-xs">
+                        <span>通用标签</span>
+                        <span>发票抬头</span>
+                        <span class="text-primary">企业亮点：有发明专利</span>
+                    </div>
+                </div>
+            </div>
+            <div class="flex gap-3 text-xs">
+                <button class="border border-borderLine rounded px-2 py-1">AI触达</button>
+                <button class="border border-borderLine rounded px-2 py-1">查看授信指引/报告</button>
+                <button class="border border-borderLine rounded px-2 py-1">PK 企业PK</button>
+                <button class="border border-borderLine rounded px-2 py-1">营销</button>
+            </div>
+        </div>
+
+        <!-- 一级Tab导航 -->
+        <div class="px-4 flex border-b border-borderLine overflow-x-auto">
+            <div class="tab-item">企业概览</div>
+            <div class="tab-item tab-active">科创力分析</div>
+            <div class="tab-item">科创成果分析</div>
+            <div class="tab-item">科研团队分析</div>
+            <div class="tab-item">荣誉资质</div>
+            <div class="tab-item">资产分析</div>
+            <div class="tab-item">风险分析</div>
+        </div>
+
+        <!-- 二级Tab导航 -->
+        <div class="px-4 flex border-b border-borderLine overflow-x-auto bg-grayBg">
+            <div class="tab-item tab-active">科创评分</div>
+            <div class="tab-item">科创分析</div>
+            <div class="tab-item">科创经营动态标签</div>
+            <div class="tab-item">重点技术趋势</div>
+            <div class="tab-item">科创技术画像</div>
+            <div class="tab-item">专利结构分析</div>
+            <div class="tab-item">专利申请趋势</div>
+            <div class="tab-item">专利申请结构趋势</div>
+            <div class="tab-item">技术更新周期分析</div>
+            <div class="tab-item">研发产出率</div>
+            <div class="tab-item">研发稳定性</div>
+            <div class="tab-item">全球布局</div>
+            <div class="tab-item">生命周期</div>
+        </div>
+
+        <div class="p-4 grid grid-cols-12 gap-3">
+            <!-- 左侧科创评分雷达+评分说明 col-span-7 -->
+            <div class="col-span-7 card-wrap">
+                <div class="flex items-center gap-4">
+                    <div class="w-[180px] h-[180px]">
+                        <canvas id="radarChart"></canvas>
+                    </div>
+                    <div>
+                        <div class="text-lg font-bold">科创能力评分80分</div>
+                        <div class="text-greenHigh font-medium text-base">优秀</div>
+                        <div class="text-desc-xs mt-1">跑赢全国商务服务业中99%的企业</div>
+                        <div class="flex items-center gap-2 mt-2">
+                            <span class="text-desc-xs">科创能力高</span>
+                            <div class="w-[120px] h-[4px] bg-gray-200 rounded overflow-hidden">
+                                <div class="h-full bg-greenHigh w-[80%] float-left"></div>
+                                <div class="h-full bg-orangeMid w-[20%] float-left"></div>
+                            </div>
+                            <span class="text-desc-xs">科创能力低</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- 右侧科创评分维度表格 col-span-5 -->
+            <div class="col-span-5 card-wrap">
+                <table class="w-full text-xs">
+                    <thead>
+                        <tr class="bg-grayBg">
+                            <th class="text-left p-1">科创评分维度</th>
+                            <th class="text-center p-1">得分</th>
+                            <th class="text-left p-1">得分情况</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="p-1">技术创新</td>
+                            <td class="text-center p-1">98</td>
+                            <td class="p-1 text-greenHigh">优秀</td>
+                        </tr>
+                        <tr>
+                            <td class="p-1">研发实力</td>
+                            <td class="text-center p-1">95</td>
+                            <td class="p-1 text-greenHigh">优秀</td>
+                        </tr>
+                        <tr>
+                            <td class="p-1">科创资质</td>
+                            <td class="text-center p-1">0</td>
+                            <td class="p-1 text-orangeMid">一般</td>
+                        </tr>
+                        <tr>
+                            <td class="p-1">企业成长性</td>
+                            <td class="text-center p-1">0</td>
+                            <td class="p-1 text-orangeMid">一般</td>
+                        </tr>
+                        <tr>
+                            <td class="p-1">行业潜力</td>
+                            <td class="text-center p-1">0</td>
+                            <td class="p-1 text-orangeMid">一般</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 科创分析 整行 col-span-12 -->
+            <div class="col-span-12 card-wrap">
+                <div class="grid grid-cols-2 gap-x-6 gap-y-2 text-xs">
+                    <div class="flex-row-between">
+                        <span>有效发明专利数量(公司本身)</span>
+                        <div class="flex items-center gap-2">
+                            <div class="w-[180px] h-[6px] bg-gray-200 rounded overflow-hidden">
+                                <div class="h-full bg-chartBlue w-[85%]"></div>
+                            </div>
+                            <span>413 前13%</span>
+                        </div>
+                    </div>
+                    <div class="flex-row-between">
+                        <span>有效发明专利数量(含子公司)</span>
+                        <div class="flex items-center gap-2">
+                            <div class="w-[180px] h-[6px] bg-gray-200 rounded overflow-hidden">
+                                <div class="h-full bg-chartBlue w-[72%]"></div>
+                            </div>
+                            <span>413 前28%</span>
+                        </div>
+                    </div>
+                    <div class="flex-row-between">
+                        <span>有效发明授权数量(公司本身)</span>
+                        <div class="flex items-center gap-2">
+                            <div class="w-[180px] h-[6px] bg-gray-200 rounded overflow-hidden">
+                                <div class="h-full bg-chartBlue w-[70%]"></div>
+                            </div>
+                            <span>257 前17%</span>
+                        </div>
+                    </div>
+                    <div class="flex-row-between">
+                        <span>有效发明授权数量(含子公司)</span>
+                        <div class="flex items-center gap-2">
+                            <div class="w-[180px] h-[6px] bg-gray-200 rounded overflow-hidden">
+                                <div class="h-full bg-chartBlue w-[65%]"></div>
+                            </div>
+                            <span>257 前33%</span>
+                        </div>
+                    </div>
+                    <div class="flex-row-between">
+                        <span>有效实用新型数量(公司本身)</span>
+                        <div class="flex items-center gap-2">
+                            <div class="w-[180px] h-[6px] bg-gray-200 rounded overflow-hidden">
+                                <div class="h-full bg-chartGreen w-[5%]"></div>
+                            </div>
+                            <span>3 后2%</span>
+                        </div>
+                    </div>
+                    <div class="flex-row-between">
+                        <span>有效实用新型数量(含子公司)</span>
+                        <div class="flex items-center gap-2">
+                            <div class="w-[180px] h-[6px] bg-gray-200 rounded overflow-hidden">
+                                <div class="h-full bg-chartGreen w-[5%]"></div>
+                            </div>
+                            <span>3 后1%</span>
+                        </div>
+                    </div>
+                    <div class="flex-row-between">
+                        <span>有效外观设计数量(公司本身)</span>
+                        <div class="flex items-center gap-2">
+                            <div class="w-[180px] h-[6px] bg-gray-200 rounded overflow-hidden">
+                                <div class="h-full bg-chartOrange w-[3%]"></div>
+                            </div>
+                            <span>1 后1%</span>
+                        </div>
+                    </div>
+                    <div class="flex-row-between">
+                        <span>有效外观设计数量(含子公司)</span>
+                        <div class="flex items-center gap-2">
+                            <div class="w-[180px] h-[6px] bg-gray-200 rounded overflow-hidden">
+                                <div class="h-full bg-chartOrange w-[3%]"></div>
+                            </div>
+                            <span>1 后1%</span>
+                        </div>
+                    </div>
+                    <div class="flex-row-between">
+                        <span>原创专利转移数</span>
+                        <div class="flex items-center gap-2">
+                            <div class="w-[180px] h-[6px] bg-gray-200 rounded overflow-hidden">
+                                <div class="h-full bg-chartPurple w-[2%]"></div>
+                            </div>
+                            <span>0 后1%</span>
+                        </div>
+                    </div>
+                    <div class="flex-row-between">
+                        <span>专利增长水平</span>
+                        <div class="flex items-center gap-2">
+                            <div class="w-[180px] h-[6px] bg-gray-200 rounded overflow-hidden">
+                                <div class="h-full bg-chartPurple w-[2%]"></div>
+                            </div>
+                            <span>0 后1%</span>
+                        </div>
+                    </div>
+                    <div class="flex-row-between">
+                        <span>专利平均维持年限</span>
+                        <div class="flex items-center gap-2">
+                            <div class="w-[180px] h-[6px] bg-gray-200 rounded overflow-hidden">
+                                <div class="h-full bg-chartBlue w-[80%]"></div>
+                            </div>
+                            <span>8.18 前10%</span>
+                        </div>
+                    </div>
+                    <div class="flex-row-between">
+                        <span>PCT专利申请数</span>
+                        <div class="flex items-center gap-2">
+                            <div class="w-[180px] h-[6px] bg-gray-200 rounded overflow-hidden">
+                                <div class="h-full bg-chartBlue w-[75%]"></div>
+                            </div>
+                            <span>368 前9%</span>
+                        </div>
+                    </div>
+                    <div class="flex-row-between">
+                        <span>软著数量(公司本身)</span>
+                        <div class="flex items-center gap-2">
+                            <div class="w-[180px] h-[6px] bg-gray-200 rounded overflow-hidden">
+                                <div class="h-full bg-chartGreen w-[2%]"></div>
+                            </div>
+                            <span>0 后1%</span>
+                        </div>
+                    </div>
+                    <div class="flex-row-between">
+                        <span>软著数量(含子公司)</span>
+                        <div class="flex items-center gap-2">
+                            <div class="w-[180px] h-[6px] bg-gray-200 rounded overflow-hidden">
+                                <div class="h-full bg-chartGreen w-[2%]"></div>
+                            </div>
+                            <span>0 后1%</span>
+                        </div>
+                    </div>
+                    <div class="flex-row-between">
+                        <span>参保人数增长率</span>
+                        <div class="flex items-center gap-2">
+                            <div class="w-[180px] h-[6px] bg-gray-200 rounded overflow-hidden">
+                                <div class="h-full bg-chartOrange w-[50%]"></div>
+                            </div>
+                            <span>0 前47%</span>
+                        </div>
+                    </div>
+                    <div class="flex-row-between">
+                        <span>行业融资次数增长率</span>
+                        <div class="flex items-center gap-2">
+                            <div class="w-[180px] h-[6px] bg-gray-200 rounded overflow-hidden">
+                                <div class="h-full bg-chartOrange w-[55%]"></div>
+                            </div>
+                            <span>-3.41% 后43%</span>
+                        </div>
+                    </div>
+                    <div class="flex-row-between">
+                        <span>行业融资金额增长率</span>
+                        <div class="flex items-center gap-2">
+                            <div class="w-[180px] h-[6px] bg-gray-200 rounded overflow-hidden">
+                                <div class="h-full bg-chartPurple w-[30%]"></div>
+                            </div>
+                            <span>-41.52% 后28%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 重点技术趋势图 col-span-6 -->
+            <div class="col-span-6 card-wrap">
+                <div class="text-xs font-medium mb-2">重点技术趋势图</div>
+                <div class="h-[220px]">
+                    <canvas id="techTrendChart"></canvas>
+                </div>
+                <div class="text-desc-xs mt-2">该企业的主要主题词稳定 (如果企业主要主题词发生了变化，则企业的重点布局领域可能也发生了变更)。</div>
+            </div>
+            <!-- 科创技术画像 col-span-6 -->
+            <div class="col-span-6 card-wrap">
+                <div class="text-xs font-medium mb-2">科创技术画像</div>
+                <div class="h-[220px] flex items-center justify-center text-center text-xs leading-5">
+                    包装袋 阻气 锂离子<br>
+                    片材 量子 显示装置 转印 图像<br>
+                    滤光片 高分子 装饰元件 催化剂 玻璃<br>
+                    电路 电阻 电池 油墨 阻气膜<br>
+                    容器 部件IC 薄膜<br>
+                    介质树脂 蓄电 合体 装饰板<br>
+                    片剂 配线电极 基板 气体 信息<br>
+                    成像 光学 体及荧光<br>
+                    照明 燃料电池 固体 照相机<br>
+                    固态 包装材料波长<br>
+                    遮光板 喷墨 包装容器<br>
+                    电子仪器
+                </div>
+            </div>
+
+            <!-- 专利结构分析 两个环形图 col-span-6 -->
+            <div class="col-span-6 card-wrap">
+                <div class="text-xs font-medium mb-2">专利结构分析<br/><span class="text-desc-xs">专利IPC分类: 不同专利类别占比</span></div>
+                <div class="h-[180px]">
+                    <canvas id="ipcPieChart"></canvas>
+                </div>
+                <div class="text-desc-xs mt-1 text-center">▲ 1/2 ▼</div>
+            </div>
+            <div class="col-span-6 card-wrap">
+                <div class="text-xs font-medium mb-2">专利评级结构: 不同价值的专利的占比</div>
+                <div class="h-[180px]">
+                    <canvas id="patentLevelPieChart"></canvas>
+                </div>
+                <div class="text-desc-xs mt-1">
+                    <span class="inline-block w-2 h-2 rounded bg-green-500 mr-1"></span>高价值 57.60%
+                    <span class="inline-block w-2 h-2 rounded bg-blue-500 mr-1 ml-2"></span>中价值 40.40%
+                    <span class="inline-block w-2 h-2 rounded bg-orange-500 mr-1 ml-2"></span>低价值 2.00%
+                </div>
+            </div>
+
+            <!-- 专利申请趋势 左右两个图表 col-span-6 each -->
+            <div class="col-span-6 card-wrap">
+                <div class="text-xs font-medium mb-2">专利申请趋势<br/><span class="text-desc-xs">专利平均分趋势</span></div>
+                <div class="h-[180px]">
+                    <canvas id="patentAvgScoreChart"></canvas>
+                </div>
+            </div>
+            <div class="col-span-6 card-wrap">
+                <div class="text-xs font-medium mb-2">有效核心专利占比的趋势</div>
+                <div class="h-[180px]">
+                    <canvas id="corePatentRateChart"></canvas>
+                </div>
+            </div>
+
+            <!-- 专利申请结构趋势 + 专利授权结构趋势 col-span-6 each -->
+            <div class="col-span-6 card-wrap">
+                <div class="text-xs font-medium mb-2">专利申请结构趋势</div>
+                <div class="h-[180px]">
+                    <canvas id="patentApplyStructChart"></canvas>
+                </div>
+            </div>
+            <div class="col-span-6 card-wrap">
+                <div class="text-xs font-medium mb-2">专利授权结构趋势</div>
+                <div class="h-[180px]">
+                    <canvas id="patentGrantStructChart"></canvas>
+                </div>
+            </div>
+
+            <!-- 技术更新周期分析 两个环形 col-span-6 each -->
+            <div class="col-span-6 card-wrap">
+                <div class="text-xs font-medium mb-2">技术更新周期<br/><span class="text-desc-xs">技术更新周期</span></div>
+                <div class="h-[180px]">
+                    <canvas id="techUpdatePieChart"></canvas>
+                </div>
+                <div class="text-desc-xs mt-1">该企业专利34.77%维持年限在6-9年。</div>
+            </div>
+            <div class="col-span-6 card-wrap">
+                <div class="text-xs font-medium mb-2">专利生命周期年限</div>
+                <div class="h-[180px]">
+                    <canvas id="patentLifeYearChart"></canvas>
+                </div>
+                <div class="text-desc-xs mt-1">该企业专利最长维持年限是20年，有1个专利；该企业专利在维持年限5年的最多。</div>
+            </div>
+
+            <!-- 研发产出率 col-span-12 -->
+            <div class="col-span-12 card-wrap">
+                <div class="text-xs font-medium mb-2">研发产出率</div>
+                <div class="h-[200px]">
+                    <canvas id="rdOutputChart"></canvas>
+                </div>
+                <div class="text-desc-xs mt-2">该企业年均专利申请数量低于其所属国标二级行业。</div>
+            </div>
+
+            <!-- 研发稳定性 左右两个 col-span-6 each -->
+            <div class="col-span-6 card-wrap">
+                <div class="text-xs font-medium mb-2">研发稳定性<br/><span class="text-desc-xs">历年发明及发明人数量趋势</span></div>
+                <div class="h-[200px]">
+                    <canvas id="rdStabilityChart"></canvas>
+                </div>
+            </div>
+            <div class="col-span-6 card-wrap">
+                <div class="text-xs font-medium mb-2">产学研合作趋势</div>
+                <div class="h-[200px]">
+                    <canvas id="industryUnivChart"></canvas>
+                </div>
+                <div class="text-desc-xs mt-1">该企业与高校或研究机构展开2次合作，与企业展开4次合作。历年合作趋势如图。</div>
+            </div>
+
+            <!-- 全球专利布局 col-span-12 -->
+            <div class="col-span-12 card-wrap">
+                <div class="text-xs font-medium mb-2">全球专利布局</div>
+                <div class="flex gap-4">
+                    <div class="w-[60%] h-[240px] bg-grayBg flex items-center justify-center text-desc-xs">世界地图占位（专利布局热力图）</div>
+                    <div class="w-[40%]">
+                        <div class="text-desc-xs mb-2">该企业在至少1个国家或地区有366个有效专利<br/>共有583个国际专利 <a class="text-primary">查看全部 ></a></div>
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="text-xs w-12">1 日本</span>
+                            <div class="w-[160px] h-[6px] bg-gray-200 rounded overflow-hidden">
+                                <div class="h-full bg-chartBlue w-full"></div>
+                            </div>
+                            <span class="text-xs">366</span>
+                        </div>
+                        <div class="text-desc-xs mt-4">图例：<br/>1.0-74.0 &nbsp;74-147 &nbsp;147-220 &nbsp;220-293 &nbsp;293-366</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 企业生命周期 col-span-12 -->
+            <div class="col-span-12 card-wrap">
+                <div class="text-xs font-medium mb-2">企业生命周期</div>
+                <div class="flex gap-4">
+                    <div class="w-[70%] h-[260px]">
+                        <canvas id="lifeCycleChart"></canvas>
+                    </div>
+                    <div class="w-[30%] border border-borderLine rounded p-2 bg-grayBg">
+                        <div class="font-medium text-xs mb-2">成熟期</div>
+                        <div class="text-desc-xs leading-5">基于启信慧眼大数据模型计算，该企业属于成熟期的科创企业</div>
+                        <div class="text-desc-xs mt-2 leading-5">融资模式以银行信贷、股权融资、留存盈余、集合债融资和供应链融资为主</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 雷达图
+        const radarCtx = document.getElementById('radarChart').getContext('2d');
+        new Chart(radarCtx, {
+            type: 'radar',
+            data: {
+                labels: ['技术创新','研发实力','科创资质','企业成长性','行业潜力'],
+                datasets: [{
+                    label: '得分',
+                    data: [98,95,0,0,0],
+                    backgroundColor: 'rgba(64,128,255,0.2)',
+                    borderColor: 'rgba(64,128,255,1)',
+                    borderWidth:1
+                }]
+            },
+            options:{ scales:{ r:{ min:0, max:100 } }, maintainAspectRatio:false }
+        });
+
+        // 其余图表仅占位，如需完整渲染可补充配置
+        const emptyChartList = [
+            'techTrendChart','ipcPieChart','patentLevelPieChart','patentAvgScoreChart','corePatentRateChart',
+            'patentApplyStructChart','patentGrantStructChart','techUpdatePieChart','patentLifeYearChart','rdOutputChart',
+            'rdStabilityChart','industryUnivChart','lifeCycleChart'
+        ];
+        emptyChartList.forEach(id=>{
+            const ctx = document.getElementById(id).getContext('2d');
+            new Chart(ctx,{ type:'bar', data:{labels:[],datasets:[]}, options:{maintainAspectRatio:false} });
+        })
+    </script>
+</body>
+</html>

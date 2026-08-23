@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>舆情详情页复刻</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        tagNeutral: '#dbeafe',
+                        tagTech: '#84CC16',
+                        tagB: '#6366F1',
+                        linkBlue: '#165DFF',
+                        lightBg: '#f8fafc',
+                    }
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .tag-sm {
+                @apply px-2 py-0.5 rounded text-xs;
+            }
+            .tag-keyword {
+                @apply px-1.5 py-0.5 rounded bg-blue-50 text-blue-600 text-xs border border-blue-100;
+            }
+        }
+    </style>
+</head>
+<body class="bg-white text-gray-800 font-sans text-sm">
+    <div class="flex max-w-full">
+        <!-- 左侧详情主体 -->
+        <div class="flex-1 p-4">
+            <!-- 标题行 -->
+            <div class="flex items-start justify-between flex-wrap gap-2">
+                <h1 class="text-base font-normal">IT早报0821：奕境汽车为“假Labubu”礼品致歉；华为发布享界G9/智界RX等四车、PuraXView阔直板手机；《黑神话：钟馗》15分钟实机演示公布...</h1>
+                <div class="flex gap-1">
+                    <span class="tag-sm bg-tagNeutral text-blue-600">中立</span>
+                    <span class="tag-sm bg-tagTech text-white">科技</span>
+                    <span class="tag-sm bg-tagB text-white">B级</span>
+                </div>
+            </div>
+            <!-- 标签+来源时间行 -->
+            <div class="flex items-center flex-wrap gap-2 my-2">
+                <div class="flex gap-1">
+                    <span class="tag-keyword">项目延期</span>
+                    <span class="tag-keyword">业绩亏损/下降</span>
+                    <span class="tag-keyword">事件澄清</span>
+                    <span class="tag-keyword">产品信息</span>
+                    <span class="tag-keyword">招聘信息</span>
+                    <span class="tag-keyword">其他新闻</span>
+                </div>
+                <span class="text-gray-500">2026-08-21 00:00</span>
+                <span class="text-gray-500">IT之家</span>
+                <div class="ml-auto text-linkBlue text-xs flex items-center gap-1">
+                    <i class="fa fa-square"></i>相关组织/人物/企业
+                </div>
+            </div>
+            <!-- 主题词栏 -->
+            <div class="bg-lightBg p-2 rounded my-3 flex flex-wrap gap-2">
+                <span class="text-gray-500">主题词：</span>
+                <span class="text-linkBlue">#查看(26)</span>
+                <span class="text-linkBlue">#详情(26)</span>
+                <span class="text-linkBlue">#发布(19)</span>
+                <span class="text-linkBlue">#华为(17)</span>
+                <span class="text-linkBlue">#鸿蒙(17)</span>
+            </div>
+            <!-- 查看原文 -->
+            <div class="my-2">
+                <a href="#" class="text-linkBlue">查看原文&gt;</a>
+            </div>
+            <!-- 正文内容 -->
+            <div class="mt-3 leading-relaxed">
+                <p class="mb-3">“IT早报”时间，大家好，现在是 2026 年 8 月 21 日星期五，今天的重要科技资讯有：</p>
+                <div class="mb-4">
+                    <p class="text-lg font-medium mb-1">1. 曝奕境汽车南昌门店活动送仿版 Labubu，品牌总经理<span class="text-linkBlue">曾清林</span>发文回应</p>
+                    <p class="text-gray-700">有网友反映奕境汽车南昌门店活动送出了仿版 Labubu。奕境汽车品牌总经理曾清林 8 月 20 日发文就此事进行了回应，称礼品管控、风险审核这套管理体系没有跟上业务增长的节奏，才造成这次失误，将向公司报告，申请采购一万件正版 Labubu，用于全国门店到店 / 试驾权益。>> 查看详情</p>
+                </div>
+                <div class="mb-4">
+                    <p class="text-lg font-medium mb-1">2. 享界 G9 及鸿蒙智行新品发布会一文汇总：<span class="text-red-500">华为</span>首款阔直板惊喜亮相，<span class="text-linkBlue">余承东</span>狂甩“四张车牌”</p>
+                    <p class="text-gray-700">在 8 月 20 日的鸿蒙智行新品发布会上，<span class="text-linkBlue">余承东</span>不仅带来了全新硬派 SUV 享界 G9，还预告了智界 RX、享界 V8，并发布了问界 M6 新版本。最令人惊喜的是，全球首款阔直板手机<span class="text-linkBlue">华为</span> Pura X View 也一同亮相，首发鸿蒙 HarmonyOS 7 系统。>> 查看详情</p>
+                </div>
+                <div class="mb-4">
+                    <p class="text-lg font-medium mb-1">3. 《黑神话：钟馗》全新 15 分钟游戏实机演示公布，首次展示主角战斗与部分剧情片段</p>
+                    <p class="text-gray-700">由游戏科学开发的黑神话系列第二部作品《黑神话：钟馗》，8 月 20 日带来全新 15 分钟游戏实机演示，首次展示主角战斗与部分剧情片段。>> 查看详情</p>
+                </div>
+                <div class="mb-4">
+                    <p class="text-lg font-medium mb-1">4. 曝<span class="text-linkBlue">周杰伦</span>将代言 vivo 手机，广告片拍摄现场画面曝光</p>
+                    <p class="text-gray-700">据博主 @周杰伦的床边故事推广大使 分享，<span class="text-linkBlue">周杰伦</span>正在给 vivo 手机拍摄广告片。有网友询问<span class="text-linkBlue">周杰伦</span>是否会代言 vivo 手机，博主称：“应该是，等官宣。” >> 查看详情</p>
+                </div>
+                <div>
+                    <p class="text-lg font-medium mb-1">5. 骁龙 8 Elite Gen 6/Pro？高通称将在骁龙峰会推出两款芯片</p>
+                </div>
+            </div>
+        </div>
+        <!-- 右侧边栏 -->
+        <div class="w-[320px] border-l border-gray-200 p-4 bg-white">
+            <!-- 相关企业 -->
+            <div class="mb-6">
+                <h3 class="font-medium pb-2 border-b border-gray-200 mb-3">相关企业</h3>
+                <div class="flex flex-col gap-2">
+                    <div>华为技术有限公司</div>
+                    <div>比亚迪股份有限公司</div>
+                    <div>阿里巴巴（中国）有限公司</div>
+                    <div>上海寻梦信息技术有限公司</div>
+                    <div>北京京东世纪贸易有限公司</div>
+                    <div>武汉联动设计股份有限公司</div>
+                    <div>京东物流股份有限公司</div>
+                </div>
+            </div>
+            <!-- 相关人物 -->
+            <div class="bg-lightBg rounded p-3">
+                <h3 class="font-medium pb-2 border-b border-gray-200 mb-3">相关人物</h3>
+                <div class="flex flex-col gap-3">
+                    <div class="flex items-center gap-2"><i class="fa fa-user-o text-gray-500"></i>余承东</div>
+                    <div class="flex items-center gap-2"><i class="fa fa-user-o text-gray-500"></i>周杰伦</div>
+                    <div class="flex items-center gap-2"><i class="fa fa-user-o text-gray-500"></i>冯骥</div>
+                    <div class="flex items-center gap-2"><i class="fa fa-user-o text-gray-500"></i>曾清林</div>
+                    <div class="flex items-center gap-2"><i class="fa fa-user-o text-gray-500"></i>古尔曼</div>
+                    <div class="flex items-center gap-2"><i class="fa fa-user-o text-gray-500"></i>弗里亚尔</div>
+                    <div class="flex items-center gap-2"><i class="fa fa-user-o text-gray-500"></i>王兴</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>科研团队分析</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @layer utilities {
+            .tab-top {
+                @apply px-4 py-3 cursor-pointer text-sm text-gray-800;
+            }
+            .tab-top-active {
+                @apply border-b-2 border-yellow-400 font-medium;
+            }
+            .tab-sub {
+                @apply px-3 py-2 cursor-pointer text-xs text-gray-500;
+            }
+            .empty-wrap {
+                @apply flex flex-col items-center justify-center py-20 text-gray-500 text-sm;
+            }
+        }
+    </style>
+</head>
+<body class="bg-[#f5f7ff] m-0 p-0">
+    <div class="bg-white">
+        <!-- 一级顶部Tab -->
+        <div class="flex border-b border-gray-200">
+            <div class="tab-top">企业概览</div>
+            <div class="tab-top">科创力分析</div>
+            <div class="tab-top">科创成果分析</div>
+            <div class="tab-top tab-top-active">科研团队分析</div>
+            <div class="tab-top">荣誉资质</div>
+            <div class="tab-top">资产分析</div>
+            <div class="tab-top">风险分析</div>
+        </div>
+        <!-- 二级子Tab -->
+        <div class="flex bg-white border-b border-gray-100">
+            <div class="tab-sub">团队核心人员介绍</div>
+            <div class="tab-sub">科研团队</div>
+            <div class="tab-sub">核心研发人员稳定性</div>
+            <div class="tab-sub">招聘信息</div>
+        </div>
+        <!-- 空白内容区域 -->
+        <div class="empty-wrap">
+            <!-- 简易空状态图形示意 -->
+            <svg width="120" height="120" viewBox="0 0 120 120" fill="none">
+                <rect x="35" y="60" width="50" height="30" rx="6" fill="#e8edff"/>
+                <circle cx="50" cy="45" r="4" fill="#4070f4"/>
+                <circle cx="62" cy="32" r="4" fill="#4070f4"/>
+                <circle cx="75" cy="48" r="4" fill="#4070f4"/>
+                <circle cx="60" cy="65" r="4" fill="#4070f4"/>
+                <line x1="50" y1="45" x2="62" y2="32" stroke="#4070f4" stroke-width="1.5"/>
+                <line x1="62" y1="32" x2="75" y2="48" stroke="#4070f4" stroke-width="1.5"/>
+                <line x1="75" y1="48" x2="60" y2="65" stroke="#4070f4" stroke-width="1.5"/>
+                <line x1="60" y1="65" x2="50" y2="45" stroke="#4070f4" stroke-width="1.5"/>
+                <rect x="48" y="43" width="4" height="4" fill="#ff8844"/>
+                <rect x="60" y="30" width="4" height="4" fill="#ff8844"/>
+                <rect x="73" y="46" width="4" height="4" fill="#ff8844"/>
+                <rect x="58" y="63" width="4" height="4" fill="#ff8844"/>
+            </svg>
+            <div class="mt-3">暂无科研团队分析信息</div>
+        </div>
+    </div>
+</body>
+</html>
