@@ -156,7 +156,7 @@ export default function EntTopBeneficiary({ companyName }: { companyName?: strin
                     onClick={() => { setActiveNode(c.id); setDetailNode(c); }}
                     style={{ cursor: 'pointer' }}
                   >
-                    <circle r={26} fill={nodeFill(c)} stroke={nodeStroke(c)} strokeWidth={2} stroke={active || hoverNode === c.id ? '#1677ff' : nodeStroke(c)} />
+                    <circle r={26} fill={nodeFill(c)} strokeWidth={2} stroke={active || hoverNode === c.id ? '#1677ff' : nodeStroke(c)} />
                     <text y={4} textAnchor="middle" fontSize={11} fill={nodeTextColor(c)}>{c.name.slice(0, 4)}</text>
                     {c.avatar && <circle cx={0} cy={34} r={9} fill="#fff" stroke="#ddd" />}
                   </g>

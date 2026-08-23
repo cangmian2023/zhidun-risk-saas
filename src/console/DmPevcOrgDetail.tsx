@@ -1,7 +1,6 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { usePageNav } from './pageNav';
-import { PageShell } from './PageShell';
 
 /* ============ 数据 ============ */
 const ORG_INFO = {
@@ -125,9 +124,19 @@ const EXIT_EVENTS = [
 ];
 
 /* ============ 样式 ============ */
-const tableStyle: React.CSSProperties = { width: '100%', borderCollapse: 'collapse', fontSize: 14 };
-const thStyle: React.CSSProperties = { border: '1px solid #e5e7eb', padding: '8px 12px', textAlign: 'left', background: '#f9fafb', fontWeight: 600, color: '#333' };
-const tdStyle: React.CSSProperties = { border: '1px solid #e5e7eb', padding: '8px 12px', textAlign: 'left', color: '#333' };
+const tableStyle: React.CSSProperties = { width: '100%', minWidth: 640, borderCollapse: 'collapse', fontSize: 14, tableLayout: 'fixed' };
+const thStyle: React.CSSProperties = { border: '1px solid #e5e7eb', padding: '8px 12px', textAlign: 'left', background: '#f9fafb', fontWeight: 600, color: '#333', wordBreak: 'break-all' };
+const tdStyle: React.CSSProperties = { border: '1px solid #e5e7eb', padding: '8px 12px', textAlign: 'left', color: '#333', wordBreak: 'break-all' };
+// 表格外层：限宽 + 内部横向滚动，避免撑出页面
+const tableWrap: React.CSSProperties = { width: '100%', maxWidth: 1100, overflowX: 'auto' };
+// 内容区统一限宽，页面整体不出现底部水平滚动条
+const contentMax: React.CSSProperties = { maxWidth: 1100, margin: '0 auto', width: '100%' };
+// 标题区吸顶：吸在 Console 固定顶栏(56px) 正下方
+const titleSticky: React.CSSProperties = { position: 'sticky', top: 56, zIndex: 30, background: '#fff' };
+// Tab 吸顶：吸在标题区(约 56px) 之下，即顶栏(56) + 标题(56) = 112
+const tabBarSticky: React.CSSProperties = { position: 'sticky', top: 112, zIndex: 20, background: '#fff' };
+// 完整简介（点"更多"展开）
+const FULL_DESC = '红杉中国是专注于投资科技、医疗健康、消费三大领域的私募股权投资机构，始终积极参与和推动以科技为核心的创新经济发展，努力成为各行业最早和最重要的赋能型商业伙伴，为创业者提供从初创到上市的全周期支持。';
 
 /* ============ 图表组件 ============ */
 function RadarChart({ data, labels }: { data: number[]; labels: string[] }) {
@@ -260,335 +269,365 @@ export default function DmPevcOrgDetail() {
   const orgName = params.get('name') || ORG_INFO.name;
   const { back } = usePageNav();
   const [activeTab, setActiveTab] = useState(TABS[0]);
+  const [expanded, setExpanded] = useState(false);
+  const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
+
+  // 点击 Tab：平滑滚动到对应内容区块（平铺不隐藏）
+  const scrollToTab = (tab: string) => {
+    setActiveTab(tab);
+    const el = sectionRefs.current[tab];
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
 
   return (
-    <div style={{ width: '100%', minHeight: '100vh', backgroundColor: '#fff', overflow: 'auto', fontFamily: '"Microsoft Yahei", PingFang SC, sans-serif', fontSize: 14, color: '#333', paddingTop: 80, paddingLeft: 16, paddingRight: 16 }}>
-      <PageShell title={orgName} crumb="数字营销 / 金融工具 / PE/VC / 投资机构详情" legend={false} onBack={() => back('/console/dm/pevc')} />
+    <div style={{ width: '100%', minHeight: '100vh', backgroundColor: '#fff', overflowX: 'clip', fontFamily: '"Microsoft Yahei", PingFang SC, sans-serif', fontSize: 14, color: '#333', paddingTop: 64, paddingLeft: 16, paddingRight: 16 }}>
+      {/* 标题区（白底，无浅蓝块，吸顶在固定顶栏下） */}
+      <div style={{ ...contentMax, ...titleSticky }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 0', borderBottom: '1px solid #e5e7eb' }}>
+          <button
+            onClick={() => back('/console/dm/pevc')}
+            style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: '#64748b', padding: '6px', borderRadius: 6, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = '#e2e8f0'; e.currentTarget.style.color = '#0f172a'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#64748b'; }}
+            title="返回"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
+          </button>
+          <div>
+            <div style={{ fontSize: 22, fontWeight: 700, color: '#0f172a' }}>{orgName}</div>
+            <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 2 }}>数字营销 / 金融工具 / PE/VC / 投资机构详情</div>
+          </div>
+        </div>
+      </div>
 
-      {/* 头部基础信息 */}
-      <div style={{ padding: '12px 16px', borderBottom: '1px solid #e5e7eb' }}>
+      {/* 头部基础信息（平铺，吸顶 Tab 之下） */}
+      <div style={{ ...contentMax, padding: '12px 16px', border: '1px solid #e5e7eb', borderRadius: 8, background: '#fafafa' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-          <h1 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>{orgName}</h1>
           <span style={{ color: '#666' }}>所属地：{ORG_INFO.area}</span>
           <span style={{ color: '#666' }}>成立时间：{ORG_INFO.estDate}</span>
           <a href={ORG_INFO.website} target="_blank" rel="noreferrer" style={{ color: '#1677ff', textDecoration: 'none' }}>官网：{ORG_INFO.website}</a>
         </div>
         <div style={{ marginTop: 8, color: '#555', lineHeight: 1.6 }}>
           <span style={{ fontWeight: 600 }}>{ORG_INFO.logo}</span>
-          <span style={{ marginLeft: 8 }}>{ORG_INFO.desc}</span>
-          <span style={{ color: '#1677ff', cursor: 'pointer', marginLeft: 4 }}>更多 &gt;</span>
+          <span style={{ marginLeft: 8 }}>{expanded ? FULL_DESC : ORG_INFO.desc}</span>
+          <span onClick={() => setExpanded(v => !v)} style={{ color: '#1677ff', cursor: 'pointer', marginLeft: 4, userSelect: 'none' }}>{expanded ? '收起' : '更多 >'}</span>
         </div>
       </div>
 
-      {/* Tab导航 */}
-      <div style={{ display: 'flex', borderBottom: '1px solid #e5e7eb', paddingLeft: 16 }}>
-        {TABS.map(tab => (
-          <div
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            style={{
-              padding: '12px 16px',
-              fontSize: 14,
-              cursor: 'pointer',
-              color: activeTab === tab ? '#1677ff' : '#666',
-              borderBottom: activeTab === tab ? '2px solid #1677ff' : '2px solid transparent',
-              fontWeight: activeTab === tab ? 500 : 400,
-              marginBottom: -1,
-            }}
-          >
-            {tab}
-          </div>
-        ))}
+      {/* Tab导航（吸顶在标题下） */}
+      <div style={{ ...contentMax, ...tabBarSticky }}>
+        <div style={{ display: 'flex', borderBottom: '1px solid #e5e7eb', overflowX: 'auto' }}>
+          {TABS.map(tab => (
+            <div
+              key={tab}
+              onClick={() => scrollToTab(tab)}
+              style={{
+                padding: '12px 16px',
+                fontSize: 14,
+                cursor: 'pointer',
+                whiteSpace: 'nowrap',
+                color: activeTab === tab ? '#1677ff' : '#666',
+                borderBottom: activeTab === tab ? '2px solid #1677ff' : '2px solid transparent',
+                fontWeight: activeTab === tab ? 500 : 400,
+                marginBottom: -1,
+              }}
+            >
+              {tab}
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* ===== 创投机构指数 ===== */}
-      {activeTab === TABS[0] && (
-        <div style={{ padding: 16, borderBottom: '1px solid #e5e7eb' }}>
-          <h2 style={{ fontSize: 18, fontWeight: 600, margin: '0 0 12px 0' }}>创投机构指数</h2>
-          <p style={{ color: '#666', margin: '0 0 16px 0', lineHeight: 1.7 }}>
-            模型采集了创投机构历史所有投资信息，从专注度、资金能力、投资水平、团队能力共计4个维度对机构的综合实力进行量化评估。<br />
-            指数总分100分，分值越大代表机构综合实力越强，跟投的成功率越高。
-          </p>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 32, alignItems: 'flex-start' }}>
-            {/* 雷达图 */}
-            <div style={{ width: 260, height: 260, border: '1px solid #e5e7eb', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fafafa' }}>
-              <RadarChart data={INDEX_DIMENSIONS.map(d => d.score)} labels={INDEX_DIMENSIONS.map(d => d.name)} />
-            </div>
-            {/* 综合得分 */}
-            <div>
-              <div style={{ fontSize: 24, fontWeight: 700 }}>创投综合实力95.81分</div>
-              <div style={{ fontSize: 20, fontWeight: 700, color: '#ea580c', marginTop: 4 }}>A级 顶尖</div>
-              <div style={{ fontSize: 13, color: '#999', marginTop: 4 }}>跑赢100.00%创投机构 <span style={{ cursor: 'help' }}>ⓘ</span></div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8 }}>
-                <span style={{ fontSize: 13 }}>实力低</span>
-                <div style={{ width: 160, height: 8, background: '#e5e7eb', borderRadius: 4, overflow: 'hidden' }}>
-                  <div style={{ width: '100%', height: '100%', background: '#22c55e' }}></div>
-                </div>
-                <span style={{ fontSize: 13 }}>实力高</span>
+      <div ref={el => { sectionRefs.current[TABS[0]] = el; }} style={{ ...contentMax, padding: '16px 0', borderBottom: '1px solid #e5e7eb', scrollMarginTop: 168 }}>
+        <h2 style={{ fontSize: 18, fontWeight: 600, margin: '0 0 12px 0' }}>创投机构指数</h2>
+        <p style={{ color: '#666', margin: '0 0 16px 0', lineHeight: 1.7 }}>
+          模型采集了创投机构历史所有投资信息，从专注度、资金能力、投资水平、团队能力共计4个维度对机构的综合实力进行量化评估。<br />
+          指数总分100分，分值越大代表机构综合实力越强，跟投的成功率越高。
+        </p>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 32, alignItems: 'flex-start' }}>
+          {/* 雷达图 */}
+          <div style={{ width: 260, height: 260, flexShrink: 0, border: '1px solid #e5e7eb', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fafafa' }}>
+            <RadarChart data={INDEX_DIMENSIONS.map(d => d.score)} labels={INDEX_DIMENSIONS.map(d => d.name)} />
+          </div>
+          {/* 综合得分 */}
+          <div style={{ flexShrink: 0 }}>
+            <div style={{ fontSize: 24, fontWeight: 700 }}>创投综合实力95.81分</div>
+            <div style={{ fontSize: 20, fontWeight: 700, color: '#ea580c', marginTop: 4 }}>A级 顶尖</div>
+            <div style={{ fontSize: 13, color: '#999', marginTop: 4 }}>跑赢100.00%创投机构 <span style={{ cursor: 'help' }}>ⓘ</span></div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8 }}>
+              <span style={{ fontSize: 13 }}>实力低</span>
+              <div style={{ width: 160, height: 8, background: '#e5e7eb', borderRadius: 4, overflow: 'hidden' }}>
+                <div style={{ width: '100%', height: '100%', background: '#22c55e' }}></div>
               </div>
+              <span style={{ fontSize: 13 }}>实力高</span>
             </div>
-            {/* 维度得分表格 */}
-            <div style={{ flex: 1, minWidth: 450 }}>
-              <table style={tableStyle}>
-                <thead>
-                  <tr>
-                    <th style={thStyle}>创投指数维度</th>
-                    <th style={thStyle}>满分</th>
-                    <th style={thStyle}>得分</th>
-                    <th style={thStyle}>得分情况</th>
+          </div>
+          {/* 维度得分表格 */}
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={tableWrap}>
+            <table style={tableStyle}>
+              <thead>
+                <tr>
+                  <th style={thStyle}>创投指数维度</th>
+                  <th style={thStyle}>满分</th>
+                  <th style={thStyle}>得分</th>
+                  <th style={thStyle}>得分情况</th>
+                </tr>
+              </thead>
+              <tbody>
+                {INDEX_DIMENSIONS.map((d, i) => (
+                  <tr key={i}>
+                    <td style={tdStyle}>
+                      <div>{d.name}</div>
+                      <div style={{ fontSize: 12, color: '#999', marginTop: 4, lineHeight: 1.5 }}>{d.desc}</div>
+                    </td>
+                    <td style={tdStyle}>{d.full}</td>
+                    <td style={tdStyle}>{d.score}</td>
+                    <td style={tdStyle}>{d.level}</td>
                   </tr>
-                </thead>
-                <tbody>
-                  {INDEX_DIMENSIONS.map((d, i) => (
-                    <tr key={i}>
-                      <td style={tdStyle}>
-                        <div>{d.name}</div>
-                        <div style={{ fontSize: 12, color: '#999', marginTop: 4, lineHeight: 1.5 }}>{d.desc}</div>
-                      </td>
-                      <td style={tdStyle}>{d.full}</td>
-                      <td style={tdStyle}>{d.score}</td>
-                      <td style={tdStyle}>{d.level}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                ))}
+              </tbody>
+            </table>
             </div>
           </div>
         </div>
-      )}
+      </div>
 
       {/* ===== 投资偏好 ===== */}
-      {activeTab === TABS[1] && (
-        <div style={{ padding: 16, borderBottom: '1px solid #e5e7eb' }}>
-          <h2 style={{ fontSize: 18, fontWeight: 600, margin: '0 0 12px 0' }}>投资偏好</h2>
-          {/* 投资领域词云 */}
-          <div style={{ marginBottom: 24 }}>
-            <h3 style={{ fontWeight: 500, margin: '0 0 8px 0' }}>投资领域</h3>
-            <div style={{ lineHeight: 2, textAlign: 'center' }}>
-              {WORD_CLOUD.map((w, i) => (
-                <span key={i} style={{ fontSize: w.size, fontWeight: w.bold ? 700 : 400, margin: '0 4px', color: '#333' }}>{w.text}</span>
+      <div ref={el => { sectionRefs.current[TABS[1]] = el; }} style={{ ...contentMax, padding: '16px 0', borderBottom: '1px solid #e5e7eb', scrollMarginTop: 168 }}>
+        <h2 style={{ fontSize: 18, fontWeight: 600, margin: '0 0 12px 0' }}>投资偏好</h2>
+        {/* 投资领域词云 */}
+        <div style={{ marginBottom: 24 }}>
+          <h3 style={{ fontWeight: 500, margin: '0 0 8px 0' }}>投资领域</h3>
+          <div style={{ lineHeight: 2, textAlign: 'center' }}>
+            {WORD_CLOUD.map((w, i) => (
+              <span key={i} style={{ fontSize: w.size, fontWeight: w.bold ? 700 : 400, margin: '0 4px', color: '#333' }}>{w.text}</span>
+            ))}
+          </div>
+        </div>
+        {/* 投资阶段 + 投资战绩 */}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 32 }}>
+          <div style={{ flex: '1 1 400px', minWidth: 0 }}>
+            <h3 style={{ fontWeight: 500, margin: '0 0 8px 0' }}>投资阶段</h3>
+            <div style={{ maxWidth: '100%', overflowX: 'auto' }}><BarChart data={STAGE_DATA} /></div>
+            <div style={{ display: 'flex', gap: 16, justifyContent: 'center', marginTop: 4, fontSize: 12, flexWrap: 'wrap' }}>
+              {STAGE_DATA.map((s, i) => (
+                <span key={i} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <span style={{ width: 12, height: 12, background: s.color, display: 'inline-block' }}></span>{s.label}
+                </span>
               ))}
             </div>
           </div>
-          {/* 投资阶段 + 投资战绩 */}
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 32 }}>
-            <div style={{ width: '48%', minWidth: 400 }}>
-              <h3 style={{ fontWeight: 500, margin: '0 0 8px 0' }}>投资阶段</h3>
-              <BarChart data={STAGE_DATA} />
-              <div style={{ display: 'flex', gap: 16, justifyContent: 'center', marginTop: 4, fontSize: 12 }}>
-                {STAGE_DATA.map((s, i) => (
-                  <span key={i} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <span style={{ width: 12, height: 12, background: s.color, display: 'inline-block' }}></span>{s.label}
-                  </span>
-                ))}
-              </div>
-            </div>
-            <div style={{ width: '48%', minWidth: 400 }}>
-              <h3 style={{ fontWeight: 500, margin: '0 0 8px 0' }}>投资战绩</h3>
-              <LineChart years={LINE_YEARS} datasets={LINE_DATASETS} />
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center', marginTop: 4, fontSize: 12 }}>
-                {LINE_DATASETS.map((ds, i) => (
-                  <span key={i} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <span style={{ color: ds.color, fontWeight: 700 }}>━</span>{ds.label}
-                  </span>
-                ))}
-              </div>
+          <div style={{ flex: '1 1 400px', minWidth: 0 }}>
+            <h3 style={{ fontWeight: 500, margin: '0 0 8px 0' }}>投资战绩</h3>
+            <div style={{ maxWidth: '100%', overflowX: 'auto' }}><LineChart years={LINE_YEARS} datasets={LINE_DATASETS} /></div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center', marginTop: 4, fontSize: 12 }}>
+              {LINE_DATASETS.map((ds, i) => (
+                <span key={i} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <span style={{ color: ds.color, fontWeight: 700 }}>━</span>{ds.label}
+                </span>
+              ))}
             </div>
           </div>
         </div>
-      )}
+      </div>
 
       {/* ===== 投资事件 ===== */}
-      {activeTab === TABS[2] && (
-        <div style={{ padding: 16, borderBottom: '1px solid #e5e7eb' }}>
-          <h2 style={{ fontSize: 18, fontWeight: 600, margin: '0 0 12px 0' }}>投资事件</h2>
-          {/* 筛选栏 */}
-          <div style={{ display: 'flex', gap: 12, marginBottom: 12, flexWrap: 'wrap', alignItems: 'center' }}>
-            {['融资轮次', '融资日期', '融资金额', '币种', '融资状态'].map((s, i) => (
-              <select key={i} style={{ border: '1px solid #d9d9d9', padding: '4px 8px', borderRadius: 4, fontSize: 14 }}>
-                <option>{s}</option>
-              </select>
-            ))}
-            <button style={{ color: '#1677ff', background: 'none', border: 'none', cursor: 'pointer', fontSize: 14 }}>⬇ 导出数据</button>
-          </div>
-          {/* 已公开事件 */}
-          <div style={{ marginBottom: 24 }}>
-            <h3 style={{ fontWeight: 500, margin: '0 0 8px 0' }}>已公开事件 1655</h3>
-            <table style={tableStyle}>
-              <thead>
-                <tr>
-                  <th style={thStyle}>序号</th>
-                  <th style={thStyle}>被投资企业</th>
-                  <th style={thStyle}>融资轮次</th>
-                  <th style={thStyle}>融资日期</th>
-                  <th style={thStyle}>融资金额</th>
-                  <th style={thStyle}>投资方</th>
-                </tr>
-              </thead>
-              <tbody>
-                {PUBLIC_EVENTS.map(e => (
-                  <tr key={e.id}>
-                    <td style={tdStyle}>{e.id}</td>
-                    <td style={tdStyle}>{e.company}</td>
-                    <td style={tdStyle}>{e.round}</td>
-                    <td style={tdStyle}>{e.date}</td>
-                    <td style={tdStyle}>{e.amount}</td>
-                    <td style={tdStyle}>{e.investors}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            <Pagination total={1655} totalPages={331} />
-          </div>
-          {/* 未公开事件 */}
-          <div>
-            <h3 style={{ fontWeight: 500, margin: '0 0 8px 0' }}>未公开事件 476</h3>
-            <table style={tableStyle}>
-              <thead>
-                <tr>
-                  <th style={thStyle}>序号</th>
-                  <th style={thStyle}>被投资企业</th>
-                  <th style={thStyle}>融资轮次</th>
-                  <th style={thStyle}>融资日期</th>
-                  <th style={thStyle}>融资金额</th>
-                  <th style={thStyle}>投资方</th>
-                </tr>
-              </thead>
-              <tbody>
-                {PRIVATE_EVENTS.map(e => (
-                  <tr key={e.id}>
-                    <td style={tdStyle}>{e.id}</td>
-                    <td style={tdStyle}>{e.company}</td>
-                    <td style={tdStyle}>{e.round}</td>
-                    <td style={tdStyle}>{e.date}</td>
-                    <td style={tdStyle}>{e.amount}</td>
-                    <td style={tdStyle}>{e.investors}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            <Pagination total={476} totalPages={96} />
-          </div>
+      <div ref={el => { sectionRefs.current[TABS[2]] = el; }} style={{ ...contentMax, padding: '16px 0', borderBottom: '1px solid #e5e7eb', scrollMarginTop: 168 }}>
+        <h2 style={{ fontSize: 18, fontWeight: 600, margin: '0 0 12px 0' }}>投资事件</h2>
+        {/* 筛选栏 */}
+        <div style={{ display: 'flex', gap: 12, marginBottom: 12, flexWrap: 'wrap', alignItems: 'center' }}>
+          {['融资轮次', '融资日期', '融资金额', '币种', '融资状态'].map((s, i) => (
+            <select key={i} style={{ border: '1px solid #d9d9d9', padding: '4px 8px', borderRadius: 4, fontSize: 14, maxWidth: '100%' }}>
+              <option>{s}</option>
+            </select>
+          ))}
+          <button style={{ color: '#1677ff', background: 'none', border: 'none', cursor: 'pointer', fontSize: 14 }}>⬇ 导出数据</button>
         </div>
-      )}
-
-      {/* ===== 机构成员 ===== */}
-      {activeTab === TABS[3] && (
-        <div style={{ padding: 16, borderBottom: '1px solid #e5e7eb' }}>
-          <h2 style={{ fontSize: 18, fontWeight: 600, margin: '0 0 12px 0' }}>机构成员 131</h2>
+        {/* 已公开事件 */}
+        <div style={{ marginBottom: 24 }}>
+          <h3 style={{ fontWeight: 500, margin: '0 0 8px 0' }}>已公开事件 1655</h3>
+          <div style={tableWrap}>
           <table style={tableStyle}>
             <thead>
               <tr>
                 <th style={thStyle}>序号</th>
-                <th style={thStyle}>姓名</th>
-                <th style={thStyle}>职务</th>
-                <th style={thStyle}>简介</th>
+                <th style={thStyle}>被投资企业</th>
+                <th style={thStyle}>融资轮次</th>
+                <th style={thStyle}>融资日期</th>
+                <th style={thStyle}>融资金额</th>
+                <th style={thStyle}>投资方</th>
               </tr>
             </thead>
             <tbody>
-              {MEMBERS.map(m => (
-                <tr key={m.id}>
-                  <td style={tdStyle}>{m.id}</td>
-                  <td style={tdStyle}>{m.name}</td>
-                  <td style={tdStyle}>{m.title}</td>
-                  <td style={tdStyle}>{m.desc}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <Pagination total={131} totalPages={27} />
-        </div>
-      )}
-
-      {/* ===== 基金数据 ===== */}
-      {activeTab === TABS[4] && (
-        <div style={{ padding: 16, borderBottom: '1px solid #e5e7eb' }}>
-          <h2 style={{ fontSize: 18, fontWeight: 600, margin: '0 0 12px 0' }}>基金数据 1537</h2>
-          {/* 私募基金管理人 */}
-          <h3 style={{ fontWeight: 500, margin: '0 0 8px 0' }}>私募基金管理人 66</h3>
-          <table style={tableStyle}>
-            <thead>
-              <tr>
-                <th style={thStyle}>序号</th>
-                <th style={thStyle}>企业名称</th>
-                <th style={thStyle}>法定代表人</th>
-                <th style={thStyle}>注册资本</th>
-                <th style={thStyle}>成立时间</th>
-              </tr>
-            </thead>
-            <tbody>
-              {FUND_MANAGERS.map(f => (
-                <tr key={f.id}>
-                  <td style={tdStyle}>{f.id}</td>
-                  <td style={tdStyle}>{f.name}</td>
-                  <td style={tdStyle}>{f.legal}</td>
-                  <td style={tdStyle}>{f.capital}</td>
-                  <td style={tdStyle}>{f.estDate}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <Pagination total={66} totalPages={14} />
-
-          {/* 管理基金 */}
-          <h3 style={{ fontWeight: 500, margin: '24px 0 8px 0' }}>管理基金 1471</h3>
-          <table style={tableStyle}>
-            <thead>
-              <tr>
-                <th style={thStyle}>序号</th>
-                <th style={thStyle}>企业名称</th>
-                <th style={thStyle}>法定代表人</th>
-                <th style={thStyle}>注册资本</th>
-                <th style={thStyle}>成立时间</th>
-              </tr>
-            </thead>
-            <tbody>
-              {MANAGED_FUNDS.map(f => (
-                <tr key={f.id}>
-                  <td style={tdStyle}>{f.id}</td>
-                  <td style={tdStyle}>{f.name}</td>
-                  <td style={tdStyle}>{f.legal}</td>
-                  <td style={tdStyle}>{f.capital}</td>
-                  <td style={tdStyle}>{f.estDate}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <Pagination total={1471} totalPages={295} />
-        </div>
-      )}
-
-      {/* ===== 退出事件 ===== */}
-      {activeTab === TABS[5] && (
-        <div style={{ padding: 16 }}>
-          <h2 style={{ fontSize: 18, fontWeight: 600, margin: '0 0 12px 0' }}>退出事件 185</h2>
-          <table style={tableStyle}>
-            <thead>
-              <tr>
-                <th style={thStyle}>序号</th>
-                <th style={thStyle}>融资企业（已退出）</th>
-                <th style={thStyle}>退出方式</th>
-                <th style={thStyle}>退出日期</th>
-                <th style={thStyle}>持有天数</th>
-                <th style={thStyle}>投资总额</th>
-              </tr>
-            </thead>
-            <tbody>
-              {EXIT_EVENTS.map(e => (
+              {PUBLIC_EVENTS.map(e => (
                 <tr key={e.id}>
                   <td style={tdStyle}>{e.id}</td>
                   <td style={tdStyle}>{e.company}</td>
-                  <td style={tdStyle}>{e.method}</td>
+                  <td style={tdStyle}>{e.round}</td>
                   <td style={tdStyle}>{e.date}</td>
-                  <td style={tdStyle}>{e.holdDays}</td>
-                  <td style={tdStyle}>{e.totalInvest}</td>
+                  <td style={tdStyle}>{e.amount}</td>
+                  <td style={tdStyle}>{e.investors}</td>
                 </tr>
               ))}
             </tbody>
           </table>
-          <Pagination total={185} totalPages={37} />
+          </div>
+          <Pagination total={1655} totalPages={331} />
         </div>
-      )}
+        {/* 未公开事件 */}
+        <div>
+          <h3 style={{ fontWeight: 500, margin: '0 0 8px 0' }}>未公开事件 476</h3>
+          <div style={tableWrap}>
+          <table style={tableStyle}>
+            <thead>
+              <tr>
+                <th style={thStyle}>序号</th>
+                <th style={thStyle}>被投资企业</th>
+                <th style={thStyle}>融资轮次</th>
+                <th style={thStyle}>融资日期</th>
+                <th style={thStyle}>融资金额</th>
+                <th style={thStyle}>投资方</th>
+              </tr>
+            </thead>
+            <tbody>
+              {PRIVATE_EVENTS.map(e => (
+                <tr key={e.id}>
+                  <td style={tdStyle}>{e.id}</td>
+                  <td style={tdStyle}>{e.company}</td>
+                  <td style={tdStyle}>{e.round}</td>
+                  <td style={tdStyle}>{e.date}</td>
+                  <td style={tdStyle}>{e.amount}</td>
+                  <td style={tdStyle}>{e.investors}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          </div>
+          <Pagination total={476} totalPages={96} />
+        </div>
+      </div>
+
+      {/* ===== 机构成员 ===== */}
+      <div ref={el => { sectionRefs.current[TABS[3]] = el; }} style={{ ...contentMax, padding: '16px 0', borderBottom: '1px solid #e5e7eb', scrollMarginTop: 168 }}>
+        <h2 style={{ fontSize: 18, fontWeight: 600, margin: '0 0 12px 0' }}>机构成员 131</h2>
+        <div style={tableWrap}>
+        <table style={tableStyle}>
+          <thead>
+            <tr>
+              <th style={thStyle}>序号</th>
+              <th style={thStyle}>姓名</th>
+              <th style={thStyle}>职务</th>
+              <th style={thStyle}>简介</th>
+            </tr>
+          </thead>
+          <tbody>
+            {MEMBERS.map(m => (
+              <tr key={m.id}>
+                <td style={tdStyle}>{m.id}</td>
+                <td style={tdStyle}>{m.name}</td>
+                <td style={tdStyle}>{m.title}</td>
+                <td style={tdStyle}>{m.desc}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        </div>
+        <Pagination total={131} totalPages={27} />
+      </div>
+
+      {/* ===== 基金数据 ===== */}
+      <div ref={el => { sectionRefs.current[TABS[4]] = el; }} style={{ ...contentMax, padding: '16px 0', borderBottom: '1px solid #e5e7eb', scrollMarginTop: 168 }}>
+        <h2 style={{ fontSize: 18, fontWeight: 600, margin: '0 0 12px 0' }}>基金数据 1537</h2>
+        {/* 私募基金管理人 */}
+        <h3 style={{ fontWeight: 500, margin: '0 0 8px 0' }}>私募基金管理人 66</h3>
+        <div style={tableWrap}>
+        <table style={tableStyle}>
+          <thead>
+            <tr>
+              <th style={thStyle}>序号</th>
+              <th style={thStyle}>企业名称</th>
+              <th style={thStyle}>法定代表人</th>
+              <th style={thStyle}>注册资本</th>
+              <th style={thStyle}>成立时间</th>
+            </tr>
+          </thead>
+          <tbody>
+            {FUND_MANAGERS.map(f => (
+              <tr key={f.id}>
+                <td style={tdStyle}>{f.id}</td>
+                <td style={tdStyle}>{f.name}</td>
+                <td style={tdStyle}>{f.legal}</td>
+                <td style={tdStyle}>{f.capital}</td>
+                <td style={tdStyle}>{f.estDate}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        </div>
+        <Pagination total={66} totalPages={14} />
+
+        {/* 管理基金 */}
+        <h3 style={{ fontWeight: 500, margin: '24px 0 8px 0' }}>管理基金 1471</h3>
+        <div style={tableWrap}>
+        <table style={tableStyle}>
+          <thead>
+            <tr>
+              <th style={thStyle}>序号</th>
+              <th style={thStyle}>企业名称</th>
+              <th style={thStyle}>法定代表人</th>
+              <th style={thStyle}>注册资本</th>
+              <th style={thStyle}>成立时间</th>
+            </tr>
+          </thead>
+          <tbody>
+            {MANAGED_FUNDS.map(f => (
+              <tr key={f.id}>
+                <td style={tdStyle}>{f.id}</td>
+                <td style={tdStyle}>{f.name}</td>
+                <td style={tdStyle}>{f.legal}</td>
+                <td style={tdStyle}>{f.capital}</td>
+                <td style={tdStyle}>{f.estDate}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        </div>
+        <Pagination total={1471} totalPages={295} />
+      </div>
+
+      {/* ===== 退出事件 ===== */}
+      <div ref={el => { sectionRefs.current[TABS[5]] = el; }} style={{ ...contentMax, padding: '16px 0', scrollMarginTop: 168 }}>
+        <h2 style={{ fontSize: 18, fontWeight: 600, margin: '0 0 12px 0' }}>退出事件 185</h2>
+        <div style={tableWrap}>
+        <table style={tableStyle}>
+          <thead>
+            <tr>
+              <th style={thStyle}>序号</th>
+              <th style={thStyle}>融资企业（已退出）</th>
+              <th style={thStyle}>退出方式</th>
+              <th style={thStyle}>退出日期</th>
+              <th style={thStyle}>持有天数</th>
+              <th style={thStyle}>投资总额</th>
+            </tr>
+          </thead>
+          <tbody>
+            {EXIT_EVENTS.map(e => (
+              <tr key={e.id}>
+                <td style={tdStyle}>{e.id}</td>
+                <td style={tdStyle}>{e.company}</td>
+                <td style={tdStyle}>{e.method}</td>
+                <td style={tdStyle}>{e.date}</td>
+                <td style={tdStyle}>{e.holdDays}</td>
+                <td style={tdStyle}>{e.totalInvest}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        </div>
+        <Pagination total={185} totalPages={37} />
+      </div>
     </div>
   );
 }
