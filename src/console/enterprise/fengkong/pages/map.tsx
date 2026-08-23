@@ -85,14 +85,22 @@ const CHINA_PATH =
   'C 770 430 745 480 720 515 C 705 540 690 555 675 560 C 620 555 560 545 520 540 ' +
   'C 450 510 400 480 360 460 C 320 430 290 390 265 350 C 240 320 225 285 235 260 Z'
 
+const FILTER_OPTIONS: Record<string, string[]> = {
+  风险类型: ['不限', '司法诉讼', '经营异常', '行政处罚', '股权冻结', '舆情负面', '失信被执行'],
+  风险等级: ['不限', '高风险', '中风险', '低风险', '轻微风险'],
+  '负责人/部门': ['不限', '信贷风控部', '客户经理-王敏', '客户经理-李强'],
+  标签: ['不限', '失信被执行人', '经营异常', '行政处罚', '股权冻结', '欠税公告'],
+}
+
 function Filter({ placeholder }: { placeholder: string }) {
+  const opts = FILTER_OPTIONS[placeholder] ?? ['不限']
   return (
     <select
       defaultValue=""
       style={{ padding: '7px 10px', border: '1px solid #CBD5E1', borderRadius: 8, fontSize: 13, color: '#64748B', minWidth: 110 }}
     >
       <option value="">{placeholder}</option>
-      <option>请选择</option>
+      {opts.map((o) => <option key={o} value={o}>{o}</option>)}
     </select>
   )
 }

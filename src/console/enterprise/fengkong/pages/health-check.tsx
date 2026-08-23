@@ -100,9 +100,20 @@ export default function FkHealthCheck({ params }: { params: URLSearchParams }) {
 
       {/* 加载 / 报告内容 */}
       {!started ? (
-        <div style={{ marginTop: 14, padding: '40px 0', textAlign: 'center', color: '#94A3B8', fontSize: 13 }}>
-          {loading ? '正在加载体检数据…' : '请点击「开始体检」生成体检报告'}
-        </div>
+        <EpCard style={{ marginTop: 14 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '28px 8px' }}>
+            <span style={{ fontSize: 28, lineHeight: 1 }}>🩺</span>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 14, fontWeight: 600, color: '#0F172A' }}>尚未生成体检报告</div>
+              <div style={{ fontSize: 13, color: '#64748B', marginTop: 4 }}>
+                请在上方输入目标企业并点击「开始体检」，系统将比对企业各风险维度的变化并生成报告。
+              </div>
+            </div>
+            <EpBtn variant="primary" size="sm" onClick={onStart} disabled={loading} style={{ flexShrink: 0 }}>
+              {loading ? '查询中…' : '开始体检'}
+            </EpBtn>
+          </div>
+        </EpCard>
       ) : (
         <>
           {/* 企业信息 */}
@@ -131,9 +142,25 @@ export default function FkHealthCheck({ params }: { params: URLSearchParams }) {
                 )}
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 10, marginTop: 12 }}>
-                <EpStat label="企业健康度 · 信用等级" value={data.company.score} sub={data.company.scoreRank} accent="#0F766E" />
-                <EpStat label="空壳指数" value={`${data.company.shell}（${data.company.shellLevel}）`} sub="空壳风险 / 空壳等级" />
-                <EpStat label="合同违约指数" value={data.company.default} sub={`合同诉讼：${data.company.defaultAmount}`} />
+                <HintStat
+                  label="企业健康度 · 信用等级"
+                  value={data.company.score}
+                  sub={data.company.scoreRank}
+                  accent="#0F766E"
+                  hint="综合工商、司法、经营等维度计算的企业整体健康评分，分数越高信用风险越低，并对应信用等级。"
+                />
+                <HintStat
+                  label="空壳指数"
+                  value={`${data.company.shell}（${data.company.shellLevel}）`}
+                  sub="空壳风险 / 空壳等级"
+                  hint="基于社保人数、注册地址、经营活动等信号评估企业是否为“空壳公司”的风险指数，指数越高空壳嫌疑越大。"
+                />
+                <HintStat
+                  label="合同违约指数"
+                  value={data.company.default}
+                  sub={`合同诉讼：${data.company.defaultAmount}`}
+                  hint="根据企业涉诉、被执行及历史违约记录综合测算的合同违约风险指数，用于预判合作与授信风险。"
+                />
               </div>
             </EpCard>
           </div>
@@ -213,6 +240,25 @@ export default function FkHealthCheck({ params }: { params: URLSearchParams }) {
         </div>
       </EpDrawer>
     </EpPage>
+  )
+}
+
+function HintStat({ label, value, sub, accent, hint }: { label: string; value: React.ReactNode; sub?: React.ReactNode; accent?: string; hint: string }) {
+  return (
+    <div style={{ borderRadius: 12, border: '1px solid #E2E8F0', padding: '14px 16px', background: '#fff' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        <span style={{ fontSize: 13, color: '#475569' }}>{label}</span>
+        <span
+          title={hint}
+          style={{
+            width: 15, height: 15, borderRadius: '50%', border: '1px solid #CBD5E1', color: '#94A3B8',
+            fontSize: 10, lineHeight: '13px', textAlign: 'center', cursor: 'help', flexShrink: 0,
+          }}
+        >?</span>
+      </div>
+      <div style={{ fontSize: 22, fontWeight: 700, color: accent || '#0F172A', marginTop: 6 }}>{value}</div>
+      {sub && <div style={{ fontSize: 12, color: '#94A3B8', marginTop: 2 }}>{sub}</div>}
+    </div>
   )
 }
 

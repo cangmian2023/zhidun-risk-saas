@@ -170,8 +170,17 @@ export default function FkAccountYearly({ params }: { params: URLSearchParams })
 
       {!started ? (
         <EpCard style={{ marginTop: 14 }}>
-          <div style={{ textAlign: 'center', padding: 60, color: '#94A3B8', fontSize: 13 }}>
-            {loading ? '正在加载年检数据…' : '请点击「开始查询」生成账户年检结果'}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '28px 8px' }}>
+            <span style={{ fontSize: 28, lineHeight: 1 }}>📋</span>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 14, fontWeight: 600, color: '#0F172A' }}>尚未生成账户年检结果</div>
+              <div style={{ fontSize: 13, color: '#64748B', marginTop: 4 }}>
+                请在上方选择目标客群并点击「开始查询」，系统将按年检查验企业工商、经营、风险维度的一致性。
+              </div>
+            </div>
+            <EpBtn variant="primary" size="sm" onClick={onStart} disabled={loading} style={{ flexShrink: 0 }}>
+              {loading ? '查询中…' : '开始查询'}
+            </EpBtn>
           </div>
         </EpCard>
       ) : (

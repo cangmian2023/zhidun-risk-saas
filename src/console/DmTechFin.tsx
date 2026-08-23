@@ -48,7 +48,7 @@ const btnViewCls = 'cursor-pointer rounded border border-[#d1d5e0] bg-white px-3
 
 export default function DmTechFin() {
   const nav = useNavigate()
-  const [filterOpen, setFilterOpen] = useState(true)
+  const [filterOpen, setFilterOpen] = useState(false)
   return (
     <div style={{ padding: 12 }} className="bg-white text-sm text-[#222]">
       <PageShell title="科创金融" crumb="数字营销 / 产业金融" subtitle="科创企业专属金融服务：科创企业库与资质画像" legend={false} />

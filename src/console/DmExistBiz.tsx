@@ -84,13 +84,15 @@ function MultiSelect({ label, options, selected, onChange }: {
   onChange: (v: string[]) => void;
 }) {
   const [open, setOpen] = useState(false);
+  const [kw, setKw] = useState('');
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    const h = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
+    const h = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) { setOpen(false); setKw(''); } };
     document.addEventListener('mousedown', h);
     return () => document.removeEventListener('mousedown', h);
   }, []);
   const toggle = (opt: string) => onChange(selected.includes(opt) ? selected.filter((v) => v !== opt) : [...selected, opt]);
+  const filteredOpts = options.filter((o) => o.toLowerCase().includes(kw.trim().toLowerCase()));
   return (
     <div ref={ref} style={{ position: 'relative' }}>
       <button
@@ -107,14 +109,25 @@ function MultiSelect({ label, options, selected, onChange }: {
         <span style={{ fontSize: 12 }}>∨</span>
       </button>
       {open && (
-        <div style={{ position: 'absolute', top: '100%', left: 0, marginTop: 4, background: '#fff', border: '1px solid #e5e7eb', borderRadius: 8, boxShadow: '0 4px 12px rgba(0,0,0,0.08)', padding: 4, minWidth: 160, zIndex: 50, maxHeight: 260, overflowY: 'auto' }}>
-          {options.map((opt) => (
-            <label key={opt} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 10px', cursor: 'pointer', fontSize: 14, borderRadius: 6 }} onMouseEnter={(e) => (e.currentTarget.style.background = '#f3f4f6')} onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}>
-              <input type="checkbox" checked={selected.includes(opt)} onChange={() => toggle(opt)} />
-              <span style={{ color: '#374151' }}>{opt}</span>
-            </label>
-          ))}
-          {options.length === 0 && <div style={{ padding: 10, color: '#999', fontSize: 13 }}>暂无选项</div>}
+        <div style={{ position: 'absolute', top: '100%', left: 0, marginTop: 4, background: '#fff', border: '1px solid #e5e7eb', borderRadius: 8, boxShadow: '0 4px 12px rgba(0,0,0,0.08)', padding: 4, minWidth: 200, zIndex: 50 }}>
+          <div style={{ position: 'relative', padding: '2px 4px 6px' }}>
+            <input
+              value={kw}
+              onChange={(e) => setKw(e.target.value)}
+              placeholder="搜索选项"
+              style={{ width: '100%', boxSizing: 'border-box', padding: '6px 10px 6px 28px', border: '1px solid #e5e7eb', borderRadius: 6, fontSize: 13, outline: 'none' }}
+            />
+            <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-30%)', color: '#9ca3af', fontSize: 13 }}>🔍</span>
+          </div>
+          <div style={{ maxHeight: 220, overflowY: 'auto' }}>
+            {filteredOpts.map((opt) => (
+              <label key={opt} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 10px', cursor: 'pointer', fontSize: 14, borderRadius: 6 }} onMouseEnter={(e) => (e.currentTarget.style.background = '#f3f4f6')} onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}>
+                <input type="checkbox" checked={selected.includes(opt)} onChange={() => toggle(opt)} />
+                <span style={{ color: '#374151' }}>{opt}</span>
+              </label>
+            ))}
+            {filteredOpts.length === 0 && <div style={{ padding: 10, color: '#999', fontSize: 13 }}>无匹配选项</div>}
+          </div>
         </div>
       )}
     </div>

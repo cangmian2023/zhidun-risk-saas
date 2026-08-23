@@ -106,7 +106,57 @@ function BuildingIcon() {
   )
 }
 
-function UploadCard({ card, icon, onAdd }: { card: Card; icon: React.ReactNode; onAdd: () => void }) {
+function CheckIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="20 6 9 17 4 12" />
+    </svg>
+  )
+}
+
+function DocIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2563EB" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+      <polyline points="14 2 14 8 20 8" />
+    </svg>
+  )
+}
+
+function CloseIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="18" y1="6" x2="6" y2="18" />
+      <line x1="6" y1="6" x2="18" y2="18" />
+    </svg>
+  )
+}
+
+function UploadIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+      <polyline points="17 8 12 3 7 8" />
+      <line x1="12" y1="3" x2="12" y2="15" />
+    </svg>
+  )
+}
+
+function UploadCard({
+  card,
+  icon,
+  file,
+  uploading,
+  onUpload,
+  onRemove,
+}: {
+  card: Card
+  icon: React.ReactNode
+  file: string | null
+  uploading: boolean
+  onUpload: () => void
+  onRemove: () => void
+}) {
   return (
     <div
       style={{
@@ -118,47 +168,114 @@ function UploadCard({ card, icon, onAdd }: { card: Card; icon: React.ReactNode; 
         background: '#fff',
         display: 'flex',
         flexDirection: 'column',
-        gap: 14,
+        gap: 12,
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-        <span
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <span
+            style={{
+              width: 44,
+              height: 44,
+              borderRadius: 12,
+              background: '#EFF6FF',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            {icon}
+          </span>
+          <div>
+            <div style={{ fontSize: 16, fontWeight: 600, color: '#0F172A' }}>{card.name}</div>
+            <div style={{ fontSize: 12, color: '#64748B', marginTop: 2 }}>{card.desc}</div>
+          </div>
+        </div>
+        <a
+          onClick={() => alert('下载 ' + card.name + ' 样例模板（姓名/编号/企业名称）')}
+          style={{ fontSize: 13, color: '#2563EB', cursor: 'pointer', whiteSpace: 'nowrap' }}
+        >
+          查看样例
+        </a>
+      </div>
+
+      <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
+        {card.limit.split('，').map((t) => (
+          <span key={t} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 12, color: '#94A3B8' }}>
+            <CheckIcon />
+            {t}
+          </span>
+        ))}
+      </div>
+
+      {file ? (
+        <div
           style={{
-            width: 44,
-            height: 44,
-            borderRadius: 12,
-            background: '#EFF6FF',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center',
+            gap: 10,
+            background: '#F8FAFC',
+            borderRadius: 8,
+            padding: '9px 14px',
+            border: '1px solid #E2E8F0',
           }}
         >
-          {icon}
-        </span>
-        <div>
-          <div style={{ fontSize: 16, fontWeight: 600, color: '#0F172A' }}>{card.name}</div>
-          <div style={{ fontSize: 12, color: '#64748B', marginTop: 2 }}>{card.desc}</div>
+          <DocIcon />
+          <span style={{ fontSize: 13, color: '#2563EB', fontWeight: 500 }}>{file}</span>
+          <button
+            onClick={onRemove}
+            title="删除文件"
+            style={{ marginLeft: 'auto', border: 'none', background: 'transparent', cursor: 'pointer', color: '#94A3B8', display: 'inline-flex', padding: 4 }}
+          >
+            <CloseIcon />
+          </button>
         </div>
-      </div>
-      <div style={{ fontSize: 12, color: '#94A3B8' }}>{card.limit}</div>
-      <EpBtn variant="default" style={{ alignSelf: 'flex-start' }} onClick={onAdd}>
-        {card.btn}
-      </EpBtn>
+      ) : (
+        <EpBtn
+          variant="default"
+          style={{ alignSelf: 'flex-start', display: 'inline-flex', alignItems: 'center', gap: 6 }}
+          onClick={onUpload}
+          disabled={uploading}
+        >
+          <UploadIcon />
+          {uploading ? '上传中…' : card.btn}
+        </EpBtn>
+      )}
     </div>
   )
 }
 
 export default function FkInterest({ params }: { params: URLSearchParams }) {
   const [data] = useSample<Data>('fkInterest.json', seed)
-  const [emplOpen, setEmplOpen] = useState(false)
-  const [partnerOpen, setPartnerOpen] = useState(false)
+  const [emplFile, setEmplFile] = useState<string | null>(null)
+  const [partnerFile, setPartnerFile] = useState<string | null>(null)
+  const [emplUploading, setEmplUploading] = useState(false)
+  const [partnerUploading, setPartnerUploading] = useState(false)
   const [banner, setBanner] = useState(data.banner)
   const [showTable, setShowTable] = useState(false)
   const [collapsed, setCollapsed] = useState(false)
   const [kw, setKw] = useState('')
   const [detailRow, setDetailRow] = useState<TableRow | null>(null)
+  const [checkHint, setCheckHint] = useState('')
+
+  const uploadFile = (which: 'empl' | 'partner') => {
+    const setUploading = which === 'empl' ? setEmplUploading : setPartnerUploading
+    const setFile = which === 'empl' ? setEmplFile : setPartnerFile
+    setUploading(true)
+    window.setTimeout(() => {
+      setUploading(false)
+      setFile(which === 'empl' ? '员工名单_20260818.xlsx' : '合作方名单_20260818.xlsx')
+    }, 800)
+  }
+
+  const bothUploaded = !!emplFile && !!partnerFile
 
   const onCheck = () => {
+    if (!bothUploaded) {
+      setCheckHint('请先上传「员工名单」与「合作方名单」两份文件后再开始排查')
+      return
+    }
+    setCheckHint('')
     const now = new Date()
     const pad = (n: number) => String(n).padStart(2, '0')
     const time = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`
@@ -258,8 +375,31 @@ export default function FkInterest({ params }: { params: URLSearchParams }) {
         </div>
       ) : (
         <>
-          <div style={{ display: 'flex', gap: 20, alignItems: 'stretch', marginTop: 18, flexWrap: 'wrap' }}>
-            <UploadCard card={data.emplCard} icon={<PersonIcon />} onAdd={() => setEmplOpen(true)} />
+          <div
+            onClick={() => setCollapsed(true)}
+            style={{
+              marginTop: 18,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'flex-end',
+              gap: 6,
+              fontSize: 13,
+              color: '#2563EB',
+              cursor: 'pointer',
+              userSelect: 'none',
+            }}
+          >
+            收起配置 ▴
+          </div>
+          <div style={{ display: 'flex', gap: 20, alignItems: 'stretch', marginTop: 8, flexWrap: 'wrap' }}>
+            <UploadCard
+              card={data.emplCard}
+              icon={<PersonIcon />}
+              file={emplFile}
+              uploading={emplUploading}
+              onUpload={() => uploadFile('empl')}
+              onRemove={() => setEmplFile(null)}
+            />
 
             {/* 中间排查逻辑 */}
             <div
@@ -296,25 +436,42 @@ export default function FkInterest({ params }: { params: URLSearchParams }) {
               ))}
             </div>
 
-            <UploadCard card={data.partnerCard} icon={<BuildingIcon />} onAdd={() => setPartnerOpen(true)} />
+            <UploadCard
+              card={data.partnerCard}
+              icon={<BuildingIcon />}
+              file={partnerFile}
+              uploading={partnerUploading}
+              onUpload={() => uploadFile('partner')}
+              onRemove={() => setPartnerFile(null)}
+            />
           </div>
 
           {/* 排查按钮 */}
           <div style={{ marginTop: 22, textAlign: 'center' }}>
+            {checkHint && (
+              <div style={{ marginBottom: 10, fontSize: 13, color: '#DC2626' }}>{checkHint}</div>
+            )}
             <EpBtn
               variant="primary"
               onClick={onCheck}
+              disabled={!bothUploaded}
               style={{
-                background: '#2563EB',
-                borderColor: '#2563EB',
+                background: bothUploaded ? '#2563EB' : '#CBD5E1',
+                borderColor: bothUploaded ? '#2563EB' : '#CBD5E1',
                 color: '#fff',
                 fontWeight: 600,
                 padding: '8px 28px',
                 fontSize: 14,
+                cursor: bothUploaded ? 'pointer' : 'not-allowed',
               }}
             >
               {data.checkBtn}
             </EpBtn>
+            {!bothUploaded && (
+              <div style={{ marginTop: 8, fontSize: 12, color: '#94A3B8' }}>
+                已上传：{emplFile ? '员工名单 ✓' : '员工名单 ✗'} ／ {partnerFile ? '合作方名单 ✓' : '合作方名单 ✗'}
+              </div>
+            )}
           </div>
         </>
       )}
@@ -404,8 +561,6 @@ export default function FkInterest({ params }: { params: URLSearchParams }) {
         />
       )}
 
-      <UploadDrawer open={emplOpen} title={`添加${data.emplCard.name}`} onClose={() => setEmplOpen(false)} />
-      <UploadDrawer open={partnerOpen} title={`添加${data.partnerCard.name}`} onClose={() => setPartnerOpen(false)} />
     </EpPage>
   )
 }
@@ -526,52 +681,6 @@ function DetailModal({ row, labels, onClose }: { row: TableRow; labels: Data['de
           >
             {labels.download}
           </EpBtn>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function UploadDrawer({ open, title, onClose }: { open: boolean; title: string; onClose: () => void }) {
-  if (!open) return null
-  return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 50 }}>
-      <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,.35)' }} onClick={onClose} />
-      <div
-        style={{
-          position: 'fixed',
-          top: 0,
-          right: 0,
-          bottom: 0,
-          width: 480,
-          maxWidth: '92vw',
-          background: '#fff',
-          boxShadow: '-8px 0 30px rgba(0,0,0,.12)',
-          display: 'flex',
-          flexDirection: 'column',
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 18px', borderBottom: '1px solid #F1F5F9' }}>
-          <div style={{ fontSize: 15, fontWeight: 600, color: '#0F172A' }}>{title}</div>
-          <button onClick={onClose} style={{ border: 'none', background: 'transparent', fontSize: 20, cursor: 'pointer', color: '#94A3B8' }}>×</button>
-        </div>
-        <div style={{ flex: 1, overflow: 'auto', padding: 18 }}>
-          <div
-            style={{
-              border: '1.5px dashed #CBD5E1',
-              borderRadius: 12,
-              padding: '36px 18px',
-              textAlign: 'center',
-              color: '#64748B',
-              fontSize: 13,
-            }}
-          >
-            <div style={{ marginBottom: 8 }}>点击或拖拽 Excel 文件到此处上传</div>
-            <div style={{ fontSize: 12, color: '#94A3B8' }}>仅支持 xls / xlsx 格式</div>
-            <div style={{ marginTop: 14 }}>
-              <EpBtn variant="primary">选择文件</EpBtn>
-            </div>
-          </div>
         </div>
       </div>
     </div>

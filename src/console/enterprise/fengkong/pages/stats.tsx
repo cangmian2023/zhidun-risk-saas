@@ -11,7 +11,7 @@ import seedJson from '../../../fkStats.json'
 type Stats = typeof seedJson
 
 const TABS = [
-  { key: 'report', label: 'AI 风险报告' },
+  { key: 'report', label: '风险报告' },
   { key: 'rank', label: '企业风险排名' },
   { key: 'dynamic', label: '企业风险动态' },
   { key: 'other', label: '其他统计' },
@@ -43,7 +43,6 @@ const fixCols = (cols: any[]): Column[] => cols.map((c) => {
 export default function FkStats({ params }: { params: URLSearchParams }) {
   const [data] = useSample('fkStats.json', seedJson)
   const [activeTab, setActiveTab] = useState<string>('report')
-  const [showSummary, setShowSummary] = useState(false)
   const [drill, setDrill] = useState<null | { title: string; rows: Row[]; cols: Column[]; tag: string }>(null)
   const nav = useNavigate()
   const { goDetail } = usePageNav()
@@ -75,12 +74,18 @@ export default function FkStats({ params }: { params: URLSearchParams }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const openDrill = (item: Stats['chartGrid'][number]) => {
+  const openDrill = (item: {
+    title: string
+    drillRows?: Row[]
+    drillCols?: Column[]
+    drillTag?: string
+  }) => {
+    if (!item.drillRows || !item.drillCols) return
     setDrill({
       title: item.title,
       rows: item.drillRows as Row[],
       cols: item.drillCols as Column[],
-      tag: item.drillTag,
+      tag: item.drillTag || 'sam',
     })
   }
 
@@ -155,67 +160,12 @@ export default function FkStats({ params }: { params: URLSearchParams }) {
         </div>
       </div>
 
-      {/* 区块一：AI 风险报告 */}
+      {/* 区块一：风险报告（报告列表表格） */}
       <div ref={refs.report} data-tab="report" className="scroll-mt-[112px]">
         <div className="mb-3 mt-5 flex items-center justify-between">
-          <h2 className="text-base font-semibold text-slate-800">AI 风险报告</h2>
+          <h2 className="text-base font-semibold text-slate-800">风险报告</h2>
         </div>
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-          <EpCard className="lg:col-span-1">
-            <div className="flex flex-col items-center gap-3 py-3">
-              <EpBtn variant="primary" onClick={() => setShowSummary(true)}>
-                生成 AI 风险报告
-              </EpBtn>
-              <p className="text-center text-xs text-slate-400">
-                基于当前「50家」企业风险数据，自动生成三句话摘要
-              </p>
-              <div className="mt-1 flex w-full items-center justify-around">
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-[#B91C1C]">{data.aiReport.highRisk}</div>
-                  <div className="text-xs text-slate-400">高风险企业</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-[#C2410C]">{data.aiReport.midRisk}</div>
-                  <div className="text-xs text-slate-400">中风险企业</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-[#1D4ED8]">{data.aiReport.lowRisk}</div>
-                  <div className="text-xs text-slate-400">低风险企业</div>
-                </div>
-              </div>
-              <div className="w-full">
-                <DonutChart
-                  data={[
-                    { label: '高风险', value: data.aiReport.highRisk, color: '#B91C1C' },
-                    { label: '中风险', value: data.aiReport.midRisk, color: '#C2410C' },
-                    { label: '低风险', value: data.aiReport.lowRisk, color: '#1D4ED8' },
-                  ]}
-                  centerLabel="风险占比"
-                />
-              </div>
-            </div>
-          </EpCard>
-
-          <EpCard className="lg:col-span-2">
-            <div className="mb-2 flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-slate-700">AI 三句话摘要</h3>
-              <Cal label="实时计算" />
-            </div>
-            <ul className="space-y-2 text-sm leading-relaxed text-slate-600">
-              {data.aiReport.summary.map((s, i) => (
-                <li key={i} className="flex gap-2">
-                  <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-[#2563EB]" />
-                  <span>{s}</span>
-                </li>
-              ))}
-            </ul>
-            <div className="mt-4">
-              <img src={data.aiReport.cover} alt="AI 风险报告封面" style={{ width: '100%', borderRadius: 8, display: 'block' }} />
-            </div>
-          </EpCard>
-        </div>
-
-        <div className="mt-4">
+        <EpCard>
           <DataTable
             rows={data.aiReport.list as Row[]}
             columns={fixCols(data.aiReport.cols)}
@@ -231,7 +181,7 @@ export default function FkStats({ params }: { params: URLSearchParams }) {
               </button>
             )}
           />
-        </div>
+        </EpCard>
       </div>
 
       {/* 区块二：企业风险排名 */}
@@ -263,22 +213,39 @@ export default function FkStats({ params }: { params: URLSearchParams }) {
         <div className="mb-3 mt-6 flex items-center justify-between">
           <h2 className="text-base font-semibold text-slate-800">企业风险动态</h2>
         </div>
-        <ChartGrid
-          items={data.chartGrid.filter(
-            (c) => c.key !== 'risk_dynamic' && c.key !== 'risk_new' && c.key !== 'risk_trend' && c.key !== 'risk_radar',
-          )}
-          onDrill={openDrill}
-        />
-      </div>
 
-      {/* 区块四：其他统计 */}
-      <div ref={refs.other} data-tab="other" className="scroll-mt-[112px]">
-        <div className="mb-3 mt-6 flex items-center justify-between">
-          <h2 className="text-base font-semibold text-slate-800">其他统计</h2>
+        {/* 风险类型分布（柱状图） */}
+        <ChartCard title="风险类型分布" data={data.typeDist} onDrill={openDrill} />
+
+        {/* 风险数量趋势（柱状图） */}
+        <div className="mt-4">
+          <ChartCard title="风险数量趋势" data={data.riskTrend} onDrill={openDrill} />
         </div>
 
-        {/* 企业标签风险 */}
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        {/* 风险等级分布（环形图） */}
+        <div className="mt-4">
+          <EpCard>
+            <div className="mb-2 flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-slate-700">风险等级分布</h3>
+              <Sam value="fkStats.json" />
+            </div>
+            <DonutChart
+              data={data.chartGrid.find((c) => c.key === 'risk_level')!.donut.map((d) => ({ label: d.label, value: d.value, color: d.color }))}
+              centerLabel="风险总量"
+            />
+            <div className="mt-3 flex flex-wrap gap-4">
+              {data.chartGrid.find((c) => c.key === 'risk_level')!.donut.map((d) => (
+                <span key={d.label} className="flex items-center gap-1.5 text-xs text-slate-500">
+                  <span className="h-2.5 w-2.5 rounded-full" style={{ background: d.color }} />
+                  {d.label}：{d.value}
+                </span>
+              ))}
+            </div>
+          </EpCard>
+        </div>
+
+        {/* 企业标签风险（柱状图） */}
+        <div className="mt-4">
           <EpCard>
             <div className="mb-2 flex items-center justify-between">
               <h3 className="text-sm font-semibold text-slate-700">企业标签风险</h3>
@@ -290,8 +257,10 @@ export default function FkStats({ params }: { params: URLSearchParams }) {
               unit=" 家"
             />
           </EpCard>
+        </div>
 
-          {/* 风险跟进分布 */}
+        {/* 风险跟进分布（环形图） */}
+        <div className="mt-4">
           <EpCard>
             <div className="mb-2 flex items-center justify-between">
               <h3 className="text-sm font-semibold text-slate-700">风险跟进分布</h3>
@@ -312,7 +281,7 @@ export default function FkStats({ params }: { params: URLSearchParams }) {
           </EpCard>
         </div>
 
-        {/* 风险跟进趋势 */}
+        {/* 风险跟进趋势（折线图） */}
         <div className="mt-4">
           <EpCard>
             <div className="mb-2 flex items-center justify-between">
@@ -322,32 +291,44 @@ export default function FkStats({ params }: { params: URLSearchParams }) {
             <LineChart labels={data.followTrend.labels} series={data.followTrend.series} unit=" 条" />
           </EpCard>
         </div>
+      </div>
 
-        {/* 港口 / 航线风险 */}
+      {/* 区块四：其他统计 */}
+      <div ref={refs.other} data-tab="other" className="scroll-mt-[112px]">
+        <div className="mb-3 mt-6 flex items-center justify-between">
+          <h2 className="text-base font-semibold text-slate-800">其他统计</h2>
+        </div>
+
+        {/* 港口 / 航线风险（表格） */}
+        <EpCard>
+          <div className="mb-2 flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-slate-700">港口 / 机场风险</h3>
+            <Sam value="fkStats.json" />
+          </div>
+          <DataTable rows={data.portRisk.rows as Row[]} columns={fixCols(data.portRisk.cols)} pager defaultPageSize={6} />
+        </EpCard>
+
+        {/* 关键词分布（柱状图） */}
+        <div className="mt-4">
+          <ChartCard title="关键词分布" data={data.keywordDist} onDrill={openDrill} />
+        </div>
+
+        {/* 区域风险排名（表格） */}
         <div className="mt-4">
           <EpCard>
             <div className="mb-2 flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-slate-700">港口 / 航线风险</h3>
+              <h3 className="text-sm font-semibold text-slate-700">区域风险排名</h3>
               <Sam value="fkStats.json" />
             </div>
-            <DataTable rows={data.portRisk.rows as Row[]} columns={fixCols(data.portRisk.cols)} pager defaultPageSize={6} />
+            <DataTable rows={data.regionRank.rows as Row[]} columns={fixCols(data.regionRank.cols)} pager defaultPageSize={6} />
           </EpCard>
         </div>
-      </div>
 
-      <EpDrawer open={showSummary} onClose={() => setShowSummary(false)} title="AI 风险报告 · 三句话摘要">
-        <ul className="space-y-3 text-sm leading-relaxed text-slate-600">
-          {data.aiReport.summary.map((s, i) => (
-            <li key={i} className="flex gap-2">
-              <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-[#2563EB]" />
-              <span>{s}</span>
-            </li>
-          ))}
-        </ul>
+        {/* 风险处理周期（柱状图） */}
         <div className="mt-4">
-          <img src={data.aiReport.cover} alt="AI 风险报告封面" style={{ width: '100%', borderRadius: 8, display: 'block' }} />
+          <ChartCard title="风险处理周期" data={data.handleCycle} onDrill={openDrill} />
         </div>
-      </EpDrawer>
+      </div>
 
       <EpDrawer open={!!drill} onClose={() => setDrill(null)} title={drill?.title || '明细'}>
         {drill && (
@@ -363,30 +344,38 @@ export default function FkStats({ params }: { params: URLSearchParams }) {
   )
 }
 
-/* 图表网格：原样渲染，支持点击下钻 */
-function ChartGrid({
-  items,
+/* 图表卡片：标题 + 柱状图/折线图 + 明细下钻 */
+function ChartCard({
+  title,
+  data,
   onDrill,
 }: {
-  items: Stats['chartGrid']
-  onDrill: (item: Stats['chartGrid'][number]) => void
+  title: string
+  data: {
+    title?: string
+    labels: string[]
+    series: { name: string; color: string; data: number[] }[]
+    unit?: string
+    drillRows?: Row[]
+    drillCols?: Column[]
+    drillTag?: string
+  }
+  onDrill: (item: { title: string; drillRows?: Row[]; drillCols?: Column[]; drillTag?: string }) => void
 }) {
   return (
-    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-      {items.map((c) => (
-        <EpCard key={c.key}>
-          <div className="mb-2 flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-slate-700">{c.title}</h3>
-            <button type="button" className="text-xs text-[#2563EB] hover:underline" onClick={() => onDrill(c)}>
+    <EpCard>
+      <div className="mb-2 flex items-center justify-between">
+        <h3 className="text-sm font-semibold text-slate-700">{title}</h3>
+        <div className="flex items-center gap-3">
+          <Sam value="fkStats.json" />
+          {data.drillRows && data.drillCols && (
+            <button type="button" className="text-xs text-[#2563EB] hover:underline" onClick={() => onDrill({ title, drillRows: data.drillRows, drillCols: data.drillCols, drillTag: data.drillTag })}>
               明细
             </button>
-          </div>
-          {c.kind === 'bar' && <BarChart labels={c.labels} series={c.series} unit={c.unit || ''} />}
-          {c.kind === 'donut' && (
-            <DonutChart data={c.donut.map((d) => ({ label: d.label, value: d.value, color: d.color }))} centerLabel={c.centerLabel} />
           )}
-        </EpCard>
-      ))}
-    </div>
+        </div>
+      </div>
+      <BarChart labels={data.labels} series={data.series} unit={data.unit || ''} />
+    </EpCard>
   )
 }

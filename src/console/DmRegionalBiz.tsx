@@ -1020,7 +1020,7 @@ export default function DmRegionalBiz() {
       />
 
       {/* ========== 区域商机概览（保留已有统计/地图/图表） ========== */}
-      <div className="mt-4">
+      <div className="mt-4 px-6">
         <div className="flex items-center gap-3 mb-2">
           <select
             className="border border-gray-300 rounded px-2 py-1.5 text-sm"

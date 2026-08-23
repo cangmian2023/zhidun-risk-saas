@@ -123,6 +123,57 @@
       ]
     }
   ],
+  "typeDist": {
+    "labels": ["工商变更", "司法诉讼", "经营异常", "行政处罚", "舆情负面", "股权冻结", "欠税公告", "失信被执行"],
+    "series": [
+      { "name": "高风险", "color": "#B91C1C", "data": [22, 28, 12, 16, 9, 11, 6, 14] },
+      { "name": "中风险", "color": "#C2410C", "data": [30, 24, 18, 20, 14, 13, 9, 12] },
+      { "name": "低风险", "color": "#1D4ED8", "data": [16, 12, 10, 11, 8, 7, 5, 6] }
+    ],
+    "unit": " 起",
+    "drillTag": "sam",
+    "drillRows": [
+      { "id": 1, "type": "工商变更", "high": 22, "mid": 30, "low": 16, "total": 68 },
+      { "id": 2, "type": "司法诉讼", "high": 28, "mid": 24, "low": 12, "total": 64 },
+      { "id": 3, "type": "经营异常", "high": 12, "mid": 18, "low": 10, "total": 40 },
+      { "id": 4, "type": "行政处罚", "high": 16, "mid": 20, "low": 11, "total": 47 },
+      { "id": 5, "type": "舆情负面", "high": 9, "mid": 14, "low": 8, "total": 31 },
+      { "id": 6, "type": "股权冻结", "high": 11, "mid": 13, "low": 7, "total": 31 },
+      { "id": 7, "type": "欠税公告", "high": 6, "mid": 9, "low": 5, "total": 20 },
+      { "id": 8, "type": "失信被执行", "high": 14, "mid": 12, "low": 6, "total": 32 }
+    ],
+    "drillCols": [
+      { "key": "type", "title": "风险类型", "width": 160 },
+      { "key": "high", "title": "高风险", "width": 90, "align": "right" },
+      { "key": "mid", "title": "中风险", "width": 90, "align": "right" },
+      { "key": "low", "title": "低风险", "width": 90, "align": "right" },
+      { "key": "total", "title": "合计", "width": 90, "align": "right" }
+    ]
+  },
+  "riskTrend": {
+    "labels": ["08-11", "08-12", "08-13", "08-14", "08-15", "08-16", "08-17"],
+    "series": [
+      { "name": "新增风险", "color": "#B91C1C", "data": [12, 15, 18, 14, 21, 19, 24] },
+      { "name": "解除风险", "color": "#1D4ED8", "data": [8, 9, 11, 10, 13, 12, 15] }
+    ],
+    "unit": " 起",
+    "drillTag": "sam",
+    "drillRows": [
+      { "id": 1, "date": "08-11", "add": 12, "remove": 8, "net": 4 },
+      { "id": 2, "date": "08-12", "add": 15, "remove": 9, "net": 6 },
+      { "id": 3, "date": "08-13", "add": 18, "remove": 11, "net": 7 },
+      { "id": 4, "date": "08-14", "add": 14, "remove": 10, "net": 4 },
+      { "id": 5, "date": "08-15", "add": 21, "remove": 13, "net": 8 },
+      { "id": 6, "date": "08-16", "add": 19, "remove": 12, "net": 7 },
+      { "id": 7, "date": "08-17", "add": 24, "remove": 15, "net": 9 }
+    ],
+    "drillCols": [
+      { "key": "date", "title": "日期", "width": 120 },
+      { "key": "add", "title": "新增", "width": 90, "align": "right" },
+      { "key": "remove", "title": "解除", "width": 90, "align": "right" },
+      { "key": "net", "title": "净增", "width": 90, "align": "right" }
+    ]
+  },
   "tagRisk": {
     "labels": ["失信被执行人", "经营异常", "行政处罚", "严重违法", "股权冻结", "欠税公告"],
     "values": [18, 14, 11, 7, 11, 4]
@@ -140,6 +191,59 @@
       { "name": "处理中", "color": "#C2410C", "data": [30, 35, 41, 46, 49, 51, 52] },
       { "name": "已处理", "color": "#1D4ED8", "data": [55, 60, 64, 69, 72, 75, 78] },
       { "name": "无需处理", "color": "#0F766E", "data": [20, 21, 22, 23, 23, 24, 24] }
+    ]
+  },
+  "keywordDist": {
+    "labels": ["债务违约", "破产重整", "限高消费", "股权质押", "环保处罚", "安全事故", "虚假宣传", "欠税"],
+    "series": [{ "name": "命中企业数", "color": "#B91C1C", "data": [23, 17, 31, 19, 12, 9, 15, 11] }],
+    "unit": " 家",
+    "drillTag": "sam",
+    "drillRows": [
+      { "id": 1, "keyword": "债务违约", "count": 23 },
+      { "id": 2, "keyword": "破产重整", "count": 17 },
+      { "id": 3, "keyword": "限高消费", "count": 31 },
+      { "id": 4, "keyword": "股权质押", "count": 19 },
+      { "id": 5, "keyword": "环保处罚", "count": 12 },
+      { "id": 6, "keyword": "安全事故", "count": 9 },
+      { "id": 7, "keyword": "虚假宣传", "count": 15 },
+      { "id": 8, "keyword": "欠税", "count": 11 }
+    ],
+    "drillCols": [
+      { "key": "keyword", "title": "关键词", "width": 160 },
+      { "key": "count", "title": "命中企业数", "width": 120, "align": "right" }
+    ]
+  },
+  "regionRank": {
+    "rows": [
+      { "id": 1, "region": "华东地区", "total": 245, "high": 120, "mid": 85, "low": 40, "level": "高风险" },
+      { "id": 2, "region": "华南地区", "total": 187, "high": 92, "mid": 64, "low": 31, "level": "高风险" },
+      { "id": 3, "region": "华北地区", "total": 121, "high": 58, "mid": 41, "low": 22, "level": "中风险" },
+      { "id": 4, "region": "西南地区", "total": 51, "high": 24, "mid": 18, "low": 9, "level": "中风险" },
+      { "id": 5, "region": "其他地区", "total": 34, "high": 16, "mid": 12, "low": 6, "level": "低风险" }
+    ],
+    "cols": [
+      { "key": "region", "title": "区域", "width": 160 },
+      { "key": "total", "title": "风险事件总数", "width": 120, "align": "right" },
+      { "key": "high", "title": "高风险", "width": 90, "align": "right" },
+      { "key": "mid", "title": "中风险", "width": 90, "align": "right" },
+      { "key": "low", "title": "低风险", "width": 90, "align": "right" },
+      { "key": "level", "title": "风险等级", "width": 100, "render": "tag" }
+    ]
+  },
+  "handleCycle": {
+    "labels": ["未处理", "处理中", "已处理", "无需处理"],
+    "series": [{ "name": "平均处理周期(天)", "color": "#C2410C", "data": [42, 18, 9, 3] }],
+    "unit": " 天",
+    "drillTag": "sam",
+    "drillRows": [
+      { "id": 1, "status": "未处理", "cycle": 42 },
+      { "id": 2, "status": "处理中", "cycle": 18 },
+      { "id": 3, "status": "已处理", "cycle": 9 },
+      { "id": 4, "status": "无需处理", "cycle": 3 }
+    ],
+    "drillCols": [
+      { "key": "status", "title": "跟进状态", "width": 160 },
+      { "key": "cycle", "title": "平均处理周期(天)", "width": 160, "align": "right" }
     ]
   },
   "portRisk": {

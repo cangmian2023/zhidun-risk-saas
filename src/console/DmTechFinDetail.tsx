@@ -975,6 +975,8 @@ export default function DmTechFinDetail() {
   const headerRef = useRef<HTMLDivElement>(null)
   const [headH, setHeadH] = useState(80)
   const STICKY = 56 + headH
+  // 企业标签默认收起
+  const [tagsCollapsed, setTagsCollapsed] = useState(true)
   useEffect(() => {
     const measure = () => { if (headerRef.current) setHeadH(headerRef.current.offsetHeight) }
     measure()
@@ -1038,21 +1040,33 @@ export default function DmTechFinDetail() {
 
       {/* ============ 公司标签 概要（1:1 复刻 企业标签.md） ============ */}
       <div className="mb-2.5 rounded-md bg-white px-4 py-3.5">
-        <div className="mb-2 flex flex-wrap items-center gap-2">
-          <span className="rounded bg-[#fff5e6] px-2 py-0.5 text-xs">科创等级 🅰️ A</span>
-          <span className="cursor-pointer text-[#2762e8] text-xs">⦿ 商机线索：商机事件61条 ▶</span>
-          <span className="cursor-pointer text-[#2762e8] text-xs">关联商机52条 ▶</span>
-        </div>
-        {TAG_SECTIONS.map((s) => (
-          <div key={s.label} className="flex items-start gap-3 border-b border-dashed border-[#eef0f6] py-1.5 last:border-0">
-            <div className="w-[88px] shrink-0 pt-1 text-xs text-[#666]">{s.label}</div>
-            <div className="flex flex-1 flex-wrap gap-2">
-              {s.tags.map((t) => (
-                <span key={t} className={`rounded px-2 py-0.5 text-xs ${s.tone === 'blue' ? 'bg-[#e8f3ff] text-[#165DFF]' : 'bg-[#edf7ed] text-[#2e7d32]'}`}>{t}</span>
-              ))}
-            </div>
+        <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="rounded bg-[#fff5e6] px-2 py-0.5 text-xs">科创等级 🅰️ A</span>
+            <span className="cursor-pointer text-[#2762e8] text-xs">⦿ 商机线索：商机事件61条 ▶</span>
+            <span className="cursor-pointer text-[#2762e8] text-xs">关联商机52条 ▶</span>
           </div>
-        ))}
+          <button
+            onClick={() => setTagsCollapsed((o) => !o)}
+            className="cursor-pointer rounded border border-[#d1d5e0] px-2.5 py-1 text-xs text-[#2762e8] hover:bg-[#f4f7ff]"
+          >
+            {tagsCollapsed ? '展开企业标签 ▾' : '收起企业标签 ▴'}
+          </button>
+        </div>
+        {!tagsCollapsed && (
+          <>
+            {TAG_SECTIONS.map((s) => (
+              <div key={s.label} className="flex items-start gap-3 border-b border-dashed border-[#eef0f6] py-1.5 last:border-0">
+                <div className="w-[88px] shrink-0 pt-1 text-xs text-[#666]">{s.label}</div>
+                <div className="flex flex-1 flex-wrap gap-2">
+                  {s.tags.map((t) => (
+                    <span key={t} className={`rounded px-2 py-0.5 text-xs ${s.tone === 'blue' ? 'bg-[#e8f3ff] text-[#165DFF]' : 'bg-[#edf7ed] text-[#2e7d32]'}`}>{t}</span>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </>
+        )}
       </div>
 
       {/* ============ 大 Tab 栏（吸顶，吸到页面标题下方） ============ */}

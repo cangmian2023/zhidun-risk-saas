@@ -1021,7 +1021,7 @@ export default function DmFullSearch() {
                 {SCOPE_OPTIONS.map((o) => <option key={o} value={o}>{o}</option>)}
               </select>
               <input value={keyword} onChange={(e) => setKeyword(e.target.value)} placeholder="请输入关键词" style={{ flex: 1, minWidth: 220, maxWidth: 420, border: `1px solid ${C.border}`, borderRadius: 4, padding: '7px 10px' }} />
-              <button onClick={() => { setPage(1); setLoaded(true) }} style={{ background: C.primary, color: '#fff', border: 'none', borderRadius: 4, padding: '8px 18px', cursor: 'pointer', fontSize: 14 }}>查询</button>
+              <button onClick={() => { setPage(1); setLoaded(true); setFilterPanelOpen(false) }} style={{ background: C.primary, color: '#fff', border: 'none', borderRadius: 4, padding: '8px 18px', cursor: 'pointer', fontSize: 14 }}>查询</button>
               <button style={{ border: `1px solid ${C.primary}`, color: C.primary, background: '#fff', borderRadius: 4, padding: '8px 14px', cursor: 'pointer' }}>AI找名单</button>
               <div style={{ marginLeft: 'auto', display: 'flex', gap: 12 }}>
                 <a style={{ color: C.sub, fontSize: 13, cursor: 'pointer' }}>批量搜索</a>
@@ -1040,7 +1040,7 @@ export default function DmFullSearch() {
           <div style={{ background: '#fff', border: `1px solid ${C.border}`, borderRadius: 8, padding: '0 12px 12px', marginBottom: 12 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0 4px' }}>
               <span style={{ fontWeight: 700, color: C.text, fontSize: 14 }}>条件筛选 <span style={{ color: C.ph, fontSize: 12, fontWeight: 400 }}>（分组可单独展开/收起）</span></span>
-              <a onClick={toggleAllFilters} style={{ color: C.primary, fontSize: 13, cursor: 'pointer', flexShrink: 0 }}>{filterPanelOpen ? '收起筛选 ▲' : '展开筛选 ▼'}</a>
+              <button onClick={toggleAllFilters} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: C.primary, fontSize: 13, cursor: 'pointer', flexShrink: 0, border: `1px solid ${C.primary}`, borderRadius: 4, padding: '5px 14px', background: '#fff', fontWeight: 600 }}>{filterPanelOpen ? '收起筛选 ▲' : '展开筛选 ▼'}</button>
             </div>
             {filterPanelOpen && <FilterPanel checked={checked} toggle={toggle} expandedGroups={expandedGroups} toggleGroup={toggleGroup} />}
           </div>

@@ -72,6 +72,7 @@ export default function FkBlacklist({ params }: { params: URLSearchParams }) {
       return <EpTag color={m.c} bg={m.b}>{t}</EpTag>
     } },
     { key: 'listName', label: '名单名称', width: 200 },
+    { key: 'industry', label: '企业行业', width: 200 },
     { key: 'department', label: '认定部门', width: 180 },
     { key: 'level', label: '认定层级', width: 90 },
     { key: 'includeDate', label: '列入日期', width: 120 },

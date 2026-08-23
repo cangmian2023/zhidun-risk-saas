@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { EpPage, EpCard, EpBtn, DataTable, useSample, Sam } from '../../epCommon'
 import { Modal } from '../../../../components/ui'
+import { usePageNav } from '../../../pageNav'
 
 type TreeItem = { key: string; label: string; checked: boolean }
 type FilterGroup = {
@@ -246,7 +247,7 @@ function CustomCheckbox({ checked, onChange }: { checked: boolean; onChange?: ()
 function IndicatorSidebar({ data }: { data: Data['left'] }) {
   const [kw, setKw] = useState('')
   const [checked, setChecked] = useState<Set<string>>(() => new Set(data.tree.filter((t) => t.checked).map((t) => t.key)))
-  const [tab, setTab] = useState(data.active)
+  const [collapsed, setCollapsed] = useState(false)
   const filtered = data.tree.filter((t) => t.label.includes(kw.trim()))
 
   const toggleOne = (key: string) => {
@@ -273,78 +274,63 @@ function IndicatorSidebar({ data }: { data: Data['left'] }) {
         flexDirection: 'column',
       }}
     >
-      <div style={{ display: 'flex', borderBottom: '1px solid #E2E8F0' }}>
-        {data.tabs.map((lt) => (
-          <button
-            key={lt}
-            onClick={() => setTab(lt)}
-            style={{
-              flex: 1,
-              padding: '12px 0',
-              border: 'none',
-              background: tab === lt ? '#fff' : 'transparent',
-              color: tab === lt ? '#2563EB' : '#475569',
-              fontSize: 13,
-              fontWeight: tab === lt ? 600 : 400,
-              cursor: 'pointer',
-              borderLeft: tab === lt ? '3px solid #2563EB' : '3px solid transparent',
-            }}
-          >
-            {lt}
-          </button>
-        ))}
+      <div style={{ padding: '12px 14px', borderBottom: '1px solid #E2E8F0', fontSize: 14, fontWeight: 600, color: '#0F172A' }}>
+        {data.active}
       </div>
 
-      <div style={{ padding: 14 }}>
-        <div style={{ position: 'relative', marginBottom: 12 }}>
-          <input
-            value={kw}
-            onChange={(e) => setKw(e.target.value)}
-            placeholder={data.searchPlaceholder}
-            style={{
-              width: '100%',
-              padding: '7px 28px 7px 10px',
-              borderRadius: 6,
-              border: '1px solid #E2E8F0',
-              fontSize: 13,
-              outline: 'none',
-              boxSizing: 'border-box',
-            }}
-          />
-          <div style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)' }}>
-            <SearchIcon />
-          </div>
-        </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-          <button
-            onClick={toggleAll}
-            style={{ display: 'flex', alignItems: 'center', gap: 6, border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 13, color: '#0F172A' }}
-          >
-            <CustomCheckbox checked={checked.size === data.tree.length && data.tree.length > 0} />
-            <span>
-              {data.selectAll}({data.total})
-            </span>
-          </button>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <EpBtn variant="ghost" size="sm">{data.settings}</EpBtn>
-            <EpBtn variant="primary" size="sm">{data.saveTemplate}</EpBtn>
-          </div>
-        </div>
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          {filtered.map((item) => (
-            <div key={item.key} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 0' }}>
-              <ChevronRight />
-              <CustomCheckbox checked={checked.has(item.key)} onChange={() => toggleOne(item.key)} />
-              <span style={{ fontSize: 13, color: '#0F172A' }}>{item.label}</span>
+      {!collapsed && (
+        <div style={{ padding: 14 }}>
+          <div style={{ position: 'relative', marginBottom: 12 }}>
+            <input
+              value={kw}
+              onChange={(e) => setKw(e.target.value)}
+              placeholder={data.searchPlaceholder}
+              style={{
+                width: '100%',
+                padding: '7px 28px 7px 10px',
+                borderRadius: 6,
+                border: '1px solid #E2E8F0',
+                fontSize: 13,
+                outline: 'none',
+                boxSizing: 'border-box',
+              }}
+            />
+            <div style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)' }}>
+              <SearchIcon />
             </div>
-          ))}
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+            <button
+              onClick={toggleAll}
+              style={{ display: 'flex', alignItems: 'center', gap: 6, border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 13, color: '#0F172A' }}
+            >
+              <CustomCheckbox checked={checked.size === data.tree.length && data.tree.length > 0} />
+              <span>
+                {data.selectAll}({data.total})
+              </span>
+            </button>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <EpBtn variant="ghost" size="sm">{data.settings}</EpBtn>
+              <EpBtn variant="primary" size="sm">{data.saveTemplate}</EpBtn>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {filtered.map((item) => (
+              <div key={item.key} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 0' }}>
+                <ChevronRight />
+                <CustomCheckbox checked={checked.has(item.key)} onChange={() => toggleOne(item.key)} />
+                <span style={{ fontSize: 13, color: '#0F172A' }}>{item.label}</span>
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       <div style={{ marginTop: 'auto', padding: 12, borderTop: '1px solid #E2E8F0', display: 'flex', justifyContent: 'center' }}>
         <button
+          onClick={() => setCollapsed((o) => !o)}
           style={{
             display: 'flex',
             alignItems: 'center',
@@ -358,8 +344,8 @@ function IndicatorSidebar({ data }: { data: Data['left'] }) {
             cursor: 'pointer',
           }}
         >
-          <ChevronRight size={12} />
-          {data.collapse}
+          {collapsed ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+          {collapsed ? '展开' : data.collapse}
         </button>
       </div>
     </div>
@@ -368,10 +354,15 @@ function IndicatorSidebar({ data }: { data: Data['left'] }) {
 
 export default function JdBatchResult({ params }: { params: URLSearchParams }) {
   const [data] = useSample<Data>('jdBatchResult.json', seed)
+  const { goDetail } = usePageNav()
   const [tab, setTab] = useState(data.activeTab)
   const [selected, setSelected] = useState<string[]>([])
   const [uploadOpen, setUploadOpen] = useState(params.get('upload') === '1')
   const [step, setStep] = useState(1)
+  // 筛选条件默认收起（点搜索/展开可打开）
+  const [filterOpen, setFilterOpen] = useState(false)
+  // 左侧指标栏可收起
+  const [leftCollapsed, setLeftCollapsed] = useState(false)
 
   // 关闭上传弹窗后重置到第一步
   useEffect(() => {
@@ -429,93 +420,108 @@ export default function JdBatchResult({ params }: { params: URLSearchParams }) {
       </div>
 
       {tab === 'person' ? (
-        <EpCard>
-          <div style={{ padding: 40, textAlign: 'center', color: '#64748B' }}>查人员结果内容待补充</div>
-        </EpCard>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {[
+            { id: 'p1', name: '吴孟', partners: ['赵凯', '贾跃亭', '邓伟', '刘秋萍'], legalRep: ['乐视控股（北京）有限公司', '乐视汽车（北京）有限公司'], shareholder: ['北京东方车云信息技术有限公司'], executive: ['乐视网信息技术（北京）股份有限公司'] },
+            { id: 'p2', name: '雷军', partners: ['刘德', '王川', '孙谦', '邹涛', '洪锋'], legalRep: ['小米科技有限责任公司', '天津金星创业投资有限公司'], shareholder: ['小米科技有限责任公司', '广州华多网络科技有限公司'], executive: ['小米科技有限责任公司', '拉卡拉支付股份有限公司'] },
+          ].map((r) => (
+            <div key={r.id} style={{ display: 'flex', gap: 16, background: '#fff', borderRadius: 10, border: '1px solid #E2E8F0', padding: '18px 20px' }}>
+              <div style={{ width: 64, height: 64, borderRadius: 6, background: '#334155', color: '#fff', fontSize: 26, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{r.name.slice(0, 1)}</div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 18, fontWeight: 700, color: '#1677ff', cursor: 'pointer' }} onClick={() => goDetail('/console/dm/person-archive-basic?name=' + encodeURIComponent(r.name))}>{r.name}</div>
+                <div style={{ marginTop: 8, fontSize: 13, lineHeight: 1.7, color: '#334155' }}>
+                  <span style={{ color: '#64748B' }}>合作伙伴：</span>
+                  {r.partners.map((v, i) => (<span key={v}>{i > 0 && <span style={{ color: '#CBD5E1' }}>、</span>}<span style={{ color: '#1677ff', cursor: 'pointer' }}>{v}</span></span>))}
+                </div>
+                <div style={{ marginTop: 4, fontSize: 13, lineHeight: 1.7, color: '#334155' }}>
+                  <span style={{ color: '#64748B' }}>担任法定代表人的企业：</span>
+                  {r.legalRep.map((v, i) => (<span key={v}>{i > 0 && <span style={{ color: '#CBD5E1' }}>、</span>}<span style={{ color: '#1677ff' }}>{v}</span></span>))}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
       ) : (
         <div style={{ display: 'flex', gap: 16 }}>
           <IndicatorSidebar data={data.left} />
 
           <div style={{ flex: 1, minWidth: 0 }}>
             {/* 高级筛选 */}
-            <EpCard title={data.filters.title} pad>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                {/* 常用筛选 */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: '#0F172A', width: 70 }}>{data.filters.common.title}</span>
-                  {data.filters.common.items.map((item) => (
-                    <button
-                      key={item.label}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 3,
-                        padding: '4px 10px',
-                        borderRadius: 4,
-                        border: '1px solid #E2E8F0',
-                        background: '#fff',
-                        fontSize: 13,
-                        color: '#475569',
-                        cursor: 'pointer',
-                      }}
-                    >
-                      {item.label}
-                      <ChevronDown size={12} />
-                    </button>
+            <EpCard
+              title={
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span>{data.filters.title}</span>
+                  <button
+                    onClick={() => setFilterOpen((o) => !o)}
+                    style={{ border: `1px solid #2563EB`, color: '#2563EB', background: '#fff', borderRadius: 4, padding: '3px 12px', fontSize: 13, cursor: 'pointer' }}
+                  >
+                    {filterOpen ? '收起筛选 ▲' : '展开筛选 ▼'}
+                  </button>
+                </div>
+              }
+              pad
+            >
+              {filterOpen && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                  {/* 常用筛选 */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: '#0F172A', width: 70 }}>{data.filters.common.title}</span>
+                    {data.filters.common.items.map((item) => (
+                      <button
+                        key={item.label}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 3,
+                          padding: '4px 10px',
+                          borderRadius: 4,
+                          border: '1px solid #E2E8F0',
+                          background: '#fff',
+                          fontSize: 13,
+                          color: '#475569',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        {item.label}
+                        <ChevronDown size={12} />
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* 分组筛选 */}
+                  {data.filters.groups.map((g) => (
+                    <div key={g.key} style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+                      <span style={{ fontSize: 13, fontWeight: 600, color: '#0F172A', width: 70, flexShrink: 0 }}>{g.title}</span>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, flex: 1 }}>
+                        {g.options.map((opt) => {
+                          const active = activeFilter[g.key] === opt
+                          return (
+                            <button
+                              key={opt}
+                              onClick={() => setActiveFilter({ ...activeFilter, [g.key]: opt })}
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 2,
+                                padding: '3px 10px',
+                                borderRadius: 4,
+                                border: `1px solid ${active ? '#2563EB' : '#E2E8F0'}`,
+                                background: active ? '#EFF6FF' : '#fff',
+                                fontSize: 13,
+                                color: active ? '#2563EB' : '#475569',
+                                cursor: 'pointer',
+                              }}
+                            >
+                              {opt}
+                              {g.dropdowns && <FilterIcon />}
+                            </button>
+                          )
+                        })}
+                      </div>
+                    </div>
                   ))}
                 </div>
-
-                {/* 分组筛选 */}
-                {data.filters.groups.map((g) => (
-                  <div key={g.key} style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-                    <span style={{ fontSize: 13, fontWeight: 600, color: '#0F172A', width: 70, flexShrink: 0 }}>{g.title}</span>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, flex: 1 }}>
-                      {g.options.map((opt) => {
-                        const active = activeFilter[g.key] === opt
-                        return (
-                          <button
-                            key={opt}
-                            onClick={() => setActiveFilter({ ...activeFilter, [g.key]: opt })}
-                            style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: 2,
-                              padding: '3px 10px',
-                              borderRadius: 4,
-                              border: `1px solid ${active ? '#2563EB' : '#E2E8F0'}`,
-                              background: active ? '#EFF6FF' : '#fff',
-                              fontSize: 13,
-                              color: active ? '#2563EB' : '#475569',
-                              cursor: 'pointer',
-                            }}
-                          >
-                            {opt}
-                            {g.dropdowns && <FilterIcon />}
-                          </button>
-                        )
-                      })}
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div style={{ display: 'flex', justifyContent: 'center', marginTop: 16 }}>
-                <button
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 4,
-                    border: 'none',
-                    background: 'transparent',
-                    color: '#64748B',
-                    fontSize: 13,
-                    cursor: 'pointer',
-                  }}
-                >
-                  {data.filters.collapse}
-                  <ChevronDown />
-                </button>
-              </div>
+              )}
             </EpCard>
 
             {/* 工具栏 */}

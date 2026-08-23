@@ -123,6 +123,17 @@ export default function FkRegulatory({ params }: { params: URLSearchParams }) {
   const [detailRow, setDetailRow] = useState<RowItem | null>(null)
   const [started, setStarted] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [openFilter, setOpenFilter] = useState<string | null>(null)
+  const [filterVals, setFilterVals] = useState<Record<string, string>>({})
+
+  const OTHER_FILTER_OPTS: Record<string, string[]> = {
+    '涉案/处罚金额': ['不限', '0-10万', '10-50万', '50-100万', '100万以上'],
+    披露日期: ['不限', '近1个月', '近3个月', '近6个月', '近1年'],
+    数据来源: ['不限', '各地市场监督管理局', '应急管理局', '网信办', '信用中国', '法院公告'],
+    行业分类: ['不限', '制造业', '批发零售', '信息技术', '建筑', '食品', '交通运输'],
+    省份地区: ['不限', '华北', '华东', '华南', '西南', '东北'],
+    注册资本: ['不限', '0-100万', '100-1000万', '1000万-1亿', '1亿以上'],
+  }
 
   const onSearch = () => {
     setLoading(true)
@@ -243,10 +254,35 @@ export default function FkRegulatory({ params }: { params: URLSearchParams }) {
         <span style={{ fontSize: 13, fontWeight: 600, color: '#0F172A', whiteSpace: 'nowrap' }}>其它筛选</span>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           {data.otherFilters.map((f) => (
-            <FilterBtn key={f} label={f} />
+            <FilterBtn
+              key={f}
+              label={f}
+              active={openFilter === f || (filterVals[f] && filterVals[f] !== '不限')}
+              onClick={() => setOpenFilter(openFilter === f ? null : f)}
+            />
           ))}
         </div>
       </div>
+      {openFilter && OTHER_FILTER_OPTS[openFilter] && (
+        <div style={{ marginTop: 8, padding: '10px 12px', background: '#F8FAFC', borderRadius: 8, border: '1px solid #E2E8F0' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+            <span style={{ fontSize: 13, color: '#475569' }}>{openFilter}</span>
+            <select
+              value={filterVals[openFilter] || '不限'}
+              onChange={(e) => setFilterVals((prev) => ({ ...prev, [openFilter]: e.target.value }))}
+              style={{ padding: '6px 10px', border: '1px solid #CBD5E1', borderRadius: 8, fontSize: 13, outline: 'none', background: '#fff' }}
+            >
+              {OTHER_FILTER_OPTS[openFilter].map((o) => <option key={o}>{o}</option>)}
+            </select>
+            <span
+              onClick={() => setOpenFilter(null)}
+              style={{ fontSize: 12, color: '#2563EB', cursor: 'pointer' }}
+            >
+              收起
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* 结果工具栏 */}
       <div
@@ -334,9 +370,23 @@ export default function FkRegulatory({ params }: { params: URLSearchParams }) {
       )}
         </>
       ) : (
-        <div style={{ marginTop: 16, padding: '40px 0', textAlign: 'center', color: '#94A3B8', fontSize: 13 }}>
-          {loading ? '正在查询监管合规数据…' : '请输入关键词后点击「查询」获取结果'}
-        </div>
+        <EpCard style={{ marginTop: 16 }}>
+          <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start', padding: '24px 12px' }}>
+            <span style={{ fontSize: 30, lineHeight: 1 }}>⚖️</span>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 15, fontWeight: 600, color: '#0F172A' }}>尚未查询监管合规数据</div>
+              <div style={{ fontSize: 13, color: '#64748B', marginTop: 6, lineHeight: 1.8 }}>
+                本模块汇聚各级市场监管、应急管理、网信、法院等公开渠道的行政处罚、判决与违规信息，帮助企业识别合作方与客户的合规风险。
+              </div>
+              <div style={{ fontSize: 13, color: '#64748B', marginTop: 4, lineHeight: 1.8 }}>
+                请在上方输入主体名称或判决机构关键词后点击「查询」，也可结合「违规类型」「其它筛选」缩小范围。
+              </div>
+              <div style={{ marginTop: 10, fontSize: 12, color: '#94A3B8' }}>
+                数据来源示例：各地市场监督管理局、应急管理局、网信办、信用中国、法院公告等公开渠道
+              </div>
+            </div>
+          </div>
+        </EpCard>
       )}
 
       {/* 详情抽屉 */}
@@ -439,24 +489,26 @@ function ScopeBtn({ label }: { label: string }) {
   )
 }
 
-function FilterBtn({ label }: { label: string }) {
+function FilterBtn({ label, active, onClick }: { label: string; active?: boolean; onClick?: () => void }) {
   return (
     <button
+      onClick={onClick}
       style={{
         display: 'flex',
         alignItems: 'center',
         gap: 4,
         padding: '5px 10px',
-        border: '1px solid #E2E8F0',
+        border: '1px solid ' + (active ? '#2563EB' : '#E2E8F0'),
         borderRadius: 6,
-        background: '#fff',
+        background: active ? '#EFF6FF' : '#fff',
         fontSize: 13,
-        color: '#475569',
+        color: active ? '#2563EB' : '#475569',
         cursor: 'pointer',
+        fontWeight: active ? 600 : 400,
       }}
     >
       {label}
-      <span style={{ fontSize: 10, color: '#94A3B8' }}>▼</span>
+      <span style={{ fontSize: 10, color: active ? '#2563EB' : '#94A3B8' }}>▼</span>
     </button>
   )
 }

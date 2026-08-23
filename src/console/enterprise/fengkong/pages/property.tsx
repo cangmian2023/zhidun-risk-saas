@@ -75,8 +75,19 @@ const seed = {
     { id: 'e4', name: '广州博鳌网络科技合伙企业（有限合伙）', rel: '股东平台', legal: '谢旭辉', risk: '中风险', reason: '员工持股平台，资金往来频繁' },
     { id: 'e5', name: '广州黄埔区博鳌孵化器有限公司', rel: '分支机构', legal: '谢旭辉', risk: '低风险', reason: '园区运营主体' },
     { id: 'e6', name: '海南纵横博鳌投资有限公司', rel: '对外投资', legal: '谢旭辉', risk: '中风险', reason: '对外投资控股平台' },
+    { id: 'e7', name: '广州博鳌纵横网络科技合伙企业', rel: '对外投资', legal: '谢旭辉', risk: '低风险', reason: '横向业务投资平台' },
+    { id: 'e8', name: '广州博鳌文化传媒有限公司', rel: '控股子公司', legal: '谢旭辉', risk: '中风险', reason: '集团品牌运营子公司，存在多起服务合同纠纷' },
   ],
-  assets: [],
+  assets: [
+    { id: 'a1', type: '不动产', name: '广州市黄埔区科学大道231号裙楼B1B2栋', detail: '建筑面积约 12,800㎡，用途为办公及商业', value: '约 1.86 亿元', status: '已抵押', court: '-' },
+    { id: 'a2', type: '股权', name: '持有的广州博鳌知识产权代理有限公司 100% 股权', detail: '注册资本 1,000 万人民币', value: '约 1,200 万元', status: '冻结', court: '广州市黄埔区人民法院' },
+    { id: 'a3', type: '银行账户', name: '招商银行广州黄埔支行 对公账户', detail: '账户余额（2026-06 查）', value: '约 386 万元', status: '部分冻结', court: '广州市黄埔区人民法院' },
+    { id: 'a4', type: '机动车', name: '奔驰 S400L 等公务用车 3 台', detail: '登记于公司名下', value: '约 260 万元', status: '正常', court: '-' },
+    { id: 'a5', type: '知识产权', name: '注册商标「博鳌」等 42 件', detail: '第35/36/42 类', value: '评估约 540 万元', status: '正常', court: '-' },
+    { id: 'a6', type: '对外投资', name: '北京博鳌纵横科技有限公司 30% 股权', detail: '注册资本 500 万人民币', value: '约 150 万元', status: '正常', court: '-' },
+    { id: 'a7', type: '应收账款', name: '账期 1 年内应收账款', detail: '主要客户为中小企业', value: '约 2,300 万元', status: '部分涉诉', court: '广州市中级人民法院' },
+    { id: 'a8', type: '设备资产', name: '服务器及办公设备一批', detail: ' IDC 机房托管设备', value: '约 420 万元', status: '正常', court: '-' },
+  ],
   pagination: { total: 75, pageSize: 5, current: 1 },
 }
 
@@ -235,7 +246,8 @@ export default function FkProperty({ params }: { params: URLSearchParams }) {
                   <span style={{ fontSize: 14, fontWeight: 600, color: '#0F172A' }}>财产线索 {data.pagination.total}</span>
                   <span style={{ fontSize: 12, color: '#94A3B8' }}>为保证线索时效性，仅展示近3年的线索信息</span>
                 </div>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, marginTop: 8 }}>
+                <div style={{ overflowX: 'auto', padding: '0 16px 16px' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, marginTop: 8, minWidth: 920 }}>
                   <thead>
                     <tr style={{ background: '#F8FAFC' }}>
                       <th style={thStyle(110)}>发生时间</th>
@@ -302,6 +314,7 @@ export default function FkProperty({ params }: { params: URLSearchParams }) {
                   <input defaultValue={page} style={{ width: 40, padding: '3px 6px', border: '1px solid #E2E8F0', borderRadius: 4, textAlign: 'center', fontSize: 12 }} />
                   <span>页</span>
                 </div>
+                </div>
               </EpCard>
             </>
           )}
@@ -309,7 +322,8 @@ export default function FkProperty({ params }: { params: URLSearchParams }) {
           {tab === 'expand' && (
             <EpCard pad={false}>
               <div style={{ padding: '14px 16px 0', fontSize: 14, fontWeight: 600, color: '#0F172A' }}>扩大主体 {data.expand.length}</div>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, marginTop: 8 }}>
+              <div style={{ overflowX: 'auto', padding: '0 16px 16px' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, marginTop: 8, minWidth: 760 }}>
                 <thead>
                   <tr style={{ background: '#F8FAFC' }}>
                     <th style={thStyle('auto')}>关联主体</th>
@@ -331,12 +345,41 @@ export default function FkProperty({ params }: { params: URLSearchParams }) {
                   ))}
                 </tbody>
               </table>
+              </div>
             </EpCard>
           )}
 
           {tab === 'asset' && (
-            <EpCard>
-              <div style={{ textAlign: 'center', padding: 40, color: '#94A3B8' }}>暂无资产状况数据</div>
+            <EpCard pad={false}>
+              <div style={{ padding: '14px 16px 0', fontSize: 14, fontWeight: 600, color: '#0F172A' }}>资产状况 {data.assets.length}</div>
+              <div style={{ overflowX: 'auto', padding: '0 16px 16px' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, marginTop: 8, minWidth: 760 }}>
+                <thead>
+                  <tr style={{ background: '#F8FAFC' }}>
+                    <th style={thStyle('auto')}>资产类型</th>
+                    <th style={thStyle(220)}>资产名称</th>
+                    <th style={thStyle(260)}>资产说明</th>
+                    <th style={thStyle(120)}>估值 / 金额</th>
+                    <th style={thStyle(100)}>状态</th>
+                    <th style={thStyle(160)}>关联法院</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.assets.map((a) => (
+                    <tr key={a.id} style={{ borderBottom: '1px solid #F1F5F9' }} className="fk-clue-row">
+                      <td style={{ ...tdStyle, color: '#2563EB', fontWeight: 600 }}>{a.type}</td>
+                      <td style={tdStyle}>{a.name}</td>
+                      <td style={{ ...tdStyle, color: '#64748B' }}>{a.detail}</td>
+                      <td style={{ ...tdStyle, fontWeight: 600 }}>{a.value}</td>
+                      <td style={tdStyle}>
+                        <span style={{ color: a.status.includes('冻结') || a.status.includes('抵押') || a.status.includes('涉诉') ? '#DC2626' : '#0F766E', fontWeight: 600 }}>{a.status}</span>
+                      </td>
+                      <td style={tdStyle}>{a.court}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              </div>
             </EpCard>
           )}
         </>

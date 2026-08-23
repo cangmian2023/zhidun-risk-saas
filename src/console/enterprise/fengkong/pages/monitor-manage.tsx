@@ -88,21 +88,6 @@ const IconSearch = () => (
   </svg>
 )
 
-const IconMonitor = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
-    <line x1="8" y1="21" x2="16" y2="21" />
-    <line x1="12" y1="17" x2="12" y2="21" />
-  </svg>
-)
-
-const IconBell = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
-    <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
-  </svg>
-)
-
 const IconDown = () => (
   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <polyline points="6 9 12 15 18 9" />
@@ -184,12 +169,6 @@ export default function FkMonitorManage({ params }: { params: URLSearchParams })
             </div>
             <Filter placeholder="请选择监控类型" />
             <Filter placeholder="请选择创建人" />
-            <EpBtn variant="default" size="sm" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-              <IconMonitor /> 监控模式
-            </EpBtn>
-            <EpBtn variant="default" size="sm" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-              <IconBell /> 监控订阅
-            </EpBtn>
             <EpBtn variant="primary" size="sm" onClick={() => goDetail('/console/ep/fk-monitor-rule-create')} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: '#2563EB', borderColor: '#2563EB' }}>
               创建新规则 <IconDown />
             </EpBtn>

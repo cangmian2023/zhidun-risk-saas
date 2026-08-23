@@ -748,6 +748,7 @@ function PersonTab({
   setSel,
   onUpload,
   onRemoveFile,
+  onNameClick,
 }: {
   data: PersonData
   phase: 'idle' | 'loading' | 'done'
@@ -755,6 +756,7 @@ function PersonTab({
   setSel: (s: Set<string>) => void
   onUpload: () => void
   onRemoveFile: () => void
+  onNameClick: (name: string) => void
 }) {
   const { uploadToolbar: up, resultToolbar: rt, summary, rows } = data
 
@@ -923,7 +925,12 @@ function PersonTab({
                 <input type="checkbox" checked={sel.has(r.id)} onChange={() => toggleRow(r.id)} style={{ marginTop: 24, cursor: 'pointer' }} />
                 <Avatar name={r.name} />
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 18, fontWeight: 700, color: '#0F172A' }}>{r.name}</div>
+                  <div
+                    style={{ fontSize: 18, fontWeight: 700, color: '#1677ff', cursor: 'pointer' }}
+                    onClick={() => onNameClick(r.name)}
+                  >
+                    {r.name}
+                  </div>
                   <InfoLine label="合作伙伴：" values={r.partners} />
                   <InfoLine label="担任法定代表人的企业：" values={r.legalRep} />
                   <InfoLine label="担任股东的企业：" values={r.shareholder} />
@@ -977,13 +984,6 @@ export default function JdBatch({ params }: { params: URLSearchParams }) {
     else setChecked(new Set(data.left.tree.map((t) => t.key)))
   }
 
-  const handleLeftTab = (lt: string) => {
-    if (lt === '我的模板' || lt === '精选模板') {
-      setTemplateOpen(true)
-    }
-    setLeftTab(lt)
-  }
-
   return (
     <EpPage title={data.pageTitle} actions={<Sam value="jdBatch.json" />}>
       {/* 顶部 Tab */}
@@ -1018,6 +1018,7 @@ export default function JdBatch({ params }: { params: URLSearchParams }) {
           setSel={setPersonSel}
           onUpload={startPersonCheck}
           onRemoveFile={removePersonFile}
+          onNameClick={(name) => goDetail('/console/dm/person-archive-basic?name=' + encodeURIComponent(name))}
         />
       ) : (
         <div style={{ display: 'flex', gap: 16, position: 'relative' }}>
@@ -1033,27 +1034,9 @@ export default function JdBatch({ params }: { params: URLSearchParams }) {
               flexDirection: 'column',
             }}
           >
-            {/* 左侧 Tab */}
-            <div style={{ display: 'flex', borderBottom: '1px solid #E2E8F0' }}>
-              {data.left.tabs.map((lt) => (
-                <button
-                  key={lt}
-                  onClick={() => handleLeftTab(lt)}
-                  style={{
-                    flex: 1,
-                    padding: '12px 0',
-                    border: 'none',
-                    background: leftTab === lt ? '#fff' : 'transparent',
-                    color: leftTab === lt ? '#2563EB' : '#475569',
-                    fontSize: 13,
-                    fontWeight: leftTab === lt ? 600 : 400,
-                    cursor: 'pointer',
-                    borderLeft: leftTab === lt ? '3px solid #2563EB' : '3px solid transparent',
-                  }}
-                >
-                  {lt}
-                </button>
-              ))}
+            {/* 左侧标题 */}
+            <div style={{ padding: '12px 14px', borderBottom: '1px solid #E2E8F0', fontSize: 14, fontWeight: 600, color: '#0F172A' }}>
+              {data.left.active}
             </div>
 
             {leftTab === '选择指标' && (
@@ -1109,27 +1092,6 @@ export default function JdBatch({ params }: { params: URLSearchParams }) {
                     ))}
                     {filteredTree.length === 0 && <div style={{ fontSize: 12, color: '#94A3B8', padding: 8 }}>暂无匹配指标</div>}
                   </div>
-                </div>
-
-                {/* 收起 */}
-                <div style={{ marginTop: 'auto', padding: 12, borderTop: '1px solid #E2E8F0', display: 'flex', justifyContent: 'center' }}>
-                  <button
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 4,
-                      padding: '4px 12px',
-                      borderRadius: 12,
-                      border: '1px solid #E2E8F0',
-                      background: '#F8FAFC',
-                      fontSize: 12,
-                      color: '#475569',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    <ChevronRight size={12} />
-                    {data.left.collapse}
-                  </button>
                 </div>
               </>
             )}
@@ -1206,25 +1168,6 @@ export default function JdBatch({ params }: { params: URLSearchParams }) {
                 </div>
               </div>
             </EpCard>
-
-            {/* 收起示例 */}
-            <div style={{ display: 'flex', justifyContent: 'center', marginTop: 16 }}>
-              <button
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 4,
-                  border: 'none',
-                  background: 'transparent',
-                  color: '#64748B',
-                  fontSize: 13,
-                  cursor: 'pointer',
-                }}
-              >
-                {data.toggle}
-                <ChevronDown />
-              </button>
-            </div>
           </div>
         </div>
       )}
