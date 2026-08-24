@@ -8,17 +8,51 @@ import type { VisualCond } from './midData'
 import { VISUAL_OP_LABEL } from './midData'
 import type { VFilter } from './CondBuilder'
 
-export type ScoreProd = 'zhicha' | 'zhixin' | 'zhirong'
+export type ScoreProd =
+  | 'zhicha' | 'zhixin' | 'zhirong'
+  | 'jd-zonghe' | 'jd-jingying' | 'jd-kongke' | 'jd-kechuang' | 'jd-hetong' | 'jd-sifa'
+  | 'gp-chain' | 'gp-equity-pen' | 'gp-equity-str' | 'gp-controller' | 'gp-beneficial'
+  | 'gp-company-rel' | 'gp-related-party' | 'gp-top-beneficiary' | 'gp-person-rel'
 
 export const SCORE_PROD_LABEL: Record<ScoreProd, string> = {
   zhicha: '智察分',
   zhixin: '智信分',
   zhirong: '智融分',
+  'jd-zonghe': '综合得分',
+  'jd-jingying': '经营指数',
+  'jd-kongke': '空壳指数',
+  'jd-kechuang': '科创分',
+  'jd-hetong': '合同违约指数',
+  'jd-sifa': '司法风险',
+  'gp-chain': '企业链图',
+  'gp-equity-pen': '股权穿透',
+  'gp-equity-str': '股权结构',
+  'gp-controller': '控制人关系',
+  'gp-beneficial': '受益所有人',
+  'gp-company-rel': '企业关系',
+  'gp-related-party': '关联方认定',
+  'gp-top-beneficiary': '十大受益人',
+  'gp-person-rel': '个人关系图谱',
 }
 export const SCORE_PROD_DESC: Record<ScoreProd, string> = {
   zhicha: '欺诈识别模型，分数越高欺诈风险越高',
   zhixin: '信用违约模型，分数越高违约概率越低',
   zhirong: '综合价值模型，融合违约/兴趣/资产维度',
+  'jd-zonghe': '企业尽调综合得分，融合存客商机与风险动态',
+  'jd-jingying': '企业健康度综合评分（成长性/知识产权/规模/质量/资本背景）',
+  'jd-kongke': '空壳指数，从多维度扫描空壳特征，分值越大空壳概率越高',
+  'jd-kechuang': '科创分，综合评价技术创新/科创资质/研发实力/成长性/行业潜力',
+  'jd-hetong': '合同违约指数，评估企业合同违约风险等级',
+  'jd-sifa': '司法风险，基于涉诉与司法执行情况评估风险',
+  'gp-chain': '企业链图模型：融合股权、任职、担保等多维关系，刻画企业关联链路与核心主体',
+  'gp-equity-pen': '股权穿透模型：穿透多层股权结构，识别最终实际控制人及持股路径',
+  'gp-equity-str': '股权结构模型：解析企业股权构成与层级分布，量化集中度与稳定性',
+  'gp-controller': '控制人关系模型：识别法定代表人与实际控制人的控制链条与关联关系',
+  'gp-beneficial': '受益所有人模型：依据反洗钱口径识别最终受益所有人及其受益比例',
+  'gp-company-rel': '企业关系模型：刻画企业间投资、担保、交易等关联关系网络',
+  'gp-related-party': '关联方认定模型：按会计准则与监管口径认定关联方及其交易',
+  'gp-top-beneficiary': '十大受益人模型：识别持股比例最高的前十名受益人及权益结构',
+  'gp-person-rel': '个人关系图谱模型：融合联系人、共债、资金、担保、设备等多维关系，刻画个人关联网络',
 }
 
 /* ---------- 模型 ---------- */
@@ -40,6 +74,7 @@ export interface ModelMeta {
   factors: { name: string; weight: number }[]
   algoType: string
   algoCode: string
+  summary?: string // 模型一句话简介（卡片展示，区别于个体得分）
   versions: ModelVersion[]
   collisionRules: CollisionRule[]
   bins?: ScoreCardFactor[] // 评分卡：分箱→计分表（让分数可从原始数据算出、可验证）
@@ -589,6 +624,7 @@ export const SEED_SCORE: ScoreData = {
       enabled: true,
       version: 'v2.3.1',
       updatedAt: '2026-07-28',
+        summary: "基于设备/网络/行为/名单多维度识别欺诈风险，分数越高欺诈概率越高",
       algoType: '梯度提升树 XGBoost + 规则硬拦截 + 规则修正',
       algoCode: `# 智察分 · 欺诈识别模型（XGBoost + 规则硬拦截 + 主线规则修正）
 # 输出 0-100，分数越高欺诈风险越高
@@ -694,6 +730,7 @@ WEIGHTS = {
       enabled: true,
       version: 'v3.1.0',
       updatedAt: '2026-08-02',
+        summary: "评估企业信用违约概率，融合历史逾期、负债收入比、征信查询等维度",
       algoType: '评分卡 · 逻辑回归（Logistic Regression）',
       algoCode: `# 智信分 · 评分卡算法（逻辑回归）
 # Score = A - B * ln(odds)，基础分 A=600，斜率 B=20
@@ -786,6 +823,7 @@ WEIGHTS = {
       enabled: true,
       version: 'v1.4.2',
       updatedAt: '2026-07-31',
+        summary: "融合违约、兴趣与资产维度评估客户综合价值，支撑差异化经营策略",
       algoType: '梯度提升树GBDT + 逻辑回归融合模型 · 信用规则修正 + 加权融合',
       algoCode: `# 智融分 · 综合价值模型（GBDT+LR 基础模型 + 信用规则修正 + 加权融合）
 # 分数区间 350-950，基础分 600；分数越高信用资质越好、违约概率越低
@@ -882,6 +920,1377 @@ WEIGHTS = {
         { id: 'fr-zr-7', ruleSort: 7, baseRiskLevel: ['VLOW', 'LOW'], matchTagList: ['TAG_VAL_003'], matchMode: 'any', finalDecision: '转人工', processId: 'f-loan-review', outputRemark: '极高价值区间仍命中黑灰名单等重度风险，转人工复核（不轻易通过）', isActive: true },
       ],
     },
+    {
+        prod: "jd-zonghe",
+        name: "综合得分",
+        range: [
+          0,
+          100
+        ],
+        color: "#DC2626",
+        score: 0,
+        algoType: "企业综合评估模型（存客商机与风险动态）",
+        algoCode: "综合得分基于企业尽调的存客商机与风险动态综合评估。商机维度覆盖商机营销、关联营销、集团营销、相似营销、位置营销等渠道数量；风险维度覆盖开庭公告、法院公告、裁判文书等风险动态，综合得出企业合作价值与风险结论。",
+        dims: [
+          {
+            name: "商机营销",
+            value: "2 条",
+            weight: 2
+          },
+          {
+            name: "关联营销",
+            value: "611 条",
+            weight: 611
+          },
+          {
+            name: "集团营销",
+            value: "249 条",
+            weight: 249
+          },
+          {
+            name: "相似营销",
+            value: "11 条",
+            weight: 11
+          },
+          {
+            name: "位置营销",
+            value: "20353 条",
+            weight: 20353
+          },
+          {
+            name: "风险动态",
+            value: "95 条",
+            weight: 95
+          }
+        ],
+        factors: [
+          {
+            name: "商机营销",
+            weight: 2
+          },
+          {
+            name: "关联营销",
+            weight: 611
+          },
+          {
+            name: "集团营销",
+            weight: 249
+          },
+          {
+            name: "相似营销",
+            weight: 11
+          },
+          {
+            name: "位置营销",
+            weight: 20353
+          },
+          {
+            name: "风险动态",
+            weight: 95
+          }
+        ],
+        enabled: true,
+        version: "v1.0.0",
+        updatedAt: "2026-08-24",
+        summary: "融合存客商机与风险动态，综合评估企业合作价值与风险结论",
+        versions: [
+          {
+            version: "v1.0.0",
+            date: "2026-08-24",
+            note: "企业尽调报告导入",
+            current: true
+          }
+        ],
+        collisionRules: [
+          {
+            id: "jd-zonghe-1",
+            cond: {
+              logic: "and",
+              groups: [],
+              loose: []
+            },
+            result: "转人工复核",
+            priority: "分数优先",
+            enabled: false
+          }
+        ],
+        decisionGraph: {
+          width: 800,
+          height: 400,
+          nodes: [],
+          edges: []
+        }
+      },
+    {
+        prod: "jd-jingying",
+        name: "经营指数",
+        range: [
+          0,
+          100
+        ],
+        color: "#1677ff",
+        score: 65,
+        algoType: "企业健康度综合评分模型（多维加权）",
+        algoCode: "经营指数（企业健康度 / 启信分）从成长性、知识产权、企业规模、经营质量、资本背景等维度综合评分，总分 450 分，多维加权得出企业整体健康度。",
+        dims: [
+          {
+            name: "成长性",
+            value: "30 分",
+            weight: 30
+          },
+          {
+            name: "知识产权",
+            value: "95 分",
+            weight: 95
+          },
+          {
+            name: "企业规模",
+            value: "95 分",
+            weight: 95
+          },
+          {
+            name: "经营质量",
+            value: "95 分",
+            weight: 95
+          },
+          {
+            name: "资本背景",
+            value: "90 分",
+            weight: 90
+          }
+        ],
+        factors: [
+          {
+            name: "成长性",
+            weight: 30
+          },
+          {
+            name: "知识产权",
+            weight: 95
+          },
+          {
+            name: "企业规模",
+            weight: 95
+          },
+          {
+            name: "经营质量",
+            weight: 95
+          },
+          {
+            name: "资本背景",
+            weight: 90
+          }
+        ],
+        enabled: true,
+        version: "v1.0.0",
+        updatedAt: "2026-08-24",
+        summary: "从成长性、知识产权、企业规模、经营质量、资本背景等维度综合评估企业健康度",
+        versions: [
+          {
+            version: "v1.0.0",
+            date: "2026-08-24",
+            note: "企业尽调报告导入",
+            current: true
+          }
+        ],
+        collisionRules: [
+          {
+            id: "jd-jingying-1",
+            cond: {
+              logic: "and",
+              groups: [],
+              loose: []
+            },
+            result: "转人工复核",
+            priority: "分数优先",
+            enabled: false
+          }
+        ],
+        decisionGraph: {
+          width: 800,
+          height: 400,
+          nodes: [],
+          edges: []
+        }
+      },
+    {
+        prod: "jd-kongke",
+        name: "空壳指数",
+        range: [
+          0,
+          100
+        ],
+        color: "#D97706",
+        score: 72,
+        algoType: "空壳特征扫描模型",
+        algoCode: "空壳指数是从企业经营场所、资产形态、企业人员、经营活动、经营资质、风险信息等维度，扫描空壳特征，用于供应链管理、信贷风控、经济犯罪侦查或税务稽查等应用场景。指数范围0-100，分值越大，主体是空壳的概率越高。",
+        dims: [
+          {
+            name: "经营异常",
+            value: "扫描项",
+            weight: 1
+          },
+          {
+            name: "治理结构异常",
+            value: "扫描项",
+            weight: 1
+          },
+          {
+            name: "税务违法违规",
+            value: "扫描项",
+            weight: 1
+          },
+          {
+            name: "相关诉讼违法记录",
+            value: "扫描项",
+            weight: 1
+          },
+          {
+            name: "严重违法失信",
+            value: "扫描项",
+            weight: 1
+          },
+          {
+            name: "联系方式异常",
+            value: "扫描项",
+            weight: 1
+          },
+          {
+            name: "注册地址异常",
+            value: "扫描项",
+            weight: 1
+          },
+          {
+            name: "法定代表人异常",
+            value: "扫描项",
+            weight: 1
+          },
+          {
+            name: "高危变更",
+            value: "扫描项",
+            weight: 1
+          },
+          {
+            name: "关联企业异常",
+            value: "扫描项",
+            weight: 1
+          },
+          {
+            name: "一址多企",
+            value: "扫描项",
+            weight: 1
+          }
+        ],
+        factors: [
+          {
+            name: "经营异常",
+            weight: 1
+          },
+          {
+            name: "治理结构异常",
+            weight: 1
+          },
+          {
+            name: "税务违法违规",
+            weight: 1
+          },
+          {
+            name: "相关诉讼违法记录",
+            weight: 1
+          },
+          {
+            name: "严重违法失信",
+            weight: 1
+          },
+          {
+            name: "联系方式异常",
+            weight: 1
+          },
+          {
+            name: "注册地址异常",
+            weight: 1
+          },
+          {
+            name: "法定代表人异常",
+            weight: 1
+          },
+          {
+            name: "高危变更",
+            weight: 1
+          },
+          {
+            name: "关联企业异常",
+            weight: 1
+          },
+          {
+            name: "一址多企",
+            weight: 1
+          }
+        ],
+        enabled: true,
+        version: "v1.0.0",
+        updatedAt: "2026-08-24",
+        summary: "从经营场所、资产形态、人员、活动、资质、风险信息等维度扫描空壳特征",
+        versions: [
+          {
+            version: "v1.0.0",
+            date: "2026-08-24",
+            note: "企业尽调报告导入",
+            current: true
+          }
+        ],
+        collisionRules: [
+          {
+            id: "jd-kongke-1",
+            cond: {
+              logic: "and",
+              groups: [],
+              loose: []
+            },
+            result: "转人工复核",
+            priority: "分数优先",
+            enabled: false
+          }
+        ],
+        decisionGraph: {
+          width: 800,
+          height: 400,
+          nodes: [],
+          edges: []
+        }
+      },
+    {
+        prod: "jd-kechuang",
+        name: "科创分",
+        range: [
+          0,
+          100
+        ],
+        color: "#7C3AED",
+        score: 81,
+        algoType: "科创企业评分模型（5大类20+细分维度）",
+        algoCode: "科创企业评分，是从企业技术创新、科创资质、研发实力、企业成长性以及行业潜力5个大类（20+个细分维度）维度综合评价企业的科技创新能力以及发展潜力。辅助金融机构、政府/产业园等多种业务应用场景决策。",
+        dims: [
+          {
+            name: "技术创新",
+            value: "90 分",
+            weight: 90
+          },
+          {
+            name: "研发实力",
+            value: "85 分",
+            weight: 85
+          },
+          {
+            name: "科创资质",
+            value: "40 分",
+            weight: 40
+          },
+          {
+            name: "企业成长性",
+            value: "30 分",
+            weight: 30
+          },
+          {
+            name: "行业潜力",
+            value: "45 分",
+            weight: 45
+          }
+        ],
+        factors: [
+          {
+            name: "技术创新",
+            weight: 90
+          },
+          {
+            name: "研发实力",
+            weight: 85
+          },
+          {
+            name: "科创资质",
+            weight: 40
+          },
+          {
+            name: "企业成长性",
+            weight: 30
+          },
+          {
+            name: "行业潜力",
+            weight: 45
+          }
+        ],
+        enabled: true,
+        version: "v1.0.0",
+        updatedAt: "2026-08-24",
+        summary: "从技术创新、科创资质、研发实力、企业成长性、行业潜力综合评价科技创新能力",
+        versions: [
+          {
+            version: "v1.0.0",
+            date: "2026-08-24",
+            note: "企业尽调报告导入",
+            current: true
+          }
+        ],
+        collisionRules: [
+          {
+            id: "jd-kechuang-1",
+            cond: {
+              logic: "and",
+              groups: [],
+              loose: []
+            },
+            result: "转人工复核",
+            priority: "分数优先",
+            enabled: false
+          }
+        ],
+        decisionGraph: {
+          width: 800,
+          height: 400,
+          nodes: [],
+          edges: []
+        }
+      },
+    {
+        prod: "jd-hetong",
+        name: "合同违约指数",
+        range: [
+          0,
+          100
+        ],
+        color: "#EA580C",
+        score: 58,
+        algoType: "合同违约风险评估模型",
+        algoCode: "合同违约指数基于企业服务合同纠纷裁判文书，统计违约次数、被执行次数、违约金额及行业排名等，评估企业合同履约风险。指数范围0-100，分值越高违约风险越高。当前违约指数55分、违约等级L6、违约风险高；违约次数59、被执行次数264、违约金额1.68亿元、行业平均违约金额303.07万元。",
+        dims: [
+          {
+            name: "违约次数",
+            value: "59 次",
+            weight: 59
+          },
+          {
+            name: "被执行次数",
+            value: "264 次",
+            weight: 264
+          },
+          {
+            name: "违约金额",
+            value: "1.68 亿元",
+            weight: 16800
+          },
+          {
+            name: "违约金额行业排名",
+            value: "100%",
+            weight: 100
+          },
+          {
+            name: "违约金额行业平均数",
+            value: "303.07 万元",
+            weight: 303
+          }
+        ],
+        factors: [
+          {
+            name: "违约次数",
+            weight: 59
+          },
+          {
+            name: "被执行次数",
+            weight: 264
+          },
+          {
+            name: "违约金额(万元)",
+            weight: 16800
+          },
+          {
+            name: "违约金额行业排名(%)",
+            weight: 100
+          },
+          {
+            name: "违约金额行业平均数(万元)",
+            weight: 303
+          }
+        ],
+        enabled: true,
+        version: "v1.0.0",
+        updatedAt: "2026-08-24",
+        summary: "基于服务合同纠纷裁判文书，统计违约次数、被执行、违约金额评估履约风险",
+        versions: [
+          {
+            version: "v1.0.0",
+            date: "2026-08-24",
+            note: "企业尽调报告导入",
+            current: true
+          }
+        ],
+        collisionRules: [
+          {
+            id: "jd-hetong-1",
+            cond: {
+              logic: "and",
+              groups: [],
+              loose: []
+            },
+            result: "转人工复核",
+            priority: "分数优先",
+            enabled: false
+          }
+        ],
+        decisionGraph: {
+          width: 800,
+          height: 400,
+          nodes: [],
+          edges: []
+        }
+      },
+    {
+        prod: "jd-sifa",
+        name: "司法风险",
+        range: [
+          0,
+          100
+        ],
+        color: "#DC2626",
+        score: 30,
+        algoType: "司法风险评估模型",
+        algoCode: "司法风险基于裁判文书（文书类型为判决书、案件身份为原告和被告的案件），统计涉诉案件数量、涉诉金额、行业排名等，评估司法风险。当前涉诉案件212件、涉诉总金额14.81亿元、行业排名92%。细分维度：商业纠纷、遵纪守法、权益规范、劳务管理。",
+        dims: [
+          {
+            name: "涉诉案件数量",
+            value: "212 件",
+            weight: 212
+          },
+          {
+            name: "涉诉数量行业排名",
+            value: "92%",
+            weight: 92
+          },
+          {
+            name: "涉诉总金额",
+            value: "14.81 亿元",
+            weight: 148100
+          },
+          {
+            name: "原告案件数",
+            value: "7 件",
+            weight: 7
+          },
+          {
+            name: "被告案件数",
+            value: "205 件",
+            weight: 205
+          }
+        ],
+        factors: [
+          {
+            name: "涉诉案件数量",
+            weight: 212
+          },
+          {
+            name: "涉诉数量行业排名(%)",
+            weight: 92
+          },
+          {
+            name: "涉诉总金额(万元)",
+            weight: 148100
+          },
+          {
+            name: "原告案件数",
+            weight: 7
+          },
+          {
+            name: "被告案件数",
+            weight: 205
+          }
+        ],
+        enabled: true,
+        version: "v1.0.0",
+        updatedAt: "2026-08-24",
+        summary: "基于裁判文书统计涉诉数量、涉诉金额、行业排名，评估企业司法风险",
+        versions: [
+          {
+            version: "v1.0.0",
+            date: "2026-08-24",
+            note: "企业尽调报告导入",
+            current: true
+          }
+        ],
+        collisionRules: [
+          {
+            id: "jd-sifa-1",
+            cond: {
+              logic: "and",
+              groups: [],
+              loose: []
+            },
+            result: "转人工复核",
+            priority: "分数优先",
+            enabled: false
+          }
+        ],
+        decisionGraph: {
+          width: 800,
+          height: 400,
+          nodes: [],
+          edges: []
+        }
+      },
+    {
+      "prod": "gp-chain",
+      "name": "企业链图",
+      "range": [
+        0,
+        100
+      ],
+      "color": "#1677ff",
+      "score": 60,
+      "algoType": "企业关系链图谱模型（多维关系融合）",
+      "algoCode": "企业链图：融合股权、任职、担保、交易等多维关系，构建企业关联链路，识别核心主体与关键路径。",
+      "dims": [
+        {
+          "name": "股权关系",
+          "value": "—",
+          "weight": 0
+        },
+        {
+          "name": "任职关系",
+          "value": "—",
+          "weight": 0
+        },
+        {
+          "name": "担保关系",
+          "value": "—",
+          "weight": 0
+        },
+        {
+          "name": "交易关系",
+          "value": "—",
+          "weight": 0
+        }
+      ],
+      "factors": [
+        {
+          "name": "股权关系",
+          "weight": 0
+        },
+        {
+          "name": "任职关系",
+          "weight": 0
+        },
+        {
+          "name": "担保关系",
+          "weight": 0
+        },
+        {
+          "name": "交易关系",
+          "weight": 0
+        }
+      ],
+      "enabled": true,
+      "version": "v1.0.0",
+      "updatedAt": "2026-08-24",
+      "summary": "融合股权、任职、担保等多维关系，刻画企业关联链路与核心主体",
+      "versions": [
+        {
+          "version": "v1.0.0",
+          "date": "2026-08-24",
+          "note": "企业图谱/个人关系图谱建模导入",
+          "current": true
+        }
+      ],
+      "collisionRules": [
+        {
+          "id": "gp-chain-1",
+          "cond": {
+            "logic": "and",
+            "groups": [],
+            "loose": []
+          },
+          "result": "转人工复核",
+          "priority": "分数优先",
+          "enabled": false
+        }
+      ],
+      "decisionGraph": {
+        "width": 800,
+        "height": 400,
+        "nodes": [],
+        "edges": []
+      }
+    },
+    {
+      "prod": "gp-equity-pen",
+      "name": "股权穿透",
+      "range": [
+        0,
+        100
+      ],
+      "color": "#13c2c2",
+      "score": 60,
+      "algoType": "股权穿透图谱模型（多层穿透）",
+      "algoCode": "股权穿透：逐层穿透企业股权结构，还原持股路径，识别最终实际控制人及其控制比例。",
+      "dims": [
+        {
+          "name": "直接持股",
+          "value": "—",
+          "weight": 0
+        },
+        {
+          "name": "间接持股",
+          "value": "—",
+          "weight": 0
+        },
+        {
+          "name": "穿透层级",
+          "value": "—",
+          "weight": 0
+        },
+        {
+          "name": "实控路径",
+          "value": "—",
+          "weight": 0
+        }
+      ],
+      "factors": [
+        {
+          "name": "直接持股",
+          "weight": 0
+        },
+        {
+          "name": "间接持股",
+          "weight": 0
+        },
+        {
+          "name": "穿透层级",
+          "weight": 0
+        },
+        {
+          "name": "实控路径",
+          "weight": 0
+        }
+      ],
+      "enabled": true,
+      "version": "v1.0.0",
+      "updatedAt": "2026-08-24",
+      "summary": "穿透多层股权结构，识别最终实际控制人及持股路径",
+      "versions": [
+        {
+          "version": "v1.0.0",
+          "date": "2026-08-24",
+          "note": "企业图谱/个人关系图谱建模导入",
+          "current": true
+        }
+      ],
+      "collisionRules": [
+        {
+          "id": "gp-equity-pen-1",
+          "cond": {
+            "logic": "and",
+            "groups": [],
+            "loose": []
+          },
+          "result": "转人工复核",
+          "priority": "分数优先",
+          "enabled": false
+        }
+      ],
+      "decisionGraph": {
+        "width": 800,
+        "height": 400,
+        "nodes": [],
+        "edges": []
+      }
+    },
+    {
+      "prod": "gp-equity-str",
+      "name": "股权结构",
+      "range": [
+        0,
+        100
+      ],
+      "color": "#722ed1",
+      "score": 60,
+      "algoType": "股权结构分析模型（构成量化）",
+      "algoCode": "股权结构：解析企业股权构成与层级分布，量化股权集中度、制衡度与结构稳定性。",
+      "dims": [
+        {
+          "name": "股权集中度",
+          "value": "—",
+          "weight": 0
+        },
+        {
+          "name": "层级分布",
+          "value": "—",
+          "weight": 0
+        },
+        {
+          "name": "制衡度",
+          "value": "—",
+          "weight": 0
+        },
+        {
+          "name": "稳定性",
+          "value": "—",
+          "weight": 0
+        }
+      ],
+      "factors": [
+        {
+          "name": "股权集中度",
+          "weight": 0
+        },
+        {
+          "name": "层级分布",
+          "weight": 0
+        },
+        {
+          "name": "制衡度",
+          "weight": 0
+        },
+        {
+          "name": "稳定性",
+          "weight": 0
+        }
+      ],
+      "enabled": true,
+      "version": "v1.0.0",
+      "updatedAt": "2026-08-24",
+      "summary": "解析企业股权构成与层级分布，量化集中度与稳定性",
+      "versions": [
+        {
+          "version": "v1.0.0",
+          "date": "2026-08-24",
+          "note": "企业图谱/个人关系图谱建模导入",
+          "current": true
+        }
+      ],
+      "collisionRules": [
+        {
+          "id": "gp-equity-str-1",
+          "cond": {
+            "logic": "and",
+            "groups": [],
+            "loose": []
+          },
+          "result": "转人工复核",
+          "priority": "分数优先",
+          "enabled": false
+        }
+      ],
+      "decisionGraph": {
+        "width": 800,
+        "height": 400,
+        "nodes": [],
+        "edges": []
+      }
+    },
+    {
+      "prod": "gp-controller",
+      "name": "控制人关系",
+      "range": [
+        0,
+        100
+      ],
+      "color": "#eb2f96",
+      "score": 60,
+      "algoType": "控制人关系图谱模型（控制链识别）",
+      "algoCode": "控制人关系：识别法定代表人与实际控制人的控制链条，刻画关键人物与企业的关联网络。",
+      "dims": [
+        {
+          "name": "法定代表人",
+          "value": "—",
+          "weight": 0
+        },
+        {
+          "name": "实际控制人",
+          "value": "—",
+          "weight": 0
+        },
+        {
+          "name": "控制链条",
+          "value": "—",
+          "weight": 0
+        },
+        {
+          "name": "关联人物",
+          "value": "—",
+          "weight": 0
+        }
+      ],
+      "factors": [
+        {
+          "name": "法定代表人",
+          "weight": 0
+        },
+        {
+          "name": "实际控制人",
+          "weight": 0
+        },
+        {
+          "name": "控制链条",
+          "weight": 0
+        },
+        {
+          "name": "关联人物",
+          "weight": 0
+        }
+      ],
+      "enabled": true,
+      "version": "v1.0.0",
+      "updatedAt": "2026-08-24",
+      "summary": "识别法定代表人与实际控制人的控制链条与关联关系",
+      "versions": [
+        {
+          "version": "v1.0.0",
+          "date": "2026-08-24",
+          "note": "企业图谱/个人关系图谱建模导入",
+          "current": true
+        }
+      ],
+      "collisionRules": [
+        {
+          "id": "gp-controller-1",
+          "cond": {
+            "logic": "and",
+            "groups": [],
+            "loose": []
+          },
+          "result": "转人工复核",
+          "priority": "分数优先",
+          "enabled": false
+        }
+      ],
+      "decisionGraph": {
+        "width": 800,
+        "height": 400,
+        "nodes": [],
+        "edges": []
+      }
+    },
+    {
+      "prod": "gp-beneficial",
+      "name": "受益所有人",
+      "range": [
+        0,
+        100
+      ],
+      "color": "#fa8c16",
+      "score": 60,
+      "algoType": "受益所有人识别模型（AML 口径）",
+      "algoCode": "受益所有人：依据反洗钱监管口径，穿透识别最终受益所有人及其受益比例与权益结构。",
+      "dims": [
+        {
+          "name": "受益比例",
+          "value": "—",
+          "weight": 0
+        },
+        {
+          "name": "穿透深度",
+          "value": "—",
+          "weight": 0
+        },
+        {
+          "name": "权益结构",
+          "value": "—",
+          "weight": 0
+        },
+        {
+          "name": "AML 口径",
+          "value": "—",
+          "weight": 0
+        }
+      ],
+      "factors": [
+        {
+          "name": "受益比例",
+          "weight": 0
+        },
+        {
+          "name": "穿透深度",
+          "weight": 0
+        },
+        {
+          "name": "权益结构",
+          "weight": 0
+        },
+        {
+          "name": "AML 口径",
+          "weight": 0
+        }
+      ],
+      "enabled": true,
+      "version": "v1.0.0",
+      "updatedAt": "2026-08-24",
+      "summary": "依据反洗钱口径识别最终受益所有人及其受益比例",
+      "versions": [
+        {
+          "version": "v1.0.0",
+          "date": "2026-08-24",
+          "note": "企业图谱/个人关系图谱建模导入",
+          "current": true
+        }
+      ],
+      "collisionRules": [
+        {
+          "id": "gp-beneficial-1",
+          "cond": {
+            "logic": "and",
+            "groups": [],
+            "loose": []
+          },
+          "result": "转人工复核",
+          "priority": "分数优先",
+          "enabled": false
+        }
+      ],
+      "decisionGraph": {
+        "width": 800,
+        "height": 400,
+        "nodes": [],
+        "edges": []
+      }
+    },
+    {
+      "prod": "gp-company-rel",
+      "name": "企业关系",
+      "range": [
+        0,
+        100
+      ],
+      "color": "#52c41a",
+      "score": 60,
+      "algoType": "企业关系网络模型（关联刻画）",
+      "algoCode": "企业关系：刻画企业间投资、担保、交易、任职等关联关系，构建企业关系网络图谱。",
+      "dims": [
+        {
+          "name": "投资关系",
+          "value": "—",
+          "weight": 0
+        },
+        {
+          "name": "担保关系",
+          "value": "—",
+          "weight": 0
+        },
+        {
+          "name": "交易关系",
+          "value": "—",
+          "weight": 0
+        },
+        {
+          "name": "任职关系",
+          "value": "—",
+          "weight": 0
+        }
+      ],
+      "factors": [
+        {
+          "name": "投资关系",
+          "weight": 0
+        },
+        {
+          "name": "担保关系",
+          "weight": 0
+        },
+        {
+          "name": "交易关系",
+          "weight": 0
+        },
+        {
+          "name": "任职关系",
+          "weight": 0
+        }
+      ],
+      "enabled": true,
+      "version": "v1.0.0",
+      "updatedAt": "2026-08-24",
+      "summary": "刻画企业间投资、担保、交易等关联关系网络",
+      "versions": [
+        {
+          "version": "v1.0.0",
+          "date": "2026-08-24",
+          "note": "企业图谱/个人关系图谱建模导入",
+          "current": true
+        }
+      ],
+      "collisionRules": [
+        {
+          "id": "gp-company-rel-1",
+          "cond": {
+            "logic": "and",
+            "groups": [],
+            "loose": []
+          },
+          "result": "转人工复核",
+          "priority": "分数优先",
+          "enabled": false
+        }
+      ],
+      "decisionGraph": {
+        "width": 800,
+        "height": 400,
+        "nodes": [],
+        "edges": []
+      }
+    },
+    {
+      "prod": "gp-related-party",
+      "name": "关联方认定",
+      "range": [
+        0,
+        100
+      ],
+      "color": "#2f54eb",
+      "score": 60,
+      "algoType": "关联方认定模型（准则口径）",
+      "algoCode": "关联方认定：按企业会计准则与监管口径，认定关联方及其关联交易，识别隐性关联。",
+      "dims": [
+        {
+          "name": "准则口径",
+          "value": "—",
+          "weight": 0
+        },
+        {
+          "name": "关联交易",
+          "value": "—",
+          "weight": 0
+        },
+        {
+          "name": "隐性关联",
+          "value": "—",
+          "weight": 0
+        },
+        {
+          "name": "认定路径",
+          "value": "—",
+          "weight": 0
+        }
+      ],
+      "factors": [
+        {
+          "name": "准则口径",
+          "weight": 0
+        },
+        {
+          "name": "关联交易",
+          "weight": 0
+        },
+        {
+          "name": "隐性关联",
+          "weight": 0
+        },
+        {
+          "name": "认定路径",
+          "weight": 0
+        }
+      ],
+      "enabled": true,
+      "version": "v1.0.0",
+      "updatedAt": "2026-08-24",
+      "summary": "按会计准则与监管口径认定关联方及其交易",
+      "versions": [
+        {
+          "version": "v1.0.0",
+          "date": "2026-08-24",
+          "note": "企业图谱/个人关系图谱建模导入",
+          "current": true
+        }
+      ],
+      "collisionRules": [
+        {
+          "id": "gp-related-party-1",
+          "cond": {
+            "logic": "and",
+            "groups": [],
+            "loose": []
+          },
+          "result": "转人工复核",
+          "priority": "分数优先",
+          "enabled": false
+        }
+      ],
+      "decisionGraph": {
+        "width": 800,
+        "height": 400,
+        "nodes": [],
+        "edges": []
+      }
+    },
+    {
+      "prod": "gp-top-beneficiary",
+      "name": "十大受益人",
+      "range": [
+        0,
+        100
+      ],
+      "color": "#a0d911",
+      "score": 60,
+      "algoType": "十大受益人识别模型（权益排序）",
+      "algoCode": "十大受益人：按持股比例排序，识别前十大受益人及其权益结构与受益比例。",
+      "dims": [
+        {
+          "name": "持股排序",
+          "value": "—",
+          "weight": 0
+        },
+        {
+          "name": "受益比例",
+          "value": "—",
+          "weight": 0
+        },
+        {
+          "name": "权益结构",
+          "value": "—",
+          "weight": 0
+        },
+        {
+          "name": "受益人类型",
+          "value": "—",
+          "weight": 0
+        }
+      ],
+      "factors": [
+        {
+          "name": "持股排序",
+          "weight": 0
+        },
+        {
+          "name": "受益比例",
+          "weight": 0
+        },
+        {
+          "name": "权益结构",
+          "weight": 0
+        },
+        {
+          "name": "受益人类型",
+          "weight": 0
+        }
+      ],
+      "enabled": true,
+      "version": "v1.0.0",
+      "updatedAt": "2026-08-24",
+      "summary": "识别持股比例最高的前十名受益人及权益结构",
+      "versions": [
+        {
+          "version": "v1.0.0",
+          "date": "2026-08-24",
+          "note": "企业图谱/个人关系图谱建模导入",
+          "current": true
+        }
+      ],
+      "collisionRules": [
+        {
+          "id": "gp-top-beneficiary-1",
+          "cond": {
+            "logic": "and",
+            "groups": [],
+            "loose": []
+          },
+          "result": "转人工复核",
+          "priority": "分数优先",
+          "enabled": false
+        }
+      ],
+      "decisionGraph": {
+        "width": 800,
+        "height": 400,
+        "nodes": [],
+        "edges": []
+      }
+    },
+    {
+      "prod": "gp-person-rel",
+      "name": "个人关系图谱",
+      "range": [
+        0,
+        100
+      ],
+      "color": "#f5222d",
+      "score": 60,
+      "algoType": "个人关系网络模型（多维融合）",
+      "algoCode": "个人关系图谱：融合联系人、共债、资金、担保、设备等多维关系，刻画个人关联网络与风险传导路径。",
+      "dims": [
+        {
+          "name": "联系人",
+          "value": "—",
+          "weight": 0
+        },
+        {
+          "name": "共债",
+          "value": "—",
+          "weight": 0
+        },
+        {
+          "name": "资金",
+          "value": "—",
+          "weight": 0
+        },
+        {
+          "name": "担保",
+          "value": "—",
+          "weight": 0
+        },
+        {
+          "name": "设备",
+          "value": "—",
+          "weight": 0
+        }
+      ],
+      "factors": [
+        {
+          "name": "联系人",
+          "weight": 0
+        },
+        {
+          "name": "共债",
+          "weight": 0
+        },
+        {
+          "name": "资金",
+          "weight": 0
+        },
+        {
+          "name": "担保",
+          "weight": 0
+        },
+        {
+          "name": "设备",
+          "weight": 0
+        }
+      ],
+      "enabled": true,
+      "version": "v1.0.0",
+      "updatedAt": "2026-08-24",
+      "summary": "融合联系人、共债、资金、担保、设备等多维关系，刻画个人关联网络",
+      "versions": [
+        {
+          "version": "v1.0.0",
+          "date": "2026-08-24",
+          "note": "企业图谱/个人关系图谱建模导入",
+          "current": true
+        }
+      ],
+      "collisionRules": [
+        {
+          "id": "gp-person-rel-1",
+          "cond": {
+            "logic": "and",
+            "groups": [],
+            "loose": []
+          },
+          "result": "转人工复核",
+          "priority": "分数优先",
+          "enabled": false
+        }
+      ],
+      "decisionGraph": {
+        "width": 800,
+        "height": 400,
+        "nodes": [],
+        "edges": []
+      }
+    },
   ],
   records: [
     { id: 'R-001', time: '2026-08-11 09:12', custId: 'CUST-100891', custName: '张伟', model: 'zhicha', score: 82, level: '高', source: '实时', status: 'success', hitLabels: ['黑灰名单命中', '多头借贷强度高'] },
@@ -967,6 +2376,801 @@ WEIGHTS = {
         { month: '07月', coverage: 95.7, accuracy: 83.9, timely: 89.1, calls: 7480 },
         { month: '08月', coverage: 95.8, accuracy: 84.0, timely: 89.3, calls: 7610 },
       ],
+    },
+    {
+        prod: "jd-zonghe",
+        coverage: 95,
+        accuracy: 88,
+        timely: 90,
+        calls: 5200,
+        psi: 0.12,
+        psiStatus: "稳定",
+        trend: [
+          {
+            month: "03月",
+            coverage: 94.5,
+            accuracy: 87.5,
+            timely: 89.5,
+            calls: 4600
+          },
+          {
+            month: "04月",
+            coverage: 94.6,
+            accuracy: 87.6,
+            timely: 89.6,
+            calls: 4720
+          },
+          {
+            month: "05月",
+            coverage: 94.7,
+            accuracy: 87.7,
+            timely: 89.7,
+            calls: 4840
+          },
+          {
+            month: "06月",
+            coverage: 94.8,
+            accuracy: 87.8,
+            timely: 89.8,
+            calls: 4960
+          },
+          {
+            month: "07月",
+            coverage: 94.9,
+            accuracy: 87.9,
+            timely: 89.9,
+            calls: 5080
+          },
+          {
+            month: "08月",
+            coverage: 95,
+            accuracy: 88,
+            timely: 90,
+            calls: 5200
+          }
+        ]
+      },
+    {
+        prod: "jd-jingying",
+        coverage: 96,
+        accuracy: 89,
+        timely: 91,
+        calls: 6100,
+        psi: 0.15,
+        psiStatus: "稳定",
+        trend: [
+          {
+            month: "03月",
+            coverage: 95.4,
+            accuracy: 88.5,
+            timely: 90.4,
+            calls: 5500
+          },
+          {
+            month: "04月",
+            coverage: 95.5,
+            accuracy: 88.6,
+            timely: 90.5,
+            calls: 5620
+          },
+          {
+            month: "05月",
+            coverage: 95.6,
+            accuracy: 88.7,
+            timely: 90.6,
+            calls: 5740
+          },
+          {
+            month: "06月",
+            coverage: 95.7,
+            accuracy: 88.8,
+            timely: 90.7,
+            calls: 5860
+          },
+          {
+            month: "07月",
+            coverage: 95.8,
+            accuracy: 88.9,
+            timely: 90.8,
+            calls: 5980
+          },
+          {
+            month: "08月",
+            coverage: 95.9,
+            accuracy: 89,
+            timely: 90.9,
+            calls: 6100
+          }
+        ]
+      },
+    {
+        prod: "jd-kongke",
+        coverage: 94,
+        accuracy: 86,
+        timely: 89,
+        calls: 4800,
+        psi: 0.18,
+        psiStatus: "稳定",
+        trend: [
+          {
+            month: "03月",
+            coverage: 93.5,
+            accuracy: 85.5,
+            timely: 88.5,
+            calls: 4300
+          },
+          {
+            month: "04月",
+            coverage: 93.6,
+            accuracy: 85.6,
+            timely: 88.6,
+            calls: 4420
+          },
+          {
+            month: "05月",
+            coverage: 93.7,
+            accuracy: 85.7,
+            timely: 88.7,
+            calls: 4540
+          },
+          {
+            month: "06月",
+            coverage: 93.8,
+            accuracy: 85.8,
+            timely: 88.8,
+            calls: 4660
+          },
+          {
+            month: "07月",
+            coverage: 93.9,
+            accuracy: 85.9,
+            timely: 88.9,
+            calls: 4780
+          },
+          {
+            month: "08月",
+            coverage: 94,
+            accuracy: 86,
+            timely: 89,
+            calls: 4900
+          }
+        ]
+      },
+    {
+        prod: "jd-kechuang",
+        coverage: 93,
+        accuracy: 85,
+        timely: 88,
+        calls: 4100,
+        psi: 0.21,
+        psiStatus: "临界",
+        trend: [
+          {
+            month: "03月",
+            coverage: 92.5,
+            accuracy: 84.5,
+            timely: 87.5,
+            calls: 3700
+          },
+          {
+            month: "04月",
+            coverage: 92.6,
+            accuracy: 84.6,
+            timely: 87.6,
+            calls: 3820
+          },
+          {
+            month: "05月",
+            coverage: 92.7,
+            accuracy: 84.7,
+            timely: 87.7,
+            calls: 3940
+          },
+          {
+            month: "06月",
+            coverage: 92.8,
+            accuracy: 84.8,
+            timely: 87.8,
+            calls: 4060
+          },
+          {
+            month: "07月",
+            coverage: 92.9,
+            accuracy: 84.9,
+            timely: 87.9,
+            calls: 4180
+          },
+          {
+            month: "08月",
+            coverage: 93,
+            accuracy: 85,
+            timely: 88,
+            calls: 4300
+          }
+        ]
+      },
+    {
+        prod: "jd-hetong",
+        coverage: 92,
+        accuracy: 84,
+        timely: 87,
+        calls: 3600,
+        psi: 0.24,
+        psiStatus: "临界",
+        trend: [
+          {
+            month: "03月",
+            coverage: 91.5,
+            accuracy: 83.5,
+            timely: 86.5,
+            calls: 3300
+          },
+          {
+            month: "04月",
+            coverage: 91.6,
+            accuracy: 83.6,
+            timely: 86.6,
+            calls: 3420
+          },
+          {
+            month: "05月",
+            coverage: 91.7,
+            accuracy: 83.7,
+            timely: 86.7,
+            calls: 3540
+          },
+          {
+            month: "06月",
+            coverage: 91.8,
+            accuracy: 83.8,
+            timely: 86.8,
+            calls: 3660
+          },
+          {
+            month: "07月",
+            coverage: 91.9,
+            accuracy: 83.9,
+            timely: 86.9,
+            calls: 3780
+          },
+          {
+            month: "08月",
+            coverage: 92,
+            accuracy: 84,
+            timely: 87,
+            calls: 3900
+          }
+        ]
+      },
+    {
+        prod: "jd-sifa",
+        coverage: 91,
+        accuracy: 83,
+        timely: 86,
+        calls: 3000,
+        psi: 0.27,
+        psiStatus: "偏移",
+        trend: [
+          {
+            month: "03月",
+            coverage: 90.5,
+            accuracy: 82.5,
+            timely: 85.5,
+            calls: 2900
+          },
+          {
+            month: "04月",
+            coverage: 90.6,
+            accuracy: 82.6,
+            timely: 85.6,
+            calls: 3020
+          },
+          {
+            month: "05月",
+            coverage: 90.7,
+            accuracy: 82.7,
+            timely: 85.7,
+            calls: 3140
+          },
+          {
+            month: "06月",
+            coverage: 90.8,
+            accuracy: 82.8,
+            timely: 85.8,
+            calls: 3260
+          },
+          {
+            month: "07月",
+            coverage: 90.9,
+            accuracy: 82.9,
+            timely: 85.9,
+            calls: 3380
+          },
+          {
+            month: "08月",
+            coverage: 91,
+            accuracy: 83,
+            timely: 86,
+            calls: 3500
+          }
+        ]
+      },
+        {
+      "prod": "gp-chain",
+      "coverage": 93,
+      "accuracy": 86,
+      "timely": 90,
+      "calls": 4880,
+      "psi": 0.12,
+      "psiStatus": "稳定",
+      "trend": [
+        {
+          "month": "03月",
+          "coverage": 92,
+          "accuracy": 85,
+          "timely": 89,
+          "calls": 3800
+        },
+        {
+          "month": "04月",
+          "coverage": 92.2,
+          "accuracy": 85.2,
+          "timely": 89.3,
+          "calls": 3980
+        },
+        {
+          "month": "05月",
+          "coverage": 92.4,
+          "accuracy": 85.4,
+          "timely": 89.6,
+          "calls": 4160
+        },
+        {
+          "month": "06月",
+          "coverage": 92.6,
+          "accuracy": 85.5,
+          "timely": 89.9,
+          "calls": 4340
+        },
+        {
+          "month": "07月",
+          "coverage": 92.8,
+          "accuracy": 85.7,
+          "timely": 90.2,
+          "calls": 4520
+        },
+        {
+          "month": "08月",
+          "coverage": 93,
+          "accuracy": 85.9,
+          "timely": 90.5,
+          "calls": 4700
+        }
+      ]
+    },
+    {
+      "prod": "gp-equity-pen",
+      "coverage": 93,
+      "accuracy": 86,
+      "timely": 90,
+      "calls": 4880,
+      "psi": 0.12,
+      "psiStatus": "稳定",
+      "trend": [
+        {
+          "month": "03月",
+          "coverage": 92,
+          "accuracy": 85,
+          "timely": 89,
+          "calls": 3800
+        },
+        {
+          "month": "04月",
+          "coverage": 92.2,
+          "accuracy": 85.2,
+          "timely": 89.3,
+          "calls": 3980
+        },
+        {
+          "month": "05月",
+          "coverage": 92.4,
+          "accuracy": 85.4,
+          "timely": 89.6,
+          "calls": 4160
+        },
+        {
+          "month": "06月",
+          "coverage": 92.6,
+          "accuracy": 85.5,
+          "timely": 89.9,
+          "calls": 4340
+        },
+        {
+          "month": "07月",
+          "coverage": 92.8,
+          "accuracy": 85.7,
+          "timely": 90.2,
+          "calls": 4520
+        },
+        {
+          "month": "08月",
+          "coverage": 93,
+          "accuracy": 85.9,
+          "timely": 90.5,
+          "calls": 4700
+        }
+      ]
+    },
+    {
+      "prod": "gp-equity-str",
+      "coverage": 93,
+      "accuracy": 86,
+      "timely": 90,
+      "calls": 4880,
+      "psi": 0.12,
+      "psiStatus": "稳定",
+      "trend": [
+        {
+          "month": "03月",
+          "coverage": 92,
+          "accuracy": 85,
+          "timely": 89,
+          "calls": 3800
+        },
+        {
+          "month": "04月",
+          "coverage": 92.2,
+          "accuracy": 85.2,
+          "timely": 89.3,
+          "calls": 3980
+        },
+        {
+          "month": "05月",
+          "coverage": 92.4,
+          "accuracy": 85.4,
+          "timely": 89.6,
+          "calls": 4160
+        },
+        {
+          "month": "06月",
+          "coverage": 92.6,
+          "accuracy": 85.5,
+          "timely": 89.9,
+          "calls": 4340
+        },
+        {
+          "month": "07月",
+          "coverage": 92.8,
+          "accuracy": 85.7,
+          "timely": 90.2,
+          "calls": 4520
+        },
+        {
+          "month": "08月",
+          "coverage": 93,
+          "accuracy": 85.9,
+          "timely": 90.5,
+          "calls": 4700
+        }
+      ]
+    },
+    {
+      "prod": "gp-controller",
+      "coverage": 93,
+      "accuracy": 86,
+      "timely": 90,
+      "calls": 4880,
+      "psi": 0.12,
+      "psiStatus": "稳定",
+      "trend": [
+        {
+          "month": "03月",
+          "coverage": 92,
+          "accuracy": 85,
+          "timely": 89,
+          "calls": 3800
+        },
+        {
+          "month": "04月",
+          "coverage": 92.2,
+          "accuracy": 85.2,
+          "timely": 89.3,
+          "calls": 3980
+        },
+        {
+          "month": "05月",
+          "coverage": 92.4,
+          "accuracy": 85.4,
+          "timely": 89.6,
+          "calls": 4160
+        },
+        {
+          "month": "06月",
+          "coverage": 92.6,
+          "accuracy": 85.5,
+          "timely": 89.9,
+          "calls": 4340
+        },
+        {
+          "month": "07月",
+          "coverage": 92.8,
+          "accuracy": 85.7,
+          "timely": 90.2,
+          "calls": 4520
+        },
+        {
+          "month": "08月",
+          "coverage": 93,
+          "accuracy": 85.9,
+          "timely": 90.5,
+          "calls": 4700
+        }
+      ]
+    },
+    {
+      "prod": "gp-beneficial",
+      "coverage": 93,
+      "accuracy": 86,
+      "timely": 90,
+      "calls": 4880,
+      "psi": 0.12,
+      "psiStatus": "稳定",
+      "trend": [
+        {
+          "month": "03月",
+          "coverage": 92,
+          "accuracy": 85,
+          "timely": 89,
+          "calls": 3800
+        },
+        {
+          "month": "04月",
+          "coverage": 92.2,
+          "accuracy": 85.2,
+          "timely": 89.3,
+          "calls": 3980
+        },
+        {
+          "month": "05月",
+          "coverage": 92.4,
+          "accuracy": 85.4,
+          "timely": 89.6,
+          "calls": 4160
+        },
+        {
+          "month": "06月",
+          "coverage": 92.6,
+          "accuracy": 85.5,
+          "timely": 89.9,
+          "calls": 4340
+        },
+        {
+          "month": "07月",
+          "coverage": 92.8,
+          "accuracy": 85.7,
+          "timely": 90.2,
+          "calls": 4520
+        },
+        {
+          "month": "08月",
+          "coverage": 93,
+          "accuracy": 85.9,
+          "timely": 90.5,
+          "calls": 4700
+        }
+      ]
+    },
+    {
+      "prod": "gp-company-rel",
+      "coverage": 93,
+      "accuracy": 86,
+      "timely": 90,
+      "calls": 4880,
+      "psi": 0.12,
+      "psiStatus": "稳定",
+      "trend": [
+        {
+          "month": "03月",
+          "coverage": 92,
+          "accuracy": 85,
+          "timely": 89,
+          "calls": 3800
+        },
+        {
+          "month": "04月",
+          "coverage": 92.2,
+          "accuracy": 85.2,
+          "timely": 89.3,
+          "calls": 3980
+        },
+        {
+          "month": "05月",
+          "coverage": 92.4,
+          "accuracy": 85.4,
+          "timely": 89.6,
+          "calls": 4160
+        },
+        {
+          "month": "06月",
+          "coverage": 92.6,
+          "accuracy": 85.5,
+          "timely": 89.9,
+          "calls": 4340
+        },
+        {
+          "month": "07月",
+          "coverage": 92.8,
+          "accuracy": 85.7,
+          "timely": 90.2,
+          "calls": 4520
+        },
+        {
+          "month": "08月",
+          "coverage": 93,
+          "accuracy": 85.9,
+          "timely": 90.5,
+          "calls": 4700
+        }
+      ]
+    },
+    {
+      "prod": "gp-related-party",
+      "coverage": 93,
+      "accuracy": 86,
+      "timely": 90,
+      "calls": 4880,
+      "psi": 0.12,
+      "psiStatus": "稳定",
+      "trend": [
+        {
+          "month": "03月",
+          "coverage": 92,
+          "accuracy": 85,
+          "timely": 89,
+          "calls": 3800
+        },
+        {
+          "month": "04月",
+          "coverage": 92.2,
+          "accuracy": 85.2,
+          "timely": 89.3,
+          "calls": 3980
+        },
+        {
+          "month": "05月",
+          "coverage": 92.4,
+          "accuracy": 85.4,
+          "timely": 89.6,
+          "calls": 4160
+        },
+        {
+          "month": "06月",
+          "coverage": 92.6,
+          "accuracy": 85.5,
+          "timely": 89.9,
+          "calls": 4340
+        },
+        {
+          "month": "07月",
+          "coverage": 92.8,
+          "accuracy": 85.7,
+          "timely": 90.2,
+          "calls": 4520
+        },
+        {
+          "month": "08月",
+          "coverage": 93,
+          "accuracy": 85.9,
+          "timely": 90.5,
+          "calls": 4700
+        }
+      ]
+    },
+    {
+      "prod": "gp-top-beneficiary",
+      "coverage": 93,
+      "accuracy": 86,
+      "timely": 90,
+      "calls": 4880,
+      "psi": 0.12,
+      "psiStatus": "稳定",
+      "trend": [
+        {
+          "month": "03月",
+          "coverage": 92,
+          "accuracy": 85,
+          "timely": 89,
+          "calls": 3800
+        },
+        {
+          "month": "04月",
+          "coverage": 92.2,
+          "accuracy": 85.2,
+          "timely": 89.3,
+          "calls": 3980
+        },
+        {
+          "month": "05月",
+          "coverage": 92.4,
+          "accuracy": 85.4,
+          "timely": 89.6,
+          "calls": 4160
+        },
+        {
+          "month": "06月",
+          "coverage": 92.6,
+          "accuracy": 85.5,
+          "timely": 89.9,
+          "calls": 4340
+        },
+        {
+          "month": "07月",
+          "coverage": 92.8,
+          "accuracy": 85.7,
+          "timely": 90.2,
+          "calls": 4520
+        },
+        {
+          "month": "08月",
+          "coverage": 93,
+          "accuracy": 85.9,
+          "timely": 90.5,
+          "calls": 4700
+        }
+      ]
+    },
+    {
+      "prod": "gp-person-rel",
+      "coverage": 93,
+      "accuracy": 86,
+      "timely": 90,
+      "calls": 4880,
+      "psi": 0.12,
+      "psiStatus": "稳定",
+      "trend": [
+        {
+          "month": "03月",
+          "coverage": 92,
+          "accuracy": 85,
+          "timely": 89,
+          "calls": 3800
+        },
+        {
+          "month": "04月",
+          "coverage": 92.2,
+          "accuracy": 85.2,
+          "timely": 89.3,
+          "calls": 3980
+        },
+        {
+          "month": "05月",
+          "coverage": 92.4,
+          "accuracy": 85.4,
+          "timely": 89.6,
+          "calls": 4160
+        },
+        {
+          "month": "06月",
+          "coverage": 92.6,
+          "accuracy": 85.5,
+          "timely": 89.9,
+          "calls": 4340
+        },
+        {
+          "month": "07月",
+          "coverage": 92.8,
+          "accuracy": 85.7,
+          "timely": 90.2,
+          "calls": 4520
+        },
+        {
+          "month": "08月",
+          "coverage": 93,
+          "accuracy": 85.9,
+          "timely": 90.5,
+          "calls": 4700
+        }
+      ]
     },
   ],
   thresholds: [

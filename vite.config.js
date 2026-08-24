@@ -39,7 +39,7 @@ function persistPlugin() {
         // 企业档案 · 上市信息 Tab（dm 数字营销，比亚迪样例）
         'dmListed.json',
         // 评分产品 / 规则合集（全局，漏加会 400）
-        'scoringData.json', 'ruleHub.json',
+        'scoringData.json', 'ruleHub.json', 'scoreData.json',
         // 个人档案子系统（gr）· 个人图谱样例数据
         'personGraph.json',
         // 企业风控子系统（fk）· 全部样例 JSON（漏加会让 useSample 返回 400，页面渲染出错）

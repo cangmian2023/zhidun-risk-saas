@@ -17,10 +17,16 @@ import FlowCanvasEditor from './FlowCanvasEditor'
 import { useFlows, getFlowById } from './flowStore'
 import { usePageNav } from './pageNav'
 
-const MODEL_COLOR: Record<ScoreProd, string> = {
+const MODEL_COLOR: Record<string, string> = {
   zhicha: '#ef4444',
   zhixin: '#22c55e',
   zhirong: '#8b5cf6',
+  'jd-zonghe': '#DC2626',
+  'jd-jingying': '#1677ff',
+  'jd-kongke': '#D97706',
+  'jd-kechuang': '#7C3AED',
+  'jd-hetong': '#EA580C',
+  'jd-sifa': '#DC2626',
 }
 const PSI_KIND: Record<string, 'green' | 'amber' | 'red'> = { 稳定: 'green', 临界: 'amber', 偏移: 'red' }
 
@@ -101,7 +107,7 @@ export default function ScoreModelDetailPage() {
   const { goDetail, back } = usePageNav()
   const prod = ((params.get('prod') as ScoreProd) ?? 'zhicha')
   const m = data.models.find((x) => x.prod === prod) ?? data.models[0]
-  const color = MODEL_COLOR[m.prod]
+  const color = MODEL_COLOR[m.prod] ?? m.color ?? '#64748b'
   const tabParam = params.get('tab')
   const [tab, setTab] = useState<DetailTab>(
     (DETAIL_TABS.some((t) => t.key === tabParam) ? (tabParam as DetailTab) : 'base'),
@@ -252,7 +258,7 @@ export default function ScoreModelDetailPage() {
   const saveStratMeta = () => {
     const now = new Date().toLocaleString('zh-CN', { hour12: false })
     const nextVer = strat.strategyVersion ? strat.strategyVersion : `V1.0`
-    saveStrat({ strategyName: stratName.trim() || `${SCORE_PROD_LABEL[prod]}处置策略`, priorityMode: stratPriority, defaultDecision: stratDefault, strategyStatus: stratStatus, validStart: stratStart, validEnd: stratEnd, strategyVersion: nextVer, updateUser: 'admin', updateTime: now })
+    saveStrat({ strategyName: stratName.trim() || `${SCORE_PROD_LABEL[prod] ?? m.name}处置策略`, priorityMode: stratPriority, defaultDecision: stratDefault, strategyStatus: stratStatus, validStart: stratStart, validEnd: stratEnd, strategyVersion: nextVer, updateUser: 'admin', updateTime: now })
   }
 
   /* ---------- Tab4 区块B：概率 p → 标准分 映射（分段表 / 线性公式） ---------- */
@@ -377,7 +383,7 @@ export default function ScoreModelDetailPage() {
     <>
       <PageShell
         title={m.name}
-        subtitle={`${SCORE_PROD_LABEL[m.prod]} · 模型详情（基本信息 / 算法编辑 / 规则风险 / 处置策略 / 模型效果）`}
+        subtitle={`${SCORE_PROD_LABEL[m.prod] ?? m.name} · 模型详情（基本信息 / 算法编辑 / 规则风险 / 处置策略 / 模型效果）`}
         crumb="评分产品 / 模型管理"
         actions={
           <Button size="sm" variant="secondary" onClick={() => back('/console/sc/model-manage')}>← 返回模型列表</Button>
@@ -671,7 +677,7 @@ export default function ScoreModelDetailPage() {
         {tab === 'effect' && (
           /* ===== 模型效果（本模型） ===== */
           <>
-            <Panel title="模型效果" desc={`${SCORE_PROD_LABEL[prod]} · 运营效果指标与 6 个月趋势（单模型视角；三模型横向对比见「模型效果」页）`} actions={<div className="flex items-center gap-2"><Cal /><Sam value="scoreData.json" /></div>}>
+            <Panel title="模型效果" desc={`${SCORE_PROD_LABEL[prod] ?? m.name} · 运营效果指标与 6 个月趋势（单模型视角；三模型横向对比见「模型效果」页）`} actions={<div className="flex items-center gap-2"><Cal /><Sam value="scoreData.json" /></div>}>
               <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
                 <div><div className="text-xs text-slate-400">评分覆盖率</div><div className="text-2xl font-bold tabular-nums" style={{ color }}>{ops.coverage}%</div></div>
                 <div><div className="text-xs text-slate-400">预警准确率</div><div className="text-2xl font-bold tabular-nums" style={{ color }}>{ops.accuracy}%</div></div>
@@ -718,7 +724,7 @@ export default function ScoreModelDetailPage() {
               <div className="grid gap-4 md:grid-cols-2">
                 <label className="block">
                   <span className="mb-1 block text-xs text-slate-400">策略名称</span>
-                  <input value={stratName} onChange={(e) => setStratName(e.target.value)} placeholder={`${SCORE_PROD_LABEL[prod]}处置策略`} className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm outline-none focus:border-brand-400" />
+                  <input value={stratName} onChange={(e) => setStratName(e.target.value)} placeholder={`${SCORE_PROD_LABEL[prod] ?? m.name}处置策略`} className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm outline-none focus:border-brand-400" />
                 </label>
                 <div>
                   <span className="mb-1 block text-xs text-slate-400">优先级模式（全局生效）</span>
@@ -759,7 +765,7 @@ export default function ScoreModelDetailPage() {
               </>
               ) : (
                 <div className="flex flex-wrap items-center gap-x-6 gap-y-1 text-sm text-slate-500">
-                  <span>策略：<b className="text-slate-700">{stratName || `${SCORE_PROD_LABEL[prod]}处置策略`}</b></span>
+                  <span>策略：<b className="text-slate-700">{stratName || `${SCORE_PROD_LABEL[prod] ?? m.name}处置策略`}</b></span>
                   <span>优先级：<b className="text-slate-700">{stratPriority === 'tag-first' ? '标签优先' : '分数优先'}</b></span>
                   <span>兜底处置：<b className="text-slate-700">{stratDefault}</b></span>
                   <span>状态：<b className={stratStatus ? 'text-emerald-600' : 'text-slate-400'}>{stratStatus ? '启用' : '停用'}</b></span>
@@ -927,7 +933,7 @@ export default function ScoreModelDetailPage() {
       </div>
 
       {/* ===== 上线 Modal（版本 + 变更内容） ===== */}
-      <Modal open={onlineOpen} onClose={() => setOnlineOpen(false)} title={`上线 · ${SCORE_PROD_LABEL[prod]}`}>
+      <Modal open={onlineOpen} onClose={() => setOnlineOpen(false)} title={`上线 · ${SCORE_PROD_LABEL[prod] ?? m.name}`}>
         <div className="space-y-3">
           <label className="block">
             <span className="mb-1 block text-xs text-slate-400">上线版本</span>
@@ -983,7 +989,7 @@ export default function ScoreModelDetailPage() {
       {/* ===== 新增阈值 Modal（已随评分类改造移除：阈值逻辑并入 Tab4 区块C + 等级默认处置表） ===== */}
 
       {/* ===== 新增规则风险 Modal（引用决策引擎资产） ===== */}
-      <Modal open={rlNewOpen} onClose={() => setRlNewOpen(false)} title={`新增风险标签 · ${SCORE_PROD_LABEL[prod]}`}>
+      <Modal open={rlNewOpen} onClose={() => setRlNewOpen(false)} title={`新增风险标签 · ${SCORE_PROD_LABEL[prod] ?? m.name}`}>
         <div className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <label className="block">
@@ -1044,7 +1050,7 @@ export default function ScoreModelDetailPage() {
       </Modal>
 
       {/* ===== 实时输出预览 Modal（风险标签对外统一结构） ===== */}
-      <Modal open={rlPreviewOpen} onClose={() => setRlPreviewOpen(false)} title={`实时输出预览 · ${SCORE_PROD_LABEL[prod]}`}>
+      <Modal open={rlPreviewOpen} onClose={() => setRlPreviewOpen(false)} title={`实时输出预览 · ${SCORE_PROD_LABEL[prod] ?? m.name}`}>
         <div className="space-y-3">
           <div className="text-xs text-slate-500">当前模型最终产出的风险标签数组，结构对标同盾对外 API，供前端对接、调试使用。</div>
           <pre className="max-h-80 overflow-auto rounded-lg bg-slate-900 p-3 text-xs leading-relaxed text-slate-100">{JSON.stringify(tagPreview, null, 2)}</pre>
@@ -1172,7 +1178,7 @@ export default function ScoreModelDetailPage() {
       </RightDrawer>
 
       {/* ===== 全链路模拟调试 Modal ===== */}
-      <Modal open={simOpen} onClose={() => setSimOpen(false)} title={`全链路模拟调试 · ${SCORE_PROD_LABEL[prod]}`}>
+      <Modal open={simOpen} onClose={() => setSimOpen(false)} title={`全链路模拟调试 · ${SCORE_PROD_LABEL[prod] ?? m.name}`}>
         <div className="space-y-3">
           <div className="text-xs text-slate-500">输入预测概率、勾选命中标签，一键算出标准分 / 风险等级 / 命中规则 / 最终处置。</div>
           <label className="block">

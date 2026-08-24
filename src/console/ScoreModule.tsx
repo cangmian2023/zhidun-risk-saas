@@ -1,5 +1,5 @@
 /* 评分产品子系统（v3 新 IA）· 路由中心
- * 所有 sc:* 页面统一在此分发；复用零售信贷的预警工作台与单客详情。
+ * 所有 sc:* 页面统一在此分发。
  * 看板页（总览/分布/命中/效果）= 配置驱动：读 midDashboards.json 的 sc:* 页面配置渲染；
  * 无配置时 MidDashboardPage 自带「暂无页面配置」空态。
  */
@@ -9,7 +9,6 @@ import ScoreCustomerListPage from './ScoreCustomerList'
 import ScoreModelManagePage from './ScoreModelManage'
 import ScoreModelDetailPage from './ScoreModelDetail'
 import ScoreDisposeFlowPage from './ScoreDisposeFlow'
-import MidAlertWorkbench from './MidAlertWorkbench'
 import MidDashboardPage from './MidDashboardPage'
 
 /* 看板页：pageKey → 页面配置 key（管理中心页面配置里配置这些 key） */
@@ -26,8 +25,6 @@ export default function ScoreModule({ pageKey }: { pageKey: string; search?: str
   const dashKey = DASHBOARD_PAGES[cur]
   if (dashKey) return <MidDashboardPage pageKey={dashKey} crumbPrefix="评分产品" />
   switch (cur) {
-    case 'alert-workbench':
-      return <MidAlertWorkbench />
     case 'score-records':
       return <ScoreRecordsPage />
     case 'crowd-groups':

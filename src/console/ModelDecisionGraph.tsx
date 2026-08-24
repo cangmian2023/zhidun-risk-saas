@@ -655,7 +655,7 @@ export default function ModelDecisionGraph({
             <div className="flex h-full w-[440px] max-w-[90%] flex-col bg-white shadow-xl" onClick={(e) => e.stopPropagation()}>
               <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
                 <div className="text-sm font-semibold text-slate-800">
-                  规则碰撞 · 冲突裁决 <span className="ml-1 text-xs font-normal text-slate-400">{SCORE_PROD_LABEL[prod]}</span>
+                  规则碰撞 · 冲突裁决 <span className="ml-1 text-xs font-normal text-slate-400">{SCORE_PROD_LABEL[prod] ?? model.name}</span>
                 </div>
                 <button onClick={() => setEditingCollision(false)} className="rounded-md px-2 py-1 text-sm text-slate-400 hover:bg-slate-100">关闭</button>
               </div>

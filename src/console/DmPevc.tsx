@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { usePageNav } from './pageNav';
 import { PageShell } from './PageShell';
 
@@ -176,7 +177,7 @@ const nonPrivateFundColumns = [
   '基金投资企业',
   '成立日期',
   'amac备案日期',
-  '操作'
+  '投资基金路径'
 ]
 const nonPrivateFundData = [
   { index:1, fundName:"赣 赣州西域洵美创业投资合伙企业（有限...", orgName:"西域投资 B级 广东", fundAddr:"江西赣州章贡区", orgFundProject:"1家企业", investEnt:"1", createDate:"2019-08-27", amacDate:"-", operate:"基金投" },
@@ -214,10 +215,105 @@ const privateFundData = [
   { index:9, fundName:"赣 赣州西域德纯创业投资合...", fundCode:"SQK248", orgName:"西域投资 B级 广东", investEnt:"2", amacDate:"2021-05-19", manager:"广 广州西域股权投资管理中...", manageType:"股权投资基金", runStatus:"正在运作" },
 ]
 
+/* ====================== 投资基金路径图谱弹窗（三主题） ====================== */
+const FUND_PATH_THEMES = ['合伙人持股', '对外投资', '历史合伙人持股'] as const
+type FundPathTheme = typeof FUND_PATH_THEMES[number]
+const FUND_PATH_GRAPH: Record<FundPathTheme, { center: string; nodes: { name: string; rel: string }[] }> = {
+  '合伙人持股': {
+    center: '西域投资（广东）',
+    nodes: [
+      { name: '陈某某', rel: '直接持股 40%' },
+      { name: '林某某', rel: '间接持股 30%' },
+      { name: '深圳某某合伙', rel: '代持 30%' },
+    ],
+  },
+  '对外投资': {
+    center: '西域投资（广东）',
+    nodes: [
+      { name: '赣州西域洵美创业投资', rel: '持股 60%' },
+      { name: '深圳碧桂鑫投资', rel: '持股 45%' },
+      { name: '天津天宝创业投资', rel: '持股 35%' },
+      { name: '上海丰实股权投资', rel: '持股 20%' },
+    ],
+  },
+  '历史合伙人持股': {
+    center: '西域投资（广东）',
+    nodes: [
+      { name: '赵某某（已退出）', rel: '2019-2022 持股 25%' },
+      { name: '孙某某（已退出）', rel: '2020-2023 持股 20%' },
+    ],
+  },
+}
+
+function FundPathGraph({ theme }: { theme: FundPathTheme }) {
+  const data = FUND_PATH_GRAPH[theme]
+  const W = 600, H = 400, cx = W / 2, cy = H / 2, r = 150
+  const pos = data.nodes.map((node, i) => {
+    const ang = (Math.PI * 2 * i) / data.nodes.length - Math.PI / 2
+    return { ...node, x: cx + r * Math.cos(ang), y: cy + r * Math.sin(ang) }
+  })
+  const NW = 124, NH = 42
+  return (
+    <svg width="100%" viewBox={`0 0 ${W} ${H}`} style={{ display: 'block', maxHeight: 400 }}>
+      {pos.map((p, i) => (
+        <line key={'e' + i} x1={cx} y1={cy} x2={p.x} y2={p.y} stroke="#cbd5e1" strokeWidth={1.5} />
+      ))}
+      <g>
+        <rect x={cx - 75} y={cy - 24} width={150} height={48} rx={8} fill="#2563EB" />
+        <text x={cx} y={cy - 3} textAnchor="middle" fontSize={13} fill="#fff" fontWeight={600}>{data.center}</text>
+        <text x={cx} y={cy + 14} textAnchor="middle" fontSize={11} fill="#dbeafe">核心机构</text>
+      </g>
+      {pos.map((p, i) => (
+        <g key={'n' + i}>
+          <rect x={p.x - NW / 2} y={p.y - NH / 2} width={NW} height={NH} rx={6} fill="#fff" stroke="#2563EB" strokeWidth={1.2} />
+          <text x={p.x} y={p.y - 4} textAnchor="middle" fontSize={12} fill="#1f2937" fontWeight={500}>{p.name}</text>
+          <text x={p.x} y={p.y + 13} textAnchor="middle" fontSize={10.5} fill="#2563EB">{p.rel}</text>
+        </g>
+      ))}
+    </svg>
+  )
+}
+
+function FundPathModal({ orgName, onClose }: { orgName: string; onClose: () => void }) {
+  const [theme, setTheme] = useState<FundPathTheme>('合伙人持股')
+  return createPortal(
+    <div
+      style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(15,23,42,0.45)' }}
+      onClick={onClose}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{ width: 700, maxWidth: '94vw', maxHeight: '88vh', background: '#fff', borderRadius: 12, boxShadow: '0 12px 40px rgba(0,0,0,0.18)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 20px', borderBottom: '1px solid #f0f0f0' }}>
+          <span style={{ fontSize: 16, fontWeight: 600, color: '#0f172a' }}>{orgName} · 投资基金路径</span>
+          <button onClick={onClose} style={{ border: 'none', background: 'transparent', color: '#94A3B8', fontSize: 18, lineHeight: 1, cursor: 'pointer', padding: 4 }}>×</button>
+        </div>
+        <div style={{ display: 'flex', gap: 8, padding: '12px 20px', borderBottom: '1px solid #f0f0f0', flexWrap: 'wrap' }}>
+          {FUND_PATH_THEMES.map((t) => (
+            <button
+              key={t}
+              onClick={() => setTheme(t)}
+              style={{ padding: '6px 16px', borderRadius: 6, border: theme === t ? '1px solid #2563EB' : '1px solid #d9d9d9', background: theme === t ? '#eff6ff' : '#fff', color: theme === t ? '#2563EB' : '#333', fontSize: 13, cursor: 'pointer', fontWeight: theme === t ? 600 : 400 }}
+            >
+              {t}
+            </button>
+          ))}
+        </div>
+        <div style={{ padding: '16px 20px', overflow: 'auto', background: '#fbfcfe' }}>
+          <FundPathGraph theme={theme} />
+        </div>
+      </div>
+    </div>,
+    document.body
+  )
+}
+
 export default function FinanceInvestTable() {
   const [activeTab, setActiveTab] = useState(tabList[0]);
   const [checkedRows, setCheckedRows] = useState<number[]>([]);
   const { goDetail } = usePageNav();
+  const [fundPathOrg, setFundPathOrg] = useState<string | null>(null);
 
   // 筛选状态：key 为筛选项名称
   const [financeFilters, setFinanceFilters] = useState<Record<string, string>>({});
@@ -565,7 +661,7 @@ export default function FinanceInvestTable() {
                   <td style={{ padding: '12px 8px', border: '1px solid #e5e7eb', fontSize: '15px' }}>{row.investEnt}</td>
                   <td style={{ padding: '12px 8px', border: '1px solid #e5e7eb', fontSize: '15px' }}>{row.createDate}</td>
                   <td style={{ padding: '12px 8px', border: '1px solid #e5e7eb', fontSize: '15px' }}>{row.amacDate}</td>
-                  <td style={{ padding: '12px 8px', border: '1px solid #e5e7eb', fontSize: '15px', color:"#1677ff" }}>{row.operate}</td>
+                  <td style={{ padding: '12px 8px', border: '1px solid #e5e7eb', fontSize: '15px', color:"#1677ff", cursor:'pointer', whiteSpace:'nowrap' }} onClick={() => setFundPathOrg(row.orgName)}>查看路径</td>
                 </tr>
               ))}
             </tbody>
@@ -639,32 +735,36 @@ export default function FinanceInvestTable() {
   }
 
   return (
-    <div style={{ width: '100%', height: '100vh', overflow: 'auto' }}>
-      <PageShell title="PE/VC" crumb="数字营销 / 金融工具" legend={false} />
-      {/* 顶部Tab栏 */}
-      <div style={{ display: 'flex', borderBottom: '1px solid #e5e7eb', position: 'sticky', top: 140, zIndex: 20, background: '#fff' }}>
-        {tabList.map(tab => (
-          <div
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            style={{
-              padding: '12px 20px',
-              fontSize: '16px',
-              cursor: 'pointer',
-              color: activeTab === tab ? '#1f2937' : '#6b7280',
-              borderBottom: activeTab === tab ? '2px solid #2563EB' : '2px solid transparent',
-              fontWeight: activeTab === tab ? 500 : 400,
-            }}
-          >
-            {tab}
-          </div>
-        ))}
+    <div style={{ width: '100%', minHeight: '100vh' }}>
+      {/* 吸顶头：标题 + Tab 栏一起吸顶（top:56 吸在固定顶栏正下方），内容滚动到其下方不再被半截 Tab 栏盖住 */}
+      <div style={{ position: 'sticky', top: 56, zIndex: 30, background: '#fff' }}>
+        <PageShell title="PE/VC" crumb="数字营销 / 金融工具" legend={false} />
+        {/* 顶部Tab栏 */}
+        <div style={{ display: 'flex', borderBottom: '1px solid #e5e7eb', background: '#fff' }}>
+          {tabList.map(tab => (
+            <div
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              style={{
+                padding: '12px 20px',
+                fontSize: '16px',
+                cursor: 'pointer',
+                color: activeTab === tab ? '#1f2937' : '#6b7280',
+                borderBottom: activeTab === tab ? '2px solid #2563EB' : '2px solid transparent',
+                fontWeight: activeTab === tab ? 500 : 400,
+              }}
+            >
+              {tab}
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Tab内容切换渲染 */}
       {activeTab === '投融资事件' && renderFinanceEventTab()}
       {activeTab === '投资机构' && renderInvestOrgTab()}
       {activeTab === '投资机构基金列表' && renderFundListTab()}
+      {fundPathOrg && <FundPathModal orgName={fundPathOrg} onClose={() => setFundPathOrg(null)} />}
     </div>
   );
 }

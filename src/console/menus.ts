@@ -61,7 +61,6 @@ export const scoringMenu: MenuGroup[] = [
     section: '工作台',
     items: [
       { label: '评分总览', key: 'sc:overview', keep: true, desc: '三产品评分总览与对象评分档案：并排展示智察分/智信分/智融分，支持单客分数检索与批量评分入口' },
-      { label: '预警工作台', key: 'sc:alert-workbench', keep: true, desc: '复用零售信贷预警工作台：红黄灯预警任务队列，逐条核实、发起处置' },
     ],
   },
   {
@@ -108,6 +107,17 @@ export const scoringMenu: MenuGroup[] = [
  * 「企业档案」系列页面在原产品中属于尽调结果的详情内页，不出现在左侧菜单，故不挂。
  */
 export const entMenu: MenuGroup[] = [
+  /* ============ 企业信贷审批（顺位第一 · 由零售信贷贷前四页整体迁入） ============ */
+  {
+    group: '企业信贷审批',
+    section: '企业信贷审批',
+    items: [
+      { label: '企业信贷审批', key: 'ep:ent-pre-report', desc: '企业信贷进件审核报告：整合信息核验+信用风控+欺诈识别，输出最终授信决策建议' },
+      { label: '企业信息核验', key: 'ep:ent-pre-verify', desc: '企业信息核验报告（数据从本地 JSON 读取）' },
+      { label: '企业信用风控', key: 'ep:ent-credit-kimi', desc: '企业信用风控报告（数据从本地 JSON 读取）' },
+      { label: '企业欺诈识别', key: 'ep:ent-pre-fraud', desc: '企业欺诈识别报告（数据从本地 JSON 读取）' },
+    ],
+  },
   /* ============ 来源：风控子系统目录 ============ */
   {
     group: '风险监控',
@@ -222,14 +232,6 @@ export const dmMenu: MenuGroup[] = [
       { label: '金融法规', key: 'dm:fin-law', desc: '金融法律法规与监管文件库（内容待核对）' },
     ],
   },
-  {
-    group: '档案与金融',
-    section: '档案与金融',
-    items: [
-      { label: '企业档案 · 数据复刻', key: 'dm:ent-archive-basic', keep: true, desc: '企业尽调档案 · 数据复刻版（与 DmEntArchiveBasic 同结构，1:1 仿企业档案样式）' },
-      { label: '个人档案 · 数据复刻', key: 'dm:person-archive-basic', keep: true, desc: '人员尽调档案 · 数据复刻版（6 个主 Tab 1:1 仿企业档案结构）' },
-    ],
-  },
 ]
 
 /* ============================================================
@@ -270,6 +272,16 @@ export const cmMenu: MenuGroup[] = [
   { group: '预警配置', items: [{ label: '统一预警配置', key: 'cm:alert-config', keep: true, desc: '跨子系统统一配置预警规则：企业风控 / 评分产品 / 零售信贷 / 数字营销' }] },
   { group: '页面配置', items: [{ label: '页面配置', key: 'cm:mid-dashboard-config', keep: true, desc: '配置监控看板页面与可视化组件，保存为 midDashboards.json 配置文件后，由贷中监测按配置加载渲染对应组件' }] },
   { group: '业务流程', items: [{ label: '业务流程配置', key: 'cm:biz-flow', keep: true, desc: '按业务域配置审核操作流程（画布编辑节点与流转），实时生效于对应审核页操作按钮' }] },
+  {
+    group: '档案备份',
+    section: '档案备份',
+    items: [
+      { label: '企业档案（数字营销）', key: 'cm:ent-archive-basic', keep: true, desc: '数字营销子系统 · 企业档案（数据复刻版）备份入口，直接在管理中心内嵌展示' },
+      { label: '个人档案（数字营销）', key: 'cm:person-archive-basic', keep: true, desc: '数字营销子系统 · 个人档案（数据复刻版）备份入口，直接在管理中心内嵌展示' },
+      { label: '个人档案（旧版 · 零售信贷）', key: 'cm:cust-archive-legacy', keep: true, desc: '零售信贷 / 评分产品原个人档案（单客 360° 画像），已在业务入口统一切至数字营销，此处保留旧版备份' },
+      { label: '得分详情（旧版 · 零售信贷）', key: 'cm:cust-score-legacy', keep: true, desc: '零售信贷 / 评分产品原单客得分详情页，已从业务入口链路移除，此处保留旧版备份' },
+    ],
+  },
 ]
 /* ============================================================
  * 七、催贷管理（智能催收子系统 · 6 大模块重新规划）

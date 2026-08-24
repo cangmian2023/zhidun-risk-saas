@@ -3,6 +3,11 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Sam, Cal } from './SourceTag'
 import { useSample } from './enterprise/epCommon'
 import PersonGraph from './PersonGraph'
+import { RelationGraphView } from './RelationGraphView'
+import { SEED_CUST, type CustRelationGraph, type GraphTheme, type CustGraphNode, type CustGraphEdge } from './custProfileData'
+
+type GraphSelection = { kind: 'node'; node: CustGraphNode } | { kind: 'edge'; edge: CustGraphEdge }
+import { ModelScoreSection } from './ModelScorePanel'
 
 /* 数字营销 · 个人档案 · 新版 1:1 复刻（与 DmEntArchiveBasic 保持完全一致的视觉语言）
  * 头部：个人摘要六段式（丁磊样例）
@@ -774,19 +779,66 @@ function RelatedRiskModules() {
   )
 }
 
-// ============ 个人图谱（交互式横向树状关系图） ============
+// ============ 个人图谱（融合：新版横向树状 + 旧版关系网络） ============
 const PERSON_GRAPH_SEED = {
   subject: '王传福',
   queryTime: '2026-08-20 10:24:08',
   relations: [] as any[],
 }
 
-function PersonGraphPlaceholder({ name }: { name?: string }) {
+// 旧版关系网络样例数据（取自 custProfileData 样例客户的关系图谱，去掉标题直接复用其内容）
+const LEGACY_RELATION_GRAPH: CustRelationGraph =
+  SEED_CUST.customers[0]?.relationGraph ?? { nodes: [], edges: [], themes: [], collectedAt: '', source: '' }
+
+function PersonGraphMerged({ name }: { name?: string }) {
   const [data, , ] = useSample('personGraph.json', PERSON_GRAPH_SEED)
   const graph = { ...data, subject: name || data.subject }
+
+  // 主题切换：个人图谱（新版）/ 关系网络（旧版）
+  const [theme, setTheme] = useState<'person' | 'relation'>('person')
+  // 关系网络（旧版 RelationGraphView）所需状态
+  const [relTheme, setRelTheme] = useState<GraphTheme>('综合')
+  const [relSel, setRelSel] = useState<GraphSelection | null>(null)
+  const relNodeMap: Record<string, CustGraphNode> = {}
+  LEGACY_RELATION_GRAPH.nodes.forEach((n) => (relNodeMap[n.id] = n))
+
   return (
-    <div id="section-person-graph" style={{ marginBottom: 40, scrollMarginTop: 140 }}>
-      <PersonGraph data={graph as any} />
+    <div style={{ marginBottom: 40 }}>
+      {/* 主题切换（两版并列，均保留列表） */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+        <button
+          onClick={() => setTheme('person')}
+          style={{
+            padding: '6px 16px', borderRadius: 8, border: '1px solid ' + (theme === 'person' ? '#1677ff' : '#d9d9d9'),
+            background: theme === 'person' ? '#1677ff' : '#fff', color: theme === 'person' ? '#fff' : '#4e5969',
+            fontSize: 13, fontWeight: 600, cursor: 'pointer',
+          }}
+        >个人图谱（新版）</button>
+        <button
+          onClick={() => setTheme('relation')}
+          style={{
+            padding: '6px 16px', borderRadius: 8, border: '1px solid ' + (theme === 'relation' ? '#1677ff' : '#d9d9d9'),
+            background: theme === 'relation' ? '#1677ff' : '#fff', color: theme === 'relation' ? '#fff' : '#4e5969',
+            fontSize: 13, fontWeight: 600, cursor: 'pointer',
+          }}
+        >关系网络（旧版）</button>
+      </div>
+
+      {theme === 'person' ? (
+        <div id="section-person-graph" style={{ scrollMarginTop: 140 }}>
+          <PersonGraph data={graph as any} />
+        </div>
+      ) : (
+        // 旧版关系网络内容（去标题，直接渲染 RelationGraphView 主体）
+        <RelationGraphView
+          graph={LEGACY_RELATION_GRAPH}
+          theme={relTheme}
+          onTheme={setRelTheme}
+          sel={relSel}
+          onPick={setRelSel}
+          nodeMap={relNodeMap}
+        />
+      )}
     </div>
   )
 }
@@ -1019,7 +1071,7 @@ export default function DmPersonArchiveBasic() {
     if (activeTab === 'risk') return <RiskModules />
     if (activeTab === 'patent') return <PatentModules />
     if (activeTab === 'related-risk') return <RelatedRiskModules />
-    if (activeTab === 'graph') return <PersonGraphPlaceholder />
+    if (activeTab === 'graph') return <PersonGraphMerged />
     if (activeTab === 'history') return <HistoryModules />
     // 兜底：渲染该 Tab 的子项（每个子项独立 section 模块）
     return (
@@ -1138,6 +1190,9 @@ export default function DmPersonArchiveBasic() {
             ))}
           </div>
         </div>
+
+        {/* ============ 模型评分板块（来自旧版个人档案 · 智察/智信/智融 + 额度建议） ============ */}
+        <ModelScoreSection onCardClick={(prod) => nav(`/console/cr/mid-cust-score?cust=${encodeURIComponent(personName)}&prod=${prod}`)} />
 
         {/* ============ Tab 导航（默认收起；悬停展开多列菜单面板；列内全展开 / 顶部对齐） ============ */}
         <div style={{ background: '#fff', borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.04)', marginBottom: 16 }}>

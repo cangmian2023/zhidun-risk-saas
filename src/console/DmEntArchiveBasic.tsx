@@ -9,6 +9,13 @@ import EntLegalRisk from './EntLegalRisk'
 import EntListingInfo from './EntListingInfo'
 import EntNewsSentiment from './EntNewsSentiment'
 import EntIntellectualProperty from './EntIntellectualProperty'
+// 企业指数 / 综合得分说明弹窗（与企业尽调报告同源，复用现成 Modal 组件）
+import QixinScoreModal from './enterprise/jindiao/pages/modals/QixinScoreModal'
+import ShellCompanyModal from './enterprise/jindiao/pages/modals/ShellCompanyModal'
+import KechuangScoreModal from './enterprise/jindiao/pages/modals/KechuangScoreModal'
+import ContractDefaultModal from './enterprise/jindiao/pages/modals/ContractDefaultModal'
+import JudicialRiskModal from './enterprise/jindiao/pages/modals/JudicialRiskModal'
+import ComprehensiveModal from './enterprise/jindiao/pages/modals/ComprehensiveModal'
 
 /* 数字营销 · 企业档案 · 新版1:1复刻
  * 头部：企业摘要六段式（比亚迪样例）
@@ -65,6 +72,148 @@ const FUNC_CARDS = [
   { icon: '⇶', title: '股权穿透图', desc: '疑似实控… 持股…' },
   { icon: '⛓', title: '财产线索', desc: '财产线索数量17255' },
 ]
+
+/* ===================================================================
+ * 以下「审核结果」「企业指数」两块，原属企业尽调报告（ep:jd-company）详情页，
+ * 现整体搬入企业档案 · 基本信息最上方（用户要求：完整拿过来，不止摘要）。
+ * 数据 / Gauge / RiskBadge 与尽调报告同口径（演示样例）。
+ * =================================================================== */
+
+const CARD_STYLE: React.CSSProperties = {
+  background: '#fff',
+  border: '1px solid #E5E7EB',
+  borderRadius: 12,
+  marginBottom: 16,
+}
+const SECTION_TITLE: React.CSSProperties = {
+  fontSize: 16,
+  fontWeight: 700,
+  color: '#0F172A',
+  padding: '14px 18px',
+  borderBottom: '1px solid #F1F5F9',
+  display: 'flex',
+  alignItems: 'center',
+  gap: 8,
+}
+
+// 审核结果 - 命中风险明细
+const HIT_RISKS = [
+  { id: 1, type: '法定代表人变更', date: '2021-03-15', desc: '张一鸣 → 张利东', level: '不通过', color: '#DC2626' },
+  { id: 2, type: '注册资本变更', date: '2020-08-22', desc: '100万人民币 → 1000万人民币', level: '不通过', color: '#DC2626' },
+  { id: 3, type: '经营范围变更', date: '2019-11-05', desc: '新增互联网文化活动、演出经纪等', level: '中风险', color: '#D97706' },
+  { id: 4, type: '行政处罚', date: '2022-05-18', desc: '发布违法广告，罚款人民币20万元', level: '高风险', color: '#EA580C' },
+  { id: 5, type: '司法诉讼', date: '2023-02-10', desc: '存在劳动争议及合同纠纷案件3条', level: '高风险', color: '#EA580C' },
+  { id: 6, type: '关联企业风险', date: '-', desc: '控股股东100%持股，关联交易风险', level: '中风险', color: '#D97706' },
+]
+
+// 企业指数（经营指数 / 空壳指数 / 科创分 / 合同违约指数 / 司法风险），modal 对应指标说明弹窗
+const INDICES = [
+  { name: '经营指数', score: 65, color: '#1677ff', modal: 'qixin' },
+  { name: '空壳指数', score: 72, color: '#D97706', modal: 'shell' },
+  { name: '科创分', score: 81, color: '#7C3AED', modal: 'kechuang' },
+  { name: '合同违约指数', score: 58, color: '#EA580C', modal: 'contract' },
+  { name: '司法风险', score: 30, color: '#DC2626', modal: 'judicial' },
+]
+
+function Gauge({ score, color, label, onClick }: { score: number; color: string; label: string; onClick?: () => void }) {
+  const r = 42
+  const c = 2 * Math.PI * r
+  const offset = c - (score / 100) * c
+  return (
+    <div
+      onClick={onClick}
+      style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, cursor: onClick ? 'pointer' : 'default' }}
+    >
+      <svg width={110} height={110} viewBox="0 0 110 110">
+        <circle cx={55} cy={55} r={r} fill="none" stroke="#F1F5F9" strokeWidth={8} />
+        <circle cx={55} cy={55} r={r} fill="none" stroke={color} strokeWidth={8} strokeDasharray={c} strokeDashoffset={offset} strokeLinecap="round" transform="rotate(-90 55 55)" />
+        <text x={55} y={52} textAnchor="middle" fontSize={22} fontWeight={800} fill={color}>{score}</text>
+        <text x={55} y={70} textAnchor="middle" fontSize={11} fill="#94A3B8">分</text>
+      </svg>
+      <span style={{ fontSize: 13, color: '#475569', fontWeight: 600 }}>{label}</span>
+    </div>
+  )
+}
+
+function RiskBadge({ level, color }: { level: string; color: string }) {
+  return (
+    <span style={{ display: 'inline-flex', alignItems: 'center', padding: '2px 10px', borderRadius: 10, fontSize: 11, fontWeight: 600, color, background: color + '15' }}>{level}</span>
+  )
+}
+
+// 审核结果板块（综合得分 + 评估结果 + 命中风险数 + 命中风险明细）
+function AuditResultSection({ onOpenModal }: { onOpenModal: (key: string) => void }) {
+  return (
+    <section style={{ marginBottom: 24 }}>
+      <div style={{ ...CARD_STYLE, padding: 0 }}>
+        <div style={SECTION_TITLE}>
+          <span style={{ width: 4, height: 16, background: '#1677ff', borderRadius: 2 }}></span>
+          审核结果
+        </div>
+        <div style={{ padding: '24px', display: 'flex', alignItems: 'center', gap: 48, flexWrap: 'wrap' }}>
+          <div style={{ textAlign: 'center', cursor: 'pointer' }} onClick={() => onOpenModal('comprehensive')}>
+            <div style={{ fontSize: 56, fontWeight: 800, color: '#DC2626', lineHeight: 1 }}>0</div>
+            <div style={{ fontSize: 13, color: '#1677ff', marginTop: 4 }}>综合得分（点击查看说明）</div>
+          </div>
+          <div style={{ width: 1, height: 60, background: '#E5E7EB' }}></div>
+          <div>
+            <div style={{ fontSize: 14, color: '#94A3B8', marginBottom: 6 }}>评估结果</div>
+            <span style={{ padding: '8px 24px', borderRadius: 8, fontSize: 20, fontWeight: 800, color: '#fff', background: '#DC2626' }}>不通过</span>
+          </div>
+          <div style={{ width: 1, height: 60, background: '#E5E7EB' }}></div>
+          <div>
+            <div style={{ fontSize: 14, color: '#94A3B8', marginBottom: 6 }}>命中风险信息</div>
+            <div style={{ fontSize: 32, fontWeight: 800, color: '#EA580C' }}>6<span style={{ fontSize: 14, color: '#94A3B8', fontWeight: 400, marginLeft: 4 }}>条</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div style={{ ...CARD_STYLE, padding: 0 }}>
+        <div style={SECTION_TITLE}>
+          <span style={{ width: 4, height: 16, background: '#EA580C', borderRadius: 2 }}></span>
+          命中风险明细
+        </div>
+        <div style={{ padding: '0 18px 18px' }}>
+          {HIT_RISKS.map((r) => (
+            <div key={r.id} style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '14px 0', borderBottom: '1px solid #F1F5F9' }}>
+              <div style={{ width: 36, height: 36, borderRadius: '50%', background: r.color + '15', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, flexShrink: 0 }}>⚠</div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
+                  <span style={{ fontSize: 15, fontWeight: 700, color: '#0F172A' }}>{r.type}</span>
+                  <RiskBadge level={r.level} color={r.color} />
+                  <span style={{ fontSize: 12, color: '#94A3B8' }}>{r.date}</span>
+                </div>
+                <div style={{ fontSize: 13, color: '#64748B' }}>{r.desc}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+// 企业指数板块（5 个 Gauge，点击维度弹指标说明）
+function EntIndexSection({ onOpenModal }: { onOpenModal: (key: string) => void }) {
+  return (
+    <section style={{ marginBottom: 24 }}>
+      <div style={{ ...CARD_STYLE, padding: 0 }}>
+        <div style={SECTION_TITLE}>
+          <span style={{ width: 4, height: 16, background: '#7C3AED', borderRadius: 2 }}></span>
+          企业指数
+        </div>
+        <div style={{ padding: '32px 24px', display: 'flex', justifyContent: 'space-around', flexWrap: 'wrap', gap: 24 }}>
+          {INDICES.map((idx, i) => (
+            <Gauge key={i} score={idx.score} color={idx.color} label={idx.name} onClick={() => onOpenModal(idx.modal)} />
+          ))}
+        </div>
+        <div style={{ padding: '0 24px 24px', fontSize: 12, color: '#94A3B8', textAlign: 'center' }}>
+          指数评分基于企业工商、司法、舆情、经营等多维度数据综合计算，点击维度可查看指标说明（仅供参考）
+        </div>
+      </div>
+    </section>
+  )
+}
 
 // ============ 完整Tab配置 ============
 const TABS = [
@@ -1120,6 +1269,8 @@ export default function DmEntArchiveBasic() {
   const nav = useNavigate()
   const [params] = useSearchParams()
   const companyName = params.get('name') || '比亚迪股份有限公司'
+  // 审核结果 / 企业指数板块的弹窗 key（comprehensive/qixin/shell/kechuang/contract/judicial）
+  const [modalKey, setModalKey] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState('basic')
   const [activeSubTab, setActiveSubTab] = useState('ic-info')
   // 企业图谱：8 个主题切换显示（当前选中主题）
@@ -1299,7 +1450,7 @@ export default function DmEntArchiveBasic() {
         </div>
 
         {/* ============ Tab导航（默认收起；悬停展开多列菜单面板；列内全展开 / 顶部对齐） ============ */}
-        <div style={{ background: '#fff', borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.04)', marginBottom: 16 }}>
+        <div style={{ position: 'sticky', top: 56, zIndex: 30, background: '#fff', borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.04)', marginBottom: 16 }}>
           <style>{`.fk-tabs::-webkit-scrollbar{height:0;width:0}`}</style>
           {/* relative 包裹：Tab 栏常驻 + 悬停下拉面板 */}
           <div style={{ position: 'relative' }} onMouseLeave={closePanel}>
@@ -1437,6 +1588,9 @@ export default function DmEntArchiveBasic() {
                   </button>
                 ))}
               </div>
+              {/* 审核结果 + 企业指数（原企业尽调报告详情页两块，整体搬入基本信息最上方） */}
+              <AuditResultSection onOpenModal={setModalKey} />
+              <EntIndexSection onOpenModal={setModalKey} />
               <BasicModules />
             </div>
           ) : (
@@ -1450,6 +1604,13 @@ export default function DmEntArchiveBasic() {
           )}
         </div>
       </div>
+      {/* 审核结果综合得分 / 企业指数各维度 说明弹窗（与企业尽调报告同源） */}
+      {modalKey === 'qixin' && <QixinScoreModal onClose={() => setModalKey(null)} />}
+      {modalKey === 'shell' && <ShellCompanyModal onClose={() => setModalKey(null)} />}
+      {modalKey === 'kechuang' && <KechuangScoreModal onClose={() => setModalKey(null)} />}
+      {modalKey === 'contract' && <ContractDefaultModal onClose={() => setModalKey(null)} />}
+      {modalKey === 'judicial' && <JudicialRiskModal onClose={() => setModalKey(null)} />}
+      {modalKey === 'comprehensive' && <ComprehensiveModal onClose={() => setModalKey(null)} />}
     </div>
   )
 }

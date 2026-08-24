@@ -51,6 +51,8 @@ import EnterpriseDashboard from './EnterpriseDashboard'
 import ScoreModule from './ScoreModule'
 import DecisionModule from './DecisionModule'
 import DmModule from './DmModule'
+import DmEntArchiveBasic from './DmEntArchiveBasic'
+import DmPersonArchiveBasic from './DmPersonArchiveBasic'
 import { getDashboardByKey } from './dashboardData'
 
 // AI 营销现回归系统框架内渲染（保留顶部导航与左侧菜单），不再需要全屏沉浸式模式
@@ -239,6 +241,16 @@ export default function Console() {
     // 受益所有人
     'ep:jd-beneficiary': 'layers',
     'ep:jd-beneficiary-result': 'search',
+    // 企业信贷审批（顺位第一 · 由零售信贷贷前四页整体迁入）
+    'ep:ent-pre-report': 'report',
+    'ep:ent-pre-report-detail': 'eye',
+    'ep:ent-pre-verify': 'verify',
+    'ep:ent-pre-verify-detail': 'eye',
+    'ep:ent-credit-kimi': 'shield',
+    'ep:ent-credit-kimi-detail': 'eye',
+    'ep:ent-pre-fraud': 'alert',
+    'ep:ent-pre-fraud-detail': 'eye',
+    'ep:jd-equity-penetrate': 'share',
     // 企业档案（详情内页，不在左侧菜单）
     'ep:archive': 'database',
     // 数字营销（新 IA：潜客挖掘 / 专题营销 / 营销管理 / 存客管理 / 金融工具）
@@ -691,6 +703,14 @@ export default function Console() {
               <ScoreModule pageKey={key} search={loc.search} />
             ) : key.startsWith('de:') ? (
               <DecisionModule pageKey={key} search={loc.search} />
+            ) : key === 'cm:ent-archive-basic' ? (
+              <DmEntArchiveBasic />
+            ) : key === 'cm:person-archive-basic' ? (
+              <DmPersonArchiveBasic />
+            ) : key === 'cm:cust-archive-legacy' ? (
+              <CustProfile custId="CUST-100891" title="个人档案（旧版 · 零售信贷）" />
+            ) : key === 'cm:cust-score-legacy' ? (
+              <CustScoreDetail defaultCust="CUST-100891" defaultProd="zhicha" />
             ) : key.startsWith('dm:') ? (
               <DmModule pageKey={key} />
             ) : (

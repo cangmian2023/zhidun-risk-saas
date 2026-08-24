@@ -1,6 +1,12 @@
 // 企业尽调报告 · 1:1 复刻文档（广州博鳌纵横网络科技有限公司）
 import { useState, useRef } from 'react'
-import { EpPage, EpCard, EpTag, EpBtn } from '../../epCommon'
+import { EpPage, EpBtn } from '../../epCommon'
+import QixinScoreModal from './modals/QixinScoreModal'
+import ShellCompanyModal from './modals/ShellCompanyModal'
+import KechuangScoreModal from './modals/KechuangScoreModal'
+import ContractDefaultModal from './modals/ContractDefaultModal'
+import JudicialRiskModal from './modals/JudicialRiskModal'
+import ComprehensiveModal from './modals/ComprehensiveModal'
 
 /* ============ 数据 ============ */
 const COMPANY = {
@@ -77,13 +83,13 @@ const RISK_OVERVIEW = [
 ]
 
 /* 企业指数（经营指数 / 空壳指数 / 科创分 / 合同违约指数 / 司法风险）
- * 每个维度点击弹窗，iframe 1:1 复刻 record/功能分解/*.html */
+ * 每个维度点击弹窗，弹出对应的 React 组件（见 ./modals/*，由原 HTML 1:1 转写） */
 const INDICES = [
-  { name: '经营指数', score: 65, color: '#1677ff', html: '企业指数 .html' },
-  { name: '空壳指数', score: 72, color: '#D97706', html: '空壳指数.html' },
-  { name: '科创分', score: 81, color: '#7C3AED', html: '科创分.html' },
-  { name: '合同违约指数', score: 58, color: '#EA580C', html: '合同违约指数.html' },
-  { name: '司法风险', score: 30, color: '#DC2626', html: '司法风险.html' },
+  { name: '经营指数', score: 65, color: '#1677ff', modal: 'qixin' },
+  { name: '空壳指数', score: 72, color: '#D97706', modal: 'shell' },
+  { name: '科创分', score: 81, color: '#7C3AED', modal: 'kechuang' },
+  { name: '合同违约指数', score: 58, color: '#EA580C', modal: 'contract' },
+  { name: '司法风险', score: 30, color: '#DC2626', modal: 'judicial' },
 ]
 
 /* 企业风险 */
@@ -139,6 +145,50 @@ const GRAPH_ITEMS = [
   { title: '历史股东', desc: '历史股东变更记录', icon: '📜' },
   { title: '疑似关系', desc: '疑似关联关系挖掘', icon: '🔍' },
 ]
+
+/* 初始查询页数据（双 Tab：常规筛查 / AI 尽调助手） */
+const JD_SEED = {
+  pageTitle: '企业尽调',
+  tabs: [
+    { key: 'normal', label: '常规筛查' },
+    { key: 'ai', label: 'AI 尽调助手', badge: 'beta' },
+  ],
+  topActions: { batchScreen: '批量筛查', settings: '筛查设置' },
+  normal: {
+    title: '一键筛查合作方资质风险',
+    placeholder: '请输入企业名称/统一社会信用代码',
+    defaultConfig: '默认配置',
+    screenBtn: '筛查',
+    trySearchPrefix: '试着搜索：',
+    trySearch: [
+      { name: '广州博鳌纵横网络科技有限公司' },
+      { name: '中经汇通电子商务有限公司' },
+    ],
+    historyTitle: '历史筛查',
+    batchDownload: '批量下载',
+    more: '更多',
+    failTag: '不通过',
+    history: [
+      { id: 1, name: '广州博鳌纵横网络科技有限公司', time: '2026-08-19 22:22' },
+      { id: 2, name: '乐视网信息技术（北京）股份有限公司', time: '2026-08-19 22:17' },
+      { id: 3, name: '广州博鳌纵横网络科技有限公司', time: '2026-08-19 21:21' },
+    ],
+  },
+  ai: {
+    title: '智能分析合作方资质风险',
+    placeholder: '输入您的尽调需求。使用 @企业名称 选择企业',
+    defaultConfig: '默认配置',
+    prompts: [
+      { label: '从供应商准入角度分析：', mention: '@乐视网信息技术（北京）股份有限公司' },
+      { label: '从客户授信角度分析：', mention: '@广州粤信科技有限公司' },
+    ],
+    historyTitle: '历史会话',
+    history: [
+      { id: 1, title: '供应商准入视角下的乐视分析', time: '2026-08-17 18:12' },
+      { id: 2, title: '分析乐视供应商准入', time: '2026-08-17 15:52' },
+    ],
+  },
+}
 
 /* ============ 样式常量 ============ */
 const CARD_STYLE: React.CSSProperties = {
@@ -206,42 +256,21 @@ function SentimentTag({ s }: { s: string }) {
   return <span style={{ padding: '2px 8px', borderRadius: 4, fontSize: 12, color: m.color, background: m.bg, fontWeight: 600 }}>{s}</span>
 }
 
-/* 功能分解快照弹窗：iframe 1:1 复刻 record/功能分解/*.html */
-function FeatureModal({ html, onClose }: { html: string | null; onClose: () => void }) {
-  if (!html) return null
-  return (
-    <div
-      onClick={onClose}
-      style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(15,23,42,.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
-    >
-      <div
-        onClick={(e) => e.stopPropagation()}
-        style={{ width: 'min(960px, 94vw)', height: 'min(720px, 88vh)', background: '#fff', borderRadius: 14, display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: '0 20px 60px rgba(0,0,0,.3)' }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 18px', borderBottom: '1px solid #E5E7EB' }}>
-          <span style={{ fontSize: 15, fontWeight: 700, color: '#0F172A' }}>{html.replace(/\.(html?|HTML)$/i, '')}</span>
-          <button onClick={onClose} style={{ border: 'none', background: 'transparent', fontSize: 22, lineHeight: 1, cursor: 'pointer', color: '#94A3B8' }}>×</button>
-        </div>
-        <iframe
-          src={`/feature-raw/${encodeURIComponent(html)}`}
-          style={{ flex: 1, width: '100%', border: 'none' }}
-          title={html}
-        />
-      </div>
-    </div>
-  )
-}
+/* 得分详情弹窗已改为 React 组件（见 ./modals/*，由原 HTML 快照 1:1 转写），不再用 iframe 加载 HTML */
 
 /* ============ 主组件 ============ */
 export default function JdCompany() {
   const [started, setStarted] = useState(false)
   const [query, setQuery] = useState('')
+  const [initTab, setInitTab] = useState<'normal' | 'ai'>('normal')
   const [activeTab, setActiveTab] = useState('审核结果')
-  const [modalHtml, setModalHtml] = useState<string | null>(null)
+  const [modalKey, setModalKey] = useState<string | null>(null)
   const tabScrollRef = useRef<HTMLDivElement>(null)
 
-  const openReport = () => {
-    if (!query.trim()) return
+  const openReport = (name?: string) => {
+    const q = (name ?? query).trim()
+    if (!q) return
+    setQuery(q)
     setStarted(true)
     setActiveTab('审核结果')
     requestAnimationFrame(() => {
@@ -261,32 +290,120 @@ export default function JdCompany() {
     if (el) el.scrollBy({ left: dir * 220, behavior: 'smooth' })
   }
 
-  /* ===== 首页：输入企业名称 → 进入报告 ===== */
+  /* ===== 首页：双 Tab 查询（常规筛查 + AI 尽调助手） ===== */
   if (!started) {
+    const isNormal = initTab === 'normal'
+    const cfg = isNormal ? JD_SEED.normal : JD_SEED.ai
+    const topActions = (
+      <>
+        <EpBtn variant="default" size="sm"><span style={{ marginRight: 4 }}>📊</span>{JD_SEED.topActions.batchScreen}</EpBtn>
+        <EpBtn variant="default" size="sm"><span style={{ marginRight: 4 }}>⚙</span>{JD_SEED.topActions.settings}</EpBtn>
+      </>
+    )
     return (
-      <EpPage title="企业尽调报告">
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 'calc(100vh - 160px)' }}>
-          <div style={{ width: '100%', maxWidth: 720, background: '#fff', border: '1px solid #E5E7EB', borderRadius: 16, padding: '48px 40px', boxShadow: '0 8px 30px rgba(15,23,42,.06)' }}>
-            <h1 style={{ fontSize: 24, fontWeight: 800, color: '#0F172A', margin: '0 0 8px' }}>企业尽调报告</h1>
-            <p style={{ fontSize: 14, color: '#64748B', marginBottom: 28, lineHeight: 1.7 }}>
-              输入企业名称，一键生成包含审核结果、风险速览、企业指数、融资借款、关联关系等维度的尽调报告。
-            </p>
-            <div style={{ display: 'flex', gap: 12 }}>
-              <input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && openReport()}
-                placeholder="请输入企业名称，如：广州博鳌纵横网络科技有限公司"
-                style={{ flex: 1, padding: '13px 16px', border: '1px solid #CBD5E1', borderRadius: 10, fontSize: 14, outline: 'none' }}
-              />
-              <EpBtn variant="primary" size="md" onClick={openReport} disabled={!query.trim()}>
-                开始查询
-              </EpBtn>
-            </div>
-            <div style={{ marginTop: 16, fontSize: 12, color: '#94A3B8' }}>
-              示例：广州博鳌纵横网络科技有限公司
+      <EpPage title={JD_SEED.pageTitle} actions={topActions}>
+        <div style={{ maxWidth: 820, margin: '0 auto', paddingBottom: 40 }}>
+          {/* 主标题 */}
+          <h1 style={{ textAlign: 'center', fontSize: 30, fontWeight: 700, color: '#0F172A', margin: '8px 0 26px 0' }}>{cfg.title}</h1>
+
+          {/* Tab 切换 */}
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 24 }}>
+            <div style={{ display: 'inline-flex', background: '#F1F5F9', borderRadius: 8, padding: 4 }}>
+              {JD_SEED.tabs.map((t) => {
+                const active = initTab === t.key
+                return (
+                  <button key={t.key} onClick={() => setInitTab(t.key as 'normal' | 'ai')} style={{
+                    position: 'relative', padding: '7px 18px', borderRadius: 6, border: 'none', fontSize: 14, cursor: 'pointer',
+                    color: active ? '#1677ff' : '#64748B', background: active ? '#fff' : 'transparent',
+                    fontWeight: active ? 600 : 400, boxShadow: active ? '0 1px 3px rgba(0,0,0,.08)' : 'none',
+                    display: 'flex', alignItems: 'center', gap: 6,
+                  }}>
+                    {t.label}
+                    {t.badge && <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: '#1677ff', color: '#fff', fontSize: 10, fontWeight: 600, padding: '2px 6px', borderRadius: 10, lineHeight: 1 }}>{t.badge}</span>}
+                  </button>
+                )
+              })}
             </div>
           </div>
+
+          {/* 常规筛查 */}
+          {isNormal && (
+            <>
+              <div style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: 12, boxShadow: '0 2px 12px rgba(0,0,0,.04)', display: 'flex', alignItems: 'center', padding: '6px 6px 6px 0', gap: 4 }}>
+                <button style={{ display: 'flex', alignItems: 'center', gap: 6, border: 'none', background: 'transparent', fontSize: 14, color: '#475569', cursor: 'pointer', padding: '10px 14px', borderRight: '1px solid #F1F5F9', whiteSpace: 'nowrap' }}>
+                  <span style={{ fontSize: 14 }}>⚙</span>{JD_SEED.normal.defaultConfig}
+                </button>
+                <input value={query} onChange={(e) => setQuery(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && openReport()} placeholder={JD_SEED.normal.placeholder} style={{ flex: 1, border: 'none', outline: 'none', fontSize: 14, padding: '10px 12px', color: '#0F172A', background: 'transparent' }} />
+                <EpBtn variant="primary" size="md" onClick={() => openReport()} disabled={!query.trim()}>{JD_SEED.normal.screenBtn}</EpBtn>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 12, marginTop: 16, fontSize: 13, color: '#64748B', flexWrap: 'wrap' }}>
+                <span>{JD_SEED.normal.trySearchPrefix}</span>
+                {JD_SEED.normal.trySearch.map((s, idx) => (
+                  <span key={idx}>
+                    <button onClick={() => openReport(s.name)} style={{ border: 'none', background: 'transparent', color: '#1677ff', cursor: 'pointer', fontSize: 13, padding: 0 }}>{s.name}</button>
+                    {idx < JD_SEED.normal.trySearch.length - 1 && <span style={{ marginLeft: 12, color: '#CBD5E1' }}>|</span>}
+                  </span>
+                ))}
+              </div>
+
+              <div style={{ marginTop: 48, background: '#fff', border: '1px solid #E5E7EB', borderRadius: 12, padding: '20px 22px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <span style={{ fontSize: 15, fontWeight: 700, color: '#0F172A' }}>{JD_SEED.normal.historyTitle}</span>
+                    <button style={{ border: 'none', background: 'transparent', color: '#64748B', fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}><span>⬇</span>{JD_SEED.normal.batchDownload}</button>
+                  </div>
+                  <button style={{ border: 'none', background: 'transparent', color: '#64748B', fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 2 }}>{JD_SEED.normal.more}<span style={{ fontSize: 10 }}>▾</span></button>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                  {JD_SEED.normal.history.map((h) => (
+                    <div key={h.id} onClick={() => openReport(h.name)} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <span style={{ padding: '2px 10px', borderRadius: 10, fontSize: 11, fontWeight: 600, color: '#B91C1C', background: '#FEE2E2' }}>{JD_SEED.normal.failTag}</span>
+                        <span style={{ fontSize: 14, color: '#1677ff' }}>{h.name}</span>
+                      </div>
+                      <span style={{ color: '#94A3B8', fontSize: 13, whiteSpace: 'nowrap' }}>{h.time}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* AI 尽调助手 */}
+          {!isNormal && (
+            <>
+              <div style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: 12, boxShadow: '0 2px 12px rgba(0,0,0,.04)', padding: '18px 20px 14px' }}>
+                <textarea value={query} onChange={(e) => setQuery(e.target.value)} placeholder={JD_SEED.ai.placeholder} rows={3} style={{ width: '100%', border: 'none', outline: 'none', resize: 'none', fontSize: 14, lineHeight: 1.6, color: '#0F172A', background: 'transparent' }} />
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 12, paddingTop: 12, borderTop: '1px solid #F1F5F9' }}>
+                  <button style={{ display: 'flex', alignItems: 'center', gap: 6, border: 'none', background: 'transparent', fontSize: 13, color: '#475569', cursor: 'pointer' }}><span style={{ fontSize: 14 }}>⚙</span>{JD_SEED.ai.defaultConfig}</button>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <button style={{ border: 'none', background: 'transparent', color: '#94A3B8', cursor: 'pointer', fontSize: 18, padding: 4 }} title="附件">📎</button>
+                    <button onClick={() => openReport()} disabled={!query.trim()} style={{ width: 36, height: 36, borderRadius: '50%', border: 'none', background: query.trim() ? '#1677ff' : '#E2E8F0', color: '#fff', cursor: query.trim() ? 'pointer' : 'not-allowed', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>➤</button>
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: 12, marginTop: 20, flexWrap: 'wrap', justifyContent: 'center' }}>
+                {JD_SEED.ai.prompts.map((p, idx) => (
+                  <button key={idx} onClick={() => setQuery(`${p.label}${p.mention}`)} style={{ padding: '8px 16px', borderRadius: 20, border: '1px solid #E2E8F0', background: '#fff', fontSize: 13, color: '#475569', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <span style={{ color: '#94A3B8' }}>{p.label}</span><span style={{ color: '#1677ff' }}>{p.mention}</span>
+                  </button>
+                ))}
+              </div>
+
+              <div style={{ marginTop: 48 }}>
+                <h2 style={{ fontSize: 15, fontWeight: 700, color: '#0F172A', margin: '0 0 16px 0' }}>{JD_SEED.ai.historyTitle}</h2>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                  {JD_SEED.ai.history.map((h) => (
+                    <div key={h.id} onClick={() => openReport(h.title)} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 14, color: '#0F172A', cursor: 'pointer', padding: '8px 4px', borderRadius: 6 }}>
+                      <span>{h.title}</span><span style={{ color: '#94A3B8', fontSize: 13, whiteSpace: 'nowrap' }}>{h.time}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </EpPage>
     )
@@ -387,7 +504,7 @@ export default function JdCompany() {
               审核结果
             </div>
             <div style={{ padding: '24px', display: 'flex', alignItems: 'center', gap: 48, flexWrap: 'wrap' }}>
-              <div style={{ textAlign: 'center', cursor: 'pointer' }} onClick={() => setModalHtml('综合得分.HTML')}>
+              <div style={{ textAlign: 'center', cursor: 'pointer' }} onClick={() => setModalKey('comprehensive')}>
                 <div style={{ fontSize: 56, fontWeight: 800, color: '#DC2626', lineHeight: 1 }}>0</div>
                 <div style={{ fontSize: 13, color: '#1677ff', marginTop: 4 }}>综合得分（点击查看说明）</div>
               </div>
@@ -483,7 +600,7 @@ export default function JdCompany() {
             </div>
             <div style={{ padding: '32px 24px', display: 'flex', justifyContent: 'space-around', flexWrap: 'wrap', gap: 24 }}>
               {INDICES.map((idx, i) => (
-                <Gauge key={i} score={idx.score} color={idx.color} label={idx.name} onClick={() => setModalHtml(idx.html)} />
+                <Gauge key={i} score={idx.score} color={idx.color} label={idx.name} onClick={() => setModalKey(idx.modal)} />
               ))}
             </div>
             <div style={{ padding: '0 24px 24px', fontSize: 12, color: '#94A3B8', textAlign: 'center' }}>
@@ -725,7 +842,12 @@ export default function JdCompany() {
         </section>
       </div>
 
-      <FeatureModal html={modalHtml} onClose={() => setModalHtml(null)} />
+      {modalKey === 'qixin' && <QixinScoreModal onClose={() => setModalKey(null)} />}
+      {modalKey === 'shell' && <ShellCompanyModal onClose={() => setModalKey(null)} />}
+      {modalKey === 'kechuang' && <KechuangScoreModal onClose={() => setModalKey(null)} />}
+      {modalKey === 'contract' && <ContractDefaultModal onClose={() => setModalKey(null)} />}
+      {modalKey === 'judicial' && <JudicialRiskModal onClose={() => setModalKey(null)} />}
+      {modalKey === 'comprehensive' && <ComprehensiveModal onClose={() => setModalKey(null)} />}
     </EpPage>
   )
 }

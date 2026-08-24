@@ -13,6 +13,12 @@ import MidAlertWorkbench from './MidAlertWorkbench';
 import ScoreModelManagePage from './ScoreModelManage';
 import { FkModule } from './enterprise/fengkong/FkModule';
 import { JdModule } from './enterprise/jindiao/JdModule';
+import {
+  EntPreVerify, EntPreVerifyDetail,
+  EntCreditKimi, EntCreditKimiDetail,
+  EntPreFraud, EntPreFraudDetail,
+  EntPreReport, EntPreReportDetail,
+} from './EntCreditApproval';
 
 export default function EnterpriseModule({ pageKey }: { pageKey: string }) {
   const cur = pageKey.split(':')[1] ?? 'overview';
@@ -39,6 +45,23 @@ export default function EnterpriseModule({ pageKey }: { pageKey: string }) {
       return new URLSearchParams(window.location.search).get('model') ? <EntModelDetail /> : <ScoreModelManagePage domain="ep" />;
     case 'alert-workbench':
       return <MidAlertWorkbench domain="ep" />;
+    // 企业信贷审批（顺位第一 · 由零售信贷贷前四页整体迁入）
+    case 'ent-pre-report':
+      return <EntPreReport />;
+    case 'ent-pre-report-detail':
+      return <EntPreReportDetail />;
+    case 'ent-pre-verify':
+      return <EntPreVerify />;
+    case 'ent-pre-verify-detail':
+      return <EntPreVerifyDetail />;
+    case 'ent-credit-kimi':
+      return <EntCreditKimi />;
+    case 'ent-credit-kimi-detail':
+      return <EntCreditKimiDetail />;
+    case 'ent-pre-fraud':
+      return <EntPreFraud />;
+    case 'ent-pre-fraud-detail':
+      return <EntPreFraudDetail />;
     case 'qiye-profile':
       // 企业档案详情：由「企业档案检索 / 企业一键风险查询」页的「查看档案」按钮进入（菜单入口已按需求删除，仅保留路由）
       return <QiyeProfile />;

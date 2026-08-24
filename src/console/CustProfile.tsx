@@ -14,6 +14,7 @@ import { Sam, Cal } from './SourceTag'
 import { PageShell } from './PageShell'
 import { usePageNav } from './pageNav'
 import { RelationGraphView } from './RelationGraphView'
+import { ModelScorePanel } from './ModelScorePanel'
 import {
   useCustData,
   toggleFollowCust,
@@ -161,7 +162,6 @@ const STATUS_KIND: Record<string, 'green' | 'blue' | 'amber' | 'red' | 'gray'> =
   冻结: 'gray',
 }
 const STAGE_KIND: Record<string, 'green' | 'blue' | 'amber' | 'red'> = { M1: 'blue', M2: 'amber', 'M3+': 'red' }
-const SCORE_KIND: Record<string, 'green' | 'blue' | 'amber' | 'red'> = { 优: 'green', 良: 'blue', 中: 'amber', 差: 'red' }
 
 const TABS = [
   '基本信息',
@@ -226,51 +226,7 @@ function VerifyMark({ checks }: { checks: CustExternalCheck[] }) {
 }
 
 /* ============ 模型评分（常驻 2×2：额度建议 + 智察 / 智信 / 智融 三卡，点击进详情） ============ */
-function ModelScorePanel({ scores, custId, source }: { scores: CustScores; custId: string; source?: string }) {
-  const { goDetail } = usePageNav()
-  const cards = [
-    { prod: 'zhicha', c: scores.zhiCha },
-    { prod: 'zhixin', c: scores.zhiXin },
-    { prod: 'zhirong', c: scores.zhiRong },
-  ]
-  // 点击评分卡进入得分详情：从评分产品进入则带 source=sc，得分详情返回时回到单客详情（评分产品语境）
-  const go = (prod: string) => {
-    goDetail(`/console/cr/mid-cust-score?cust=${custId}&prod=${prod}`)
-  }
-  return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gridTemplateRows: '1fr 1fr', gap: 8, flex: 1, minHeight: 0 }}>
-      {/* 额度建议：最左上角 */}
-      <div style={{ border: '1px solid #EDE9FE', borderRadius: 10, padding: 10, background: '#F5F3FF', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-        <div style={{ fontSize: 11, fontWeight: 600, color: '#6D28D9' }}>额度建议</div>
-        <div style={{ fontSize: 18, fontWeight: 800, color: '#6D28D9', marginTop: 3 }}>{money(scores.limitSuggest.suggested)}</div>
-        <div style={{ fontSize: 11, color: '#64748B', marginTop: 2 }}>当前 {money(scores.limitSuggest.current)}</div>
-      </div>
-      {cards.map(({ prod, c }) => (
-        <button
-          key={prod}
-          onClick={() => go(prod)}
-          title={`查看 ${c.name} 详情`}
-          style={{
-            border: '1px solid #E2E8F0', borderRadius: 10, padding: 10, background: '#fff', cursor: 'pointer',
-            textAlign: 'left', display: 'flex', flexDirection: 'column', gap: 3, height: '100%', justifyContent: 'center', transition: 'border-color .15s, box-shadow .15s',
-          }}
-          onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#A78BFA'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(139,92,246,.12)' }}
-          onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#E2E8F0'; e.currentTarget.style.boxShadow = 'none' }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span style={{ fontSize: 11, fontWeight: 600, color: '#334155' }}>{c.name}</span>
-            <Badge kind={SCORE_KIND[c.level]}>{c.level}</Badge>
-          </div>
-          <div style={{ fontSize: 18, fontWeight: 800, color: '#0F172A' }}>{c.score}</div>
-          <div style={{ height: 4, borderRadius: 3, background: '#EEF2FF', overflow: 'hidden' }}>
-            <div style={{ height: '100%', width: `${Math.min(100, Math.round(c.score / 10))}%`, background: '#8B5CF6' }} />
-          </div>
-          <div style={{ fontSize: 10, color: '#8B5CF6' }}>› 查看模型详情</div>
-        </button>
-      ))}
-    </div>
-  )
-}
+// 已抽取为通用组件 ModelScorePanel（见 ./ModelScorePanel.tsx），本页调用带跳转逻辑。
 
 // 关系图谱组件已迁移至 RelationGraphView.tsx（分组放射布局 + 右侧联动清单）
 
@@ -622,7 +578,7 @@ export function CustProfile({ custId, title = '单客详情' }: { custId?: strin
             <span style={{ fontSize: 13, fontWeight: 700, color: '#0F172A' }}>模型评分</span>
             <span style={{ fontSize: 11, color: '#94A3B8' }}>点击卡片查看明细 <Sam label="样例" value="custProfileData.ts" /></span>
           </div>
-          <ModelScorePanel scores={cur.scores} custId={cur.custId} source={source} />
+          <ModelScorePanel scores={cur.scores} onCardClick={(prod) => goDetail(`/console/cr/mid-cust-score?cust=${cur.custId}&prod=${prod}`)} />
         </div>
       </div>
 

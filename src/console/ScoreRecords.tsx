@@ -156,7 +156,7 @@ export default function ScoreRecordsPage() {
             defaultPageSize={10}
             actions={(r: any) => (
               <div className="flex items-center gap-2">
-                <Button size="sm" variant="ghost" onClick={() => goDetail('/console/cr/mid-cust-score?cust=' + r.custId + '&prod=' + r.model)}>查看</Button>
+                <Button size="sm" variant="ghost" onClick={() => goDetail('/console/dm/person-archive-basic?name=' + encodeURIComponent(r.custName || r.custId))}>查看</Button>
                 {r.status === 'fail' ? (
                   <Button size="sm" variant="ghost" onClick={() => retry(r.id)}>重试</Button>
                 ) : null}

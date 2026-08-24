@@ -95,12 +95,12 @@ export default function RetailCreditHome() {
     goPath(key);
     setFocus(false);
   };
-  const goCust = (custId: string) => {
-    goDetail(`/console/cr/mid-single-cust?cust=${custId}`);
+  const goCust = (custId: string, name?: string) => {
+    goDetail(`/console/dm/person-archive-basic?name=${encodeURIComponent(name || custId)}`);
     setQ(''); setFocus(false); setAdvOpen(false);
   };
   const onEnter = () => {
-    if (matches.length >= 1) goCust(matches[0].custId);
+    if (matches.length >= 1) goCust(matches[0].custId, matches[0].name);
   };
 
   const metric = (label: string, value: string, sub: string, accent: string, tag: ReactNode) => (
@@ -140,7 +140,7 @@ export default function RetailCreditHome() {
                   {matches.map((c) => (
                     <div
                       key={c.custId}
-                      onMouseDown={() => goCust(c.custId)}
+                      onMouseDown={() => goCust(c.custId, c.name)}
                       style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '10px 14px', cursor: 'pointer', borderBottom: '1px solid #F1F5F9' }}
                     >
                       <div style={{ minWidth: 0 }}>
@@ -263,7 +263,7 @@ export default function RetailCreditHome() {
               ) : advMatches.map((c) => (
                 <div
                   key={c.custId}
-                  onClick={() => goCust(c.custId)}
+                  onClick={() => goCust(c.custId, c.name)}
                   style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '10px 14px', cursor: 'pointer', borderBottom: '1px solid #F1F5F9' }}
                   onMouseEnter={(e) => { e.currentTarget.style.background = '#F8FAFC'; }}
                   onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}

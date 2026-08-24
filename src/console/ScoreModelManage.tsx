@@ -45,12 +45,12 @@ export default function ScoreModelManagePage({ domain = 'sc' }: { domain?: Domai
                   <Badge kind={m.enabled ? 'green' : 'gray'}>{m.enabled ? '已启用' : '已停用'}</Badge>
                 </div>
 
-                <div className="mt-3 flex items-end gap-2">
-                  <span className="text-3xl font-bold tabular-nums" style={{ color: m.color }}>{m.score}</span>
-                  <span className="mb-1 text-xs text-slate-400">当前得分 · {m.range[0]}–{m.range[1]}</span>
-                </div>
+                <p className="mt-3 line-clamp-2 text-sm leading-relaxed text-slate-500">
+                  {m.summary ?? m.desc ?? '—'}
+                </p>
 
                 <div className="mt-3 space-y-1 text-sm text-slate-500">
+                  <div className="flex justify-between"><span>评分范围</span><span className="text-slate-700">{m.range[0]}–{m.range[1]}</span></div>
                   <div className="flex justify-between"><span>算法类型</span><span className="text-slate-700">{m.algoType}</span></div>
                   <div className="flex justify-between"><span>版本</span><span className="text-slate-700">{m.version}</span></div>
                   <div className="flex justify-between"><span>更新时间</span><span className="text-slate-700">{m.updatedAt}</span></div>

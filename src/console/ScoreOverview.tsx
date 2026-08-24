@@ -51,7 +51,7 @@ export default function ScoreOverviewPage() {
 
   const onSearch = () => {
     const v = search.trim()
-    if (v) goDetail('/console/cr/mid-cust-score?cust=' + encodeURIComponent(v) + '&prod=zhixin')
+    if (v) goDetail('/console/dm/person-archive-basic?name=' + encodeURIComponent(v))
   }
   const openImport = () => {
     setImportMsg('')
@@ -116,7 +116,7 @@ export default function ScoreOverviewPage() {
               return (
                 <div key={m.prod} className="rounded-2xl border border-slate-100 bg-white p-5 shadow-card">
                   <div className="flex items-center justify-between">
-                    <span className="text-base font-semibold text-ink-900">{SCORE_PROD_LABEL[m.prod]}</span>
+                    <span className="text-base font-semibold text-ink-900">{SCORE_PROD_LABEL[m.prod] ?? m.name}</span>
                     <Badge kind={m.enabled ? 'green' : 'gray'}>{m.enabled ? '已启用' : '未启用'}</Badge>
                   </div>
                   <div className="mt-1 text-xs text-slate-400">版本 {m.version} · 更新于 {m.updatedAt}</div>

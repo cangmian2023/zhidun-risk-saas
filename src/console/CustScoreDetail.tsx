@@ -2,8 +2,7 @@
  * 三模型为三个独立页面（prod 参数区分，URL 即页面）：智察分 / 智信分 / 智融分
  * 顶部继承单客详情基础信息（客户名 + 标签 + 右侧模型快捷入口互跳 + 额度建议），Tab 吸顶（top 56 跟随全局标题）：
  *   Tab1 模型分     —— 模型分概览（含维度拆解，三模型各自维度）+ 模型分趋势（环比/趋势）
- *   Tab2 关系图谱 —— 复用单客详情 RelationGraphView 公共组件，仅展示「影响本模型的关联因子」（relRelevance 判定），不编造模型外内容
- *   Tab3 预警处置 —— 分值阈值预警 + 处置流程（动态读 bizFlows.json f-alert-dispose，一行节点 + 状态行 + 处置按钮）+ 规则命中预警（只显示与当前模型相关的，三页面各看各的；其余预警归对应模型页）+ 操作日志（统一时间线，由 Tab1 迁入）
+ *   Tab2 预警处置 —— 分值阈值预警 + 处置流程（动态读 bizFlows.json f-alert-dispose，一行节点 + 状态行 + 处置按钮）+ 规则命中预警（只显示与当前模型相关的，三页面各看各的；其余预警归对应模型页）+ 操作日志（统一时间线，由 Tab1 迁入）
  *   Tab4 用户数据   —— 数据明细（原始数据 · 点击行展开逐笔表格 · 标注供哪个特征使用）+ 数据来源
  *   Tab5 模型信息   —— 基本信息（含版本历史）/ 结果含义 / 运营效果 / 算法解释
  * 原则：不堆装饰性提示；处置动作跳真实页面（预警/处置工作台）；旧数据按 riskDims+alerts 运行时兜底派生。
@@ -23,9 +22,7 @@ import { models } from './data';
 import { useScore, computeZhixin, ZHIXIN_SCORECARD, resolveRiskByModel, fusionByLevel, type ScoreProd, type ModelMeta } from './scoreData';
 import ModelDecisionGraph from './ModelDecisionGraph';
 import { PIPELINE_GRAPHS } from './modelGraphData';
-import { RelationGraphView } from './RelationGraphView';
 import type { MidCustomer, ModelScoreItem, CustRiskDim, CustRelationNode } from './midData';
-import type { CustRelationGraph, CustGraphNode, CustGraphEdge, GraphTheme, GraphNodeType } from './custProfileData';
 
 type ProdKey = 'zhicha' | 'zhixin' | 'zhirong';
 const PROD_KEYS: ProdKey[] = ['zhicha', 'zhixin', 'zhirong'];
@@ -487,66 +484,6 @@ const INPUT_DETAILS: Record<ProdKey, InputDetail[]> = {
   ],
 };
 
-/* 关系图谱适配器：把 midCustomers.relations（扁平节点）转成单客详情共用的 CustRelationGraph，
- * 仅保留「影响本模型的关联因子」（relRelevance 判定），不编造模型外内容；type→theme 映射支持主题切换。 */
-const REL_THEME: Record<string, GraphTheme> = { company: '经营', device: '设备', person: '社交', contact: '社交' };
-const RISK_MAP: Record<string, CustGraphNode['risk']> = { 高危: '高危', 中: '关注', 低: '正常' };
-function toRelationGraph(cust: MidCustomer | undefined, prod: ProdKey): CustRelationGraph {
-  const rels = (cust?.relations ?? []).filter((r) => relRelevance(r, prod));
-  const nodes: CustGraphNode[] = [
-    { id: 'self', type: 'self', name: cust?.name ?? '本人', rel: '本人' },
-    ...rels.map((r) => ({
-      id: r.id,
-      type: (r.type === 'contact' ? 'person' : r.type) as GraphNodeType,
-      name: r.name,
-      rel: r.rel,
-      risk: RISK_MAP[r.risk ?? ''],
-      riskLevel: r.riskLevel,
-      openAlerts: (r as { openAlerts?: number }).openAlerts,
-      idCard: r.idCard,
-      phone: r.phone,
-      channel: r.channel,
-      regCapital: r.regCapital,
-      legalPerson: r.legalPerson,
-      ringId: r.ringId,
-    })),
-  ];
-  const edges: CustGraphEdge[] = rels.map((r) => ({
-    source: 'self',
-    target: r.id,
-    theme: REL_THEME[r.type] ?? '社交',
-    rel: r.rel,
-    danger: r.risk === '高危',
-  }));
-  const themeSet = new Set<GraphTheme>(['综合']);
-  edges.forEach((e) => themeSet.add(e.theme));
-  return { nodes, edges, themes: [...themeSet], collectedAt: '—', source: '关联关系（模型相关因子）' };
-}
-
-/* 关联实体 → 对本模型（prod）的影响：返回 null 表示不计入本模型/不直接入模，否则给出方向与说明
- * 作用：让模型得分页的图谱聚焦「哪些关联因子影响了本模型」，而非照搬完整关系网络 */
-function relRelevance(r: CustRelationNode, prod: ProdKey): { impact: '拉高' | '拉低'; desc: string } | null {
-  if (prod === 'zhicha') {
-    if (r.type === 'device') return { impact: '拉高', desc: '设备/网络关联（反欺诈入模）' };
-    if (r.type === 'company' && r.risk === '高危') return { impact: '拉高', desc: '高危实体 · 黑产关联' };
-    if (r.rel.includes('共借') || r.rel.includes('担保')) return { impact: '拉高', desc: '共借/担保（欺诈传导候选）' };
-    if (r.type === 'contact') return { impact: '拉高', desc: '联系人风险传导（候选）' };
-    return null;
-  }
-  if (prod === 'zhixin') {
-    if (r.rel.includes('共借') || r.rel.includes('担保')) return { impact: '拉低', desc: '共债/担保风险传导（入模）' };
-    if (r.type === 'company') return { impact: '拉低', desc: '经营风险（关联企业）' };
-    if (r.type === 'contact') return { impact: '拉低', desc: '联系人风险传导' };
-    return null; // 设备主要供反欺诈，不直接入信用模型
-  }
-  // zhirong 综合：经智察分/智信分间接受关联实体影响，相关因子即二者候选
-  if (r.type === 'device') return { impact: '拉低', desc: '经智察分间接影响·设备关联' };
-  if (r.type === 'company') return { impact: '拉低', desc: r.risk === '高危' ? '经智察分·高危实体黑产关联' : '经智信分·经营风险' };
-  if (r.rel.includes('共借') || r.rel.includes('担保')) return { impact: '拉低', desc: '经智信分·共债/担保传导' };
-  if (r.type === 'contact') return { impact: '拉低', desc: '经智信分·联系人传导' };
-  return null;
-}
-
 /* 规则命中预警 → 相关模型：预警是客户级事件（贷中监控触发），但不同模型关注不同预警类——
  * 反欺诈（智察）看欺诈信号（设备/黑产/多头/行为异常）、信用（智信）看还款能力与意愿（负债/逾期/司法/失联）、
  * 综合（智融）看价值与机会（提额/需求）。本页规则命中预警按此映射只展示与当前模型相关的条目。 */
@@ -602,19 +539,18 @@ function EventLine({ ev }: { ev: FlowEvent }) {
   );
 }
 
-type TabKey = 'score' | 'graph' | 'alert' | 'data' | 'model';
+type TabKey = 'score' | 'alert' | 'data' | 'model';
 const TABS: { key: TabKey; label: string }[] = [
   { key: 'score', label: '模型分' },
-  { key: 'graph', label: '关系图谱' },
   { key: 'alert', label: '预警处置' },
   { key: 'data', label: '用户数据' },
   { key: 'model', label: '模型信息' },
 ];
 
-export default function CustScoreDetail() {
+export default function CustScoreDetail({ defaultCust, defaultProd }: { defaultCust?: string; defaultProd?: ProdKey } = {}) {
   const [params] = useSearchParams();
-  const custId = params.get('cust') ?? '';
-  const prodParam = (params.get('prod') ?? 'zhicha') as ProdKey;
+  const custId = params.get('cust') ?? defaultCust ?? '';
+  const prodParam = (params.get('prod') ?? defaultProd ?? 'zhicha') as ProdKey;
   const prod: ProdKey = PROD_KEYS.includes(prodParam) ? prodParam : 'zhicha';
   const fromAlertId = params.get('id') ?? '';
   // 返回地址：入口跳转带 back 参数（如客户分组/客户列表/评分总览搜索），缺省回退单客详情
@@ -627,9 +563,6 @@ export default function CustScoreDetail() {
   const globalAlerts = useMidAlerts();
   const [tab, setTab] = useState<TabKey>('score');
   const [openInput, setOpenInput] = useState<Record<number, boolean>>({});
-  const [graphTheme, setGraphTheme] = useState<GraphTheme>('综合');
-  type GraphSel = { kind: 'node'; node: CustGraphNode } | { kind: 'edge'; edge: CustGraphEdge };
-  const [sel, setSel] = useState<GraphSel | null>(null);
 
   const cust: MidCustomer | undefined = useMemo(
     () => customers.find((c) => c.custId === custId) ?? customers[0],
@@ -708,14 +641,6 @@ export default function CustScoreDetail() {
     }
     return r;
   }, [cust, item, prod]);
-
-  // 关系图谱派生（复用单客详情 RelationGraphView 公共组件）：仅保留影响本模型的关联因子
-  const graphRelevant = useMemo(
-    () => (cust?.relations ?? []).filter((r) => relRelevance(r, prod)).map((r) => ({ name: r.name, ...relRelevance(r, prod)! })),
-    [cust, prod],
-  );
-  const relationGraph = useMemo(() => toRelationGraph(cust, prod), [cust, prod]);
-  const nodeMap = useMemo(() => Object.fromEntries(relationGraph.nodes.map((n) => [n.id, n])), [relationGraph]);
 
   if (!cust || !item) {
     return (
@@ -940,34 +865,6 @@ export default function CustScoreDetail() {
             </Panel>
 
           </>
-        )}
-
-        {/* ========== Tab 关系图谱（按当前模型高亮影响因子，其余淡化） ========== */}
-        {tab === 'graph' && (
-          <Panel title="关系图谱" desc={`复用单客详情关系图谱组件 · 仅展示影响「${meta.label}」的关联因子（共 ${graphRelevant.length} 项）`}>
-            {graphRelevant.length ? (
-              <>
-                <RelationGraphView
-                  graph={relationGraph}
-                  theme={graphTheme}
-                  onTheme={setGraphTheme}
-                  sel={sel}
-                  onPick={setSel}
-                  nodeMap={nodeMap}
-                />
-                <div style={{ fontSize: 12, color: '#64748B', marginTop: 10, lineHeight: 1.7, background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 8, padding: '8px 12px' }}>
-                  以下为影响 <b style={{ color: meta.color }}>{meta.label}</b> 的关联因子：
-                  {graphRelevant.map((f, i) => (
-                    <span key={i} style={{ marginLeft: 6, color: f.impact === '拉高' ? '#A32D2D' : '#3B6D11' }}>
-                      {f.name}（{f.impact === '拉高' ? '拉高' : '拉低'}{prod === 'zhicha' ? '欺诈风险' : '得分'}）
-                    </span>
-                  ))}
-                </div>
-              </>
-            ) : (
-              <div style={{ fontSize: 13, color: '#94A3B8', padding: '12px 0' }}>该客户暂无影响本模型的关联因子。</div>
-            )}
-          </Panel>
         )}
 
         {/* ========== Tab2 预警处置 ========== */}

@@ -46,7 +46,7 @@ export default function ScoreCrowdPage() {
     updateScore((d) => ({ ...d, crowds: d.crowds.filter((g) => g.id !== id) }))
   }
 
-  const openDetail = (custId: string) => goDetail('/console/cr/mid-cust-score?cust=' + custId + '&prod=zhixin')
+  const openDetail = (custId: string, name?: string) => goDetail('/console/dm/person-archive-basic?name=' + encodeURIComponent(name || custId))
   const openList = (g: CrowdGroup) => nav('/console/sc/customer-list?group=' + g.id)
 
   return (
@@ -111,7 +111,7 @@ export default function ScoreCrowdPage() {
                       <button
                         key={c?.custId ?? ''}
                         type="button"
-                        onClick={() => openDetail(c?.custId ?? '')}
+                        onClick={() => openDetail(c?.custId ?? '', c?.name)}
                         className="flex w-full items-center gap-2 rounded-md px-2 py-1 text-xs text-slate-500 transition hover:bg-slate-50"
                       >
                         <span className="text-ink-900">{c?.custId ?? '—'}</span>

@@ -280,7 +280,7 @@ export default function DmPevcOrgDetail() {
   };
 
   return (
-    <div style={{ width: '100%', minHeight: '100vh', backgroundColor: '#fff', overflowX: 'clip', fontFamily: '"Microsoft Yahei", PingFang SC, sans-serif', fontSize: 14, color: '#333', paddingTop: 64, paddingLeft: 16, paddingRight: 16 }}>
+    <div style={{ width: '100%', minHeight: '100vh', backgroundColor: '#fff', fontFamily: '"Microsoft Yahei", PingFang SC, sans-serif', fontSize: 14, color: '#333', paddingTop: 64, paddingLeft: 16, paddingRight: 16 }}>
       {/* 标题区（白底，无浅蓝块，吸顶在固定顶栏下） */}
       <div style={{ ...contentMax, ...titleSticky }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 0', borderBottom: '1px solid #e5e7eb' }}>

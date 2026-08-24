@@ -340,7 +340,7 @@ function EvidenceModal({ data, open, onClose }: { data: EvidenceModal; open: boo
 
 export default function JdBeneficiaryResult({ params }: { params: URLSearchParams }) {
   const [data] = useSample<Data>('jdBeneficiaryResult.json', seed)
-  const { back } = usePageNav()
+  const { back, goDetail } = usePageNav()
   const [mgrOpen, setMgrOpen] = useState(false)
   const [evidenceOpen, setEvidenceOpen] = useState(false)
   const co = data.company
@@ -352,7 +352,7 @@ export default function JdBeneficiaryResult({ params }: { params: URLSearchParam
       crumb={data.crumb}
       actions={
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <EpBtn ghost onClick={() => back('/console/ep/jd-beneficiary')}>返回</EpBtn>
+          <EpBtn variant="ghost" onClick={() => back('/console/ep/jd-beneficiary')}>返回</EpBtn>
           <Sam value={data.source} />
         </div>
       }
@@ -399,7 +399,10 @@ export default function JdBeneficiaryResult({ params }: { params: URLSearchParam
             {co.buttons.map((b, i) => (
               <button
                 key={b}
-                onClick={() => (b === '佐证材料' ? setEvidenceOpen(true) : undefined)}
+                onClick={() => {
+                if (b === '股权穿透') goDetail('/console/ep/jd-equity-penetrate', { name: co.name })
+                else if (b === '佐证材料') setEvidenceOpen(true)
+              }}
                 style={{
                   padding: '6px 14px',
                   borderRadius: 6,

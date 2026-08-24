@@ -72,6 +72,35 @@ export const DECISION_MODULE: ReportModuleCfg = {
   listRoute: '/console/cr/pre-report', detailRoute: '/console/cr/pre-report-detail', saveFile: 'decisionVerifyData.json',
 }
 
+/* ── 企业风控 · 企业信贷审批（与零售信贷贷前四页同一套组件，独立样例数据） ── */
+export const ENT_INFO_MODULE: ReportModuleCfg = {
+  key: 'ent-info', title: '企业信息核验', subtitle: '模板驱动 · 数据从本地 JSON 文件读取（entInfoVerifyData.json）',
+  crumb: '企业风控 / 企业信贷审批', templateId: 'tpl-info-backup222', fallbackType: 'info_verify',
+  listJson: infoListJson as VerifyRow[], detailSamples: infoDetailSamples as Record<string, any>, defaultSample: infoDefaultSample,
+  listRoute: '/console/ep/ent-pre-verify', detailRoute: '/console/ep/ent-pre-verify-detail', saveFile: 'entInfoVerifyData.json',
+}
+
+export const ENT_CREDIT_MODULE: ReportModuleCfg = {
+  key: 'ent-credit', title: '企业信用风控', subtitle: '模板驱动 · 数据从本地 JSON 文件读取（entCreditVerifyData.json）',
+  crumb: '企业风控 / 企业信贷审批', templateId: 'tpl-credit-222', fallbackType: 'credit',
+  listJson: creditListJson as VerifyRow[], detailSamples: creditDetailSamples as Record<string, any>, defaultSample: creditDefaultSample,
+  listRoute: '/console/ep/ent-credit-kimi', detailRoute: '/console/ep/ent-credit-kimi-detail', saveFile: 'entCreditVerifyData.json',
+}
+
+export const ENT_FRAUD_MODULE: ReportModuleCfg = {
+  key: 'ent-fraud', title: '企业欺诈识别', subtitle: '模板驱动 · 数据从本地 JSON 文件读取（entFraudVerifyData.json）',
+  crumb: '企业风控 / 企业信贷审批', templateId: 'tpl-fraud-222', fallbackType: 'fraud',
+  listJson: fraudListJson as VerifyRow[], detailSamples: fraudDetailSamples as Record<string, any>, defaultSample: fraudDefaultSample,
+  listRoute: '/console/ep/ent-pre-fraud', detailRoute: '/console/ep/ent-pre-fraud-detail', saveFile: 'entFraudVerifyData.json',
+}
+
+export const ENT_DECISION_MODULE: ReportModuleCfg = {
+  key: 'ent-decision', title: '企业信贷审批', subtitle: '模板驱动 · 数据从本地 JSON 文件读取（entDecisionVerifyData.json）',
+  crumb: '企业风控 / 企业信贷审批', templateId: 'tpl-decision-222', fallbackType: 'decision',
+  listJson: decisionListJson as VerifyRow[], detailSamples: decisionDetailSamples as Record<string, any>, defaultSample: decisionDefaultSample,
+  listRoute: '/console/ep/ent-pre-report', detailRoute: '/console/ep/ent-pre-report-detail', saveFile: 'entDecisionVerifyData.json',
+}
+
 /* ── 来源调试标签（蓝=模板配置 / 橙=本地JSON数据 / 灰=实时算法） ── */
 const tagS: CSSProperties = { display: 'inline-block', fontSize: 9, fontFamily: 'monospace', padding: '0 3px', borderRadius: 2, marginLeft: 3, verticalAlign: 'middle', lineHeight: '14px', fontWeight: 400 }
 const Tpl = ({ f, v }: { f: string; v?: any }) => <span style={{ ...tagS, background: '#DBEAFE', color: '#1D4ED8', border: '1px solid #93C5FD' }}>{f}={v ?? 'null'}</span>

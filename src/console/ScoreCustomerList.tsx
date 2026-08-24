@@ -49,7 +49,7 @@ export default function ScoreCustomerListPage() {
     [group, customers],
   );
 
-  const openDetail = (custId: string) => goDetail('/console/cr/mid-cust-score?cust=' + custId + '&prod=zhixin');
+  const openDetail = (custId: string, name?: string) => goDetail('/console/dm/person-archive-basic?name=' + encodeURIComponent(name || custId));
 
   const rows = useMemo(() => {
     const ql = (q ?? '').trim().toLowerCase();
@@ -72,7 +72,7 @@ export default function ScoreCustomerListPage() {
           score: typeof score === 'number' ? String(score) : '—',
           tag: { v: tagFrom(level), kind: riskKindOf(level) },
           action: (
-            <Button size="sm" variant="ghost" onClick={() => openDetail(c?.custId ?? '')}>
+            <Button size="sm" variant="ghost" onClick={() => openDetail(c?.custId ?? '', c?.name)}>
               查看
             </Button>
           ),
@@ -125,7 +125,7 @@ export default function ScoreCustomerListPage() {
             columns={columns}
             rows={rows}
             clickableKey="custId"
-            onCellClick={(r: any) => openDetail(String(r.custId))}
+            onCellClick={(r: any) => openDetail(String(r.custId), r.name)}
             defaultPageSize={15}
             empty="暂无客户"
           />
