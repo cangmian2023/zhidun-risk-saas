@@ -1,5 +1,5 @@
 // 企业尽调报告 · 1:1 复刻文档（广州博鳌纵横网络科技有限公司）
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { EpPage, EpCard, EpTag, EpBtn } from '../../epCommon'
 
 /* ============ 数据 ============ */
@@ -63,7 +63,7 @@ const RISK_OVERVIEW = [
     ],
   },
   {
-    level: '低风险', color: '#2563EB', bg: '#EFF6FF', items: [
+    level: '低风险', color: '#1677ff', bg: '#EFF6FF', items: [
       { title: '数据合规约谈', time: '2023-03-15', desc: '监管部门就用户数据合规问题进行约谈，要求限期整改，已完成整改' },
     ],
   },
@@ -76,13 +76,14 @@ const RISK_OVERVIEW = [
   },
 ]
 
-/* 企业指数 */
+/* 企业指数（经营指数 / 空壳指数 / 科创分 / 合同违约指数 / 司法风险）
+ * 每个维度点击弹窗，iframe 1:1 复刻 record/功能分解/*.html */
 const INDICES = [
-  { name: '经营指数', score: 65, color: '#2563EB' },
-  { name: '信用指数', score: 45, color: '#D97706' },
-  { name: '司法指数', score: 30, color: '#DC2626' },
-  { name: '舆情指数', score: 55, color: '#7C3AED' },
-  { name: '综合指数', score: 48, color: '#0F172A' },
+  { name: '经营指数', score: 65, color: '#1677ff', html: '企业指数 .html' },
+  { name: '空壳指数', score: 72, color: '#D97706', html: '空壳指数.html' },
+  { name: '科创分', score: 81, color: '#7C3AED', html: '科创分.html' },
+  { name: '合同违约指数', score: 58, color: '#EA580C', html: '合同违约指数.html' },
+  { name: '司法风险', score: 30, color: '#DC2626', html: '司法风险.html' },
 ]
 
 /* 企业风险 */
@@ -156,14 +157,21 @@ const SECTION_TITLE: React.CSSProperties = {
   alignItems: 'center',
   gap: 8,
 }
+const TABBAR_TOP = 178 // 吸顶 tabBar 高度 + 系统导航，用于锚点 scrollMarginTop
 
 /* ============ 子组件 ============ */
-function Gauge({ score, color, label }: { score: number; color: string; label: string }) {
+function Gauge({ score, color, label, onClick }: { score: number; color: string; label: string; onClick?: () => void }) {
   const r = 42
   const c = 2 * Math.PI * r
   const offset = c - (score / 100) * c
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+    <div
+      onClick={onClick}
+      style={{
+        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
+        cursor: onClick ? 'pointer' : 'default',
+      }}
+    >
       <svg width={110} height={110} viewBox="0 0 110 110">
         <circle cx={55} cy={55} r={r} fill="none" stroke="#F1F5F9" strokeWidth={8} />
         <circle
@@ -198,9 +206,91 @@ function SentimentTag({ s }: { s: string }) {
   return <span style={{ padding: '2px 8px', borderRadius: 4, fontSize: 12, color: m.color, background: m.bg, fontWeight: 600 }}>{s}</span>
 }
 
+/* 功能分解快照弹窗：iframe 1:1 复刻 record/功能分解/*.html */
+function FeatureModal({ html, onClose }: { html: string | null; onClose: () => void }) {
+  if (!html) return null
+  return (
+    <div
+      onClick={onClose}
+      style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(15,23,42,.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{ width: 'min(960px, 94vw)', height: 'min(720px, 88vh)', background: '#fff', borderRadius: 14, display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: '0 20px 60px rgba(0,0,0,.3)' }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 18px', borderBottom: '1px solid #E5E7EB' }}>
+          <span style={{ fontSize: 15, fontWeight: 700, color: '#0F172A' }}>{html.replace(/\.(html?|HTML)$/i, '')}</span>
+          <button onClick={onClose} style={{ border: 'none', background: 'transparent', fontSize: 22, lineHeight: 1, cursor: 'pointer', color: '#94A3B8' }}>×</button>
+        </div>
+        <iframe
+          src={`/feature-raw/${encodeURIComponent(html)}`}
+          style={{ flex: 1, width: '100%', border: 'none' }}
+          title={html}
+        />
+      </div>
+    </div>
+  )
+}
+
 /* ============ 主组件 ============ */
 export default function JdCompany() {
+  const [started, setStarted] = useState(false)
+  const [query, setQuery] = useState('')
   const [activeTab, setActiveTab] = useState('审核结果')
+  const [modalHtml, setModalHtml] = useState<string | null>(null)
+  const tabScrollRef = useRef<HTMLDivElement>(null)
+
+  const openReport = () => {
+    if (!query.trim()) return
+    setStarted(true)
+    setActiveTab('审核结果')
+    requestAnimationFrame(() => {
+      const el = document.getElementById('tab-审核结果')
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    })
+  }
+
+  const onTabClick = (t: string) => {
+    setActiveTab(t)
+    const el = document.getElementById('tab-' + t)
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
+  const scrollTabs = (dir: number) => {
+    const el = tabScrollRef.current
+    if (el) el.scrollBy({ left: dir * 220, behavior: 'smooth' })
+  }
+
+  /* ===== 首页：输入企业名称 → 进入报告 ===== */
+  if (!started) {
+    return (
+      <EpPage title="企业尽调报告">
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 'calc(100vh - 160px)' }}>
+          <div style={{ width: '100%', maxWidth: 720, background: '#fff', border: '1px solid #E5E7EB', borderRadius: 16, padding: '48px 40px', boxShadow: '0 8px 30px rgba(15,23,42,.06)' }}>
+            <h1 style={{ fontSize: 24, fontWeight: 800, color: '#0F172A', margin: '0 0 8px' }}>企业尽调报告</h1>
+            <p style={{ fontSize: 14, color: '#64748B', marginBottom: 28, lineHeight: 1.7 }}>
+              输入企业名称，一键生成包含审核结果、风险速览、企业指数、融资借款、关联关系等维度的尽调报告。
+            </p>
+            <div style={{ display: 'flex', gap: 12 }}>
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && openReport()}
+                placeholder="请输入企业名称，如：广州博鳌纵横网络科技有限公司"
+                style={{ flex: 1, padding: '13px 16px', border: '1px solid #CBD5E1', borderRadius: 10, fontSize: 14, outline: 'none' }}
+              />
+              <EpBtn variant="primary" size="md" onClick={openReport} disabled={!query.trim()}>
+                开始查询
+              </EpBtn>
+            </div>
+            <div style={{ marginTop: 16, fontSize: 12, color: '#94A3B8' }}>
+              示例：广州博鳌纵横网络科技有限公司
+            </div>
+          </div>
+        </div>
+      </EpPage>
+    )
+  }
 
   return (
     <EpPage title="企业尽调报告">
@@ -222,7 +312,7 @@ export default function JdCompany() {
               {ENT_TAGS.map((t, i) => (
                 <span key={i} style={{
                   padding: '3px 10px', borderRadius: 4, fontSize: 12,
-                  color: '#2563EB', background: '#EFF6FF', border: '1px solid #DBEAFE',
+                  color: '#1677ff', background: '#EFF6FF', border: '1px solid #DBEAFE',
                   cursor: 'default',
                 }}>{t}</span>
               ))}
@@ -256,90 +346,99 @@ export default function JdCompany() {
           </div>
         </div>
 
-        {/* ===== Tab 导航 ===== */}
+        {/* ===== Tab 导航（箭头按钮顺位移动；点击锚点滚动，不切换隐藏） ===== */}
         <div style={{ ...CARD_STYLE, padding: 0, marginBottom: 16, position: 'sticky', top: 112, zIndex: 20 }}>
-          <div style={{ display: 'flex', overflowX: 'auto', padding: '0 12px', borderBottom: '1px solid #F1F5F9' }}>
-            {TABS.map((t) => {
-              const active = activeTab === t
-              return (
-                <button
-                  key={t}
-                  onClick={() => setActiveTab(t)}
-                  style={{
-                    padding: '14px 18px', fontSize: 14, fontWeight: active ? 700 : 500,
-                    color: active ? '#2563EB' : '#64748B', background: 'transparent',
-                    border: 'none', borderBottom: active ? '2px solid #2563EB' : '2px solid transparent',
-                    cursor: 'pointer', whiteSpace: 'nowrap', marginBottom: -1,
-                  }}
-                >{t}</button>
-              )
-            })}
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <button
+              onClick={() => scrollTabs(-1)}
+              style={{ flexShrink: 0, width: 36, border: 'none', background: '#fff', cursor: 'pointer', fontSize: 18, color: '#64748B', borderRight: '1px solid #F1F5F9' }}
+              title="向左"
+            >‹</button>
+            <div ref={tabScrollRef} className="tabbar-hide-scroll" style={{ display: 'flex', overflowX: 'auto', padding: '0 12px', borderBottom: '1px solid #F1F5F9', flex: 1 }}>
+              {TABS.map((t) => {
+                const active = activeTab === t
+                return (
+                  <button
+                    key={t}
+                    onClick={() => onTabClick(t)}
+                    style={{
+                      padding: '14px 18px', fontSize: 14, fontWeight: active ? 700 : 500,
+                      color: active ? '#1677ff' : '#64748B', background: 'transparent',
+                      border: 'none', borderBottom: active ? '2px solid #1677ff' : '2px solid transparent',
+                      cursor: 'pointer', whiteSpace: 'nowrap', marginBottom: -1,
+                    }}
+                  >{t}</button>
+                )
+              })}
+            </div>
+            <button
+              onClick={() => scrollTabs(1)}
+              style={{ flexShrink: 0, width: 36, border: 'none', background: '#fff', cursor: 'pointer', fontSize: 18, color: '#64748B', borderLeft: '1px solid #F1F5F9' }}
+              title="向右"
+            >›</button>
           </div>
         </div>
 
         {/* ===== 审核结果 ===== */}
-        {activeTab === '审核结果' && (
-          <>
-            {/* 综合得分 + 评估结果 */}
-            <div style={{ ...CARD_STYLE, padding: 0 }}>
-              <div style={SECTION_TITLE}>
-                <span style={{ width: 4, height: 16, background: '#2563EB', borderRadius: 2 }}></span>
-                审核结果
+        <section id="tab-审核结果" style={{ scrollMarginTop: TABBAR_TOP }} className="mb-4">
+          <div style={{ ...CARD_STYLE, padding: 0 }}>
+            <div style={SECTION_TITLE}>
+              <span style={{ width: 4, height: 16, background: '#1677ff', borderRadius: 2 }}></span>
+              审核结果
+            </div>
+            <div style={{ padding: '24px', display: 'flex', alignItems: 'center', gap: 48, flexWrap: 'wrap' }}>
+              <div style={{ textAlign: 'center', cursor: 'pointer' }} onClick={() => setModalHtml('综合得分.HTML')}>
+                <div style={{ fontSize: 56, fontWeight: 800, color: '#DC2626', lineHeight: 1 }}>0</div>
+                <div style={{ fontSize: 13, color: '#1677ff', marginTop: 4 }}>综合得分（点击查看说明）</div>
               </div>
-              <div style={{ padding: '24px', display: 'flex', alignItems: 'center', gap: 48, flexWrap: 'wrap' }}>
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: 56, fontWeight: 800, color: '#DC2626', lineHeight: 1 }}>0</div>
-                  <div style={{ fontSize: 13, color: '#94A3B8', marginTop: 4 }}>综合得分</div>
-                </div>
-                <div style={{ width: 1, height: 60, background: '#E5E7EB' }}></div>
-                <div>
-                  <div style={{ fontSize: 14, color: '#94A3B8', marginBottom: 6 }}>评估结果</div>
-                  <span style={{
-                    padding: '8px 24px', borderRadius: 8, fontSize: 20, fontWeight: 800,
-                    color: '#fff', background: '#DC2626',
-                  }}>不通过</span>
-                </div>
-                <div style={{ width: 1, height: 60, background: '#E5E7EB' }}></div>
-                <div>
-                  <div style={{ fontSize: 14, color: '#94A3B8', marginBottom: 6 }}>命中风险信息</div>
-                  <div style={{ fontSize: 32, fontWeight: 800, color: '#EA580C' }}>6<span style={{ fontSize: 14, color: '#94A3B8', fontWeight: 400, marginLeft: 4 }}>条</span></div>
-                </div>
+              <div style={{ width: 1, height: 60, background: '#E5E7EB' }}></div>
+              <div>
+                <div style={{ fontSize: 14, color: '#94A3B8', marginBottom: 6 }}>评估结果</div>
+                <span style={{
+                  padding: '8px 24px', borderRadius: 8, fontSize: 20, fontWeight: 800,
+                  color: '#fff', background: '#DC2626',
+                }}>不通过</span>
+              </div>
+              <div style={{ width: 1, height: 60, background: '#E5E7EB' }}></div>
+              <div>
+                <div style={{ fontSize: 14, color: '#94A3B8', marginBottom: 6 }}>命中风险信息</div>
+                <div style={{ fontSize: 32, fontWeight: 800, color: '#EA580C' }}>6<span style={{ fontSize: 14, color: '#94A3B8', fontWeight: 400, marginLeft: 4 }}>条</span></div>
               </div>
             </div>
+          </div>
 
-            {/* 命中风险列表 */}
-            <div style={{ ...CARD_STYLE, padding: 0 }}>
-              <div style={SECTION_TITLE}>
-                <span style={{ width: 4, height: 16, background: '#EA580C', borderRadius: 2 }}></span>
-                命中风险明细
-              </div>
-              <div style={{ padding: '0 18px 18px' }}>
-                {HIT_RISKS.map((r) => (
-                  <div key={r.id} style={{
-                    display: 'flex', alignItems: 'center', gap: 16, padding: '14px 0',
-                    borderBottom: '1px solid #F1F5F9',
-                  }}>
-                    <div style={{ width: 36, height: 36, borderRadius: '50%', background: r.color + '15', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, flexShrink: 0 }}>
-                      ⚠
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
-                        <span style={{ fontSize: 15, fontWeight: 700, color: '#0F172A' }}>{r.type}</span>
-                        <RiskBadge level={r.level} color={r.color} />
-                        <span style={{ fontSize: 12, color: '#94A3B8' }}>{r.date}</span>
-                      </div>
-                      <div style={{ fontSize: 13, color: '#64748B' }}>{r.desc}</div>
-                    </div>
-                    <EpBtn variant="default" size="sm">查看详情</EpBtn>
-                  </div>
-                ))}
-              </div>
+          {/* 命中风险列表 */}
+          <div style={{ ...CARD_STYLE, padding: 0 }}>
+            <div style={SECTION_TITLE}>
+              <span style={{ width: 4, height: 16, background: '#EA580C', borderRadius: 2 }}></span>
+              命中风险明细
             </div>
-          </>
-        )}
+            <div style={{ padding: '0 18px 18px' }}>
+              {HIT_RISKS.map((r) => (
+                <div key={r.id} style={{
+                  display: 'flex', alignItems: 'center', gap: 16, padding: '14px 0',
+                  borderBottom: '1px solid #F1F5F9',
+                }}>
+                  <div style={{ width: 36, height: 36, borderRadius: '50%', background: r.color + '15', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, flexShrink: 0 }}>
+                    ⚠
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
+                      <span style={{ fontSize: 15, fontWeight: 700, color: '#0F172A' }}>{r.type}</span>
+                      <RiskBadge level={r.level} color={r.color} />
+                      <span style={{ fontSize: 12, color: '#94A3B8' }}>{r.date}</span>
+                    </div>
+                    <div style={{ fontSize: 13, color: '#64748B' }}>{r.desc}</div>
+                  </div>
+                  <EpBtn variant="default" size="sm">查看详情</EpBtn>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
 
         {/* ===== 风险速览 ===== */}
-        {activeTab === '风险速览' && (
+        <section id="tab-风险速览" style={{ scrollMarginTop: TABBAR_TOP }} className="mb-4">
           <div style={{ ...CARD_STYLE, padding: 0 }}>
             <div style={SECTION_TITLE}>
               <span style={{ width: 4, height: 16, background: '#DC2626', borderRadius: 2 }}></span>
@@ -373,10 +472,10 @@ export default function JdCompany() {
               ))}
             </div>
           </div>
-        )}
+        </section>
 
         {/* ===== 企业指数 ===== */}
-        {activeTab === '企业指数' && (
+        <section id="tab-企业指数" style={{ scrollMarginTop: TABBAR_TOP }} className="mb-4">
           <div style={{ ...CARD_STYLE, padding: 0 }}>
             <div style={SECTION_TITLE}>
               <span style={{ width: 4, height: 16, background: '#7C3AED', borderRadius: 2 }}></span>
@@ -384,23 +483,23 @@ export default function JdCompany() {
             </div>
             <div style={{ padding: '32px 24px', display: 'flex', justifyContent: 'space-around', flexWrap: 'wrap', gap: 24 }}>
               {INDICES.map((idx, i) => (
-                <Gauge key={i} score={idx.score} color={idx.color} label={idx.name} />
+                <Gauge key={i} score={idx.score} color={idx.color} label={idx.name} onClick={() => setModalHtml(idx.html)} />
               ))}
             </div>
             <div style={{ padding: '0 24px 24px', fontSize: 12, color: '#94A3B8', textAlign: 'center' }}>
-              指数评分基于企业工商、司法、舆情、经营等多维度数据综合计算，仅供参考
+              指数评分基于企业工商、司法、舆情、经营等多维度数据综合计算，点击维度可查看指标说明（仅供参考）
             </div>
           </div>
-        )}
+        </section>
 
         {/* ===== 企业风险 ===== */}
-        {activeTab === '企业风险' && (
+        <section id="tab-企业风险" style={{ scrollMarginTop: TABBAR_TOP }} className="mb-4">
           <div style={{ ...CARD_STYLE, padding: 0 }}>
             <div style={SECTION_TITLE}>
               <span style={{ width: 4, height: 16, background: '#EA580C', borderRadius: 2 }}></span>
               企业风险
             </div>
-            <div style={{ padding: '18px 24px 24px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+            <div style={{ padding: '18px 24px 24px', display: 'grid', gridTemplateColumns: '1fr  {1fr}', gap: 16 }}>
               {ENT_RISKS.map((r, i) => (
                 <div key={i} style={{
                   padding: '18px', borderRadius: 10, border: '1px solid #E5E7EB',
@@ -411,60 +510,58 @@ export default function JdCompany() {
                     <RiskBadge level={`${r.level}风险`} color={r.color} />
                   </div>
                   <div style={{ fontSize: 13, color: '#475569', lineHeight: 1.7, marginBottom: 12 }}>{r.desc}</div>
-                  <div style={{ fontSize: 12, color: '#2563EB', background: '#EFF6FF', padding: '8px 12px', borderRadius: 6, lineHeight: 1.6 }}>
+                  <div style={{ fontSize: 12, color: '#1677ff', background: '#EFF6FF', padding: '8px 12px', borderRadius: 6, lineHeight: 1.6 }}>
                     <span style={{ fontWeight: 600 }}>建议：</span>{r.suggestion}
                   </div>
                 </div>
               ))}
             </div>
           </div>
-        )}
+        </section>
 
         {/* ===== 融资借款 ===== */}
-        {activeTab === '融资借款' && (
-          <>
-            {[
-              { title: '融资历史', data: FINANCE.financing, cols: ['轮次', '融资日期', '投资方', '融资金额', '估值', '操作'] },
-              { title: '借款信息', data: FINANCE.loans, cols: ['贷款银行', '贷款金额', '年利率', '起始日期', '到期日期', '状态'] },
-              { title: '担保信息', data: FINANCE.guarantees, cols: ['被担保方', '担保金额', '担保类型', '担保日期', '状态', '操作'] },
-              { title: '股权出质', data: FINANCE.pledge, cols: ['出质人', '质权人', '出质金额', '出质日期', '状态', '操作'] },
-            ].map((section, si) => (
-              <div key={si} style={{ ...CARD_STYLE, padding: 0 }}>
-                <div style={SECTION_TITLE}>
-                  <span style={{ width: 4, height: 16, background: '#2563EB', borderRadius: 2 }}></span>
-                  {section.title}
-                </div>
-                <div style={{ padding: '0 18px 18px', overflowX: 'auto' }}>
-                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
-                    <thead>
-                      <tr style={{ background: '#F8FAFC' }}>
-                        {section.cols.map((c, ci) => (
-                          <th key={ci} style={{ textAlign: 'left', padding: '10px 12px', fontWeight: 600, color: '#475569', whiteSpace: 'nowrap' }}>{c}</th>
+        <section id="tab-融资借款" style={{ scrollMarginTop: TABBAR_TOP }} className="mb-4">
+          {[
+            { title: '融资历史', data: FINANCE.financing, cols: ['轮次', '融资日期', '投资方', '融资金额', '估值', '操作'] },
+            { title: '借款信息', data: FINANCE.loans, cols: ['贷款银行', '贷款金额', '年利率', '起始日期', '到期日期', '状态'] },
+            { title: '担保信息', data: FINANCE.guarantees, cols: ['被担保方', '担保金额', '担保类型', '担保日期', '状态', '操作'] },
+            { title: '股权出质', data: FINANCE.pledge, cols: ['出质人', '质权人', '出质金额', '出质日期', '状态', '操作'] },
+          ].map((section, si) => (
+            <div key={si} style={{ ...CARD_STYLE, padding: 0 }}>
+              <div style={SECTION_TITLE}>
+                <span style={{ width: 4, height: 16, background: '#1677ff', borderRadius: 2 }}></span>
+                {section.title}
+              </div>
+              <div style={{ padding: '0 18px 18px', overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                  <thead>
+                    <tr style={{ background: '#F8FAFC' }}>
+                      {section.cols.map((c, ci) => (
+                        <th key={ci} style={{ textAlign: 'left', padding: '10px 12px', fontWeight: 600, color: '#475569', whiteSpace: 'nowrap' }}>{c}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {section.data.map((row: any, ri) => (
+                      <tr key={ri} style={{ borderTop: '1px solid #F1F5F9' }}>
+                        {Object.values(row).map((v: any, vi) => (
+                          <td key={vi} style={{ padding: '10px 12px', color: '#334155', verticalAlign: 'top' }}>
+                            {vi === section.cols.length - 1 && section.title !== '借款信息' ? (
+                              <span style={{ color: '#1677ff', cursor: 'pointer', fontSize: 12 }}>查看</span>
+                            ) : v}
+                          </td>
                         ))}
                       </tr>
-                    </thead>
-                    <tbody>
-                      {section.data.map((row: any, ri) => (
-                        <tr key={ri} style={{ borderTop: '1px solid #F1F5F9' }}>
-                          {Object.values(row).map((v: any, vi) => (
-                            <td key={vi} style={{ padding: '10px 12px', color: '#334155', verticalAlign: 'top' }}>
-                              {vi === section.cols.length - 1 && section.title !== '借款信息' ? (
-                                <span style={{ color: '#2563EB', cursor: 'pointer', fontSize: 12 }}>查看</span>
-                              ) : v}
-                            </td>
-                          ))}
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                    ))}
+                  </tbody>
+                </table>
               </div>
-            ))}
-          </>
-        )}
+            </div>
+          ))}
+        </section>
 
         {/* ===== 资质信用 ===== */}
-        {activeTab === '资质信用' && (
+        <section id="tab-资质信用" style={{ scrollMarginTop: TABBAR_TOP }} className="mb-4">
           <div style={{ ...CARD_STYLE, padding: 0 }}>
             <div style={SECTION_TITLE}>
               <span style={{ width: 4, height: 16, background: '#16A34A', borderRadius: 2 }}></span>
@@ -475,10 +572,10 @@ export default function JdCompany() {
               <div style={{ fontSize: 14 }}>暂无资质信用数据</div>
             </div>
           </div>
-        )}
+        </section>
 
         {/* ===== 市场环境 ===== */}
-        {activeTab === '市场环境' && (
+        <section id="tab-市场环境" style={{ scrollMarginTop: TABBAR_TOP }} className="mb-4">
           <div style={{ ...CARD_STYLE, padding: 0 }}>
             <div style={SECTION_TITLE}>
               <span style={{ width: 4, height: 16, background: '#0891B2', borderRadius: 2 }}></span>
@@ -489,10 +586,10 @@ export default function JdCompany() {
               <div style={{ fontSize: 14 }}>暂无市场环境数据</div>
             </div>
           </div>
-        )}
+        </section>
 
         {/* ===== 舆情公告 ===== */}
-        {activeTab === '舆情公告' && (
+        <section id="tab-舆情公告" style={{ scrollMarginTop: TABBAR_TOP }} className="mb-4">
           <div style={{ ...CARD_STYLE, padding: 0 }}>
             <div style={SECTION_TITLE}>
               <span style={{ width: 4, height: 16, background: '#7C3AED', borderRadius: 2 }}></span>
@@ -519,7 +616,7 @@ export default function JdCompany() {
                       </td>
                       <td style={{ padding: '12px', color: '#64748B' }}>{n.source}</td>
                       <td style={{ padding: '12px' }}><SentimentTag s={n.sentiment} /></td>
-                      <td style={{ padding: '12px' }}><span style={{ color: '#2563EB', cursor: 'pointer', fontSize: 12 }}>详情</span></td>
+                      <td style={{ padding: '12px' }}><span style={{ color: '#1677ff', cursor: 'pointer', fontSize: 12 }}>详情</span></td>
                     </tr>
                   ))}
                 </tbody>
@@ -528,15 +625,15 @@ export default function JdCompany() {
             {/* 分页 */}
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 8, padding: '16px', borderTop: '1px solid #F1F5F9' }}>
               <button style={{ padding: '6px 12px', border: '1px solid #E5E7EB', borderRadius: 6, background: '#fff', cursor: 'pointer', fontSize: 13, color: '#94A3B8' }}>上一页</button>
-              <button style={{ padding: '6px 12px', border: '1px solid #2563EB', borderRadius: 6, background: '#2563EB', cursor: 'pointer', fontSize: 13, color: '#fff', fontWeight: 600 }}>1</button>
+              <button style={{ padding: '6px 12px', border: '1px solid #1677ff', borderRadius: 6, background: '#1677ff', cursor: 'pointer', fontSize: 13, color: '#fff', fontWeight: 600 }}>1</button>
               <button style={{ padding: '6px 12px', border: '1px solid #E5E7EB', borderRadius: 6, background: '#fff', cursor: 'pointer', fontSize: 13, color: '#64748B' }}>下一页</button>
               <span style={{ fontSize: 12, color: '#94A3B8', marginLeft: 8 }}>共 3 条</span>
             </div>
           </div>
-        )}
+        </section>
 
         {/* ===== 财务分析 ===== */}
-        {activeTab === '财务分析' && (
+        <section id="tab-财务分析" style={{ scrollMarginTop: TABBAR_TOP }} className="mb-4">
           <div style={{ ...CARD_STYLE, padding: 0 }}>
             <div style={SECTION_TITLE}>
               <span style={{ width: 4, height: 16, background: '#0891B2', borderRadius: 2 }}></span>
@@ -548,10 +645,10 @@ export default function JdCompany() {
               <div style={{ fontSize: 12 }}>该企业未公开财务报表，无法进行财务分析</div>
             </div>
           </div>
-        )}
+        </section>
 
         {/* ===== 关联关系 ===== */}
-        {activeTab === '关联关系' && (
+        <section id="tab-关联关系" style={{ scrollMarginTop: TABBAR_TOP }} className="mb-4">
           <div style={{ ...CARD_STYLE, padding: 0 }}>
             <div style={SECTION_TITLE}>
               <span style={{ width: 4, height: 16, background: '#0891B2', borderRadius: 2 }}></span>
@@ -560,7 +657,7 @@ export default function JdCompany() {
             <div style={{ padding: '18px 24px 24px' }}>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14, marginBottom: 20 }}>
                 {[
-                  { label: '控股股东', value: '1 家', color: '#2563EB' },
+                  { label: '控股股东', value: '1 家', color: '#1677ff' },
                   { label: '实际控制人', value: '1 人', color: '#7C3AED' },
                   { label: '最终受益人', value: '1 人', color: '#16A34A' },
                   { label: '关联企业', value: '2 家', color: '#EA580C' },
@@ -587,7 +684,7 @@ export default function JdCompany() {
                   <tbody>
                     {RELATIONS.map((r, i) => (
                       <tr key={i} style={{ borderTop: '1px solid #F1F5F9' }}>
-                        <td style={{ padding: '10px 12px' }}><span style={{ padding: '2px 8px', borderRadius: 4, fontSize: 12, background: '#EFF6FF', color: '#2563EB', fontWeight: 600 }}>{r.type}</span></td>
+                        <td style={{ padding: '10px 12px' }}><span style={{ padding: '2px 8px', borderRadius: 4, fontSize: 12, background: '#EFF6FF', color: '#1677ff', fontWeight: 600 }}>{r.type}</span></td>
                         <td style={{ padding: '10px 12px', color: '#0F172A', fontWeight: 500 }}>{r.name}</td>
                         <td style={{ padding: '10px 12px', color: '#64748B' }}>{r.ratio}</td>
                         <td style={{ padding: '10px 12px', color: '#64748B' }}>{r.capital}</td>
@@ -599,10 +696,10 @@ export default function JdCompany() {
               </div>
             </div>
           </div>
-        )}
+        </section>
 
         {/* ===== 企业图谱 ===== */}
-        {activeTab === '企业图谱' && (
+        <section id="tab-企业图谱" style={{ scrollMarginTop: TABBAR_TOP }} className="mb-4">
           <div style={{ ...CARD_STYLE, padding: 0 }}>
             <div style={SECTION_TITLE}>
               <span style={{ width: 4, height: 16, background: '#7C3AED', borderRadius: 2 }}></span>
@@ -625,8 +722,10 @@ export default function JdCompany() {
               点击卡片查看对应图谱详情
             </div>
           </div>
-        )}
+        </section>
       </div>
+
+      <FeatureModal html={modalHtml} onClose={() => setModalHtml(null)} />
     </EpPage>
   )
 }

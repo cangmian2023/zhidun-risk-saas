@@ -63,6 +63,32 @@ type Data = {
   }
 }
 
+// 查企业：编造模拟尽调结果数据（样例，贴合真实业务语义）
+const BATCH_ENT_ROWS: Record<string, string | number>[] = [
+  { seq: 1, name: '广州博鳌纵横网络科技有限公司', regCapital: '5651.14万', paidCapital: '5651.14万', orgType: '其他有限责任公司', status: '存续', insuredCount: '43', industry1: '软件和信息技术服务业', industry2: '互联网信息服务', province: '广东', city: '广州', district: '黄埔区', establishDate: '2012-04-11', capitalBackground: '民营企业', scale: '中型', techCert: '高新技术企业', listing: '未上市', park: '广州科学城', group: '博鳌系', emergingIndustry: '数字创意', qixinScore: '362', shellIndex: '21', contractDefault: '低', techScore: '78', judicialDocs: '3', executed: '0', dishonest: '0', equityFreeze: '1', consumptionLimit: '1', finalCases: '2', abnormal: '0', seriousIllegal: '0', adminPenalty: '1', envPenalty: '0', equityPledge: '0', taxIllegal: '0', abnormalTax: '0', simpleCancel: '0', cancelRecord: '0', equityMortgage: '0', blacklist: '0', patents: '42', trademarks: '42', copyrights: '120', softwareCopyrights: '210' },
+  { seq: 2, name: '深圳前海微众银行股份有限公司', regCapital: '300000万', paidCapital: '300000万', orgType: '股份有限公司', status: '存续', insuredCount: '2860', industry1: '货币金融服务', industry2: '银行', province: '广东', city: '深圳', district: '前海', establishDate: '2014-12-16', capitalBackground: '民间资本', scale: '大型', techCert: '高新技术企业', listing: '未上市', park: '前海深港合作区', group: '微众系', emergingIndustry: '金融科技', qixinScore: '891', shellIndex: '8', contractDefault: '低', techScore: '92', judicialDocs: '6', executed: '0', dishonest: '0', equityFreeze: '0', consumptionLimit: '0', finalCases: '0', abnormal: '0', seriousIllegal: '0', adminPenalty: '0', envPenalty: '0', equityPledge: '0', taxIllegal: '0', abnormalTax: '0', simpleCancel: '0', cancelRecord: '0', equityMortgage: '0', blacklist: '0', patents: '88', trademarks: '56', copyrights: '30', softwareCopyrights: '320' },
+  { seq: 3, name: '杭州蚂蚁智信信息技术有限公司', regCapital: '5000万', paidCapital: '5000万', orgType: '有限责任公司', status: '存续', insuredCount: '652', industry1: '软件和信息技术服务业', industry2: '金融科技', province: '浙江', city: '杭州', district: '西湖区', establishDate: '2015-06-19', capitalBackground: '民营控股', scale: '中型', techCert: '高新技术企业', listing: '未上市', park: '杭州未来科技城', group: '蚂蚁系', emergingIndustry: '金融科技', qixinScore: '876', shellIndex: '12', contractDefault: '低', techScore: '90', judicialDocs: '11', executed: '0', dishonest: '0', equityFreeze: '0', consumptionLimit: '0', finalCases: '0', abnormal: '0', seriousIllegal: '0', adminPenalty: '1', envPenalty: '0', equityPledge: '0', taxIllegal: '0', abnormalTax: '0', simpleCancel: '0', cancelRecord: '0', equityMortgage: '0', blacklist: '0', patents: '60', trademarks: '48', copyrights: '40', softwareCopyrights: '280' },
+  { seq: 4, name: '苏泊尔集团有限公司', regCapital: '10000万', paidCapital: '10000万', orgType: '有限责任公司', status: '存续', insuredCount: '3200', industry1: '电气机械和器材制造业', industry2: '小家电', province: '浙江', city: '杭州', district: '滨江区', establishDate: '1994-08-25', capitalBackground: '民营控股', scale: '大型', techCert: '高新技术企业', listing: 'A股上市', park: '滨江高新产业园', group: '苏泊尔系', emergingIndustry: '智能制造', qixinScore: '812', shellIndex: '15', contractDefault: '低', techScore: '74', judicialDocs: '4', executed: '0', dishonest: '0', equityFreeze: '0', consumptionLimit: '0', finalCases: '0', abnormal: '0', seriousIllegal: '0', adminPenalty: '0', envPenalty: '1', equityPledge: '0', taxIllegal: '0', abnormalTax: '0', simpleCancel: '0', cancelRecord: '0', equityMortgage: '0', blacklist: '0', patents: '320', trademarks: '120', copyrights: '0', softwareCopyrights: '0' },
+  { seq: 5, name: '北京字节跳动科技有限公司', regCapital: '10000万', paidCapital: '10000万', orgType: '其他有限责任公司', status: '存续', insuredCount: '38000', industry1: '互联网和相关服务', industry2: '内容平台', province: '北京', city: '北京', district: '海淀区', establishDate: '2012-03-09', capitalBackground: '民营控股', scale: '大型', techCert: '高新技术企业', listing: '未上市', park: '中关村软件园', group: '字节系', emergingIndustry: '数字创意', qixinScore: '905', shellIndex: '9', contractDefault: '低', techScore: '95', judicialDocs: '88', executed: '3', dishonest: '0', equityFreeze: '2', consumptionLimit: '4', finalCases: '5', abnormal: '0', seriousIllegal: '0', adminPenalty: '2', envPenalty: '0', equityPledge: '1', taxIllegal: '0', abnormalTax: '0', simpleCancel: '0', cancelRecord: '0', equityMortgage: '0', blacklist: '0', patents: '210', trademarks: '320', copyrights: '180', softwareCopyrights: '560' },
+  { seq: 6, name: '上海寻梦信息技术有限公司', regCapital: '1000万', paidCapital: '1000万', orgType: '有限责任公司', status: '存续', insuredCount: '5600', industry1: '互联网和相关服务', industry2: '电商', province: '上海', city: '上海', district: '长宁区', establishDate: '2014-01-09', capitalBackground: '民营控股', scale: '大型', techCert: '高新技术企业', listing: '未上市', park: '虹桥临空经济园', group: '拼多多系', emergingIndustry: '数字商务', qixinScore: '868', shellIndex: '11', contractDefault: '低', techScore: '88', judicialDocs: '62', executed: '1', dishonest: '0', equityFreeze: '0', consumptionLimit: '2', finalCases: '3', abnormal: '0', seriousIllegal: '0', adminPenalty: '1', envPenalty: '0', equityPledge: '0', taxIllegal: '0', abnormalTax: '0', simpleCancel: '0', cancelRecord: '0', equityMortgage: '0', blacklist: '0', patents: '96', trademarks: '120', copyrights: '40', softwareCopyrights: '640' },
+  { seq: 7, name: '广州唯品会电子商务有限公司', regCapital: '10000万', paidCapital: '10000万', orgType: '有限责任公司', status: '存续', insuredCount: '4200', industry1: '互联网和相关服务', industry2: '电商', province: '广东', city: '广州', district: '海珠区', establishDate: '2008-08-15', capitalBackground: '民营控股', scale: '大型', techCert: '高新技术企业', listing: 'NYSE上市', park: '琶洲互联网集聚区', group: '唯品会系', emergingIndustry: '数字商务', qixinScore: '835', shellIndex: '14', contractDefault: '低', techScore: '80', judicialDocs: '39', executed: '0', dishonest: '0', equityFreeze: '0', consumptionLimit: '1', finalCases: '2', abnormal: '0', seriousIllegal: '0', adminPenalty: '0', envPenalty: '0', equityPledge: '0', taxIllegal: '0', abnormalTax: '0', simpleCancel: '0', cancelRecord: '0', equityMortgage: '0', blacklist: '0', patents: '70', trademarks: '160', copyrights: '20', softwareCopyrights: '300' },
+  { seq: 8, name: '成都某科技有限公司', regCapital: '500万', paidCapital: '200万', orgType: '有限责任公司', status: '存续', insuredCount: '28', industry1: '软件和信息技术服务业', industry2: '软件开发', province: '四川', city: '成都', district: '高新区', establishDate: '2019-11-22', capitalBackground: '民营控股', scale: '小型', techCert: '科技型中小企业', listing: '未上市', park: '天府软件园', group: '—', emergingIndustry: '人工智能', qixinScore: '612', shellIndex: '33', contractDefault: '中', techScore: '58', judicialDocs: '2', executed: '0', dishonest: '0', equityFreeze: '0', consumptionLimit: '0', finalCases: '0', abnormal: '1', seriousIllegal: '0', adminPenalty: '0', envPenalty: '0', equityPledge: '0', taxIllegal: '0', abnormalTax: '1', simpleCancel: '0', cancelRecord: '0', equityMortgage: '0', blacklist: '0', patents: '8', trademarks: '4', copyrights: '0', softwareCopyrights: '22' },
+  { seq: 9, name: '武汉斗鱼鱼乐网络科技有限公司', regCapital: '1000万', paidCapital: '1000万', orgType: '其他有限责任公司', status: '存续', insuredCount: '1200', industry1: '互联网和相关服务', industry2: '直播', province: '湖北', city: '武汉', district: '东湖新区', establishDate: '2014-04-28', capitalBackground: '民营控股', scale: '中型', techCert: '高新技术企业', listing: 'NASDAQ上市', park: '光谷软件园', group: '斗鱼系', emergingIndustry: '数字创意', qixinScore: '720', shellIndex: '19', contractDefault: '低', techScore: '71', judicialDocs: '45', executed: '2', dishonest: '1', equityFreeze: '0', consumptionLimit: '3', finalCases: '4', abnormal: '1', seriousIllegal: '0', adminPenalty: '1', envPenalty: '0', equityPledge: '1', taxIllegal: '0', abnormalTax: '0', simpleCancel: '0', cancelRecord: '0', equityMortgage: '0', blacklist: '0', patents: '36', trademarks: '28', copyrights: '60', softwareCopyrights: '180' },
+  { seq: 10, name: '西安迈科金属国际集团有限公司', regCapital: '50000万', paidCapital: '50000万', orgType: '有限责任公司', status: '存续', insuredCount: '880', industry1: '批发业', industry2: '金属矿产', province: '陕西', city: '西安', district: '高新区', establishDate: '2001-03-06', capitalBackground: '民营控股', scale: '大型', techCert: '—', listing: '未上市', park: '西安高新区', group: '迈科系', emergingIndustry: '大宗商品', qixinScore: '690', shellIndex: '22', contractDefault: '中', techScore: '52', judicialDocs: '21', executed: '4', dishonest: '1', equityFreeze: '3', consumptionLimit: '2', finalCases: '6', abnormal: '0', seriousIllegal: '0', adminPenalty: '2', envPenalty: '1', equityPledge: '5', taxIllegal: '0', abnormalTax: '0', simpleCancel: '2', cancelRecord: '0', equityMortgage: '0', blacklist: '0', patents: '12', trademarks: '8', copyrights: '0', softwareCopyrights: '0' },
+  { seq: 11, name: '重庆小康工业集团股份有限公司', regCapital: '140000万', paidCapital: '140000万', orgType: '股份有限公司', status: '存续', insuredCount: '12000', industry1: '汽车制造业', industry2: '整车制造', province: '重庆', city: '重庆', district: '沙坪坝区', establishDate: '2007-05-18', capitalBackground: '民营控股', scale: '大型', techCert: '高新技术企业', listing: 'A股上市', park: '小康产业园', group: '小康系', emergingIndustry: '新能源汽车', qixinScore: '805', shellIndex: '17', contractDefault: '低', techScore: '76', judicialDocs: '18', executed: '1', dishonest: '0', equityFreeze: '0', consumptionLimit: '1', finalCases: '2', abnormal: '0', seriousIllegal: '0', adminPenalty: '1', envPenalty: '2', equityPledge: '2', taxIllegal: '0', abnormalTax: '0', simpleCancel: '0', cancelRecord: '0', equityMortgage: '0', blacklist: '0', patents: '480', trademarks: '210', copyrights: '0', softwareCopyrights: '60' },
+  { seq: 12, name: '沈阳机床（集团）有限责任公司', regCapital: '120000万', paidCapital: '120000万', orgType: '有限责任公司', status: '存续', insuredCount: '6500', industry1: '通用设备制造业', industry2: '机床制造', province: '辽宁', city: '沈阳', district: '铁西区', establishDate: '1995-12-18', capitalBackground: '国有控股', scale: '大型', techCert: '高新技术企业', listing: 'A股上市', park: '沈阳机床城', group: '通用技术系', emergingIndustry: '高端装备', qixinScore: '688', shellIndex: '24', contractDefault: '中', techScore: '63', judicialDocs: '52', executed: '6', dishonest: '2', equityFreeze: '4', consumptionLimit: '3', finalCases: '8', abnormal: '1', seriousIllegal: '1', adminPenalty: '3', envPenalty: '2', equityPledge: '3', taxIllegal: '1', abnormalTax: '1', simpleCancel: '1', cancelRecord: '0', equityMortgage: '0', blacklist: '0', patents: '620', trademarks: '90', copyrights: '0', softwareCopyrights: '40' },
+]
+
+// 查人员：样例数据（编造，贴合真实业务语义）
+const PERSON_ROWS = [
+  { id: 'p1', name: '吴孟', partners: ['赵凯', '贾跃亭', '邓伟', '刘秋萍'], legalRep: ['乐视控股（北京）有限公司', '乐视汽车（北京）有限公司'], shareholder: ['北京东方车云信息技术有限公司'], executive: ['乐视网信息技术（北京）股份有限公司'] },
+  { id: 'p2', name: '雷军', partners: ['刘德', '王川', '孙谦', '邹涛', '洪锋'], legalRep: ['小米科技有限责任公司', '天津金星创业投资有限公司'], shareholder: ['小米科技有限责任公司', '广州华多网络科技有限公司'], executive: ['小米科技有限责任公司', '拉卡拉支付股份有限公司'] },
+  { id: 'p3', name: '张一鸣', partners: ['张利东', '陈林', '梁汝波'], legalRep: ['北京字节跳动科技有限公司', '抖音视界（上海）有限公司'], shareholder: ['字节跳动有限公司'], executive: ['北京字节跳动科技有限公司'] },
+  { id: 'p4', name: '马化腾', partners: ['刘炽平', '任宇昕', '许晨晔'], legalRep: ['腾讯科技（深圳）有限公司', '深圳市世纪凯旋科技有限公司'], shareholder: ['腾讯控股有限公司'], executive: ['腾讯科技（深圳）有限公司'] },
+  { id: 'p5', name: '马云', partners: ['蔡崇信', '彭蕾', '张勇'], legalRep: ['阿里巴巴（中国）有限公司', '淘宝（中国）软件有限公司'], shareholder: ['阿里巴巴集团控股有限公司'], executive: ['阿里巴巴（中国）有限公司'] },
+  { id: 'p6', name: '王兴', partners: ['穆荣均', '王慧文', '陈亮'], legalRep: ['北京三快在线科技有限公司', '美团科技有限公司'], shareholder: ['美团点评科技（深圳）有限公司'], executive: ['北京三快在线科技有限公司'] },
+]
+
 const seed: Data = {
   pageTitle: '批量尽调结果',
   tabs: [
@@ -164,7 +190,7 @@ const seed: Data = {
       { key: 'copyrights', label: '著作权' },
       { key: 'softwareCopyrights', label: '软件著作权' },
     ],
-    rows: [],
+    rows: BATCH_ENT_ROWS,
   },
   footer: { selectedIndicator: '已选指标: 44/203', selectedEnterprise: '已选企业 0/2', fullscreen: '全屏显示' },
   uploadModal: {
@@ -225,9 +251,9 @@ function CustomCheckbox({ checked, onChange }: { checked: boolean; onChange?: ()
       style={{
         width: 14,
         height: 14,
-        border: `1px solid ${checked ? '#2563EB' : '#CBD5E1'}`,
+        border: `1px solid ${checked ? '#1677ff' : '#CBD5E1'}`,
         borderRadius: 2,
-        background: checked ? '#2563EB' : '#fff',
+        background: checked ? '#1677ff' : '#fff',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -357,6 +383,8 @@ export default function JdBatchResult({ params }: { params: URLSearchParams }) {
   const { goDetail } = usePageNav()
   const [tab, setTab] = useState(data.activeTab)
   const [selected, setSelected] = useState<string[]>([])
+  const [personKw, setPersonKw] = useState('')
+  const [appliedKw, setAppliedKw] = useState('')
   const [uploadOpen, setUploadOpen] = useState(params.get('upload') === '1')
   const [step, setStep] = useState(1)
   // 筛选条件默认收起（点搜索/展开可打开）
@@ -405,9 +433,9 @@ export default function JdBatchResult({ params }: { params: URLSearchParams }) {
               padding: '10px 0',
               marginRight: 28,
               border: 'none',
-              borderBottom: `2px solid ${tab === t.key ? '#2563EB' : 'transparent'}`,
+              borderBottom: `2px solid ${tab === t.key ? '#1677ff' : 'transparent'}`,
               background: 'transparent',
-              color: tab === t.key ? '#2563EB' : '#475569',
+              color: tab === t.key ? '#1677ff' : '#475569',
               fontSize: 15,
               fontWeight: tab === t.key ? 600 : 400,
               cursor: 'pointer',
@@ -420,27 +448,49 @@ export default function JdBatchResult({ params }: { params: URLSearchParams }) {
       </div>
 
       {tab === 'person' ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {[
-            { id: 'p1', name: '吴孟', partners: ['赵凯', '贾跃亭', '邓伟', '刘秋萍'], legalRep: ['乐视控股（北京）有限公司', '乐视汽车（北京）有限公司'], shareholder: ['北京东方车云信息技术有限公司'], executive: ['乐视网信息技术（北京）股份有限公司'] },
-            { id: 'p2', name: '雷军', partners: ['刘德', '王川', '孙谦', '邹涛', '洪锋'], legalRep: ['小米科技有限责任公司', '天津金星创业投资有限公司'], shareholder: ['小米科技有限责任公司', '广州华多网络科技有限公司'], executive: ['小米科技有限责任公司', '拉卡拉支付股份有限公司'] },
-          ].map((r) => (
-            <div key={r.id} style={{ display: 'flex', gap: 16, background: '#fff', borderRadius: 10, border: '1px solid #E2E8F0', padding: '18px 20px' }}>
-              <div style={{ width: 64, height: 64, borderRadius: 6, background: '#334155', color: '#fff', fontSize: 26, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{r.name.slice(0, 1)}</div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 18, fontWeight: 700, color: '#1677ff', cursor: 'pointer' }} onClick={() => goDetail('/console/dm/person-archive-basic?name=' + encodeURIComponent(r.name))}>{r.name}</div>
-                <div style={{ marginTop: 8, fontSize: 13, lineHeight: 1.7, color: '#334155' }}>
-                  <span style={{ color: '#64748B' }}>合作伙伴：</span>
-                  {r.partners.map((v, i) => (<span key={v}>{i > 0 && <span style={{ color: '#CBD5E1' }}>、</span>}<span style={{ color: '#1677ff', cursor: 'pointer' }}>{v}</span></span>))}
-                </div>
-                <div style={{ marginTop: 4, fontSize: 13, lineHeight: 1.7, color: '#334155' }}>
-                  <span style={{ color: '#64748B' }}>担任法定代表人的企业：</span>
-                  {r.legalRep.map((v, i) => (<span key={v}>{i > 0 && <span style={{ color: '#CBD5E1' }}>、</span>}<span style={{ color: '#1677ff' }}>{v}</span></span>))}
+        <>
+          {/* 查人员：搜索工具条 */}
+          <div style={{ display: 'flex', gap: 12, marginBottom: 14 }}>
+            <div style={{ position: 'relative', flex: 1, maxWidth: 520 }}>
+              <input
+                value={personKw}
+                onChange={(e) => setPersonKw(e.target.value)}
+                placeholder="请输入人员姓名进行查询"
+                style={{ width: '100%', padding: '9px 28px 9px 12px', borderRadius: 8, border: '1px solid #CBD5E1', fontSize: 13, outline: 'none', boxSizing: 'border-box' }}
+              />
+              <div style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(- 50%)' }}><SearchIcon /></div>
+            </div>
+            <EpBtn variant="primary" size="sm" onClick={() => setAppliedKw(personKw.trim())}>查询</EpBtn>
+            {appliedKw && (
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '0 12px', borderRadius: 8, background: '#EFF6FF', color: '#1677ff', fontSize: 13 }}>
+                关键词：{appliedKw}
+                <span style={{ cursor: 'pointer', color: '#94A3B8' }} onClick={() => { setAppliedKw(''); setPersonKw('') }}>×</span>
+              </span>
+            )}
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {PERSON_ROWS.filter((r) => !appliedKw || r.name.includes(appliedKw)).map((r) => (
+              <div key={r.id} style={{ display: 'flex', gap: 16, background: '#fff', borderRadius: 10, border: '1px solid #E2E8F0', padding: '18px 20px' }}>
+                <div style={{ width: 64, height: 64, borderRadius: 6, background: '#334155', color: '#fff', fontSize: 26, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{r.name.slice(0, 1)}</div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 18, fontWeight: 700, color: '#1677ff', cursor: 'pointer' }} onClick={() => goDetail('/console/dm/person-archive-basic?name=' + encodeURIComponent(r.name))}>{r.name}</div>
+                  <div style={{ marginTop: 8, fontSize: 13, lineHeight: 1.7, color: '#334155' }}>
+                    <span style={{ color: '#64748B' }}>合作伙伴：</span>
+                    {r.partners.map((v, i) => (<span key={v}>{i > 0 && <span style={{ color: '#CBD5E1' }}>、</span>}<span style={{ color: '#1677ff', cursor: 'pointer' }}>{v}</span></span>))}
+                  </div>
+                  <div style={{ marginTop: 4, fontSize: 13, lineHeight: 1.7, color: '#334155' }}>
+                    <span style={{ color: '#64748B' }}>担任法定代表人的企业：</span>
+                    {r.legalRep.map((v, i) => (<span key={v}>{i > 0 && <span style={{ color: '#CBD5E1' }}>、</span>}<span style={{ color: '#1677ff' }}>{v}</span></span>))}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+            {PERSON_ROWS.filter((r) => !appliedKw || r.name.includes(appliedKw)).length === 0 && (
+              <div style={{ padding: 40, textAlign: 'center', color: '#94A3B8', fontSize: 13 }}>未查询到相关人员</div>
+            )}
+          </div>
+        </>
       ) : (
         <div style={{ display: 'flex', gap: 16 }}>
           <IndicatorSidebar data={data.left} />
@@ -453,7 +503,7 @@ export default function JdBatchResult({ params }: { params: URLSearchParams }) {
                   <span>{data.filters.title}</span>
                   <button
                     onClick={() => setFilterOpen((o) => !o)}
-                    style={{ border: `1px solid #2563EB`, color: '#2563EB', background: '#fff', borderRadius: 4, padding: '3px 12px', fontSize: 13, cursor: 'pointer' }}
+                    style={{ border: `1px solid #1677ff`, color: '#1677ff', background: '#fff', borderRadius: 4, padding: '3px 12px', fontSize: 13, cursor: 'pointer' }}
                   >
                     {filterOpen ? '收起筛选 ▲' : '展开筛选 ▼'}
                   </button>
@@ -505,10 +555,10 @@ export default function JdBatchResult({ params }: { params: URLSearchParams }) {
                                 gap: 2,
                                 padding: '3px 10px',
                                 borderRadius: 4,
-                                border: `1px solid ${active ? '#2563EB' : '#E2E8F0'}`,
+                                border: `1px solid ${active ? '#1677ff' : '#E2E8F0'}`,
                                 background: active ? '#EFF6FF' : '#fff',
                                 fontSize: 13,
-                                color: active ? '#2563EB' : '#475569',
+                                color: active ? '#1677ff' : '#475569',
                                 cursor: 'pointer',
                               }}
                             >
@@ -655,12 +705,12 @@ export default function JdBatchResult({ params }: { params: URLSearchParams }) {
                       fontSize: 13,
                       fontWeight: 600,
                       color: active || done ? '#fff' : '#64748B',
-                      background: active ? '#2563EB' : done ? '#10B981' : '#E2E8F0',
+                      background: active ? '#1677ff' : done ? '#10B981' : '#E2E8F0',
                     }}
                   >
                     {done ? '✓' : num}
                   </div>
-                  <span style={{ fontSize: 13, color: active ? '#2563EB' : done ? '#10B981' : '#64748B', fontWeight: active ? 600 : 400 }}>{s}</span>
+                  <span style={{ fontSize: 13, color: active ? '#1677ff' : done ? '#10B981' : '#64748B', fontWeight: active ? 600 : 400 }}>{s}</span>
                 </div>
                 {idx < data.uploadModal.steps.length - 1 && (
                   <div style={{ flex: 1, height: 1, background: done ? '#10B981' : '#E2E8F0', margin: '0 12px' }} />

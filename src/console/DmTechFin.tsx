@@ -50,16 +50,16 @@ export default function DmTechFin() {
   const nav = useNavigate()
   const [filterOpen, setFilterOpen] = useState(false)
   return (
-    <div style={{ padding: 12 }} className="bg-white text-sm text-[#222]">
+    <div style={{ padding: 12 }} className="text-sm text-[#222]">
       <PageShell title="科创金融" crumb="数字营销 / 产业金融" subtitle="科创企业专属金融服务：科创企业库与资质画像" legend={false} />
 
       {/* ============ 顶部搜索 ============ */}
-      <div className="mb-2 flex items-center justify-center gap-2">
+      <div className="mt-4 mb-2 flex items-center justify-center gap-2">
         <div className="flex w-[440px] items-center rounded-md bg-[#f4f5f9] px-3.5 py-2.5">
           <span className="mr-1 text-[#3670d8]">🗺</span>
           <input placeholder="请输入企业名称、标签、产业等" className="flex-1 bg-transparent text-sm outline-none placeholder:text-gray-400" />
         </div>
-        <button className="cursor-pointer rounded bg-[#f7c43c] px-5 py-2.5 font-medium hover:opacity-90"><SearchIcon /> 查询</button>
+        <button className="cursor-pointer rounded bg-[#1677ff] px-5 py-2.5 font-medium hover:opacity-90"><SearchIcon /> 查询</button>
       </div>
       <div className="mb-3 text-center">
         <span className="text-[13px] text-[#666]">热门企业库：</span>
@@ -102,7 +102,7 @@ export default function DmTechFin() {
           <button className={btnViewCls}>🗏 列表视图</button>
           <button className={btnViewCls}>🗄 表格视图</button>
           <button className={btnViewCls}>🗁 营销</button>
-          <button className="cursor-pointer rounded bg-[#f7c43c] px-3.5 py-1.5"><DownloadIcon /> 导出数据</button>
+          <button className="cursor-pointer rounded bg-[#1677ff] px-3.5 py-1.5"><DownloadIcon /> 导出数据</button>
         </div>
       </div>
 

@@ -26,8 +26,8 @@ const SearchIcon = () => (
 
 /* ============ 通用样式类（等价 HTML 表单控件） ============ */
 const inputCls = 'flex-1 rounded border border-[#ced2e0] px-2.5 py-2 text-sm outline-none'
-const btnResetCls = 'cursor-pointer rounded border border-[#2b65e8] bg-white px-5 py-2 text-sm text-[#2b65e8]'
-const btnSearchCls = 'cursor-pointer rounded bg-[#2b65e8] px-5 py-2 text-sm text-white'
+const btnResetCls = 'cursor-pointer rounded border border-[#1677ff] bg-white px-5 py-2 text-sm text-[#1677ff]'
+const btnSearchCls = 'cursor-pointer rounded bg-[#1677ff] px-5 py-2 text-sm text-white'
 
 /* 左侧栏标题 + 条目（HTML .sidebar-block/.sidebar-item） */
 function SidebarBlock({ title, extra, children }: { title: string; extra?: React.ReactNode; children: React.ReactNode }) {
@@ -50,7 +50,7 @@ function SidebarItem({ children, arrow, sub }: { children: React.ReactNode; arro
 function SidebarCheck({ children, arrow }: { children: React.ReactNode; arrow?: boolean }) {
   return (
     <label className="flex cursor-pointer items-center gap-1.5 py-1.5 pl-1 text-[15px]">
-      <input type="checkbox" className="accent-[#2b65e8]" />
+      <input type="checkbox" className="accent-[#1677ff]" />
       {children}
       {arrow && <span className="ml-auto"><ArrowRight /></span>}
     </label>
@@ -66,17 +66,17 @@ export default function DmFinLaw() {
       <PageShell title="金融法规" crumb="数字营销 / 金融工具" subtitle="金融法律法规与监管文件库" legend={false} />
 
       {/* ============ 顶层 Tab（金色下划线，HTML .tab-wrap/.tab-item） ============ */}
-      <div className="mb-5 flex border-b-2 border-[#e5e7f2]">
+      <div className="sticky top-[140px] z-20 bg-white mb-5 flex border-b-2 border-[#e5e7f2]">
         {['金融法规', '处罚案例'].map((t) => (
           <span
             key={t}
             onClick={() => setTab(t)}
             className={`relative cursor-pointer px-6 py-3 text-[17px] ${
-              tab === t ? 'font-bold text-[#cc9900]' : ''
+              tab === t ? 'font-bold text-[#1677ff]' : ''
             }`}
           >
             {t}
-            {tab === t && <span className="absolute -bottom-0.5 left-0 h-[3px] w-full bg-[#f2c94c]" />}
+            {tab === t && <span className="absolute -bottom-0.5 left-0 h-[3px] w-full bg-[#1677ff]" />}
           </span>
         ))}
       </div>
@@ -112,7 +112,7 @@ export default function DmFinLaw() {
               <div className="mb-3.5 flex items-center gap-2">
                 <span className="w-[100px] shrink-0 text-[15px]">标题搜索：</span>
                 <div>
-                  <button className="cursor-pointer rounded bg-[#2b65e8] px-3.5 py-1.5 text-white">精确</button>
+                  <button className="cursor-pointer rounded bg-[#1677ff] px-3.5 py-1.5 text-white">精确</button>
                   <button className="cursor-pointer rounded bg-[#eee] px-3.5 py-1.5">模糊</button>
                   <span className="ml-2.5 text-[13px] text-[#666]">使用&quot;+&quot;(且的关系)；使用&quot;/&quot;(或的关系)进行多关键词组合搜索</span>
                 </div>
@@ -131,7 +131,7 @@ export default function DmFinLaw() {
                   <div className="my-2 flex items-center gap-5 text-sm">
                     {['同条', '同段', '同句'].map((m) => (
                       <label key={m} className="flex items-center gap-1">
-                        <input type="radio" name="searchMode" className="accent-[#2b65e8]" />{m}
+                        <input type="radio" name="searchMode" className="accent-[#1677ff]" />{m}
                       </label>
                     ))}
                     <span className="text-xs text-[#666]">ⓘ 检索符号</span>
@@ -154,9 +154,9 @@ export default function DmFinLaw() {
                     <select className={inputCls}><option>请输入颁布单位</option></select>
                   </div>
                   <div className="my-2 ml-[100px] text-sm">
-                    <label><input type="checkbox" className="accent-[#2b65e8]" />银行业</label>
-                    <label className="ml-4"><input type="checkbox" className="accent-[#2b65e8]" />证券业</label>
-                    <label className="ml-4"><input type="checkbox" className="accent-[#2b65e8]" />保险业</label>
+                    <label><input type="checkbox" className="accent-[#1677ff]" />银行业</label>
+                    <label className="ml-4"><input type="checkbox" className="accent-[#1677ff]" />证券业</label>
+                    <label className="ml-4"><input type="checkbox" className="accent-[#1677ff]" />保险业</label>
                   </div>
                 </div>
               </div>
@@ -172,7 +172,7 @@ export default function DmFinLaw() {
               <span>共 1000+ 条结果</span>
               <div>
                 <span>法规层级</span>
-                <input type="checkbox" checked className="ml-1 w-10 accent-[#2b65e8]" />
+                <input type="checkbox" checked className="ml-1 w-10 accent-[#1677ff]" />
                 <span className="ml-3.5">时间降序 ▽</span>
               </div>
             </div>
@@ -185,10 +185,10 @@ export default function DmFinLaw() {
 
             {/* 列表项 */}
             <div className="mb-2.5 rounded-md bg-white px-4 py-3.5">
-              <div className="mb-1.5 cursor-pointer text-[16px] text-[#003399]">
+              <div className="mb-1.5 cursor-pointer text-[16px] text-[#1677ff]">
                 <span className="mr-1.5 inline-block rounded bg-[#e8e8eb] px-1.5 py-0.5 text-xs">未生效</span>
                 金融产品网络营销管理办法
-                <span className="ml-2 rounded border border-[#2b65e8] px-1.5 py-0.5 text-xs">🔗 关联图谱</span>
+                <span className="ml-2 rounded border border-[#1677ff] px-1.5 py-0.5 text-xs">🔗 关联图谱</span>
               </div>
               <div className="text-sm text-[#666]">
                 2026-04-21颁布 | 中国人民银行 工业和信息化部 市场监管总局 金融监管总局 中国证监会 国家知识产权局 国家网信办 国家外汇局公告（2026）第9号 | 中国人民银行、工业和信息化部、国家市场监督管理总局、国家金融监督管理总局、中国证券监督管理委员会、国家...
@@ -196,7 +196,7 @@ export default function DmFinLaw() {
               </div>
             </div>
             <div className="mb-2.5 rounded-md bg-white px-4 py-3.5">
-              <div className="mb-1.5 cursor-pointer text-[16px] text-[#003399]">
+              <div className="mb-1.5 cursor-pointer text-[16px] text-[#1677ff]">
                 <span className="mr-1.5 inline-block rounded bg-[#d7e3ff] px-1.5 py-0.5 text-xs">有效</span>
                 推动生态环境损害赔偿制度改革进程的十大案例
               </div>
@@ -214,7 +214,7 @@ export default function DmFinLaw() {
         <div className="flex gap-6">
           {/* 左侧筛选栏 */}
           <div className="w-[220px] shrink-0 rounded-md bg-white px-3 py-4">
-            <SidebarBlock title="案例分类" extra={<span className="text-[13px] font-normal text-[#2b65e8]"><SearchIcon /> 查看全部</span>}>
+            <SidebarBlock title="案例分类" extra={<span className="text-[13px] font-normal text-[#1677ff]"><SearchIcon /> 查看全部</span>}>
               {['同业及金融市场', '公司治理', '监管报告报表', '供应链金融', '信贷业务', '柜台业务', '大资管', '小微涉农金融（739）', '内控合规案防', '消费者保护'].map((c) => (
                 <SidebarItem key={c} arrow="right">{c}（1000+）</SidebarItem>
               ))}
@@ -242,9 +242,9 @@ export default function DmFinLaw() {
               <div className="mb-4 flex">
                 <input
                   placeholder="例如：2025年金管总局对农村金融机构的处罚"
-                  className="flex-1 rounded-l-lg border-2 border-[#2b65e8] px-3.5 py-3 text-[15px] outline-none"
+                  className="flex-1 rounded-l-lg border-2 border-[#1677ff] px-3.5 py-3 text-[15px] outline-none"
                 />
-                <button className="cursor-pointer rounded-r-lg bg-[#2b65e8] px-6 text-white">AI搜索</button>
+                <button className="cursor-pointer rounded-r-lg bg-[#1677ff] px-6 text-white">AI搜索</button>
               </div>
               <div className="mb-4.5 flex items-center gap-2.5">
                 <span>试试这样问：</span>
@@ -254,7 +254,7 @@ export default function DmFinLaw() {
               </div>
               <div className="mb-2.5">
                 <span className="font-bold">处罚机构：</span>
-                <span className="mx-2.5 cursor-pointer text-[#2b65e8]">金管总局(银行)</span>
+                <span className="mx-2.5 cursor-pointer text-[#1677ff]">金管总局(银行)</span>
                 <span className="mx-2.5 cursor-pointer">人民银行</span>
                 <span className="mx-2.5 cursor-pointer">证券基金业</span>
               </div>
@@ -320,18 +320,18 @@ export default function DmFinLaw() {
 
               {/* 底部操作行 */}
               <div className="mt-3.5 flex items-center justify-between">
-                <label className="flex items-center gap-1"><input type="checkbox" className="accent-[#2b65e8]" />仅查机构双罚</label>
+                <label className="flex items-center gap-1"><input type="checkbox" className="accent-[#1677ff]" />仅查机构双罚</label>
                 <div>
                   <button className={btnResetCls}>重置</button>
                   <button className={`${btnSearchCls} ml-2`}>检索</button>
-                  <span className="ml-6 cursor-pointer text-[#2b65e8]">我保存的条件</span>
+                  <span className="ml-6 cursor-pointer text-[#1677ff]">我保存的条件</span>
                 </div>
               </div>
               <div className="mt-4.5 flex items-center justify-between">
                 <div>
-                  <label className="mr-1"><input type="checkbox" className="accent-[#2b65e8]" />全选</label>
+                  <label className="mr-1"><input type="checkbox" className="accent-[#1677ff]" />全选</label>
                   <span>共 1000+ 处罚案例，总计处罚金额 244.67亿元</span>
-                  <button className="ml-2.5 cursor-pointer rounded border border-[#2b65e8] bg-white px-3 py-1 text-[#2b65e8]">↖ 生成图表 &gt;</button>
+                  <button className="ml-2.5 cursor-pointer rounded border border-[#1677ff] bg-white px-3 py-1 text-[#1677ff]">↖ 生成图表 &gt;</button>
                 </div>
                 <div>
                   <span>发布日期 ∨</span>
@@ -341,15 +341,25 @@ export default function DmFinLaw() {
             </div>
 
             {/* 处罚案例列表 */}
-            <div className="mb-2.5 rounded-md bg-white px-4 py-3.5">
-              <div className="mb-1.5 cursor-pointer text-[16px] text-[#003399]" onClick={() => setModal(true)}>
-                国家金融监督管理总局常州监管分局对中国建设银行溧阳西平路支行的处罚
+            {[
+              { title: '国家金融监督管理总局常州监管分局对中国建设银行溧阳西平路支行的处罚', date: '2026-08-20', agency: '国家金融监督管理总局常州监管分局', unit: '中国建设银行溧阳西平路支行', reason: '贷款资金被挪用、贷后管理不到位', result: '罚款35万元', amount: '35万元' },
+              { title: '国家金融监督管理总局上海监管局对某股份制银行上海分行的处罚', date: '2026-08-18', agency: '国家金融监督管理总局上海监管局', unit: '某股份制银行上海分行', reason: '同业投资业务穿透管理缺失、风险分类不准确', result: '罚款410万元', amount: '410万元' },
+              { title: '中国人民银行某省分行对某城商银行的行政处罚', date: '2026-08-15', agency: '中国人民银行某省分行', unit: '某城市商业银行', reason: '反洗钱客户身份识别义务履行不到位', result: '罚款128万元', amount: '128万元' },
+              { title: '国家金融监督管理总局北京监管局对某寿险公司北京分公司的处罚', date: '2026-08-12', agency: '国家金融监督管理总局北京监管局', unit: '某寿险公司北京分公司', reason: '虚假宣传保险产品、欺骗投保人', result: '罚款24万元', amount: '24万元' },
+              { title: '中国证监会深圳监管局对某证券公司资产管理业务的处罚', date: '2026-08-10', agency: '中国证监会深圳监管局', unit: '某证券公司', reason: '资管产品合规管理不到位、信息披露不及时', result: '责令改正并罚款180万元', amount: '180万元' },
+              { title: '国家金融监督管理总局浙江监管局对某农村商业银行的处罚', date: '2026-08-08', agency: '国家金融监督管理总局浙江监管局', unit: '某农村商业银行', reason: '个人贷款资金违规流入房地产市场', result: '罚款90万元', amount: '90万元' },
+              { title: '国家外汇管理局某市分局对某外资银行支行的处罚', date: '2026-08-05', agency: '国家外汇管理局某市分局', unit: '某外资银行支行', reason: '外汇业务展业尽职调查不充分', result: '罚款60万元并责令整改', amount: '60万元' },
+            ].map((c, i) => (
+              <div key={i} className="mb-2.5 rounded-md bg-white px-4 py-3.5">
+                <div className="mb-1.5 cursor-pointer text-[16px] text-[#1677ff]" onClick={() => setModal(true)}>
+                  {c.title}
+                </div>
+                <div className="text-sm text-[#666]">
+                  发布日期：{c.date} &nbsp;&nbsp; 处罚机构：{c.agency} &nbsp;&nbsp; 罚没金额：{c.amount}
+                  <span className="float-right"><DownloadIcon /></span>
+                </div>
               </div>
-              <div className="text-sm text-[#666]">
-                发布日期：2026-08-20 &nbsp;&nbsp; 处罚机构：国家金融监督管理总局常州监管分局
-                <span className="float-right"><DownloadIcon /></span>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
       )}

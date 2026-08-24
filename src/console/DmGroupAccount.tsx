@@ -639,7 +639,7 @@ export default function DmGroupAccount() {
 
       {/* Tab 导航 */}
       <div className="bg-white px-6">
-        <div className="flex items-stretch border-b border-[#e8e8e8]">
+        <div className="sticky top-[140px] z-20 bg-white flex items-stretch border-b border-[#e8e8e8]">
           {TABS.map((t) => {
             const active = t.key === tab
             return (

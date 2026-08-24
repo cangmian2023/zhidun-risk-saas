@@ -91,7 +91,7 @@ const seed: Data = {
 
 function PersonIcon() {
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2563EB" strokeWidth="1.8">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1677ff" strokeWidth="1.8">
       <circle cx="12" cy="8" r="3.2" />
       <path d="M5.5 19c0-3.3 2.9-5.5 6.5-5.5s6.5 2.2 6.5 5.5" strokeLinecap="round" />
     </svg>
@@ -99,7 +99,7 @@ function PersonIcon() {
 }
 function BuildingIcon() {
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2563EB" strokeWidth="1.8">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1677ff" strokeWidth="1.8">
       <rect x="5" y="4" width="14" height="16" rx="1.5" />
       <path d="M9 8h2M13 8h2M9 12h2M13 12h2M9 16h2M13 16h2" strokeLinecap="round" />
     </svg>
@@ -116,7 +116,7 @@ function CheckIcon() {
 
 function DocIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2563EB" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1677ff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
       <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
       <polyline points="14 2 14 8 20 8" />
     </svg>
@@ -149,6 +149,7 @@ function UploadCard({
   uploading,
   onUpload,
   onRemove,
+  count,
 }: {
   card: Card
   icon: React.ReactNode
@@ -156,7 +157,9 @@ function UploadCard({
   uploading: boolean
   onUpload: () => void
   onRemove: () => void
+  count: number
 }) {
+  const isEmpl = card.name.includes('员工')
   return (
     <div
       style={{
@@ -168,7 +171,8 @@ function UploadCard({
         background: '#fff',
         display: 'flex',
         flexDirection: 'column',
-        gap: 12,
+        gap: 14,
+        boxShadow: '0 2px 8px rgba(15,23,42,.05)',
       }}
     >
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10 }}>
@@ -193,7 +197,7 @@ function UploadCard({
         </div>
         <a
           onClick={() => alert('下载 ' + card.name + ' 样例模板（姓名/编号/企业名称）')}
-          style={{ fontSize: 13, color: '#2563EB', cursor: 'pointer', whiteSpace: 'nowrap' }}
+          style={{ fontSize: 13, color: '#1677ff', cursor: 'pointer', whiteSpace: 'nowrap', textDecoration: 'none' }}
         >
           查看样例
         </a>
@@ -216,16 +220,21 @@ function UploadCard({
             gap: 10,
             background: '#F8FAFC',
             borderRadius: 8,
-            padding: '9px 14px',
+            padding: '10px 14px',
             border: '1px solid #E2E8F0',
           }}
         >
           <DocIcon />
-          <span style={{ fontSize: 13, color: '#2563EB', fontWeight: 500 }}>{file}</span>
+          <div style={{ minWidth: 0, flex: 1 }}>
+            <div style={{ fontSize: 13, color: '#1677ff', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{file}</div>
+            <div style={{ fontSize: 12, color: '#94A3B8', marginTop: 2 }}>
+              已识别 {count} {isEmpl ? '人' : '家'}数据
+            </div>
+          </div>
           <button
             onClick={onRemove}
             title="删除文件"
-            style={{ marginLeft: 'auto', border: 'none', background: 'transparent', cursor: 'pointer', color: '#94A3B8', display: 'inline-flex', padding: 4 }}
+            style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: '#94A3B8', display: 'inline-flex', padding: 4 }}
           >
             <CloseIcon />
           </button>
@@ -240,6 +249,27 @@ function UploadCard({
           <UploadIcon />
           {uploading ? '上传中…' : card.btn}
         </EpBtn>
+      )}
+
+      {file && (
+        <button
+          onClick={onUpload}
+          style={{
+            alignSelf: 'flex-start',
+            border: 'none',
+            background: 'transparent',
+            color: '#1677ff',
+            fontSize: 12.5,
+            cursor: 'pointer',
+            padding: 0,
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 4,
+          }}
+        >
+          <UploadIcon />
+          重新上传
+        </button>
       )}
     </div>
   )
@@ -257,14 +287,19 @@ export default function FkInterest({ params }: { params: URLSearchParams }) {
   const [kw, setKw] = useState('')
   const [detailRow, setDetailRow] = useState<TableRow | null>(null)
   const [checkHint, setCheckHint] = useState('')
+  const [ruleOpen, setRuleOpen] = useState(false)
+  const [emplCount, setEmplCount] = useState(0)
+  const [partnerCountRows, setPartnerCountRows] = useState(0)
 
   const uploadFile = (which: 'empl' | 'partner') => {
     const setUploading = which === 'empl' ? setEmplUploading : setPartnerUploading
     const setFile = which === 'empl' ? setEmplFile : setPartnerFile
+    const setCount = which === 'empl' ? setEmplCount : setPartnerCountRows
     setUploading(true)
     window.setTimeout(() => {
       setUploading(false)
       setFile(which === 'empl' ? '员工名单_20260818.xlsx' : '合作方名单_20260818.xlsx')
+      setCount(which === 'empl' ? 128 : 36)
     }, 800)
   }
 
@@ -295,6 +330,12 @@ export default function FkInterest({ params }: { params: URLSearchParams }) {
 
   const empCount = data.table.rows.length
   const partnerCount = data.table.rows.reduce((s, r) => s + r.conflictCount, 0)
+
+  const STEPS = [
+    { n: 1, label: '上传员工名单', done: !!emplFile },
+    { n: 2, label: '上传合作方名单', done: !!partnerFile },
+    { n: 3, label: '发起利益冲突排查', done: showTable },
+  ]
 
   const columns = [
     {
@@ -333,7 +374,7 @@ export default function FkInterest({ params }: { params: URLSearchParams }) {
       render: (r: Row) => (
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
           {String(r.conflictName)}
-          <a style={{ color: '#2563EB', fontSize: 12, cursor: 'pointer' }}>更多</a>
+          <a style={{ color: '#1677ff', fontSize: 12, cursor: 'pointer' }}>更多</a>
         </div>
       ),
     },
@@ -343,7 +384,7 @@ export default function FkInterest({ params }: { params: URLSearchParams }) {
       label: '操作',
       width: 70,
       render: (r: Row) => (
-        <a style={{ color: '#2563EB', cursor: 'pointer' }} onClick={() => setDetailRow(r as unknown as TableRow)}>
+        <a style={{ color: '#1677ff', cursor: 'pointer' }} onClick={() => setDetailRow(r as unknown as TableRow)}>
           详情
         </a>
       ),
@@ -352,8 +393,8 @@ export default function FkInterest({ params }: { params: URLSearchParams }) {
 
   return (
     <EpPage title="利益排查" crumb="风控中心 / 利益排查">
-      {/* 两张名单卡片 + 中间排查逻辑虚线（排查后可收起/展开） */}
-      {collapsed ? (
+      {/* 收起态：一行横幅，点击展开 */}
+      {collapsed && (
         <div
           onClick={() => setCollapsed(false)}
           style={{
@@ -370,106 +411,202 @@ export default function FkInterest({ params }: { params: URLSearchParams }) {
             color: '#475569',
           }}
         >
-          <span>名单配置已收起（已上传 {empCount} 名员工、{partnerCount} 家合作伙伴）</span>
-          <span style={{ color: '#2563EB', fontWeight: 500 }}>▾ 展开配置</span>
+          <span>名单配置已收起（已上传 {emplCount} 名员工、{partnerCountRows} 家合作伙伴）</span>
+          <span style={{ color: '#1677ff', fontWeight: 500 }}>▾ 展开配置</span>
         </div>
-      ) : (
+      )}
+
+      {!collapsed && (
         <>
+          {/* 顶部流程步骤导航 */}
           <div
-            onClick={() => setCollapsed(true)}
             style={{
               marginTop: 18,
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'flex-end',
-              gap: 6,
-              fontSize: 13,
-              color: '#2563EB',
-              cursor: 'pointer',
-              userSelect: 'none',
+              justifyContent: 'center',
+              gap: 0,
+              marginBottom: 22,
             }}
           >
-            收起配置 ▴
-          </div>
-          <div style={{ display: 'flex', gap: 20, alignItems: 'stretch', marginTop: 8, flexWrap: 'wrap' }}>
-            <UploadCard
-              card={data.emplCard}
-              icon={<PersonIcon />}
-              file={emplFile}
-              uploading={emplUploading}
-              onUpload={() => uploadFile('empl')}
-              onRemove={() => setEmplFile(null)}
-            />
-
-            {/* 中间排查逻辑 */}
-            <div
-              style={{
-                flex: '1 1 220px',
-                minWidth: 200,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexWrap: 'wrap',
-                gap: 6,
-                padding: '10px 0',
-              }}
-            >
-              {data.flow.map((f, i) => (
-                <span key={f} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            {STEPS.map((s, i) => (
+              <div key={s.n} style={{ display: 'flex', alignItems: 'center' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <span
                     style={{
+                      width: 26,
+                      height: 26,
+                      borderRadius: '50%',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: 13,
+                      fontWeight: 700,
+                      color: s.done ? '#fff' : '#64748B',
+                      background: s.done ? '#1677ff' : '#E2E8F0',
+                    }}
+                  >
+                    {s.done ? '✓' : s.n}
+                  </span>
+                  <span
+                    style={{
+                      fontSize: 14,
+                      fontWeight: s.done ? 600 : 400,
+                      color: s.done ? '#0F172A' : '#64748B',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {s.label}
+                  </span>
+                </div>
+                {i < STEPS.length - 1 && (
+                  <span
+                    style={{
+                      width: 120,
+                      height: 2,
+                      background: s.done ? '#1677ff' : '#CBD5E1',
+                      margin: '0 14px',
+                    }}
+                  />
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* 左右双上传卡片 + 右上收起配置 */}
+          <div style={{ position: 'relative' }}>
+            <div
+              onClick={() => setCollapsed(true)}
+              style={{
+                position: 'absolute',
+                top: -2,
+                right: 0,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                fontSize: 13,
+                color: '#1677ff',
+                cursor: 'pointer',
+                userSelect: 'none',
+              }}
+            >
+              收起配置 ▴
+            </div>
+            <div style={{ display: 'flex', gap: 20, alignItems: 'stretch', flexWrap: 'wrap' }}>
+              <UploadCard
+                card={data.emplCard}
+                icon={<PersonIcon />}
+                file={emplFile}
+                uploading={emplUploading}
+                onUpload={() => uploadFile('empl')}
+                onRemove={() => {
+                  setEmplFile(null)
+                  setEmplCount(0)
+                }}
+                count={emplCount}
+              />
+              <UploadCard
+                card={data.partnerCard}
+                icon={<BuildingIcon />}
+                file={partnerFile}
+                uploading={partnerUploading}
+                onUpload={() => uploadFile('partner')}
+                onRemove={() => {
+                  setPartnerFile(null)
+                  setPartnerCountRows(0)
+                }}
+                count={partnerCountRows}
+              />
+            </div>
+          </div>
+
+          {/* 底部居中排查按钮 */}
+          <div style={{ marginTop: 26, textAlign: 'center' }}>
+            {!bothUploaded && (
+              <div style={{ marginBottom: 12, fontSize: 13, color: '#64748B' }}>
+                已上传：员工名单 <b style={{ color: emplFile ? '#1677ff' : '#94A3B8' }}>{emplFile ? `${emplCount} 人` : '0 人'}</b> ／ 合作方名单{' '}
+                <b style={{ color: partnerFile ? '#1677ff' : '#94A3B8' }}>{partnerFile ? `${partnerCountRows} 家` : '0 家'}</b>
+              </div>
+            )}
+            <div style={{ display: 'inline-block', position: 'relative' }}>
+              <EpBtn
+                variant="primary"
+                onClick={onCheck}
+                disabled={!bothUploaded}
+                title={bothUploaded ? '' : '请先上传「员工名单」与「合作方名单」两份文件后再开始排查'}
+                style={{
+                  background: bothUploaded ? '#1677ff' : '#CBD5E1',
+                  borderColor: bothUploaded ? '#1677ff' : '#CBD5E1',
+                  color: '#fff',
+                  fontWeight: 600,
+                  padding: '9px 32px',
+                  fontSize: 14,
+                  cursor: bothUploaded ? 'pointer' : 'not-allowed',
+                }}
+              >
+                {data.checkBtn}
+              </EpBtn>
+            </div>
+            {checkHint && (
+              <div style={{ marginTop: 10, fontSize: 13, color: '#DC2626' }}>{checkHint}</div>
+            )}
+          </div>
+
+          {/* 排查规则说明（折叠面板） */}
+          <div style={{ marginTop: 18, maxWidth: 760, marginLeft: 'auto', marginRight: 'auto' }}>
+            <div
+              onClick={() => setRuleOpen((v) => !v)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                cursor: 'pointer',
+                fontSize: 13,
+                color: '#64748B',
+                userSelect: 'none',
+              }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="9" />
+                <line x1="12" y1="11" x2="12" y2="16" />
+                <line x1="12" y1="8" x2="12" y2="8" />
+              </svg>
+              本次排查规则
+              <span style={{ color: '#94A3B8', fontSize: 12 }}>{ruleOpen ? '⌃' : '⌄'}</span>
+            </div>
+            {ruleOpen && (
+              <div
+                style={{
+                  marginTop: 8,
+                  padding: '12px 16px',
+                  borderRadius: 10,
+                  background: '#F8FAFC',
+                  border: '1px solid #E2E8F0',
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  gap: 8,
+                }}
+              >
+                {data.flow.map((f, i) => (
+                  <span
+                    key={f}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 6,
                       fontSize: 12,
                       color: '#475569',
-                      background: '#F1F5F9',
+                      background: '#fff',
                       border: '1px dashed #CBD5E1',
                       borderRadius: 999,
                       padding: '3px 10px',
                       whiteSpace: 'nowrap',
                     }}
                   >
+                    {i < data.flow.length - 1 && <span style={{ color: '#94A3B8', fontSize: 11 }}>{i + 1}.</span>}
                     {f}
                   </span>
-                  {i < data.flow.length - 1 && (
-                    <span style={{ color: '#CBD5E1', fontSize: 16, lineHeight: 1 }}>—›</span>
-                  )}
-                </span>
-              ))}
-            </div>
-
-            <UploadCard
-              card={data.partnerCard}
-              icon={<BuildingIcon />}
-              file={partnerFile}
-              uploading={partnerUploading}
-              onUpload={() => uploadFile('partner')}
-              onRemove={() => setPartnerFile(null)}
-            />
-          </div>
-
-          {/* 排查按钮 */}
-          <div style={{ marginTop: 22, textAlign: 'center' }}>
-            {checkHint && (
-              <div style={{ marginBottom: 10, fontSize: 13, color: '#DC2626' }}>{checkHint}</div>
-            )}
-            <EpBtn
-              variant="primary"
-              onClick={onCheck}
-              disabled={!bothUploaded}
-              style={{
-                background: bothUploaded ? '#2563EB' : '#CBD5E1',
-                borderColor: bothUploaded ? '#2563EB' : '#CBD5E1',
-                color: '#fff',
-                fontWeight: 600,
-                padding: '8px 28px',
-                fontSize: 14,
-                cursor: bothUploaded ? 'pointer' : 'not-allowed',
-              }}
-            >
-              {data.checkBtn}
-            </EpBtn>
-            {!bothUploaded && (
-              <div style={{ marginTop: 8, fontSize: 12, color: '#94A3B8' }}>
-                已上传：{emplFile ? '员工名单 ✓' : '员工名单 ✗'} ／ {partnerFile ? '合作方名单 ✓' : '合作方名单 ✗'}
+                ))}
               </div>
             )}
           </div>
@@ -500,7 +637,7 @@ export default function FkInterest({ params }: { params: URLSearchParams }) {
                     outline: 'none',
                   }}
                 />
-                <EpBtn variant="primary" style={{ background: '#2563EB', borderColor: '#2563EB', color: '#fff' }}>
+                <EpBtn variant="primary" style={{ background: '#1677ff', borderColor: '#1677ff', color: '#fff' }}>
                   {data.table.exportBtn}
                 </EpBtn>
               </div>
@@ -539,7 +676,7 @@ export default function FkInterest({ params }: { params: URLSearchParams }) {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {data.intro.items.map((it) => (
               <div key={it.label} style={{ display: 'flex', gap: 8 }}>
-                <span style={{ color: '#2563EB', flexShrink: 0 }}>·</span>
+                <span style={{ color: '#1677ff', flexShrink: 0 }}>·</span>
                 <span>
                   <b style={{ fontWeight: 600, color: '#1E3A8A' }}>{it.label}：</b>
                   {it.text}
@@ -630,7 +767,7 @@ function DetailModal({ row, labels, onClose }: { row: TableRow; labels: Data['de
                       width: 22,
                       height: 22,
                       borderRadius: '50%',
-                      background: '#2563EB',
+                      background: '#1677ff',
                       color: '#fff',
                       fontSize: 12,
                       display: 'inline-flex',
@@ -677,7 +814,7 @@ function DetailModal({ row, labels, onClose }: { row: TableRow; labels: Data['de
           </EpBtn>
           <EpBtn
             variant="primary"
-            style={{ background: '#2563EB', borderColor: '#2563EB', color: '#fff', fontWeight: 600 }}
+            style={{ background: '#1677ff', borderColor: '#1677ff', color: '#fff', fontWeight: 600 }}
           >
             {labels.download}
           </EpBtn>

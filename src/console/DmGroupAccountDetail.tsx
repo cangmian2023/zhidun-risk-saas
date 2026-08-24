@@ -241,7 +241,7 @@ export default function DmGroupAccountDetail() {
   ]
 
   return (
-    <div className="font-sans text-[14px] text-gray-800 bg-white">
+    <div className="font-sans text-[14px] text-gray-800">
       <PageShell title={name} crumb="数字营销 / 潜客挖掘 / 集团户" legend={false} onBack={() => nav(backUrl)} />
 
       <div className="px-6 py-4 max-w-[1440px] mx-auto">
@@ -267,7 +267,7 @@ export default function DmGroupAccountDetail() {
         </Panel>
 
         {/* ========== Tab 栏 ========== */}
-        <div className="flex border-b border-gray-200 mt-4 mb-3">
+        <div className="sticky top-[140px] z-20 bg-white flex border-b border-gray-200 mt-4 mb-3">
           <div
             className={`px-3 py-2 cursor-pointer ${tab === '集团信息' ? 'border-b-2 border-[#2762e8] text-[#2762e8] font-medium' : 'text-gray-600'}`}
             onClick={() => setTab('集团信息')}

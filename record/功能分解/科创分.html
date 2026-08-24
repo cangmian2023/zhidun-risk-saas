@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>科创分详情</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+    <style>
+        .rule-box {
+            background-color: #fffbeb;
+            border: 1px solid #fef08a;
+        }
+    </style>
+</head>
+<body class="bg-white text-gray-800 font-sans">
+    <div class="w-[1700px] border border-gray-200 rounded shadow-sm bg-white">
+        <!-- 头部 -->
+        <div class="flex justify-between items-center p-4 border-b border-gray-200">
+            <h1 class="text-2xl font-semibold">广州博鳌纵横网络科技有限公司 科创分详情</h1>
+            <button class="text-gray-400 text-xl">×</button>
+        </div>
+
+        <!-- 主体内容：雷达图 + 表格 -->
+        <div class="p-6 flex gap-10 items-start">
+            <!-- 五维雷达图 -->
+            <div class="w-[420px] h-[420px]">
+                <canvas id="radarChart"></canvas>
+            </div>
+            <!-- 知识产权表格 -->
+            <div class="flex-1">
+                <table class="w-full border-collapse">
+                    <thead>
+                        <tr class="bg-gray-50">
+                            <th class="border border-gray-300 px-4 py-3 text-left text-base font-medium">知识产权指标</th>
+                            <th class="border border-gray-300 px-4 py-3 text-left text-base font-medium">该企业获得数</th>
+                            <th class="border border-gray-300 px-4 py-3 text-left text-base font-medium">含子公司获得数</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="border border-gray-300 px-4 py-3 text-base">有效专利数</td>
+                            <td class="border border-gray-300 px-4 py-3 text-base">78</td>
+                            <td class="border border-gray-300 px-4 py-3 text-base">78</td>
+                        </tr>
+                        <tr>
+                            <td class="border border-gray-300 px-4 py-3 text-base">有效发明专利数</td>
+                            <td class="border border-gray-300 px-4 py-3 text-base">77</td>
+                            <td class="border border-gray-300 px-4 py-3 text-base">77</td>
+                        </tr>
+                        <tr>
+                            <td class="border border-gray-300 px-4 py-3 text-base">有效发明授权数</td>
+                            <td class="border border-gray-300 px-4 py-3 text-base">77</td>
+                            <td class="border border-gray-300 px-4 py-3 text-base">77</td>
+                        </tr>
+                        <tr>
+                            <td class="border border-gray-300 px-4 py-3 text-base">有效外观设计数</td>
+                            <td class="border border-gray-300 px-4 py-3 text-base">1</td>
+                            <td class="border border-gray-300 px-4 py-3 text-base">1</td>
+                        </tr>
+                        <tr>
+                            <td class="border border-gray-300 px-4 py-3 text-base">软件著作权数</td>
+                            <td class="border border-gray-300 px-4 py-3 text-base">74</td>
+                            <td class="border border-gray-300 px-4 py-3 text-base">156</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 底部科创评分规则 -->
+        <div class="m-6 p-5 rule-box rounded">
+            <div class="font-semibold mb-2 text-lg">科创分评分规则：</div>
+            <div class="text-base leading-relaxed">
+                科创企业评分，是从企业技术创新、科创资质、研发实力、企业成长性以及行业潜力5个大类（20+个细分维度）维度综合评价企业的科技创新能力以及发展潜力。辅助金融机构、政府/产业园等多种业务应用场景决策。
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const radarCtx = document.getElementById('radarChart').getContext('2d');
+        new Chart(radarCtx, {
+            type: 'radar',
+            data: {
+                labels: [
+                    '技术创新',
+                    '研发实力',
+                    '科创资质',
+                    '企业成长性',
+                    '行业潜力'
+                ],
+                datasets: [{
+                    data: [90, 85, 40, 30, 45],
+                    borderColor: '#4f86f7',
+                    backgroundColor: 'rgba(79, 134, 247, 0.35)',
+                    fill: true,
+                    pointBackgroundColor: '#4f86f7'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    r: {
+                        min: 0,
+                        max: 100,
+                        ticks: { display: false },
+                        grid: { color: 'rgba(180, 205, 255, 0.4)' },
+                        pointLabels: {
+                            font: { size: 14 },
+                            color: '#4b5563'
+                        }
+                    }
+                },
+                plugins: {
+                    legend: { display: false }
+                }
+            }
+        });
+    </script>
+</body>
+</html>

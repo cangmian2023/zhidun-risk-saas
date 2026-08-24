@@ -28,9 +28,9 @@ const seed = {
     description: '广州博鳌纵横网络科技有限公司成立于2013年07月30日，注册地址为广州市黄埔区科学大道231、233号裙楼B1B2栋一层、三层、四层，法定代表人为谢旭辉，注册资本为30872.97万人民币，统一社会信用代码为91440106074639077N。',
   },
   tabs: [
-    { key: 'clue', label: '线索信息', count: 75 },
-    { key: 'expand', label: '扩大主体', count: 6 },
-    { key: 'asset', label: '资产状况', count: 867 },
+    { key: 'clue', label: '线索信息', count: 12 },
+    { key: 'expand', label: '扩大主体', count: 14 },
+    { key: 'asset', label: '资产状况', count: 14 },
   ],
   filters: {
     flow: ['不限', '疑似流入', '疑似流出', '流向未知'],
@@ -41,7 +41,7 @@ const seed = {
   clues: [
     {
       id: '1', time: '2026-07-15', event: '新增一条限制高消费', type: '其他类型', diff: '其他',
-      caseNo: '（2026）京0108执7425号', restricted: '广州博鳌纵横网络科技有限公司', related: '谢旭辉',
+      caseNo:  '（2026）京0108执7425号', restricted: '广州博鳌纵横网络科技有限公司', related: '谢旭辉',
       applicant: '海南道智君联信息科技股份有限公司', reason: '服务合同纠纷',
       parse: '当个人因为“有履行能力而拒不履行生效法律文书确定义务”原因被列入限制高消费名单时，很可能还有可被执行的资产。',
     },
@@ -66,6 +66,47 @@ const seed = {
       caseNo: '（2026）琼9021执恢169号', amount: '88000', court: '定安县人民法院', status: '已结案',
       parse: '案件恢复执行的原因有债权人向法院提供了财产线索或追加了当事人。',
     },
+    {
+      id: '6', time: '2026-04-28', event: '新增股权冻结', type: '股权', diff: '高',
+      caseNo: '（2026）粤0112财保88号', restricted: '广州博鳌纵横网络科技有限公司', related: '广州博鳌知识产权代理有限公司',
+      applicant: '北京盈科（广州）律师事务所', reason: '股权转让纠纷诉前保全', amount: '12000000', court: '广州市黄埔区人民法院', status: '保全中',
+      parse: '股权被冻结通常意味着企业存在未披露的债务或诉讼，冻结期间股权无法转让、质押，影响其融资与资本运作。',
+    },
+    {
+      id: '7', time: '2026-03-30', event: '新增不动产登记查封', type: '不动产', diff: '高',
+      caseNo: '（2026）粤0112执保521号', restricted: '广州市黄埔区科学大道231、233号裙楼', related: '广州博鳌纵横网络科技有限公司',
+      applicant: '招商银行广州黄埔支行', reason: '金融借款合同纠纷', amount: '186000000', court: '广州市黄埔区人民法院', status: '查封中',
+      parse: '核心办公不动产被查封将直接影响企业持续经营场所的稳定性，建议优先评估并制定资产处置预案。',
+    },
+    {
+      id: '8', time: '2026-03-11', event: '新增一笔应收账款质押', type: '对外债权', diff: '中',
+      caseNo: '（2026）穗仲字第447号', restricted: '账期12个月内应收账款', related: '广州博鳌纵横网络科技有限公司',
+      applicant: '深圳前海某商业保理公司', reason: '保理融资', amount: '23000000', court: '-', status: '已登记',
+      parse: '应收账款质押可增加短期流动性，但若底层贸易背景不实，可能形成潜在风险敞口，需核验合同与发票。',
+    },
+    {
+      id: '9', time: '2026-02-22', event: '有被执行人记录', type: '其他类型', diff: '高',
+      caseNo: '（2026）粤01执383号', restricted: '广州博鳌纵横网络科技有限公司', related: '谢旭辉',
+      applicant: '广州市黄埔区税务局', reason: '欠税强制执行', amount: '4380000', court: '广州市中级人民法院', status: '执行中',
+      parse: '被税务机关列为被执行人，反映企业现金流紧张且存在历史纳税义务履行瑕疵，需关注税务合规风险。',
+    },
+    {
+      id: '10', time: '2026-01-18', event: '新增动产抵押', type: '动产', diff: '中',
+      caseNo: '（2026）粤0106动抵登12号', restricted: '服务器及IDC机房设备一批', related: '广州博鳌纵横网络科技有限公司',
+      applicant: '远东宏信（天津）融资租赁有限公司', reason: '融资租赁售后回租', amount: '4200000', court: '-', status: '已登记',
+      parse: '动产抵押登记可盘活存量设备资产，但同时形成优先债权，处置资产时受偿顺序靠后需留意。',
+    },
+    {
+      id: '11', time: '2025-12-05', event: '新增知识产权质押', type: '无形资产', diff: '低',
+      caseNo: '（2025）粤知质押字第39号', restricted: '注册商标「博鳌」等42件', related: '广州博鳌纵横网络科技有限公司',
+      applicant: '广州知识产权交易中心', reason: '知识产权质押融资', amount: '5400000', court: '-', status: '已登记',
+      parse: '知识产权质押体现企业无形资产变现能力，相关权利稳定性（续展、异议）需持续跟踪。',
+    },
+    {
+      id: '12', time: '2025-11-20', event: '有案件恢复执行', type: '其他类型', diff: '中',
+      caseNo: '（2025）琼9021执恢233号', amount: '310000', court: '定安县人民法院', status: '已结案',
+      parse: '案件恢复执行的原因有债权人向法院提供了财产线索或追加了当事人。',
+    },
   ],
   // 扩大主体：补充内容（关联主体 / 疑似关联人员 / 分支机构）
   expand: [
@@ -77,6 +118,12 @@ const seed = {
     { id: 'e6', name: '海南纵横博鳌投资有限公司', rel: '对外投资', legal: '谢旭辉', risk: '中风险', reason: '对外投资控股平台' },
     { id: 'e7', name: '广州博鳌纵横网络科技合伙企业', rel: '对外投资', legal: '谢旭辉', risk: '低风险', reason: '横向业务投资平台' },
     { id: 'e8', name: '广州博鳌文化传媒有限公司', rel: '控股子公司', legal: '谢旭辉', risk: '中风险', reason: '集团品牌运营子公司，存在多起服务合同纠纷' },
+    { id: 'e9', name: '广州博鳌信息科技有限公司', rel: '全资子公司', legal: '谢旭辉', risk: '中风险', reason: '集团数据业务承载主体，近期股权被冻结' },
+    { id: 'e10', name: '博鳌国际知识产权运营（深圳）有限公司', rel: '联营企业', legal: '陈晓丹', risk: '低风险', reason: '跨区域知识产权运营平台' },
+    { id: 'e11', name: '谢旭辉', rel: '疑似关联自然人 / 密切联系人', legal: '-', risk: '高风险', reason: '担任多家关联公司法定代表人且有被执行记录' },
+    { id: 'e12', name: '广州博鳌纵横网络科技（海南）有限公司', rel: '分支机构', legal: '谢旭辉', risk: '低风险', reason: '海南自贸港运营主体' },
+    { id: 'e13', name: '广州博鳌创业投资合伙企业（有限合伙）', rel: '对外投资', legal: '谢旭辉', risk: '中风险', reason: '早期项目投资平台，存在回购义务' },
+    { id: 'e14', name: '广州博鳌智慧园区运营管理有限公司', rel: '控股子公司', legal: '谢旭辉', risk: '低风险', reason: '园区物业管理与招商主体' },
   ],
   assets: [
     { id: 'a1', type: '不动产', name: '广州市黄埔区科学大道231号裙楼B1B2栋', detail: '建筑面积约 12,800㎡，用途为办公及商业', value: '约 1.86 亿元', status: '已抵押', court: '-' },
@@ -86,9 +133,15 @@ const seed = {
     { id: 'a5', type: '知识产权', name: '注册商标「博鳌」等 42 件', detail: '第35/36/42 类', value: '评估约 540 万元', status: '正常', court: '-' },
     { id: 'a6', type: '对外投资', name: '北京博鳌纵横科技有限公司 30% 股权', detail: '注册资本 500 万人民币', value: '约 150 万元', status: '正常', court: '-' },
     { id: 'a7', type: '应收账款', name: '账期 1 年内应收账款', detail: '主要客户为中小企业', value: '约 2,300 万元', status: '部分涉诉', court: '广州市中级人民法院' },
-    { id: 'a8', type: '设备资产', name: '服务器及办公设备一批', detail: ' IDC 机房托管设备', value: '约 420 万元', status: '正常', court: '-' },
+    { id: 'a8', type: '设备资产', name: '服务器及办公设备一批', detail: 'IDC 机房托管设备', value: '约 420 万元', status: '正常', court: '-' },
+    { id: 'a9', type: '不动产', name: '广州市天河区珠江新城写字楼 8 层', detail: '建筑面积约 2,100㎡，投资性房地产', value: '约 4,200 万元', status: '正常', court: '-' },
+    { id: 'a10', type: '股权', name: '持有的广州博鳌文化传媒有限公司 60% 股权', detail: '注册资本 500 万人民币', value: '约 300 万元', status: '正常', court: '-' },
+    { id: 'a11', type: '银行存款', name: '工商银行广州天河支行 一般户', detail: '账户余额（2026-06 查）', value: '约 92 万元', status: '正常', court: '-' },
+    { id: 'a12', type: '知识产权', name: '发明专利「一种知识产权交易匹配方法」等 11 项', detail: '第42类，剩余保护期 12 年', value: '评估约 860 万元', status: '正常', court: '-' },
+    { id: 'a13', type: '对外投资', name: '海南纵横博鳌投资有限公司 100% 股权', detail: '注册资本 2,000 万人民币', value: '约 1,800 万元', status: '质押', court: '海口市中级人民法院' },
+    { id: 'a14', type: '应收账款', name: '账期 1-2 年应收账款', detail: '含履约保证金及质保金', value: '约 1,050 万元', status: '部分涉诉', court: '广州市黄埔区人民法院' },
   ],
-  pagination: { total: 75, pageSize: 5, current: 1 },
+  pagination: { total: 12, pageSize: 5, current: 1 },
 }
 
 type Data = typeof seed
@@ -150,7 +203,7 @@ export default function FkProperty({ params }: { params: URLSearchParams }) {
           size="sm"
           onClick={onStart}
           disabled={loading}
-          style={{ background: '#2563EB', borderColor: '#2563EB', display: 'inline-flex', alignItems: 'center', gap: 6 }}
+          style={{ background: '#1677ff', borderColor: '#1677ff', display: 'inline-flex', alignItems: 'center', gap: 6 }}
         >
           <IconSearch />
           {loading ? '查询中…' : '开始查询'}
@@ -192,7 +245,7 @@ export default function FkProperty({ params }: { params: URLSearchParams }) {
                 </div>
                 <div style={{ marginTop: 12, fontSize: 12, color: '#64748B', lineHeight: 1.7 }}>
                   {descOpen ? data.company.description : data.company.description.slice(0, 90) + '...'}
-                  <a style={{ color: '#2563EB', cursor: 'pointer', marginLeft: 6 }} onClick={() => setDescOpen(!descOpen)}>
+                  <a style={{ color: '#1677ff', cursor: 'pointer', marginLeft: 6 }} onClick={() => setDescOpen(!descOpen)}>
                     {descOpen ? '收起' : '展开'}
                   </a>
                 </div>
@@ -201,22 +254,24 @@ export default function FkProperty({ params }: { params: URLSearchParams }) {
           </EpCard>
 
           {/* Tabs + 导出 */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', margin: '16px 0 12px' }}>
-            <div style={{ display: 'flex', gap: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', margin: '16px 0 12px', position: 'sticky', top: 140, zIndex: 20, background: '#fff', borderBottom: '1px solid #E5E7EB', paddingBottom: 0 }}>
+            <div style={{ display: 'flex', gap: 4 }}>
               {data.tabs.map((t) => (
                 <div
                   key={t.key}
                   onClick={() => setTab(t.key as any)}
                   style={{
-                    cursor: 'pointer', padding: '7px 16px', borderRadius: 8, fontSize: 13, fontWeight: 600,
-                    color: tab === t.key ? '#fff' : '#475569', background: tab === t.key ? '#2563EB' : '#F1F5F9',
+                    cursor: 'pointer', padding: '9px 18px', fontSize: 14, fontWeight: tab === t.key ? 600 : 500,
+                    color: tab === t.key ? '#1677ff' : '#475569', background: tab === t.key ? '#fff' : 'transparent',
+                    borderBottom: `2px solid ${tab === t.key ? '#1677ff' : 'transparent'}`,
+                    marginTop: tab === t.key ? 0 : 0, position: 'relative', top: 1,
                   }}
                 >
                   {t.label} {t.count}
                 </div>
               ))}
             </div>
-            <EpBtn variant="default" size="sm" onClick={() => alert('导出财产线索')}>导出</EpBtn>
+            <EpBtn variant="default" size="sm" onClick={() => alert('导出财产线索')} style={{ marginBottom: 6 }}>导出</EpBtn>
           </div>
 
           {tab === 'clue' && (
@@ -241,13 +296,13 @@ export default function FkProperty({ params }: { params: URLSearchParams }) {
               </EpCard>
 
               {/* 线索表格 + 提示标签（同一区域） */}
-              <EpCard pad={false}>
+              <EpCard pad={false} style={{ marginTop: 16 }}>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, padding: '14px 16px 0' }}>
                   <span style={{ fontSize: 14, fontWeight: 600, color: '#0F172A' }}>财产线索 {data.pagination.total}</span>
                   <span style={{ fontSize: 12, color: '#94A3B8' }}>为保证线索时效性，仅展示近3年的线索信息</span>
                 </div>
-                <div style={{ overflowX: 'auto', padding: '0 16px 16px' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, marginTop: 8, minWidth: 920 }}>
+                <div style={{ overflowX: 'auto', overflowY: 'hidden', padding: '0 16px 16px' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, marginTop: 8, minWidth: 1080 }}>
                   <thead>
                     <tr style={{ background: '#F8FAFC' }}>
                       <th style={thStyle(110)}>发生时间</th>
@@ -261,7 +316,7 @@ export default function FkProperty({ params }: { params: URLSearchParams }) {
                           <Toggle checked={parseOpen} onChange={setParseOpen} />
                         </div>
                       </th>
-                      <th style={thStyle(70)}>操作</th>
+                      <th style={{ ...thStyle(70), position: 'sticky', right: 0, zIndex: 3, background: '#F8FAFC', borderLeft: '1px solid #E2E8F0', boxShadow: '-8px 0 10px -8px rgba(15,23,42,.12)' }}>操作</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -271,8 +326,8 @@ export default function FkProperty({ params }: { params: URLSearchParams }) {
                         <td style={tdStyle}><EpTag color="#7C3AED" bg="#F5F3FF">{c.event}</EpTag></td>
                         <td style={tdStyle}>{c.type}</td>
                         <td style={tdStyle}><DiffText d={c.diff} /></td>
-                        <td style={{ ...tdStyle, minWidth: 280 }}>
-                          <div style={{ color: '#0F172A', lineHeight: 1.8 }}>
+                        <td style={{ ...tdStyle, maxWidth: 360, minWidth: 280, whiteSpace: 'normal !important', overflow: 'hidden !important' }}>
+                          <div style={{ color: '#0F172A', lineHeight: 1.8, overflow: 'hidden', wordBreak: 'break-all' }}>
                             {c.caseNo && <div>案号：{c.caseNo}</div>}
                             {c.restricted && <div>限制法人或组织：{c.restricted}</div>}
                             {c.related && <div>关联对象：{c.related}</div>}
@@ -283,7 +338,7 @@ export default function FkProperty({ params }: { params: URLSearchParams }) {
                             {c.status && <div>执行状态：{c.status}</div>}
                           </div>
                           {parseOpen && (
-                            <div style={{ marginTop: 8, padding: '8px 10px', background: '#F8FAFC', borderRadius: 6, color: '#475569', fontSize: 12, lineHeight: 1.6 }}>
+                            <div style={{ marginTop: 8, padding: '8px 10px', background: '#F8FAFC', borderRadius: 6, color: '#475569', fontSize: 12, lineHeight: 1.6, overflow: 'hidden', wordBreak: 'break-all' }}>
                               线索解析：{c.parse}
                             </div>
                           )}
@@ -291,8 +346,8 @@ export default function FkProperty({ params }: { params: URLSearchParams }) {
                         <td style={{ ...tdStyle, textAlign: 'center' }}>
                           {parseOpen && <span style={{ fontSize: 12, color: '#64748B' }}>已解析</span>}
                         </td>
-                        <td style={tdStyle}>
-                          <a style={{ color: '#2563EB', cursor: 'pointer' }} onClick={() => openDetail(c)}>详情</a>
+                        <td style={{ ...tdStyle, position: 'sticky', right: 0, zIndex: 3, background: '#fff', borderLeft: '1px solid #E2E8F0', boxShadow: '-8px 0 10px -8px rgba(15,23,42,.12)' }}>
+                          <a style={{ color: '#1677ff', cursor: 'pointer' }} onClick={() => openDetail(c)}>详情</a>
                         </td>
                       </tr>
                     ))}
@@ -305,7 +360,7 @@ export default function FkProperty({ params }: { params: URLSearchParams }) {
                   <span>{data.pagination.pageSize}条/页</span>
                   <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1} style={pageBtnStyle}>上一页</button>
                   {Array.from({ length: Math.min(5, totalPages) }, (_, i) => i + 1).map((p) => (
-                    <button key={p} onClick={() => setPage(p)} style={{ ...pageBtnStyle, background: page === p ? '#2563EB' : '#fff', color: page === p ? '#fff' : '#475569', borderColor: page === p ? '#2563EB' : '#E2E8F0' }}>{p}</button>
+                    <button key={p} onClick={() => setPage(p)} style={{ ...pageBtnStyle, background: page === p ? '#1677ff' : '#fff', color: page === p ? '#fff' : '#475569', borderColor: page === p ? '#1677ff' : '#E2E8F0' }}>{p}</button>
                   ))}
                   {totalPages > 5 && <span>...</span>}
                   {totalPages > 5 && <button style={pageBtnStyle}>{totalPages}</button>}
@@ -320,7 +375,7 @@ export default function FkProperty({ params }: { params: URLSearchParams }) {
           )}
 
           {tab === 'expand' && (
-            <EpCard pad={false}>
+            <EpCard pad={false} style={{ marginTop: 16 }}>
               <div style={{ padding: '14px 16px 0', fontSize: 14, fontWeight: 600, color: '#0F172A' }}>扩大主体 {data.expand.length}</div>
               <div style={{ overflowX: 'auto', padding: '0 16px 16px' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, marginTop: 8, minWidth: 760 }}>
@@ -336,7 +391,7 @@ export default function FkProperty({ params }: { params: URLSearchParams }) {
                 <tbody>
                   {data.expand.map((e: Expand) => (
                     <tr key={e.id} style={{ borderBottom: '1px solid #F1F5F9' }} className="fk-clue-row">
-                      <td style={{ ...tdStyle, color: '#2563EB', fontWeight: 600 }}>{e.name}</td>
+                      <td style={{ ...tdStyle, color: '#1677ff', fontWeight: 600 }}>{e.name}</td>
                       <td style={tdStyle}>{e.rel}</td>
                       <td style={tdStyle}>{e.legal}</td>
                       <td style={tdStyle}><DiffText d={e.risk.replace('风险', '')} /></td>
@@ -350,7 +405,7 @@ export default function FkProperty({ params }: { params: URLSearchParams }) {
           )}
 
           {tab === 'asset' && (
-            <EpCard pad={false}>
+            <EpCard pad={false} style={{ marginTop: 16 }}>
               <div style={{ padding: '14px 16px 0', fontSize: 14, fontWeight: 600, color: '#0F172A' }}>资产状况 {data.assets.length}</div>
               <div style={{ overflowX: 'auto', padding: '0 16px 16px' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, marginTop: 8, minWidth: 760 }}>
@@ -367,7 +422,7 @@ export default function FkProperty({ params }: { params: URLSearchParams }) {
                 <tbody>
                   {data.assets.map((a) => (
                     <tr key={a.id} style={{ borderBottom: '1px solid #F1F5F9' }} className="fk-clue-row">
-                      <td style={{ ...tdStyle, color: '#2563EB', fontWeight: 600 }}>{a.type}</td>
+                      <td style={{ ...tdStyle, color: '#1677ff', fontWeight: 600 }}>{a.type}</td>
                       <td style={tdStyle}>{a.name}</td>
                       <td style={{ ...tdStyle, color: '#64748B' }}>{a.detail}</td>
                       <td style={{ ...tdStyle, fontWeight: 600 }}>{a.value}</td>
@@ -440,7 +495,7 @@ function Chip({ children, active, onClick }: { children: ReactNode; active: bool
       onClick={onClick}
       style={{
         cursor: 'pointer', padding: '4px 12px', borderRadius: 999, fontSize: 12,
-        color: active ? '#fff' : '#475569', background: active ? '#2563EB' : '#F1F5F9',
+        color: active ? '#fff' : '#475569', background: active ? '#1677ff' : '#F1F5F9',
       }}
     >
       {children}
@@ -458,7 +513,7 @@ function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean
     <div
       onClick={() => onChange(!checked)}
       style={{
-        width: 32, height: 18, borderRadius: 9, background: checked ? '#2563EB' : '#CBD5E1',
+        width: 32, height: 18, borderRadius: 9, background: checked ? '#1677ff' : '#CBD5E1',
         position: 'relative', cursor: 'pointer', transition: 'background .2s',
       }}
     >

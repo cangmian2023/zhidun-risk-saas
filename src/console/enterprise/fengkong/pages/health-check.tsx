@@ -100,7 +100,7 @@ export default function FkHealthCheck({ params }: { params: URLSearchParams }) {
 
       {/* 加载 / 报告内容 */}
       {!started ? (
-        <EpCard style={{ marginTop: 14 }}>
+        <EpCard style={{ marginTop: 20 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '28px 8px' }}>
             <span style={{ fontSize: 28, lineHeight: 1 }}>🩺</span>
             <div style={{ flex: 1 }}>

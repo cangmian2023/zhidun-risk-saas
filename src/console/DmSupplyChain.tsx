@@ -62,11 +62,11 @@ export default function DmSupplyChain() {
   )
 
   return (
-    <div style={{ padding: '16px 24px 24px' }} className="bg-white text-sm text-[#222]">
+    <div style={{ padding: '16px 24px 24px' }} className="text-sm text-[#222]">
       <PageShell title="供应链" crumb="数字营销 / 商机挖掘" subtitle="产业链上下游企业挖掘与供应链金融商机识别" legend={false} />
 
       {/* ============ 搜索区域 ============ */}
-      <div className="mb-8 flex items-center justify-center gap-3">
+      <div className="mt-4 mb-8 flex items-center justify-center gap-3">
         <input
           value={kw}
           onChange={(e) => setKw(e.target.value)}
@@ -124,7 +124,7 @@ export default function DmSupplyChain() {
             <th className={thCls}>企业类型</th>
             <th className={thCls}>公开时间</th>
             <th className={thCls}>数据来源</th>
-            <th className={thCls}>操作</th>
+            <th className={thCls + ' w-[140px]'}>操作</th>
           </tr>
         </thead>
         <tbody>
@@ -145,7 +145,7 @@ export default function DmSupplyChain() {
               <td className={tdCls}>{r.type}</td>
               <td className={tdCls}>{r.pub}</td>
               <td className={tdCls}>{r.source}</td>
-              <td className={tdCls}>
+              <td className={tdCls + ' w-[140px] whitespace-nowrap'}>
                 <span
                   className="cursor-pointer text-[#2b65e8] hover:underline"
                   onClick={() => goDetail('/console/ep/jd-company', { name: r.supplier })}

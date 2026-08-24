@@ -98,13 +98,13 @@ function MultiSelect({ label, options, selected, onChange }: {
       <button
         onClick={() => setOpen((o) => !o)}
         style={{
-          display: 'flex', alignItems: 'center', gap: 4, fontSize: 16, color: selected.length ? '#2563eb' : '#374151',
+          display: 'flex', alignItems: 'center', gap: 4, fontSize: 16, color: selected.length ? '#1677ff' : '#374151',
           background: 'transparent', border: 'none', cursor: 'pointer', padding: '4px 2px',
         }}
       >
         <span>{label}</span>
         {selected.length > 0 && (
-          <span style={{ background: '#eff6ff', color: '#2563eb', borderRadius: 10, fontSize: 12, padding: '0 6px', lineHeight: '18px' }}>{selected.length}</span>
+          <span style={{ background: '#eff6ff', color: '#1677ff', borderRadius: 10, fontSize: 12, padding: '0 6px', lineHeight: '18px' }}>{selected.length}</span>
         )}
         <span style={{ fontSize: 12 }}>∨</span>
       </button>
@@ -136,16 +136,16 @@ function MultiSelect({ label, options, selected, onChange }: {
 
 /* =====================================================================
    存客详情（设计稿：存客列表 - 存客详情.html）
-   设计稿自定义主题色 → 字面量 hex：
-   primary #165DFF / borderLine #e5e6eb / grayBg #f7f8fa
-   tagBlue #E8F3FF · tagBlueText #165DFF / tagGreen #E6FFEA · tagGreenText #00B42A
+   统一使用全局品牌色 → 字面量 hex：
+   primary #1677ff / borderLine #e5e6eb / grayBg #f7f8fa
+   tagBlue #E8F3FF · tagBlueText #1677ff / tagGreen #E6FFEA · tagGreenText #00B42A
    tagWarn #FFECE5 · tagWarnText #F53F3F / star #FFAA00
    ===================================================================== */
 const CELL = 'px-2 py-2 text-xs border border-[#e5e6eb]';
 const BTN_DEFAULT = 'border border-[#e5e6eb] rounded px-3 py-1 text-xs flex items-center gap-1';
-const BTN_YELLOW = 'bg-[#2563EB] text-white rounded px-3 py-1 text-xs flex items-center gap-1';
+const BTN_PRIMARY = 'bg-[#1677ff] text-white rounded px-3 py-1 text-xs flex items-center gap-1';
 const BADGE_GREEN = 'px-1.5 py-0.5 rounded text-xs bg-[#E6FFEA] text-[#00B42A]';
-const BADGE_BLUE = 'px-1.5 py-0.5 rounded text-xs bg-[#E8F3FF] text-[#165DFF]';
+const BADGE_BLUE = 'px-1.5 py-0.5 rounded text-xs bg-[#E8F3FF] text-[#1677ff]';
 const BADGE_WARN = 'px-1.5 py-0.5 rounded text-xs bg-[#FFECE5] text-[#F53F3F]';
 const ALIGN = { left: 'text-left', center: 'text-center', right: 'text-right' } as const;
 type Align = keyof typeof ALIGN;
@@ -213,7 +213,7 @@ function Pager({ total, last }: { total: string; last?: number }) {
     <div className="flex justify-end items-center mt-2 gap-2 text-xs flex-wrap">
       <span className="text-gray-500">共 {total} 条 &nbsp; 5条/页</span>
       <button className={BTN_DEFAULT}>{'<'}</button>
-      <button className={BTN_YELLOW}>1</button>
+      <button className={BTN_PRIMARY}>1</button>
       <button className={BTN_DEFAULT}>2</button>
       <button className={BTN_DEFAULT}>3</button>
       <button className={BTN_DEFAULT}>4</button>
@@ -323,7 +323,7 @@ function CunkeDetail({ row }: { row: BizRow }) {
       {/* 头部企业信息 */}
       <div className="flex justify-between items-start mb-4 gap-3">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 shrink-0 bg-[#165DFF] text-white flex items-center justify-center rounded">{row.name.slice(0, 1)}</div>
+          <div className="w-8 h-8 shrink-0 bg-[#1677ff] text-white flex items-center justify-center rounded">{row.name.slice(0, 1)}</div>
           <div>
             <span className="font-medium text-base">{row.name}</span>
             <span className={`${BADGE_GREEN} ml-1`}>存续（在营、开业、在册）</span>
@@ -332,20 +332,20 @@ function CunkeDetail({ row }: { row: BizRow }) {
         </div>
         <div className="flex gap-2 shrink-0">
           <button className={BTN_DEFAULT}>查看工商详情</button>
-          <button className={BTN_YELLOW}>下载商机/风险信息</button>
+          <button className={BTN_PRIMARY}>下载商机/风险信息</button>
         </div>
       </div>
 
       {/* Tab 切换 */}
       <div className="flex border-b border-[#e5e6eb] mb-4">
         <div
-          className={`px-4 py-2 text-sm cursor-pointer border-b-2 ${tab === 'biz' ? 'border-[#165DFF] text-[#165DFF] font-medium' : 'border-transparent'}`}
+          className={`px-4 py-2 text-sm cursor-pointer border-b-2 ${tab === 'biz' ? 'border-[#1677ff] text-[#1677ff] font-medium' : 'border-transparent'}`}
           onClick={() => setTab('biz')}
         >
           存客商机
         </div>
         <div
-          className={`px-4 py-2 text-sm cursor-pointer border-b-2 ${tab === 'risk' ? 'border-[#165DFF] text-[#165DFF] font-medium' : 'border-transparent'}`}
+          className={`px-4 py-2 text-sm cursor-pointer border-b-2 ${tab === 'risk' ? 'border-[#1677ff] text-[#1677ff] font-medium' : 'border-transparent'}`}
           onClick={() => setTab('risk')}
         >
           风险动态
@@ -369,7 +369,7 @@ function CunkeDetail({ row }: { row: BizRow }) {
                   <div className="text-xs text-gray-500">{c.label}</div>
                   {c.note && <div className="text-xs text-gray-400">{c.note}</div>}
                 </div>
-                <div className="text-xl font-bold text-[#165DFF] mt-1">
+                <div className="text-xl font-bold text-[#1677ff] mt-1">
                   {c.value} <span className="text-xs font-normal text-gray-500">条</span>
                 </div>
               </DetailCard>
@@ -378,7 +378,7 @@ function CunkeDetail({ row }: { row: BizRow }) {
 
           {/* 商机营销 */}
           <DetailCard className="mb-4">
-            <CardTitle title="商机营销" count="2" extra={<span className="text-[#165DFF] text-xs cursor-pointer">全部存客商机 &gt;</span>} />
+            <CardTitle title="商机营销" count="2" extra={<span className="text-[#1677ff] text-xs cursor-pointer">全部存客商机 &gt;</span>} />
             <TWrap>
               <thead>
                 <tr className="bg-[#f7f8fa]">
@@ -393,9 +393,9 @@ function CunkeDetail({ row }: { row: BizRow }) {
                   <tr key={i}>
                     <Td>{o.type}</Td>
                     <Td><Stars n={o.stars} /></Td>
-                    <Td>{o.content} <span className="text-[#165DFF]">{o.biz}</span></Td>
+                    <Td>{o.content} <span className="text-[#1677ff]">{o.biz}</span></Td>
                     <Td a="center">
-                      <span className="text-[#165DFF] cursor-pointer">{o.op}</span> &nbsp; <span className="text-[#165DFF] cursor-pointer">AI 触达</span>
+                      <span className="text-[#1677ff] cursor-pointer">{o.op}</span> &nbsp; <span className="text-[#1677ff] cursor-pointer">AI 触达</span>
                     </Td>
                   </tr>
                 ))}
@@ -429,7 +429,7 @@ function CunkeDetail({ row }: { row: BizRow }) {
                       <Td>{p.duty}</Td>
                       <Td a="center">{p.ratio}</Td>
                       <Td a="center">{p.count}</Td>
-                      <Td><span className="text-[#165DFF] cursor-pointer">{p.latest}</span></Td>
+                      <Td><span className="text-[#1677ff] cursor-pointer">{p.latest}</span></Td>
                     </tr>
                   ))}
                 </tbody>
@@ -483,7 +483,7 @@ function CunkeDetail({ row }: { row: BizRow }) {
                       <Td a="center">{v.date}</Td>
                       <Td a="center">{v.capital}</Td>
                       <Td a="center">{v.area}</Td>
-                      <Td>{v.latest === '-' ? '-' : <span className="text-[#165DFF] cursor-pointer">{v.latest}</span>}</Td>
+                      <Td>{v.latest === '-' ? '-' : <span className="text-[#1677ff] cursor-pointer">{v.latest}</span>}</Td>
                     </tr>
                   ))}
                 </tbody>
@@ -511,7 +511,7 @@ function CunkeDetail({ row }: { row: BizRow }) {
                       <Td a="center">{v.date}</Td>
                       <Td a="center">{v.capital}</Td>
                       <Td a="center">{v.area}</Td>
-                      <Td><span className="text-[#165DFF] cursor-pointer">{v.latest}</span></Td>
+                      <Td><span className="text-[#1677ff] cursor-pointer">{v.latest}</span></Td>
                     </tr>
                   ))}
                 </tbody>
@@ -539,7 +539,7 @@ function CunkeDetail({ row }: { row: BizRow }) {
                       <Td a="center">{v.date}</Td>
                       <Td a="center">{v.capital}</Td>
                       <Td a="center">{v.area}</Td>
-                      <Td>{v.latest === '-' ? '-' : <span className="text-[#165DFF] cursor-pointer">{v.latest}</span>}</Td>
+                      <Td>{v.latest === '-' ? '-' : <span className="text-[#1677ff] cursor-pointer">{v.latest}</span>}</Td>
                     </tr>
                   ))}
                 </tbody>
@@ -552,14 +552,14 @@ function CunkeDetail({ row }: { row: BizRow }) {
             <div className="p-3 font-medium border-b border-[#e5e6eb]">集团营销 <span className="text-xs font-normal text-gray-500">找到 249 条结果</span></div>
             <div className="px-3 py-2 border-b border-[#e5e6eb] flex justify-between items-center gap-2">
               <div className="text-xs">所在集团: 抖音集团 &nbsp; 集团成员数: 330 &nbsp; 集团主体企业: 抖音有限公司</div>
-              <span className="text-[#165DFF] text-xs cursor-pointer whitespace-nowrap">北京全部民营集团 &gt;</span>
+              <span className="text-[#1677ff] text-xs cursor-pointer whitespace-nowrap">北京全部民营集团 &gt;</span>
             </div>
             <div className="px-3 py-2 flex gap-2 border-b border-[#e5e6eb] overflow-x-auto">
               {GROUP_CHIPS.map((c) => <Chip key={c}>{c}</Chip>)}
               <Chip active>集团内级别</Chip>
               <Chip>控股等级</Chip>
             </div>
-            <div className="px-3 py-2 text-xs text-gray-500 border-b border-[#e5e6eb]">已选 <span className="text-[#165DFF] float-right cursor-pointer">清空</span></div>
+            <div className="px-3 py-2 text-xs text-gray-500 border-b border-[#e5e6eb]">已选 <span className="text-[#1677ff] float-right cursor-pointer">清空</span></div>
 
             <div className="p-3 border-b border-[#e5e6eb]">
               <TWrap>
@@ -615,12 +615,12 @@ function CunkeDetail({ row }: { row: BizRow }) {
                   {GROUP_OPPS.map((o, i) => (
                     <tr key={i}>
                       <Td a="center"><input type="checkbox" /></Td>
-                      <Td className="text-[#165DFF]">{o.name}</Td>
+                      <Td className="text-[#1677ff]">{o.name}</Td>
                       <Td a="center">{o.date}</Td>
                       <Td a="center"><span className={BADGE_WARN}>{o.type}</span></Td>
                       <Td a="center"><Stars n={o.stars} /></Td>
-                      <Td>{o.content} <span className="text-[#165DFF]">{o.biz}</span></Td>
-                      <Td a="center"><span className="text-[#165DFF] cursor-pointer">{o.op}</span></Td>
+                      <Td>{o.content} <span className="text-[#1677ff]">{o.biz}</span></Td>
+                      <Td a="center"><span className="text-[#1677ff] cursor-pointer">{o.op}</span></Td>
                     </tr>
                   ))}
                 </tbody>
@@ -648,7 +648,7 @@ function CunkeDetail({ row }: { row: BizRow }) {
                       <Td>{q.date}</Td>
                       <Td>{q.type}</Td>
                       <Td>{q.detail}</Td>
-                      <Td a="center"><span className="text-[#165DFF] cursor-pointer">查看详情</span></Td>
+                      <Td a="center"><span className="text-[#1677ff] cursor-pointer">查看详情</span></Td>
                     </tr>
                   ))}
                 </tbody>
@@ -670,7 +670,7 @@ function CunkeDetail({ row }: { row: BizRow }) {
                       <Td>{q.date}</Td>
                       <Td>{q.unit}</Td>
                       <Td>{q.detail}</Td>
-                      <Td a="center"><span className="text-[#165DFF] cursor-pointer">查看详情</span></Td>
+                      <Td a="center"><span className="text-[#1677ff] cursor-pointer">查看详情</span></Td>
                     </tr>
                   ))}
                 </tbody>
@@ -683,10 +683,10 @@ function CunkeDetail({ row }: { row: BizRow }) {
             <div className="p-3 font-medium border-b border-[#e5e6eb]">位置营销 <span className="text-xs font-normal text-gray-500">找到 20353 条结果</span></div>
             <div className="px-3 py-2 flex justify-between items-center border-b border-[#e5e6eb] gap-2">
               <div className="text-xs">所在位置: 北京市海淀区北三环西路甲23号院1号楼3层327 &nbsp; 周边范围：1km</div>
-              <span className="text-[#165DFF] text-xs cursor-pointer whitespace-nowrap">查看完整周边企业 &gt;</span>
+              <span className="text-[#1677ff] text-xs cursor-pointer whitespace-nowrap">查看完整周边企业 &gt;</span>
             </div>
             <div className="px-3 py-2 flex justify-between items-center border-b border-[#e5e6eb] gap-2">
-              <div><span className="font-medium text-xs">找到 20353 条相关结果</span> <span className="text-[#165DFF] text-xs cursor-pointer">最近中心距离</span></div>
+              <div><span className="font-medium text-xs">找到 20353 条相关结果</span> <span className="text-[#1677ff] text-xs cursor-pointer">最近中心距离</span></div>
               <div className="flex gap-2 shrink-0">
                 <button className={BTN_DEFAULT}>+ 关注</button>
                 <button className={BTN_DEFAULT}><IconDownload /> 导出</button>
@@ -771,7 +771,7 @@ function CunkeDetail({ row }: { row: BizRow }) {
                     <Td a="center">{r.type}</Td>
                     <Td>{r.content} {r.warn && <span className={BADGE_WARN}>{r.warn}</span>}</Td>
                     <Td a="center">广州粤信科技有限公司 191560</Td>
-                    <Td a="center"><span className="text-[#165DFF] cursor-pointer">跟踪记录</span></Td>
+                    <Td a="center"><span className="text-[#1677ff] cursor-pointer">跟踪记录</span></Td>
                   </tr>
                 ))}
               </tbody>
@@ -830,7 +830,7 @@ export default function CustomerList() {
   const hasFilter = Object.values(filters).some((v) => v.length > 0) || keyword.trim() !== '';
 
   return (
-    <div style={{ width: '100%', minHeight: '100vh', backgroundColor: '#ffffff' }}>
+    <div style={{ width: '100%', minHeight: '100vh' }}>
       <PageShell title="存客商机" crumb="数字营销 / 潜客挖掘 / 存客商机" legend={false} />
       {/* 顶部客商筛选栏 */}
       <div style={{ padding: '16px 20px', borderBottom: '1px solid #f0f2f5' }}>
@@ -855,7 +855,7 @@ export default function CustomerList() {
               </button>
             )}
             <button
-              style={{ padding: '8px 16px', borderRadius: '20px', border: '1px solid #dbeafe', backgroundColor: '#eff6ff', color: '#2563eb', fontSize: '14px', cursor: 'pointer' }}
+              style={{ padding: '8px 16px', borderRadius: '20px', border: '1px solid #dbeafe', backgroundColor: '#eff6ff', color: '#1677ff', fontSize: '14px', cursor: 'pointer' }}
             >
               高级筛选
             </button>
@@ -908,7 +908,7 @@ export default function CustomerList() {
                 <td style={{ padding: '12px 8px', border: '1px solid #e5e7eb', fontSize: '15px' }}>
                   <span
                     onClick={() => openDetail(row)}
-                    style={{ color: '#165DFF', cursor: 'pointer' }}
+                    style={{ color: '#1677ff', cursor: 'pointer' }}
                     title="查看存客详情"
                   >
                     {row.name}
@@ -919,7 +919,7 @@ export default function CustomerList() {
                 <td style={{ padding: '12px 8px', border: '1px solid #e5e7eb', fontSize: '15px' }}>{row.newBusiness}</td>
                 <td style={{ padding: '12px 8px', border: '1px solid #e5e7eb', fontSize: '15px' }}>{row.risk}</td>
                 <td style={{ padding: '12px 8px', border: '1px solid #e5e7eb', fontSize: '15px' }}>
-                  <span onClick={() => openDetail(row)} style={{ marginRight: '12px', color: '#165DFF', cursor: 'pointer' }}>详情</span>
+                  <span onClick={() => openDetail(row)} style={{ marginRight: '12px', color: '#1677ff', cursor: 'pointer' }}>详情</span>
                   <span style={{ cursor: 'pointer' }}>🗑</span>
                 </td>
               </tr>

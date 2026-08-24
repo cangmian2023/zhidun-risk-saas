@@ -4,7 +4,7 @@ import { usePageNav } from './pageNav'
 
 /* ============ 图标（等价 HTML：收起/图表/搜索/排序/涨跌箭头） ============ */
 const ArrowDown = ({ active }: { active?: boolean }) => (
-  <svg width="10" height="10" viewBox="0 0 12 12" fill="none" className={`inline align-middle ml-1 ${active ? 'text-[#4a7dff]' : 'text-[#c0c4cc]'}`}>
+  <svg width="10" height="10" viewBox="0 0 12 12" fill="none" className={`inline align-middle ml-1 ${active ? 'text-[#1677ff]' : 'text-[#c0c4cc]'}`}>
     <path d="M2.5 4.5 6 8l3.5-3.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
   </svg>
 )
@@ -35,6 +35,10 @@ const INDUSTRY_ROWS = [
 
 /* ============ 已选标签（HTML .selected-tag） ============ */
 const INITIAL_SELECTED = ['最高值', '最低值', '平均值', '2021年 中报']
+
+const STAT_OPTIONS = ['最高值', '最低值', '平均值', '中位数']
+const PERIOD_OPTIONS = ['2021年 中报', '2021年 年报', '2022年 中报', '2022年 年报', '2023年 中报']
+const REGION_OPTIONS = ['全国', '北京', '上海', '广东', '江苏', '浙江']
 
 /* ============ 表格数据（与 HTML 逐行一致） ============ */
 type StatRow = { label: string; cells: (string | { roe: boolean; value: string })[] }
@@ -138,12 +142,16 @@ export default function DmPeerAnalysis() {
   const [industry, setIndustry] = useState('煤炭')
   const [collapsed, setCollapsed] = useState(false)
   const [selected, setSelected] = useState<string[]>(INITIAL_SELECTED)
+  const [statValue, setStatValue] = useState('')
+  const [reportPeriod, setReportPeriod] = useState('2021年 中报')
+  const [region, setRegion] = useState('全国')
+  const [kw, setKw] = useState('')
 
   const closeTag = (tag: string) => setSelected((s) => s.filter((t) => t !== tag))
   const reset = () => setSelected(INITIAL_SELECTED)
 
   return (
-    <div style={{ minHeight: '100vh' }} className="bg-white text-sm text-[#333]">
+    <div style={{ minHeight: '100vh' }} className="text-sm text-[#333]">
       <PageShell title="同业分析" crumb="数字营销 / 金融工具" subtitle="同业机构对标与竞争格局分析" legend={false} />
 
       {/* ============ 浅灰筛选区 ============ */}
@@ -156,7 +164,7 @@ export default function DmPeerAnalysis() {
               key={ind}
               onClick={() => setIndustry(ind)}
               className={`cursor-pointer select-none whitespace-nowrap rounded px-3.5 py-1.5 text-sm transition ${
-                industry === ind ? 'bg-[#e8f0ff] font-medium text-[#4a7dff]' : 'text-[#555] hover:bg-[#e8eaf0] hover:text-[#333]'
+                industry === ind ? 'bg-[#e8f0ff] font-medium text-[#1677ff]' : 'text-[#555] hover:bg-[#e8eaf0] hover:text-[#333]'
               }`}
             >
               {ind}
@@ -164,7 +172,7 @@ export default function DmPeerAnalysis() {
           ))}
           <span
             onClick={() => setCollapsed((c) => !c)}
-            className="absolute right-0 top-0 cursor-pointer select-none text-sm text-[#4a7dff]"
+            className="absolute right-0 top-0 cursor-pointer select-none text-sm text-[#1677ff]"
           >
             {collapsed ? '展开 ⌄' : '收起 ⌃'}
           </span>
@@ -180,7 +188,7 @@ export default function DmPeerAnalysis() {
                   key={ind}
                   onClick={() => setIndustry(ind)}
                   className={`cursor-pointer select-none whitespace-nowrap rounded px-3.5 py-1.5 text-sm transition ${
-                    industry === ind ? 'bg-[#e8f0ff] font-medium text-[#4a7dff]' : 'text-[#555] hover:bg-[#e8eaf0] hover:text-[#333]'
+                    industry === ind ? 'bg-[#e8f0ff] font-medium text-[#1677ff]' : 'text-[#555] hover:bg-[#e8eaf0] hover:text-[#333]'
                   }`}
                 >
                   {ind}
@@ -194,15 +202,31 @@ export default function DmPeerAnalysis() {
         {/* 数值筛选 */}
         <div className="flex items-center gap-6">
           <span className="min-w-[70px] text-[15px] font-bold text-[#1a1a1a]">数值筛选</span>
-          <span className="flex cursor-pointer select-none items-center gap-1 py-1 text-sm text-[#4a7dff]">
-            统计值 <ArrowDown active />
-          </span>
-          <span className="flex cursor-pointer select-none items-center gap-1 py-1 text-sm text-[#4a7dff]">
-            报告期 <ArrowDown active />
-          </span>
-          <span className="flex cursor-pointer select-none items-center gap-1 py-1 text-sm text-[#555]">
-            地区 <ArrowDown />
-          </span>
+          <select
+            value={statValue}
+            onChange={(e) => setStatValue(e.target.value)}
+            className="cursor-pointer rounded border-none bg-transparent py-1 pr-6 text-sm text-[#1677ff] outline-none"
+            style={{ backgroundImage: 'none' }}
+          >
+            <option value="">统计值</option>
+            {STAT_OPTIONS.map((o) => <option key={o} value={o}>{o}</option>)}
+          </select>
+          <select
+            value={reportPeriod}
+            onChange={(e) => setReportPeriod(e.target.value)}
+            className="cursor-pointer rounded border-none bg-transparent py-1 pr-6 text-sm text-[#1677ff] outline-none"
+            style={{ backgroundImage: 'none' }}
+          >
+            {PERIOD_OPTIONS.map((o) => <option key={o} value={o}>{o}</option>)}
+          </select>
+          <select
+            value={region}
+            onChange={(e) => setRegion(e.target.value)}
+            className="cursor-pointer rounded border-none bg-transparent py-1 pr-6 text-sm text-[#555] outline-none hover:text-[#1677ff]"
+            style={{ backgroundImage: 'none' }}
+          >
+            {REGION_OPTIONS.map((o) => <option key={o} value={o}>{o}</option>)}
+          </select>
         </div>
       </div>
 
@@ -210,14 +234,14 @@ export default function DmPeerAnalysis() {
       <div className="flex flex-wrap items-center gap-2.5 px-6 py-4">
         <span className="mr-1 text-[15px] font-bold text-[#1a1a1a]">已选</span>
         {selected.map((tag) => (
-          <span key={tag} className="inline-flex items-center gap-2 rounded bg-[#f0f4ff] px-3 py-1.5 text-sm text-[#4a7dff]">
+          <span key={tag} className="inline-flex items-center gap-2 rounded bg-[#f0f4ff] px-3 py-1.5 text-sm text-[#1677ff]">
             {tag}
             <span onClick={() => closeTag(tag)} className="cursor-pointer text-sm leading-none text-[#999] hover:text-[#666]">
               ×
             </span>
           </span>
         ))}
-        <span onClick={reset} className="ml-auto cursor-pointer select-none text-sm text-[#555] hover:text-[#4a7dff]">
+        <span onClick={reset} className="ml-auto cursor-pointer select-none text-sm text-[#555] hover:text-[#1677ff]">
           重置
         </span>
       </div>
@@ -226,11 +250,11 @@ export default function DmPeerAnalysis() {
       <div className="bg-[#f5f6fa] px-6 pt-5">
         <div className="mb-4 flex items-center justify-between">
           <div className="text-[15px] text-[#333]">
-            找到 <span className="font-semibold text-[#4a7dff]">40</span> 条结果
+            找到 <span className="font-semibold text-[#1677ff]">40</span> 条结果
           </div>
           <div className="flex w-[260px] items-center gap-2 rounded border border-[#dcdfe6] bg-white px-3.5 py-2">
             <span className="text-sm text-[#999]"><SearchIcon /></span>
-            <input placeholder="请输入公司名称" className="flex-1 bg-transparent text-sm text-[#333] outline-none placeholder:text-[#999]" />
+            <input value={kw} onChange={(e) => setKw(e.target.value)} placeholder="请输入公司名称" className="flex-1 bg-transparent text-sm text-[#333] outline-none placeholder:text-[#999]" />
           </div>
         </div>
 
@@ -284,12 +308,12 @@ export default function DmPeerAnalysis() {
               ))}
 
               {/* 公司行 */}
-              {COMPANY_ROWS.map((r) => (
+              {COMPANY_ROWS.filter((r) => !kw.trim() || r.name.includes(kw.trim())).map((r) => (
                 <tr key={r.rank} className="transition hover:bg-[#fafbfc]">
                   <td className="border-b border-[#f0f0f0] px-2.5 py-3.5 text-center text-sm text-[#666]">{r.rank}</td>
                   <td className="border-b border-[#f0f0f0] px-2.5 py-3.5">
                     <span
-                      className="cursor-pointer text-sm font-medium text-[#1a1a1a] hover:text-[#1f47f5] hover:underline"
+                      className="cursor-pointer text-sm font-medium text-[#1a1a1a] hover:text-[#1677ff] hover:underline"
                       onClick={() => goDetail('/console/dm/ent-archive-basic', { name: r.name })}
                     >
                       {r.name}

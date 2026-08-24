@@ -987,7 +987,7 @@ export default function JdBatch({ params }: { params: URLSearchParams }) {
   return (
     <EpPage title={data.pageTitle} actions={<Sam value="jdBatch.json" />}>
       {/* 顶部 Tab */}
-      <div style={{ display: 'flex', borderBottom: '1px solid #E2E8F0', marginBottom: 16 }}>
+      <div style={{ display: 'flex', borderBottom: '1px solid #E2E8F0', marginBottom: 16, position: 'sticky', top: 140, zIndex: 20, background: '#fff' }}>
         {data.tabs.map((t) => (
           <button
             key={t.key}

@@ -105,7 +105,7 @@ export default function DmRating() {
   const toggleOne = (i: number) => setChecked((c) => c.map((v, idx) => (idx === i ? !v : v)))
 
   return (
-    <div style={{ minHeight: '100vh' }} className="bg-white text-sm text-[#333]">
+    <div style={{ minHeight: '100vh' }} className="text-sm text-[#333]">
       <PageShell title="主体评级" crumb="数字营销 / 金融工具" subtitle="企业主体信用评级与评级迁移" legend={false} />
 
       {/* ============ 搜索栏 ============ */}

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { PageShell } from './PageShell'
 
 /* 数字营销 · AI营销 · 1:1 复刻
  * 源截图：
@@ -36,8 +37,9 @@ export default function DmAiMarketing() {
     <div style={{ 
       minHeight: 'calc(100vh - 48px)',
       background: 'linear-gradient(180deg, #eaf4ff 0%, #ffffff 35%)',
-      paddingTop: 80
+      paddingTop: 16
     }}>
+      <PageShell title="AI营销" crumb="数字营销 / 营销管理" legend={false} />
       <div style={{ maxWidth: 900, margin: '0 auto', padding: '0 24px' }}>
         {/* 标题区域 */}
         <div style={{ textAlign: 'center', marginBottom: 60 }}>

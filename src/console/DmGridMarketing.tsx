@@ -54,7 +54,7 @@ export default function DmGridMarketing() {
   const list = openStat ? detailData[openStat] || [] : [];
 
   return (
-    <div style={{ width: '100%', minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: '#fff', overflow: 'hidden' }}>
+    <div style={{ width: '100%', minHeight: '100vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
       <PageShell title="网格营销" subtitle="按地理网格划分责任区，批量获取周边企业与商机" crumb="数字营销 / 网格营销" legend={false} />
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
         {/* 左侧面板 */}

@@ -45,6 +45,136 @@ const PANEL_KEYS: Record<string, string> = { '全部标讯': 'all-bid', '中标�
 const btnNormalCls = 'cursor-pointer rounded border border-[#b8bcc8] bg-white px-4 py-1.5'
 const btnExportCls = 'cursor-pointer rounded bg-[#1f47f5] px-4 py-1.5 text-white'
 
+type Bid = {
+  title: string
+  type: string
+  region: string
+  category: string
+  hasContact: boolean
+  publishTime: string
+  projectNo: string
+  contacts: string
+  tenderUnit: string
+  winnerUnit: string
+  agencyUnit: string
+  candidate: string
+  bidderUnit: string
+  mentionedUnit: string
+  products: string
+  body: string
+}
+const DASH = '−'
+const BID_LIST: Bid[] = [
+  {
+    title: 'OV支援勤务保障外包服务采购项目',
+    type: '招标公告 | 招标',
+    region: '北京市朝阳区',
+    category: '服务采购',
+    hasContact: true,
+    publishTime: '2026-08-20 20小时前获取',
+    projectNo: 'OVBS-2026-0005',
+    contacts: '2个',
+    tenderUnit: '北京飞机维修工程有限公司',
+    winnerUnit: DASH,
+    agencyUnit: DASH,
+    candidate: DASH,
+    bidderUnit: DASH,
+    mentionedUnit: '中航集团',
+    products: 'OV支援勤务保障外包服务 OV飞机客舱清洁外包人… +1',
+    body: 'OV支援勤务保障外包服务采购项目 北京飞机维修工程有限公司（Ameco）现就以下采购项目进行第二次公开招标，诚邀合格投标人参加投标。一、项目基本情况 1.项目名称：OV支…',
+  },
+  {
+    title: '市政务云扩容升级及容灾备份采购项目',
+    type: '中标公告 | 中标',
+    region: '广东省深圳市',
+    category: '信息化',
+    hasContact: true,
+    publishTime: '2026-08-19 1天前获取',
+    projectNo: 'SZCG-2026-1180',
+    contacts: '3个',
+    tenderUnit: '深圳市政务服务和数据管理局',
+    winnerUnit: '腾讯云计算（北京）有限责任公司',
+    agencyUnit: '深圳交易集团有限公司',
+    candidate: '腾讯云计算（北京）有限责任公司',
+    bidderUnit: '阿里云计算有限公司',
+    mentionedUnit: '腾讯云',
+    products: '政务云扩容服务器 分布式存储 容灾备份软件… +3',
+    body: '市政务云扩容升级及容灾备份采购项目 经评标委员会评审，中标供应商为腾讯云计算（北京）有限责任公司，中标金额人民币 4,860 万元，现予以公告。',
+  },
+  {
+    title: '城市轨道交通5号线车辆及牵引系统采购项目',
+    type: '招标公告 | 招标',
+    region: '浙江省杭州市',
+    category: '设备采购',
+    hasContact: false,
+    publishTime: '2026-08-18 2天前获取',
+    projectNo: 'HZMETRO-2026-052',
+    contacts: '1个',
+    tenderUnit: '杭州市地铁集团有限责任公司',
+    winnerUnit: DASH,
+    agencyUnit: '浙江省成套招标代理有限公司',
+    candidate: DASH,
+    bidderUnit: DASH,
+    mentionedUnit: '中车南京浦镇车辆有限公司',
+    products: '地铁A型车 36列 牵引系统 制动系统… +2',
+    body: '城市轨道交通5号线车辆及牵引系统采购项目 杭州市地铁集团现对5号线所需36列A型电动客车及牵引系统进行公开招标，资金来源为财政拨款及银行贷款。',
+  },
+  {
+    title: '社区卫生服务中心医疗设备购置项目',
+    type: '中标公告 | 中标',
+    region: '四川省成都市',
+    category: '医疗器械',
+    hasContact: true,
+    publishTime: '2026-08-17 3天前获取',
+    projectNo: 'CDWS-2026-0733',
+    contacts: '2个',
+    tenderUnit: '成都市武侯区卫生健康局',
+    winnerUnit: '四川瑞康医疗器械有限公司',
+    agencyUnit: '四川国际招标有限责任公司',
+    candidate: '四川瑞康医疗器械有限公司',
+    bidderUnit: '成都恒康医疗设备有限公司',
+    mentionedUnit: '迈瑞医疗',
+    products: '彩色多普勒超声诊断仪 DR数字影像系统 监护仪… +4',
+    body: '社区卫生服务中心医疗设备购置项目 中标供应商为四川瑞康医疗器械有限公司，中标金额人民币 1,275 万元，主要供货设备含彩色多普勒超声诊断仪等。',
+  },
+  {
+    title: '智慧校园一体化平台建设项目（变更公告）',
+    type: '变更公告 | 变更',
+    region: '江苏省南京市',
+    category: '软件开发',
+    hasContact: false,
+    publishTime: '2026-08-16 4天前获取',
+    projectNo: 'NJEDU-2026-0312',
+    contacts: '1个',
+    tenderUnit: '南京师范大学附属中学',
+    winnerUnit: DASH,
+    agencyUnit: '江苏省设备成套股份有限公司',
+    candidate: DASH,
+    bidderUnit: DASH,
+    mentionedUnit: '江苏金智教育信息股份有限公司',
+    products: '智慧校园门户 统一身份认证 数据中台 移动端… +2',
+    body: '智慧校园一体化平台建设项目（变更公告） 原定开标时间由2026-09-01调整为2026-09-08，招标文件第三章技术需求第2.3条参数要求作如下调整，详见更正内容。',
+  },
+  {
+    title: '城东污水处理厂提标改造工程总承包（EPC）',
+    type: '招标公告 | 招标',
+    region: '湖北省武汉市',
+    category: '工程建筑',
+    hasContact: true,
+    publishTime: '2026-08-15 5天前获取',
+    projectNo: 'WHEPB-2026-0466',
+    contacts: '4个',
+    tenderUnit: '武汉生态环境投资发展集团有限公司',
+    winnerUnit: DASH,
+    agencyUnit: '湖北省招标股份有限公司',
+    candidate: DASH,
+    bidderUnit: DASH,
+    mentionedUnit: '中交第二航务工程局有限公司',
+    products: '曝气生物滤池 高效沉淀池 除臭系统 自控改造… +3',
+    body: '城东污水处理厂提标改造工程总承包（EPC） 现状处理规模10万吨/日，出水标准由一级A提升至地表水准IV类，现对该工程总承包进行公开招标。',
+  },
+]
+
 export default function DmTender() {
   const nav = useNavigate()
   const [tab, setTab] = useState('全部标讯')
@@ -57,11 +187,11 @@ export default function DmTender() {
   }
 
   return (
-    <div style={{ padding: '16px 24px 24px' }} className="bg-white text-sm text-[#222]">
+    <div style={{ padding: '16px 24px 24px' }} className="text-sm text-[#222]">
       <PageShell title="招投标" crumb="数字营销 / 商机挖掘" subtitle="招投标信息检索与商机挖掘" legend={false} />
 
       {/* ============ 顶部导航 ============ */}
-      <div className="mb-4 flex items-center gap-8">
+      <div className="sticky top-[140px] z-20 bg-white mb-4 flex items-center gap-8">
         {NAV_TABS.map((t) => (
           <span
             key={t}
@@ -163,31 +293,33 @@ export default function DmTender() {
           </div>
 
           {/* 标讯列表项 */}
-          <div className="border-b border-dashed border-[#dde0e8] px-3 py-4">
-            <div className="flex items-center justify-between">
-              <div className="mb-2 cursor-pointer text-lg font-bold" onClick={() => setBidOpen(true)}>OV支援勤务保障外包服务采购项目</div>
-              <div className="text-sm text-[#444]"><span className="cursor-pointer">🗔订阅</span>｜<span className="cursor-pointer">更多 ▾</span></div>
+          {BID_LIST.map((b, i) => (
+            <div key={i} className="border-b border-dashed border-[#dde0e8] px-3 py-4">
+              <div className="flex items-center justify-between">
+                <div className="mb-2 cursor-pointer text-lg font-bold" onClick={() => setBidOpen(true)}>{b.title}</div>
+                <div className="text-sm text-[#444]"><span className="cursor-pointer">🗔订阅</span>｜<span className="cursor-pointer">更多 ▾</span></div>
+              </div>
+              <div className="mb-2.5 flex gap-2.5">
+                <span className="text-sm text-[#2b65e8]">{b.type}</span>
+                <span className="text-sm text-[#666]">{b.region}</span>
+                <span className="text-sm text-[#666]">{b.category}</span>
+                {b.hasContact && <span className="text-sm text-[#666]">有联系方式</span>}
+              </div>
+              <div className="mb-2 grid grid-cols-3 gap-2 text-sm text-[#444]">
+                <div>发布时间：{b.publishTime}</div>
+                <div>项目编号：{b.projectNo}</div>
+                <div>联系人： {b.contacts}</div>
+                <div>招标单位：{b.tenderUnit === DASH ? DASH : <span className="text-[#2b65e8]">{b.tenderUnit}</span>}</div>
+                <div>中标单位： {b.winnerUnit}</div>
+                <div>代理单位： {b.agencyUnit}</div>
+                <div>中标候选人： {b.candidate}</div>
+                <div>投标单位： {b.bidderUnit}</div>
+                <div>被提及单位：{b.mentionedUnit === DASH ? DASH : <span className="text-[#2b65e8]">{b.mentionedUnit}</span>}</div>
+              </div>
+              <div className="text-sm text-[#666]">采购产品：{b.products}</div>
+              <div className="mt-1.5 text-sm text-[#666]">标讯正文：{b.body}</div>
             </div>
-            <div className="mb-2.5 flex gap-2.5">
-              <span className="text-sm text-[#2b65e8]">招标公告 | 招标</span>
-              <span className="text-sm text-[#666]">北京市朝阳区</span>
-              <span className="text-sm text-[#666]">服务采购</span>
-              <span className="text-sm text-[#666]">有联系方式</span>
-            </div>
-            <div className="mb-2 grid grid-cols-3 gap-2 text-sm text-[#444]">
-              <div>发布时间：2026-08-20 20小时前获取</div>
-              <div>项目编号：OVBS-2026-0005</div>
-              <div>联系人： 2个</div>
-              <div>招标单位：<span className="text-[#2b65e8]">北京飞机维修工程有限公司</span></div>
-              <div>中标单位： −</div>
-              <div>代理单位： −</div>
-              <div>中标候选人： −</div>
-              <div>投标单位： −</div>
-              <div>被提及单位：<span className="text-[#2b65e8]">中航集团</span></div>
-            </div>
-            <div className="text-sm text-[#666]">采购产品：OV支援勤务保障外包服务 OV飞机客舱清洁外包人… +1</div>
-            <div className="mt-1.5 text-sm text-[#666]">标讯正文：OV支援勤务保障外包服务采购项目 北京飞机维修工程有限公司（Ameco）现就以下采购项目进行第二次公开招标，诚邀合格投标人参加投标。一、项目基本情况 1.项目名称：OV支…</div>
-          </div>
+          ))}
         </div>
       )}
 

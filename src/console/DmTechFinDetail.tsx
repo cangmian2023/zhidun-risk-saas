@@ -299,7 +299,7 @@ function Bar({ color, widthClass }: { color: string; widthClass: string }) {
 }
 function SubTabs({ items, active, onChange }: { items: string[]; active: string; onChange: (s: string) => void }) {
   return (
-    <div className="mb-3 flex overflow-x-auto border-b border-[#e5e6eb] bg-[#f7f8fa]">
+    <div className="mb-3 flex flex-wrap border-b border-[#e5e6eb] bg-[#f7f8fa]">
       {items.map((t) => (
         <span key={t} onClick={() => onChange(t)}
           className={`cursor-pointer whitespace-nowrap border-b-2 px-3 py-2 text-xs ${active === t ? 'border-[#165DFF] font-medium text-[#165DFF]' : 'border-transparent text-gray-600'}`}>
@@ -311,7 +311,7 @@ function SubTabs({ items, active, onChange }: { items: string[]; active: string;
 }
 function SubTabsPill({ items, active, onChange }: { items: string[]; active: string; onChange: (s: string) => void }) {
   return (
-    <div className="mb-3 flex gap-1 rounded bg-[#f7f8fa] p-2">
+    <div className="mb-3 flex flex-wrap gap-1 rounded bg-[#f7f8fa] p-2">
       {items.map((t) => (
         <span key={t} onClick={() => onChange(t)}
           className={`cursor-pointer whitespace-nowrap rounded px-3 py-2 text-xs ${active === t ? 'bg-[#165DFF] text-white' : 'text-gray-500'}`}>
@@ -376,8 +376,8 @@ function TechFinAbility({ stickyTop = 150, scrollMt = 210 }: { stickyTop?: numbe
   return (
     <div>
       {/* 二级 tab 工具条：不切换视图内容，点击锚点滑动到对应区块 */}
-      <div className="sticky z-10 -mx-4 mb-3 border-b border-[#e5e6eb] bg-white px-4 py-2" style={{ top: stickyTop }}>
-        <div className="flex overflow-x-auto">
+      <div className="sticky z-20 -mx-4 mb-3 border-b border-[#e5e6eb] bg-white px-4 py-2" style={{ top: stickyTop }}>
+        <div className="flex flex-wrap">
           {ABILITY_SUBTABS.map((t) => (
             <span
               key={t}
@@ -592,10 +592,14 @@ const ACH_INTL: string[][] = [
 
 function TechFinAchievement() {
   const [sub, setSub] = useState('专利价值概览')
+  const scrollTo = (name: string) => {
+    const el = document.getElementById('ach-' + name)
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
   return (
     <div>
-      <SubTabs items={ACH_SUBTABS} active={sub} onChange={setSub} />
-      {sub === '专利价值概览' ? (
+      <SubTabs items={ACH_SUBTABS} active={sub} onChange={(t) => { setSub(t); scrollTo(t) }} />
+      <section id="ach-专利价值概览" className="mb-4 rounded-md border border-[#e5e6eb] p-4" style={{ scrollMarginTop: 210 }}>
         <div className="space-y-3">
           <div className="grid grid-cols-12 gap-3 border border-[#e5e6eb] rounded p-3">
             <div className="col-span-4">
@@ -728,12 +732,13 @@ function TechFinAchievement() {
             <Pager total="共 583 条 10条/页" pages={['1', '2', '3', '4', '…', '59']} />
           </div>
         </div>
-      ) : (
-        <div className="py-6">
-          <EChart option={subChartFor(sub)} height={240} />
-          <div className="mt-2 text-center text-xs text-gray-400">「{sub}」示例图表（样例数据）</div>
-        </div>
-      )}
+      </section>
+      {ACH_SUBTABS.filter((t) => t !== '专利价值概览').map((t) => (
+        <section key={t} id={'ach-' + t} className="mb-4 rounded-md border border-[#e5e6eb] p-4" style={{ scrollMarginTop: 210 }}>
+          <EChart option={subChartFor(t)} height={240} />
+          <div className="mt-2 text-center text-xs text-gray-400">「{t}」示例图表（样例数据）</div>
+        </section>
+      ))}
     </div>
   )
 }
@@ -742,27 +747,44 @@ function TechFinAchievement() {
 const TEAM_SUBTABS = ['团队核心人员介绍', '科研团队', '核心研发人员稳定性', '招聘信息']
 function TechFinTeam() {
   const [sub, setSub] = useState('团队核心人员介绍')
+  const scrollTo = (name: string) => {
+    const el = document.getElementById('team-' + name)
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
   return (
     <div>
-      <SubTabs items={TEAM_SUBTABS} active={sub} onChange={setSub} />
-      <div className="flex flex-col items-center justify-center py-20 text-sm text-gray-500">
-        <svg width="120" height="120" viewBox="0 0 120 120" fill="none">
-          <rect x="35" y="60" width="50" height="30" rx="6" fill="#e8edff" />
-          <circle cx="50" cy="45" r="4" fill="#4070f4" />
-          <circle cx="62" cy="32" r="4" fill="#4070f4" />
-          <circle cx="75" cy="48" r="4" fill="#4070f4" />
-          <circle cx="60" cy="65" r="4" fill="#4070f4" />
-          <line x1="50" y1="45" x2="62" y2="32" stroke="#4070f4" strokeWidth="1.5" />
-          <line x1="62" y1="32" x2="75" y2="48" stroke="#4070f4" strokeWidth="1.5" />
-          <line x1="75" y1="48" x2="60" y2="65" stroke="#4070f4" strokeWidth="1.5" />
-          <line x1="60" y1="65" x2="50" y2="45" stroke="#4070f4" strokeWidth="1.5" />
-          <rect x="48" y="43" width="4" height="4" fill="#ff8844" />
-          <rect x="60" y="30" width="4" height="4" fill="#ff8844" />
-          <rect x="73" y="46" width="4" height="4" fill="#ff8844" />
-          <rect x="58" y="63" width="4" height="4" fill="#ff8844" />
-        </svg>
-        <div className="mt-3">暂无科研团队分析信息</div>
-      </div>
+      <SubTabs items={TEAM_SUBTABS} active={sub} onChange={(t) => { setSub(t); scrollTo(t) }} />
+      {TEAM_SUBTABS.map((t) => (
+        <section key={t} id={'team-' + t} className="mb-4 rounded-md border border-[#e5e6eb] p-4" style={{ scrollMarginTop: 210 }}>
+          <ModuleTitle title={t} />
+          {t === '团队核心人员介绍' ? (
+            <div className="space-y-2 text-xs">
+              {[
+                ['王博', '董事长 / 总经理', '工商管理硕士，高级工程师；历任中国土木工程集团海外部助理工程师、中工国际合作高级项目经理，现任公司总经理。'],
+                ['李海欣', '副总经理 / 总工程师', '负责工程技术管理与研发体系建设，主导多项境外工程总承包技术标准制定。'],
+                ['闫海禄', '副总经理', '本科学历，高级工程师；曾任中师国际合作高级项目经理，现任公司副总经理。'],
+              ].map(([n, role, desc]) => (
+                <div key={n} className="rounded border border-[#e5e6eb] p-2">
+                  <div className="flex items-center justify-between"><span className="font-medium">{n}</span><span className="text-[#666]">{role}</span></div>
+                  <div className="mt-1 text-[#666]">{desc}</div>
+                </div>
+              ))}
+            </div>
+          ) : t === '科研团队' ? (
+            <div className="text-xs text-[#666]">企业研发人员共计 86 人，其中硕士及以上占比 42%；核心研发团队长期从事工程总承包与关键核心装备研发，与清华大学、北京理工大学等高校建立联合实验室。</div>
+          ) : t === '核心研发人员稳定性' ? (
+            <EChart option={OPT_RND_STABLE} height={220} />
+          ) : t === '招聘信息' ? (
+            <div className="space-y-1 text-xs">
+              {['嵌入式软件工程师', '国际工程项目经理', '商务英语专员', '液压系统工程师'].map((j) => (
+                <div key={j} className="flex items-center justify-between rounded border border-[#e5e6eb] px-2 py-1.5"><span>{j}</span><span className="text-[#165DFF]">查看详情</span></div>
+              ))}
+            </div>
+          ) : (
+            <EChart option={subChartFor(t)} height={220} />
+          )}
+        </section>
+      ))}
     </div>
   )
 }
@@ -782,10 +804,14 @@ const HONOR_CREDIT = [
 ]
 function TechFinHonor() {
   const [sub, setSub] = useState('科创榜单')
+  const scrollTo = (name: string) => {
+    const el = document.getElementById('hon-' + name)
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
   return (
     <div>
-      <SubTabsPill items={HONOR_SUBTABS} active={sub} onChange={setSub} />
-      {sub === '科创榜单' ? (
+      <SubTabsPill items={HONOR_SUBTABS} active={sub} onChange={(t) => { setSub(t); scrollTo(t) }} />
+      <section id="hon-科创榜单" className="mb-4 rounded-md border border-[#e5e6eb] p-4" style={{ scrollMarginTop: 210 }}>
         <div className="space-y-6">
           <div>
             <div className="mb-2 text-sm font-medium">科创榜单</div>
@@ -839,12 +865,13 @@ function TechFinHonor() {
             </div>
           </div>
         </div>
-      ) : (
-        <div className="py-6">
-          <EChart option={subChartFor(sub)} height={240} />
-          <div className="mt-2 text-center text-xs text-gray-400">「{sub}」示例图表（样例数据）</div>
-        </div>
-      )}
+      </section>
+      {HONOR_SUBTABS.filter((t) => t !== '科创榜单').map((t) => (
+        <section key={t} id={'hon-' + t} className="mb-4 rounded-md border border-[#e5e6eb] p-4" style={{ scrollMarginTop: 210 }}>
+          <EChart option={subChartFor(t)} height={240} />
+          <div className="mt-2 text-center text-xs text-gray-400">「{t}」示例图表（样例数据）</div>
+        </section>
+      ))}
     </div>
   )
 }
@@ -857,10 +884,14 @@ const ASSET_REALTY = [
 ]
 function TechFinAsset() {
   const [sub, setSub] = useState('专利分析')
+  const scrollTo = (name: string) => {
+    const el = document.getElementById('asset-' + name)
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
   return (
     <div>
-      <SubTabsPill items={ASSET_SUBTABS} active={sub} onChange={setSub} />
-      {sub === '专利分析' ? (
+      <SubTabsPill items={ASSET_SUBTABS} active={sub} onChange={(t) => { setSub(t); scrollTo(t) }} />
+      <section id="asset-专利分析" className="mb-4 rounded-md border border-[#e5e6eb] p-4" style={{ scrollMarginTop: 210 }}>
         <div className="space-y-4">
           <div className="text-xs text-gray-600">该企业为专利分析, 无形资产420。可点击<a className="text-[#165DFF]">查看详细</a>。</div>
           <div className="grid grid-cols-2 gap-4">
@@ -885,7 +916,7 @@ function TechFinAsset() {
                   </tr>
                 </thead>
                 <tbody>
-                  {ASSET_REALTY.map((r) => (
+                    {ASSET_REALTY.map((r) => (
                     <tr key={r[0]}>
                       <td className="border border-[#e5e6eb] px-2 py-2 text-center">{r[0]}</td>
                       <td className="border border-[#e5e6eb] px-2 py-2 text-center">{r[1]}</td>
@@ -897,12 +928,13 @@ function TechFinAsset() {
             </div>
           </div>
         </div>
-      ) : (
-        <div className="py-6">
-          <EChart option={subChartFor(sub)} height={240} />
-          <div className="mt-2 text-center text-xs text-gray-400">「{sub}」示例图表（样例数据）</div>
-        </div>
-      )}
+      </section>
+      {ASSET_SUBTABS.filter((t) => t !== '专利分析').map((t) => (
+        <section key={t} id={'asset-' + t} className="mb-4 rounded-md border border-[#e5e6eb] p-4" style={{ scrollMarginTop: 210 }}>
+          <EChart option={subChartFor(t)} height={240} />
+          <div className="mt-2 text-center text-xs text-gray-400">「{t}」示例图表（样例数据）</div>
+        </section>
+      ))}
     </div>
   )
 }
@@ -918,10 +950,14 @@ const RISK_TRANSFER = [
 ]
 function TechFinRisk() {
   const [sub, setSub] = useState('专利转让 29')
+  const scrollTo = (name: string) => {
+    const el = document.getElementById('risk-' + name)
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
   return (
     <div>
-      <SubTabsPill items={RISK_SUBTABS} active={sub} onChange={setSub} />
-      {sub === '专利转让 29' ? (
+      <SubTabsPill items={RISK_SUBTABS} active={sub} onChange={(t) => { setSub(t); scrollTo(t) }} />
+      <section id="risk-专利转让 29" className="mb-4 rounded-md border border-[#e5e6eb] p-4" style={{ scrollMarginTop: 210 }}>
         <div>
           <div className="mb-3 flex items-center justify-between">
             <div className="text-sm font-medium">专利转让 29</div>
@@ -956,12 +992,13 @@ function TechFinRisk() {
           </div>
           <Pager total="共 29 条  5条/页" pages={['1', '2', '3', '4', '…', '6']} />
         </div>
-      ) : (
-        <div className="py-6">
-          <EChart option={subChartFor(sub)} height={240} />
-          <div className="mt-2 text-center text-xs text-gray-400">「{sub}」示例图表（样例数据）</div>
-        </div>
-      )}
+      </section>
+      {RISK_SUBTABS.filter((t) => t !== '专利转让 29').map((t) => (
+        <section key={t} id={'risk-' + t} className="mb-4 rounded-md border border-[#e5e6eb] p-4" style={{ scrollMarginTop: 210 }}>
+          <EChart option={subChartFor(t)} height={240} />
+          <div className="mt-2 text-center text-xs text-gray-400">「{t}」示例图表（样例数据）</div>
+        </section>
+      ))}
     </div>
   )
 }
@@ -998,7 +1035,7 @@ export default function DmTechFinDetail() {
 
   return (
     <div style={{ padding: 12 }} className="min-h-screen bg-[#f7f8fc] text-[13px] leading-relaxed text-[#222]">
-      <div ref={headerRef}>
+      <div ref={headerRef} className="sticky top-14 z-40 bg-[#f7f8fc]">
       <DetailHeader
         title="中工国际工程股份有限公司"
         crumb="数字营销 / 产业金融 / 科创金融"

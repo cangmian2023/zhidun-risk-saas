@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>空壳指数详情</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <style>
+        .risk-bar {
+            height: 6px;
+            border-radius: 3px;
+            background: linear-gradient(90deg, #22c55e 0%, #a855f7 50%, #ef4444 100%);
+        }
+        .tip-box {
+            background-color: #fef9c3;
+            border: 1px solid #facc15;
+        }
+    </style>
+</head>
+<body class="bg-white text-gray-800 font-sans">
+    <div class="w-[980px] border border-gray-200 rounded shadow-sm bg-white">
+        <!-- 头部 -->
+        <div class="flex justify-between items-center p-4 border-b border-gray-200">
+            <div class="flex items-center gap-2">
+                <span class="text-lg font-semibold">空壳指数 <i class="fa fa-question-circle text-gray-400 text-sm"></i></span>
+            </div>
+            <button class="text-gray-400 text-xl">×</button>
+        </div>
+
+        <!-- 风险条区域 -->
+        <div class="p-4 border-b border-gray-200">
+            <div class="relative mb-6">
+                <div class="absolute left-0 top-[-30px] bg-gray-800 text-white text-xs px-2 py-1 rounded whitespace-nowrap">
+                    L1 低风险
+                </div>
+                <div class="risk-bar w-full"></div>
+                <div class="flex justify-between text-xs text-gray-500 mt-2">
+                    <span>风险较小</span>
+                    <span>风险较大</span>
+                </div>
+            </div>
+            <div class="flex justify-center">
+                <button class="text-blue-500 text-sm flex items-center gap-1">
+                    查看说明 <i class="fa fa-caret-down"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- 异常提示 -->
+        <div class="px-4 py-3 text-sm border-b border-gray-200">
+            发现 0 个项目异常，共计 0 条异常详情
+        </div>
+
+        <!-- 扫描结果表格 -->
+        <div class="p-4">
+            <table class="w-full border-collapse">
+                <thead>
+                    <tr class="bg-gray-100">
+                        <th class="border border-gray-300 px-3 py-2 text-left text-sm font-medium">空壳扫描风险</th>
+                        <th class="border border-gray-300 px-3 py-2 text-left text-sm font-medium">扫描结果</th>
+                        <th class="border border-gray-300 px-3 py-2 text-left text-sm font-medium">空壳特征</th>
+                        <th class="border border-gray-300 px-3 py-2 text-left text-sm font-medium">操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="border border-gray-300 px-3 py-2 text-sm">经营异常</td>
+                        <td class="border border-gray-300 px-3 py-2 text-sm text-green-600 font-medium">不存在</td>
+                        <td class="border border-gray-300 px-3 py-2 text-sm">有0条经营异常未移出，疑似无真实经营场所或无实际经营</td>
+                        <td class="border border-gray-300 px-3 py-2 text-sm text-blue-500">查看详情</td>
+                    </tr>
+                    <tr>
+                        <td class="border border-gray-300 px-3 py-2 text-sm">治理结构异常</td>
+                        <td class="border border-gray-300 px-3 py-2 text-sm text-green-600 font-medium">不存在</td>
+                        <td class="border border-gray-300 px-3 py-2 text-sm">企业治理结构与0家主体相似</td>
+                        <td class="border border-gray-300 px-3 py-2 text-sm text-blue-500">查看详情</td>
+                    </tr>
+                    <tr>
+                        <td class="border border-gray-300 px-3 py-2 text-sm">税务违法违规</td>
+                        <td class="border border-gray-300 px-3 py-2 text-sm text-green-600 font-medium">不存在</td>
+                        <td class="border border-gray-300 px-3 py-2 text-sm">存在0起违反票据管理规定案件</td>
+                        <td class="border border-gray-300 px-3 py-2 text-sm text-blue-500">查看详情</td>
+                    </tr>
+                    <tr>
+                        <td class="border border-gray-300 px-3 py-2 text-sm">相关诉讼违法记录</td>
+                        <td class="border border-gray-300 px-3 py-2 text-sm text-green-600 font-medium">不存在</td>
+                        <td class="border border-gray-300 px-3 py-2 text-sm">存在0起洗钱/诈骗/逃税等违法案件</td>
+                        <td class="border border-gray-300 px-3 py-2 text-sm text-blue-500">查看详情</td>
+                    </tr>
+                    <tr>
+                        <td class="border border-gray-300 px-3 py-2 text-sm">严重违法失信</td>
+                        <td class="border border-gray-300 px-3 py-2 text-sm text-green-600 font-medium">不存在</td>
+                        <td class="border border-gray-300 px-3 py-2 text-sm">被列入严重违法失信名单，且尚未移出</td>
+                        <td class="border border-gray-300 px-3 py-2 text-sm text-blue-500">查看详情</td>
+                    </tr>
+                    <tr>
+                        <td class="border border-gray-300 px-3 py-2 text-sm">联系方式异常</td>
+                        <td class="border border-gray-300 px-3 py-2 text-sm text-green-600 font-medium">不存在</td>
+                        <td class="border border-gray-300 px-3 py-2 text-sm">企业的联系方式疑似与0家主体重复</td>
+                        <td class="border border-gray-300 px-3 py-2 text-sm text-blue-500">查看详情</td>
+                    </tr>
+                    <tr>
+                        <td class="border border-gray-300 px-3 py-2 text-sm">注册地址异常</td>
+                        <td class="border border-gray-300 px-3 py-2 text-sm text-green-600 font-medium">不存在</td>
+                        <td class="border border-gray-300 px-3 py-2 text-sm">疑似使用托管、代办地址注册</td>
+                        <td class="border border-gray-300 px-3 py-2 text-sm text-blue-500">查看详情</td>
+                    </tr>
+                    <tr>
+                        <td class="border border-gray-300 px-3 py-2 text-sm">法定代表人异常</td>
+                        <td class="border border-gray-300 px-3 py-2 text-sm text-green-600 font-medium">不存在</td>
+                        <td class="border border-gray-300 px-3 py-2 text-sm">法定代表人疑似同时担任0家主体法人</td>
+                        <td class="border border-gray-300 px-3 py-2 text-sm text-blue-500">查看详情</td>
+                    </tr>
+                    <tr>
+                        <td class="border border-gray-300 px-3 py-2 text-sm">高危变更</td>
+                        <td class="border border-gray-300 px-3 py-2 text-sm text-green-600 font-medium">不存在</td>
+                        <td class="border border-gray-300 px-3 py-2 text-sm">短期内连续发生0起重大变更</td>
+                        <td class="border border-gray-300 px-3 py-2 text-sm text-blue-500">查看详情</td>
+                    </tr>
+                    <tr>
+                        <td class="border border-gray-300 px-3 py-2 text-sm">关联企业异常</td>
+                        <td class="border border-gray-300 px-3 py-2 text-sm text-green-600 font-medium">不存在</td>
+                        <td class="border border-gray-300 px-3 py-2 text-sm">企业注册信息与0家主体相似</td>
+                        <td class="border border-gray-300 px-3 py-2 text-sm text-blue-500">查看详情</td>
+                    </tr>
+                    <tr>
+                        <td class="border border-gray-300 px-3 py-2 text-sm">一址多企</td>
+                        <td class="border border-gray-300 px-3 py-2 text-sm text-green-600 font-medium">不存在</td>
+                        <td class="border border-gray-300 px-3 py-2 text-sm">企业的注册地址疑似与0家主体重复</td>
+                        <td class="border border-gray-300 px-3 py-2 text-sm text-blue-500">查看详情</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 底部评分规则提示框 -->
+        <div class="m-4 p-3 tip-box rounded text-sm">
+            <div class="font-medium mb-1">空壳指数评分规则：</div>
+            <div>空壳指数是从企业经营场所、资产形态、企业人员、经营活动、经营资质、风险信息等维度，扫描空壳特征，用于供应链管理、信贷风控、经济犯罪侦查或者税务稽查等应用场景。指数范围0-100，分值越大，主体是空壳的概率越高。</div>
+        </div>
+    </div>
+</body>
+</html>

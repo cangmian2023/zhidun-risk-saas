@@ -112,9 +112,9 @@ const COLUMNS: { key: string; label: string }[] = [
   { key: 'biz', label: '最新商机内容' },
 ]
 
-/* ===================== 配色（PRD：主按钮黄色 #ffc53d） ===================== */
-const Y = '#ffc53d'
-const Y_HOVER = '#f0a500'
+/* ===================== 配色（主按钮系统主色 #1677ff） ===================== */
+const Y = '#1677ff'
+const Y_HOVER = '#0958d9'
 
 /* ===================== 小图标 ===================== */
 const PlusIcon = () => (<svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M8 3v10M3 8h10" stroke="#333" strokeWidth="2" strokeLinecap="round" /></svg>)
@@ -229,7 +229,6 @@ export default function DmMarketListDetail() {
   const [exportCols, setExportCols] = useState<string[]>(COLUMNS.map((c) => c.key))
   const [exportSelectedOnly, setExportSelectedOnly] = useState(false)
   const [showCol, setShowCol] = useState(false)
-  const [showAI, setShowAI] = useState<Lead | null>(null)
   const [moreFilter, setMoreFilter] = useState<null | { title: string; items: string[] }>(null)
   const [toast, setToast] = useState('')
   const flash = (m: string) => { setToast(m); window.setTimeout(() => setToast(''), 2000) }
@@ -501,7 +500,7 @@ export default function DmMarketListDetail() {
                 <button onClick={resetFilters} className="mt-3 rounded-md border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-600 hover:border-slate-300">重置筛选条件</button>
               </div>
             ) : (
-              <div className="overflow-x-auto">
+              <div className="overflow-visible">
                 <table className="w-full border-collapse text-sm">
                   <thead>
                     <tr className="border-b border-slate-200 text-left text-xs font-medium text-slate-500">
@@ -518,12 +517,12 @@ export default function DmMarketListDetail() {
                           ) : c.label}
                         </th>
                       ))}
-                      <th className="whitespace-nowrap px-3 py-3 text-right">操作</th>
+                      <th className="whitespace-nowrap px-3 py-3 text-center">操作</th>
                     </tr>
                   </thead>
                   <tbody>
                     {view.map((l) => (
-                      <tr key={l.id} className="group border-b border-slate-50 transition hover:bg-slate-50/60">
+                      <tr key={l.id} className={`group border-b border-slate-50 transition hover:bg-slate-50/60 ${showMore?.id === l.id ? 'relative z-40' : ''}`}>
                         <td className="sticky left-0 z-10 bg-white px-3 py-3 group-hover:bg-slate-50/60">
                           <input type="checkbox" checked={selected.includes(l.id)} onChange={() => toggleOne(l.id)} className="accent-blue-600" />
                         </td>
@@ -566,14 +565,13 @@ export default function DmMarketListDetail() {
                         )}
                         <td className="whitespace-nowrap px-3 py-3 text-right">
                           <div className="flex flex-nowrap justify-end gap-2 text-xs whitespace-nowrap">
-                            <OpBtn onClick={() => setShowAI(l)}>AI+</OpBtn>
                             <OpBtn onClick={() => openAssign(l)}>分配</OpBtn>
                             <OpBtn onClick={() => setShowFollow(l)}>跟进</OpBtn>
                             <OpBtn onClick={() => setShowRecord(l)}>查看记录</OpBtn>
                             <div className="relative">
                               <OpBtn onClick={() => setShowMore(showMore?.id === l.id ? null : l)} danger={false}>更多 <MoreIcon /></OpBtn>
                               {showMore?.id === l.id && (
-                                <div className="absolute right-0 z-30 mt-1 w-32 rounded-md border border-slate-200 bg-white py-1 text-left shadow-lg">
+                                <div className="absolute right-0 z-40 mt-1 w-32 rounded-md border border-slate-200 bg-white py-1 text-left shadow-lg">
                                   <MoreItem onClick={() => { setShowMore(null); setShowRemove(l) }}>移出名单</MoreItem>
                                   <MoreItem onClick={() => { setShowMore(null); openAssign(l) }}>编辑</MoreItem>
                                 </div>
@@ -753,19 +751,7 @@ export default function DmMarketListDetail() {
         </Modal>
       )}
 
-      {/* ============ AI 分析弹窗 ============ */}
-      {showAI && (
-        <Modal title="企业 AI 分析" onClose={() => setShowAI(null)}>
-          <div className="space-y-3 text-sm text-slate-600">
-            <div className="rounded-md bg-slate-50 px-3 py-2">企业：<span className="font-medium text-slate-800">{showAI.name}</span></div>
-            <div className="rounded-md bg-slate-50 px-3 py-2">企业健康度：<span className="font-medium text-slate-800">{showAI.score}</span>　线索状态：{showAI.status}　走访：{showAI.visit}</div>
-            <p className="text-slate-500">AI 分析结论（演示）：该企业所属客群与名单主题高度匹配，建议优先分配营销人员跟进，重点关注其融资与设备更新需求。</p>
-          </div>
-          <div className="mt-5 flex justify-end gap-2">
-            <button onClick={() => setShowAI(null)} className="rounded-md border border-slate-200 bg-white px-4 py-1.5 text-sm text-slate-600 hover:border-slate-300">关闭</button>
-          </div>
-        </Modal>
-      )}
+      {/* ============ AI 分析弹窗（已移除，对应入口 AI+ 按钮已删除） ============ */}
 
       {/* ============ 查看记录弹窗 ============ */}
       {showRecord && (

@@ -242,7 +242,7 @@ export default function DmBond() {
       <PageShell title="债券数据" crumb="数字营销 / 金融工具" subtitle="债券发行、存续期与违约风险数据" legend={false} />
 
       {/* ============ 顶层主 Tab ============ */}
-      <div className="mb-4 flex gap-8 border-b border-[#e5e7eb]">
+      <div className="sticky top-[140px] z-20 bg-white mb-4 flex gap-8 border-b border-[#e5e7eb]">
         {MAIN_TABS.map((t) => (
           <span
             key={t}

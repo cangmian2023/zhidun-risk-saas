@@ -56,9 +56,9 @@ const CREATORS = ['-广州粤信科技有限公司', '张三', '李四', '王五
 const SCOPES = ['全行可见', '部门可见', '仅自己可见']
 const PAGE_SIZES = [10, 20, 50, 100]
 
-/* ===================== 配色（PRD：主按钮黄色 #ffc53d） ===================== */
-const Y = '#ffc53d'
-const Y_HOVER = '#f0a500'
+/* ===================== 配色（主按钮系统主色 #1677ff） ===================== */
+const Y = '#1677ff'
+const Y_HOVER = '#0958d9'
 
 /* ===================== 小图标 ===================== */
 const PlusIcon = () => (
@@ -358,7 +358,7 @@ export default function DmMarketList() {
                     <td className="whitespace-nowrap px-3 py-3 text-slate-500">{r.created}</td>
                     <td className="whitespace-nowrap px-3 py-3 text-slate-600">{r.scope}</td>
                     <td className="whitespace-nowrap px-3 py-3 text-right">
-                      <div className="flex flex-nowrap justify-end gap-2 text-xs whitespace-nowrap">
+                      <div className="flex flex-wrap justify-end gap-2 text-xs">
                         <OpBtn onClick={() => goDetail('/console/dm/market-list-detail', { id: r.id, name: r.name })}>查看详情</OpBtn>
                         <OpBtn onClick={() => openEdit(r)}>编辑名单</OpBtn>
                         <OpBtn onClick={() => copyRow(r)}>复制名单</OpBtn>

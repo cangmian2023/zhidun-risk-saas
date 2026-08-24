@@ -18,7 +18,7 @@ import {
 
 /* ---------- 颜色规范 ---------- */
 const C = {
-  primary: '#1f47f5',
+  primary: '#1677ff',
   text: '#333',
   sub: '#666',
   ph: '#999',
@@ -973,7 +973,7 @@ export default function DmFullSearch() {
   })
   const hasRepFilter = repTime !== '' || repDate.from !== '' || repDate.to !== '' || repType.length > 0 || repCat.length > 0 || repFeat.length > 0 || repPageSize !== '不限' || repOrg.length > 0
   const repStatTotal = hasRepFilter ? repFiltered.length : REPORT_STATS_TOTAL
-  const accent = ['person', 'risk', 'public', 'report'].includes(activeModule) ? C.yellow : C.primary
+  const accent = C.primary
 
   const toggle = (o: string) => setChecked((s) => ({ ...s, [o]: !s[o] }))
   const toggleGroup = (g: string) => setExpandedGroups((s) => { const n = new Set(s); n.has(g) ? n.delete(g) : n.add(g); return n })
@@ -999,7 +999,7 @@ export default function DmFullSearch() {
       <div style={{ display: 'flex', gap: 4, borderBottom: `2px solid ${C.border}`, marginBottom: 12, position: 'sticky', top: 56 + headH, zIndex: 30, background: '#fff' }}>
         {MODULES.map((m) => {
           const navActive = activeModule === m.key
-          const navColor = ['person', 'risk', 'public', 'report'].includes(activeModule) ? C.yellow : C.primary
+          const navColor = C.primary
           return (
             <div key={m.key}
               onClick={() => { setActiveModule(m.key); setKeyword(m.key === 'person' ? PERSON_SEARCH_KEYWORD : SEARCH_KEYWORD); setPage(1); resetBiz(); resetRisk(); resetPub(); resetRep() }}

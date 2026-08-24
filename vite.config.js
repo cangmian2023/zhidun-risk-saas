@@ -144,7 +144,44 @@ function qixinRawPlugin() {
   };
 }
 
+// 原样（raw）服务 record/功能分解 下的「功能分解快照」（综合得分 / 企业指数 / 空壳指数 / 科创分 / 合同违约指数 / 司法风险 等），
+// 供企业尽调报告弹窗 iframe 1:1 复刻。与 qixin-raw 同理，单文件快照走真实 MIME 返回。
+function featureRawPlugin() {
+  const FEATURE_DIR = path.resolve(__dirname, 'record/功能分解');
+  const MIME = {
+    '.html': 'text/html; charset=utf-8', '.htm': 'text/html; charset=utf-8',
+    '.css': 'text/css; charset=utf-8', '.js': 'application/javascript; charset=utf-8',
+    '.mjs': 'application/javascript; charset=utf-8', '.json': 'application/json; charset=utf-8',
+    '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.gif': 'image/gif',
+    '.svg': 'image/svg+xml', '.webp': 'image/webp', '.ico': 'image/x-icon',
+    '.woff': 'font/woff', '.woff2': 'font/woff2', '.ttf': 'font/ttf',
+    '.eot': 'application/vnd.ms-fontobject', '.map': 'application/json',
+    '.txt': 'text/plain; charset=utf-8',
+  };
+  return {
+    name: 'feature-raw',
+    configureServer(server) {
+      server.middlewares.use('/feature-raw', (req, res, next) => {
+        try {
+          const rel = decodeURIComponent((req.url || '').split('?')[0]).replace(/^\/+/, '');
+          const target = path.resolve(FEATURE_DIR, rel);
+          if (!target.startsWith(FEATURE_DIR) || target === FEATURE_DIR) return next();
+          fs.stat(target, (err, st) => {
+            if (err || !st.isFile()) return next();
+            let base = path.basename(target);
+            const eff = base.endsWith('.下载') ? base.slice(0, -3) : base;
+            const ext = path.extname(eff).toLowerCase();
+            res.setHeader('Content-Type', MIME[ext] || 'text/html; charset=utf-8');
+            res.setHeader('Cache-Control', 'no-cache');
+            fs.createReadStream(target).pipe(res);
+          });
+        } catch (e) { next(); }
+      });
+    },
+  };
+}
+
 export default defineConfig({
-  plugins: [react(), persistPlugin(), qixinRawPlugin()],
+  plugins: [react(), persistPlugin(), qixinRawPlugin(), featureRawPlugin()],
   server: { host: true, port: 5173 },
 });

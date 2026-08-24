@@ -169,7 +169,7 @@ export default function FkAccountYearly({ params }: { params: URLSearchParams })
       </EpCard>
 
       {!started ? (
-        <EpCard style={{ marginTop: 14 }}>
+        <EpCard style={{ marginTop: 20 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '28px 8px' }}>
             <span style={{ fontSize: 28, lineHeight: 1 }}>📋</span>
             <div style={{ flex: 1 }}>

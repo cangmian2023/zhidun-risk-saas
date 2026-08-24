@@ -1013,7 +1013,7 @@ export default function DmRegionalBiz() {
   ]
 
   return (
-    <div className="font-sans text-[14px] text-[#333] bg-white">
+    <div className="font-sans text-[14px] text-[#333]">
       <PageHeader
         title="区域商机"
         crumb="数字营销 / 区域商机"

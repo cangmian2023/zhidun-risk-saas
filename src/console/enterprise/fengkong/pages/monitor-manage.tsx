@@ -137,7 +137,7 @@ export default function FkMonitorManage({ params }: { params: URLSearchParams })
       actions={<Sam value="fkMonManage.json" />}
     >
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: 6, borderBottom: '1px solid #E2E8F0', marginBottom: 16 }}>
+      <div style={{ display: 'flex', gap: 6, borderBottom: '1px solid #E2E8F0', marginBottom: 16, position: 'sticky', top: 140, zIndex: 20, background: '#fff' }}>
         {TABS.map((t) => (
           <button
             key={t}

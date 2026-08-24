@@ -66,7 +66,7 @@ export default function DmBondDetail() {
 
   return (
     <div style={{ padding: 16, background: '#f5f6f8', minHeight: '100vh' }}>
-      <div style={{ background: '#fff', borderRadius: 8, padding: 20, maxWidth: 1440, margin: '0 auto' }}>
+      <div style={{ padding: 20, maxWidth: 1440, margin: '0 auto' }}>
         <PageShell
           title={name}
           crumb={`数字营销 / 金融工具 / 债券数据 / ${name}`}

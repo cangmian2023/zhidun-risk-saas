@@ -516,7 +516,7 @@ export default function DmCompanyLibList() {
                   </td>
                   <td className="px-3 py-3 align-top">
                     <div className="flex items-start gap-3">
-                      <LogoBox text={row.name} color={row.abbrColor} />
+                      <LogoBox text={row.name} color="#1f47f5" />
                       <div className="min-w-0">
                         <div className="cursor-pointer font-medium text-[#1f47f5] hover:underline" title={row.name} onClick={() => goDetail('/console/dm/ent-archive-basic', { name: row.name })}>
                           {row.name}

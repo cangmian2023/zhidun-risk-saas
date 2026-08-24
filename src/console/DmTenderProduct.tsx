@@ -63,7 +63,7 @@ export default function DmTenderProduct() {
   const { back } = usePageNav()
 
   return (
-    <div style={{ padding: '16px 24px 24px' }} className="bg-white text-sm text-[#222]">
+    <div style={{ padding: '16px 24px 24px' }} className="text-sm text-[#222]">
       {/* 返回按钮 */}
       <div className="mb-3">
         <button

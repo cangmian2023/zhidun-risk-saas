@@ -196,6 +196,15 @@ aside:hover::-webkit-scrollbar-thumb {
   background: #eef3fd;
 }
 
+/* Tab 工具条：隐藏横向滚动条，改用左右箭头按钮顺位移动 */
+.tabbar-hide-scroll {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.tabbar-hide-scroll::-webkit-scrollbar {
+  display: none;
+}
+
 /* 企业PK对比页：独立表格样式，避免被上方 .ep-dm-tables 全局规则（斑马纹/固定列/nowrap）干扰，按需求 1:1 还原 */
 .pk-compare table {
   border-collapse: collapse;

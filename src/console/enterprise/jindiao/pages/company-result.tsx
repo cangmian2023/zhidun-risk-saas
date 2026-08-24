@@ -201,7 +201,7 @@ export default function JdCompanyResult({ params }: { params: URLSearchParams })
       </EpCard>
 
       {/* 顶部 Tab 栏 */}
-      <div style={{ marginTop: 18, borderBottom: '1px solid #E2E8F0' }}>
+      <div style={{ marginTop: 18, borderBottom: '1px solid #E2E8F0', position: 'sticky', top: 140, zIndex: 20, background: '#fff' }}>
         <div style={{ display: 'flex', gap: 4 }}>
           {data.topTabs.map((t) => {
             const active = activeTopTab === t

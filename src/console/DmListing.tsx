@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Tabs, Input, Button, Table, Space } from 'antd';
 import type { TableProps, TabsProps } from 'antd';
 import { usePageNav } from './pageNav';
+import { PageShell } from './PageShell';
 
 // ============ 类型定义 ============
 interface TableRecord {
@@ -150,7 +151,8 @@ const IpoBoardPage: React.FC = () => {
 
   return (
     <div style={{ padding: 16, background: '#f5f6f8', minHeight: '100vh' }}>
-      <div style={{ background: '#fff', borderRadius: 8, padding: 20, maxWidth: 1440, margin: '0 auto' }}>
+      <PageShell title="上市数据" crumb="数字营销 / 金融工具" legend={false} />
+      <div style={{ padding: 20, maxWidth: 1440, margin: '0 auto' }}>
         <Tabs
           activeKey={activeTab}
           items={tabItems}

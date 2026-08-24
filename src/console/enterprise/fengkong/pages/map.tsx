@@ -152,7 +152,7 @@ export default function FkMap({ params }: { params: URLSearchParams }) {
       </div>
 
       {/* 分布切换 Tabs */}
-      <div style={{ display: 'flex', gap: 6, borderBottom: '1px solid #E2E8F0', marginBottom: 14 }}>
+      <div style={{ display: 'flex', gap: 6, borderBottom: '1px solid #E2E8F0', marginBottom: 14, position: 'sticky', top: 140, zIndex: 20, background: '#fff' }}>
         {([['warning', '风险预警分布'], ['monitor', '监控企业分布']] as const).map(([k, lbl]) => (
           <button
             key={k}
@@ -169,11 +169,11 @@ export default function FkMap({ params }: { params: URLSearchParams }) {
         ))}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) 300px', gap: 16, alignItems: 'start' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) 300px', gap: 16, alignItems: 'stretch' }}>
         {/* 地图 */}
-        <EpCard pad={false}>
-          <div style={{ position: 'relative' }}>
-            <svg viewBox="0 0 1000 760" style={{ width: '100%', height: 'auto', display: 'block', background: '#F8FAFC', borderRadius: 16 }}>
+        <EpCard pad={false} style={{ display: 'flex' }}>
+          <div style={{ position: 'relative', width: '100%', height: '100%', minHeight: 524 }}>
+            <svg viewBox="0 0 1000 760" style={{ width: '100%', height: '100%', display: 'block', background: '#F8FAFC', borderRadius: 16 }}>
               {/* 经纬网格 */}
               {Array.from({ length: 9 }).map((_, i) => (
                 <line key={'v' + i} x1={(i + 1) * 100} y1={0} x2={(i + 1) * 100} y2={760} stroke="#EEF2F7" strokeWidth={1} />

@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>司法风险详情</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <style>
+        .info-card {
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+        }
+        .tab-active {
+            border-bottom: 2px solid #f59e0b;
+            color: #1f2937;
+            font-weight: 500;
+        }
+        .tab-normal {
+            color: #6b7280;
+        }
+    </style>
+</head>
+<body class="bg-white text-gray-800 font-sans">
+    <div class="w-[1020px] border border-gray-200 rounded shadow-sm bg-white">
+        <!-- 头部 -->
+        <div class="flex justify-between items-center p-4 border-b border-gray-200">
+            <h1 class="text-xl font-semibold">司法风险详情</h1>
+            <button class="text-gray-400 text-xl">×</button>
+        </div>
+
+        <!-- 说明文字 -->
+        <div class="px-4 py-3 text-sm text-gray-600">
+            以下数据取用裁判文书中：文书类型为判决书、案件身份为原告和被告的案件。
+        </div>
+
+        <!-- 涉诉概览 -->
+        <div class="p-4 border-b border-gray-200">
+            <div class="font-medium mb-3">涉诉概览</div>
+            <div class="grid grid-cols-3 gap-4">
+                <div class="info-card p-3 text-center">
+                    <div class="text-sm text-gray-500">涉诉案件数量</div>
+                    <div class="text-2xl font-bold mt-1">212</div>
+                </div>
+                <div class="info-card p-3 text-center">
+                    <div class="text-sm text-gray-500">涉诉数量行业排名</div>
+                    <div class="text-2xl font-bold mt-1">92%</div>
+                </div>
+                <div class="info-card p-3 text-center">
+                    <div class="text-sm text-gray-500">涉诉总金额</div>
+                    <div class="text-2xl font-bold mt-1">14.81亿元</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 涉案数量 -->
+        <div class="p-4 border-b border-gray-200">
+            <div class="font-medium mb-3">涉案数量</div>
+            <table class="w-full border-collapse">
+                <thead>
+                    <tr class="bg-gray-100">
+                        <th class="border border-gray-300 px-3 py-2 text-left text-sm font-medium">涉诉身份</th>
+                        <th class="border border-gray-300 px-3 py-2 text-left text-sm font-medium">案件数量（件）</th>
+                        <th class="border border-gray-300 px-3 py-2 text-left text-sm font-medium">行业排名</th>
+                        <th class="border border-gray-300 px-3 py-2 text-left text-sm font-medium">行业平均值</th>
+                        <th class="border border-gray-300 px-3 py-2 text-left text-sm font-medium">行业中位数</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="border border-gray-300 px-3 py-2 text-sm">原告</td>
+                        <td class="border border-gray-300 px-3 py-2 text-sm">7</td>
+                        <td class="border border-gray-300 px-3 py-2 text-sm">10%</td>
+                        <td class="border border-gray-300 px-3 py-2 text-sm">2.04</td>
+                        <td class="border border-gray-300 px-3 py-2 text-sm">1</td>
+                    </tr>
+                    <tr>
+                        <td class="border border-gray-300 px-3 py-2 text-sm">被告</td>
+                        <td class="border border-gray-300 px-3 py-2 text-sm">205</td>
+                        <td class="border border-gray-300 px-3 py-2 text-sm">95%</td>
+                        <td class="border border-gray-300 px-3 py-2 text-sm">2.44</td>
+                        <td class="border border-gray-300 px-3 py-2 text-sm">1</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 涉案金额 -->
+        <div class="p-4 border-b border-gray-200">
+            <div class="font-medium mb-3">涉案金额</div>
+            <table class="w-full border-collapse">
+                <thead>
+                    <tr class="bg-gray-100">
+                        <th class="border border-gray-300 px-3 py-2 text-left text-sm font-medium">涉诉身份</th>
+                        <th class="border border-gray-300 px-3 py-2 text-left text-sm font-medium">案件总金额</th>
+                        <th class="border border-gray-300 px-3 py-2 text-left text-sm font-medium">行业排名</th>
+                        <th class="border border-gray-300 px-3 py-2 text-left text-sm font-medium">行业平均值</th>
+                        <th class="border border-gray-300 px-3 py-2 text-left text-sm font-medium">行业中位数</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="border border-gray-300 px-3 py-2 text-sm">原告</td>
+                        <td class="border border-gray-300 px-3 py-2 text-sm">75.24万元</td>
+                        <td class="border border-gray-300 px-3 py-2 text-sm">72%</td>
+                        <td class="border border-gray-300 px-3 py-2 text-sm">174.28万元</td>
+                        <td class="border border-gray-300 px-3 py-2 text-sm">14.82万元</td>
+                    </tr>
+                    <tr>
+                        <td class="border border-gray-300 px-3 py-2 text-sm">被告</td>
+                        <td class="border border-gray-300 px-3 py-2 text-sm">14.81亿元</td>
+                        <td class="border border-gray-300 px-3 py-2 text-sm">100%</td>
+                        <td class="border border-gray-300 px-3 py-2 text-sm">3457.65万元</td>
+                        <td class="border border-gray-300 px-3 py-2 text-sm">17.31万元</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 涉案细分 -->
+        <div class="p-4">
+            <div class="font-medium mb-3">涉案细分</div>
+            <!-- Tab栏 -->
+            <div class="flex border-b border-gray-200 mb-4">
+                <div class="tab-active px-4 py-2 cursor-pointer">商业纠纷</div>
+                <div class="tab-normal px-4 py-2 cursor-pointer">遵纪守法</div>
+                <div class="tab-normal px-4 py-2 cursor-pointer">权益规范</div>
+                <div class="tab-normal px-4 py-2 cursor-pointer">劳务管理</div>
+            </div>
+            <table class="w-full border-collapse">
+                <thead>
+                    <tr class="bg-gray-100">
+                        <th class="border border-gray-300 px-3 py-2 text-left text-sm font-medium">涉诉身份</th>
+                        <th class="border border-gray-300 px-3 py-2 text-left text-sm font-medium">案件数量（件）</th>
+                        <th class="border border-gray-300 px-3 py-2 text-left text-sm font-medium">案件数量行业排名</th>
+                        <th class="border border-gray-300 px-3 py-2 text-left text-sm font-medium">涉案总金额</th>
+                        <th class="border border-gray-300 px-3 py-2 text-left text-sm font-medium">涉案金额行业排名</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="border border-gray-300 px-3 py-2 text-sm">原告</td>
+                        <td class="border border-gray-300 px-3 py-2 text-sm">1</td>
+                        <td class="border border-gray-300 px-3 py-2 text-sm">1%</td>
+                        <td class="border border-gray-300 px-3 py-2 text-sm">38万元</td>
+                        <td class="border border-gray-300 px-3 py-2 text-sm">67%</td>
+                    </tr>
+                    <tr>
+                        <td class="border border-gray-300 px-3 py-2 text-sm">被告</td>
+                        <td class="border border-gray-300 px-3 py-2 text-sm">62</td>
+                        <td class="border border-gray-300 px-3 py-2 text-sm">100%</td>
+                        <td class="border border-gray-300 px-3 py-2 text-sm">1.68亿元</td>
+                        <td class="border border-gray-300 px-3 py-2 text-sm">100%</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>

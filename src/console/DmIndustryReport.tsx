@@ -53,7 +53,7 @@ export default function DmIndustryReport() {
   const [tag, setTag] = useState('不限')
 
   return (
-    <div style={{ padding: 24 }} className="bg-white text-sm text-[#333]">
+    <div style={{ padding: 24 }} className="text-sm text-[#333]">
       <PageShell title="行业研报" crumb="数字营销 / 金融工具" subtitle="行业研究报告库：检索、订阅与解读" legend={false} />
 
       {/* ============ 搜索栏 ============ */}
@@ -62,7 +62,7 @@ export default function DmIndustryReport() {
           placeholder="请输入报告名称、公司简称、发布机构等关键词"
           className="h-14 w-[600px] rounded-l-md border border-[#e8e8f0] bg-[#f5f5fa] px-5 text-[16px] outline-none placeholder:text-gray-400"
         />
-        <button className="h-14 w-[110px] cursor-pointer rounded-r-md bg-[#f7c02e] text-[16px] hover:opacity-90">
+        <button className="h-14 w-[110px] cursor-pointer rounded-r-md bg-[#1677ff] text-[16px] hover:opacity-90">
           ⵠ 查询
         </button>
       </div>

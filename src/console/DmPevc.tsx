@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { usePageNav } from './pageNav';
+import { PageShell } from './PageShell';
 
 // ====================== 基础Tab配置 ======================
 const tabList = [
@@ -339,7 +340,7 @@ export default function FinanceInvestTable() {
           </button>
         </div>
         <div style={{ padding: '0 20px' }}>
-          <div className="overflow-x-auto"><table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <div><table style={{ width: '100%', tableLayout: 'fixed', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ backgroundColor: '#f9fafb' }}>
                 <th style={{ padding: '12px 8px', textAlign: 'left', border: '1px solid #e5e7eb', width: '40px' }}>
@@ -363,7 +364,7 @@ export default function FinanceInvestTable() {
                     />
                   </td>
                   <td style={{ padding: '12px 8px', border: '1px solid #e5e7eb', fontSize: '15px' }}>{row.index}</td>
-                  <td style={{ padding: '12px 8px', border: '1px solid #e5e7eb', fontSize: '15px', whiteSpace: 'pre-line', color: '#2563eb', cursor: 'pointer' }} onClick={() => goDetail('/console/dm/ent-archive-basic', { name: row.brandName.split('\n')[0] })}>{row.brandName}</td>
+                  <td style={{ padding: '12px 8px', border: '1px solid #e5e7eb', fontSize: '15px', whiteSpace: 'pre-line', wordBreak: 'break-all', color: '#1677ff', cursor: 'pointer' }} onClick={() => goDetail('/console/dm/ent-archive-basic', { name: row.brandName.split('\n')[0] })}>{row.brandName}</td>
                   <td style={{ padding: '12px 8px', border: '1px solid #e5e7eb', fontSize: '15px' }}>{row.financeDate}</td>
                   <td style={{ padding: '12px 8px', border: '1px solid #e5e7eb', fontSize: '15px' }}>{row.round}</td>
                   <td style={{ padding: '12px 8px', border: '1px solid #e5e7eb', fontSize: '15px' }}>{row.amount}</td>
@@ -451,7 +452,7 @@ export default function FinanceInvestTable() {
               </div>
               <div style={{flex:1}}>
                 <div style={{display:'flex', alignItems:'center', gap:'8px', marginBottom:'8px'}}>
-                  <span style={{fontSize: '18px', fontWeight: 600, color: '#2563eb', cursor: 'pointer'}} onClick={() => goDetail('/console/dm/pevc-org-detail', { name: org.name })}>{org.name}</span>
+                  <span style={{fontSize: '18px', fontWeight: 600, color: '#1677ff', cursor: 'pointer'}} onClick={() => goDetail('/console/dm/pevc-org-detail', { name: org.name })}>{org.name}</span>
                   <span style={{padding:'2px 6px',background:'#eefdf2',color:'#16a34a',borderRadius:'4px',fontSize:'13px'}}>{org.tag}</span>
                 </div>
                 <div style={{fontSize:'15px',color:'#333',marginBottom:'6px'}}>
@@ -459,7 +460,7 @@ export default function FinanceInvestTable() {
                   <span style={{margin:'0 16px'}}>地区：{org.area}</span>
                   <span>投资事件：{org.investCount}</span>
                 </div>
-                <div style={{fontSize:'14px',color:'#444',lineHeight:'1.6'}}>
+                <div style={{fontSize:'14px',color:'#444',lineHeight:'1.6', wordBreak:'break-all'}}>
                   主投领域：{org.mainField}
                 </div>
               </div>
@@ -530,14 +531,14 @@ export default function FinanceInvestTable() {
           <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', margin:'12px 0'}}>
             <div>
               <span style={{fontSize: '17px', fontWeight: 500, color: '#1f2937'}}>投资机构非私募基金</span>
-              <span style={{color:'#2563eb', margin:'0 6px'}}>432994</span>
+              <span style={{color:'#1677ff', margin:'0 6px'}}>432994</span>
               <span style={{fontSize:14, color:'#6b7280'}}>注:统计数据和实际条数可能存在偏差</span>
             </div>
             <button style={{ padding: '6px 12px', border: '1px solid #d1d5db', borderRadius: '4px', backgroundColor: '#fff', cursor: 'pointer', fontSize: '14px' }}>
               🗂 营销 &darr;
             </button>
           </div>
-          <div className="overflow-x-auto"><table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <div><table style={{ width: '100%', tableLayout: 'fixed', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ backgroundColor: '#f9fafb' }}>
                 <th style={{ padding: '12px 8px', textAlign: 'left', border: '1px solid #e5e7eb', width: '40px' }}>
@@ -557,14 +558,14 @@ export default function FinanceInvestTable() {
                     <input type="checkbox" />
                   </td>
                   <td style={{ padding: '12px 8px', border: '1px solid #e5e7eb', fontSize: '15px' }}>{row.index}</td>
-                  <td style={{ padding: '12px 8px', border: '1px solid #e5e7eb', fontSize: '15px', color:"#2563eb" }}>{row.fundName}</td>
+                  <td style={{ padding: '12px 8px', border: '1px solid #e5e7eb', fontSize: '15px', color:"#1677ff" }}>{row.fundName}</td>
                   <td style={{ padding: '12px 8px', border: '1px solid #e5e7eb', fontSize: '15px' }}>{row.orgName}</td>
                   <td style={{ padding: '12px 8px', border: '1px solid #e5e7eb', fontSize: '15px' }}>{row.fundAddr}</td>
                   <td style={{ padding: '12px 8px', border: '1px solid #e5e7eb', fontSize: '15px' }}>{row.orgFundProject}</td>
                   <td style={{ padding: '12px 8px', border: '1px solid #e5e7eb', fontSize: '15px' }}>{row.investEnt}</td>
                   <td style={{ padding: '12px 8px', border: '1px solid #e5e7eb', fontSize: '15px' }}>{row.createDate}</td>
                   <td style={{ padding: '12px 8px', border: '1px solid #e5e7eb', fontSize: '15px' }}>{row.amacDate}</td>
-                  <td style={{ padding: '12px 8px', border: '1px solid #e5e7eb', fontSize: '15px', color:"#2563eb" }}>{row.operate}</td>
+                  <td style={{ padding: '12px 8px', border: '1px solid #e5e7eb', fontSize: '15px', color:"#1677ff" }}>{row.operate}</td>
                 </tr>
               ))}
             </tbody>
@@ -596,11 +597,11 @@ export default function FinanceInvestTable() {
           <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', margin:'12px 0'}}>
             <div>
               <span style={{fontSize: '17px', fontWeight: 500, color: '#1f2937'}}>私募基金</span>
-              <span style={{color:'#2563eb', margin:'0 6px'}}>248998</span>
+              <span style={{color:'#1677ff', margin:'0 6px'}}>248998</span>
               <span style={{fontSize:14, color:'#6b7280'}}>注:统计数据和实际条数可能存在偏差</span>
             </div>
           </div>
-          <div className="overflow-x-auto"><table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <div><table style={{ width: '100%', tableLayout: 'fixed', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ backgroundColor: '#f9fafb' }}>
                 <th style={{ padding: '12px 8px', textAlign: 'left', border: '1px solid #e5e7eb', width: '40px' }}>
@@ -620,12 +621,12 @@ export default function FinanceInvestTable() {
                     <input type="checkbox" />
                   </td>
                   <td style={{ padding: '12px 8px', border: '1px solid #e5e7eb', fontSize: '15px' }}>{row.index}</td>
-                  <td style={{ padding: '12px 8px', border: '1px solid #e5e7eb', fontSize: '15px', color:"#2563eb" }}>{row.fundName}</td>
+                  <td style={{ padding: '12px 8px', border: '1px solid #e5e7eb', fontSize: '15px', color:"#1677ff" }}>{row.fundName}</td>
                   <td style={{ padding: '12px 8px', border: '1px solid #e5e7eb', fontSize: '15px' }}>{row.fundCode}</td>
                   <td style={{ padding: '12px 8px', border: '1px solid #e5e7eb', fontSize: '15px' }}>{row.orgName}</td>
                   <td style={{ padding: '12px 8px', border: '1px solid #e5e7eb', fontSize: '15px' }}>{row.investEnt}</td>
                   <td style={{ padding: '12px 8px', border: '1px solid #e5e7eb', fontSize: '15px' }}>{row.amacDate}</td>
-                  <td style={{ padding: '12px 8px', border: '1px solid #e5e7eb', fontSize: '15px', color:"#2563eb" }}>{row.manager}</td>
+                  <td style={{ padding: '12px 8px', border: '1px solid #e5e7eb', fontSize: '15px', color:"#1677ff" }}>{row.manager}</td>
                   <td style={{ padding: '12px 8px', border: '1px solid #e5e7eb', fontSize: '15px' }}>{row.manageType}</td>
                   <td style={{ padding: '12px 8px', border: '1px solid #e5e7eb', fontSize: '15px' }}>{row.runStatus}</td>
                 </tr>
@@ -638,9 +639,10 @@ export default function FinanceInvestTable() {
   }
 
   return (
-    <div style={{ width: '100%', height: '100vh', backgroundColor: '#ffffff', overflow: 'auto' }}>
+    <div style={{ width: '100%', height: '100vh', overflow: 'auto' }}>
+      <PageShell title="PE/VC" crumb="数字营销 / 金融工具" legend={false} />
       {/* 顶部Tab栏 */}
-      <div style={{ display: 'flex', borderBottom: '1px solid #e5e7eb' }}>
+      <div style={{ display: 'flex', borderBottom: '1px solid #e5e7eb', position: 'sticky', top: 140, zIndex: 20, background: '#fff' }}>
         {tabList.map(tab => (
           <div
             key={tab}
