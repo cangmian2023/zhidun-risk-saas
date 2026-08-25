@@ -44,8 +44,15 @@ import MetaVirtualPropConfig from './MetaVirtualPropConfig'
 import MetaVirtualEventConfig from './MetaVirtualEventConfig'
 import MetaAutoTrackConfig from './MetaAutoTrackConfig'
 import EventAnalysis from './EventAnalysis'
-import { CollectionOverview, CollectionCases, CollectionStrategy, CollectionRecords } from './CollectionPages'
-import { DunAssignment, DunImport, DunChannels, DunAgencies, DunQa, DunRepayment } from './DunPages'
+import { ZzCaseModule } from './ZzCase'
+import { ZzStrategyModule } from './ZzStrategy'
+import { ZzAgentModule } from './ZzAgent'
+import { ZzAgencyModule } from './ZzAgency'
+import { ZzVisitModule } from './ZzVisit'
+import { ZzQaModule } from './ZzQa'
+import { ZzAiModule } from './ZzAi'
+import { ZzLegalModule } from './ZzLegal'
+import { ZzBiModule } from './ZzBi'
 import EnterpriseModule from './EnterpriseModule'
 import EnterpriseDashboard from './EnterpriseDashboard'
 import ScoreModule from './ScoreModule'
@@ -649,26 +656,24 @@ export default function Console() {
               <MetaVirtualEventConfig />
             ) : key === 'dg:meta-auto-track' ? (
               <MetaAutoTrackConfig />
-            ) : key === 'zz:overview' ? (
-              <CollectionOverview />
-            ) : key === 'zz:cases' ? (
-              <CollectionCases />
-            ) : key === 'zz:records' ? (
-              <CollectionRecords />
-            ) : key === 'zz:strategy' ? (
-              <CollectionStrategy />
-            ) : key === 'zz:assignment' ? (
-              <DunAssignment />
-            ) : key === 'zz:import' ? (
-              <DunImport />
-            ) : key === 'zz:channels' ? (
-              <DunChannels />
-            ) : key === 'zz:agencies' ? (
-              <DunAgencies />
-            ) : key === 'zz:qa' ? (
-              <DunQa />
-            ) : key === 'zz:repayment' ? (
-              <DunRepayment />
+            ) : key.startsWith('zz:case') ? (
+              <ZzCaseModule pageKey={key} />
+            ) : key.startsWith('zz:strategy') ? (
+              <ZzStrategyModule pageKey={key} />
+            ) : key.startsWith('zz:agent') ? (
+              <ZzAgentModule pageKey={key} />
+            ) : key.startsWith('zz:agency') ? (
+              <ZzAgencyModule pageKey={key} />
+            ) : key.startsWith('zz:visit') ? (
+              <ZzVisitModule pageKey={key} />
+            ) : key.startsWith('zz:qa') ? (
+              <ZzQaModule pageKey={key} />
+            ) : key.startsWith('zz:ai') ? (
+              <ZzAiModule pageKey={key} />
+            ) : key.startsWith('zz:legal') ? (
+              <ZzLegalModule pageKey={key} />
+            ) : key.startsWith('zz:bi') ? (
+              <ZzBiModule pageKey={key} />
             ) : key === 'ep:overview' || key === 'ep:overview-realtime' ? (
               <EnterpriseDashboard key={key} pageKey={key} />
             ) : key.startsWith('ep:') ? (

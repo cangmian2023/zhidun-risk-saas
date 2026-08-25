@@ -2,7 +2,8 @@
  * 复用报告模块通用组件（ReportModuleList / ReportModuleDetail），
  * 数据与零售信贷贷前四页同源（同一打包 JSON 作 SEED），但各自独立持久化文件。
  */
-import { ReportModuleList, ReportModuleDetail, ENT_INFO_MODULE, ENT_CREDIT_MODULE, ENT_FRAUD_MODULE, ENT_DECISION_MODULE } from './ReportModule'
+import { ReportModuleList, ENT_INFO_MODULE, ENT_CREDIT_MODULE, ENT_FRAUD_MODULE, ENT_DECISION_MODULE } from './ReportModule'
+import { ReportModuleDetail } from './ReportModuleDetail'
 
 export function EntPreVerify() { return <ReportModuleList cfg={ENT_INFO_MODULE} /> }
 export function EntPreVerifyDetail() { return <ReportModuleDetail cfg={ENT_INFO_MODULE} /> }

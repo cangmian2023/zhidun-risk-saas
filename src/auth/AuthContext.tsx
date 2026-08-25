@@ -44,6 +44,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       admin: { name: '系统管理员', role: '风控管理员' },
       risk: { name: '风控审核员', role: '风控审核' },
       op: { name: '运营专员', role: '客群运营' },
+      agent: { name: '催收坐席', role: '普通催收坐席' },
     }
     const info = roleMap[u.toLowerCase()] ?? { name: u, role: '风控审核' }
     setUser({ username: u, name: info.name, role: info.role, org: '信贷风控云服务 · 消费金融企业客户' })
