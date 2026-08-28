@@ -10,6 +10,7 @@ export function PageShell({
   title,
   subtitle,
   crumb,
+  crumbNodes,
   actions,
   header,
   legend = true,
@@ -18,6 +19,7 @@ export function PageShell({
   title?: string;
   subtitle?: string;
   crumb?: string;
+  crumbNodes?: ReactNode;
   actions?: ReactNode;
   header?: ReactNode;
   legend?: boolean;
@@ -25,7 +27,7 @@ export function PageShell({
 }) {
   return (
     <>
-      {header ?? <PageHeader title={title ?? ''} subtitle={subtitle} crumb={crumb} actions={actions} onBack={onBack} />}
+      {header ?? <PageHeader title={title ?? ''} subtitle={subtitle} crumb={crumb} crumbNodes={crumbNodes} actions={actions} onBack={onBack} />}
       {legend && <SourceTagLegend />}
     </>
   );

@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { ZzPage, ZzCard, ZzBtn, ZzModal, ZzTabs, ZzTable, ZzFilterBar, ZzField, ZzInput, ZzSelect, ZzTextarea, ZzBadge, ZzStat, BLUE } from './zzUi'
-import { ZZ_CASES, ZZ_CASE_NOTES, ZZ_HISTORY_CASES, money, zzCurrentRole, canOfflineRepay, zzDetailOf, zzCaseButtons, zzActivePtp, ZZ_GRAPH_PROFILES, ZZ_GRAPH_TAG_COLOR, type ZzCase } from './zzData'
+import { ZZ_CASES, ZZ_CASE_NOTES, ZZ_HISTORY_CASES, money, zzCurrentRole, canOfflineRepay, zzDetailOf, zzCaseButtons, zzActivePtp, ZZ_GRAPH_PROFILES, ZZ_GRAPH_TAG_COLOR, ZZ_AGENT_PTP, ZZ_AGENT_NEGO, type ZzCase } from './zzData'
 
 type PageKey = string
 
@@ -88,7 +88,6 @@ function ZzCaseList() {
   const [waiver, setWaiver] = useState<ZzCase | null>(null)
   const [ptpQuick, setPtpQuick] = useState<ZzCase | null>(null)
   const [batch, setBatch] = useState<{ action: string } | null>(null)
-  const [logOpen, setLogOpen] = useState(false)
   const [logs, setLogs] = useState<LogEntry[]>([])
   const [hidden, setHidden] = useState<Set<ColKey>>(new Set(COLS.filter((c) => !c.def).map((c) => c.key)))
   const [colPop, setColPop] = useState(false)
@@ -138,6 +137,9 @@ function ZzCaseList() {
   const statOut = base.filter((r) => r.outsource || r.status === '委外').length
   const statLit = base.filter((r) => r.litigation).length
   const statPtp = base.filter((r) => zzActivePtp(r.id).kind === 'pending').length
+  // AI 有效触达户数：AI 外呼成功接通，且产生有效沟通（非静默、无挂断秒挂）的客户数。
+  // 以「已外呼 + 未标记失联/多次未接通」近似代表有效沟通达成（Demo 口径；生产按通话转写静默/秒挂时长判定）。
+  const statAiReach = base.filter((r) => r.aiCalled && !r.tags.includes('失联') && !r.tags.includes('❌多次未接通')).length
 
   const owners = Array.from(new Set(rows.map((r) => r.owner)))
   const quickTags = ['全部', 'M1', 'M2', 'M3+', '失联', '委外', '诉讼']
@@ -183,6 +185,7 @@ function ZzCaseList() {
         <ZzStat label="委外案件" value={statOut} accent="#D97706" sub="已委托第三方" tip="委外案件：已发起委外委托、由第三方机构承接催收" />
         <ZzStat label="诉讼案件" value={statLit} accent="#D97706" sub="已进入诉讼流程" tip="诉讼案件：已立案/进入诉讼流程的在催案件，列表中以浅红底色标识" />
         <ZzStat label="PTP待履约" value={statPtp} accent="#D97706" sub="存在未到期承诺" tip="PTP待履约：客户已口头承诺或签署协议、承诺还款日未到的案件数" />
+        <ZzStat label="AI 有效触达户数" value={statAiReach} accent={BLUE} sub="接通且产生有效沟通" tip="定义：AI 外呼通话成功接通、且产生有效沟通（非静默、无挂断秒挂）的客户数。可精准核算 AI 外呼真实有效产能，弥补原有接通率虚高、无法甄别无效接通（如秒挂、长期静默）的统计短板。" />
       </div>
 
       <ZzFilterBar>
@@ -209,7 +212,6 @@ function ZzCaseList() {
         {quickTags.map((t) => (
           <button key={t} onClick={() => setQuick(t)} className={`rounded-full border px-3 py-1 text-xs ${quick === t ? 'border-[#1677ff] bg-[#1677ff] text-white' : 'border-slate-300 text-gray-600 hover:border-[#1677ff]'}`}>{t}</button>
         ))}
-        <span className="ml-1 text-xs text-gray-400">已结清/核销/诉讼结案请到 →</span>
         <ZzBtn sm onClick={() => nav('/console/zz/cases-history')}>历史案件</ZzBtn>
       </div>
 
@@ -222,7 +224,6 @@ function ZzCaseList() {
           <ZzBtn sm title={batchInfo('批量恢复').tip} disabled={batchInfo('批量恢复').disabled} onClick={() => setBatch({ action: '批量恢复' })}>批量恢复</ZzBtn>
           <ZzBtn sm title={batchInfo('批量分配').tip} disabled={batchInfo('批量分配').disabled} onClick={() => setBatch({ action: '批量分配' })}>批量分配</ZzBtn>
           <ZzBtn sm title={exportDisabled ? '请先勾选案件' : ''} disabled={exportDisabled} onClick={() => { alert(`已导出 ${sel.size} 笔案件的催收台账（案件+PTP+最近催收记录）`); addLog(`批量导出催收台账 ${sel.size} 笔`) }}>批量导出催收台账</ZzBtn>
-          <ZzBtn sm onClick={() => setLogOpen(true)}>操作日志</ZzBtn>
           <ZzBtn sm onClick={reset}>刷新</ZzBtn>
           <div className="relative">
             <ZzBtn sm onClick={() => setColPop((v) => !v)}>自定义列</ZzBtn>
@@ -250,9 +251,9 @@ function ZzCaseList() {
           <table className="w-full text-sm">
             <thead className="bg-[#f7f8fc]">
               <tr>
-                <th className="border px-3 py-2 text-left font-medium text-gray-600"><input type="checkbox" checked={sel.size > 0 && sorted.every((r) => sel.has(r.id))} onChange={(e) => { if (e.target.checked) setSel(new Set(sorted.map((r) => r.id))); else setSel(new Set()) }} /></th>
+                <th className="border px-3 py-2 text-left font-medium text-gray-600 whitespace-nowrap" style={{ position: 'sticky', left: 0, zIndex: 30, background: '#f7f8fc' }}><input type="checkbox" checked={sel.size > 0 && sorted.every((r) => sel.has(r.id))} onChange={(e) => { if (e.target.checked) setSel(new Set(sorted.map((r) => r.id))); else setSel(new Set()) }} /></th>
                 {visibleCols.map((c) => <th key={c.key} className="border px-3 py-2 text-left font-medium text-gray-600 whitespace-nowrap">{c.label}</th>)}
-                <th className="border px-3 py-2 text-left font-medium text-gray-600">操作</th>
+                <th className="border px-3 py-2 text-left font-medium text-gray-600" style={{ position: 'sticky', right: 0, zIndex: 30, background: '#f7f8fc' }}>操作</th>
               </tr>
             </thead>
             <tbody>
@@ -261,7 +262,7 @@ function ZzCaseList() {
                 const warn = r.outsource || r.status === '委外' || r.litigation
                 return (
                   <tr key={r.id} className={`hover:bg-slate-50 ${warn ? 'bg-[#fff7ed]' : ''}`}>
-                    <td className="border px-3 py-2"><input type="checkbox" checked={sel.has(r.id)} onChange={() => toggle(r.id)} /></td>
+                    <td className="border px-3 py-2 whitespace-nowrap" style={{ position: 'sticky', left: 0, zIndex: 10, background: '#fff' }}><input type="checkbox" checked={sel.has(r.id)} onChange={() => toggle(r.id)} /></td>
                     {visibleCols.map((c) => {
                       let v: any
                       switch (c.key) {
@@ -280,7 +281,7 @@ function ZzCaseList() {
                       }
                       return <td key={c.key} className="border px-3 py-2 align-top whitespace-nowrap">{v}</td>
                     })}
-                    <td className="border px-3 py-2 align-top">
+                    <td className="border px-3 py-2 align-top whitespace-nowrap text-left" style={{ position: 'sticky', right: 0, zIndex: 10, background: '#fff' }}>
                       <ZzRowMenu c={r} role={role} showRepay={showRepay}
                         onDetail={() => nav('/console/zz/case-detail?id=' + r.id)}
                         onRepay={() => setRepay(r)} onWaiver={() => setWaiver(r)} onPtp={() => setPtpQuick(r)} />
@@ -312,23 +313,17 @@ function ZzCaseList() {
         alert(`${batch.action} 已提交，操作日志已留存（${sel.size} 笔）`)
         setBatch(null)
       }} />}
-      {logOpen && (
-        <ZzModal open title="操作日志" onClose={() => setLogOpen(false)} width={680}
-          footer={<ZzBtn primary onClick={() => setLogOpen(false)}>关闭</ZzBtn>}>
-          <ZzTable head={['时间', '操作人', '操作内容']} rows={logs.length ? logs.map((l) => [l.time, l.operator, l.content]) : [['—', '—', '暂无操作记录']]} />
-        </ZzModal>
-      )}
       {importOpen && <ZzImportModal role={role} onClose={() => setImportOpen(false)} onDone={(msg) => addLog(msg)} />}
     </ZzPage>
   )
 }
 
 /* ---------------- 行操作下拉菜单（按状态动态渲染 + 权限置灰） ---------------- */
+/* ---------------- 行操作（按状态动态渲染有效按钮，行内平铺靠左，不折叠） ---------------- */
 function ZzRowMenu({ c, role, showRepay, onDetail, onRepay, onWaiver, onPtp }: {
   c: ZzCase; role: string; showRepay: boolean
   onDetail: () => void; onRepay: () => void; onWaiver: () => void; onPtp: () => void
 }) {
-  const [open, setOpen] = useState(false)
   const closed = CLOSED.has(c.status)
   const isOut = c.outsource || c.status === '委外'
   const isLit = c.litigation
@@ -336,29 +331,17 @@ function ZzRowMenu({ c, role, showRepay, onDetail, onRepay, onWaiver, onPtp }: {
   const repayOk = showRepay && inCollect && !isOut && !isLit && !closed
   const waiverOk = inCollect && !isOut && !isLit && !closed && showRepay
   const ptpOk = inCollect && !closed && !isOut && !isLit
-  const items = [
-    { label: '查看详情', onClick: onDetail, disabled: false, hint: '' },
-    { label: '线下还款登记', onClick: onRepay, disabled: !repayOk, hint: (!showRepay ? '无权限' : isOut || isLit ? '委外/诉讼案件不可操作' : closed ? '已结案' : '仅催收中可操作') },
-    { label: '减免申请', onClick: onWaiver, disabled: !waiverOk, hint: isOut || isLit ? '委外/诉讼案件不可操作' : closed ? '已结案' : '仅催收中可操作' },
-    { label: '快速登记PTP', onClick: onPtp, disabled: !ptpOk, hint: isOut || isLit ? '委外/诉讼案件不可操作' : closed ? '已结案' : '仅催收中可操作' },
+  const btns = [
+    { label: '查看详情', onClick: onDetail, disabled: false, primary: true },
+    { label: '线下还款', onClick: onRepay, disabled: !repayOk },
+    { label: '减免申请', onClick: onWaiver, disabled: !waiverOk },
+    { label: '登记PTP', onClick: onPtp, disabled: !ptpOk },
   ]
   return (
-    <div className="relative inline-block">
-      <ZzBtn sm onClick={() => setOpen((v) => !v)}>操作 ▾</ZzBtn>
-      {open && (
-        <>
-          <div className="fixed inset-0 z-30" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 z-40 mt-1 w-48 rounded border bg-white py-1 shadow-lg">
-            {items.map((it) => (
-              <button key={it.label} disabled={it.disabled} title={it.disabled ? it.hint : ''}
-                onClick={() => { if (it.disabled) return; setOpen(false); it.onClick() }}
-                className={`block w-full px-3 py-1.5 text-left text-sm ${it.disabled ? 'cursor-not-allowed text-gray-300' : 'text-gray-700 hover:bg-slate-50'}`}>
-                {it.label}{it.disabled && it.hint ? <span className="ml-1 text-xs text-gray-300">·{it.hint}</span> : ''}
-              </button>
-            ))}
-          </div>
-        </>
-      )}
+    <div className="flex flex-nowrap items-center gap-1">
+      {btns.filter((b) => !b.disabled).map((b) => (
+        <ZzBtn key={b.label} sm primary={b.primary} onClick={b.onClick}>{b.label}</ZzBtn>
+      ))}
     </div>
   )
 }
@@ -624,21 +607,124 @@ function ZzImportModal({ role, onClose, onDone }: { role: string; onClose: () =>
 }
 
 /* ---------------- 历史案件 ---------------- */
+const CLOSE_TYPE_TIP: Record<string, string> = {
+  '已结清': '客户已全额还清本息，案件正常关闭',
+  '核销': '经合规核销流程认定坏账，账务出表、不再催收（监管报备）',
+  '诉讼结案': '经法院诉讼/执行程序终结，按判决或执行结果结案',
+}
+const HIST_COLS = [
+  { key: 'id', label: '案件ID' }, { key: 'name', label: '客户' }, { key: 'total', label: '原逾期金额' },
+  { key: 'recovered', label: '实际回款金额' }, { key: 'closeType', label: '结案方式' },
+  { key: 'closeTime', label: '结案时间' }, { key: 'archiveTime', label: '归档时间' },
+  { key: 'disposal', label: '处置方式' }, { key: 'op', label: '操作' },
+]
 function ZzCaseHistory() {
   const nav = useNavigate()
+  const [q, setQ] = useState('')            // 客户姓名/身份证 模糊
+  const [cid, setCid] = useState('')        // 原案件编号
+  const [closeType, setCloseType] = useState('')
+  const [amtMin, setAmtMin] = useState('')
+  const [amtMax, setAmtMax] = useState('')
+  const [dateStart, setDateStart] = useState('')
+  const [dateEnd, setDateEnd] = useState('')
+  const [expanded, setExpanded] = useState(true)
+  const [sortKey, setSortKey] = useState('') // 'total'|'recovered'|'closeTime'
+  const [sortAsc, setSortAsc] = useState(true)
+  const [hidden, setHidden] = useState<Record<string, boolean>>({})
+  const [showColSet, setShowColSet] = useState(false)
+
+  const rows = ZZ_HISTORY_CASES.filter((h) => {
+    if (q && !(h.name.includes(q) || h.idCard.includes(q))) return false
+    if (cid && !h.id.toLowerCase().includes(cid.toLowerCase())) return false
+    if (closeType && h.closeType !== closeType) return false
+    if (amtMin && h.total < Number(amtMin)) return false
+    if (amtMax && h.total > Number(amtMax)) return false
+    if (dateStart && h.closeTime < dateStart) return false
+    if (dateEnd && h.closeTime > dateEnd) return false
+    return true
+  })
+  const sortable = (a: any, b: any) => {
+    if (sortKey === 'total' || sortKey === 'recovered') return sortAsc ? a[sortKey] - b[sortKey] : b[sortKey] - a[sortKey]
+    if (sortKey === 'closeTime') return sortAsc ? a.closeTime.localeCompare(b.closeTime) : b.closeTime.localeCompare(a.closeTime)
+    return 0
+  }
+  const sorted = sortKey ? [...rows].sort(sortable) : rows
+  const visCols = HIST_COLS.filter((c) => !hidden[c.key])
+  const toggleSort = (k: string) => { if (sortKey === k) setSortAsc(!sortAsc); else { setSortKey(k); setSortAsc(true) } }
+  const cell = (h: any, key: string) => {
+    switch (key) {
+      case 'id': return <button className="text-left font-medium text-[#1677ff] hover:underline" onClick={() => nav('/console/zz/case-detail?id=' + h.id)}>{h.id}</button>
+      case 'name': return <span title={`${h.name}　身份证 ${h.idCard}`} className="cursor-help border-b border-dashed border-gray-300">{h.name}</span>
+      case 'total': return <span className="block text-right tabular-nums">{money(h.total)}</span>
+      case 'recovered': return <span className="block text-right tabular-nums">{h.recovered > 0 ? money(h.recovered) : <span className="text-gray-400">-</span>}</span>
+      case 'closeType': return <span title={CLOSE_TYPE_TIP[h.closeType] || ''} className="cursor-help rounded px-2 py-0.5 text-xs text-white" style={{ background: h.closeType === '已结清' ? '#16A34A' : h.closeType === '诉讼结案' ? BLUE : '#9CA3AF' }}>{h.closeType}</span>
+      case 'closeTime': return h.closeTime
+      case 'archiveTime': return h.archiveTime
+      case 'disposal': return <div className="flex flex-wrap gap-1">{h.disposal.map((d: string, i: number) => <span key={i} className="rounded bg-slate-100 px-1.5 py-0.5 text-xs text-gray-600">{d}</span>)}</div>
+      case 'op': return <ZzBtn sm onClick={() => nav('/console/zz/case-detail?id=' + h.id)}>案件快照</ZzBtn>
+      default: return ''
+    }
+  }
   return (
-    <ZzPage title="历史案件" crumb="催贷管理 / 案件管理" subtitle="已结清 / 核销 / 诉讼结案案件的归档查询（只读）">
+    <ZzPage title="历史案件" crumb="催贷管理 / 案件管理" subtitle="已结清 / 核销 / 诉讼结案案件的归档查询（只读）" extra={
+      <div className="relative">
+        <ZzBtn sm onClick={() => setShowColSet(!showColSet)}>列设置</ZzBtn>
+        {showColSet && (
+          <div className="absolute right-0 z-20 mt-1 w-44 rounded border bg-white p-2 shadow-lg">
+            {HIST_COLS.filter((c) => c.key !== 'op').map((c) => (
+              <label key={c.key} className="flex items-center gap-2 py-0.5 text-sm">
+                <input type="checkbox" checked={!hidden[c.key]} onChange={(e) => setHidden({ ...hidden, [c.key]: !e.target.checked })} />{c.label}
+              </label>
+            ))}
+          </div>
+        )}
+      </div>
+    }>
       <ZzCard title="历史案件列表">
-        <ZzFilterBar>
-          <ZzField label="原案件编号"><ZzInput placeholder="CO-..." /></ZzField>
-          <ZzField label="结案类型"><ZzSelect defaultValue=""><option value="">全部</option><option>已结清</option><option>核销</option><option>诉讼结案</option></ZzSelect></ZzField>
-          <ZzField label="结案时间"><ZzInput type="date" /></ZzField>
-          <ZzBtn primary>查询</ZzBtn>
-        </ZzFilterBar>
-        <ZzTable head={['案件ID', '客户', '原逾期金额', '结案方式', '结案时间', '操作']} rows={ZZ_HISTORY_CASES.map((h) => [
-          h.id, h.name, money(h.total), <ZzBadge color={h.closeType === '已结清' ? '#16A34A' : '#9CA3AF'}>{h.closeType}</ZzBadge>, h.closeTime,
-          <ZzBtn sm onClick={() => nav('/console/zz/case-detail?id=' + h.id)}>查看详情</ZzBtn>,
-        ])} />
+        <div className="mb-3 rounded border bg-slate-50 p-3">
+          <div className="flex flex-wrap items-end gap-3">
+            <ZzField label="客户姓名 / 身份证"><ZzInput value={q} onChange={(e) => setQ(e.target.value)} placeholder="支持姓名或身份证模糊" className="w-52" /></ZzField>
+            <ZzField label="原案件编号"><ZzInput value={cid} onChange={(e) => setCid(e.target.value)} placeholder="CO-..." className="w-40" /></ZzField>
+            <ZzField label="结案类型"><ZzSelect value={closeType} onChange={(e) => setCloseType(e.target.value)} className="w-32"><option value="">全部</option><option>已结清</option><option>核销</option><option>诉讼结案</option></ZzSelect></ZzField>
+            {expanded && (
+              <>
+                <ZzField label="结案金额区间"><div className="flex items-center gap-1"><ZzInput type="number" value={amtMin} onChange={(e) => setAmtMin(e.target.value)} placeholder="最小" className="w-24" />-<ZzInput type="number" value={amtMax} onChange={(e) => setAmtMax(e.target.value)} placeholder="最大" className="w-24" /></div></ZzField>
+                <ZzField label="结案时间（起~止）"><div className="flex items-center gap-1"><ZzInput type="date" value={dateStart} onChange={(e) => setDateStart(e.target.value)} className="w-36" />~<ZzInput type="date" value={dateEnd} onChange={(e) => setDateEnd(e.target.value)} className="w-36" /></div></ZzField>
+              </>
+            )}
+            <div className="flex h-[34px] items-center gap-2">
+              <ZzBtn primary onClick={() => setExpanded(!expanded)}>{expanded ? '收起' : '展开'}</ZzBtn>
+              <ZzBtn>重置</ZzBtn>
+            </div>
+          </div>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse text-sm">
+            <thead>
+              <tr className="bg-slate-100 text-left text-gray-600">
+                {visCols.map((c) => {
+                  const sortableKey = ['total', 'recovered', 'closeTime'].includes(c.key)
+                  return (
+                    <th key={c.key} className={`border-b px-3 py-2 ${['total', 'recovered'].includes(c.key) ? 'text-right' : ''}`} style={c.key === 'op' ? { minWidth: 120, width: 120 } : undefined}>
+                      {sortableKey
+                        ? <button className="inline-flex items-center gap-1 hover:text-[#1677ff]" onClick={() => toggleSort(c.key)}>{c.label}{sortKey === c.key ? (sortAsc ? ' ▲' : ' ▼') : ' ⇅'}</button>
+                        : c.label}
+                    </th>
+                  )
+                })}
+              </tr>
+            </thead>
+            <tbody>
+              {sorted.map((h) => (
+                <tr key={h.id} className="border-b hover:bg-slate-50">
+                  {visCols.map((c) => <td key={c.key} className={`px-3 py-2 align-top ${c.key === 'op' ? 'whitespace-nowrap' : ''}`}>{cell(h, c.key)}</td>)}
+                </tr>
+              ))}
+              {!sorted.length && <tr><td colSpan={visCols.length} className="px-3 py-6 text-center text-gray-400">无匹配案件</td></tr>}
+            </tbody>
+          </table>
+        </div>
+        <div className="mt-2 text-xs text-gray-400">共 {sorted.length} 条 · 点击「案件快照」或案件编号查看结案快照。</div>
       </ZzCard>
     </ZzPage>
   )
@@ -663,12 +749,14 @@ function ZzCaseDetailPage() {
   const c = inActive || (inHist ? { id: inHist.id, name: inHist.name, idno: '—', contract: '—', principal: inHist.total, penalty: 0, total: inHist.total, remainPrincipal: 0, remainPenalty: 0, remainTotal: 0, stage: 'M1' as const, overdueRange: '—', status: inHist.closeType, owner: '—', lost: false, outsource: false, litigation: false, lastTouch: inHist.closeTime, phone: '—', contacts: 0 } : null)
   const notes = ZZ_CASE_NOTES[id] ?? []
   const d = zzDetailOf(id)
+  // 坐席工作台录入的还款承诺 / 协商方案（与工作台共享存储，双向同步展示）
+  const agentPtp = ZZ_AGENT_PTP[id] ?? []
+  const agentNego = ZZ_AGENT_NEGO[id] ?? []
   const btns = zzCaseButtons(c ? c.status : '', role)
   const today = new Date().toISOString().slice(0, 10)
 
   const [repay, setRepay] = useState<ZzCase | null>(null)
   const [waiver, setWaiver] = useState<ZzCase | null>(null)
-  const [logOpen, setLogOpen] = useState(false)
   const [snapOpen, setSnapOpen] = useState(false)
   const [ptpOpen, setPtpOpen] = useState(false)
   const [focusPtp, setFocusPtp] = useState('')
@@ -703,7 +791,7 @@ function ZzCaseDetailPage() {
     return <ZzBtn sm danger={danger} onClick={onClick}>{name}</ZzBtn>
   }
 
-  const MODULES = [['sec-debtor', '债务人信息'], ['sec-overdue', '逾期信息'], ['sec-repay', '还款记录'], ['sec-ptp', 'PTP记录'], ['sec-action', '行动记录'], ['sec-contact', '联系信息'], ['sec-extra', '补充信息'], ['sec-graph', '关联关系图谱']]
+  const MODULES = [['sec-debtor', '债务人信息'], ['sec-overdue', '逾期信息'], ['sec-repay', '还款记录'], ['sec-ptp', 'PTP记录'], ['sec-action', '行动记录'], ['sec-contact', '联系信息'], ['sec-extra', '补充信息'], ['sec-graph', '关联关系图谱'], ['sec-log', '操作日志']]
 
   return (
     <ZzPage title="案件详情" crumb="催贷管理 / 案件详情" subtitle={`内部档案 · ${c.id}`} actions={<ZzBtn sm onClick={() => nav(-1)}>返回</ZzBtn>}>
@@ -718,7 +806,7 @@ function ZzCaseDetailPage() {
             {activePtp.length > 0 ? (
               <span className="rounded bg-[#fff7e6] px-2 py-0.5 text-[#d97706] font-medium">⏳ 当前生效PTP待履约，到期 {activePtp[0].dueTime}</span>
             ) : <span className="text-gray-400">无待履约PTP</span>}
-            {readOnly && <span className="rounded bg-gray-100 px-1 text-xs text-gray-500">只读归档（结案快照）</span>}
+            {readOnly && <span className="rounded bg-[#eef4ff] px-2 py-0.5 text-xs font-medium text-[#1677ff]">📸 案件快照（只读归档）</span>}
           </div>
         </div>
       </div>
@@ -726,20 +814,14 @@ function ZzCaseDetailPage() {
       {/* 汇总卡片：案件总览 */}
       <div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-4">
         <ZzStat label="当前剩余本金" value={money(c.remainPrincipal)} accent={BLUE} sub={`原始逾期 ${money(c.principal)}`} />
-        <ZzStat label="历史PTP次数" value={d.ptpOral.length + d.ptpAgreement.length} sub={`口头 ${d.ptpOral.length} / 协议 ${d.ptpAgreement.length}`} />
+        <ZzStat label="历史PTP次数" value={d.ptpOral.length + d.ptpAgreement.length + agentPtp.length + agentNego.length} sub={`口头 ${d.ptpOral.length + agentPtp.length} / 协议 ${d.ptpAgreement.length + agentNego.length}`} />
         <ZzStat label="PTP失约次数" value={ptpBroken} accent={ptpBroken ? '#DC2626' : '#16A34A'} />
         <ZzStat label="催收次数" value={d.actions.length} sub={`累计已还 ${money(repaidTotal)}`} />
       </div>
 
-      {/* 结案归档提示 */}
-      {readOnly && (
-        <div className="mb-3 flex items-center justify-between rounded border border-amber-300 bg-amber-50 px-4 py-2 text-sm text-amber-700">
-          <span>⚠ 本案件已结案归档，原详情页业务操作已禁用，建议查看【结案快照】。</span>
-          <button onClick={() => setSnapOpen(true)} className="rounded bg-amber-500 px-3 py-1 text-white">查看结案快照</button>
-        </div>
-      )}
+      {/* 结案归档提示：结案快照为只读，业务操作以灰色禁用态展示，无需额外警示与重复入口 */}
 
-      {/* 顶部操作按钮区：业务左 / 辅助右；操作日志突出 */}
+      {/* 顶部操作按钮区：业务左 / 辅助右 */}
       <div className={panel}>
         <div className={phead}>
           <div className="flex flex-wrap items-center gap-2">
@@ -754,8 +836,6 @@ function ZzCaseDetailPage() {
           <div className="flex flex-wrap items-center gap-2">
             {!readOnly && <BizBtn name="登记PTP" onClick={() => { setPtpKind('口头PTP'); setPtpOpen(true) }} />}
             <button onClick={() => alert('导出案件全部资料（含结案快照）')} className="rounded border border-slate-300 px-2 py-1 text-sm text-gray-700">导出</button>
-            <button onClick={() => setLogOpen(true)} className="rounded border border-[#1677ff] bg-[#e6f0ff] px-2 py-1 text-sm font-medium text-[#1677ff]">📋 操作日志</button>
-            {btns['查看结案快照'] === 'show' && <button onClick={() => setSnapOpen(true)} className="rounded border border-slate-300 px-2 py-1 text-sm text-gray-700">查看结案快照</button>}
           </div>
         </div>
       </div>
@@ -836,19 +916,40 @@ function ZzCaseDetailPage() {
       <div id="sec-ptp" className={panel}><div className={phead}><span>PTP 记录（口头承诺 / 正式协议）</span>{activePtp.length > 0 && <span className="rounded bg-[#fff7e6] px-1 text-xs text-[#d97706]">生效中 {activePtp.length} 条</span>}</div>
         <div className={pbody}>
           <div className="mb-1 flex items-center justify-between"><span className="font-medium text-gray-700">① 口头 PTP（客户承诺）</span>{!readOnly && <button onClick={() => { setPtpKind('口头PTP'); setPtpOpen(true) }} className="rounded border border-[#1677ff] px-2 py-0.5 text-xs text-[#1677ff]">＋ 登记口头PTP</button>}</div>
-          <ZzTable head={['承诺时间', '到期时间', '承诺金额', '状态', '结果', '创建人', '实际还款', '备注', '来源催收']} rows={d.ptpOral.length ? d.ptpOral.map((p) => [
-            p.promiseTime, p.dueTime, money(p.promiseAmt),
-            <span className={p.status === '待履约' ? 'font-semibold text-[#d97706]' : p.status === '已失约' ? 'text-[#DC2626]' : 'text-[#16A34A]'}>{p.status}</span>,
-            p.result === 'BP' ? <ZzBadge color="#DC2626">BP失约</ZzBadge> : p.result === 'KP' ? <ZzBadge color="#16A34A">KP履约</ZzBadge> : '-',
-            p.creator, p.actualTime || '-', p.note,
-            p.actionId ? <button onClick={() => goto('sec-action', p.actionId, setFocusAct)} className="text-[#1677ff]">来源催收</button> : '-',
-          ]) : [['—', '—', '—', '—', '—', '—', '—', '暂无口头PTP', '—']]} />
+          <ZzTable head={['承诺时间', '到期时间', '承诺金额', '状态', '结果', '创建人', '实际还款', '备注', '来源催收']} rows={(() => {
+            const rows = [
+              ...d.ptpOral.map((p) => [
+                p.promiseTime, p.dueTime, money(p.promiseAmt),
+                <span className={p.status === '待履约' ? 'font-semibold text-[#d97706]' : p.status === '已失约' ? 'text-[#DC2626]' : 'text-[#16A34A]'}>{p.status}</span>,
+                p.result === 'BP' ? <ZzBadge color="#DC2626">BP失约</ZzBadge> : p.result === 'KP' ? <ZzBadge color="#16A34A">KP履约</ZzBadge> : '-',
+                p.creator, p.actualTime || '-', p.note,
+                p.actionId ? <button onClick={() => goto('sec-action', p.actionId, setFocusAct)} className="text-[#1677ff]">来源催收</button> : '-',
+              ]),
+              ...agentPtp.map((p) => [
+                p.date, p.date, money(p.amt),
+                <span className={p.status === '待履约' ? 'font-semibold text-[#d97706]' : p.status === '已失信' ? 'text-[#DC2626]' : 'text-[#16A34A]'}>{p.status === '已失信' ? '已失约' : p.status}</span>,
+                '-', '李娜（坐席）', '-', p.note,
+                p.callId ? <span className="text-[#1677ff]">坐席工作台</span> : '-',
+              ]),
+            ]
+            return rows.length ? rows : [['—', '—', '—', '—', '—', '—', '—', '暂无口头PTP', '—']]
+          })()} />
           <div className="mt-4 mb-1 flex items-center justify-between"><span className="font-medium text-gray-700">② 正式还款协议（已签署）</span>{!readOnly && <button onClick={() => { setPtpKind('正式协议'); setPtpOpen(true) }} className="rounded border border-[#1677ff] px-2 py-0.5 text-xs text-[#1677ff]">＋ 签订还款协议</button>}</div>
-          <ZzTable head={['签署时间', '承诺时间', '到期时间', '金额', '状态', '结果', '创建人', '实际还款', '备注']} rows={d.ptpAgreement.length ? d.ptpAgreement.map((p) => [
-            p.signTime, p.promiseTime, p.dueTime, money(p.amt),
-            <span className={p.status === '生效中' ? 'font-semibold text-[#d97706]' : p.status === '已作废' ? 'text-[#DC2626]' : 'text-[#16A34A]'}>{p.status}</span>,
-            p.result || '-', p.creator, p.actualTime || '-', p.note,
-          ]) : [['—', '—', '—', '—', '—', '—', '—', '—', '暂无正式还款协议']]} />
+          <ZzTable head={['签署时间', '承诺时间', '到期时间', '金额', '状态', '结果', '创建人', '实际还款', '备注']} rows={(() => {
+            const rows = [
+              ...d.ptpAgreement.map((p) => [
+                p.signTime, p.promiseTime, p.dueTime, money(p.amt),
+                <span className={p.status === '生效中' ? 'font-semibold text-[#d97706]' : p.status === '已作废' ? 'text-[#DC2626]' : 'text-[#16A34A]'}>{p.status}</span>,
+                p.result || '-', p.creator, p.actualTime || '-', p.note,
+              ]),
+              ...agentNego.map((a) => [
+                '—', a.firstDue, '—', money(a.terms * a.perAmt),
+                <span className={a.status === '已生效' ? 'font-semibold text-[#d97706]' : a.status === '已失效' ? 'text-[#DC2626]' : 'text-[#16A34A]'}>{a.status === '已生效' ? '生效中' : a.status === '已失效' ? '已作废' : '待确认'}</span>,
+                '-', '李娜（坐席）', '-', `每期 ${money(a.perAmt)} × ${a.terms} 期`,
+              ]),
+            ]
+            return rows.length ? rows : [['—', '—', '—', '—', '—', '—', '—', '—', '暂无正式还款协议']]
+          })()} />
         </div>
       </div>
 
@@ -894,16 +995,6 @@ function ZzCaseDetailPage() {
       {ptpOpen && <ZzPtpRegisterModal caseId={c.id} role={role} defaultKind={ptpKind} onClose={() => setPtpOpen(false)} onSave={() => setPtpOpen(false)} />}
       {actionOpen && <ZzActionAddModal caseId={c.id} role={role} ptpOptions={[...d.ptpOral, ...d.ptpAgreement].map((p) => p.id)} onClose={() => setActionOpen(false)} onSave={(rec) => { setActions((s) => [...s, rec]); setActionOpen(false) }} />}
       {snapOpen && <ZzSnapshotModal c={c} onClose={() => setSnapOpen(false)} />}
-      {logOpen && (
-        <ZzModal open title="操作日志" onClose={() => setLogOpen(false)} width={680} footer={<ZzBtn primary onClick={() => setLogOpen(false)}>关闭</ZzBtn>}>
-          <div className="text-sm text-gray-600">操作日志（审计轨迹）示例：</div>
-          <ZzTable head={['时间', '操作人', '操作内容']} rows={[
-            ['2026-08-25 09:12', role, `查看案件 ${c.id} 详情`],
-            ['2026-08-24 14:30', '李娜', '登记 PTP 承诺（PTP-001）'],
-            ['2026-08-20 10:00', '李娜', '线下还款登记 20000 元'],
-          ]} />
-        </ZzModal>
-      )}
 
       {/* 关联关系图谱（知识图谱嵌入：合规内部授权数据，仅作风险研判与线索参考） */}
       {(() => {
@@ -967,6 +1058,22 @@ function ZzCaseDetailPage() {
           </div>
         )
       })()}
+
+      {/* 操作日志（审计轨迹）：由详情页顶部按钮下沉至页面底部，列表与快照页同步 */}
+      <div id="sec-log" className="mt-2">
+        <div className={panel}>
+          <div className={phead}><span>操作日志（审计轨迹）</span></div>
+          <div className={pbody}>
+            <ZzTable head={['时间', '操作人', '操作内容']} rows={[
+              ['2026-08-25 09:12', role, `查看案件 ${c.id} 详情`],
+              ['2026-08-24 14:30', '李娜', '登记 PTP 承诺（PTP-001）'],
+              ['2026-08-20 10:00', '李娜', '线下还款登记 20000 元'],
+              ['2026-08-18 11:20', '系统', '案件进入催收队列（策略自动分案）'],
+            ]} />
+            <div className="mt-2 text-xs text-gray-400">操作日志为审计级不可篡改记录，覆盖查看 / 登记 / 转移 / 导出等关键动作。</div>
+          </div>
+        </div>
+      </div>
 
     </ZzPage>
   )

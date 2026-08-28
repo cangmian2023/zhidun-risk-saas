@@ -44,10 +44,12 @@ export const ZZ_CASE_NOTES: Record<string, { time: string; who: string; what: st
   'CO-202608-002': [{ time: '2026-08-24 14:30', who: '李娜', what: '客户承诺 8 月 28 日前还款 2 万，已记录承诺' }],
 }
 export const ZZ_HISTORY_CASES = [
-  { id: 'CO-202601-017', name: '陈*东', total: 23000, closeType: '已结清', closeTime: '2026-03-12' },
-  { id: 'CO-202602-009', name: '黄*丽', total: 56000, closeType: '核销', closeTime: '2026-05-20' },
-  { id: 'CO-202603-004', name: '林*生', total: 41000, closeType: '诉讼结案', closeTime: '2026-06-30' },
-  { id: 'CO-202608-000', name: '郑*国', total: 22800, closeType: '已结清', closeTime: '2026-08-21' },
+  { id: 'CO-202601-017', name: '陈*东', idCard: '3301**********1234', total: 23000, recovered: 23000, closeType: '已结清', closeTime: '2026-03-12', archiveTime: '2026-03-13 09:10', disposal: ['坐席催收', 'AI协催'] },
+  { id: 'CO-202602-009', name: '黄*丽', idCard: '4401**********5678', total: 56000, recovered: 0, closeType: '核销', closeTime: '2026-05-20', archiveTime: '2026-05-21 14:30', disposal: ['坐席催收', '委外'] },
+  { id: 'CO-202603-004', name: '林*生', idCard: '5101**********9012', total: 41000, recovered: 38000, closeType: '诉讼结案', closeTime: '2026-06-30', archiveTime: '2026-07-01 10:05', disposal: ['坐席催收', '法务诉讼'] },
+  { id: 'CO-202608-000', name: '郑*国', idCard: '3201**********3456', total: 22800, recovered: 22800, closeType: '已结清', closeTime: '2026-08-21', archiveTime: '2026-08-22 08:40', disposal: ['AI协催', '坐席催收'] },
+  { id: 'CO-202604-021', name: '王*芳', idCard: '3701**********7890', total: 88000, recovered: 12000, closeType: '核销', closeTime: '2026-07-18', archiveTime: '2026-07-19 16:20', disposal: ['坐席催收', '委外', '法务诉讼'] },
+  { id: 'CO-202605-013', name: '赵*强', idCard: '3301**********2345', total: 32000, recovered: 32000, closeType: '已结清', closeTime: '2026-08-15', archiveTime: '2026-08-16 11:00', disposal: ['AI协催', '坐席催收', '委外'] },
 ]
 
 /* —— 案件详情页结构化数据 —— */
@@ -67,7 +69,7 @@ export interface ZzPtpAgreement {
 }
 export interface ZzAction {
   id: string; rec: string; who: string; time: string
-  channel: '外呼' | '短信' | '微信' | '上门'; recording: boolean; ptpId?: string
+  channel: '外呼' | '短信' | '微信' | '上门'; recording: boolean; ptpId?: string; callId?: string
 }
 export interface ZzContact {
   rel: string; name: string; type: string; tel: string; status: string; isNew: boolean
@@ -223,18 +225,24 @@ export interface ZzAgentCase {
   total: number; stage: string; overdueDays: number
   principal: number; interest: number; penalty: number
   promise: string; promiseDue: string; lastNote: string
-  tags: string[]; status: ZzCaseStatus; aiCalled: boolean
+  tags: string[]; status: ZzCaseStatus; aiCalled: boolean; archived?: boolean
 }
 export const ZZ_AGENT_POOL: ZzAgentCase[] = [
   { id: 'CO-202608-002', name: '张*明', idno: '4401**********5678', phone: '139****3344', contract: 'HT-2025-0923', total: 42000, stage: 'M2', overdueDays: 60, principal: 40000, interest: 1260, penalty: 2000, promise: '2026-08-28', promiseDue: '2026-08-28', lastNote: '承诺还款 2 万', tags: ['📝有还款承诺', '🤖AI已外呼'], status: '承诺到期', aiCalled: true },
   { id: 'CO-202608-003', name: '刘*梅', idno: '5101**********9012', phone: '137****5566', contract: 'HT-2026-0115', total: 6800, stage: 'M1', overdueDays: 20, principal: 6500, interest: 130, penalty: 300, promise: '2026-08-27', promiseDue: '2026-08-27', lastNote: '月底发工资后还款', tags: ['📝有还款承诺', '🤖AI已外呼'], status: '待回款', aiCalled: true },
   { id: 'CO-202608-004', name: '孙*磊', idno: '3201**********3456', phone: '135****7788', contract: 'HT-2026-0208', total: 3500, stage: 'M1', overdueDays: 15, principal: 3400, interest: 60, penalty: 100, promise: '-', promiseDue: '', lastNote: '已确认分期方案', tags: ['🤝已协商方案', '🤖AI已外呼'], status: '协商中', aiCalled: true },
   { id: 'CO-202608-007', name: '冯*军', idno: '3701**********3344', phone: '139****5566', contract: 'HT-2025-1102', total: 15000, stage: 'M2', overdueDays: 65, principal: 14500, interest: 320, penalty: 500, promise: '-', promiseDue: '', lastNote: '多次外呼未接通', tags: ['❌多次未接通', '失联'], status: '待跟进', aiCalled: true },
+  { id: 'CO-202608-001', name: '王*芳', idno: '4201**********7788', phone: '138****9900', contract: 'HT-2025-0612', total: 12000, stage: 'M1', overdueDays: 42, principal: 11500, interest: 280, penalty: 420, promise: '2026-07-30', promiseDue: '2026-07-30', lastNote: '已全额结清并归档', tags: ['📦已归档'], status: '已归档', aiCalled: true, archived: true },
 ]
 
 /* —— 自动策略执行日志：策略画布产出（AI机器人/短信/分配人工），坐席工作台只读查看 —— */
 export interface ZzAiLog { time: string; action: 'AI外呼' | '催收短信' | '分配人工'; result: string; recording: boolean }
 export const ZZ_AGENT_AI_LOG: Record<string, ZzAiLog[]> = {
+  'CO-202608-001': [
+    { time: '2026-07-20 10:00', action: 'AI外呼', result: '接通 · 客户确认 7 月底全额结清', recording: true },
+    { time: '2026-07-20 10:05', action: '催收短信', result: '已发送结清提醒短信', recording: false },
+    { time: '2026-07-30 18:00', action: 'AI外呼', result: '接通 · 确认已还款 12000 元，案件结案', recording: true },
+  ],
   'CO-202608-002': [
     { time: '2026-08-22 09:00', action: 'AI外呼', result: '接通 · 客户表示资金紧张，需要时间筹款', recording: true },
     { time: '2026-08-22 09:05', action: '催收短信', result: '已发送还款提醒短信', recording: false },
@@ -322,6 +330,125 @@ export const ZZ_AGENT_TRANSCRIPT: Record<string, string[]> = {
 }
 export const zzTranscriptOf = (id: string): string[] => ZZ_AGENT_TRANSCRIPT[id] ?? []
 
+/* —— 本次通话目标：按优先级从多源推导（承诺到期/失联/协商/状态/阶段策略） ——
+   行业对应：催收/呼叫中心「通话目的 / Call Objective」——外呼任务的目标前置推导。
+   来源优先级：①还款承诺到期核验 ②联系状态(失联) ③协商方案 ④案件状态 ⑤阶段策略(账龄) */
+export type ZzObjective = { title: string; source: string; reason: string; action: string; level: 'high' | 'mid' | 'low' }
+export function zzCallObjective(cs: ZzAgentCase, ptps: { date: string; status: string }[]): ZzObjective {
+  const today = new Date().toISOString().slice(0, 10)
+  // 来源1：还款承诺（最优先，到期/逾期需核实到账）
+  if (cs.promise !== '-' && cs.promiseDue) {
+    if (cs.promiseDue < today) return { title: '核实承诺还款是否到账，未到账按失约复催', source: '还款承诺 · 已逾期', reason: `客户曾承诺于 ${cs.promiseDue} 还款，该承诺日已逾期，需核实是否到账`, action: '查询到账记录；未到账则重申违约后果并安排二次承诺/转人工', level: 'high' }
+    if (cs.promiseDue === today) return { title: '确认今日承诺还款是否按时到账', source: '还款承诺 · 今日到期', reason: `客户承诺于今日（${cs.promiseDue}）还款，需确认是否按时到账`, action: '优先查询到账；已还则登记履约，未还则当日跟进提醒', level: 'high' }
+    return { title: '跟进承诺还款，确认资金安排与到账计划', source: '还款承诺 · 未到期', reason: `客户承诺于 ${cs.promiseDue} 还款，尚未到期，提前确认资金安排`, action: '核实资金安排，强化履约预期，必要时预登记', level: 'mid' }
+  }
+  // 来源2：联系状态（失联/多次未接通）
+  if (cs.tags.includes('失联') || cs.tags.includes('❌多次未接通')) return { title: '失联修复：更换时段/紧急联系人/函件触达', source: '联系状态 · 失联', reason: cs.tags.includes('❌多次未接通') ? 'AI 多次外呼未接通，常规号码不可达' : '标记为失联，常规号码不可达', action: '更换拨打时段；联系紧急联系人/单位电话；发送函件并记录可达性', level: 'high' }
+  // 来源3：协商方案
+  if (cs.status === '协商中' || cs.tags.includes('🤝已协商方案')) return { title: '确认分期/延期方案，引导客户签字生效', source: '协商方案', reason: '已达成方案意向，待客户确认生效', action: '复述方案条款；确认首期与期数；提交生效', level: 'mid' }
+  // 来源4：案件状态
+  if (cs.status === '承诺到期') return { title: '催收本次承诺，确认到账或重申承诺', source: '案件状态 · 承诺到期', reason: '案件处于承诺到期阶段', action: '查询到账；未到账则重申承诺并登记', level: 'mid' }
+  if (cs.status === '待回款') return { title: '跟进回款，确认还款到账', source: '案件状态 · 待回款', reason: '已有承诺/方案，等待资金到账', action: '确认到账记录；未到账则催办', level: 'mid' }
+  // 来源5：阶段策略（账龄驱动，默认/待跟进）
+  const stageGoal: Record<string, string> = { 'M1': '温和提醒，确认还款意愿，推动首次承诺', 'M2': '施压+提供分期方案，确认可负担金额', 'M3+': '预警委外/法诉，确认还款或协商兜底' }
+  return { title: '建立联系，确认还款意愿与可负担金额', source: `阶段策略 · ${cs.stage}`, reason: `账龄 ${cs.stage}，逾期 ${cs.overdueDays} 天，待跟进`, action: stageGoal[cs.stage] ?? '建立联系，了解还款能力与意向', level: 'low' }
+}
+
+/* —— 话术参考：依据本次通话目标来源/层级，给出坐席可参考的催收脚本 ——
+   对应行业「话术库 / 合规话术」实践：分场景（承诺到期/失联/协商/账龄分层）提供开场、核实、引导、施压模板。 */
+export type ZzScript = { scenario: string; lines: string[] }
+export function zzScriptRef(obj: ZzObjective): ZzScript[] {
+  const s = obj.source
+  const high = obj.level === 'high'
+  const base: ZzScript[] = [
+    { scenario: '开场白（通用）', lines: [
+      '您好，请问是 {客户} 先生/女士吗？我是 XX 金融的贷后客服专员，工号 {工号}，来电与您核对一下账户还款事宜，方便讲话吗？',
+      '本次通话会全程录音，用于核实还款安排与留存凭证，请您知悉。',
+    ] },
+  ]
+  let specific: ZzScript[] = []
+  if (s.includes('今日到期') || s.includes('已逾期') || s.includes('承诺到期')) {
+    specific = [
+      { scenario: '核实承诺到账', lines: [
+        '您此前承诺于 {承诺日} 还款 {金额}，今天我来帮您确认一下是否已经到账。',
+        '若已还款请您提供转账凭证/交易流水，我同步为您登记履约；若尚未到账，我们确认一下具体到账时间。',
+      ] },
+      { scenario: '未到账·复催', lines: [
+        '承诺未到账会影响您的信用记录，并产生相应违约金，建议今天优先安排处理。',
+        '确认一下：今天能先还多少？剩余部分我们重新约定一个具体日期，我为您登记。',
+      ] },
+    ]
+  } else if (s.includes('未到期')) {
+    specific = [
+      { scenario: '跟进承诺安排', lines: [
+        '您承诺于 {承诺日} 还款 {金额}，我提前跟您确认下资金安排是否就绪。',
+        '若临时有变动请尽早告诉我，我们一起调整方案，避免走到违约环节。',
+      ] },
+    ]
+  } else if (s.includes('失联')) {
+    specific = [
+      { scenario: '失联修复触达', lines: [
+        '本次多次拨打未接通，为不耽误您的还款安排，我尝试联系您预留的紧急联系人/单位电话。',
+        '若号码变更，请通过官方 APP/客服热线更新，确保后续通知可送达。',
+        '您也可主动回拨官方客服热线，说明当前情况并约定还款时间。',
+      ] },
+    ]
+  } else if (s.includes('协商')) {
+    specific = [
+      { scenario: '协商方案引导', lines: [
+        '您此前申请的 {方案} 我们已为您保留，今天确认一下条款：共 {期数} 期，每期 {每期金额}，首期 {首期日}。',
+        '确认无误我为您提交生效；生效后请务必按约还款，再次逾期将按协议转交处理。',
+      ] },
+    ]
+  } else if (s.includes('待回款')) {
+    specific = [
+      { scenario: '跟进回款', lines: [
+        '您的还款方案已在执行中，我帮您确认本期是否已到账。',
+        '到账后系统会自动更新状态；若遇延迟，请保留凭证，我为您备注。',
+      ] },
+    ]
+  } else if (s.includes('M1')) {
+    specific = [
+      { scenario: 'M1 温和提醒', lines: [
+        '温馨提示，您的账单已逾期 {天数} 天，金额 {金额}，建议尽快处理以免影响征信。',
+        '目前还在早期阶段，您看今天方便先还一部分或全额结清吗？',
+      ] },
+    ]
+  } else if (s.includes('M2')) {
+    specific = [
+      { scenario: 'M2 施压+分期', lines: [
+        '逾期已进入第 2 阶段，持续拖欠会产生更多违约金并影响征信。',
+        '如果一次性还款有压力，我可以为您申请分期方案，您看每月可承受多少？',
+      ] },
+    ]
+  } else if (s.includes('M3')) {
+    specific = [
+      { scenario: 'M3+ 法诉预警', lines: [
+        '逾期已超过 90 天，按合同约定后续可能移交委外或启动司法程序。',
+        '这是最后协商窗口，今天确认还款或分期方案可避免进一步流程。',
+      ] },
+    ]
+  }
+  const scripts = [...base, ...specific]
+  if (high) {
+    scripts.push({ scenario: '⚠ 合规红线（高优先级案件必读）', lines: [
+      '严禁使用威胁、侮辱、骚扰第三方等违规话术；每日外呼不超过合规上限。',
+      '仅与本人或经授权的联系人沟通，不得向无关第三方透露债务细节。',
+      '不得承诺减免/豁免超出权限的方案，所有约定以系统登记为准。',
+    ] })
+  }
+  return scripts
+}
+
+/* ============================ 坐席录入的还款承诺 / 协商方案（与「案件详情页」共享、双向同步） ============================
+   统一数据结构：坐席工作台 Tab2 录入与案件详情页 PTP 记录使用同一份内存存储，避免两处结构不一致、互不同步。
+   字段对齐案件详情页：口头PTP（promiseTime/dueTime/promiseAmt/status/creator）→ 这里用 date=承诺&到期日, amt, status, note；
+   正式协议（signTime/promiseTime/dueTime/amt/status）→ 这里用 type/terms/perAmt/firstDue/status。 */
+export type AgentPtp = { id: string; date: string; amt: number; type: string; status: '待履约' | '已履约' | '已失信'; note: string; callId?: string }
+export type AgentNego = { id: string; type: string; terms: number; perAmt: number; firstDue: string; status: '待确认' | '已生效' | '已失效'; note: string; callId?: string }
+export const ZZ_AGENT_PTP: Record<string, AgentPtp[]> = {}
+export const ZZ_AGENT_NEGO: Record<string, AgentNego[]> = {}
+
 /* ============================ 模块4 委外机构 ============================ */
 export interface ZzAgency {
   id: string; name: string; contact: string; phone: string
@@ -395,25 +522,109 @@ export const zzAgencySettle = (id: string) => ZZ_AGENCY_SETTLE.find((s) => s.age
 /* ============================ 模块5 外访 ============================ */
 // 状态全集：待分配 / 待外访 / 外访进行中 / 待审核 / 已完成 / 已驳回 / 已取消
 export const ZZ_VISIT_STATUSES = ['待分配', '待外访', '外访进行中', '待审核', '已完成', '已驳回', '已取消']
-export const ZZ_VISITORS = ['外访员A', '外访员B', '外访员C']
+export const ZZ_VISITORS = ['外访员A（华南）', '外访员B（华南）', '外访员C（华东）', '外访员D（华北）']
+export const ZZ_VISIT_REGIONS = ['华南', '华东', '华北']
+
+/* ============================ 话术库（话术管理） ============================ */
+export const ZZ_SCRIPT_CATEGORIES = ['首催提醒', '逾期催收', '委外前催收', '法诉前催告', '协商分期', '失联修复', '节假日关怀']
+export const ZZ_SCRIPT_CHANNELS = ['语音', '短信', '企微']
+export const ZZ_SCRIPT_STATUSES = ['生效中', '草稿', '已下线']
+
+export const ZZ_SCRIPTS: any[] = [
+  {
+    id: 'S-1001', name: '首催温和提醒（M1）', category: '首催提醒', channel: '语音', status: '生效中',
+    version: 'v1.2.0', content: '您好{客户}，我是{机构}的催收专员{工号}。提醒您本期应还{金额}元已于{日期}到期，请尽快通过官方渠道还款，避免影响征信。如有疑问可回拨。',
+    variables: ['客户', '机构', '工号', '金额', '日期'], strategies: ['首催-标准', 'M1温和'], updatedAt: '2026-08-20', author: '话术管理员',
+    versions: [
+      { version: 'v1.2.0', status: '生效中', updatedAt: '2026-08-20', note: '补充征信提示话术' },
+      { version: 'v1.1.0', status: '已下线', updatedAt: '2026-06-11', note: '初版' },
+    ],
+  },
+  {
+    id: 'S-1002', name: '逾期施压（M2-M3）', category: '逾期催收', channel: '语音', status: '生效中',
+    version: 'v2.0.1', content: '您好{客户}，您的贷款已逾期{天数}天，欠款{金额}元。请于{日期}前处理，长期逾期将影响征信并可能产生额外费用。请尽快安排还款或联系我们协商。',
+    variables: ['客户', '天数', '金额', '日期'], strategies: ['逾期-标准', 'M2施压'], updatedAt: '2026-08-18', author: '话术管理员',
+    versions: [
+      { version: 'v2.0.1', status: '生效中', updatedAt: '2026-08-18', note: '合规复核通过' },
+      { version: 'v2.0.0', status: '已下线', updatedAt: '2026-05-30', note: '初版' },
+    ],
+  },
+  {
+    id: 'S-1003', name: '失联修复触达', category: '失联修复', channel: '语音', status: '生效中',
+    version: 'v1.0.0', content: '您好，这里是{机构}。我们多次联系{客户}未果，如您是预留联系人请协助转告其尽快处理逾期欠款{金额}元，或回拨{工号}。感谢配合，请勿转告无关第三方。',
+    variables: ['机构', '客户', '金额', '工号'], strategies: ['失联-修复'], updatedAt: '2026-08-12', author: '话术管理员',
+    versions: [{ version: 'v1.0.0', status: '生效中', updatedAt: '2026-08-12', note: '初版' }],
+  },
+  {
+    id: 'S-1004', name: '协商分期方案引导', category: '协商分期', channel: '语音', status: '草稿',
+    version: 'v0.3.0', content: '您好{客户}，了解到您当前还款有困难。我们可提供分期方案：分{期数}期，每期{每期金额}元，首期{首期日}。确认后我为您登记，请保持电话畅通。',
+    variables: ['客户', '期数', '每期金额', '首期日'], strategies: ['协商-分期'], updatedAt: '2026-08-25', author: '王经理',
+    versions: [{ version: 'v0.3.0', status: '草稿', updatedAt: '2026-08-25', note: '待合规审核' }],
+  },
+  {
+    id: 'S-1005', name: '法诉前催告（短信）', category: '法诉前催告', channel: '短信', status: '生效中',
+    version: 'v1.1.0', content: '【{机构}】{客户}：您在我司贷款已严重逾期{金额}元，请在{日期}前处理，否则将依法诉前催告。回拨{工号}。',
+    variables: ['机构', '客户', '金额', '日期', '工号'], strategies: ['法诉-催告'], updatedAt: '2026-08-15', author: '话术管理员',
+    versions: [
+      { version: 'v1.1.0', status: '生效中', updatedAt: '2026-08-15', note: '补充诉前催告表述' },
+      { version: 'v1.0.0', status: '已下线', updatedAt: '2026-04-02', note: '初版' },
+    ],
+  },
+  {
+    id: 'S-1006', name: '节假日关怀提醒', category: '节假日关怀', channel: '企微', status: '已下线',
+    version: 'v1.0.0', content: '尊敬的{客户}，佳节将至，祝您安康。您账户应还{金额}元，可在节后方便时处理，如需协商请回复。',
+    variables: ['客户', '金额'], strategies: [], updatedAt: '2026-02-01', author: '话术管理员',
+    versions: [{ version: 'v1.0.0', status: '已下线', updatedAt: '2026-02-01', note: '节日活动结束' }],
+  },
+]
+
+/* ============================ 短信模板管理 ============================ */
+export const ZZ_SMS_TYPES = ['还款提醒', '逾期催告', '法诉告知', '协商方案', '还款成功']
+export const ZZ_SMS_CHANNELS = ['短信', '企微', '5G消息']
+export const ZZ_SMS_STATUSES = ['启用', '停用', '草稿']
+
+export const ZZ_SMS_TEMPLATES: any[] = [
+  { id: 'SM-2001', code: 'SMS_M1_REMIND', name: 'M1还款提醒', type: '还款提醒', channel: '短信', status: '启用', sign: '【XX金融】', content: '{客户}您好，您本期应还{金额}元将于{日期}到期，请通过官方APP还款，详情回拨{工号}。', variables: ['客户', '金额', '日期', '工号'], updatedAt: '2026-08-20', audit: '已审核', send: 12840 },
+  { id: 'SM-2002', code: 'SMS_M2_URGE', name: 'M2逾期催告', type: '逾期催告', channel: '短信', status: '启用', sign: '【XX金融】', content: '{客户}您好，您已逾期{天数}天，欠款{金额}元，请于{日期}前还款，否则将影响征信。回拨{工号}。', variables: ['客户', '天数', '金额', '日期', '工号'], updatedAt: '2026-08-18', audit: '已审核', send: 9312 },
+  { id: 'SM-2003', code: 'SMS_LEGAL', name: '诉前告知', type: '法诉告知', channel: '短信', status: '启用', sign: '【XX金融】', content: '{客户}您好，您欠款{金额}元已严重逾期，我司将于{日期}依法诉前催告，请尽快处理或回拨{工号}协商。', variables: ['客户', '金额', '日期', '工号'], updatedAt: '2026-08-15', audit: '已审核', send: 2045 },
+  { id: 'SM-2004', code: 'SMS_PLAN', name: '协商方案通知', type: '协商方案', channel: '企微', status: '启用', sign: '【XX金融】', content: '{客户}您好，您申请的分{期数}期方案已生效，每期{每期金额}元，首期{首期日}。请按时还款。', variables: ['客户', '期数', '每期金额', '首期日'], updatedAt: '2026-08-22', audit: '已审核', send: 612 },
+  { id: 'SM-2005', code: 'SMS_PAID', name: '还款成功通知', type: '还款成功', channel: '5G消息', status: '停用', sign: '【XX金融】', content: '{客户}您好，您于{日期}还款{金额}元已到账，当前账单结清，感谢配合。', variables: ['客户', '日期', '金额'], updatedAt: '2026-07-30', audit: '已审核', send: 0 },
+  { id: 'SM-2006', code: 'SMS_M3_URGE', name: 'M3强化催告', type: '逾期催告', channel: '短信', status: '草稿', sign: '【XX金融】', content: '{客户}您好，您已逾期{天数}天，欠款{金额}元，多次联系未果，请于{日期}前处理。', variables: ['客户', '天数', '金额', '日期'], updatedAt: '2026-08-25', audit: '待审核', send: 0 },
+]
+
+/* ============================ 外访人员管理 ============================ */
+export const ZZ_VISITOR_STATUS = ['在岗', '休假', '停用']
+export const ZZ_VISITOR_SKILLS = ['常规外访', '夜间外访', '现场取证', '协商谈判', '高风险处置']
+
+export const ZZ_VISITOR_LIST: any[] = [
+  { id: 'V-001', name: '外访员A', phone: '138****0001', agency: '华南外访一组', region: '华南', skills: ['常规外访', '现场取证'], status: '在岗', rating: 4.8, tasks: 6, done: 132 },
+  { id: 'V-002', name: '外访员B', phone: '138****0002', agency: '华南外访一组', region: '华南', skills: ['常规外访', '协商谈判'], status: '在岗', rating: 4.5, tasks: 4, done: 98 },
+  { id: 'V-003', name: '外访员C', phone: '139****0003', agency: '华东外访二组', region: '华东', skills: ['夜间外访', '高风险处置'], status: '休假', rating: 4.2, tasks: 0, done: 75 },
+  { id: 'V-004', name: '外访员D', phone: '137****0004', agency: '华北外访三组', region: '华北', skills: ['常规外访', '现场取证', '协商谈判'], status: '在岗', rating: 4.9, tasks: 8, done: 156 },
+  { id: 'V-005', name: '外访员E', phone: '136****0005', agency: '华北外访三组', region: '华北', skills: ['常规外访'], status: '停用', rating: 3.6, tasks: 0, done: 41 },
+]
 
 export const ZZ_VISITS: any[] = [
   {
     id: 'VS-001', caseId: 'CO-202608-001', name: '赵*强', phone: '138****6601', addr: '杭州市西湖区文三路 100 号', backupAddr: '杭州市西湖区文三路 102 号',
     priority: '普通', status: '待分配', assignee: '-', creator: '主管-王经理', createdAt: '2026-08-20 09:12', assignedAt: '', dueDate: '2026-08-25',
     overdueAmount: 86000, age: 'M2',
-    punch: null,
-    report: null,
+    punch: { time: '2026-08-22 09:30', lng: 120.150, lat: 30.280, actualAddr: '杭州市西湖区文三路 100 号', inRadius: true, device: 'iPhone 14', offline: false },
+    report: { result: '见到家属/同住人', talk: '家属表示会转告客户本人尽快处理', statusDesc: '家庭住址已核实，同住家属配合', agree: '否', planTime: '', planAmount: 0, risk: '无', photos: ['门牌号.jpg'], audio: '', summary: '初步外访，待进一步联系本人还款' },
     rejectReason: '',
+    finishedAt: '2026-08-22 10:30',
+    resultSummary: '见到家属，待联系本人',
     logs: [{ op: '创建任务', by: '主管-王经理', at: '2026-08-20 09:12', note: '由案件 CO-202608-001 推送创建' }],
   },
   {
     id: 'VS-002', caseId: 'CO-202608-007', name: '冯*军', phone: '159****2288', addr: '成都市武侯区天府大道 88 号', backupAddr: '成都市武侯区天府大道 90 号',
     priority: '紧急', status: '待外访', assignee: '外访员A', creator: '主管-王经理', createdAt: '2026-08-21 10:30', assignedAt: '2026-08-21 11:00', dueDate: '2026-08-24',
     overdueAmount: 124000, age: 'M3+',
-    punch: null,
-    report: null,
+    punch: { time: '2026-08-23 09:10', lng: 104.070, lat: 30.570, actualAddr: '成都市武侯区天府大道 88 号', inRadius: true, device: 'iPhone 14', offline: false },
+    report: { result: '见到本人客户', talk: '客户承认欠款，承诺周内处理', statusDesc: '个体经营，短期资金困难', agree: '是', planTime: '2026-08-30', planAmount: 30000, risk: '无', photos: ['门牌号.jpg', '房屋现场.jpg'], audio: '现场录音.mp3', summary: '已现场沟通，达成部分还款意向' },
     rejectReason: '',
+    finishedAt: '2026-08-23 10:00',
+    resultSummary: '见到本人，承诺还款',
     logs: [
       { op: '创建任务', by: '主管-王经理', at: '2026-08-21 10:30', note: '逾期M3+，紧急外访' },
       { op: '分配人员', by: '主管-王经理', at: '2026-08-21 11:00', note: '分配给 外访员A' },
@@ -443,8 +654,10 @@ export const ZZ_VISITS: any[] = [
     priority: '普通', status: '外访进行中', assignee: '外访员C', creator: '主管-李经理', createdAt: '2026-08-22 09:00', assignedAt: '2026-08-22 09:30', dueDate: '2026-08-26',
     overdueAmount: 56000, age: 'M2',
     punch: { time: '2026-08-23 14:20', lng: 114.270, lat: 30.590, actualAddr: '武汉市江汉区解放大道 60 号（偏移 320m）', inRadius: false, device: 'HUAWEI Mate60', offline: true },
-    report: null,
+    report: { result: '无人在家，敲门无人应答', talk: '多次敲门无人应答，邻居称白天多不在家', statusDesc: '疑似白天外出务工', agree: '否', planTime: '', planAmount: 0, risk: '无', photos: ['门牌号.jpg'], audio: '', summary: '现场已打卡（偏移 320m，离线），报告待补' },
     rejectReason: '',
+    finishedAt: '2026-08-23 15:00',
+    resultSummary: '已打卡，待补报告',
     logs: [
       { op: '分配人员', by: '主管-李经理', at: '2026-08-22 09:30', note: '分配给 外访员C' },
       { op: '现场打卡', by: '外访员C', at: '2026-08-23 14:20', note: '⚠️位置偏移 320m（离线打卡，已标记风险）' },
@@ -549,6 +762,30 @@ export const ZZ_QA_SCORE_TPL = [
   { item: '信息保密', desc: '不泄露债务给第三方', max: 25 },
   { item: '流程规范', desc: '身份核验、还款提醒完整', max: 25 },
 ]
+// 质检报告（由抽样任务复核产出，含评分项/扣分/违规点，可关联录音回放）
+export const ZZ_QA_REPORTS: any[] = [
+  { id: 'RPT-01', task: '8月坐席抽样质检', callId: 'CALL-9001', agent: '王雷(0012)', target: '赵*强', date: '2026-08-25', total: 100, score: 70, violations: ['不还钱就上门'],
+    items: [
+      { item: '文明用语', max: 25, deduct: 15, score: 10, note: '出现威胁恐吓话术' },
+      { item: '合规承诺', max: 25, deduct: 0, score: 25, note: '无违规承诺' },
+      { item: '信息保密', max: 25, deduct: 0, score: 25, note: '未泄露债务' },
+      { item: '流程规范', max: 25, deduct: 10, score: 15, note: '未完整身份核验' },
+    ] },
+  { id: 'RPT-02', task: '8月坐席抽样质检', callId: 'CALL-9003', agent: '李娜(0015)', target: '冯*军', date: '2026-08-25', total: 100, score: 75, violations: ['明天再不还要后果'],
+    items: [
+      { item: '文明用语', max: 25, deduct: 10, score: 15, note: '存在后果恐吓' },
+      { item: '合规承诺', max: 25, deduct: 0, score: 25, note: '—' },
+      { item: '信息保密', max: 25, deduct: 0, score: 25, note: '—' },
+      { item: '流程规范', max: 25, deduct: 10, score: 15, note: '提醒流程不完整' },
+    ] },
+  { id: 'RPT-03', task: '8月坐席抽样质检', callId: 'CALL-9002', agent: '李娜(0015)', target: '张*明', date: '2026-08-25', total: 100, score: 100, violations: [],
+    items: [
+      { item: '文明用语', max: 25, deduct: 0, score: 25, note: '规范' },
+      { item: '合规承诺', max: 25, deduct: 0, score: 25, note: '—' },
+      { item: '信息保密', max: 25, deduct: 0, score: 25, note: '—' },
+      { item: '流程规范', max: 25, deduct: 0, score: 25, note: '完整' },
+    ] },
+]
 
 /* ============================ 模块7 AI协催机器人 ============================ */
 // 单条通话（含 ASR/NLP/标签回写/后续建议）
@@ -619,6 +856,75 @@ export const ZZ_AI_TASKS: any[] = [
 ]
 export const ZZ_AI_BOARD = { total: 700, connected: 298, effective: 0.43, toHuman: 56, abnormal: 1 }
 
+/* ============================ AI 外呼任务详情（独立详情页样例数据） ============================ */
+// 任务配置快照（创建时完整留存，规则修改后仍可追溯历史执行逻辑）
+export const ZZ_AI_TASK_CONFIG: Record<string, any> = {
+  'AI-01': {
+    filterSnapshot: {
+      逾期阶段: 'M1', 逾期天数区间: '1-30 天', 案件状态: '在催（未结案）', 客户类型: '个人消费贷',
+      排除规则: '已人工跟进 / 已外访 / 已转法务 / 禁呼名单 / 已承诺还款(PTP) 客户',
+    },
+    compliance: { 允许外呼时段: '09:00-12:00，14:00-18:00', 夜间禁呼拦截: '开启', 节假日拦截: '开启' },
+    callStrategy: { 单客户最大呼叫次数: 2, 呼叫失败重呼间隔: '4h', 无人接听重试次数: 1, 接通后不再重呼: '是' },
+    intercept: { 屏蔽失联客户: '否', 已PTP客户: '是', 已协商客户: '是', 投诉风险客户: '是' },
+  },
+  'AI-02': {
+    filterSnapshot: { 逾期阶段: 'M2', 逾期天数区间: '31-60 天', 案件状态: '在催（未结案）', 客户类型: '个人消费贷', 排除规则: '导入客户池 220 户（M2 逾期），已排除法诉案件' },
+    compliance: { 允许外呼时段: '09:00-12:00，14:00-18:00', 夜间禁呼拦截: '开启', 节假日拦截: '关闭' },
+    callStrategy: { 单客户最大呼叫次数: 3, 呼叫失败重呼间隔: '6h', 无人接听重试次数: 2, 接通后不再重呼: '是' },
+    intercept: { 屏蔽失联客户: '否', 已PTP客户: '是', 已协商客户: '是', 投诉风险客户: '是' },
+  },
+}
+
+// 通话明细（样例，按 taskId 区分；无数据字段统一以 '-' 展示由页面处理）
+export const ZZ_AI_CALL_DETAILS: Record<string, any[]> = {
+  'AI-01': [
+    { callId: 'AIC-501', cust: '张*明', caseNo: 'CO-202608-001', time: '2026-08-24 09:12', duration: 86, result: '接通', intent: '有还款意愿', ptp: true, recording: true, asr: true },
+    { callId: 'AIC-502', cust: '李*华', caseNo: 'CO-202608-002', time: '2026-08-24 09:31', duration: 42, result: '拒接', intent: '-', ptp: false, recording: false, asr: false },
+    { callId: 'AIC-503', cust: '王*芳', caseNo: 'CO-202608-003', time: '2026-08-24 10:05', duration: 0, result: '关机', intent: '-', ptp: false, recording: false, asr: false },
+    { callId: 'AIC-504', cust: '陈*强', caseNo: 'CO-202608-004', time: '2026-08-24 10:22', duration: 0, result: '空号', intent: '-', ptp: false, recording: false, asr: false },
+    { callId: 'AIC-505', cust: '刘*东', caseNo: 'CO-202608-005', time: '2026-08-24 10:48', duration: 121, result: '接通', intent: '需协商分期', ptp: false, recording: true, asr: true },
+    { callId: 'AIC-506', cust: '赵*军', caseNo: 'CO-202608-006', time: '2026-08-24 11:10', duration: 0, result: '运营商拦截', intent: '-', ptp: false, recording: false, asr: false },
+    { callId: 'AIC-507', cust: '孙*丽', caseNo: 'CO-202608-007', time: '2026-08-24 11:35', duration: 38, result: '接通', intent: '无还款意愿', ptp: false, recording: true, asr: true },
+    { callId: 'AIC-508', cust: '周*敏', caseNo: 'CO-202608-008', time: '2026-08-24 14:03', duration: 0, result: '无人接听', intent: '-', ptp: false, recording: false, asr: false },
+    { callId: 'AIC-509', cust: '吴*斌', caseNo: 'CO-202608-009', time: '2026-08-24 14:28', duration: 95, result: '接通', intent: '情绪激动', ptp: false, recording: true, asr: true, risk: true },
+    { callId: 'AIC-510', cust: '郑*伟', caseNo: 'CO-202608-010', time: '2026-08-24 14:55', duration: 73, result: '接通', intent: '有还款意愿', ptp: true, recording: true, asr: true },
+  ],
+  'AI-02': [
+    { callId: 'AIC-601', cust: '冯*涛', caseNo: 'CO-202608-101', time: '2026-08-20 09:20', duration: 110, result: '接通', intent: '需协商分期', ptp: false, recording: true, asr: true },
+    { callId: 'AIC-602', cust: '蒋*磊', caseNo: 'CO-202608-102', time: '2026-08-20 09:41', duration: 0, result: '拒接', intent: '-', ptp: false, recording: false, asr: false },
+    { callId: 'AIC-603', cust: '韩*宇', caseNo: 'CO-202608-103', time: '2026-08-20 10:12', duration: 0, result: '关机', intent: '-', ptp: false, recording: false, asr: false },
+    { callId: 'AIC-604', cust: '杨*静', caseNo: 'CO-202608-104', time: '2026-08-20 10:39', duration: 64, result: '接通', intent: '有还款意愿', ptp: true, recording: true, asr: true },
+    { callId: 'AIC-605', cust: '朱*浩', caseNo: 'CO-202608-105', time: '2026-08-20 11:02', duration: 0, result: '空号', intent: '-', ptp: false, recording: false, asr: false },
+    { callId: 'AIC-606', cust: '秦*峰', caseNo: 'CO-202608-106', time: '2026-08-20 11:30', duration: 88, result: '接通', intent: '无还款意愿', ptp: false, recording: true, asr: true },
+  ],
+}
+
+// 自动周期任务：历史执行批次（多批次对比复盘）
+export const ZZ_AI_BATCHES: Record<string, any[]> = {
+  'AI-01': [
+    { batch: 'B20260824', time: '2026-08-24 09:00', fetched: 1200, called: 480, connectRate: '43.75%', promise: 23, status: '已完成' },
+    { batch: 'B20260823', time: '2026-08-23 09:00', fetched: 1180, called: 462, connectRate: '41.10%', promise: 19, status: '已完成' },
+    { batch: 'B20260822', time: '2026-08-22 09:00', fetched: 1195, called: 474, connectRate: '44.20%', promise: 25, status: '已完成' },
+    { batch: 'B20260821', time: '2026-08-21 09:00', fetched: 1150, called: 451, connectRate: '39.80%', promise: 17, status: '已完成' },
+  ],
+}
+
+// 全生命周期操作日志（样例，按 taskId）
+export const ZZ_AI_OPLOG: Record<string, any[]> = {
+  'AI-01': [
+    { time: '2026-08-24 09:00', operator: '系统(自动)', action: '周期任务自动执行批次 B20260824', ip: '10.0.0.12' },
+    { time: '2026-08-23 09:00', operator: '系统(自动)', action: '周期任务自动执行批次 B20260823', ip: '10.0.0.12' },
+    { time: '2026-08-20 18:30', operator: '王经理(8821)', action: '暂停任务（外呼时段调整）', ip: '192.168.1.44' },
+    { time: '2026-08-20 14:10', operator: '王经理(8821)', action: '修改呼叫策略：单客户最大呼叫次数 2→2（生效）', ip: '192.168.1.44' },
+    { time: '2026-08-19 10:00', operator: '话术管理员(7703)', action: '创建周期任务，绑定话术模板「标准开场白」', ip: '192.168.1.30' },
+  ],
+  'AI-02': [
+    { time: '2026-08-20 18:30', operator: '王经理(8821)', action: '手动暂停任务', ip: '192.168.1.44' },
+    { time: '2026-08-20 09:00', operator: '王经理(8821)', action: '创建手动临时任务，导入客户池 220 户', ip: '192.168.1.44' },
+  ],
+}
+
 /* AI协催报表（数据分析） */
 export const ZZ_BI_AI = {
   totalCalls: 700, connected: 298, connectRate: 0.426, promiseRate: 0.18, toHumanRate: 0.08,
@@ -641,38 +947,73 @@ export type ZzGraphTag = '关联团伙逾期' | '疑似虚假资料' | '有稳�
 // 每个欠款客户的图谱画像（key = 案件ID）
 export const ZZ_GRAPH_PROFILES: Record<string, any> = {
   'CO-202608-001': {
-    center: '赵*强', phone: '138****6601', device: 'IMEI-A8821', addr: '杭州市西湖区文三路 100 号',
+    center: '赵*强', phone: '138****2211', device: 'IMEI-A8821', addr: '杭州市西湖区文三路 100 号',
     tags: ['关联团伙逾期', '有稳定关联人'] as ZzGraphTag[],
-    gang: { inGang: true, gangId: 'G-03', gangSize: 6, level: '核心成员', risk: '高风险逃废债' },
+    gang: { inGang: true, gangId: 'G-03', gangSize: 3, level: '核心成员', risk: '高风险逃废债' },
     contacts: [
       { rel: '预留紧急联系人(合法可呼)', name: '赵*父', phone: '139****0001', reachable: true },
       { rel: '共同借款人', name: '赵*妻', phone: '137****0002', reachable: true },
     ],
-    sameAddr: ['孙*磊(CO-202608-009)', '周*敏(CO-202608-011)'],
-    sameDevice: ['孙*磊(CO-202608-009)'],
+    sameAddr: ['孙*磊(CO-202608-004)', '刘*梅(CO-202608-003)'],
+    sameDevice: ['孙*磊(CO-202608-004)'],
     history: ['CO-202601-014(已结清)'],
-    lostRepair: { score: 82, reachable: true, hint: '优先联系预留紧急联系人赵*父，接通率高' },
-    ability: '有关联人且有历史还款记录，疑似资金周转困难而非恶意逃废',
+    lostRepair: { score: 82, reachable: true, hint: '优先联系预留紧急联系人赵*父，接通率高，可转告还款安排' },
+    ability: '有关联人且有历史还款记录，疑似资金周转困难而非恶意逃废，委外+诉讼并行',
   },
-  'CO-202608-009': {
-    center: '孙*磊', phone: '138****6688', device: 'IMEI-A8821', addr: '杭州市西湖区文三路 100 号',
-    tags: ['关联团伙逾期', '疑似虚假资料'] as ZzGraphTag[],
-    gang: { inGang: true, gangId: 'G-03', gangSize: 6, level: '普通成员', risk: '中风险' },
-    contacts: [{ rel: '预留紧急联系人(合法可呼)', name: '孙*母', phone: '135****0099', reachable: false }],
-    sameAddr: ['赵*强(CO-202608-001)', '周*敏(CO-202608-011)'],
+  'CO-202608-004': {
+    center: '孙*磊', phone: '135****7788', device: 'IMEI-A8821', addr: '杭州市西湖区文三路 100 号',
+    tags: ['关联团伙逾期', '有稳定关联人'] as ZzGraphTag[],
+    gang: { inGang: true, gangId: 'G-03', gangSize: 3, level: '普通成员', risk: '中风险' },
+    contacts: [{ rel: '预留紧急联系人(合法可呼)', name: '孙*母', phone: '135****0099', reachable: true }],
+    sameAddr: ['赵*强(CO-202608-001)', '刘*梅(CO-202608-003)'],
     sameDevice: ['赵*强(CO-202608-001)'],
     history: [],
-    lostRepair: { score: 35, reachable: false, hint: '同址同设备多人逾期，疑似资料异常，建议转人工核实' },
-    ability: '多客户共用地址与设备，疑似虚假资料，建议重点核查',
+    lostRepair: { score: 70, reachable: true, hint: '同址关联人孙*母可触达，配合短信 + 关联人转告修复失联' },
+    ability: '同址团伙成员但保留有效联系人，已提出分期意愿，可协商分期非恶意逃废',
+  },
+  'CO-202608-003': {
+    center: '刘*梅', phone: '137****5566', device: 'IMEI-A8822', addr: '杭州市西湖区文三路 100 号',
+    tags: ['关联团伙逾期'] as ZzGraphTag[],
+    gang: { inGang: true, gangId: 'G-03', gangSize: 3, level: '普通成员', risk: '中风险' },
+    contacts: [{ rel: '预留紧急联系人(合法可呼)', name: '刘*姐', phone: '136****0066', reachable: true }],
+    sameAddr: ['赵*强(CO-202608-001)', '孙*磊(CO-202608-004)'],
+    sameDevice: [],
+    history: ['CO-202602-008(已结清)'],
+    lostRepair: { score: 65, reachable: true, hint: '同址关联人刘*姐可触达，已承诺月底发工资后还款' },
+    ability: '同址团伙成员但保留有效联系人，已口头承诺还款，建议坐席确认并绑定 PTP',
+  },
+  'CO-202608-002': {
+    center: '张*明', phone: '139****3344', device: 'IMEI-C5501', addr: '杭州市滨江区江南大道 50 号',
+    tags: ['有稳定关联人'] as ZzGraphTag[],
+    gang: { inGang: false, gangId: '-', gangSize: 0, level: '-', risk: '低' },
+    contacts: [
+      { rel: '预留紧急联系人(合法可呼)', name: '张*国', phone: '137****2211', reachable: true },
+      { rel: '单位电话', name: '单位', phone: '020****5566', reachable: true },
+    ],
+    sameAddr: [], sameDevice: [],
+    history: ['CO-202512-031(已结清)'],
+    lostRepair: { score: 88, reachable: true, hint: '本人与单位电话均可达，承诺 8/28 还款 2 万，优先坐席跟进' },
+    ability: '有稳定单位与紧急联系人，已承诺部分还款，还款意愿明确，重点确认履约',
+  },
+  'CO-202608-007': {
+    center: '冯*军', phone: '139****5566', device: 'IMEI-B2207', addr: '成都市武侯区天府大道 88 号',
+    tags: ['疑似虚假资料', '关联团伙逾期'] as ZzGraphTag[],
+    gang: { inGang: true, gangId: 'G-07', gangSize: 2, level: '普通成员', risk: '中风险' },
+    contacts: [{ rel: '预留紧急联系人(合法可呼)', name: '冯*友', phone: '135****7788', reachable: false }],
+    sameAddr: ['王*芳(CO-202608-008)'],
+    sameDevice: [],
+    history: [],
+    lostRepair: { score: 28, reachable: false, hint: '多次外呼未接通，同址同设备多人逾期疑似资料异常，建议转人工核实' },
+    ability: '多次未接通且关联人不可达，疑似虚假资料，建议重点核查并升级委外',
   },
   'CO-202608-006': {
-    center: '钱*华', phone: '159****2288', device: 'IMEI-B2207', addr: '成都市武侯区天府大道 88 号',
+    center: '钱*华', phone: '138****1234', device: 'IMEI-D3309', addr: '成都市武侯区天府大道 88 号',
     tags: ['孤立高风险客户'] as ZzGraphTag[],
     gang: { inGang: false, gangId: '-', gangSize: 0, level: '-', risk: '低' },
     contacts: [],
     sameAddr: [], sameDevice: [], history: [],
-    lostRepair: { score: 8, reachable: false, hint: '无任何关联线索，建议直接走 AI 外呼 + 委外' },
-    ability: '无关联人、失联，还款能力无法研判，建议委外跟进',
+    lostRepair: { score: 8, reachable: false, hint: '无任何关联线索且已失联，已核销，建议直接委外/法务处置' },
+    ability: '无关联人、失联，还款能力无法研判，已核销出表，不再主动催收',
   },
 }
 // 图谱风险标签颜色
@@ -681,8 +1022,8 @@ export const ZZ_GRAPH_TAG_COLOR: Record<ZzGraphTag, string> = {
 }
 // 逾期团伙网络（社区发现聚类结果）
 export const ZZ_GRAPH_GANGS = [
-  { gangId: 'G-03', size: 6, members: ['赵*强', '孙*磊', '周*敏', '刘*梅', '钱*华', '冯*军'], risk: '高', core: '赵*强', action: '建议提前拦截、重点跟进、升级法务' },
-  { gangId: 'G-07', size: 3, members: ['张*明', '李*芳', '王*强'], risk: '中', core: '张*明', action: '集中话术施压、监控关联动向' },
+  { gangId: 'G-03', size: 3, members: ['赵*强(CO-202608-001)', '孙*磊(CO-202608-004)', '刘*梅(CO-202608-003)'], risk: '高', core: '赵*强', action: '建议提前拦截、重点跟进、升级法务，同址文三路100号多人逾期' },
+  { gangId: 'G-07', size: 2, members: ['冯*军(CO-202608-007)', '王*芳(CO-202608-008)'], risk: '中', core: '冯*军', action: '同址天府大道88号疑似资料异常，监控关联动向并转人工核实' },
 ]
 // 失联修复潜力排行（按可达性得分）
 export const ZZ_GRAPH_REPAIR = [

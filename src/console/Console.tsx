@@ -51,6 +51,10 @@ import { ZzAgencyModule } from './ZzAgency'
 import { ZzVisitModule } from './ZzVisit'
 import { ZzQaModule } from './ZzQa'
 import { ZzAiModule } from './ZzAi'
+import { ZzAiTaskDetail } from './ZzAiTaskDetail'
+import { ZzScriptLib } from './ZzScriptLib'
+import { ZzSmsTemplate } from './ZzSmsTemplate'
+import { ZzVisitorManage } from './ZzVisitorManage'
 import { ZzLegalModule } from './ZzLegal'
 import { ZzBiModule } from './ZzBi'
 import EnterpriseModule from './EnterpriseModule'
@@ -664,12 +668,20 @@ export default function Console() {
               <ZzAgentModule pageKey={key} />
             ) : key.startsWith('zz:agency') ? (
               <ZzAgencyModule pageKey={key} />
+            ) : key.startsWith('zz:visitor') ? (
+              <ZzVisitorManage />
             ) : key.startsWith('zz:visit') ? (
               <ZzVisitModule pageKey={key} />
             ) : key.startsWith('zz:qa') ? (
               <ZzQaModule pageKey={key} />
+            ) : key.startsWith('zz:ai-task-detail') ? (
+              <ZzAiTaskDetail />
             ) : key.startsWith('zz:ai') ? (
               <ZzAiModule pageKey={key} />
+            ) : key.startsWith('zz:script') ? (
+              <ZzScriptLib />
+            ) : key.startsWith('zz:sms') ? (
+              <ZzSmsTemplate />
             ) : key.startsWith('zz:legal') ? (
               <ZzLegalModule pageKey={key} />
             ) : key.startsWith('zz:bi') ? (

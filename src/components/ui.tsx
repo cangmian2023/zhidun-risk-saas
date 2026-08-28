@@ -10,18 +10,20 @@ export function PageHeader({
   subtitle,
   actions,
   crumb,
+  crumbNodes,
   onBack,
 }: {
   title: string
   subtitle?: string
   actions?: ReactNode
   crumb?: string
+  crumbNodes?: ReactNode
   onBack?: () => void
 }) {
   return (
     <div className="sticky top-14 z-30 -mx-4 border-b border-slate-100 bg-slate-50 px-4 pb-5 pt-1 lg:-mx-8 lg:px-8">
-      {/* 第一行：面包屑（与详情页 DetailHeader 一致，放最上面） */}
-      {crumb && <div className="text-xs text-slate-400">{crumb}</div>}
+      {/* 第一行：面包屑（与详情页 DetailHeader 一致，放最上面，可与页面标题左对齐） */}
+      {crumbNodes ?? (crumb && <div className="text-xs text-slate-400">{crumb}</div>)}
       {/* 第二行：标题 + 右侧操作 */}
       <div className="mt-2 flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0 flex-1 flex items-center gap-2">

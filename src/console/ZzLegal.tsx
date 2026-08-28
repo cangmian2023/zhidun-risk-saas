@@ -37,10 +37,10 @@ function ZzLegalOverview() {
       </ZzFilterBar>
       <ZzTabs tabs={tabs} active={tab} onChange={setTab} />
       <ZzCard title={`${tab}（${visible.length}）`}>
-        <ZzTable head={['案件ID', '关联催收案件', '客户', '涉案本金', '诉讼阶段', '承办人', '立案时间', '当前状态', '操作']} rows={visible.map((c) => [
+        <ZzTable stickyAction head={['案件ID', '关联催收案件', '客户', '涉案本金', '诉讼阶段', '承办人', '立案时间', '当前状态', '操作']} rows={visible.map((c) => [
           c.id, c.caseId, c.name, money(c.principal), <ZzBadge color={STAGE_COLOR[c.stage]}>{c.stage}</ZzBadge>, c.handler, c.filing?.time || '-',
           <ZzBadge color={c.archived ? GRAY : STAGE_COLOR[c.stage]}>{c.archived ? '已归档' : c.stage}</ZzBadge>,
-          <div className="flex gap-1">
+          <div className="flex flex-nowrap gap-1">
             <ZzBtn sm onClick={() => setDetail(c)}>查看详情</ZzBtn>
             {c.stage === '待诉讼评估' && <ZzBtn sm primary onClick={() => setStart(c)}>启动法务流程</ZzBtn>}
           </div>,

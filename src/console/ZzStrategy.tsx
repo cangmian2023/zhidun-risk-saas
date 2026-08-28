@@ -1,5 +1,5 @@
 // 催贷管理 · 模块2 智能策略引擎
-import { useState, useRef, type MouseEvent as ReactMouseEvent } from 'react'
+import { useState, useRef, useEffect, type MouseEvent as ReactMouseEvent } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { ZzPage, ZzCard, ZzBtn, ZzModal, ZzTable, ZzField, ZzInput, ZzSelect, ZzBadge, ZzTabs, BLUE } from './zzUi'
 import {
@@ -9,18 +9,17 @@ import {
 } from './zzData'
 
 export function ZzStrategyModule({ pageKey }: { pageKey: string }) {
-  // 画布页（带 ?id=）独立路由；其余（含 zz:strategy 首页）走统一首页双 Tab
+  // 画布页（带 ?id=）独立路由；执行监控独立页面；其余（含 zz:strategy 首页）走策略列表
   if (pageKey.startsWith('zz:strategy-canvas')) return <ZzStrategyCanvasPage />
+  if (pageKey === 'zz:strategy-monitor') return <ZzStrategyMonitorPage />
   return <ZzStrategyHome />
 }
 
-/* ===================== 首页：顶部 Tab（策略列表 / 执行监控） ===================== */
+/* ===================== 首页：策略列表 ===================== */
 function ZzStrategyHome() {
-  const [tab, setTab] = useState('策略列表')
   return (
-    <ZzPage title="智能策略引擎" crumb="催贷管理 / 智能策略引擎" subtitle="催收策略总入口：策略列表编排与全局执行监控">
-      <ZzTabs tabs={['策略列表', '执行监控']} active={tab} onChange={setTab} />
-      {tab === '策略列表' ? <ZzStrategyList /> : <ZzStrategyMonitor />}
+    <ZzPage title="智能策略引擎" crumb="催贷管理 / 智能策略引擎" subtitle="催收策略总入口：策略列表编排与版本管理（执行监控见独立页面）">
+      <ZzStrategyList />
     </ZzPage>
   )
 }
@@ -53,12 +52,12 @@ function ZzStrategyList() {
 
   return (
     <ZzCard title="策略列表" extra={<div className="flex gap-2"><ZzBtn sm primary onClick={() => setCreating(true)}>新建策略</ZzBtn><ZzBtn sm>导出配置</ZzBtn></div>}>
-      <ZzTable head={['策略名称', '适用账龄', '版本', '状态', '创建时间', '操作']} rows={rows.map((s) => [
+      <ZzTable stickyAction head={['策略名称', '适用账龄', '版本', '状态', '创建时间', '操作']} rows={rows.map((s) => [
         <button className="text-left font-medium text-[#1677ff] hover:underline" onClick={() => openCanvas(s)}>{s.name}</button>,
         s.stageRange, s.version,
         s.enabled ? <ZzBadge color="#16A34A">已启用</ZzBadge> : <ZzBadge color="#9CA3AF">已停用</ZzBadge>,
         s.created,
-        <div className="flex flex-wrap gap-1">
+        <div className="flex flex-nowrap gap-1">
           <ZzBtn sm primary onClick={() => openCanvas(s)}>编辑</ZzBtn>
           <ZzBtn sm onClick={() => clone(s)}>复制</ZzBtn>
           <ZzBtn sm onClick={() => toggle(s)}>{s.enabled ? '停用' : '启用'}</ZzBtn>
@@ -79,7 +78,14 @@ function ZzStrategyList() {
   )
 }
 
-/* ---------------- 执行监控（全局统计 Tab，支持按策略筛选） ---------------- */
+/* ---------------- 执行监控（独立页面，支持按策略筛选） ---------------- */
+function ZzStrategyMonitorPage() {
+  return (
+    <ZzPage title="策略执行监控" crumb="催贷管理 / 智能策略引擎" subtitle="策略全局执行监控：分流统计、图谱因子与异常日志">
+      <ZzStrategyMonitor />
+    </ZzPage>
+  )
+}
 function ZzStrategyMonitor() {
   const [sid, setSid] = useState('')
   const exec = ZZ_STRATEGY_EXEC.filter((e) => !sid || e.sid === sid)
@@ -184,11 +190,23 @@ function CanvasEditor({ st }: { st: ZzStrategy }) {
   const [edges, setEdges] = useState<EdgeT[]>(INIT_EDGES)
   const [active, setActive] = useState<NodeT | null>(INIT_NODES[1])
   const [zoom, setZoom] = useState(1)
+  const [fitZoom, setFitZoom] = useState(1)
   const [linkFrom, setLinkFrom] = useState<string | null>(null)
   const [callWindow, setCallWindow] = useState('22:00-08:00 禁止外呼')
   const [maxCall, setMaxCall] = useState(2)
   const wrapRef = useRef<HTMLDivElement>(null)
+  const measureRef = useRef<HTMLDivElement>(null)
   const drag = useRef<{ id: string; dx: number; dy: number } | null>(null)
+
+  useEffect(() => {
+    const el = measureRef.current
+    if (!el) return
+    const { width: w, height: h } = el.getBoundingClientRect()
+    const z = Math.min(1, w / CANVAS_W, h / CANVAS_H)
+    const fz = Math.round(z * 100) / 100
+    setFitZoom(fz)
+    setZoom(fz)
+  }, [])
 
   const color = (k: NodeT['kind']) => k === 'start' ? '#16A34A' : k === 'cond' ? BLUE : '#D97706'
   const nodeById = (id: string) => nodes.find((n) => n.id === id)
@@ -244,7 +262,7 @@ function CanvasEditor({ st }: { st: ZzStrategy }) {
   return (
     <>
     <div className="grid grid-cols-[minmax(0,1fr)_280px] gap-4">
-      <div className="min-w-0 overflow-auto" style={{ scrollbarWidth: 'none' }}>
+      <div className="min-w-0 overflow-hidden">
       <ZzCard title={`画布（${st.name}）`} extra={
         <div className="flex flex-wrap items-center gap-2">
           <ZzBtn sm onClick={() => addNode('cond')}>+ 条件</ZzBtn>
@@ -254,15 +272,15 @@ function CanvasEditor({ st }: { st: ZzStrategy }) {
           <ZzBtn sm onClick={() => setZoom((z) => Math.max(0.4, +(z - 0.1).toFixed(2)))}>－</ZzBtn>
           <span className="w-12 text-center text-sm">{Math.round(zoom * 100)}%</span>
           <ZzBtn sm onClick={() => setZoom((z) => Math.min(2, +(z + 0.1).toFixed(2)))}>＋</ZzBtn>
-          <ZzBtn sm onClick={() => setZoom(1)}>重置</ZzBtn>
+          <ZzBtn sm onClick={() => setZoom(fitZoom)}>重置</ZzBtn>
           <span className="text-gray-300">|</span>
           <ZzBtn sm onClick={() => alert('画布已保存')}>保存</ZzBtn>
           <ZzBtn sm primary onClick={() => alert(`「${st.name}」已发布`)}>发布</ZzBtn>
         </div>
       }>
-        <div className="relative h-[520px] w-full overflow-auto rounded border bg-slate-50" style={{ minWidth: CANVAS_W }}
+        <div ref={measureRef} className="relative h-[520px] w-full overflow-hidden rounded border bg-slate-50"
           onMouseMove={onMove} onMouseUp={onUp} onMouseLeave={onUp} onClick={() => linkFrom && setLinkFrom(null)}>
-          <div ref={wrapRef} className="relative" style={{ width: CANVAS_W * zoom, height: CANVAS_H * zoom, transform: `scale(${zoom})`, transformOrigin: '0 0' }}>
+          <div ref={wrapRef} className="relative" style={{ width: CANVAS_W, height: CANVAS_H, transform: `scale(${zoom})`, transformOrigin: '0 0' }}>
             <svg className="pointer-events-none absolute inset-0" width={CANVAS_W} height={CANVAS_H}>
               {edges.map((e) => {
                 const a = nodeById(e.from), b = nodeById(e.to)
@@ -298,7 +316,7 @@ function CanvasEditor({ st }: { st: ZzStrategy }) {
       </ZzCard>
       </div>
       <div>
-        <ZzCard title="节点属性" bodyClass="p-4 max-h-[520px] overflow-y-auto">
+        <ZzCard title="节点属性" bodyClass="p-4 h-[520px] overflow-y-auto">
           {active ? (
             <div className="grid grid-cols-1 gap-3">
               <ZzField label="节点名称"><ZzInput value={active.label} onChange={(e) => updateActive({ label: e.target.value })} /></ZzField>
@@ -340,9 +358,9 @@ function VersionManager({ st, onRollback }: { st: ZzStrategy; onRollback: () => 
 
   return (
     <ZzCard title={`版本管理 · ${st.name}（${versions.length} 个版本）`} extra={<ZzBtn sm onClick={() => { setVa(versions[0].version); setVb(versions[versions.length - 1].version); setCompareOpen(true) }}>版本对比</ZzBtn>}>
-      <ZzTable head={['版本号', '修改人', '修改时间', '版本备注', '画布概要', '操作']} rows={versions.map((v) => [
+      <ZzTable stickyAction head={['版本号', '修改人', '修改时间', '版本备注', '画布概要', '操作']} rows={versions.map((v) => [
         <ZzBadge color={BLUE}>{v.version}</ZzBadge>, v.editor, v.time, v.note, v.summary,
-        <div className="flex gap-1">
+        <div className="flex flex-nowrap gap-1">
           <ZzBtn sm onClick={() => { setVa(v.version); setVb(versions[versions.length - 1].version); setCompareOpen(true) }}>对比</ZzBtn>
           <ZzBtn sm onClick={() => alert(`已生成 ${v.version} 快照`)}>快照</ZzBtn>
           <ZzBtn sm onClick={() => { alert(`已回滚至 ${v.version}，画布已刷新`); onRollback() }}>回滚</ZzBtn>

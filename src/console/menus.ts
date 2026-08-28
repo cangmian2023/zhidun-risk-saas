@@ -297,13 +297,13 @@ export const collectionMenu: MenuGroup[] = [
     // 智能策略引擎：4 个平级菜单收拢为唯一入口。画布/版本不再占侧边导航，
     // 改为「策略列表行编辑 → 画布页 → 版本管理子Tab」；监控作为页面内全局 Tab。
     group: '智能策略引擎', section: '策略编排', items: [
-      { label: '智能策略引擎', key: 'zz:strategy', desc: '催收策略总入口：策略列表（新建/复制/启停/灰度）与全局执行监控，画布编辑与版本管理在下钻页内' },
+      { label: '智能策略引擎', key: 'zz:strategy', desc: '催收策略总入口：策略列表（新建/复制/启停/灰度），画布编辑与版本管理在下钻页内' },
+      { label: '策略执行监控', key: 'zz:strategy-monitor', desc: '策略全局执行监控：分流统计、图谱因子与异常日志' },
     ],
   },
   {
     group: '坐席工作台', section: '坐席作业', items: [
-      { label: '工作台首页', key: 'zz:agent-home', desc: '坐席数据看板：待处理/今日已处理/接通/承诺/待跟进' },
-      { label: '我的案件池', key: 'zz:agent-pool', desc: '一键外呼、催记录入、还款承诺、协商方案、联系人管理' },
+      { label: '我的案件池', key: 'zz:agent-pool', desc: '坐席名下案件：一键外呼、催记录入、还款承诺、协商方案、联系人管理（含全部案件/今日待办筛选）' },
     ],
   },
   {
@@ -319,6 +319,7 @@ export const collectionMenu: MenuGroup[] = [
       { label: '外访任务', key: 'zz:visit-list', desc: '外访任务分配、详情、打卡与报告' },
       { label: '我的外访', key: 'zz:visit-mine', desc: '外访人员视图：待办、打卡与报告' },
       { label: '外访历史', key: 'zz:visit-history', desc: '历史全部外访任务归档查询' },
+      { label: '外访人员管理', key: 'zz:visitor-manage', desc: '外访人员档案、技能标签、任务负载与区域分布' },
     ],
   },
   {
@@ -327,13 +328,15 @@ export const collectionMenu: MenuGroup[] = [
       { label: '敏感词库管理', key: 'zz:qa-words', desc: '维护催收违规敏感词，配置违规分类、告警风险等级与启用状态' },
       { label: '实时告警处理', key: 'zz:qa-alert', desc: '通话中AI实时识别违规敏感词，完成告警复核、判定处理与误判标记' },
       { label: '事后抽样质检', key: 'zz:qa-task', desc: '创建抽样任务，对历史催收通话做事后人工复核打分' },
-      { label: '质检报表', key: 'zz:qa-report', desc: '违规统计、坐席排行与审计台账导出' },
+
     ],
   },
   {
     group: '智能化', section: 'AI 协催', items: [
       { label: '外呼任务总览', key: 'zz:ai-task', desc: '手动临时 + 自动周期任务（系统按策略自动外呼）；任务详情含通话明细与异常统计' },
       { label: '对话模板管理', key: 'zz:ai-template', desc: '多轮对话话术模板、分支流程可视化与模拟测试' },
+      { label: '话术管理', key: 'zz:script-lib', desc: '话术库：分类、版本管理、效果预览、关联催回策略' },
+      { label: '短信模板管理', key: 'zz:sms-template', desc: '短信/企微/5G 消息模板：合规校验、预览、审核状态' },
     ],
   },
   {

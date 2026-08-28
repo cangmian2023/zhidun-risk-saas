@@ -1,9 +1,10 @@
 // 催贷管理 · 模块4 委外监管（重构：菜单分组 + 详情抽屉打通关联数据）
-import { useEffect, useState } from 'react'
-import { ZzPage, ZzCard, ZzBtn, ZzModal, ZzTable, ZzTabs, ZzField, ZzInput, ZzSelect, ZzBadge, ZzStat, BLUE } from './zzUi'
+import { useEffect, useState, type ReactNode } from 'react'
+import { useNavigate, useLocation } from 'react-router-dom'
+import { ZzPage, ZzCard, ZzBtn, ZzModal, ZzTable, ZzTabs, ZzField, ZzInput, ZzSelect, ZzBadge, ZzStat, ZzDrawer, BLUE } from './zzUi'
 import {
   ZZ_AGENCIES, ZZ_AGENCY_ACCOUNTS, ZZ_ENTRUSTS, ZZ_AGENCY_MONITOR, ZZ_AGENCY_CALLBACKS,
-  ZZ_AGENCY_KPI, ZZ_AGENCY_SETTLE, ZZ_GRAPH_AGENCY_KPI, zzAgencyName, zzAgencyCases, zzAgencyAccounts,
+  ZZ_AGENCY_KPI, ZZ_AGENCY_SETTLE, zzAgencyName, zzAgencyCases, zzAgencyAccounts,
   zzAgencyKpi, zzAgencySettle, pct, money, type ZzAgency,
 } from './zzData'
 
@@ -27,18 +28,23 @@ function CaseId({ id, onOpen }: { id: string; onOpen: (id: string, tab?: string)
 /* ============================ 模块容器 ============================ */
 export function ZzAgencyModule({ pageKey }: { pageKey: string }) {
   // 抽屉共享状态提升到模块层，任意子页机构名/案件号均可唤起
+  const nav = useNavigate()
   const [agency, setAgency] = useState<string | null>(null)
   const [caseId, setCaseId] = useState<{ id: string; tab?: 'info' | 'callback' } | null>(null)
   const [jump, setJump] = useState(pageKey)
   // 左侧菜单切换 pageKey 时同步内部跳转状态，避免每次需强制刷新才切换
   useEffect(() => { setJump(pageKey) }, [pageKey])
+  // 委外案件监控 / 催收回传：点击案件直接进入案件详情页
+  const openCase = (id: string) => nav('/console/zz/case-detail?id=' + id)
+  // 「查看回传」→ 进入催退回传记录页，并筛选出该案件的委外机构回传记录
+  const viewCallback = (caseId: string) => nav('/console/zz/agency-callback?case=' + caseId)
 
   const render = () => {
     switch (jump) {
       case 'zz:agency-list':
       case 'zz:agency-account': return <AgencyManage onAgency={(id) => setAgency(id)} onCase={(id) => setCaseId({ id })} />
-      case 'zz:agency-monitor': return <MonitorPage onAgency={(id) => setAgency(id)} onCase={(id, tab) => setCaseId({ id, tab })} />
-      case 'zz:agency-callback': return <CallbackPage onAgency={(id) => setAgency(id)} onCase={(id) => setCaseId({ id })} />
+      case 'zz:agency-monitor': return <MonitorPage onAgency={(id) => setAgency(id)} onCase={(id) => openCase(id)} onViewCallback={viewCallback} />
+      case 'zz:agency-callback': return <CallbackPage onAgency={(id) => setAgency(id)} onCase={(id) => openCase(id)} />
       case 'zz:agency-kpi':
       case 'zz:agency-settle': return <PerfSettle onAgency={(id) => setAgency(id)} onCase={(id) => setCaseId({ id })} />
       default: return <AgencyManage onAgency={(id) => setAgency(id)} onCase={(id) => setCaseId({ id })} />
@@ -72,12 +78,12 @@ function AgencyList({ onAgency }: { onAgency: (id: string) => void }) {
   const [add, setAdd] = useState(false)
   return (
     <ZzCard title="机构列表" extra={<ZzBtn sm primary onClick={() => setAdd(true)}>新增机构</ZzBtn>}>
-      <ZzTable head={['机构名称', '联系人', '电话', '状态', '考核得分', '操作']} rows={rows.map((a) => [
+      <ZzTable stickyAction head={['机构名称', '联系人', '电话', '状态', '考核得分', '操作']} rows={rows.map((a) => [
         <button className="text-left font-medium text-[#1677ff] hover:underline" onClick={() => onAgency(a.id)}>{a.name}</button>,
         a.contact, a.phone,
         a.status === '正常' ? <ZzBadge color="#16A34A">正常</ZzBadge> : <ZzBadge color="#D97706">暂停</ZzBadge>,
         <span className="font-medium" style={{ color: a.score >= 90 ? '#16A34A' : a.score >= 80 ? BLUE : '#DC2626' }}>{a.score}</span>,
-        <div className="flex flex-wrap gap-1">
+        <div className="flex flex-nowrap gap-1">
           <ZzBtn sm onClick={() => onAgency(a.id)}>机构详情</ZzBtn>
           <ZzBtn sm onClick={() => setEdit(a)}>编辑</ZzBtn>
           <ZzBtn sm onClick={() => alert('资质：' + a.license + '（' + a.licenseNo + '）')}>资质</ZzBtn>
@@ -115,7 +121,7 @@ function AgencyAccountTab({ onAgency, onCase }: { onAgency: (id: string) => void
     <>
       <ZzCard title="数据权限隔离说明"><div className="rounded bg-amber-50 p-3 text-sm text-amber-700">委外机构仅能查看分配给自己机构的案件；菜单权限按角色下发。总览/详情已标注数据隔离范围。</div></ZzCard>
       <ZzCard title="子账号列表" extra={<ZzBtn sm primary onClick={() => setAdd(true)}>新增账号</ZzBtn>}>
-        <ZzTable head={['机构', '子账号', '角色', '数据权限', '菜单权限', '状态', '操作']} rows={rows.map((a) => [
+        <ZzTable stickyAction head={['机构', '子账号', '角色', '数据权限', '菜单权限', '状态', '操作']} rows={rows.map((a) => [
           <AgencyName id={a.agency} onOpen={onAgency} />,
           <span className="font-mono">{a.account}</span>, a.role,
           <ZzBadge color="#D97706">{a.dataScope}</ZzBadge>, a.menu,
@@ -146,18 +152,18 @@ function MonitorPage({ onAgency, onCase }: { onAgency: (id: string) => void; onC
   )
 }
 
-function MonitorTab({ onAgency, onCase }: { onAgency: (id: string) => void; onCase: (id: string, tab?: string) => void }) {
+function MonitorTab({ onAgency, onCase, onViewCallback }: { onAgency: (id: string) => void; onCase: (id: string, tab?: string) => void; onViewCallback: (caseId: string) => void }) {
   const [status, setStatus] = useState('')
   const list = ZZ_AGENCY_MONITOR.filter((m) => !status || m.status === status)
   return (
     <ZzCard title={`监控列表（${list.length}）`} extra={
       <ZzField label="案件状态"><ZzSelect value={status} onChange={(e) => setStatus(e.target.value)}><option value="">全部</option><option>催收中</option><option>协商中</option><option>已召回</option></ZzSelect></ZzField>
     }>
-      <ZzTable head={['案件', '客户', '委外机构', '委托时间', '委托到期', '状态', '最新回传摘要', '操作']} rows={list.map((m) => [
+      <ZzTable stickyAction head={['案件', '客户', '委外机构', '委托时间', '委托到期', '状态', '最新回传摘要', '操作']} rows={list.map((m) => [
         <CaseId id={m.id} onOpen={onCase} />, m.name, <AgencyName id={m.agency} onOpen={onAgency} />, m.entrustTime, m.due,
         <ZzBadge color={m.status === '已召回' ? '#9CA3AF' : BLUE}>{m.status}</ZzBadge>,
         <span className="block max-w-[200px] truncate" title={m.feedback}>{m.feedback}</span>,
-        <div className="flex flex-wrap gap-1"><ZzBtn sm primary onClick={() => onCase(m.id, 'callback')}>查看回传</ZzBtn><ZzBtn sm onClick={() => alert('已召回 ' + m.id)}>召回</ZzBtn></div>,
+        <div className="flex flex-nowrap gap-1"><ZzBtn sm primary onClick={() => onViewCallback(m.id)}>查看回传</ZzBtn><ZzBtn sm onClick={() => alert('已召回 ' + m.id)}>召回</ZzBtn></div>,
       ])} />
     </ZzCard>
   )
@@ -165,9 +171,18 @@ function MonitorTab({ onAgency, onCase }: { onAgency: (id: string) => void; onCa
 
 /* ============================ 3 催收回传记录（独立页面） ============================ */
 function CallbackPage({ onAgency, onCase }: { onAgency: (id: string) => void; onCase: (id: string, tab?: string) => void }) {
+  const loc = useLocation()
+  const caseFilter = new URLSearchParams(loc.search).get('case') || ''
   const [agency, setAgency] = useState('')
   const [result, setResult] = useState('')
-  const list = ZZ_AGENCY_CALLBACKS.filter((c) => (!agency || c.agency === agency) && (!result || c.result === result))
+  const [detail, setDetail] = useState<any>(null)
+  const list = ZZ_AGENCY_CALLBACKS.filter((c) =>
+    (!agency || c.agency === agency) &&
+    (!result || c.result === result) &&
+    (!caseFilter || c.caseId === caseFilter)
+  )
+  const nav = useNavigate()
+  const caseRec = caseFilter ? ZZ_AGENCY_MONITOR.find((m) => m.id === caseFilter) : null
   return (
     <ZzPage title="催收回传记录" crumb="催贷管理 / 委外监管" subtitle="委外机构催收回传流水记录，支持按机构 / 结果筛选（机构名/案件号可点开详情抽屉）">
       <ZzCard title={`催收回传流水（${list.length}）`} extra={
@@ -176,14 +191,64 @@ function CallbackPage({ onAgency, onCase }: { onAgency: (id: string) => void; on
           <ZzSelect value={result} onChange={(e) => setResult(e.target.value)}><option value="">全部结果</option><option>有效</option><option>无效</option></ZzSelect>
         </div>
       }>
-        <ZzTable head={['时间', '案件', '委外机构', '客户反馈', '结果']} rows={list.map((c) => [
+        {caseFilter && (
+          <div className="mb-3 flex items-center justify-between rounded bg-blue-50 px-3 py-2 text-sm text-blue-700">
+            <span>已按案件 <b className="font-mono">{caseFilter}</b> 过滤回传记录（{list.length} 条）{caseRec ? ` · 客户 ${caseRec.name}` : ''}</span>
+            <ZzBtn sm onClick={() => (window.history.length > 1 ? window.history.back() : nav('/console/zz/agency-monitor'))}>返回监控</ZzBtn>
+          </div>
+        )}
+        <ZzTable stickyAction head={['时间', '案件', '委外机构', '客户反馈', '结果', '操作']} rows={list.map((c) => [
           c.time, <CaseId id={c.caseId} onOpen={onCase} />, <AgencyName id={c.agency} onOpen={onAgency} />, c.feedback,
           <ZzBadge color={c.result === '有效' ? '#16A34A' : '#DC2626'}>{c.result}</ZzBadge>,
+          <ZzBtn sm onClick={() => setDetail(c)}>详情</ZzBtn>,
         ])} />
       </ZzCard>
+      {detail && <CallbackDetail rec={detail} onClose={() => setDetail(null)} onAgency={onAgency} onCase={onCase} />}
     </ZzPage>
   )
 }
+
+/* 回传记录详情抽屉：展示单条回传原文 + 同案件其他回传 */
+function CallbackDetail({ rec, onClose, onAgency, onCase }: { rec: any; onClose: () => void; onAgency: (id: string) => void; onCase: (id: string, tab?: string) => void }) {
+  const sameCase = ZZ_AGENCY_CALLBACKS.filter((c) => c.caseId === rec.caseId)
+  return (
+    <ZzDrawer open title="回传记录详情" onClose={onClose} width={560}>
+      <div className="grid gap-4">
+        <div className="grid grid-cols-2 gap-3 rounded bg-slate-50 p-3 text-sm">
+          <Field label="案件号" value={<CaseId id={rec.caseId} onOpen={onCase} />} />
+          <Field label="客户" value={rec.client} />
+          <Field label="委外机构" value={<AgencyName id={rec.agency} onOpen={onAgency} />} />
+          <Field label="回传时间" value={rec.time} />
+          <Field label="判定结果" value={<ZzBadge color={rec.result === '有效' ? '#16A34A' : '#DC2626'}>{rec.result}</ZzBadge>} />
+        </div>
+        <div>
+          <div className="mb-1 text-xs font-medium text-gray-500">客户反馈</div>
+          <div className="rounded border p-3 text-sm leading-relaxed">{rec.feedback}</div>
+        </div>
+        {sameCase.length > 1 && (
+          <div>
+            <div className="mb-1 text-xs font-medium text-gray-500">同一案件的其他回传记录（{sameCase.length - 1}）</div>
+            <div className="space-y-2">
+              {sameCase.filter((c: any) => c !== rec).map((c: any, i: number) => (
+                <div key={i} className="rounded border p-2 text-sm">
+                  <div className="mb-1 flex items-center justify-between text-xs text-gray-500">
+                    <span>{c.time} · <AgencyName id={c.agency} onOpen={onAgency} /></span>
+                    <ZzBadge color={c.result === '有效' ? '#16A34A' : '#DC2626'}>{c.result}</ZzBadge>
+                  </div>
+                  <div className="leading-relaxed">{c.feedback}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </ZzDrawer>
+  )
+}
+
+const Field = ({ label, value }: { label: string; value: ReactNode }) => (
+  <div><div className="text-xs text-gray-400">{label}</div><div className="mt-0.5">{value}</div></div>
+)
 
 /* ============================ 4 绩效与结算 ============================ */
 function PerfSettle({ onAgency, onCase }: { onAgency: (id: string) => void; onCase: (id: string, tab?: string) => void }) {
@@ -201,24 +266,14 @@ function KpiTab({ onAgency }: { onAgency: (id: string) => void; onCase: (id: str
   return (
     <>
       <ZzCard title="KPI报表">
+        <div className="mb-2 flex flex-wrap items-center gap-2 text-xs text-gray-500">
+          <span className="rounded bg-slate-100 px-2 py-1">得分说明：满分 100，综合「回款率(40%) · 处理量(20%) · 投诉量(扣减) · 违规次数(扣减)」加权计算；投诉 / 违规越多扣分越高，得分低于 80 触发督导复盘。</span>
+        </div>
         <ZzTable head={['机构', '回款率', '处理量', '投诉量', '违规次数', '得分']} rows={ZZ_AGENCY_KPI.map((k) => [
           <AgencyName id={k.agency} onOpen={onAgency} />, pct(k.recoveryRate), k.handled, k.complaints,
           <ZzBadge color={k.violations > 2 ? '#DC2626' : '#16A34A'}>{k.violations}</ZzBadge>,
           <span className="font-medium" style={{ color: k.score >= 90 ? '#16A34A' : k.score >= 80 ? BLUE : '#DC2626' }}>{k.score}</span>,
         ])} />
-      </ZzCard>
-      <ZzCard title="图谱维度考核（委外质量溯源）">
-        <div className="mb-2 rounded bg-[#eef4ff] p-2 text-xs text-[#1677ff]">基于知识图谱统计各机构关联线索利用率、团伙案件处置率、失联修复成功率，用于评估外包机构能力、决定是否续聘与调价（零侵入嵌入）。</div>
-        <ZzTable head={['机构', '线索利用率', '团伙处置率', '失联修复成功率', '图谱评估']} rows={ZZ_AGENCY_KPI.map((k) => {
-          const g = ZZ_GRAPH_AGENCY_KPI[k.agency]
-          return [
-            <AgencyName id={k.agency} onOpen={onAgency} />,
-            g ? (g.clueRate * 100).toFixed(0) + '%' : '-',
-            g ? (g.gangRate * 100).toFixed(0) + '%' : '-',
-            g ? (g.repairRate * 100).toFixed(0) + '%' : '-',
-            g ? <span className={g.clueRate >= 0.65 ? 'text-green-600' : 'text-amber-600'}>{g.note}</span> : '-',
-          ]
-        })} />
       </ZzCard>
     </>
   )
@@ -235,7 +290,7 @@ function SettleTab({ onAgency }: { onAgency: (id: string) => void; onCase: (id: 
         </div>
       </ZzCard>
       <ZzCard title="对账账单">
-        <ZzTable head={['机构', '回款金额', '费率', '佣金', '状态', '操作']} rows={ZZ_AGENCY_SETTLE.map((s) => [
+        <ZzTable stickyAction head={['机构', '回款金额', '费率', '佣金', '状态', '操作']} rows={ZZ_AGENCY_SETTLE.map((s) => [
           <AgencyName id={s.agency} onOpen={onAgency} />, money(s.recovery), pct(s.rate, 0), money(s.commission),
           s.status === '已结算' ? <ZzBadge color="#16A34A">已结算</ZzBadge> : <ZzBadge color="#D97706">待确认</ZzBadge>,
           <ZzBtn sm onClick={() => alert('账单已' + (s.status === '已结算' ? '查看' : '确认结算'))}>{s.status === '已结算' ? '查看' : '确认结算'}</ZzBtn>,
@@ -285,7 +340,7 @@ function AgencyDrawer({ id, onClose, onCase, onRecallTip }: { id: string; onClos
           </ZzCard>
 
           <ZzCard title={`当前委外案件（${cases.length}）`}>
-            {cases.length ? <ZzTable head={['案件', '客户', '委托时间', '到期', '状态', '操作']} rows={cases.map((m) => [
+            {cases.length ? <ZzTable stickyAction head={['案件', '客户', '委托时间', '到期', '状态', '操作']} rows={cases.map((m) => [
               <CaseId id={m.id} onOpen={onCase} />, m.name, m.entrustTime, m.due,
               <ZzBadge color={m.status === '已召回' ? '#9CA3AF' : BLUE}>{m.status}</ZzBadge>,
               m.status !== '已召回' && <ZzBtn sm onClick={() => { if (confirm('确认召回 ' + m.id + '？召回后将转回内部处理')) onRecallTip(m.id) }}>召回</ZzBtn>,

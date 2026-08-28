@@ -42,6 +42,7 @@ vite.config.d.ts
 # runtime noise & throwaway scripts (kept local, not committed)
 debug.log
 _devlog.txt
+zz_dev.log
 shot.mjs
 tmp/
 record/qixin/html文件菜单分组清单 - 副本.md

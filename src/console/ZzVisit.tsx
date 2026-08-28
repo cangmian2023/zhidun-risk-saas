@@ -1,30 +1,46 @@
 // 催贷管理 · 模块5 外访管理
 import { useState } from 'react'
-import { ZzPage, ZzCard, ZzBtn, ZzModal, ZzTable, ZzFilterBar, ZzField, ZzInput, ZzSelect, ZzTextarea, ZzBadge, ZzTabs, BLUE } from './zzUi'
-import { ZZ_VISITS, ZZ_VISIT_MINE, ZZ_VISIT_STATUSES, ZZ_VISITORS, ZZ_BI_VISIT } from './zzData'
+import { ZzPage, ZzCard, ZzBtn, ZzModal, ZzTable, ZzFilterBar, ZzField, ZzInput, ZzSelect, ZzTextarea, ZzBadge, ZzTabs, ZzDrawer, BLUE } from './zzUi'
+import { ZZ_VISITS, ZZ_VISIT_MINE, ZZ_VISIT_STATUSES, ZZ_VISITORS, ZZ_VISIT_REGIONS, ZZ_BI_VISIT } from './zzData'
 
 const GREEN = '#16A34A'
 const RED = '#DC2626'
 const AMBER = '#D97706'
+
+// 当前登录外访员（样例）。「我的外访任务」= 该外访员名下的全部任务。
+const CURRENT_AGENT = '外访员A'
+// 「我的外访任务」展示的任务 ID 集合（复用 ZZ_VISITS 全量数据，覆盖全部状态）
+const MINE_IDS = ZZ_VISIT_MINE.map((m) => m.id)
 
 function statusColor(s: string) {
   return s === '已完成' ? GREEN : s === '已驳回' || s === '已取消' ? RED : s === '待外访' || s === '待分配' ? BLUE : s === '外访进行中' || s === '待审核' ? AMBER : '#6B7280'
 }
 
 export function ZzVisitModule({ pageKey }: { pageKey: string }) {
-  if (pageKey === 'zz:visit-mine') return <ZzVisitMine />
+  // 「我的外访任务」菜单项融合进「外访任务管理」本页（默认 mine 视图）
+  if (pageKey === 'zz:visit-mine') return <ZzVisitList initialScope="mine" />
   if (pageKey === 'zz:visit-history') return <ZzVisitHistory />
   return <ZzVisitList />
 }
 
-/* ============================ 页面3：任务管理（主管/管理员） ============================ */
-function ZzVisitList() {
+/* ============================ 页面3：任务管理（主管/管理员） + 我的外访任务（融合） ============================ */
+function ZzVisitList({ initialScope = 'all' }: { initialScope?: 'all' | 'mine' }) {
+  const [scope, setScope] = useState<'all' | 'mine'>(initialScope)
   const [visits, setVisits] = useState<any[]>(ZZ_VISITS)
   const [detail, setDetail] = useState<any | null>(null)
   const [create, setCreate] = useState(false)
   const [assign, setAssign] = useState<any | null>(null)
+  const [assignee, setAssignee] = useState(ZZ_VISITORS[0])
+  const [assignRegion, setAssignRegion] = useState('')
+  const [report, setReport] = useState<any | null>(null)
+  const [mineStatus, setMineStatus] = useState('')
 
   const addLog = (id: string, log: any) => setVisits((vs) => vs.map((v) => v.id === id ? { ...v, logs: [...v.logs, log] } : v))
+
+  // 列表可见数据
+  const visible = scope === 'all'
+    ? visits
+    : visits.filter((v) => MINE_IDS.includes(v.id) && (!mineStatus || v.status === mineStatus))
 
   // 新建任务
   const [form, setForm] = useState({ caseId: 'CO-202608-015', name: '钱*伟', addr: '深圳市南山区科技路 8 号', backupAddr: '', dueDate: '2026-08-28', priority: '普通' })
@@ -40,35 +56,78 @@ function ZzVisitList() {
     addLog(assign.id, { op: '分配人员', by: '主管-当前', at: '2026-08-25 10:00', note: '分配给 ' + visitor })
     setAssign(null)
   }
-  // 审核通过/驳回
+  // 审核通过/驳回/取消
   const approve = (v: any) => { setVisits((vs) => vs.map((x) => x.id === v.id ? { ...x, status: '已完成', finishedAt: '2026-08-25 11:00', resultSummary: (x.report?.result ?? '') } : x)); addLog(v.id, { op: '审核通过', by: '主管-当前', at: '2026-08-25 11:00', note: '报告合规，任务闭环' }); setDetail(null) }
   const reject = (v: any) => { const r = prompt('填写驳回意见') ?? ''; if (!r) return; setVisits((vs) => vs.map((x) => x.id === v.id ? { ...x, status: '已驳回', rejectReason: r } : x)); addLog(v.id, { op: '驳回报告', by: '主管-当前', at: '2026-08-25 11:00', note: r }); setDetail(null) }
   const cancel = (v: any) => { setVisits((vs) => vs.map((x) => x.id === v.id ? { ...x, status: '已取消' } : x)); addLog(v.id, { op: '取消任务', by: '主管-当前', at: '2026-08-25 11:30', note: '案件结清/终止' }); setDetail(null) }
 
+  // 外访员：现场打卡
+  const doPunch = (v: any) => {
+    const inR = Math.random() > 0.3
+    const ok = inR || confirm('当前位置偏离目标地址，是否强制打卡（将标记风险）？')
+    if (!ok) return
+    const punch = { time: '2026-08-25 09:30', lng: 120.15, lat: 30.28, actualAddr: v.addr, inRadius: inR, device: 'iPhone 14', offline: false }
+    setVisits((vs) => vs.map((x) => x.id === v.id ? { ...x, status: '外访进行中', punch } : x))
+    setDetail((cur) => cur && cur.id === v.id ? { ...cur, status: '外访进行中', punch } : cur)
+    alert(inR ? '打卡成功，状态：外访进行中' : '已强制打卡，位置偏移已标记风险')
+  }
+  // 外访员：提交/修改报告
+  const submitReport = (v: any, r: any) => {
+    setVisits((vs) => vs.map((x) => x.id === v.id ? { ...x, status: '待审核', report: r } : x))
+    setDetail((cur) => cur && cur.id === v.id ? { ...cur, status: '待审核', report: r } : cur)
+    setReport(null)
+    alert('报告已提交，待主管审核')
+  }
+
+  const ops = (v: any) => (
+    <div className="flex flex-nowrap gap-1">
+      <ZzBtn sm onClick={() => setDetail(v)}>详情</ZzBtn>
+      {scope === 'all' && v.status === '待分配' && <ZzBtn sm primary onClick={() => setAssign(v)}>分配</ZzBtn>}
+      {scope === 'all' && v.status === '待审核' && <ZzBtn sm primary onClick={() => setDetail(v)}>审核</ZzBtn>}
+      {scope === 'all' && ['待外访', '外访进行中', '待审核', '已驳回'].includes(v.status) && <ZzBtn sm danger onClick={() => cancel(v)}>取消</ZzBtn>}
+      {scope === 'mine' && v.status === '待外访' && <ZzBtn sm primary onClick={() => doPunch(v)}>打卡</ZzBtn>}
+      {scope === 'mine' && v.status === '外访进行中' && <ZzBtn sm primary onClick={() => setReport(v)}>填报告</ZzBtn>}
+      {scope === 'mine' && v.status === '待审核' && <ZzBtn sm onClick={() => setDetail(v)}>查看报告</ZzBtn>}
+      {scope === 'mine' && v.status === '已驳回' && <ZzBtn sm primary onClick={() => setReport(v)}>修改报告</ZzBtn>}
+    </div>
+  )
+
+  const rows = visible.map((v) => scope === 'all'
+    ? [v.id, v.caseId, v.name, v.addr, prioBadge(v.priority), stBadge(v.status), v.assignee, ops(v)]
+    : [v.id, v.caseId, v.name, v.phone, v.addr, prioBadge(v.priority), v.dueDate || '—', stBadge(v.status), ops(v)]
+  )
+
   return (
-    <ZzPage title="外访任务管理" crumb="催贷管理 / 外访管理" subtitle="任务创建、分配、审核与进度管理（主管/管理员）">
-      <ZzFilterBar>
-        <ZzField label="任务状态"><ZzSelect defaultValue=""><option value="">全部</option>{ZZ_VISIT_STATUSES.map((s) => <option key={s}>{s}</option>)}</ZzSelect></ZzField>
-        <ZzField label="外访员"><ZzSelect defaultValue=""><option value="">全部</option>{ZZ_VISITORS.map((a) => <option key={a}>{a}</option>)}</ZzSelect></ZzField>
-        <ZzField label="案件"><ZzInput placeholder="案件编号" /></ZzField>
-        <ZzBtn primary>查询</ZzBtn>
-        <ZzBtn onClick={() => setCreate(true)}>新建外访任务</ZzBtn>
-        <ZzBtn onClick={() => alert('已导出任务与报告 Excel')}>批量导出</ZzBtn>
-      </ZzFilterBar>
-      <ZzCard title="全部任务列表">
-        <ZzTable head={['任务ID', '案件', '客户', '外访地址', '优先级', '状态', '外访员', '操作']} rows={visits.map((v) => [
-          v.id, v.caseId, v.name, v.addr, <ZzBadge color={v.priority === '紧急' ? RED : '#6B7280'}>{v.priority}</ZzBadge>,
-          <ZzBadge color={statusColor(v.status)}>{v.status}</ZzBadge>, v.assignee,
-          <div className="flex flex-wrap gap-1">
-            <ZzBtn sm onClick={() => setDetail(v)}>详情</ZzBtn>
-            {v.status === '待分配' && <ZzBtn sm primary onClick={() => setAssign(v)}>分配</ZzBtn>}
-            {v.status === '待审核' && <ZzBtn sm primary onClick={() => setDetail(v)}>审核</ZzBtn>}
-            {['待外访', '外访进行中', '待审核', '已驳回'].includes(v.status) && <ZzBtn sm danger onClick={() => cancel(v)}>取消</ZzBtn>}
-          </div>,
-        ])} />
+    <ZzPage title="外访任务管理" crumb="催贷管理 / 外访管理" subtitle="任务创建、分配、审核与进度管理（主管/管理员）；外访员可切换至「我的外访任务」">
+      <ZzTabs tabs={['全部', '我的外访任务']} active={scope === 'all' ? '全部' : '我的外访任务'} onChange={(t) => { setScope(t === '全部' ? 'all' : 'mine'); setMineStatus('') }} />
+
+      {scope === 'all' ? (
+        <ZzFilterBar>
+          <ZzField label="任务状态"><ZzSelect defaultValue=""><option value="">全部</option>{ZZ_VISIT_STATUSES.map((s) => <option key={s}>{s}</option>)}</ZzSelect></ZzField>
+          <ZzField label="外访员"><ZzSelect defaultValue=""><option value="">全部</option>{ZZ_VISITORS.map((a) => <option key={a}>{a}</option>)}</ZzSelect></ZzField>
+          <ZzField label="案件"><ZzInput placeholder="案件编号" /></ZzField>
+          <ZzBtn primary>查询</ZzBtn>
+          <ZzBtn onClick={() => setCreate(true)}>新建外访任务</ZzBtn>
+          <ZzBtn onClick={() => alert('已导出任务与报告 Excel')}>批量导出</ZzBtn>
+        </ZzFilterBar>
+      ) : (
+        <ZzFilterBar>
+          <ZzField label="状态筛选（我的全部任务）"><ZzSelect value={mineStatus} onChange={(e) => setMineStatus(e.target.value)}><option value="">全部状态</option>{ZZ_VISIT_STATUSES.map((s) => <option key={s}>{s}</option>)}</ZzSelect></ZzField>
+          <ZzField label="客户姓名"><ZzInput placeholder="姓名关键词" /></ZzField>
+          <ZzField label="任务ID"><ZzInput placeholder="VS-xxx" /></ZzField>
+          <ZzBtn primary>查询</ZzBtn>
+          <span className="self-center text-xs text-gray-400">当前外访员：<span className="font-medium text-[#1677ff]">{CURRENT_AGENT}</span></span>
+        </ZzFilterBar>
+      )}
+
+      <ZzCard title={scope === 'all' ? '全部任务列表' : `我的外访任务（${visible.length}）`}>
+        <ZzTable stickyAction head={scope === 'all'
+          ? ['任务ID', '案件', '客户', '外访地址', '优先级', '状态', '外访员', '操作']
+          : ['任务ID', '案件', '客户', '电话', '外访地址', '优先级', '要求完成', '状态', '操作']
+        } rows={rows} />
       </ZzCard>
 
-      {detail && <ZzVisitDetail v={detail} visits={visits} setVisits={setVisits} onClose={() => setDetail(null)} onApprove={approve} onReject={reject} onCancel={cancel} admin />}
+      {detail && <ZzVisitDetail v={detail} onClose={() => setDetail(null)} admin={scope === 'all'} visitor={scope === 'mine'} onApprove={approve} onReject={reject} onCancel={cancel} onPunch={doPunch} onOpenReport={(vv) => setReport(vv)} />}
       {create && <ZzModal open title="新建外访任务" onClose={() => setCreate(false)} footer={<><ZzBtn onClick={() => setCreate(false)}>取消</ZzBtn><ZzBtn primary onClick={submitCreate}>创建</ZzBtn></>}>
         <div className="grid grid-cols-2 gap-3">
           <ZzField label="关联案件"><ZzInput value={form.caseId} onChange={(e) => setForm({ ...form, caseId: e.target.value })} /></ZzField>
@@ -79,57 +138,20 @@ function ZzVisitList() {
           <ZzField label="优先级"><ZzSelect value={form.priority} onChange={(e) => setForm({ ...form, priority: e.target.value })}><option>普通</option><option>紧急</option></ZzSelect></ZzField>
         </div>
       </ZzModal>}
-      {assign && <ZzModal open title={`分配任务 · ${assign.id}`} onClose={() => setAssign(null)} footer={<><ZzBtn onClick={() => setAssign(null)}>取消</ZzBtn><ZzBtn primary onClick={() => doAssign(ZZ_VISITORS[0])}>确认分配给 {ZZ_VISITORS[0]}</ZzBtn></>}>
-        <ZzField label="选择外访员"><ZzSelect defaultValue={ZZ_VISITORS[0]}>{ZZ_VISITORS.map((a) => <option key={a}>{a}</option>)}</ZzSelect></ZzField>
-        <div className="mt-3 flex gap-2">{ZZ_VISITORS.map((a) => <ZzBtn key={a} sm onClick={() => doAssign(a)}>{a}</ZzBtn>)}</div>
-      </ZzModal>}
-    </ZzPage>
-  )
-}
-
-/* ============================ 页面2：我的外访任务（外访员） ============================ */
-function ZzVisitMine() {
-  const [list, setList] = useState<any[]>(ZZ_VISIT_MINE)
-  const [tab, setTab] = useState('待外访')
-  const [detail, setDetail] = useState<any | null>(null)
-  const [report, setReport] = useState<any | null>(null)
-  const tabs = ['待外访', '进行中', '待审核', '已完成', '已驳回']
-  const visible = list.filter((v) => (tab === '进行中' ? v.status === '外访进行中' : v.status === tab))
-
-  const doPunch = (v: any) => {
-    const inR = Math.random() > 0.3
-    const ok = inR || confirm('当前位置偏离目标地址，是否强制打卡（将标记风险）？')
-    if (!ok) return
-    setList((ls) => ls.map((x) => x.id === v.id ? { ...x, status: '外访进行中', punch: { time: '2026-08-25 09:30', lng: 120.15, lat: 30.28, actualAddr: v.addr, inRadius: inR, device: 'iPhone 14', offline: false } } : x))
-    alert(inR ? '打卡成功，状态：外访进行中' : '已强制打卡，位置偏移已标记风险')
-  }
-  const submitReport = (v: any, r: any) => { setList((ls) => ls.map((x) => x.id === v.id ? { ...x, status: '待审核', report: r } : x)); setReport(null); alert('报告已提交，待主管审核') }
-
-  return (
-    <ZzPage title="我的外访任务" crumb="催贷管理 / 外访管理" subtitle="外访人员视图：待办、现场打卡与报告填报">
-      <ZzTabs tabs={tabs} active={tab} onChange={setTab} />
-      <ZzFilterBar>
-        <ZzField label="客户姓名"><ZzInput placeholder="姓名关键词" /></ZzField>
-        <ZzField label="案件编号"><ZzInput placeholder="案件编号" /></ZzField>
-        <ZzField label="任务ID"><ZzInput placeholder="VS-xxx" /></ZzField>
-        <ZzField label="状态"><ZzSelect defaultValue={tab}><option>{tab}</option></ZzSelect></ZzField>
-        <ZzBtn primary>查询</ZzBtn>
-      </ZzFilterBar>
-      <ZzCard title={`${tab}（${visible.length}）`}>
-        <ZzTable head={['任务ID', '案件', '客户', '电话', '外访地址', '优先级', '要求完成', '状态', '操作']} rows={visible.map((v) => [
-          v.id, v.caseId, v.name, v.phone, v.addr, <ZzBadge color={v.priority === '紧急' ? RED : '#6B7280'}>{v.priority}</ZzBadge>, v.dueDate,
-          <ZzBadge color={statusColor(v.status)}>{v.status}</ZzBadge>,
-          <div className="flex flex-wrap gap-1">
-            {v.status === '待外访' && <ZzBtn sm primary onClick={() => doPunch(v)}>打卡</ZzBtn>}
-            {v.status === '外访进行中' && <ZzBtn sm primary onClick={() => setReport(v)}>填报告</ZzBtn>}
-            {v.status === '待审核' && <ZzBtn sm onClick={() => setDetail(v)}>查看报告</ZzBtn>}
-            {v.status === '已驳回' && <ZzBtn sm primary onClick={() => setReport(v)}>修改报告</ZzBtn>}
-            {(v.status === '已完成' || v.status === '已取消' || v.status === '待外访') && <ZzBtn sm onClick={() => setDetail(v)}>详情</ZzBtn>}
-            {v.status === '外访进行中' && <ZzBtn sm onClick={() => setDetail(v)}>详情</ZzBtn>}
-          </div>,
-        ])} />
-      </ZzCard>
-      {detail && <ZzVisitDetail v={detail} visits={list} setVisits={setList} onClose={() => setDetail(null)} />}
+      {assign && (
+        <ZzDrawer open title={`分配任务 · ${assign.id}`} onClose={() => setAssign(null)} width={480}
+          footer={<><ZzBtn onClick={() => setAssign(null)}>取消</ZzBtn><ZzBtn primary onClick={() => doAssign(assignee)}>确认分配</ZzBtn></>}>
+          <div className="space-y-3">
+            <ZzField label="按区域筛选"><ZzSelect value={assignRegion} onChange={(e) => setAssignRegion(e.target.value)}><option value="">全部区域</option>{ZZ_VISIT_REGIONS.map((r) => <option key={r} value={r}>{r}</option>)}</ZzSelect></ZzField>
+            <ZzField label="选择外访员（按姓名/工号搜索）">
+              <ZzSelect value={assignee} onChange={(e) => setAssignee(e.target.value)}>
+                {ZZ_VISITORS.filter((a) => !assignRegion || a.includes(assignRegion)).map((a) => <option key={a} value={a}>{a}</option>)}
+              </ZzSelect>
+            </ZzField>
+            <div className="text-xs text-gray-400">将分配给：<span className="font-medium text-[#1677ff]">{assignee}</span></div>
+          </div>
+        </ZzDrawer>
+      )}
       {report && <ReportForm v={report} onClose={() => setReport(null)} onSubmit={submitReport} />}
     </ZzPage>
   )
@@ -159,21 +181,30 @@ function ReportForm({ v, onClose, onSubmit }: { v: any; onClose: () => void; onS
         <ZzField label="录音文件（如有）"><input type="file" accept="audio/*" className="block text-sm" onChange={(e) => set('audio', e.target.value as any)} /></ZzField>
         <ZzField label="外访员总结备注"><ZzTextarea rows={2} value={r.summary} onChange={(e) => set('summary', e.target.value)} /></ZzField>
       </div>
-    </ZzModal>
+    </ZModal>
   )
 }
 
-/* ============================ 页面2：外访任务详情页（4卡片） ============================ */
-function ZzVisitDetail({ v, visits, setVisits, onClose, onApprove, onReject, onCancel, admin }: {
-  v: any; visits: any[]; setVisits: (f: (p: any[]) => any[]) => void; onClose: () => void; onApprove?: (v: any) => void; onReject?: (v: any) => void; onCancel?: (v: any) => void; admin?: boolean
+/* ============================ 外访任务详情（右侧抽屉，4卡片） ============================ */
+function ZzVisitDetail({ v, onClose, admin, visitor, onApprove, onReject, onCancel, onPunch, onOpenReport }: {
+  v: any; onClose: () => void; admin?: boolean; visitor?: boolean
+  onApprove?: (v: any) => void; onReject?: (v: any) => void; onCancel?: (v: any) => void
+  onPunch?: (v: any) => void; onOpenReport?: (v: any) => void
 }) {
   return (
-    <ZzModal open title={`外访任务详情 · ${v.id}`} onClose={onClose} width={820}
-      footer={<><ZzBtn onClick={onClose}>关闭</ZzBtn>{admin && v.status === '待审核' && <><ZzBtn danger onClick={() => onReject?.(v)}>驳回</ZzBtn><ZzBtn primary onClick={() => onApprove?.(v)}>审核通过</ZzBtn></>}{admin && onCancel && ['待外访', '外访进行中', '待审核', '已驳回'].includes(v.status) && <ZzBtn danger onClick={() => onCancel(v)}>取消任务</ZzBtn>}</>}>
+    <ZzDrawer open title={`外访任务详情 · ${v.id}`} onClose={onClose} width={820}
+      footer={<>
+        <ZzBtn onClick={onClose}>关闭</ZzBtn>
+        {admin && v.status === '待审核' && <><ZzBtn danger onClick={() => onReject?.(v)}>驳回</ZzBtn><ZzBtn primary onClick={() => onApprove?.(v)}>审核通过</ZzBtn></>}
+        {admin && onCancel && ['待外访', '外访进行中', '待审核', '已驳回'].includes(v.status) && <ZzBtn danger onClick={() => onCancel(v)}>取消任务</ZzBtn>}
+        {visitor && v.status === '待外访' && <ZzBtn primary onClick={() => onPunch?.(v)}>现场打卡</ZzBtn>}
+        {visitor && v.status === '外访进行中' && <ZzBtn primary onClick={() => onOpenReport?.(v)}>填写外访报告</ZzBtn>}
+        {visitor && v.status === '已驳回' && <ZzBtn primary onClick={() => onOpenReport?.(v)}>修改报告</ZzBtn>}
+      </>}>
       <div className="space-y-4">
         <ZzCard title="① 任务基础信息">
           <div className="grid grid-cols-2 gap-2 text-sm md:grid-cols-3">
-            {[['任务ID', v.id], ['关联案件', v.caseId], ['客户', v.name], ['手机', v.phone], ['外访地址', v.addr], ['备选地址', v.backupAddr || '—'], ['任务来源', v.creator], ['创建时间', v.createdAt], ['分配外访员', v.assignee], ['分配时间', v.assignedAt || '—'], ['要求完成', v.dueDate], ['优先级', <ZzBadge color={v.priority === '紧急' ? RED : '#6B7280'}>{v.priority}</ZzBadge>], ['当前状态', <ZzBadge color={statusColor(v.status)}>{v.status}</ZzBadge>], ['逾期金额', v.overdueAmount?.toLocaleString()], ['账龄', v.age]].map(([k, val]) => (
+            {[['任务ID', v.id], ['关联案件', v.caseId], ['客户', v.name], ['手机', v.phone], ['外访地址', v.addr], ['备选地址', v.backupAddr || '—'], ['任务来源', v.creator], ['创建时间', v.createdAt], ['分配外访员', v.assignee], ['分配时间', v.assignedAt || '—'], ['要求完成', v.dueDate], ['优先级', prioBadge(v.priority)], ['当前状态', stBadge(v.status)], ['逾期金额', v.overdueAmount?.toLocaleString()], ['账龄', v.age]].map(([k, val]) => (
               <div key={k} className="rounded border px-3 py-2"><div className="text-xs text-gray-400">{k}</div><div className="mt-0.5 font-medium">{val}</div></div>
             ))}
           </div>
@@ -201,22 +232,27 @@ function ZzVisitDetail({ v, visits, setVisits, onClose, onApprove, onReject, onC
         </ZzCard>
         <ZzCard title="④ 操作日志">
           <div className="space-y-1 text-sm">
-            {v.logs.map((l: any, i: number) => (
+            {(v.logs || []).map((l: any, i: number) => (
               <div key={i} className="flex gap-2 border-b pb-1"><span className="text-gray-400">{l.at}</span><span className="font-medium">{l.op}</span><span className="text-gray-500">（{l.by}）</span><span className="text-gray-400">{l.note}</span></div>
             ))}
+            {(!v.logs || v.logs.length === 0) && <div className="text-gray-400">暂无操作日志</div>}
           </div>
         </ZzCard>
       </div>
-    </ZzModal>
+    </ZzDrawer>
   )
 }
 
-/* ============================ 页面4：外访历史（增强） ============================ */
+// 详情卡片内复用的徽标（作用域隔离）
+function prioBadge(p: string) { return <ZzBadge color={p === '紧急' ? RED : '#6B7280'}>{p}</ZzBadge> }
+function stBadge(s: string) { return <ZzBadge color={statusColor(s)}>{s}</ZzBadge> }
+
+/* ============================ 页面4：外访历史（所有记录均含打卡+报告样例） ============================ */
 function ZzVisitHistory() {
   const [visits, setVisits] = useState<any[]>(ZZ_VISITS)
   const [detail, setDetail] = useState<any | null>(null)
   return (
-    <ZzPage title="外访历史记录" crumb="催贷管理 / 外访管理" subtitle="历史全部外访任务归档查询与报告查看">
+    <ZzPage title="外访历史记录" crumb="催贷管理 / 外访管理" subtitle="历史全部外访任务归档查询与报告查看（每条任务均含打卡记录与外访报告）">
       <ZzFilterBar>
         <ZzField label="时间范围"><ZzSelect defaultValue="近30天"><option>今日</option><option>近7天</option><option>近30天</option><option>全部</option></ZzSelect></ZzField>
         <ZzField label="外访员"><ZzSelect defaultValue=""><option value="">全部</option>{ZZ_VISITORS.map((a) => <option key={a}>{a}</option>)}</ZzSelect></ZzField>
@@ -226,13 +262,13 @@ function ZzVisitHistory() {
         <ZzBtn onClick={() => alert('已批量导出全部历史外访报告档案')}>批量导出</ZzBtn>
       </ZzFilterBar>
       <ZzCard title="历史记录">
-        <ZzTable head={['任务ID', '案件', '客户', '外访地址', '外访员', '优先级', '完成时间', '外访结果摘要', '状态', '操作']} rows={visits.map((v) => [
-          v.id, v.caseId, v.name, v.addr, v.assignee, <ZzBadge color={v.priority === '紧急' ? RED : '#6B7280'}>{v.priority}</ZzBadge>,
-          v.finishedAt || '—', v.resultSummary || '—', <ZzBadge color={statusColor(v.status)}>{v.status}</ZzBadge>,
+        <ZzTable stickyAction head={['任务ID', '案件', '客户', '外访地址', '外访员', '优先级', '完成时间', '外访结果摘要', '状态', '操作']} rows={visits.map((v) => [
+          v.id, v.caseId, v.name, v.addr, v.assignee, prioBadge(v.priority),
+          v.finishedAt || '—', v.resultSummary || '—', stBadge(v.status),
           <ZzBtn sm onClick={() => setDetail(v)}>查看详情</ZzBtn>,
         ])} />
       </ZzCard>
-      {detail && <ZzVisitDetail v={detail} visits={visits} setVisits={setVisits} onClose={() => setDetail(null)} />}
+      {detail && <ZzVisitDetail v={detail} onClose={() => setDetail(null)} />}
     </ZzPage>
   )
 }

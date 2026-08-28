@@ -1,7 +1,7 @@
 // 催贷管理 · 模块6 智能AI质检
-import { useState } from 'react'
-import { ZzPage, ZzCard, ZzBtn, ZzModal, ZzTable, ZzFilterBar, ZzField, ZzInput, ZzSelect, ZzTextarea, ZzBadge, ZzStat, BLUE } from './zzUi'
-import { ZZ_QA_RECORDS, ZZ_SENSITIVE_WORDS, ZZ_SENSITIVE_CATS, ZZ_QA_ALERTS, ZZ_QA_TASKS, ZZ_QA_SCORE_TPL } from './zzData'
+import { useState, useEffect, useRef, useMemo } from 'react'
+import { ZzPage, ZzCard, ZzBtn, ZzModal, ZzDrawer, ZzTabs, ZzTable, ZzFilterBar, ZzField, ZzInput, ZzSelect, ZzTextarea, ZzBadge, ZzStat, BLUE } from './zzUi'
+import { ZZ_QA_RECORDS, ZZ_SENSITIVE_WORDS, ZZ_SENSITIVE_CATS, ZZ_QA_ALERTS, ZZ_QA_TASKS, ZZ_QA_SCORE_TPL, ZZ_QA_REPORTS } from './zzData'
 
 const GREEN = '#16A34A'; const RED = '#DC2626'; const AMBER = '#D97706'; const GRAY = '#9CA3AF'
 // 风险等级统一样式 🔴高 🟡中 🟢低
@@ -13,7 +13,6 @@ export function ZzQaModule({ pageKey }: { pageKey: string }) {
   if (pageKey === 'zz:qa-words') return <ZzQaWords />
   if (pageKey === 'zz:qa-alert') return <ZzQaAlert />
   if (pageKey === 'zz:qa-task') return <ZzQaTask />
-  if (pageKey === 'zz:qa-report') return <ZzQaReport />
   return <ZzQaRecord />
 }
 
@@ -30,47 +29,89 @@ function ZzPager({ total, pageSize = 10, page, onChange }: { total: number; page
   )
 }
 
-/* 统一录音弹窗：语音播放器 + ASR 逐轮转写 + 命中敏感词高亮标红 */
-function RecordPlayer({ rec, onClose }: { rec: any; onClose: () => void }) {
-  const hits = rec.hitWords ?? []
-  const hl = (text: string) => {
-    let out: any[] = [text]; let key = 0
-    hits.forEach((w: string) => {
-      const next: any[] = []
-      out.forEach((seg) => {
-        if (typeof seg !== 'string') { next.push(seg); return }
-        const idx = seg.indexOf(w)
-        if (idx < 0) { next.push(seg); return }
-        seg.slice(0, idx) && next.push(seg.slice(0, idx))
-        next.push(<span key={key++} className="rounded bg-red-100 px-0.5 font-semibold text-red-600">{w}</span>)
-        seg.slice(idx + w.length) && next.push(seg.slice(idx + w.length))
-      })
-      out = next
-    })
-    return out
+/* 模拟播放器 + 转写高亮 + 敏感词跳转（通话录音查询 / 事后抽样质检 复用） */
+function parseDur(s: string) { const m = (s || '').split(':').map(Number); return (m[0] || 0) * 60 + (m[1] || 0) }
+function fmtTime(s: number) {
+  const mm = Math.floor(s / 60), ss = s % 60
+  return `${String(mm).padStart(2, '0')}:${String(ss).padStart(2, '0')}`
+}
+function QaPlayer({ rec, hitWords }: { rec: any; hitWords?: string[] }) {
+  const dur = parseDur(rec.duration)
+  const hits = hitWords ?? (rec.hitWords ?? [])
+  const segs = useMemo(() => {
+    const lines = rec.asr || []
+    const n = Math.max(1, lines.length)
+    const step = dur / n
+    return lines.map((l: any[], i: number) => ({ spk: l[0], text: l[1], start: Math.round(i * step), end: Math.round((i + 1) * step) }))
+  }, [rec, dur])
+  const [t, setT] = useState(0)
+  const [playing, setPlaying] = useState(false)
+  const timer = useRef<number | null>(null)
+  useEffect(() => {
+    if (playing) {
+      timer.current = window.setInterval(() => {
+        setT((p) => { if (p >= dur) { setPlaying(false); return dur } return Math.min(p + 1, dur) })
+      }, 1000)
+    }
+    return () => { if (timer.current) window.clearInterval(timer.current) }
+  }, [playing, dur])
+  useEffect(() => () => { if (timer.current) window.clearInterval(timer.current) }, [])
+  const activeIdx = segs.findIndex((s) => t >= s.start && t < s.end)
+  const toggle = () => { if (t >= dur) setT(0); setPlaying((p) => !p) }
+  const seek = (e: React.MouseEvent<HTMLDivElement>) => {
+    const r = e.currentTarget.getBoundingClientRect()
+    setT(Math.max(0, Math.min(dur, Math.round(((e.clientX - r.left) / r.width) * dur))))
+  }
+  const jumpSeg = (i: number) => { setT(segs[i].start); setPlaying(true) }
+  const renderText = (text: string, segIdx: number) => {
+    if (!hits.length) return text
+    const re = new RegExp(`(${hits.map((w) => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})`, 'g')
+    return text.split(re).map((seg, k) =>
+      hits.includes(seg)
+        ? <span key={k} className="cursor-pointer rounded bg-red-100 px-0.5 font-semibold text-red-600 hover:bg-red-200" title="点击跳转到该片段" onClick={() => jumpSeg(segIdx)}>{seg}</span>
+        : <span key={k}>{seg}</span>
+    )
   }
   return (
-    <ZzModal open title={`通话录音 · ${rec.target}（${rec.id}）`} onClose={onClose} width={600}
-      footer={<ZzBtn primary onClick={onClose}>关闭</ZzBtn>}>
-      <div className="flex items-center gap-3 rounded bg-slate-50 p-3 text-sm">
-        <span className="text-2xl text-blue-600">▶</span>
-        <div className="h-2 flex-1 rounded bg-blue-100"><div className="h-2 w-1/3 rounded bg-blue-500" /></div>
-        <span className="text-gray-400">时长 {rec.duration}</span>
+    <div className="space-y-3">
+      <div className="rounded bg-slate-50 p-3">
+        <div className="flex items-center gap-3">
+          <button onClick={toggle} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-white" style={{ background: BLUE }}>{playing ? '⏸' : (t >= dur ? '↻' : '▶')}</button>
+          <div className="flex-1">
+            <div className="mb-1 flex justify-between text-xs text-gray-500"><span>{fmtTime(t)}</span><span>{rec.duration}</span></div>
+            <div className="h-2 w-full cursor-pointer rounded bg-blue-100" onClick={seek}><div className="h-2 rounded" style={{ width: `${dur ? (t / dur) * 100 : 0}%`, background: BLUE }} /></div>
+          </div>
+        </div>
       </div>
-      <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
-        <div className="rounded border px-3 py-2"><div className="text-xs text-gray-400">债务人</div><div className="font-medium">{rec.target} {rec.phone}</div></div>
-        <div className="rounded border px-3 py-2"><div className="text-xs text-gray-400">坐席</div><div className="font-medium">{rec.agent}</div></div>
-      </div>
-      <div className="mt-3 rounded border p-3 text-sm">
-        <div className="mb-1 text-xs text-gray-500">ASR 对话转写（命中敏感词已标红）</div>
+      <div className="rounded border p-3 text-sm">
+        <div className="mb-1 text-xs text-gray-500">ASR 对话转写（命中敏感词已标红，点击敏感词/片段跳转播放）</div>
         <div className="space-y-1">
-          {rec.asr.map((line: any[], i: number) => (
-            <div key={i} className={line[0] === '坐席' ? 'text-blue-700' : 'text-gray-800'}>{line[0]}：{hl(line[1])}</div>
+          {segs.map((s, i) => (
+            <div key={i} className={`cursor-pointer rounded px-2 py-1 ${i === activeIdx ? 'bg-blue-50 ring-1 ring-blue-300' : 'hover:bg-slate-50'}`} onClick={() => jumpSeg(i)}>
+              <span className={s.spk === '坐席' ? 'font-medium text-blue-700' : 'font-medium text-gray-800'}>{s.spk}：</span>{renderText(s.text, i)}
+              <span className="ml-1 text-[10px] text-gray-400">{fmtTime(s.start)}</span>
+            </div>
           ))}
         </div>
       </div>
-      {(hits.length ?? 0) > 0 && <div className="mt-2 text-sm text-red-600">⚠️ 命中敏感词：{hits.join('、')}</div>}
-    </ZzModal>
+      {(hits.length) > 0 && <div className="text-sm text-red-600">⚠️ 命中敏感词：{hits.join('、')}</div>}
+    </div>
+  )
+}
+
+/* 右侧抽屉：录音播放 + 转写（替代原居中弹窗） */
+function RecordDrawer({ rec, onClose }: { rec: any; onClose: () => void }) {
+  return (
+    <ZzDrawer open title={`通话录音 · ${rec.target}（${rec.id}）`} onClose={onClose} width={560}
+      footer={<ZzBtn primary onClick={onClose}>关闭</ZzBtn>}>
+      <div className="space-y-3">
+        <div className="grid grid-cols-2 gap-2 text-sm">
+          <div className="rounded border px-3 py-2"><div className="text-xs text-gray-400">债务人</div><div className="font-medium">{rec.target} {rec.phone}</div></div>
+          <div className="rounded border px-3 py-2"><div className="text-xs text-gray-400">坐席</div><div className="font-medium">{rec.agent}</div></div>
+        </div>
+        <QaPlayer rec={rec} />
+      </div>
+    </ZzDrawer>
   )
 }
 
@@ -91,15 +132,15 @@ function ZzQaRecord() {
         <ZzBtn onClick={() => alert('已导出录音查询报表')}>导出</ZzBtn>
       </ZzFilterBar>
       <ZzCard title="录音列表" extra={<ZzBtn sm onClick={() => alert('已导出')}>导出</ZzBtn>}>
-        <ZzTable head={['通话时间', '债务人', '通话时长', '坐席', 'AI质检告警', '命中敏感词', '操作']} rows={rows.map((r) => [
+        <ZzTable stickyAction head={['通话时间', '债务人', '通话时长', '坐席', 'AI质检告警', '命中敏感词', '操作']} rows={rows.map((r) => [
           r.time, `${r.target} ${r.phone}`, r.duration, r.agent,
           r.alertStatus === '命中告警' ? <ZzBadge color={RED}>🔴 命中告警</ZzBadge> : <ZzBadge color={GREEN}>🟢 正常</ZzBadge>,
           r.hitWords.length ? <span className="text-red-600">{r.hitWords.join('、')}</span> : <span className="text-gray-400">-</span>,
-          <ZzBtn sm primary onClick={() => setPlay(r)}>播放&查看转写</ZzBtn>,
+          <ZzBtn sm primary onClick={() => setPlay(r)}>查看</ZzBtn>,
         ])} />
         <ZzPager total={rows.length} page={page} onChange={setPage} />
       </ZzCard>
-      {play && <RecordPlayer rec={play} onClose={() => setPlay(null)} />}
+      {play && <RecordDrawer rec={play} onClose={() => setPlay(null)} />}
     </ZzPage>
   )
 }
@@ -122,10 +163,10 @@ function ZzQaWords() {
         <ZzBtn onClick={() => setCat(true)}>分类管理</ZzBtn>
       </ZzFilterBar>
       <ZzCard title="敏感词库" extra={<ZzBtn sm onClick={() => alert('已导出词库')}>导出</ZzBtn>}>
-        <ZzTable head={['敏感词', '违规分类', '告警等级', '状态', '操作']} rows={rows.map((w) => [
+        <ZzTable stickyAction head={['敏感词', '违规分类', '告警等级', '状态', '操作']} rows={rows.map((w) => [
           w.word, w.cat, levelBadge(w.level),
           w.enabled ? <ZzBadge color={GREEN}>✅ 已启用</ZzBadge> : <ZzBadge color={GRAY}>⛔ 已禁用</ZzBadge>,
-          <div className="flex gap-1"><ZzBtn sm onClick={() => setEditing(w)}>编辑</ZzBtn><ZzBtn sm danger={w.enabled} onClick={() => setRows((rs) => rs.map((x) => x === w ? { ...x, enabled: !x.enabled } : x))}>{w.enabled ? '禁用' : '启用'}</ZzBtn></div>,
+          <div className="flex flex-nowrap gap-1"><ZzBtn sm onClick={() => setEditing(w)}>编辑</ZzBtn><ZzBtn sm danger={w.enabled} onClick={() => setRows((rs) => rs.map((x) => x === w ? { ...x, enabled: !x.enabled } : x))}>{w.enabled ? '禁用' : '启用'}</ZzBtn></div>,
         ])} />
       </ZzCard>
       {editing && <ZzModal open title={editing.cat && !ZZ_SENSITIVE_WORDS.includes(editing) ? '新增敏感词' : '编辑敏感词'} onClose={() => setEditing(null)} width={520}
@@ -181,7 +222,7 @@ function ZzQaAlert() {
         <ZzBtn onClick={() => alert('已导出告警处理记录')}>导出</ZzBtn>
       </ZzFilterBar>
       <ZzCard title="告警列表" extra={<ZzBtn sm onClick={() => alert('已导出')}>导出</ZzBtn>}>
-        <ZzTable head={['告警ID', '告警时间', '坐席', '债务人', '录音编号', '命中敏感词', '风险等级', '处理状态', '操作']} rows={rows.map((a) => [
+        <ZzTable stickyAction head={['告警ID', '告警时间', '坐席', '债务人', '录音编号', '命中敏感词', '风险等级', '处理状态', '操作']} rows={rows.map((a) => [
           a.id, a.time, a.agent, a.debtor, a.call, <span className="text-red-600">{a.word}</span>, levelBadge(a.level),
           a.status === '待复核' ? <ZzBadge color={AMBER}>待复核</ZzBadge> : a.status === '已处理' ? <ZzBadge color={GREEN}>已处理</ZzBadge> : <ZzBadge color={GRAY}>误判</ZzBadge>,
           <ZzBtn sm primary onClick={() => setReview(a)}>{a.status === '待复核' ? '复核' : '查看'}</ZzBtn>,
@@ -231,24 +272,70 @@ function ZzQaTask() {
   const [tasks, setTasks] = useState(ZZ_QA_TASKS)
   const [create, setCreate] = useState(false)
   const [work, setWork] = useState<any | null>(null)
+  const [tab, setTab] = useState('质检任务')
+  const [report, setReport] = useState<any | null>(null)
   return (
     <ZzPage title="事后抽样质检" crumb="催贷管理 / 智能AI质检" subtitle="创建抽样任务，对历史催收通话做事后人工复核，完成质检打分">
-      <ZzFilterBar>
-        <ZzBtn primary onClick={() => setCreate(true)}>新建质检任务</ZzBtn>
-        <ZzBtn onClick={() => alert('已导出质检任务')}>导出</ZzBtn>
-      </ZzFilterBar>
-      <ZzCard title="质检任务列表" extra={<ZzBtn sm onClick={() => alert('已导出')}>导出</ZzBtn>}>
-        <ZzTable head={['任务名称', '任务时间范围', '抽样规则', '抽样总数/已完成', '负责人', '操作']} rows={tasks.map((t) => [
-          t.name, t.range, t.dim, `${t.done}/${t.total}`, t.owner,
-          <div className="flex gap-1">
-            <ZzBtn sm primary onClick={() => setWork(t)}>开始复核</ZzBtn>
-            <ZzBtn sm onClick={() => alert('查看质检报告：' + t.name)}>查看报告</ZzBtn>
-          </div>,
-        ])} />
-      </ZzCard>
+      <ZzTabs tabs={['质检任务', '质检报告']} active={tab} onChange={setTab} />
+      {tab === '质检任务' ? (
+        <>
+          <ZzFilterBar>
+            <ZzBtn primary onClick={() => setCreate(true)}>新建质检任务</ZzBtn>
+            <ZzBtn onClick={() => alert('已导出质检任务')}>导出</ZzBtn>
+          </ZzFilterBar>
+          <ZzCard title="质检任务列表" extra={<ZzBtn sm onClick={() => alert('已导出')}>导出</ZzBtn>}>
+            <ZzTable stickyAction head={['任务名称', '任务时间范围', '抽样规则', '抽样总数/已完成', '负责人', '操作']} rows={tasks.map((t) => [
+              t.name, t.range, t.dim, `${t.done}/${t.total}`, t.owner,
+              <ZzBtn sm primary onClick={() => setWork(t)}>开始复核</ZzBtn>,
+            ])} />
+          </ZzCard>
+        </>
+      ) : (
+        <ZzCard title="质检报告列表" extra={<ZzBtn sm onClick={() => alert('已导出')}>导出</ZzBtn>}>
+          <ZzTable stickyAction head={['报告ID', '所属任务', '录音编号', '坐席', '债务人', '质检日期', '总分', '违规点', '操作']} rows={ZZ_QA_REPORTS.map((r) => [
+            r.id, r.task, r.callId, r.agent, r.target, r.date,
+            <span className={r.score < 80 ? 'font-semibold text-red-600' : 'font-semibold text-green-600'}>{r.score} / {r.total}</span>,
+            r.violations.length ? <span className="text-red-600">{r.violations.join('、')}</span> : <span className="text-gray-400">无</span>,
+            <ZzBtn sm primary onClick={() => setReport(r)}>详情</ZzBtn>,
+          ])} />
+        </ZzCard>
+      )}
       {create && <CreateTaskModal onClose={() => setCreate(false)} onOk={(nt) => { setTasks((ts) => [...ts, nt]); setCreate(false) }} />}
       {work && <ReviewWorkbench task={work} onClose={() => setWork(null)} />}
+      {report && <ReportDrawer r={report} onClose={() => setReport(null)} />}
     </ZzPage>
+  )
+}
+
+/* 质检报告详情（右侧抽屉）：评分项/扣分/总分/违规点 + 录音回放 */
+function ReportDrawer({ r, onClose }: { r: any; onClose: () => void }) {
+  const rec = ZZ_QA_RECORDS.find((x) => x.id === r.callId)
+  return (
+    <ZzDrawer open title={`质检报告 · ${r.id}`} onClose={onClose} width={600}
+      footer={<ZzBtn primary onClick={onClose}>关闭</ZzBtn>}>
+      <div className="space-y-3 text-sm">
+        <div className="grid grid-cols-2 gap-2">
+          <div className="rounded border px-3 py-2"><div className="text-xs text-gray-400">坐席</div><div className="font-medium">{r.agent}</div></div>
+          <div className="rounded border px-3 py-2"><div className="text-xs text-gray-400">债务人</div><div className="font-medium">{r.target}</div></div>
+          <div className="rounded border px-3 py-2"><div className="text-xs text-gray-400">录音编号</div><div className="font-medium">{r.callId}</div></div>
+          <div className="rounded border px-3 py-2"><div className="text-xs text-gray-400">质检日期</div><div className="font-medium">{r.date}</div></div>
+        </div>
+        <ZzCard title="质检评分">
+          <div className="space-y-2">
+            {r.items.map((it: any) => (
+              <div key={it.item} className="grid grid-cols-3 items-center gap-2">
+                <div><span className="font-medium">{it.item}</span><span className="ml-1 text-gray-400">（{it.max}分）</span></div>
+                <div className={it.deduct ? 'font-medium text-red-600' : 'text-gray-600'}>扣分 {it.deduct} · 得 {it.score}</div>
+                <div className="text-gray-500">{it.note}</div>
+              </div>
+            ))}
+            <div className="text-right font-semibold">总分：{r.score} / {r.total}</div>
+          </div>
+        </ZzCard>
+        <div className="text-sm">违规点：{r.violations.length ? <span className="text-red-600">{r.violations.join('、')}</span> : '无'}</div>
+        {rec && (<><div className="text-xs text-gray-500">录音回放</div><QaPlayer rec={rec} /></>)}
+      </div>
+    </ZzDrawer>
   )
 }
 
@@ -277,7 +364,6 @@ function ReviewWorkbench({ task, onClose }: { task: any; onClose: () => void }) 
   const [cur, setCur] = useState(recs[0])
   const [scores, setScores] = useState<any>({})
   const [comment, setComment] = useState('')
-  const hits = cur.hitWords ?? []
   const totalScore = ZZ_QA_SCORE_TPL.reduce((s, it) => s + (Number(scores[it.item]) || 0), 0)
   return (
     <ZzModal open title={`复核工作台 · ${task.name}`} onClose={onClose} width={820}
@@ -288,21 +374,7 @@ function ReviewWorkbench({ task, onClose }: { task: any; onClose: () => void }) 
           <ZzBtn sm onClick={() => setCur(recs[(recs.indexOf(cur) + 1) % recs.length])}>下一条</ZzBtn>
           <span className="text-gray-500">当前：{cur.target}（{cur.id}）</span>
         </div>
-        <div className="flex items-center gap-3 rounded bg-slate-50 p-3 text-sm">
-          <span className="text-2xl text-blue-600">▶</span>
-          <div className="h-2 flex-1 rounded bg-blue-100"><div className="h-2 w-1/3 rounded bg-blue-500" /></div>
-          <span className="text-gray-400">{cur.duration}</span>
-        </div>
-        <div className="rounded border p-3 text-sm">
-          <div className="mb-1 text-xs text-gray-500">ASR 对话转写（命中词高亮）</div>
-          <div className="space-y-1">
-            {cur.asr.map((line: any[], i: number) => (
-              <div key={i} className={line[0] === '坐席' ? 'text-blue-700' : 'text-gray-800'}>
-                {line[0]}：{hits.some((w: string) => line[1].includes(w)) ? line[1].split(new RegExp(`(${hits.join('|')})`, 'g')).map((seg: string, k: number) => hits.includes(seg) ? <span key={k} className="rounded bg-red-100 font-semibold text-red-600">{seg}</span> : seg) : line[1]}
-              </div>
-            ))}
-          </div>
-        </div>
+        <QaPlayer rec={cur} />
         <ZzCard title="质检打分表">
           <div className="space-y-2">
             {ZZ_QA_SCORE_TPL.map((it) => (
@@ -318,22 +390,5 @@ function ReviewWorkbench({ task, onClose }: { task: any; onClose: () => void }) 
         </ZzCard>
       </div>
     </ZzModal>
-  )
-}
-
-/* ============================ 质检报表 ============================ */
-function ZzQaReport() {
-  return (
-    <ZzPage title="质检统计报表" crumb="催贷管理 / 智能AI质检" subtitle="违规统计、坐席排行与告警趋势（可导出审计台账）">
-      <div className="mb-4 flex gap-3">
-        <ZzStat label="违规总数" value={6} accent={RED} />
-        <ZzStat label="告警趋势(周)" value="↓ 12%" accent={GREEN} />
-        <ZzStat label="质检覆盖率" value="100%" accent={BLUE} />
-      </div>
-      <ZzCard title="坐席违规排行">
-        <ZzTable head={['排名', '坐席', '违规次数']} rows={[['1', '王雷', 2], ['2', '李娜', 1]]} />
-      </ZzCard>
-      <ZzCard title="导出"><ZzBtn sm primary onClick={() => alert('审计台账已导出')}>导出审计台账</ZzBtn></ZzCard>
-    </ZzPage>
   )
 }

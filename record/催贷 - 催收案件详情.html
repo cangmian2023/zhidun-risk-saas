@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>催收案件详情</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#1677ff',
+                        warnYellow: '#fff9cc',
+                        dangerRed: '#f53f3f',
+                        borderGray: '#e5e7eb',
+                        labelBg: '#f0f5ff'
+                    }
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .panel-box {
+                @apply border border-borderGray rounded bg-white mb-3;
+            }
+            .panel-header {
+                @apply px-4 py-2 border-b border-borderGray flex justify-between items-center font-semibold text-gray-700;
+            }
+            .panel-body {
+                @apply p-4 text-sm;
+            }
+            .field-row {
+                @apply flex flex-wrap gap-x-6 gap-y-2 mb-2;
+            }
+            .field-item {
+                @apply min-w-[220px];
+            }
+            .field-label {
+                @apply text-gray-500 mr-1;
+            }
+            .warn-bg {
+                @apply bg-yellow-100;
+            }
+            .table-small th {
+                @apply bg-gray-50 text-left p-2 border text-xs;
+            }
+            .table-small td {
+                @apply p-2 border text-xs;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 p-4 text-sm">
+    <!-- 顶部操作栏 -->
+    <div class="panel-box">
+        <div class="panel-header">
+            <div>案件详情｜内部档案编码：ZXYH201811001‑CRC‑2239038688105858｜承案人：admin 管理</div>
+            <div class="space-x-2">
+                <button class="border px-3 py-1 rounded">线下还款登记</button>
+                <button class="border px-3 py-1 rounded">减免申请</button>
+                <button class="border px-3 py-1 rounded">案件转移</button>
+                <button class="border px-3 py-1 rounded">暂停/恢复</button>
+                <button class="border px-3 py-1 rounded">导出</button>
+                <button class="border px-3 py-1 rounded">操作日志</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <!-- ==========左上：债务人信息 ========== -->
+        <div class="panel-box">
+            <div class="panel-header">
+                <span>债务人信息</span>
+                <i class="fa fa-refresh cursor-pointer"></i>
+            </div>
+            <div class="panel-body">
+                <div class="field-row">
+                    <div class="field-item">
+                        <span class="field-label">出生年月：</span><span>(1992‑03‑14) 男</span>
+                    </div>
+                    <div class="field-item">
+                        <span class="field-label">年龄：</span><span>27</span>
+                    </div>
+                    <div class="field-item">
+                        <span class="field-label">证件号：</span><span>44082********</span>
+                    </div>
+                    <div class="field-item">
+                        <span class="field-label">出生地：</span><span>广东***</span>
+                    </div>
+                </div>
+                <div class="field-row">
+                    <div class="field-item">
+                        <span class="field-label">户籍地址：</span><span>深圳市南山区沙河西路白沙产业园</span>
+                    </div>
+                    <div class="field-item">
+                        <span class="field-label">手机：</span><span>13*******47 <i class="fa fa-phone text-primary cursor-pointer"></i></span>
+                    </div>
+                </div>
+                <div class="field-row">
+                    <div class="field-item">
+                        <span class="field-label">单位名称：</span><span>深****有限公司</span>
+                    </div>
+                    <div class="field-item">
+                        <span class="field-label">家庭电话：</span><span>44555655adas</span>
+                    </div>
+                </div>
+                <div class="field-row">
+                    <div class="field-item">
+                        <span class="field-label">电子邮箱：</span><span>13338192287@164.com</span>
+                    </div>
+                    <div class="field-item">
+                        <span class="field-label">城市：</span><span>深圳</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==========右上：逾期信息 ========== -->
+        <div class="panel-box">
+            <div class="panel-header">
+                <span>逾期信息</span>
+                <i class="fa fa-refresh cursor-pointer"></i>
+            </div>
+            <div class="panel-body">
+                <!-- 黄色警示块，逾期金额负数异常 -->
+                <div class="warn-bg p-2 mb-3 rounded border border-yellow-300">
+                    <div class="grid grid-cols-3 gap-2">
+                        <div><span class="field-label">逾期金额：</span><span class="text-dangerRed font-bold">-15200.00（异常）</span></div>
+                        <div><span class="field-label">共债金额：</span><span>0.00</span></div>
+                        <div><span class="field-label">委案日期：</span><span>2018‑11‑01</span></div>
+                        <div><span class="field-label">逾期天数：</span><span>20</span></div>
+                        <div><span class="field-label">委案金额：</span><span>400.00</span></div>
+                        <div><span class="field-label">同号金额：</span><span>0.00</span></div>
+                        <div><span class="field-label">截止日期：</span><span>2019‑12‑30</span></div>
+                        <div><span class="field-label">期数：</span><span>10</span></div>
+                        <div><span class="field-label">参考M值：</span><span>----</span></div>
+                    </div>
+                </div>
+                <div class="field-row">
+                    <div class="field-item"><span class="field-label">银行：</span><span>***银行</span></div>
+                    <div class="field-item"><span class="field-label">账户号码：</span><span>622689****</span></div>
+                    <div class="field-item"><span class="field-label">卡号：</span><span>622689****</span></div>
+                    <div class="field-item"><span class="field-label">开卡日期：</span><span>2018‑02‑01</span></div>
+                    <div class="field-item"><span class="field-label">账单日：</span><span>2018‑02‑02</span></div>
+                </div>
+                <div class="field-row">
+                    <div class="field-item"><span class="field-label">本金：</span><span>300.00</span></div>
+                    <div class="field-item"><span class="field-label">原始金额：</span><span>200.00</span></div>
+                    <div class="field-item"><span class="field-label">外包序号：</span><span>‑‑</span></div>
+                    <div class="field-item"><span class="field-label">最后还款金额：</span><span>200.00</span></div>
+                    <div class="field-item"><span class="field-label">最后还款日期：</span><span>2018‑02‑05</span></div>
+                </div>
+                <!-- 新增补齐：案件基础元数据 -->
+                <div class="mt-3 border-t pt-3">
+                    <div class="font-medium mb-2">案件元数据【补齐缺失】</div>
+                    <div class="field-row">
+                        <div class="field-item"><span class="field-label">案件状态：</span><span>催收中</span></div>
+                        <div class="field-item"><span class="field-label">账龄M：</span><span>M1</span></div>
+                        <div class="field-item"><span class="field-label">风险标签：</span><span class="bg-orange-100 px-1 rounded">无</span></div>
+                        <div class="field-item"><span class="field-label">委外状态：</span><span>未委外</span></div>
+                        <div class="field-item"><span class="field-label">诉讼状态：</span><span>未诉讼</span></div>
+                        <div class="field-item"><span class="field-label">分案时间：</span><span>2018‑11‑01</span></div>
+                    </div>
+                </div>
+                <!-- tab切换：还款记录 / PTP记录 -->
+                <div class="flex mt-4 border-b">
+                    <div class="px-3 py-2 border-b-2 border-primary text-primary cursor-pointer">
+                        <i class="fa fa-credit-card"></i> 还款记录
+                    </div>
+                    <div class="px-3 py-2 cursor-pointer text-gray-500">
+                        <i class="fa fa-paper-plane"></i> PTP记录
+                    </div>
+                </div>
+                <!--还款记录表-->
+                <div class="mt-2 overflow-x-auto">
+                    <table class="w-full table-small">
+                        <thead>
+                        <tr>
+                            <th>还款金额</th>
+                            <th>还款时间</th>
+                            <th>录入人</th>
+                            <th>来源</th>
+                            <th>备注</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr>
+                            <td>300.00</td>
+                            <td>2019‑08‑20</td>
+                            <td>admin</td>
+                            <td>客服导入</td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td>11000.00</td>
+                            <td>2019‑08‑14</td>
+                            <td>admin</td>
+                            <td>客服导入</td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td>3000.00</td>
+                            <td>2019‑08‑13</td>
+                            <td>admin</td>
+                            <td>客服导入</td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td>1000.00</td>
+                            <td>2019‑08‑13</td>
+                            <td>admin</td>
+                            <td>客服导入</td>
+                            <td>1000</td>
+                        </tr>
+                        <tr>
+                            <td>100.00</td>
+                            <td>2019‑08‑06</td>
+                            <td>admin</td>
+                            <td>客服导入</td>
+                            <td>1000</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                    <div class="flex justify-between items-center mt-2 text-xs text-gray-500">
+                        <div>共6条记录，显示1‑5</div>
+                        <div class="space-x-1">
+                            <button class="border px-1">上一页</button>
+                            <span>第1页</span>
+                            <button class="border px-1">下一页</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==========左下：补充信息 ========== -->
+        <div class="panel-box">
+            <div class="panel-header">
+                <span>补充信息</span>
+                <i class="fa fa-refresh cursor-pointer"></i>
+            </div>
+            <div class="panel-body">
+                <div class="field-row">
+                    <div class="field-item"><span class="field-label">当月代码：</span><span>6N2</span></div>
+                    <div class="field-item"><span class="field-label">最后发单日期：</span><span>20181020</span></div>
+                    <div class="field-item"><span class="field-label">卡类：</span><span>671</span></div>
+                </div>
+                <div class="field-row">
+                    <div class="field-item"><span class="field-label">汇率：</span><span>1.000000</span></div>
+                    <div class="field-item"><span class="field-label">主副卡：</span><span>主卡</span></div>
+                    <div class="field-item"><span class="field-label">性别：</span><span>男</span></div>
+                </div>
+                <div class="field-row">
+                    <div class="field-item"><span class="field-label">省份：</span><span>广东省</span></div>
+                    <div class="field-item"><span class="field-label">城市调整：</span><span>佛山</span></div>
+                    <div class="field-item"><span class="field-label">持卡人职务：</span><span>技术员</span></div>
+                </div>
+                <div class="field-row">
+                    <div class="field-item"><span class="field-label">持卡人通讯地址：</span><span>广东省佛山…</span></div>
+                    <div class="field-item"><span class="field-label">持卡人邮编：</span><span>528000</span></div>
+                    <div class="field-item"><span class="field-label">最后零售日期：</span><span>20180615</span></div>
+                </div>
+                <div class="field-row">
+                    <div class="field-item"><span class="field-label">最后提现日期：</span><span>20180204</span></div>
+                    <div class="field-item"><span class="field-label">主卡持卡人代码：</span><span>144(</span></div>
+                    <div class="field-item"><span class="field-label">渠道：</span><span>6***</span></div>
+                </div>
+                <div class="field-row">
+                    <div class="field-item"><span class="field-label">信用额度：</span><span>17000.00</span></div>
+                    <div class="field-item"><span class="field-label">客户类别：</span><span>普通</span></div>
+                    <div class="field-item"><span class="field-label">申请代码：</span><span>20171***</span></div>
+                </div>
+                <!-- 补齐：合同放款信息 -->
+                <div class="mt-3 border-t pt-3">
+                    <div class="font-medium mb-2">合同放款信息【补齐缺失】</div>
+                    <div class="field-row">
+                        <div class="field-item"><span class="field-label">合同编号：</span><span>HT20181101001</span></div>
+                        <div class="field-item"><span class="field-label">放款金额：</span><span>50000.00</span></div>
+                        <div class="field-item"><span class="field-label">放款日期：</span><span>2018‑02‑01</span></div>
+                        <div class="field-item"><span class="field-label">到期日：</span><span>2019‑02‑01</span></div>
+                    </div>
+                </div>
+                <!--补齐：减免历史记录 -->
+                <div class="mt-3 border-t pt-3">
+                    <div class="font-medium mb-2">减免历史【补齐缺失】</div>
+                    <div class="text-gray-400">暂无减免记录</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==========右下：联系信息 + 行动记录 ========== -->
+        <div class="panel-box">
+            <div class="panel-header">
+                <span>联系信息</span>
+                <i class="fa fa-refresh cursor-pointer"></i>
+            </div>
+            <div class="panel-body">
+                <div class="overflow-x-auto">
+                    <table class="w-full table-small">
+                        <thead>
+                        <tr>
+                            <th>关系</th>
+                            <th>姓名</th>
+                            <th>号码类型</th>
+                            <th>电话号码</th>
+                            <th>操作</th>
+                            <th>状态</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr>
+                            <td>本人</td>
+                            <td>***</td>
+                            <td>手机</td>
+                            <td>137*******</td>
+                            <td>
+                                <i class="fa fa-phone text-primary"></i>
+                                <i class="fa fa-comment-o ml-2 text-primary"></i>
+                            </td>
+                            <td>有效</td>
+                        </tr>
+                        <tr>
+                            <td>兄弟姐妹</td>
+                            <td>***</td>
+                            <td>手机</td>
+                            <td>13*******</td>
+                            <td>
+                                <i class="fa fa-phone text-primary"></i>
+                                <i class="fa fa-comment-o ml-2 text-primary"></i>
+                            </td>
+                            <td>有效</td>
+                        </tr>
+                        <tr>
+                            <td>债务人</td>
+                            <td>***</td>
+                            <td>单位电话</td>
+                            <td>1*******</td>
+                            <td>
+                                <i class="fa fa-phone text-primary"></i>
+                                <i class="fa fa-comment-o ml-2 text-primary"></i>
+                            </td>
+                            <td>有效</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                    <div class="flex justify-between items-center mt-2 text-xs text-gray-500">
+                        <div>共23条记录，显示1‑5</div>
+                        <div class="space-x-1">
+                            <button class="border px-1">上一页</button>
+                            <span>第1页</span>
+                            <button class="border px-1">下一页</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 行动记录 -->
+                <div class="mt-4">
+                    <div class="panel-header -mx-4 -mt-4 mb-3">
+                        <span>行动记录（催收记录）</span>
+                        <i class="fa fa-refresh cursor-pointer"></i>
+                    </div>
+                    <table class="w-full table-small">
+                        <thead>
+                        <tr>
+                            <th>录音文件</th>
+                            <th>催收记录</th>
+                            <th>催收员</th>
+                            <th>记录时间</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr>
+                            <td><a href="#" class="text-primary">播放录音</a></td>
+                            <td>亲戚 郝和***，去电【无望还款（可联）】,个雨解情</td>
+                            <td>admin</td>
+                            <td>2019‑08‑20</td>
+                        </tr>
+                        <tr>
+                            <td><a href="#" class="text-primary">播放录音</a></td>
+                            <td>债务人家人 梁是造***，去电【其它（可联）】,表婉份流</td>
+                            <td>admin</td>
+                            <td>2019‑08‑18</td>
+                        </tr>
+                        <tr>
+                            <td><a href="#" class="text-primary">播放录音</a></td>
+                            <td>朋友 毕洋***，去电【争议】,友友酒而</td>
+                            <td>admin</td>
+                            <td>2019‑08‑15</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                    <div class="flex justify-between items-center mt-2 text-xs text-gray-500">
+                        <div>共23条记录，显示1‑5</div>
+                        <div class="space-x-1">
+                            <button class="border px-1">上一页</button>
+                            <span>第1页</span>
+                            <button class="border px-1">下一页</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 新增独立面板：PTP协议记录，原图只有tab没有内容 -->
+    <div class="panel-box">
+        <div class="panel-header">
+            <span>PTP还款协议记录【原图缺失补齐】</span>
+        </div>
+        <div class="panel-body">
+            <table class="w-full table-small">
+                <thead>
+                <tr>
+                    <th>协议承诺还款时间</th>
+                    <th>承诺金额</th>
+                    <th>PTP状态</th>
+                    <th>创建催收员</th>
+                    <th>实际还款时间</th>
+                    <th>备注</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr><td colspan="6" class="text-center text-gray‑400">暂无PTP协议记录</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>

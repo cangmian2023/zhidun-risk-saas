@@ -2,6 +2,7 @@
 import { ReactNode, useEffect, useRef } from 'react'
 import * as echarts from 'echarts'
 import { PageShell } from './PageShell'
+import { usePageNav } from './pageNav'
 
 export function EChart({ option, height = 300 }: { option: echarts.EChartsOption; height?: number }) {
   const ref = useRef<HTMLDivElement>(null)
@@ -18,12 +19,54 @@ export function EChart({ option, height = 300 }: { option: echarts.EChartsOption
 
 export const BLUE = '#1677ff'
 
+// 面包屑末级标签 → 子系统内路由 key（用于点击跳转）
+const ZZ_CRUMB_ROUTE: Record<string, string> = {
+  催贷管理: 'zz:cases',
+  案件管理: 'zz:cases',
+  历史案件: 'zz:cases-history',
+  委外监管: 'zz:agency-list',
+  坐席工作台: 'zz:agent-pool',
+  AI协催: 'zz:ai-task',
+  BI报表中心: 'zz:bi-overview',
+  智能策略引擎: 'zz:strategy',
+  策略列表: 'zz:strategy',
+  法务处置: 'zz:legal-overview',
+  智能AI质检: 'zz:qa-record',
+  外访管理: 'zz:visit-list',
+  话术管理: 'zz:script-lib',
+  短信模板管理: 'zz:sms-template',
+  外访人员管理: 'zz:visitor-manage',
+}
+
 export function ZzPage({ title, crumb, subtitle, actions, children, max = 1680 }: {
-  title: string; crumb: string; subtitle?: string; actions?: ReactNode; children: ReactNode; max?: number
+  title: string; crumb?: string; subtitle?: string; actions?: ReactNode; children: ReactNode; max?: number
 }) {
+  const { nav } = usePageNav()
+  const crumbNodes = crumb ? (
+    <div className="flex items-center gap-1 text-xs">
+      {crumb.split('/').map((s, i, arr) => {
+        const label = s.trim()
+        const to = ZZ_CRUMB_ROUTE[label]
+        const isLast = i === arr.length - 1
+        const clickable = !!to && !isLast
+        const seg = (
+          <span
+            className={isLast || !to ? 'font-medium text-slate-500' : 'cursor-pointer text-slate-400 hover:text-[#1677ff]'}
+            onClick={clickable ? () => nav('/console/zz/' + to.split(':')[1]) : undefined}
+          >{label}</span>
+        )
+        return (
+          <span key={i} className="flex items-center gap-1">
+            {seg}
+            {!isLast && <span className="text-slate-300">/</span>}
+          </span>
+        )
+      })}
+    </div>
+  ) : undefined
   return (
     <div style={{ padding: 24, maxWidth: max, margin: '0 auto' }}>
-      <PageShell title={title} crumb={crumb} subtitle={subtitle} actions={actions} legend={false} />
+      <PageShell title={title} crumb={crumb} crumbNodes={crumbNodes} subtitle={subtitle} actions={actions} legend={false} />
       {children}
     </div>
   )
@@ -84,6 +127,29 @@ export function ZzModal({ open, title, onClose, children, width = 760, footer }:
   )
 }
 
+// 右侧抽屉（替代居中弹窗，不脱离系统框架）
+export function ZzDrawer({ open, title, onClose, width = 520, children, footer }: {
+  open: boolean; title: ReactNode; onClose: () => void; width?: number; children: ReactNode; footer?: ReactNode
+}) {
+  if (!open) return null
+  return (
+    <div className="fixed inset-0 z-[1100]">
+      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
+      <div
+        className="absolute right-0 top-0 flex h-full flex-col bg-white shadow-2xl"
+        style={{ width, maxWidth: '94vw', animation: 'zzDrawerIn .2s ease' }}
+      >
+        <div className="flex items-center justify-between border-b px-4 py-3">
+          <span className="text-sm font-semibold">{title}</span>
+          <button onClick={onClose} className="text-xl leading-none text-gray-400 hover:text-gray-600">✕</button>
+        </div>
+        <div className="flex-1 overflow-y-auto p-4">{children}</div>
+        {footer && <div className="flex justify-end gap-2 border-t px-4 py-3">{footer}</div>}
+      </div>
+    </div>
+  )
+}
+
 export function ZzTabs({ tabs, active, onChange }: { tabs: string[]; active: string; onChange: (t: string) => void }) {
   return (
     <div className="mb-4 flex gap-1 border-b border-slate-200">
@@ -94,21 +160,28 @@ export function ZzTabs({ tabs, active, onChange }: { tabs: string[]; active: str
   )
 }
 
-export function ZzTable({ head, rows, onRow, rowKey }: {
-  head: string[]; rows: ReactNode[][]; onRow?: (i: number) => void; rowKey?: (i: number) => string
+export function ZzTable({ head, rows, onRow, rowKey, stickyAction, stickyFirst = true }: {
+  head: ReactNode[]; rows: ReactNode[][]; onRow?: (i: number) => void; rowKey?: (i: number) => string; stickyAction?: boolean; stickyFirst?: boolean
 }) {
+  const lastIdx = head.length - 1
+  const cellCls = (i: number, isHead: boolean) => {
+    const parts = ['border', 'px-3', 'py-2', 'align-top', 'whitespace-nowrap']
+    if (stickyFirst && i === 0) { parts.push('sticky', 'left-0', 'z-' + (isHead ? '30' : '10')); parts.push(isHead ? 'bg-[#f7f8fc]' : 'bg-white') }
+    if (stickyAction && i === lastIdx) { parts.push('sticky', 'right-0', 'z-' + (isHead ? '30' : '10'), 'text-left'); parts.push(isHead ? 'bg-[#f7f8fc]' : 'bg-white') }
+    return parts.join(' ')
+  }
   return (
     <div className="overflow-x-auto">
-      <table className="w-full text-sm">
+      <table className="w-full text-sm border-collapse">
         <thead className="bg-[#f7f8fc]">
           <tr>
-            {head.map((h, i) => <th key={i} className="border px-3 py-2 text-left font-medium text-gray-600">{h}</th>)}
+            {head.map((h, i) => <th key={i} className={cellCls(i, true)}>{h}</th>)}
           </tr>
         </thead>
         <tbody>
           {rows.map((r, i) => (
             <tr key={rowKey ? rowKey(i) : i} onClick={onRow ? () => onRow(i) : undefined} className={`hover:bg-slate-50 ${onRow ? 'cursor-pointer' : ''}`}>
-              {r.map((c, j) => <td key={j} className="border px-3 py-2 align-top">{c}</td>)}
+              {r.map((c, j) => <td key={j} className={cellCls(j, false)}>{c}</td>)}
             </tr>
           ))}
         </tbody>
