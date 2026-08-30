@@ -34,6 +34,11 @@ function persistPlugin() {
         'eventAnalysis.json',
         // 催贷管理子系统（zz）
         'collectionData.json', 'dunData.json',
+        // 催贷统一数据层（zzStore：跨页面共享 + 落盘，漏加会 400 导致改动不生效）
+        'zzCases.json', 'zzPtp.json', 'zzWaivers.json', 'zzLogs.json', 'zzQa.json',
+        'zzEntrusts.json', 'zzVisits.json', 'zzLegal.json', 'zzAiTasks.json', 'zzPolicy.json',
+        'zzWords.json', 'zzVisitors.json', 'zzSms.json', 'zzSettle.json',
+        'zzFlows.json', 'zzStrategyVer.json', 'zzExec.json',
         // 企业档案子系统（qy）
         'qiyeData.json',
         // 企业档案 · 上市信息 Tab（dm 数字营销，比亚迪样例）

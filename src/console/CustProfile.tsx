@@ -505,7 +505,7 @@ export function CustProfile({ custId, title = '单客详情' }: { custId?: strin
             title={title}
             crumb={(isSc ? '评分产品' : CRUMB) + ' / ' + cur.name}
             backLabel={isSc ? '← 返回评分产品' : '← 返回'}
-            backTo={isSc ? '/console/sc/overview' : undefined}
+            backTo={isSc ? '/console/sc/score-records' : undefined}
             actions={
               <>
                 <Sam label="单客样例" value="custProfileData.ts" />

@@ -21,7 +21,8 @@ const DASHBOARD_PAGES: Record<string, string> = {
 }
 
 export default function ScoreModule({ pageKey }: { pageKey: string; search?: string }) {
-  const cur = pageKey.split(':')[1] ?? 'overview'
+  const cur = pageKey.split(':')[1] ?? 'score-records'
+  if (cur === 'score-records-import') return <ScoreRecordsPage />
   const dashKey = DASHBOARD_PAGES[cur]
   if (dashKey) return <MidDashboardPage pageKey={dashKey} crumbPrefix="评分产品" />
   switch (cur) {

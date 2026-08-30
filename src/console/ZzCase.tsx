@@ -1,14 +1,83 @@
 // 催贷管理 · 模块1 案件管理
 // 页面：案件管理(列表) / 案件导入(分步向导弹窗) / 历史案件 / 案件详情页(复刻 HTML)
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { ZzPage, ZzCard, ZzBtn, ZzModal, ZzTabs, ZzTable, ZzFilterBar, ZzField, ZzInput, ZzSelect, ZzTextarea, ZzBadge, ZzStat, BLUE } from './zzUi'
-import { ZZ_CASES, ZZ_CASE_NOTES, ZZ_HISTORY_CASES, money, zzCurrentRole, canOfflineRepay, zzDetailOf, zzCaseButtons, zzActivePtp, ZZ_GRAPH_PROFILES, ZZ_GRAPH_TAG_COLOR, ZZ_AGENT_PTP, ZZ_AGENT_NEGO, type ZzCase } from './zzData'
+import { ZZ_CASES, ZZ_CASE_NOTES, ZZ_HISTORY_CASES, money, zzCurrentRole, canOfflineRepay, zzDetailOf, zzCaseButtons, zzActivePtp, ZZ_GRAPH_PROFILES, ZZ_GRAPH_TAG_COLOR, ZZ_HISTORY_GRAPH_SAMPLE, ZZ_AGENT_PTP, ZZ_AGENT_NEGO, ZZ_AGENCIES, type ZzCase, type ZzEntrust } from './zzData'
+import { RelationGraphView } from './RelationGraphView'
+import { CaseDrawer } from './ZzAgent'
+import { useZzList, updateZzList, ZZ_FILE } from './zzStore'
+import type { CustRelationGraph, GraphTheme, CustGraphNode, CustGraphEdge } from './custProfileData'
 
 type PageKey = string
 
 const STAGE_LABEL: Record<string, string> = { M0: 'M0 未逾期', M1: 'M1 1-30天', M2: 'M2 31-90天', 'M3+': 'M3+ 90天+' }
 const statusColor = (s: string) => s === '已结清' ? '#16A34A' : s === '委外' ? '#D97706' : s === '核销' ? '#9CA3AF' : s === '承诺还款' ? BLUE : '#DC2626'
+
+// 将催贷图谱画像转换为关系图谱组件所需结构（催收业务关系：共债/同址/同设备/联系人）
+// 注意：RelationGraphView 的节点用 type、边用 source/target/rel/theme/danger；此处严格对齐，否则连线/配色不渲染
+function buildRelationGraph(g: any): CustRelationGraph {
+  if (!g) return { nodes: [], edges: [], themes: [], collectedAt: '', source: '' }
+  const nodes: CustGraphNode[] = []
+  const edges: CustGraphEdge[] = []
+  const centerId = 'self'
+  nodes.push({ id: centerId, name: g.center, type: 'self', rel: '本人', risk: '正常' })
+  ;(g.contacts || []).forEach((ct: any, i: number) => {
+    const id = 'c' + i
+    nodes.push({ id, name: ct.name, type: 'person', rel: ct.rel, risk: (ct.risk || (ct.reachable ? '正常' : '关注')) as any, phone: ct.phone, detail: ct.reachable ? '可呼' : '暂不可达' })
+    edges.push({ source: centerId, target: id, rel: ct.rel || '联系人', theme: '社交', since: '' })
+  })
+  ;(g.sameAddr || []).forEach((s: string, i: number) => {
+    const id = 'a' + i
+    nodes.push({ id, name: s, type: 'person', rel: '同址逾期', risk: '高危', openAlerts: 1, detail: '同址逾期客户' })
+    edges.push({ source: centerId, target: id, rel: '同址逾期', theme: '共债', since: '', danger: true })
+  })
+  ;(g.sameDevice || []).forEach((s: string, i: number) => {
+    const id = 'd' + i
+    nodes.push({ id, name: s, type: 'person', rel: '同设备逾期', risk: '高危', openAlerts: 1, detail: '同设备逾期客户' })
+    edges.push({ source: centerId, target: id, rel: '同设备逾期', theme: '设备', since: '', danger: true })
+  })
+  ;(g.history || []).forEach((s: string, i: number) => {
+    const id = 'h' + i
+    nodes.push({ id, name: s, type: 'person', rel: '历史关联', risk: '正常', detail: '历史关联案件' })
+    edges.push({ source: centerId, target: id, rel: '历史关联', theme: '资金', since: '' })
+  })
+  const themes = ['综合', '社交', '共债', '设备', '资金'] as GraphTheme[]
+  return { nodes, edges, themes, collectedAt: '2026-08-10 02:15', source: '催收内部授权数据（本人/紧急联系人/共借人/担保人/同址同设备逾期客户/历史关联案件）' }
+}
+
+// 关联关系图谱组件：复用 RelationGraphView（放射布局 + 右侧联动清单），数据来自催贷业务画像
+function CaseRelationGraph({ g }: { g: any }) {
+  const [relSel, setRelSel] = useState<{ kind: 'node'; node: CustGraphNode } | { kind: 'edge'; edge: CustGraphEdge } | null>(null)
+  const [relTheme, setRelTheme] = useState<GraphTheme>('综合')
+  if (!g) return <div className="py-6 text-center text-sm text-gray-400">本案件暂未纳入图谱关系网络（无同址/同设备/关联人线索）。</div>
+  const graph = buildRelationGraph(g)
+  const nodeMap: Record<string, CustGraphNode> = {}
+  graph.nodes.forEach((n) => (nodeMap[n.id] = n))
+  return (
+    <div className="space-y-3">
+      <RelationGraphView graph={graph} theme={relTheme} onTheme={setRelTheme} sel={relSel} onPick={setRelSel} nodeMap={nodeMap} />
+      <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
+        <div className="rounded border p-2">
+          <div className="mb-1 text-xs text-gray-500">① 失联修复线索（合规）</div>
+          <div className="text-sm">可达性得分：<b className="text-[#1677ff]">{g.lostRepair.score}</b></div>
+          <div className="text-xs text-gray-600">{g.lostRepair.hint}</div>
+        </div>
+        <div className="rounded border p-2">
+          <div className="mb-1 text-xs text-gray-500">② 团伙风险提示</div>
+          {g.gang.inGang
+            ? <div className="text-sm text-red-600">处于逾期团伙 {g.gang.gangId}（{g.gang.gangSize}人）· {g.gang.level} · {g.gang.risk}</div>
+            : <div className="text-sm text-green-600">未命中逾期团伙网络</div>}
+        </div>
+        <div className="rounded border p-2">
+          <div className="mb-1 text-xs text-gray-500">③ 还款能力/意愿辅助</div>
+          <div className="text-xs text-gray-600">{g.ability}</div>
+        </div>
+      </div>
+      <div className="text-xs text-gray-400">合规说明：图谱仅使用系统已授权内部数据（本人/紧急联系人/共借人/担保人/同址同设备逾期客户/历史关联案件），不直接外呼陌生关联人，仅作风险研判与线索参考。</div>
+    </div>
+  )
+}
 
 interface LogEntry { time: string; operator: string; content: string }
 const nowStr = () => new Date().toISOString().slice(0, 16).replace('T', ' ')
@@ -51,20 +120,23 @@ function moneyCell(r: ZzCase, k: ColKey): any {
 }
 
 // 风险标签组合（合并原 status/lost/outsource/litigation/paused/waiver）+ 图谱自动标签
+const RISK_TAG_COLOR: Record<string, string> = {
+  '委外': '#D97706', '催收中': '#475569', '承诺还款': '#16A34A', '待分案': '#475569',
+  '暂停': '#9CA3AF', '诉讼': '#DC2626', '失联': '#DC2626', '减免中': '#D97706',
+}
 function RiskTags({ c }: { c: ZzCase }) {
   const tags: { t: string; color: string }[] = []
-  if (c.status === '委外') tags.push({ t: '委外', color: '#D97706' })
-  else if (c.status === '催收中' || c.status === '承诺还款' || c.status === '待分案')
-    tags.push({ t: c.status, color: c.status === '承诺还款' ? BLUE : '#DC2626' })
-  if (c.paused) tags.push({ t: '暂停', color: '#6B7280' })
-  if (c.litigation) tags.push({ t: '诉讼', color: '#DC2626' })
-  if (c.lost) tags.push({ t: '失联', color: '#DC2626' })
-  if (c.waiverPending) tags.push({ t: '减免中', color: '#D97706' })
+  if (c.status === '委外' || c.status === '催收中' || c.status === '承诺还款' || c.status === '待分案')
+    tags.push({ t: c.status, color: RISK_TAG_COLOR[c.status] })
+  if (c.paused) tags.push({ t: '暂停', color: RISK_TAG_COLOR['暂停'] })
+  if (c.litigation) tags.push({ t: '诉讼', color: RISK_TAG_COLOR['诉讼'] })
+  if (c.lost) tags.push({ t: '失联', color: RISK_TAG_COLOR['失联'] })
+  if (c.waiverPending) tags.push({ t: '减免中', color: RISK_TAG_COLOR['减免中'] })
   // 图谱自动打标（无需人工，零侵入注入列表）
   const gt = ZZ_GRAPH_PROFILES[c.id]?.tags
-  if (gt) gt.forEach((t: any) => tags.push({ t, color: ZZ_GRAPH_TAG_COLOR[t] }))
-  if (!tags.length) tags.push({ t: c.status, color: '#6B7280' })
-  return <div className="flex flex-wrap gap-1">{tags.map((x, i) => <ZzBadge key={i} color={x.color}>{x.t}</ZzBadge>)}</div>
+  if (gt) gt.forEach((t: any) => tags.push({ t, color: ZZ_GRAPH_TAG_COLOR[t] ?? '#6B7280' }))
+  if (!tags.length) tags.push({ t: c.status, color: '#9CA3AF' })
+  return <div className="flex flex-wrap items-center gap-1">{tags.map((x, i) => <ZzBadge key={i} color={x.color}>{x.t}</ZzBadge>)}</div>
 }
 
 /* ---------------- 案件列表（在催逾期案件队列） ---------------- */
@@ -82,18 +154,32 @@ function ZzCaseList() {
   const [remainMax, setRemainMax] = useState('')
   const [quick, setQuick] = useState('全部')
   const [sort, setSort] = useState('stageDesc')
-  const [rows, setRows] = useState<ZzCase[]>(ZZ_CASES)
+  // 案件统一走共享数据层：本页改动其他页面即时可见，且刷新不丢（setRows 保持原调用方式不变）
+  const rows = useZzList<ZzCase>(ZZ_FILE.cases, ZZ_CASES)
+  const setRows = (v: ZzCase[] | ((rs: ZzCase[]) => ZzCase[])) => updateZzList<ZzCase>(ZZ_FILE.cases, (rs) => (typeof v === 'function' ? v(rs) : v))
   const [sel, setSel] = useState<Set<string>>(new Set())
   const [repay, setRepay] = useState<ZzCase | null>(null)
   const [waiver, setWaiver] = useState<ZzCase | null>(null)
   const [ptpQuick, setPtpQuick] = useState<ZzCase | null>(null)
   const [batch, setBatch] = useState<{ action: string } | null>(null)
-  const [logs, setLogs] = useState<LogEntry[]>([])
+  // 操作日志统一走共享数据层：各页面写入后可在案件抽屉「操作日志」里查到
+  const setLogs = (v: LogEntry[] | ((l: LogEntry[]) => LogEntry[])) => updateZzList<LogEntry>(ZZ_FILE.logs, (ls) => (typeof v === 'function' ? v(ls) : v))
   const [hidden, setHidden] = useState<Set<ColKey>>(new Set(COLS.filter((c) => !c.def).map((c) => c.key)))
   const [colPop, setColPop] = useState(false)
+  const [openMoreRow, setOpenMoreRow] = useState<string | null>(null)
   const [importOpen, setImportOpen] = useState(false)
+  const [entrustOpen, setEntrustOpen] = useState(false)
+  const [waiverListOpen, setWaiverListOpen] = useState(false)
+  const [call, setCall] = useState<string | null>(null)
 
   const addLog = (content: string) => setLogs((l) => [{ time: nowStr(), operator: role + '（' + (JSON.parse(localStorage.getItem('zdrk_user') || '{}').name || '') + '）', content }, ...l])
+
+  // 待我处理的减免审批（共享数据，任何页面发起的都能在这里审批）
+  const allWaivers = useZzList<WaiverAppr>(ZZ_FILE.waivers, [])
+  const pendingWaivers = allWaivers.filter((a) => a.status === '待审批')
+  const canApproveWaiver = WAIVER_APPROVERS.includes(role)
+  // 共享还款承诺 PTP：坐席工作台登记的承诺即时进入本页列表与统计
+  const sharedPtp = useZzList<any>(ZZ_FILE.ptp, [])
 
   // 在催逾期队列：剔除已结案/核销/诉讼结案（统一进历史案件）
   const base = rows.filter((r) => !CLOSED.has(r.status))
@@ -136,7 +222,16 @@ function ZzCaseList() {
   const statLost = base.filter((r) => r.lost).length
   const statOut = base.filter((r) => r.outsource || r.status === '委外').length
   const statLit = base.filter((r) => r.litigation).length
-  const statPtp = base.filter((r) => zzActivePtp(r.id).kind === 'pending').length
+  // 还款承诺：优先取共享数据层（坐席工作台实时登记），无则回落到案件详情样例
+  const ptpOf = (id: string) => {
+    const live = sharedPtp.filter((p) => p.caseId === id)
+    const pending = live.find((p) => p.status === '待履约')
+    if (pending) return { kind: 'pending' as const, text: `承诺 ${pending.date} 还 ${money(pending.amt ?? 0)}` }
+    const broken = live.find((p) => p.status === '已失约')
+    if (broken) return { kind: 'broken' as const, text: `失约 ${broken.date}` }
+    return zzActivePtp(id)
+  }
+  const statPtp = base.filter((r) => ptpOf(r.id).kind === 'pending').length
   // AI 有效触达户数：AI 外呼成功接通，且产生有效沟通（非静默、无挂断秒挂）的客户数。
   // 以「已外呼 + 未标记失联/多次未接通」近似代表有效沟通达成（Demo 口径；生产按通话转写静默/秒挂时长判定）。
   const statAiReach = base.filter((r) => r.aiCalled && !r.tags.includes('失联') && !r.tags.includes('❌多次未接通')).length
@@ -175,17 +270,13 @@ function ZzCaseList() {
   const reset = () => { setQ(''); setStage(''); setStatuses([]); setOwner(''); setPtpFilter(''); setRemainMin(''); setRemainMax(''); setQuick('全部'); setRows(ZZ_CASES); setSel(new Set()) }
 
   return (
-    <ZzPage title="案件管理" crumb="催贷管理 / 案件管理" subtitle="在催逾期案件队列：检索、批量作业与大盘统计；已结案/核销/诉讼结案统一进入「历史案件」">
-      {/* 顶部统计卡片（7 张） */}
-      <div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-4 xl:grid-cols-7">
+    <ZzPage title="案件管理" crumb="催贷管理 / 案件管理" subtitle="在催逾期案件队列：检索、批量作业与大盘统计；已结案/核销/诉讼结案案件统一进入归档库">
+      {/* 顶部统计卡片（自适应宽度，不可折叠） */}
+      <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
         <ZzStat label="案件总数（不含已结清）" value={base.length} sub={`当前待处置 · 已选 ${sel.size} 笔`} tip="统计范围：未结案的在催逾期案件（不含已结清/核销/诉讼结案），数字随筛选联动" />
-        <ZzStat label="原始逾期总额" value={money(statOrig)} accent="#6B7280" sub="立案时逾期本息（原始）" tip="原始逾期总额 = 立案时点逾期本金+罚息总和，不随还款变动" />
-        <ZzStat label="当前待还总额" value={money(statRemain)} accent="#D97706" sub="扣除已还后剩余（重点）" tip="当前待还总额 = 原始总额 - 已还款，是坐席当前真正的催收目标" />
-        <ZzStat label="失联案件" value={statLost} accent="#D97706" sub="无法触达借款人" tip="失联案件：近 N 次触达均未联系上本人及联系人的案件" />
-        <ZzStat label="委外案件" value={statOut} accent="#D97706" sub="已委托第三方" tip="委外案件：已发起委外委托、由第三方机构承接催收" />
-        <ZzStat label="诉讼案件" value={statLit} accent="#D97706" sub="已进入诉讼流程" tip="诉讼案件：已立案/进入诉讼流程的在催案件，列表中以浅红底色标识" />
-        <ZzStat label="PTP待履约" value={statPtp} accent="#D97706" sub="存在未到期承诺" tip="PTP待履约：客户已口头承诺或签署协议、承诺还款日未到的案件数" />
-        <ZzStat label="AI 有效触达户数" value={statAiReach} accent={BLUE} sub="接通且产生有效沟通" tip="定义：AI 外呼通话成功接通、且产生有效沟通（非静默、无挂断秒挂）的客户数。可精准核算 AI 外呼真实有效产能，弥补原有接通率虚高、无法甄别无效接通（如秒挂、长期静默）的统计短板。" />
+        <ZzStat label="原始逾期总额" value={money(statOrig)} accent={BLUE} sub="立案时逾期本息（原始）" tip="原始逾期总额 = 立案时点逾期本金+罚息总和，不随还款变动" />
+        <ZzStat label="当前待还总额" value={money(statRemain)} accent={BLUE} sub="扣除已还后剩余（重点）" tip="当前待还总额 = 原始总额 - 已还款，是坐席当前真正的催收目标" />
+        <ZzStat label="PTP待履约" value={statPtp} accent={BLUE} sub="存在未到期承诺" tip="PTP待履约：客户已口头承诺或签署协议、承诺还款日未到的案件数" />
       </div>
 
       <ZzFilterBar>
@@ -196,73 +287,87 @@ function ZzCaseList() {
           <div className="flex flex-wrap gap-1">
             {['催收中', '承诺还款', '委外', '诉讼', '暂停'].map((s) => (
               <button key={s} onClick={() => setStatuses((x) => x.includes(s) ? x.filter((y) => y !== s) : [...x, s])}
-                className={`rounded border px-2 py-0.5 text-xs ${statuses.includes(s) ? 'border-[#1677ff] bg-[#1677ff] text-white' : 'border-slate-300 text-gray-600 hover:border-[#1677ff]'}`}>{s}</button>
+                className={`rounded-full border px-2 py-0.5 text-[11px] ${statuses.includes(s) ? 'border-[#1677ff] bg-[#e6f0ff] text-[#1677ff]' : 'border-slate-200 bg-slate-50 text-gray-500 hover:border-[#1677ff]'}`}>{s}</button>
             ))}
           </div>
         </ZzField>
         <ZzField label="PTP状态"><ZzSelect value={ptpFilter} onChange={(e) => setPtpFilter(e.target.value)}><option value="">全部</option><option value="active">存在待履约PTP</option><option value="none">无有效PTP</option></ZzSelect></ZzField>
         <ZzField label="剩余待还(元)"><div className="flex items-center gap-1"><ZzInput style={{ width: 86 }} value={remainMin} onChange={(e) => setRemainMin(e.target.value)} placeholder="最小" /><span className="text-gray-400">~</span><ZzInput style={{ width: 86 }} value={remainMax} onChange={(e) => setRemainMax(e.target.value)} placeholder="最大" /></div></ZzField>
-        <ZzBtn primary onClick={() => setRows([...rows])}>查询</ZzBtn>
-        <ZzBtn onClick={reset}>重置</ZzBtn>
+        <ZzBtn sm primary onClick={() => setRows([...rows])}>查询</ZzBtn>
+        <ZzBtn sm onClick={reset}>重置</ZzBtn>
       </ZzFilterBar>
 
       {/* 快捷筛选标签（移除已结清 → 历史案件） */}
-      <div className="mb-3 flex flex-wrap items-center gap-2">
-        <span className="text-xs text-gray-400">快捷筛选：</span>
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        <span className="text-xs text-[#8c8c8c]">快捷筛选：</span>
         {quickTags.map((t) => (
-          <button key={t} onClick={() => setQuick(t)} className={`rounded-full border px-3 py-1 text-xs ${quick === t ? 'border-[#1677ff] bg-[#1677ff] text-white' : 'border-slate-300 text-gray-600 hover:border-[#1677ff]'}`}>{t}</button>
+          <button key={t} onClick={() => setQuick(t)} className={`rounded-full border px-2.5 py-0.5 text-[11px] ${quick === t ? 'border-[#1677ff] bg-[#e6f0ff] text-[#1677ff]' : 'border-slate-200 bg-slate-50 text-gray-500 hover:border-[#1677ff]'}`}>{t}</button>
         ))}
-        <ZzBtn sm onClick={() => nav('/console/zz/cases-history')}>历史案件</ZzBtn>
       </div>
 
       <ZzCard title={<span>在催逾期案件（{sorted.length}）</span>}
         extra={<div className="flex flex-wrap items-center gap-2">
-          <ZzBtn sm primary title={importDisabled ? '无导入权限（需管理/审核角色）' : ''} disabled={importDisabled} onClick={() => setImportOpen(true)}>案件导入</ZzBtn>
-          <ZzBtn sm title={exportDisabled ? '请先勾选案件' : ''} disabled={exportDisabled} onClick={() => { alert(`已导出选中 ${sel.size} 笔案件明细`); addLog(`导出案件 ${sel.size} 笔`) }}>导出案件</ZzBtn>
-          <ZzBtn sm title={batchInfo('批量转移').tip} disabled={batchInfo('批量转移').disabled} onClick={() => setBatch({ action: '批量转移' })}>批量转移</ZzBtn>
-          <ZzBtn sm title={batchInfo('批量暂停').tip} disabled={batchInfo('批量暂停').disabled} onClick={() => setBatch({ action: '批量暂停' })}>批量暂停</ZzBtn>
-          <ZzBtn sm title={batchInfo('批量恢复').tip} disabled={batchInfo('批量恢复').disabled} onClick={() => setBatch({ action: '批量恢复' })}>批量恢复</ZzBtn>
-          <ZzBtn sm title={batchInfo('批量分配').tip} disabled={batchInfo('批量分配').disabled} onClick={() => setBatch({ action: '批量分配' })}>批量分配</ZzBtn>
-          <ZzBtn sm title={exportDisabled ? '请先勾选案件' : ''} disabled={exportDisabled} onClick={() => { alert(`已导出 ${sel.size} 笔案件的催收台账（案件+PTP+最近催收记录）`); addLog(`批量导出催收台账 ${sel.size} 笔`) }}>批量导出催收台账</ZzBtn>
-          <ZzBtn sm onClick={reset}>刷新</ZzBtn>
-          <div className="relative">
-            <ZzBtn sm onClick={() => setColPop((v) => !v)}>自定义列</ZzBtn>
-            {colPop && (
-              <div className="absolute right-0 z-20 mt-1 w-48 rounded border bg-white p-2 shadow-lg">
-                {COLS.map((c) => (
-                  <label key={c.key} className="flex items-center gap-2 py-1 text-sm hover:bg-slate-50">
-                    <input type="checkbox" checked={!hidden.has(c.key)} onChange={() => setHidden((s) => { const n = new Set(s); n.has(c.key) ? n.delete(c.key) : n.add(c.key); return n })} />
-                    {c.label}{c.def ? '' : <span className="text-xs text-gray-400">（默认隐藏）</span>}
-                  </label>
-                ))}
-              </div>
-            )}
+          {/* 分组1：导入导出 */}
+          <div className="flex items-center gap-1.5">
+            <ZzBtn sm primary title={importDisabled ? '无导入权限（需管理/审核角色）' : ''} disabled={importDisabled} onClick={() => setImportOpen(true)}>案件导入</ZzBtn>
+            <ZzBtn sm title={exportDisabled ? '请先勾选案件' : ''} disabled={exportDisabled} onClick={() => { alert(`已导出选中 ${sel.size} 笔案件明细`); addLog(`导出案件 ${sel.size} 笔`) }}>导出案件</ZzBtn>
+            <ZzBtn sm title={exportDisabled ? '请先勾选案件' : ''} disabled={exportDisabled} onClick={() => { alert(`已导出 ${sel.size} 笔案件的催收台账（案件+PTP+最近催收记录）`); addLog(`批量导出催收台账 ${sel.size} 笔`) }}>导出台账</ZzBtn>
+          </div>
+          <span className="h-4 w-px bg-slate-200" />
+          {/* 分组2：批量作业 */}
+          <div className="flex items-center gap-1.5">
+            <ZzBtn sm title={batchInfo('批量转移').tip} disabled={batchInfo('批量转移').disabled} onClick={() => setBatch({ action: '批量转移' })}>批量转移</ZzBtn>
+            <ZzBtn sm title={batchInfo('批量暂停').tip} disabled={batchInfo('批量暂停').disabled} onClick={() => setBatch({ action: '批量暂停' })}>批量暂停</ZzBtn>
+            <ZzBtn sm title={batchInfo('批量恢复').tip} disabled={batchInfo('批量恢复').disabled} onClick={() => setBatch({ action: '批量恢复' })}>批量恢复</ZzBtn>
+            <ZzBtn sm title={batchInfo('批量分配').tip} disabled={batchInfo('批量分配').disabled} onClick={() => setBatch({ action: '批量分配' })}>批量分配</ZzBtn>
+          </div>
+          <span className="h-4 w-px bg-slate-200" />
+          {/* 分组3：委外与审批 */}
+          <div className="flex items-center gap-1.5">
+            <ZzBtn sm title={sel.size === 0 ? '请先勾选要委托的案件' : '把勾选的案件委托给委外机构'} disabled={sel.size === 0} onClick={() => setEntrustOpen(true)}>发起委托</ZzBtn>
+            <ZzBtn sm title={canApproveWaiver ? '处理待审批的减免申请' : '当前角色无审批权限'} onClick={() => setWaiverListOpen(true)}>减免审批{pendingWaivers.length > 0 ? `（${pendingWaivers.length}）` : ''}</ZzBtn>
+          </div>
+          {/* 右侧：弱化次要按钮 */}
+          <div className="ml-auto flex items-center gap-1.5">
+            <ZzBtn sm className="border-slate-200 text-gray-400 hover:text-gray-600" onClick={reset}>刷新</ZzBtn>
+            <div className="relative">
+              <ZzBtn sm className="border-slate-200 text-gray-400 hover:text-gray-600" onClick={() => setColPop((v) => !v)}>自定义列</ZzBtn>
+              {colPop && (
+                <div className="absolute right-0 z-20 mt-1 w-48 rounded border bg-white p-2 shadow-lg">
+                  {COLS.map((c) => (
+                    <label key={c.key} className="flex items-center gap-2 py-1 text-sm hover:bg-slate-50">
+                      <input type="checkbox" checked={!hidden.has(c.key)} onChange={() => setHidden((s) => { const n = new Set(s); n.has(c.key) ? n.delete(c.key) : n.add(c.key); return n })} />
+                      {c.label}{c.def ? '' : <span className="text-xs text-gray-400">（默认隐藏）</span>}
+                    </label>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>}>
         {/* 排序工具栏 */}
-        <div className="mb-2 flex flex-wrap items-center gap-2 text-xs text-gray-500">
+        <div className="mb-2 flex flex-wrap items-center gap-1.5 text-xs text-[#8c8c8c]">
           <span>排序：</span>
-          {[['stageDesc', '账龄（M3+优先）'], ['stageAsc', '账龄（M0优先）'], ['remain', '剩余待还金额↓'], ['lastTouch', '最后催收时间↓']].map(([k, label]) => (
-            <button key={k} onClick={() => setSort(k)} className={`rounded border px-2 py-0.5 ${sort === k ? 'border-[#1677ff] text-[#1677ff]' : 'border-slate-300 text-gray-600'}`}>{label}</button>
+          {[['stageDesc', 'M3+↓', '账龄（M3+优先）'], ['stageAsc', 'M0↑', '账龄（M0优先）'], ['remain', '¥↓', '剩余待还金额↓'], ['lastTouch', '🕒↓', '最后催收时间↓']].map(([k, icon, label]) => (
+            <button key={k} title={label} onClick={() => setSort(k)} className={`flex h-6 w-7 items-center justify-center rounded border text-[11px] ${sort === k ? 'border-[#1677ff] bg-[#e6f0ff] text-[#1677ff]' : 'border-slate-200 bg-white text-gray-500 hover:border-[#1677ff]'}`}>{icon}</button>
           ))}
         </div>
         {/* 表格 */}
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-[#f7f8fc]">
+            <thead className="bg-[#fafbfc]">
               <tr>
-                <th className="border px-3 py-2 text-left font-medium text-gray-600 whitespace-nowrap" style={{ position: 'sticky', left: 0, zIndex: 30, background: '#f7f8fc' }}><input type="checkbox" checked={sel.size > 0 && sorted.every((r) => sel.has(r.id))} onChange={(e) => { if (e.target.checked) setSel(new Set(sorted.map((r) => r.id))); else setSel(new Set()) }} /></th>
-                {visibleCols.map((c) => <th key={c.key} className="border px-3 py-2 text-left font-medium text-gray-600 whitespace-nowrap">{c.label}</th>)}
-                <th className="border px-3 py-2 text-left font-medium text-gray-600" style={{ position: 'sticky', right: 0, zIndex: 30, background: '#f7f8fc' }}>操作</th>
+                <th className="border border-slate-100 px-3 py-2.5 text-left font-semibold text-gray-700 whitespace-nowrap align-middle" style={{ position: 'sticky', left: 0, zIndex: 30, background: '#fafbfc' }}><input type="checkbox" checked={sel.size > 0 && sorted.every((r) => sel.has(r.id))} onChange={(e) => { if (e.target.checked) setSel(new Set(sorted.map((r) => r.id))); else setSel(new Set()) }} /></th>
+                {visibleCols.map((c) => <th key={c.key} className="border border-slate-100 px-3 py-2.5 text-left font-semibold text-gray-700 whitespace-nowrap">{c.label}</th>)}
+                <th className="border border-slate-100 px-3 py-2.5 text-left font-semibold text-gray-700" style={{ position: 'sticky', right: 0, zIndex: 30, background: '#fafbfc' }}>操作</th>
               </tr>
             </thead>
             <tbody>
               {sorted.map((r) => {
-                const ptp = zzActivePtp(r.id)
-                const warn = r.outsource || r.status === '委外' || r.litigation
+                const ptp = ptpOf(r.id)
                 return (
-                  <tr key={r.id} className={`hover:bg-slate-50 ${warn ? 'bg-[#fff7ed]' : ''}`}>
-                    <td className="border px-3 py-2 whitespace-nowrap" style={{ position: 'sticky', left: 0, zIndex: 10, background: '#fff' }}><input type="checkbox" checked={sel.has(r.id)} onChange={() => toggle(r.id)} /></td>
+                  <tr key={r.id} className="hover:bg-slate-50">
+                    <td className="border border-slate-100 px-3 py-3 whitespace-nowrap align-middle" style={{ position: 'sticky', left: 0, zIndex: 10, background: '#fff' }}><input type="checkbox" checked={sel.has(r.id)} onChange={() => toggle(r.id)} /></td>
                     {visibleCols.map((c) => {
                       let v: any
                       switch (c.key) {
@@ -272,19 +377,20 @@ function ZzCaseList() {
                         case 'risk': v = <RiskTags c={r} />; break
                         case 'stage': v = <span className="font-medium">{STAGE_SHORT[r.stage]} <span className="text-xs text-gray-400">· {r.overdueDays}天</span></span>; break
                         case 'total': v = <span className="text-gray-500">{money(r.total)}</span>; break
-                        case 'remainTotal': v = <span className="font-semibold text-[#D97706]">{money(r.remainTotal)}</span>; break
+                        case 'remainTotal': v = <span className="font-semibold text-[#1677ff]">{money(r.remainTotal)}</span>; break
                         case 'owner': v = r.owner; break
                         case 'ptp': v = ptp.kind === 'pending' ? <ZzBadge color={BLUE}>{ptp.text}</ZzBadge> : ptp.kind === 'broken' ? <ZzBadge color="#DC2626">{ptp.text}</ZzBadge> : <span className="text-gray-300">—</span>; break
                         case 'nextFollow': v = r.nextFollow === '—' ? <span className="text-gray-300">—</span> : <span className="text-[#1677ff]">{r.nextFollow}</span>; break
                         case 'lastTouch': v = r.lastTouch; break
                         default: v = moneyCell(r, c.key)
                       }
-                      return <td key={c.key} className="border px-3 py-2 align-top whitespace-nowrap">{v}</td>
+                      return <td key={c.key} className="border border-slate-100 px-3 py-3 align-top whitespace-nowrap">{v}</td>
                     })}
-                    <td className="border px-3 py-2 align-top whitespace-nowrap text-left" style={{ position: 'sticky', right: 0, zIndex: 10, background: '#fff' }}>
+                    <td className="border border-slate-100 px-3 py-3 align-top whitespace-nowrap text-left" style={{ position: 'sticky', right: 0, zIndex: openMoreRow === r.id ? 50 : 10, background: '#fff' }}>
                       <ZzRowMenu c={r} role={role} showRepay={showRepay}
+                        open={openMoreRow === r.id} onOpenChange={(v) => setOpenMoreRow(v ? r.id : null)}
                         onDetail={() => nav('/console/zz/case-detail?id=' + r.id)}
-                        onRepay={() => setRepay(r)} onWaiver={() => setWaiver(r)} onPtp={() => setPtpQuick(r)} />
+                        onRepay={() => setRepay(r)} onWaiver={() => setWaiver(r)} onPtp={() => setPtpQuick(r)} onCall={() => setCall(r.id)} />
                     </td>
                   </tr>
                 )
@@ -308,22 +414,40 @@ function ZzCaseList() {
       }} />}
       {waiver && <ZzWaiverModal case={waiver} role={role} onClose={() => setWaiver(null)} onApply={(content) => addLog(content)} />}
       {ptpQuick && <ZzPtpRegisterModal caseId={ptpQuick.id} role={role} defaultKind="口头PTP" onClose={() => setPtpQuick(null)} onSave={() => { addLog(`快速登记PTP 案件 ${ptpQuick.id}（${ptpQuick.name}）`); alert('PTP 已登记（详情页可查看明细）'); setPtpQuick(null) }} />}
-      {batch && <ZzBatchModal action={batch.action} ids={[...sel]} onClose={() => setBatch(null)} onConfirm={(reason) => {
-        addLog(`${batch.action} ${sel.size} 笔案件，原因：${reason}`)
-        alert(`${batch.action} 已提交，操作日志已留存（${sel.size} 笔）`)
+      {call && <CaseDrawer caseId={call} initTab="💬通话&处置工作台" onClose={() => setCall(null)} />}
+      {batch && <ZzBatchModal action={batch.action} ids={[...sel]} owners={[...new Set(rows.map((r) => r.owner))]} onClose={() => setBatch(null)} onConfirm={(reason, target) => {
+        const picked = new Set(sel)
+        setRows((rs: ZzCase[]) => rs.map((r) => {
+          if (!picked.has(r.id)) return r
+          if (batch.action.includes('暂停')) return { ...r, paused: true }
+          if (batch.action.includes('恢复')) return { ...r, paused: false }
+          if (batch.action.includes('转移') || batch.action.includes('分配')) return { ...r, owner: target }
+          return r
+        }))
+        addLog(`${batch.action} ${sel.size} 笔案件${target ? '，目标处理人：' + target : ''}，原因：${reason}`)
+        alert(`${batch.action} 已完成（${sel.size} 笔）${target ? '，已转给 ' + target : ''}，操作日志已留存`)
         setBatch(null)
       }} />}
       {importOpen && <ZzImportModal role={role} onClose={() => setImportOpen(false)} onDone={(msg) => addLog(msg)} />}
+      {entrustOpen && <ZzEntrustModal cases={rows.filter((r) => sel.has(r.id))} onClose={() => setEntrustOpen(false)} onDone={(msg) => { addLog(msg); alert('委托已发起：' + msg); setEntrustOpen(false); setSel(new Set()) }} />}
+      {waiverListOpen && <ZzWaiverApprovalModal role={role} canApprove={canApproveWaiver} onClose={() => setWaiverListOpen(false)} onDone={(msg) => addLog(msg)} />}
     </ZzPage>
   )
 }
 
 /* ---------------- 行操作下拉菜单（按状态动态渲染 + 权限置灰） ---------------- */
 /* ---------------- 行操作（按状态动态渲染有效按钮，行内平铺靠左，不折叠） ---------------- */
-function ZzRowMenu({ c, role, showRepay, onDetail, onRepay, onWaiver, onPtp }: {
-  c: ZzCase; role: string; showRepay: boolean
-  onDetail: () => void; onRepay: () => void; onWaiver: () => void; onPtp: () => void
+function ZzRowMenu({ c, role, showRepay, open, onOpenChange, onDetail, onRepay, onWaiver, onPtp, onCall }: {
+  c: ZzCase; role: string; showRepay: boolean; open: boolean; onOpenChange: (v: boolean) => void
+  onDetail: () => void; onRepay: () => void; onWaiver: () => void; onPtp: () => void; onCall: () => void
 }) {
+  const ref = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!open) return
+    const onDoc = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) onOpenChange(false) }
+    document.addEventListener('mousedown', onDoc)
+    return () => document.removeEventListener('mousedown', onDoc)
+  }, [open, onOpenChange])
   const closed = CLOSED.has(c.status)
   const isOut = c.outsource || c.status === '委外'
   const isLit = c.litigation
@@ -331,17 +455,26 @@ function ZzRowMenu({ c, role, showRepay, onDetail, onRepay, onWaiver, onPtp }: {
   const repayOk = showRepay && inCollect && !isOut && !isLit && !closed
   const waiverOk = inCollect && !isOut && !isLit && !closed && showRepay
   const ptpOk = inCollect && !closed && !isOut && !isLit
-  const btns = [
-    { label: '查看详情', onClick: onDetail, disabled: false, primary: true },
+  const moreItems = [
     { label: '线下还款', onClick: onRepay, disabled: !repayOk },
     { label: '减免申请', onClick: onWaiver, disabled: !waiverOk },
     { label: '登记PTP', onClick: onPtp, disabled: !ptpOk },
   ]
   return (
-    <div className="flex flex-nowrap items-center gap-1">
-      {btns.filter((b) => !b.disabled).map((b) => (
-        <ZzBtn key={b.label} sm primary={b.primary} onClick={b.onClick}>{b.label}</ZzBtn>
-      ))}
+    <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+      <ZzBtn sm primary onClick={onDetail}>查看详情</ZzBtn>
+      <ZzBtn sm onClick={onCall}>外呼</ZzBtn>
+      <div className="relative" ref={ref}>
+        <ZzBtn sm onClick={() => onOpenChange(!open)}>更多 ▾</ZzBtn>
+        {open && (
+          <div className="absolute right-0 z-30 mt-1 w-28 rounded-md border border-slate-200 bg-white py-1 shadow-lg">
+            {moreItems.map((m) => (
+              <button key={m.label} disabled={m.disabled} onClick={() => { if (!m.disabled) { m.onClick(); onOpenChange(false) } }}
+                className={`block w-full px-3 py-1.5 text-left text-sm ${m.disabled ? 'cursor-not-allowed text-gray-300' : 'text-gray-700 hover:bg-slate-50'}`}>{m.label}</button>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   )
 }
@@ -381,27 +514,41 @@ function ZzRepayModal({ case: c, role, onClose, onSave }: { case: ZzCase; role: 
 }
 
 /* ---------------- 减免审批（走审批流，不一键生效） ---------------- */
-interface WaiverAppr { id: string; caseId: string; name: string; type: string; amt: number; reason: string; status: '待审批' | '已通过' | '已驳回'; time: string }
+interface WaiverAppr { id: string; caseId: string; name: string; type: string; amt: number; reason: string; status: '待审批' | '已通过' | '已驳回'; time: string; creator: string; decider?: string; decideTime?: string }
+const WAIVER_APPROVERS = ['风控管理员', '风控审核']
 function ZzWaiverModal({ case: c, role, onClose, onApply }: { case: ZzCase; role: string; onClose: () => void; onApply: (content: string) => void }) {
   const [wt, setWt] = useState<'罚息减免' | '利息减免'>('罚息减免')
   const [amt, setAmt] = useState(6000)
   const [reason, setReason] = useState('')
   const [proof, setProof] = useState<File | null>(null)
   const [err, setErr] = useState('')
-  const [apps, setApps] = useState<WaiverAppr[]>([])
+  // 审批单统一走共享数据层：关窗不丢，且可在案件管理页的「减免审批」入口继续处理
+  const apps = useZzList<WaiverAppr>(ZZ_FILE.waivers, [])
+  const mine = apps.filter((a) => a.caseId === c.id)
+  const who = (JSON.parse(localStorage.getItem('zdrk_user') || '{}').name || '') || role
+  const canApprove = WAIVER_APPROVERS.includes(role)
 
   const submit = () => {
     if (!reason.trim()) { setErr('申请理由必填'); return }
     if (!proof) { setErr('必须上传佐证材料'); return }
     setErr('')
-    const app: WaiverAppr = { id: 'WA-' + Date.now(), caseId: c.id, name: c.name, type: wt, amt, reason: reason.trim(), status: '待审批', time: nowStr() }
-    setApps((a) => [app, ...a])
+    const app: WaiverAppr = { id: 'WA-' + Date.now().toString().slice(-6), caseId: c.id, name: c.name, type: wt, amt, reason: reason.trim(), status: '待审批', time: nowStr(), creator: who }
+    updateZzList<WaiverAppr>(ZZ_FILE.waivers, (list) => [app, ...list])
+    // 案件挂上「减免在审」标记，列表页风险标签即时可见
+    updateZzList<ZzCase>(ZZ_FILE.cases, (rs) => rs.map((r) => (r.id === c.id ? { ...r, waiverPending: true } : r)))
     onApply(`发起减免审批 案件 ${c.id}（${c.name}）${wt} ${money(amt)}，状态：待审批`)
     setReason(''); setProof(null)
   }
-  const decide = (id: string, st: '已通过' | '已驳回') => {
-    setApps((a) => a.map((x) => x.id === id ? { ...x, status: st } : x))
-    onApply(`减免审批 ${id} 处理：${st}`)
+  const decide = (a: WaiverAppr, st: '已通过' | '已驳回') => {
+    updateZzList<WaiverAppr>(ZZ_FILE.waivers, (list) => list.map((x) => (x.id === a.id ? { ...x, status: st, decider: who, decideTime: nowStr() } : x)))
+    // 通过后真入账：罚息减免先扣罚息，总额同步下调，并摘掉案件上的「减免在审」标记
+    updateZzList<ZzCase>(ZZ_FILE.cases, (rs) => rs.map((r) => {
+      if (r.id !== a.caseId) return r
+      if (st !== '已通过') return { ...r, waiverPending: false }
+      const cutP = a.type === '罚息减免' ? Math.min(r.remainPenalty, a.amt) : 0
+      return { ...r, remainPenalty: r.remainPenalty - cutP, remainTotal: Math.max(0, r.remainTotal - a.amt), waiverPending: false }
+    }))
+    onApply(`减免审批 ${a.id} 处理：${st}（审批人 ${who}）${st === '已通过' ? `，已减免 ${money(a.amt)} 并入账` : ''}`)
   }
   return (
     <ZzModal open title="减免审批 · 发起" onClose={onClose} width={600}
@@ -414,15 +561,22 @@ function ZzWaiverModal({ case: c, role, onClose, onApply }: { case: ZzCase; role
       </div>
       {err && <div className="mt-2 rounded bg-red-50 px-3 py-2 text-sm text-red-600">{err}</div>}
       <div className="mt-3"><ZzBtn primary onClick={submit}>提交审批流</ZzBtn></div>
-      <div className="mt-4 rounded bg-slate-50 p-3 text-sm text-gray-600">减免不一键生效，须经上级审批后入账；提交后进入「待审批」，此处可跟踪我发起的审批。</div>
+      <div className="mt-4 rounded bg-slate-50 p-3 text-xs text-gray-600">
+        减免不一键生效：提交后进入「待审批」，由风控管理员 / 风控审核在案件管理页的「减免审批」入口处理；通过后自动减免入账，并摘掉案件上的「减免中」标记。
+        {!canApprove && <span className="text-red-600"> 当前角色（{role}）无审批权限，只能发起。</span>}
+      </div>
 
-      {apps.length > 0 && (
+      {mine.length > 0 && (
         <div className="mt-4">
-          <div className="mb-2 text-sm font-medium">我发起的减免审批</div>
-          <ZzTable head={['审批单', '类型/金额', '状态', '审批']} rows={apps.map((a) => [
-            a.id + ' · ' + a.name, `${a.type} ${money(a.amt)}`,
-            <ZzBadge color={a.status === '待审批' ? BLUE : a.status === '已通过' ? '#16A34A' : '#DC2626'}>{a.status}</ZzBadge>,
-            a.status === '待审批' ? <div className="flex gap-1"><ZzBtn sm primary onClick={() => decide(a.id, '已通过')}>通过</ZzBtn><ZzBtn sm danger onClick={() => decide(a.id, '已驳回')}>驳回</ZzBtn></div> : '-',
+          <div className="mb-2 text-sm font-medium">本案减免审批记录</div>
+          <ZzTable head={['审批单', '类型/金额', '发起人', '状态', '审批']} rows={mine.map((a) => [
+            a.id, `${a.type} ${money(a.amt)}`, a.creator,
+            <ZzBadge color={a.status === '待审批' ? BLUE : a.status === '已通过' ? '#16A34A' : '#DC2626'}>{a.status}{a.decider ? ` · ${a.decider}` : ''}</ZzBadge>,
+            a.status === '待审批'
+              ? (canApprove
+                ? <div className="flex gap-1"><ZzBtn sm primary onClick={() => decide(a, '已通过')}>通过</ZzBtn><ZzBtn sm danger onClick={() => decide(a, '已驳回')}>驳回</ZzBtn></div>
+                : <span className="text-xs text-gray-400">待有权人审批</span>)
+              : '-',
           ])} />
         </div>
       )}
@@ -430,10 +584,93 @@ function ZzWaiverModal({ case: c, role, onClose, onApply }: { case: ZzCase; role
   )
 }
 
-/* ---------------- 批量操作（带原因输入框 + 操作日志） ---------------- */
-function ZzBatchModal({ action, ids, onClose, onConfirm }: { action: string; ids: string[]; onClose: () => void; onConfirm: (reason: string) => void }) {
-  const [reason, setReason] = useState('')
+/* ---------------- 发起委外委托（案件管理页入口：写入共享委外数据 + 案件转「委外」） ---------------- */
+function ZzEntrustModal({ cases, onClose, onDone }: { cases: ZzCase[]; onClose: () => void; onDone: (msg: string) => void }) {
+  const agencies = ZZ_AGENCIES.filter((a) => a.status === '正常')
+  const [to, setTo] = useState(agencies[0]?.id ?? '')
+  const [due, setDue] = useState('')
+  const [rate, setRate] = useState(8)
+  const [note, setNote] = useState('')
   const [err, setErr] = useState('')
+  const submit = () => {
+    if (!to) { setErr('请选择委外机构'); return }
+    if (!due) { setErr('请选择委托到期日'); return }
+    setErr('')
+    const today = nowStr().slice(0, 10)
+    updateZzList<ZzEntrust>(ZZ_FILE.entrusts, (list) => {
+      const next = [...list]
+      cases.forEach((c) => {
+        if (next.some((x) => x.id === c.id && x.status === '委外中')) return
+        next.unshift({ id: c.id, name: c.name, total: c.total, to, due, entrustTime: today, status: '委外中' })
+      })
+      return next
+    })
+    const ids = new Set(cases.map((c) => c.id))
+    updateZzList<ZzCase>(ZZ_FILE.cases, (rs) => rs.map((r) => (ids.has(r.id) ? { ...r, status: '委外', outsource: true } : r)))
+    onDone(`发起委外委托 ${cases.length} 笔 → 机构 ${to}，佣金比例 ${rate}%，到期 ${due}${note ? '，备注：' + note : ''}`)
+  }
+  return (
+    <ZzModal open title="发起委外委托" onClose={onClose} width={560}
+      footer={<><ZzBtn onClick={onClose}>取消</ZzBtn><ZzBtn primary onClick={submit}>确认委托</ZzBtn></>}>
+      <div className="mb-2 text-sm text-gray-600">待委托案件 <b>{cases.length}</b> 笔，合计待还 <b>{money(cases.reduce((s, c) => s + c.remainTotal, 0))}</b></div>
+      <div className="grid grid-cols-2 gap-3">
+        <ZzField label="委外机构（仅可选合作中机构）">
+          <ZzSelect value={to} onChange={(e) => setTo(e.target.value)}>
+            <option value="">请选择</option>
+            {agencies.map((a) => <option key={a.id} value={a.id}>{a.name}（{a.id} · 评分 {a.score}）</option>)}
+          </ZzSelect>
+        </ZzField>
+        <ZzField label="委托到期日"><ZzInput type="date" value={due} onChange={(e) => setDue(e.target.value)} /></ZzField>
+        <ZzField label="佣金比例（%）"><ZzInput type="number" value={rate} onChange={(e) => setRate(Number(e.target.value))} /></ZzField>
+        <ZzField label="委托备注"><ZzInput value={note} onChange={(e) => setNote(e.target.value)} placeholder="可选：委托要求/注意事项" /></ZzField>
+      </div>
+      {err && <div className="mt-2 rounded bg-red-50 px-3 py-2 text-sm text-red-600">{err}</div>}
+      <div className="mt-3 rounded bg-slate-50 p-3 text-xs text-gray-600">确认后案件状态变更为「委外」，可在「委外案件监控」查看进度、在「委外回传记录」跟进机构反馈，到期或需收回时可召回。</div>
+    </ZzModal>
+  )
+}
+
+/* ---------------- 减免审批入口（有权人处理待审批申请，通过后自动入账） ---------------- */
+function ZzWaiverApprovalModal({ role, canApprove, onClose, onDone }: { role: string; canApprove: boolean; onClose: () => void; onDone: (msg: string) => void }) {
+  const apps = useZzList<WaiverAppr>(ZZ_FILE.waivers, [])
+  const who = (JSON.parse(localStorage.getItem('zdrk_user') || '{}').name || '') || role
+  const rows = [...apps].sort((a, b) => (a.status === '待审批' ? 0 : 1) - (b.status === '待审批' ? 0 : 1))
+  const decide = (a: WaiverAppr, st: '已通过' | '已驳回') => {
+    updateZzList<WaiverAppr>(ZZ_FILE.waivers, (list) => list.map((x) => (x.id === a.id ? { ...x, status: st, decider: who, decideTime: nowStr() } : x)))
+    updateZzList<ZzCase>(ZZ_FILE.cases, (rs) => rs.map((r) => {
+      if (r.id !== a.caseId) return r
+      if (st !== '已通过') return { ...r, waiverPending: false }
+      const cutP = a.type === '罚息减免' ? Math.min(r.remainPenalty, a.amt) : 0
+      return { ...r, remainPenalty: r.remainPenalty - cutP, remainTotal: Math.max(0, r.remainTotal - a.amt), waiverPending: false }
+    }))
+    onDone(`减免审批 ${a.id}（案件 ${a.caseId}）处理：${st}${st === '已通过' ? `，已减免 ${money(a.amt)} 并入账` : ''}`)
+  }
+  return (
+    <ZzModal open title="减免审批" onClose={onClose} width={760}
+      footer={<><ZzBtn onClick={onClose}>关闭</ZzBtn></>}>
+      {apps.length === 0 && <div className="py-8 text-center text-sm text-gray-400">暂无减免审批单。可在案件行操作「更多 → 减免申请」发起。</div>}
+      {apps.length > 0 && (
+        <ZzTable head={['审批单', '案件', '类型/金额', '发起人/时间', '状态', '审批']} rows={rows.map((a) => [
+          a.id, a.caseId + ' · ' + a.name, `${a.type} ${money(a.amt)}`, `${a.creator} / ${a.time}`,
+          <ZzBadge color={a.status === '待审批' ? BLUE : a.status === '已通过' ? '#16A34A' : '#DC2626'}>{a.status}{a.decider ? ` · ${a.decider}` : ''}</ZzBadge>,
+          a.status === '待审批'
+            ? (canApprove
+              ? <div className="flex gap-1"><ZzBtn sm primary onClick={() => decide(a, '已通过')}>通过</ZzBtn><ZzBtn sm danger onClick={() => decide(a, '已驳回')}>驳回</ZzBtn></div>
+              : <span className="text-xs text-gray-400">无权限</span>)
+            : '-',
+        ])} />
+      )}
+      {!canApprove && <div className="mt-3 rounded bg-red-50 px-3 py-2 text-xs text-red-600">当前角色（{role}）无审批权限，仅可查看。</div>}
+    </ZzModal>
+  )
+}
+
+/* ---------------- 批量操作（带原因输入框 + 操作日志） ---------------- */
+function ZzBatchModal({ action, ids, owners, onClose, onConfirm }: { action: string; ids: string[]; owners: string[]; onClose: () => void; onConfirm: (reason: string, target: string) => void }) {
+  const [reason, setReason] = useState('')
+  const [target, setTarget] = useState('')
+  const [err, setErr] = useState('')
+  const needTarget = action.includes('转移') || action.includes('分配')
   if (ids.length === 0) {
     return (
       <ZzModal open title={action} onClose={onClose} width={480} footer={<ZzBtn primary onClick={onClose}>关闭</ZzBtn>}>
@@ -443,8 +680,9 @@ function ZzBatchModal({ action, ids, onClose, onConfirm }: { action: string; ids
   }
   return (
     <ZzModal open title={action} onClose={onClose} width={520}
-      footer={<><ZzBtn onClick={onClose}>取消</ZzBtn><ZzBtn primary onClick={() => { if (!reason.trim()) { setErr('需填写操作原因'); return } onConfirm(reason.trim()) }}>确认执行</ZzBtn></>}>
+      footer={<><ZzBtn onClick={onClose}>取消</ZzBtn><ZzBtn primary onClick={() => { if (!reason.trim()) { setErr('需填写操作原因'); return } if (needTarget && !target) { setErr('需选择目标处理人'); return } onConfirm(reason.trim(), target) }}>确认执行</ZzBtn></>}>
       <div className="mb-2 text-sm text-gray-600">已选 <b>{ids.length}</b> 笔案件：{ids.slice(0, 6).join('、')}{ids.length > 6 ? '…' : ''}</div>
+      {needTarget && <ZzField label="目标处理人（必选）"><ZzSelect value={target} onChange={(e) => setTarget(e.target.value)}><option value="">请选择</option>{owners.map((o) => <option key={o} value={o}>{o}</option>)}</ZzSelect></ZzField>}
       <ZzField label="操作原因（必填，写入操作日志）"><ZzTextarea value={reason} onChange={(e) => setReason(e.target.value)} placeholder="说明本次批量操作的原因" /></ZzField>
       {err && <div className="mt-2 rounded bg-red-50 px-3 py-2 text-sm text-red-600">{err}</div>}
     </ZzModal>
@@ -498,7 +736,30 @@ function ZzImportModal({ role, onClose, onDone }: { role: string; onClose: () =>
       }
     }, 240)
   }
-  const finish = () => { onDone(`案件导入：向导导入成功 ${finishInfo.ok} 条，跳过 ${finishInfo.fail} 条（校验失败）`); onClose() }
+  const finish = () => {
+    // 导入的案件真正写入共享案件数据：列表与详情页都能查到，不再"导入成功却查无此案"
+    const today = new Date().toISOString().slice(0, 10)
+    let added = 0
+    updateZzList<ZzCase>(ZZ_FILE.cases, (rs) => {
+      const existing = new Set(rs.map((r) => r.id))
+      const fresh: ZzCase[] = validRows
+        .filter((r) => !existing.has(r.id))
+        .map((r) => ({
+          id: r.id, name: r.name, idno: '—', contract: '—',
+          principal: r.total, penalty: 0, total: r.total,
+          remainPrincipal: r.total, remainPenalty: 0, remainTotal: r.total,
+          stage: (['M0', 'M1', 'M2', 'M3+'].includes(r.stage) ? r.stage : 'M1') as ZzCase['stage'],
+          overdueRange: '—', status: '待分案', owner: '系统',
+          lost: false, outsource: false, litigation: false,
+          lastTouch: today, phone: '—', contacts: 0, overdueDays: 0, nextFollow: '—',
+          paused: false, waiverPending: false,
+        }))
+      added = fresh.length
+      return [...fresh, ...rs]
+    })
+    onDone(`案件导入：成功写入 ${added} 条（跳过 ${finishInfo.fail} 条校验失败）`)
+    onClose()
+  }
 
   const stepCls = (i: number) => `flex flex-col items-center ${i === step ? 'text-[#1677ff]' : i < step ? 'text-[#16A34A]' : 'text-gray-400'}`
   return (
@@ -632,6 +893,7 @@ function ZzCaseHistory() {
   const [sortAsc, setSortAsc] = useState(true)
   const [hidden, setHidden] = useState<Record<string, boolean>>({})
   const [showColSet, setShowColSet] = useState(false)
+  const [tab, setTab] = useState('历史案件列表')
 
   const rows = ZZ_HISTORY_CASES.filter((h) => {
     if (q && !(h.name.includes(q) || h.idCard.includes(q))) return false
@@ -680,6 +942,8 @@ function ZzCaseHistory() {
         )}
       </div>
     }>
+      <ZzTabs tabs={['历史案件列表', '关联关系图谱']} active={tab} onChange={setTab} className="mb-3" />
+      {tab === '历史案件列表' ? (
       <ZzCard title="历史案件列表">
         <div className="mb-3 rounded border bg-slate-50 p-3">
           <div className="flex flex-wrap items-end gap-3">
@@ -726,6 +990,11 @@ function ZzCaseHistory() {
         </div>
         <div className="mt-2 text-xs text-gray-400">共 {sorted.length} 条 · 点击「案件快照」或案件编号查看结案快照。</div>
       </ZzCard>
+      ) : (
+      <ZzCard title="关联关系图谱（归档样例）" subtitle="以下为已结案/核销/诉讼结案客户的归档关联关系样例，源自历史案件图谱画像">
+        <CaseRelationGraph g={ZZ_HISTORY_GRAPH_SAMPLE} />
+      </ZzCard>
+      )}
     </ZzPage>
   )
 }
@@ -743,15 +1012,20 @@ function ZzCaseDetailPage() {
   const nav = useNavigate()
   const role = zzCurrentRole()
   const id = new URLSearchParams(loc.search).get('id') || ''
-  const inActive = ZZ_CASES.find((c) => c.id === id)
+  // 案件统一读共享数据层：列表/坐席工作台改的状态、金额、标记，详情页即时同步（不再各读一套）
+  const cases = useZzList<ZzCase>(ZZ_FILE.cases, ZZ_CASES)
+  const inActive = cases.find((x) => x.id === id)
   const inHist = ZZ_HISTORY_CASES.find((h) => h.id === id)
   const readOnly = !inActive && !!inHist
   const c = inActive || (inHist ? { id: inHist.id, name: inHist.name, idno: '—', contract: '—', principal: inHist.total, penalty: 0, total: inHist.total, remainPrincipal: 0, remainPenalty: 0, remainTotal: 0, stage: 'M1' as const, overdueRange: '—', status: inHist.closeType, owner: '—', lost: false, outsource: false, litigation: false, lastTouch: inHist.closeTime, phone: '—', contacts: 0 } : null)
   const notes = ZZ_CASE_NOTES[id] ?? []
   const d = zzDetailOf(id)
-  // 坐席工作台录入的还款承诺 / 协商方案（与工作台共享存储，双向同步展示）
-  const agentPtp = ZZ_AGENT_PTP[id] ?? []
+  // 还款承诺 / 协商方案：共享数据层（坐席工作台实时录入）+ 工作台内存，双向同步展示
+  const sharedPtp = useZzList<any>(ZZ_FILE.ptp, [])
+  const agentPtp = [...sharedPtp.filter((p) => p.caseId === id), ...(ZZ_AGENT_PTP[id] ?? [])]
   const agentNego = ZZ_AGENT_NEGO[id] ?? []
+  // 操作日志写入共享数据层：案件抽屉「🧾操作日志」可查
+  const addDetailLog = (content: string) => updateZzList<any>(ZZ_FILE.logs, (l) => [{ time: nowStr(), operator: role, content: `案件 ${id} ${content}` }, ...l])
   const btns = zzCaseButtons(c ? c.status : '', role)
   const today = new Date().toISOString().slice(0, 10)
 
@@ -761,9 +1035,13 @@ function ZzCaseDetailPage() {
   const [ptpOpen, setPtpOpen] = useState(false)
   const [focusPtp, setFocusPtp] = useState('')
   const [focusAct, setFocusAct] = useState('')
+  const [transferOpen, setTransferOpen] = useState(false)
+  const [disposeOpen, setDisposeOpen] = useState(false)
+  const [entrustFromDetail, setEntrustFromDetail] = useState(false)
   const [actions, setActions] = useState(d.actions)
   const [actionOpen, setActionOpen] = useState(false)
   const [ptpKind, setPtpKind] = useState<'口头PTP' | '正式协议'>('口头PTP')
+  const [call, setCall] = useState(false)
   const goto = (sec: string, focus?: string, setFocus?: (s: string) => void) => {
     document.getElementById(sec)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
     if (focus && setFocus) setFocus(focus)
@@ -821,16 +1099,23 @@ function ZzCaseDetailPage() {
 
       {/* 结案归档提示：结案快照为只读，业务操作以灰色禁用态展示，无需额外警示与重复入口 */}
 
-      {/* 顶部操作按钮区：业务左 / 辅助右 */}
-      <div className={panel}>
-        <div className={phead}>
+      {/* 顶部操作按钮区：吸顶在页面标题下方（业务左 / 辅助右） */}
+      <div className="sticky top-0 z-30 mb-3 rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
+        <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex flex-wrap items-center gap-2">
             {readOnly ? null : (<>
               <BizBtn name="还款登记" onClick={() => setRepay(c)} danger />
               <BizBtn name="减免申请" onClick={() => setWaiver(c)} />
-              <BizBtn name="案件转移" onClick={() => alert('打开案件转移')} />
-              <BizBtn name="暂停/恢复" onClick={() => alert('暂停/恢复催收')} />
-              <BizBtn name="转外包/核销" onClick={() => alert('打开转外包/核销审批')} danger />
+              <BizBtn name="案件转移" onClick={() => setTransferOpen(true)} />
+              <BizBtn name="暂停/恢复" onClick={() => {
+                if (!c) return
+                const nextPaused = !(c as ZzCase).paused
+                updateZzList<ZzCase>(ZZ_FILE.cases, (rs) => rs.map((x) => (x.id === c.id ? { ...x, paused: nextPaused } : x)))
+                addDetailLog(nextPaused ? '暂停催收' : '恢复催收')
+                alert(nextPaused ? '已暂停催收' : '已恢复催收')
+              }} />
+              <BizBtn name="转外包/核销" onClick={() => setDisposeOpen(true)} danger />
+              <BizBtn name="外呼" onClick={() => setCall(true)} primary />
             </>)}
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -990,74 +1275,50 @@ function ZzCaseDetailPage() {
         </div>
       </div>
 
-      {repay && <ZzRepayModal case={repay} role={role} onClose={() => setRepay(null)} onSave={(amt, note) => { alert(`已登记线下还款 ${money(amt)}，备注：${note}`); setRepay(null) }} />}
-      {waiver && <ZzWaiverModal case={waiver} role={role} onClose={() => setWaiver(null)} onApply={() => {}} />}
-      {ptpOpen && <ZzPtpRegisterModal caseId={c.id} role={role} defaultKind={ptpKind} onClose={() => setPtpOpen(false)} onSave={() => setPtpOpen(false)} />}
+      {repay && <ZzRepayModal case={repay} role={role} onClose={() => setRepay(null)} onSave={(amt, note) => {
+        updateZzList<ZzCase>(ZZ_FILE.cases, (rs) => rs.map((x) => {
+          if (x.id !== repay.id) return x
+          const remainPrincipal = Math.max(0, x.remainPrincipal - amt)
+          const paidFull = remainPrincipal === 0
+          return { ...x, remainPrincipal, remainTotal: Math.max(0, x.remainTotal - amt), status: paidFull ? '已结清' : x.status }
+        }))
+        addDetailLog(`线下还款登记 金额 ${money(amt)}，备注：${note}`)
+        alert(`已登记线下还款 ${money(amt)}，操作日志已留存${amt >= repay.remainTotal ? '；账户已结清并自动归档' : ''}`)
+        setRepay(null)
+      }} />}
+      {waiver && <ZzWaiverModal case={waiver} role={role} onClose={() => setWaiver(null)} onApply={(content) => addDetailLog(content)} />}
+      {ptpOpen && <ZzPtpRegisterModal caseId={c.id} role={role} defaultKind={ptpKind} onClose={() => setPtpOpen(false)} onSave={() => { addDetailLog('登记还款承诺 PTP'); setPtpOpen(false) }} />}
       {actionOpen && <ZzActionAddModal caseId={c.id} role={role} ptpOptions={[...d.ptpOral, ...d.ptpAgreement].map((p) => p.id)} onClose={() => setActionOpen(false)} onSave={(rec) => { setActions((s) => [...s, rec]); setActionOpen(false) }} />}
+      {call && <CaseDrawer caseId={c.id} initTab="💬通话&处置工作台" onClose={() => setCall(false)} />}
       {snapOpen && <ZzSnapshotModal c={c} onClose={() => setSnapOpen(false)} />}
+      {transferOpen && c && <ZzTransferModal c={c} owners={[...new Set(cases.map((x) => x.owner))]} onClose={() => setTransferOpen(false)} onDone={(target, reason) => {
+        updateZzList<ZzCase>(ZZ_FILE.cases, (rs) => rs.map((x) => (x.id === c.id ? { ...x, owner: target } : x)))
+        addDetailLog(`案件转移给 ${target}，原因：${reason}`)
+        alert(`已转移给 ${target}`)
+        setTransferOpen(false)
+      }} />}
+      {disposeOpen && c && <ZzDisposeModal c={c} onClose={() => setDisposeOpen(false)}
+        onEntrust={() => { setDisposeOpen(false); setEntrustFromDetail(true) }}
+        onWriteOff={(reason) => {
+          updateZzList<ZzCase>(ZZ_FILE.cases, (rs) => rs.map((x) => (x.id === c.id ? { ...x, status: '核销' } : x)))
+          addDetailLog(`核销处理，原因：${reason}`)
+          alert('已提交核销，案件转入历史案件归档')
+          setDisposeOpen(false)
+        }} />}
+      {entrustFromDetail && c && <ZzEntrustModal cases={[c]} onClose={() => setEntrustFromDetail(false)} onDone={(msg) => { addDetailLog(msg); alert('委托已发起：' + msg); setEntrustFromDetail(false) }} />}
 
-      {/* 关联关系图谱（知识图谱嵌入：合规内部授权数据，仅作风险研判与线索参考） */}
-      {(() => {
-        const g = ZZ_GRAPH_PROFILES[c.id]
-        return (
-          <div id="sec-graph" className="mt-2">
-            <div className={panel}>
-              <div className={phead}>
-                <span>关联关系图谱</span>
-                <span className="rounded bg-[#eef4ff] px-1 text-xs text-[#1677ff]">图谱增强 · 仅内部授权数据</span>
-              </div>
-              <div className={pbody}>
-                {!g ? (
-                  <div className="py-6 text-center text-sm text-gray-400">本案件暂未纳入图谱关系网络（无同址/同设备/关联人线索）。</div>
-                ) : (
-                  <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-                    {/* 左：关系网络可视化 */}
-                    <div className="lg:col-span-2">
-                      <div className="rounded border bg-slate-50 p-3">
-                        <div className="mb-2 text-xs text-gray-500">以欠款客户为中心（1度合规关系）</div>
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span className="rounded bg-[#1677ff] px-2 py-1 text-xs font-medium text-white">★ {g.center}（本人）</span>
-                          <span className="text-gray-400">—</span>
-                          {g.contacts.map((ct: any, i: number) => (
-                            <span key={i} className="rounded border border-green-300 bg-green-50 px-2 py-1 text-xs text-green-700">{ct.rel}：{ct.name}{ct.reachable ? ' ✅可呼' : ' ⛔暂不可达'}</span>
-                          ))}
-                          {g.sameAddr.map((s: string, i: number) => <span key={'a' + i} className="rounded border border-red-300 bg-red-50 px-2 py-1 text-xs text-red-600">同址逾期：{s}</span>)}
-                          {g.sameDevice.map((s: string, i: number) => <span key={'d' + i} className="rounded border border-amber-300 bg-amber-50 px-2 py-1 text-xs text-amber-700">同设备逾期：{s}</span>)}
-                          {g.history.map((s: string, i: number) => <span key={'h' + i} className="rounded border border-gray-300 bg-gray-50 px-2 py-1 text-xs text-gray-500">历史关联：{s}</span>)}
-                        </div>
-                        {g.tags.length > 0 && (
-                          <div className="mt-3 flex flex-wrap gap-1">
-                            {g.tags.map((t: any, i: number) => <ZzBadge key={i} color={ZZ_GRAPH_TAG_COLOR[t]}>{t}</ZzBadge>)}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                    {/* 右：三大辅助研判 */}
-                    <div className="space-y-3">
-                      <div className="rounded border p-2">
-                        <div className="mb-1 text-xs text-gray-500">① 失联修复线索（合规）</div>
-                        <div className="text-sm">可达性得分：<b className="text-[#1677ff]">{g.lostRepair.score}</b></div>
-                        <div className="text-xs text-gray-600">{g.lostRepair.hint}</div>
-                      </div>
-                      <div className="rounded border p-2">
-                        <div className="mb-1 text-xs text-gray-500">② 团伙风险提示</div>
-                        {g.gang.inGang
-                          ? <div className="text-sm text-red-600">处于逾期团伙 {g.gang.gangId}（{g.gang.gangSize}人）· {g.gang.level} · {g.gang.risk}</div>
-                          : <div className="text-sm text-green-600">未命中逾期团伙网络</div>}
-                      </div>
-                      <div className="rounded border p-2">
-                        <div className="mb-1 text-xs text-gray-500">③ 还款能力/意愿辅助</div>
-                        <div className="text-xs text-gray-600">{g.ability}</div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-                <div className="mt-2 text-xs text-gray-400">合规说明：图谱仅使用系统已授权内部数据（本人/紧急联系人/共借人/担保人/同址同设备逾期客户/历史关联案件），不直接外呼陌生关联人，仅作风险研判与线索参考。</div>
-              </div>
-            </div>
+      {/* 关联关系图谱（关系图谱可视化：合规内部授权数据，仅作风险研判与线索参考） */}
+      <div id="sec-graph" className="mt-2">
+        <div className={panel}>
+          <div className={phead}>
+            <span>关联关系图谱</span>
+            <span className="rounded bg-[#eef4ff] px-1 text-xs text-[#1677ff]">图谱增强 · 仅内部授权数据</span>
           </div>
-        )
-      })()}
+          <div className={pbody}>
+            <CaseRelationGraph g={ZZ_GRAPH_PROFILES[c.id]} />
+          </div>
+        </div>
+      </div>
 
       {/* 操作日志（审计轨迹）：由详情页顶部按钮下沉至页面底部，列表与快照页同步 */}
       <div id="sec-log" className="mt-2">
@@ -1097,6 +1358,44 @@ function ZzSnapshotModal({ c, onClose }: { c: ZzCase; onClose: () => void }) {
   )
 }
 
+/* ---------------- 案件转移（详情页顶部按钮：真改归属人） ---------------- */
+function ZzTransferModal({ c, owners, onClose, onDone }: { c: ZzCase; owners: string[]; onClose: () => void; onDone: (target: string, reason: string) => void }) {
+  const [to, setTo] = useState('')
+  const [reason, setReason] = useState('')
+  const [err, setErr] = useState('')
+  return (
+    <ZzModal open title="案件转移" onClose={onClose} width={480}
+      footer={<><ZzBtn onClick={onClose}>取消</ZzBtn><ZzBtn primary onClick={() => { if (!to) { setErr('请选择目标处理人'); return } if (!reason.trim()) { setErr('请填写转移原因'); return } onDone(to, reason.trim()) }}>确认转移</ZzBtn></>}>
+      <div className="mb-2 text-sm text-gray-600">案件 {c.id}（{c.name}）当前处理人：<b>{c.owner}</b></div>
+      <ZzField label="转移给"><ZzSelect value={to} onChange={(e) => setTo(e.target.value)}><option value="">请选择</option>{owners.map((o) => <option key={o} value={o}>{o}</option>)}</ZzSelect></ZzField>
+      <ZzField label="转移原因（必填）"><ZzTextarea rows={3} value={reason} onChange={(e) => setReason(e.target.value)} placeholder="说明转移原因" /></ZzField>
+      {err && <div className="mt-2 rounded bg-red-50 px-3 py-2 text-sm text-red-600">{err}</div>}
+    </ZzModal>
+  )
+}
+
+/* ---------------- 转外包 / 核销（详情页顶部按钮） ---------------- */
+function ZzDisposeModal({ c, onClose, onEntrust, onWriteOff }: { c: ZzCase; onClose: () => void; onEntrust: () => void; onWriteOff: (reason: string) => void }) {
+  const [mode, setMode] = useState<'转外包' | '核销'>('转外包')
+  const [reason, setReason] = useState('')
+  const [err, setErr] = useState('')
+  return (
+    <ZzModal open title="转外包 / 核销" onClose={onClose} width={520}
+      footer={<><ZzBtn onClick={onClose}>取消</ZzBtn><ZzBtn primary danger={mode === '核销'} onClick={() => {
+        if (mode === '转外包') { onEntrust(); return }
+        if (!reason.trim()) { setErr('核销需填写原因'); return }
+        onWriteOff(reason.trim())
+      }}>确认</ZzBtn></>}>
+      <div className="mb-2 text-sm text-gray-600">案件 {c.id}（{c.name}）当前待还 <b>{money(c.remainTotal)}</b></div>
+      <ZzField label="处置方式"><ZzSelect value={mode} onChange={(e) => setMode(e.target.value as any)}><option>转外包</option><option>核销</option></ZzSelect></ZzField>
+      {mode === '转外包'
+        ? <div className="rounded bg-slate-50 p-3 text-xs text-gray-600">下一步选择委外机构，确认后案件状态转为「委外」，可在「委外案件监控」跟踪进度。已在委外的案件请先召回。</div>
+        : <ZzField label="核销原因（必填）"><ZzTextarea rows={3} value={reason} onChange={(e) => setReason(e.target.value)} placeholder="说明核销依据（如：多次催收无果、失联超期）" /></ZzField>}
+      {err && <div className="mt-2 rounded bg-red-50 px-3 py-2 text-sm text-red-600">{err}</div>}
+    </ZzModal>
+  )
+}
+
 /* ---------------- 登记 PTP 弹窗 ---------------- */
 function ZzPtpRegisterModal({ caseId, role, defaultKind = '口头PTP', onClose, onSave }: { caseId: string; role: string; defaultKind?: '口头PTP' | '正式协议'; onClose: () => void; onSave: () => void }) {
   const [promiseTime, setPromiseTime] = useState('2026-08-28')
@@ -1109,6 +1408,11 @@ function ZzPtpRegisterModal({ caseId, role, defaultKind = '口头PTP', onClose, 
     if (!note.trim()) { setErr('需填写承诺说明'); return }
     if (new Date(dueTime) < new Date(promiseTime)) { setErr('到期时间不能早于承诺时间'); return }
     setErr('')
+    // 写入共享数据层：案件列表「生效承诺」列与 PTP 统计卡即时体现，坐席工作台也能看到
+    updateZzList<any>(ZZ_FILE.ptp, (list) => [{
+      id: 'PTP-' + Date.now().toString().slice(-6), caseId, date: dueTime, amt,
+      type: kind === '正式协议' ? '协议' : '口头', status: '待履约', note: note.trim(), creator: role,
+    }, ...list])
     alert(`已登记${kind}：${caseId}，承诺 ${money(amt)}，到期 ${dueTime}`)
     onSave()
   }

@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { ZzPage, ZzCard, ZzTable, ZzTabs, ZzBtn, ZzField, ZzSelect, ZzInput, ZzTextarea, ZzBadge, ZzStat, ZzModal, ZzFilterBar } from './zzUi'
 import { ZZ_AGENT_STAT, ZZ_AGENT_POOL, zzDetailOf, ZZ_CASES, zzAiLogOf, zzFlowOf, zzTranscriptOf, zzCallObjective, zzScriptRef, ZZ_AGENT_PTP, ZZ_AGENT_NEGO } from './zzData'
 import type { ZzAgentCase, AgentPtp, AgentNego } from './zzData'
+import { useZzList, updateZzList, ZZ_FILE, useCompliancePolicy, inBanWindow } from './zzStore'
 type PtpRow = AgentPtp
 type NegoRow = AgentNego
 
@@ -13,7 +14,7 @@ const BAN_WINDOW = '22:00-08:00'
 const MAX_CALL = 2
 
 const AGENT_PAGES = [
-  { key: 'zz:agent-pool', label: '我的案件池', render: () => <ZzAgentPool /> },
+  { key: 'zz:agent-pool', label: '外呼任务', render: () => <ZzAgentPool /> },
 ]
 
 export function ZzAgentModule({ pageKey }: { pageKey: string }) {
@@ -61,7 +62,7 @@ function ZzAgentPool() {
   }
 
   return (
-    <ZzPage title="我的案件池" crumb="催贷管理 / 坐席工作台" subtitle="坐席名下案件：点击整行或「打开案件」唤起右侧常驻抽屉；在「通话&处置工作台」单页完成通话→写催记→登记承诺，无需切换 Tab（替散弹窗）">
+    <ZzPage title="外呼任务" crumb="催贷管理 / 外呼任务" subtitle="坐席名下外呼任务列表，点击「打开案件」进入通话与处置工作台">
       <ZzFilterBar>
         <ZzField label="案件状态">
           <ZzSelect value={fStatus} onChange={(e) => setFStatus(e.target.value)}>
@@ -85,15 +86,6 @@ function ZzAgentPool() {
         </ZzField>
         <ZzBtn onClick={() => { setFStatus(''); setFStage(''); setFDue(''); setFScope('全部') }}>重置</ZzBtn>
       </ZzFilterBar>
-
-      <div className="mb-3 flex items-center gap-3">
-        <span className="text-sm text-gray-500">范围：</span>
-        <div className="inline-flex overflow-hidden rounded border border-slate-300">
-          {(['全部', '今日待办'] as const).map((s, i) => (
-            <button key={s} onClick={() => setFScope(s)} className={`px-4 py-1.5 text-sm ${i > 0 ? 'border-l border-slate-300' : ''} ${fScope === s ? 'bg-[#1677ff] text-white' : 'bg-white text-gray-600 hover:bg-slate-50'}`}>{s}</button>
-          ))}
-        </div>
-      </div>
 
       <ZzCard title={`案件池（${list.length}）`}>
         <ZzTable
@@ -192,13 +184,20 @@ function RecPlayer({ url, label = '▶ 播放录音' }: { url: string; label?: s
 }
 
 /* ============================ 右侧常驻抽屉 ============================ */
-const TABS = ['📋案件概览', '💬通话&处置工作台', '📜历史记录']
+const TABS = ['📋案件概览', '💬通话&处置工作台', '📜历史记录', '🧾操作日志']
 
 type CallState = 'idle' | 'dialing' | 'ringing' | 'connected' | 'missed' | 'rejected' | 'ended'
 
-function CaseDrawer({ caseId, initTab, onClose, onPromise }: { caseId: string; initTab: string; onClose: () => void; onPromise: (id: string, date: string) => void }) {
+export function CaseDrawer({ caseId, initTab, onClose, onPromise }: { caseId: string; initTab: string; onClose: () => void; onPromise?: (id: string, date: string) => void }) {
   const nav = useNavigate()
-  const cs = useMemo(() => ZZ_AGENT_POOL.find((p) => p.id === caseId)!, [caseId])
+  // 兼容案件管理（案件号可能不在我的案件池）：优先池内，否则回退到 ZZ_CASES 并补全字段
+  const cs = useMemo(() => {
+    const pool = ZZ_AGENT_POOL.find((p) => p.id === caseId)
+    if (pool) return pool
+    const c: any = ZZ_CASES.find((x) => x.id === caseId)
+    if (c) return { id: c.id, name: c.cust ?? c.customer ?? caseId, total: c.total ?? c.amount ?? 0, promiseDue: c.promiseDue ?? '', archived: false, tags: c.tags ?? [] }
+    return { id: caseId, name: caseId, total: 0, promiseDue: '', archived: false, tags: [] }
+  }, [caseId])
   const detail = useMemo(() => zzDetailOf(caseId), [caseId])
   const aiLog = useMemo(() => zzAiLogOf(caseId), [caseId])
   const flow = useMemo(() => zzFlowOf(caseId), [caseId])
@@ -209,6 +208,9 @@ function CaseDrawer({ caseId, initTab, onClose, onPromise }: { caseId: string; i
   const openDetail = () => { onClose(); nav('/console/zz/case-detail?id=' + encodeURIComponent(caseId)) }
 
   const [tab, setTab] = useState(initTab)
+  // 操作日志读共享数据层：任何页面（案件管理 / 坐席工作台 / 委外 / 法务）写入的操作都能在这里查到
+  const allLogs = useZzList<{ time: string; operator: string; content: string }>(ZZ_FILE.logs, [])
+  const caseLogs = allLogs.filter((l) => l.content.includes(caseId))
   const [notes, setNotes] = useState(detail.actions)
   // 初始化：共享存储（坐席录入）+ 案件详情页样例，保持单一数据源
   const [ptps, setPtps] = useState<PtpRow[]>(() => [
@@ -235,17 +237,22 @@ function CaseDrawer({ caseId, initTab, onClose, onPromise }: { caseId: string; i
   const [pendingNote, setPendingNote] = useState(false)
   const [liveCall, setLiveCall] = useState(false)
   const [callId, setCallId] = useState('')
+  // 话术参考：从主抽屉左缘伸出的第二层抽屉（分层但不分离）
+  const [showScriptDrawer, setShowScriptDrawer] = useState(false)
+  const objective = useMemo(() => zzCallObjective(cs, ptps), [cs, ptps])
   const timers = useRef<number[]>([])
   const clearTimers = () => { timers.current.forEach((t) => { clearTimeout(t); clearInterval(t) }); timers.current = [] }
   useEffect(() => () => clearTimers(), [])
 
   const hour = new Date().getHours()
-  const winBlocked = compliance ? compliance.includes('时段') : (hour >= 22 || hour < 8)
-  const callBlocked = winBlocked || todayCalls >= MAX_CALL
+  // 合规配置读共享数据层：策略画布里改的禁呼时段与每日上限，外呼侧即时生效（不再写死）
+  const { banWindow, maxCall: maxCallLimit } = useCompliancePolicy()
+  const winBlocked = compliance ? compliance.includes('时段') : inBanWindow(hour, banWindow)
+  const callBlocked = winBlocked || todayCalls >= maxCallLimit
 
   const startCall = () => {
-    if (winBlocked) { setCompliance('当前时段禁止外呼（' + BAN_WINDOW + '）'); return }
-    if (todayCalls >= MAX_CALL) { setCompliance(`今日呼叫次数已达上限（${MAX_CALL} 次）`); return }
+    if (winBlocked) { setCompliance('当前时段禁止外呼（' + banWindow + '）'); return }
+    if (todayCalls >= maxCallLimit) { setCompliance(`今日呼叫次数已达上限（${maxCallLimit} 次）`); return }
     setCompliance('')
     setCallId('CALL-' + Date.now())
     setTodayCalls((c) => c + 1)
@@ -291,7 +298,9 @@ function CaseDrawer({ caseId, initTab, onClose, onPromise }: { caseId: string; i
   const saveNote = (rec: string, content: string, attitude: string, follow: string, next: string, cid: string, transcript: string, intent: string, ptp: PtpRow | null, nego: NegoRow | null, objective: string) => addNote(rec, content, attitude, follow, next, cid, transcript, intent, ptp, nego, objective)
   const savePtp = (row: PtpRow) => {
     ZZ_AGENT_PTP[cs.id] = [row, ...(ZZ_AGENT_PTP[cs.id] ?? [])]
-    setPtps((l) => [row, ...l]); onPromise(cs.id, row.date)
+    // 同步写入共享数据层：案件管理列表的「生效承诺」列与 PTP 统计卡即时可见，刷新不丢
+    updateZzList<any>(ZZ_FILE.ptp, (list) => [{ ...row, caseId: cs.id }, ...list])
+    setPtps((l) => [row, ...l]); onPromise?.(cs.id, row.date)
   }
   const saveNego = (row: NegoRow) => {
     ZZ_AGENT_NEGO[cs.id] = [row, ...(ZZ_AGENT_NEGO[cs.id] ?? [])]
@@ -326,6 +335,7 @@ function CaseDrawer({ caseId, initTab, onClose, onPromise }: { caseId: string; i
               cs={cs} call={call} secs={secs} muted={muted} transfer={transfer} intent={intent} contactSel={contactSel}
               transcript={transcript} todayCalls={todayCalls} callBlocked={callBlocked} winBlocked={winBlocked} compliance={compliance}
               recUrl={recUrl} savedRecUrl={savedRecUrl} liveCall={liveCall} pendingNote={pendingNote} callId={callId}
+              objective={objective} onOpenScript={() => setShowScriptDrawer(true)}
               notes={notes} ptps={ptps} negos={negos} disabled={!!cs.archived} contacts={contacts}
               onIntent={setIntent} onContact={setContactSel} onMute={() => setMuted((m) => !m)} onTransfer={(name) => setTransfer(name)}
               onStart={startCall} onHangup={hangup}
@@ -335,7 +345,21 @@ function CaseDrawer({ caseId, initTab, onClose, onPromise }: { caseId: string; i
           {tab === '📜历史记录' && (
             <HistoryTab notes={notes} ptps={ptps} negos={negos} recUrl={recUrl} aiLog={aiLog} flow={flow} />
           )}
+          {tab === '🧾操作日志' && (
+            <div className="p-4">
+              {caseLogs.length === 0 ? (
+                <div className="py-8 text-center text-sm text-gray-400">本案暂无操作记录。发起减免、登记还款、批量操作、发起委托、导出台账等动作都会记录在这里。</div>
+              ) : (
+                <ZzTable head={['时间', '操作人', '操作内容']} rows={caseLogs.map((l) => [l.time, l.operator, l.content])} />
+              )}
+            </div>
+          )}
         </div>
+
+        {/* 话术参考：从主抽屉左缘伸出的第二层抽屉（分层但不分离，始终贴附主抽屉） */}
+        {showScriptDrawer && (
+          <ScriptDrawer open onClose={() => setShowScriptDrawer(false)} cs={cs} objective={objective} intent={intent} />
+        )}
       </div>
     </div>
   )
@@ -396,9 +420,7 @@ function ScriptDrawer({ open, onClose, cs, objective, intent }: any) {
   if (!open) return null
   const fill = (s: string) => s.replace(/\{客户\}/g, cs.name).replace(/\{金额\}/g, money(cs.total)).replace(/\{承诺日\}/g, cs.promiseDue || '—').replace(/\{期数\}/g, '6').replace(/\{每期金额\}/g, money(600)).replace(/\{首期日\}/g, '—').replace(/\{工号\}/g, 'A1024')
   return (
-    <div className="fixed inset-0 z-[1100]">
-      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      <div className="absolute right-0 top-0 flex h-full w-[480px] max-w-[92vw] flex-col bg-white shadow-2xl" style={{ animation: 'zzDrawerIn .2s ease' }}>
+    <div className="absolute right-full top-3 bottom-3 z-0 flex w-[400px] max-w-[calc(100vw-876px)] flex-col rounded-l-2xl border border-slate-200 bg-white" style={{ boxShadow: '-14px 0 30px -10px rgba(0,0,0,0.20)', animation: 'zzDrawerIn .22s ease' }}>
         <div className="flex items-center justify-between border-b px-4 py-3">
           <div className="text-sm font-semibold">💡 话术参考（大模型生成）</div>
           <button className="text-xl leading-none text-gray-400 hover:text-gray-600" onClick={onClose}>✕</button>
@@ -425,27 +447,23 @@ function ScriptDrawer({ open, onClose, cs, objective, intent }: any) {
           )}
         </div>
       </div>
-    </div>
   )
 }
 
 function WorkbenchTab(props: any) {
   const { cs, call, secs, muted, transfer, intent, contactSel, transcript, todayCalls, callBlocked, winBlocked, compliance, recUrl, savedRecUrl, liveCall, pendingNote, callId,
+    objective, onOpenScript,
     notes, ptps, negos, disabled, contacts,
     onIntent, onContact, onMute, onTransfer, onStart, onHangup,
     onSaveNote, onSavePtp, onSaveNego } = props
 
+  // 合规配置读共享数据层：显示策略画布配置的每日呼叫上限
+  const { maxCall: maxCallLimit } = useCompliancePolicy()
   const emergency = cs.tags.includes('失联') ? '137****2211（紧急联系人）' : null
   const hasNote = notes.length > 0
   const ex = extractPromise(transcript, cs.total)
-  // 本次通话目标：多源自动推导（承诺到期/失联/协商/状态/阶段策略），坐席可手动调整
-  const objective = useMemo(() => zzCallObjective(cs, ptps), [cs, ptps])
-  const [tTitle, setTTitle] = useState('')
-  const [tNote, setTNote] = useState('')
-  const [showScriptDrawer, setShowScriptDrawer] = useState(false)
-  const [showObjective, setShowObjective] = useState(false)
-  const scripts = useMemo(() => zzScriptRef(objective), [objective])
-  const objTitle = tTitle || objective.title
+  // 本次通话目标：由 CaseDrawer 统一推导后传入（多源自动推导，坐席不可改）
+  const objTitle = objective.title
   // 从实时转录重新提取并回填 PTP 表单；未识别到则提示手动填写（保证「一键填充」始终可点）
   const fillFromTranscript = () => {
     const r = extractPromise(transcript, cs.total)
@@ -503,7 +521,7 @@ function WorkbenchTab(props: any) {
     if (disabled) return
     if (!content.trim()) { alert('请先填写催记内容摘要'); return }
     const cid = callId || ('CALL-' + Date.now())
-    const tLine = `🎯目标：${objTitle}${tNote ? '（' + tNote + '）' : ''}｜`
+    const tLine = `🎯目标：${objTitle}｜`
     const savedPtp: PtpRow | null = pDate ? { id: 'PTP-' + Date.now(), date: pDate, amt: pAmt, type: pType, status: '待履约', note: pNote, callId: cid } : null
     const savedNego: NegoRow | null = firstDue ? { id: 'NEG-' + Date.now(), type: nType, terms, perAmt, firstDue, status: '待确认', note: '', callId: cid } : null
     // 本次通话目标 + 快速录入结构化字段 + 关联的承诺/方案，一并写入历史催记（避免历史单薄）
@@ -520,37 +538,15 @@ function WorkbenchTab(props: any) {
 
   return (
     <div className="space-y-4">
-      {/* ===== 本次通话目标（多源自动推导，原因/建议动作常驻可见，目标类型可展开调整） ===== */}
+      {/* ===== 本次通话目标（多源自动推导，原因/建议动作常驻可见；目标类型/补充说明由系统生成，坐席不可改） ===== */}
       <div className="rounded border-l-4 border-[#1677ff] bg-[#1677ff]/5 p-3">
-        <div className="flex cursor-pointer items-center justify-between" onClick={() => setShowObjective((v) => !v)}>
-          <span className="text-sm font-semibold text-[#1677ff]">🎯 本次通话目标（{showObjective ? '收起调整' : '展开调整'}）</span>
-          <div className="flex items-center gap-2">
-            <span className="rounded bg-white/70 px-2 py-0.5 text-xs text-gray-500">来源：{objective.source}</span>
-            <span className="text-xs text-gray-400">{showObjective ? '▲' : '▼'}</span>
-          </div>
+        <div className="flex items-center justify-between">
+          <span className="text-sm font-semibold text-[#1677ff]">🎯 本次通话目标</span>
+          <span className="rounded bg-white/70 px-2 py-0.5 text-xs text-gray-500">来源：{objective.source}</span>
         </div>
         <div className="mt-1 text-sm font-medium text-gray-800">{objTitle}</div>
         <div className="mt-0.5 text-xs text-gray-500">原因：{objective.reason}</div>
         <div className="mt-0.5 text-xs text-gray-500">建议动作：{objective.action}</div>
-
-        {showObjective && !disabled && (
-          <div className="mt-2 space-y-2 border-t border-[#1677ff]/10 pt-2">
-            <ZzField label="目标类型（可调整）">
-              <ZzSelect value={tTitle || '__auto'} onChange={(e) => setTTitle(e.target.value === '__auto' ? '' : e.target.value)}>
-                <option value="__auto">自动（{objective.title}）</option>
-                <option>核实承诺到账</option>
-                <option>确认分期/协商方案生效</option>
-                <option>建立联系推动首次承诺</option>
-                <option>失联修复触达</option>
-                <option>施压催收/预警法诉</option>
-                <option>其他（见下方说明）</option>
-              </ZzSelect>
-            </ZzField>
-            <ZzField label="目标补充说明（可选）">
-              <ZzInput placeholder="如：重点核实工资到账后还款" value={tNote} onChange={(e) => setTNote(e.target.value)} />
-            </ZzField>
-          </div>
-        )}
       </div>
 
       {/* ===== 上半区：通话控制区 ===== */}
@@ -559,7 +555,7 @@ function WorkbenchTab(props: any) {
           <div className="flex items-center gap-2">
             <span className="text-gray-500">外呼窗口 {CALL_WINDOW}</span>
             <span className="text-gray-300">|</span>
-            <span className="text-gray-500">今日已呼 {todayCalls}/{MAX_CALL}</span>
+            <span className="text-gray-500">今日已呼 {todayCalls}/{maxCallLimit}</span>
             {callBlocked
               ? <ZzBadge color="#DC2626">⚠ 触发合规限制</ZzBadge>
               : <ZzBadge color="#16A34A">✓ 合规通过</ZzBadge>}
@@ -583,11 +579,10 @@ function WorkbenchTab(props: any) {
 
         <div className="flex flex-wrap gap-2">
           {(call === 'idle' || call === 'ended' || call === 'missed' || call === 'rejected') && (
-            <>
-              <ZzBtn primary onClick={onStart} disabled={callBlocked || disabled}>{call === 'idle' ? '📞 发起外呼' : '🔁 重拨'}</ZzBtn>
-              <ZzBtn onClick={() => setShowScriptDrawer(true)}>💡 话术参考</ZzBtn>
-            </>
+            <ZzBtn primary onClick={onStart} disabled={callBlocked || disabled}>{call === 'idle' ? '📞 发起外呼' : '🔁 重拨'}</ZzBtn>
           )}
+          {/* 话术参考：常驻可用，拨号/通话中也可随时查阅（从主抽屉左缘伸出的第二层抽屉） */}
+          <ZzBtn onClick={onOpenScript}>💡 话术参考</ZzBtn>
           {(call === 'dialing' || call === 'ringing') && <ZzBtn danger onClick={onHangup}>取消</ZzBtn>}
           {call === 'connected' && (
             <>
@@ -596,10 +591,9 @@ function WorkbenchTab(props: any) {
               <ZzBtn onClick={() => { if (!emergency) { alert('该案件暂无紧急联系人'); return } onTransfer('紧急联系人') }}>{transfer ? '已转接 ✔' : '↪ 转接紧急联系人'}</ZzBtn>
             </>
           )}
+          {/* 未接通/拒接：提供「结束并登记」，补全通话闭环（否则只能无限重拨） */}
+          {(call === 'missed' || call === 'rejected') && <ZzBtn danger onClick={onHangup}>结束并登记</ZzBtn>}
         </div>
-
-        {/* 话术参考：右侧抽屉（大模型依据当前通话目标/意图生成） */}
-        <ScriptDrawer open={showScriptDrawer} onClose={() => setShowScriptDrawer(false)} cs={cs} objective={objective} intent={intent} />
 
         <div className="rounded border border-slate-200 bg-white p-3">
           <div className="mb-2 flex items-center justify-between">
@@ -635,7 +629,7 @@ function WorkbenchTab(props: any) {
               <ZzBtn sm onClick={fillFromTranscript}>一键填充表单</ZzBtn>
             </div>
             {!transcript ? (
-              <div className="text-xs text-purple-800">发起通话后，AI 将实时识别客户说出的还款金额 / 日期，并支持一键回填下方 PTP 表单。</div>
+              <div className="text-xs text-purple-800">发起通话后即可自动提取还款金额与日期，并支持一键回填下方 PTP 表单。</div>
             ) : ex.amt != null || ex.date != null ? (
               <div className="text-xs text-purple-800">提取金额：{ex.amt != null ? money(ex.amt) : '待补'} ｜ 承诺日期：{ex.date ?? '待补'} ｜ 类型：{ex.amt != null ? ex.type : '部分'}（点击右侧按钮回填下方 PTP 表单）</div>
             ) : (
@@ -704,8 +698,8 @@ function WorkbenchTab(props: any) {
       </div>
 
       {/* 吸底操作栏：保存处置固定不随滚动条滑动 */}
-      <div className="flex items-center justify-between gap-3 border-t border-slate-200 bg-white px-5 py-3">
-        <div className="text-xs text-gray-400">一次操作同时生成「催记记录」+「还款承诺」+「协商方案」（如已填写），均绑定同一通话ID便于审计溯源。</div>
+      <div className="flex items-center justify-between gap-3 border-t border-slate-200 bg-white px- 5 py-3">
+        <div className="text-xs text-gray-400">保存处置后自动留痕（绑定本次通话ID）。</div>
         <div className="flex items-center gap-2">
           {okAll && <span className="text-xs text-green-600">✓ 已全部保存</span>}
           <ZzBtn primary onClick={saveAll} disabled={disabled}>✨ 保存处置</ZzBtn>

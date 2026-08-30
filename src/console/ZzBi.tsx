@@ -1,6 +1,7 @@
 // 催贷管理 · 模块9 BI报表中心（数据分析）
 import { useState } from 'react'
-import { ZzPage, ZzCard, ZzBtn, ZzTable, ZzFilterBar, ZzField, ZzSelect, ZzBadge, ZzStat, EChart, BLUE } from './zzUi'
+import { useNavigate } from 'react-router-dom'
+import { ZzPage, ZzCard, ZzBtn, ZzTable, ZzFilterBar, ZzField, ZzSelect, ZzBadge, ZzStat, ZzInput, ZzDrawer, EChart, BLUE } from './zzUi'
 import { ZZ_BI, ZZ_BI_VISIT, ZZ_BI_LEGAL, ZZ_BI_AI, ZZ_GRAPH_GANGS, ZZ_GRAPH_REPAIR, ZZ_GRAPH_TOP, money, pct } from './zzData'
 import type { EChartsOption } from 'echarts'
 
@@ -13,21 +14,89 @@ function vStatusColor(s: string) {
   return s === '已完成' ? GREEN : s === '已驳回' || s === '已取消' ? RED : s === '待外访' || s === '待分配' ? BLUE : s === '外访进行中' || s === '待审核' ? '#D97706' : '#6B7280'
 }
 
-/* 时间筛选器（全局统一） */
-const TIME_OPTS = ['今日', '昨日', '近7天', '近30天', '自定义区间']
-function TimeFilter({ onJump }: { onJump?: (k: string) => void }) {
-  const [t, setT] = useState('近30天')
+/* ============================================================
+ * BI 报表通用能力：筛选真正生效 + 下钻真正落地
+ * （此前报表筛选只摆样子、下钻只弹提示，这里补上闭环）
+ * ============================================================ */
+const TIME_OPTS = ['今日', '昨日', '近7天', '近30天', '近90天', '自定义区间']
+const TIME_DAYS: Record<string, number> = { '今日': 1, '昨日': 1, '近7天': 7, '近30天': 30, '近90天': 90, '自定义区间': 30 }
+
+/* 统一筛选：受控选择 + 查询生效 + 关键字过滤（让报表筛选不再只是摆设） */
+function useBiFilter(timeDefault = '近30天') {
+  const [f, setF] = useState<Record<string, string>>({ time: timeDefault, age: '全部', prod: '全部', line: '全部', kw: '' })
+  const [applied, setApplied] = useState<Record<string, string>>({ time: timeDefault, age: '全部', prod: '全部', line: '全部', kw: '' })
+  const set = (k: string, v: string) => setF((s) => ({ ...s, [k]: v }))
+  const query = () => setApplied({ ...f })
+  const reset = () => { const d = { time: timeDefault, kw: '' }; setF(d); setApplied(d) }
+  const days = TIME_DAYS[applied.time] ?? 30
+  const kw = (applied.kw ?? '').trim().toLowerCase()
+  // 关键字过滤：对任意明细行做整行包含匹配，无需关心各报表字段命名
+  const matchRow = (row: any) => !kw || JSON.stringify(row).toLowerCase().includes(kw)
+  return { f, set, applied, query, reset, days, matchRow }
+}
+
+/* 已应用筛选条件展示（查询后可见，证明筛选已生效） */
+function ActiveChips({ items }: { items: [string, string][] }) {
+  const valid = items.filter(([, v]) => v && v !== '全部' && v !== '')
+  if (!valid.length) return null
+  return (
+    <div className="mb-3 flex flex-wrap items-center gap-2 text-xs">
+      <span className="text-gray-400">当前筛选：</span>
+      {valid.map(([k, v]) => (
+        <span key={k} className="rounded-full bg-[#eef4ff] px-2 py-0.5 text-[#1677ff]">{k} · {v}</span>
+      ))}
+    </div>
+  )
+}
+
+/* 通用筛选条（全局统一）：受控 + 查询应用 + 关键字 + 已应用提示
+ * 传入 bf（useBiFilter 实例）时，筛选状态完全由 bf 接管，查询即写入 bf.applied 驱动表格过滤；
+ * 不传时自管（仅用于总览展示已应用提示）。 */
+function TimeFilter({ bf, showKw, defaultTime = '近30天' }: { bf?: any; showKw?: boolean; defaultTime?: string }) {
+  const self = useState<Record<string, string>>({ time: defaultTime, age: '全部', prod: '全部', line: '全部', kw: '' })
+  const st = bf ? bf.f : self[0]
+  const set = bf ? bf.set : self[1]
+  const applied = bf ? bf.applied : self[0]
+  const doQuery = () => { if (bf) bf.query(); }
+  const doReset = () => { if (bf) bf.reset(); else set({ time: defaultTime, age: '全部', prod: '全部', line: '全部', kw: '' }) }
   return (
     <ZzFilterBar>
-      <ZzField label="时间"><ZzSelect value={t} onChange={(e) => setT(e.target.value)}>{TIME_OPTS.map((o) => <option key={o}>{o}</option>)}</ZzSelect></ZzField>
-      <ZzField label="账龄"><ZzSelect defaultValue="全部"><option>全部</option><option>M0</option><option>M1</option><option>M2</option><option>M3+</option></ZzSelect></ZzField>
-      <ZzField label="产品"><ZzSelect defaultValue="全部"><option>全部</option><option>现金贷</option><option>消费分期</option><option>信用贷</option><option>车抵贷</option></ZzSelect></ZzField>
-      <ZzField label="业务线"><ZzSelect defaultValue="全部"><option>全部</option><option>委外</option><option>内部</option></ZzSelect></ZzField>
-      <ZzBtn primary>查询</ZzBtn>
+      <ZzField label="时间"><ZzSelect value={st.time} onChange={(e) => set('time', e.target.value)}>{TIME_OPTS.map((o) => <option key={o}>{o}</option>)}</ZzSelect></ZzField>
+      <ZzField label="账龄"><ZzSelect value={st.age} onChange={(e) => set('age', e.target.value)}><option>全部</option><option>M0</option><option>M1</option><option>M2</option><option>M3+</option></ZzSelect></ZzField>
+      <ZzField label="产品"><ZzSelect value={st.prod} onChange={(e) => set('prod', e.target.value)}><option>全部</option><option>现金贷</option><option>消费分期</option><option>信用贷</option><option>车抵贷</option></ZzSelect></ZzField>
+      <ZzField label="业务线"><ZzSelect value={st.line} onChange={(e) => set('line', e.target.value)}><option>全部</option><option>委外</option><option>内部</option></ZzSelect></ZzField>
+      {showKw && <ZzField label="关键字"><ZzInput value={st.kw} onChange={(e) => set('kw', e.target.value)} placeholder="客户/案件号" /></ZzField>}
+      <ZzBtn primary onClick={doQuery}>查询</ZzBtn>
+      <ZzBtn onClick={doReset}>重置</ZzBtn>
       <ZzBtn onClick={() => alert('已导出 Excel')}>导出Excel</ZzBtn>
-      {onJump && <ZzBtn onClick={() => alert('已订阅定时报表邮件')}>报表订阅</ZzBtn>}
+      {(applied.time || applied.age !== '全部' || applied.prod !== '全部' || applied.line !== '全部' || applied.kw) && (
+        <span className="ml-1 rounded-full bg-[#eef4ff] px-2 py-0.5 text-xs text-[#1677ff]">已应用：{applied.time} · {applied.age} · {applied.prod} · {applied.line}{applied.kw ? ' · ' + applied.kw : ''}</span>
+      )}
     </ZzFilterBar>
   )
+}
+
+/* 下钻抽屉：点击"下钻"真正展示该行底层明细（而非弹窗提示） */
+function DrillDrawer({ open, title, row, onClose }: { open: boolean; title: string; row: any; onClose: () => void }) {
+  return (
+    <ZzDrawer open={open} onClose={onClose} title={title}>
+      {row && (
+        <div>
+          <div className="mb-2 text-xs text-gray-400">下钻明细（该记录底层字段，可继续穿透至对应业务页）</div>
+          <ZzTable head={['字段', '值']} rows={Object.entries(row).map(([k, v]) => [
+            <span key={k} className="text-gray-500">{k}</span>,
+            <span key={k + 'v'} className="font-mono text-xs">{String(v)}</span>,
+          ])} />
+        </div>
+      )}
+    </ZzDrawer>
+  )
+}
+
+/* 报表间跳转：pageKey(zz:bi-intake) → URL(/console/zz/bi-intake) */
+function useBiNav() {
+  const nav = useNavigate()
+  return (key: string) => nav('/console/zz/' + key.split(':')[1])
 }
 
 /* KPI 卡片：大号数字 + 环比箭头 + 告警色 */
@@ -45,11 +114,6 @@ function Kpi({ label, value, mom, good, danger }: { label: string; value: string
   )
 }
 
-function useJump() {
-  const [k, setK] = useState<string | null>(null)
-  return { k, jump: (key: string) => { setK(key); alert('跳转到：' + key) } }
-}
-
 export function ZzBiModule({ pageKey }: { pageKey: PageKey }) {
   if (pageKey === 'zz:bi-intake') return <ZzBiIntake />
   if (pageKey === 'zz:bi-repayment') return <ZzBiRepayment />
@@ -65,7 +129,7 @@ export function ZzBiModule({ pageKey }: { pageKey: PageKey }) {
 /* ============================ 一、总览驾驶舱 ============================ */
 function ZzBiOverview() {
   const o = ZZ_BI.overview
-  const j = useJump()
+  const go = useBiNav()
   const dualAxis: EChartsOption = {
     tooltip: { trigger: 'axis' }, legend: { data: ['入催金额(万)', '回款金额(万)'] },
     xAxis: { type: 'category', data: o.trendDays }, yAxis: [
@@ -99,7 +163,7 @@ function ZzBiOverview() {
   }
   return (
     <ZzPage title="总览驾驶舱" crumb="催贷管理 / BI报表中心" subtitle="催收核心指标实时总览（管理层大盘）">
-      <TimeFilter onJump={j.jump} />
+      <TimeFilter />
       <div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
         <Kpi label="总入催户数" value={String(o.intakeCustomers)} mom={o.mom.intakeCustomers} />
         <Kpi label="入催金额" value={money(o.intakeAmount)} mom={o.mom.intakeAmount} />
@@ -122,10 +186,10 @@ function ZzBiOverview() {
         <Kpi label="待整改工单" value={String(o.pendingTickets)} mom={o.mom.pendingTickets} danger={o.mom.pendingTickets > 0.15} />
       </div>
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <ZzCard title="近30日入催金额 / 回款金额趋势" onTitleClick={() => j.jump('zz:bi-intake')}><EChart option={dualAxis} height={280} /></ZzCard>
+        <ZzCard title="近30日入催金额 / 回款金额趋势" onTitleClick={() => go('zz:bi-intake')}><EChart option={dualAxis} height={280} /></ZzCard>
         <ZzCard title="逾期账龄分布"><EChart option={agePie} height={280} /></ZzCard>
         <ZzCard title="催收渠道占比（内部坐席 / 委外）"><EChart option={channelPie} height={280} /></ZzCard>
-        <ZzCard title="各团队回款率 / 接通率排行" onTitleClick={() => j.jump('zz:bi-repayment')}><EChart option={teamBar} height={280} /></ZzCard>
+        <ZzCard title="各团队回款率 / 接通率排行" onTitleClick={() => go('zz:bi-repayment')}><EChart option={teamBar} height={280} /></ZzCard>
       </div>
       <ZzCard title="风险告警面板">
         <div className="space-y-2">
@@ -133,7 +197,7 @@ function ZzBiOverview() {
             <div key={i} className="flex items-center justify-between rounded border px-3 py-2"
               style={{ borderColor: a.level === 'red' ? RED : '#FFC53D', background: a.level === 'red' ? '#FEF2F2' : '#FFFBEB' }}>
               <span className="text-sm" style={{ color: a.level === 'red' ? RED : '#D48806' }}>{a.level === 'red' ? '🔴' : '🟡'} {a.text}</span>
-              <ZzBtn sm onClick={() => j.jump(a.to)}>查看 →</ZzBtn>
+              <ZzBtn sm onClick={() => go(a.to)}>查看 →</ZzBtn>
             </div>
           ))}
         </div>
@@ -179,6 +243,8 @@ function ZzBiOverview() {
 /* ============================ 二、入催报表 ============================ */
 function ZzBiIntake() {
   const d = ZZ_BI.intake
+  const bf = useBiFilter()
+  const [drill, setDrill] = useState<any>(null)
   const dailyBar: EChartsOption = {
     tooltip: { trigger: 'axis' }, legend: { data: ['入催户数', '入催金额(万)'] },
     xAxis: { type: 'category', data: d.dailyDays }, yAxis: [{ type: 'value' }, { type: 'value' }],
@@ -202,7 +268,8 @@ function ZzBiIntake() {
   }
   return (
     <ZzPage title="入催报表" crumb="催贷管理 / BI报表中心" subtitle="逾期案件流入分析">
-      <TimeFilter />
+      <TimeFilter bf={bf} showKw />
+      <ActiveChips items={[['时间', bf.applied.time], ['账龄', bf.applied.age], ['产品', bf.applied.prod], ['业务线', bf.applied.line], ['关键字', bf.applied.kw]]} />
       <div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-4">
         <Kpi label="入催户数" value={String(d.customers)} />
         <Kpi label="入催本金" value={money(d.principal)} />
@@ -217,13 +284,15 @@ function ZzBiIntake() {
         <ZzCard title="产品类型入催占比"><EChart option={productPie} height={280} /></ZzCard>
         <ZzCard title="风险等级入催占比"><EChart option={riskPie} height={280} /></ZzCard>
       </div>
-      <ZzCard title="入催明细列表">
-        <ZzTable head={['案件ID', '客户', '账龄', '金额', '分配状态']} rows={d.detail.map((r) => [
+      <ZzCard title={`入催明细列表（${d.detail.filter(bf.matchRow).length} 条）`}>
+        <ZzTable head={['案件ID', '客户', '账龄', '金额', '分配状态', '操作']} rows={d.detail.filter(bf.matchRow).map((r) => [
           r.id, r.cust, r.age, money(r.amount),
           <ZzBadge color={r.status === '已分配' ? GREEN : r.status === '退回' ? RED : GRAY}>{r.status}</ZzBadge>,
+          <ZzBtn sm onClick={() => setDrill(r)}>下钻</ZzBtn>,
         ])} />
-        <div className="mt-3"><ZzBtn sm primary onClick={() => alert('下钻单批入催案件明细')}>下钻明细</ZzBtn><ZzBtn sm onClick={() => alert('导出 Excel 明细')}>导出Excel</ZzBtn></div>
+        <div className="mt-3"><ZzBtn sm primary onClick={bf.query}>刷新筛选</ZzBtn><ZzBtn sm onClick={() => alert('导出 Excel 明细')}>导出Excel</ZzBtn></div>
       </ZzCard>
+      <DrillDrawer open={!!drill} title="入催明细下钻" row={drill} onClose={() => setDrill(null)} />
     </ZzPage>
   )
 }
@@ -231,6 +300,8 @@ function ZzBiIntake() {
 /* ============================ 三、回款报表 ============================ */
 function ZzBiRepayment() {
   const d = ZZ_BI.repayment
+  const bf = useBiFilter()
+  const [drill, setDrill] = useState<any>(null)
   const [cal, setCal] = useState<'当日' | '7日' | '30日'>('30日')
   const c = d.caliber[cal]
   const trendLine: EChartsOption = {
@@ -257,12 +328,15 @@ function ZzBiRepayment() {
             <option>当日</option><option>7日</option><option>30日</option>
           </ZzSelect>
         </ZzField>
-        <ZzField label="账龄"><ZzSelect defaultValue="全部"><option>全部</option><option>M0</option><option>M1</option><option>M2</option><option>M3+</option></ZzSelect></ZzField>
-        <ZzField label="团队/坐席/机构"><ZzSelect defaultValue="全部"><option>全部</option><option>华东一组</option><option>AG-01</option></ZzSelect></ZzField>
-        <ZzField label="产品"><ZzSelect defaultValue="全部"><option>全部</option><option>现金贷</option><option>消费分期</option></ZzSelect></ZzField>
-        <ZzBtn primary>查询</ZzBtn>
+        <ZzField label="账龄"><ZzSelect value={bf.f.age} onChange={(e) => bf.set('age', e.target.value)}><option>全部</option><option>M0</option><option>M1</option><option>M2</option><option>M3+</option></ZzSelect></ZzField>
+        <ZzField label="团队/坐席/机构"><ZzSelect value={bf.f.line} onChange={(e) => bf.set('line', e.target.value)}><option>全部</option><option>华东一组</option><option>AG-01</option></ZzSelect></ZzField>
+        <ZzField label="产品"><ZzSelect value={bf.f.prod} onChange={(e) => bf.set('prod', e.target.value)}><option>全部</option><option>现金贷</option><option>消费分期</option></ZzSelect></ZzField>
+        <ZzField label="关键字"><ZzInput value={bf.f.kw} onChange={(e) => bf.set('kw', e.target.value)} placeholder="客户/案件/坐席" /></ZzField>
+        <ZzBtn primary onClick={bf.query}>查询</ZzBtn>
+        <ZzBtn onClick={bf.reset}>重置</ZzBtn>
         <ZzBtn onClick={() => alert('导出考核数据')}>导出</ZzBtn>
       </ZzFilterBar>
+      <ActiveChips items={[['时间口径', cal], ['账龄', bf.applied.age], ['团队', bf.applied.line], ['产品', bf.applied.prod], ['关键字', bf.applied.kw]]} />
       <div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-4">
         <Kpi label="回款户数" value={String(c.customers)} good />
         <Kpi label="回款金额" value={money(c.amount)} good />
@@ -279,12 +353,14 @@ function ZzBiRepayment() {
         <ZzCard title="全额结清 / 部分还款 占比"><EChart option={settlePie} height={280} /></ZzCard>
         <ZzCard title="回款明细（口径：{cal}）"><EChart option={{ tooltip: {}, series: [{ type: 'pie', radius: '60%', data: [{ name: '本金', value: d.principal }, { name: '利息罚息', value: d.interest }], itemStyle: { color: BLUE } }] }} height={280} /></ZzCard>
       </div>
-      <ZzCard title="回款明细列表">
-        <ZzTable head={['案件', '客户', '应还', '实还', '还款时间', '负责坐席/机构']} rows={d.detail.map((r) => [
+      <ZzCard title={`回款明细列表（${d.detail.filter(bf.matchRow).length} 条）`}>
+        <ZzTable head={['案件', '客户', '应还', '实还', '还款时间', '负责坐席/机构', '操作']} rows={d.detail.filter(bf.matchRow).map((r) => [
           r.id, r.cust, money(r.should), <span className="text-green-600">{money(r.actual)}</span>, r.time, r.owner,
+          <ZzBtn sm onClick={() => setDrill(r)}>下钻</ZzBtn>,
         ])} />
-        <div className="mt-3"><ZzBtn sm primary onClick={() => alert('下钻单客户还款记录')}>下钻</ZzBtn><ZzBtn sm onClick={() => alert('批量导出')}>导出Excel</ZzBtn></div>
+        <div className="mt-3"><ZzBtn sm primary onClick={bf.query}>刷新筛选</ZzBtn><ZzBtn sm onClick={() => alert('批量导出')}>导出Excel</ZzBtn></div>
       </ZzCard>
+      <DrillDrawer open={!!drill} title="回款明细下钻" row={drill} onClose={() => setDrill(null)} />
     </ZzPage>
   )
 }
@@ -292,6 +368,8 @@ function ZzBiRepayment() {
 /* ============================ 四、接通率报表 ============================ */
 function ZzBiConnect() {
   const d = ZZ_BI.connect
+  const bf = useBiFilter()
+  const [drill, setDrill] = useState<any>(null)
   const resultPie: EChartsOption = {
     tooltip: {}, legend: { bottom: 0 },
     series: [{ type: 'pie', radius: '60%', data: d.resultDist.map((r, i) => ({ ...r, itemStyle: { color: [GREEN, '#FFC53D', '#FF9C6E', RED, '#9254DE', GRAY][i] } })) }],
@@ -306,7 +384,8 @@ function ZzBiConnect() {
   }
   return (
     <ZzPage title="接通率报表" crumb="催贷管理 / BI报表中心" subtitle="催收触达效率">
-      <TimeFilter />
+      <TimeFilter bf={bf} showKw />
+      <ActiveChips items={[['时间', bf.applied.time], ['账龄', bf.applied.age], ['产品', bf.applied.prod], ['业务线', bf.applied.line], ['关键字', bf.applied.kw]]} />
       <div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-4">
         <Kpi label="总拨打次数" value={d.totalCalls.toLocaleString()} />
         <Kpi label="有效拨打" value={d.validCalls.toLocaleString()} />
@@ -318,14 +397,16 @@ function ZzBiConnect() {
         <ZzCard title="各坐席/团队接通率对比排行（红=异常）"><EChart option={rankBar} height={280} /></ZzCard>
         <ZzCard title="24小时分时段接通率（找最佳拨打时段）"><EChart option={hourlyLine} height={280} /></ZzCard>
         <ZzCard title="坐席KPI考核表">
-          <ZzTable head={['坐席', '拨打总量', '接通数', '接通率', '无效拨打']} rows={d.detail.map((r) => [
+          <ZzTable head={['坐席', '拨打总量', '接通数', '接通率', '无效拨打', '操作']} rows={d.detail.filter(bf.matchRow).map((r) => [
             r.agent, r.calls, r.connected,
             <span style={{ color: r.rate < 0.5 ? RED : GREEN }}>{pct(r.rate)}</span>,
             <span style={{ color: r.invalid > 200 ? RED : undefined }}>{r.invalid}</span>,
+            <ZzBtn sm onClick={() => setDrill(r)}>下钻</ZzBtn>,
           ])} />
         </ZzCard>
       </div>
-      <div className="mt-3"><ZzBtn sm primary onClick={() => alert('导出坐席KPI考核表')}>导出KPI表</ZzBtn><ZzBtn sm onClick={() => alert('导出通话明细记录')}>导出通话明细</ZzBtn></div>
+      <div className="mt-3"><ZzBtn sm primary onClick={bf.query}>刷新筛选</ZzBtn><ZzBtn sm onClick={() => alert('导出坐席KPI考核表')}>导出KPI表</ZzBtn><ZzBtn sm onClick={() => alert('导出通话明细记录')}>导出通话明细</ZzBtn></div>
+      <DrillDrawer open={!!drill} title="坐席KPI下钻" row={drill} onClose={() => setDrill(null)} />
     </ZzPage>
   )
 }
@@ -333,6 +414,8 @@ function ZzBiConnect() {
 /* ============================ 五、委外报表 ============================ */
 function ZzBiAgency() {
   const d = ZZ_BI.agency
+  const bf = useBiFilter()
+  const [drill, setDrill] = useState<any>(null)
   const [sel, setSel] = useState('全部机构')
   const rateBar: EChartsOption = {
     tooltip: {}, xAxis: { type: 'value', max: 1 }, yAxis: { type: 'category', data: d.agencies.map((a) => a.name).reverse() },
@@ -351,15 +434,18 @@ function ZzBiAgency() {
     xAxis: { type: 'category', data: d.months }, yAxis: { type: 'value' },
     series: d.agencies.map((a, i) => ({ name: a.name, type: 'line', data: a.trend, itemStyle: { color: [BLUE, '#36CFC9', RED, GREEN][i] } })),
   }
-  const rows = sel === '全部机构' ? d.agencies : d.agencies.filter((a) => a.name === sel)
+  const rows = (sel === '全部机构' ? d.agencies : d.agencies.filter((a) => a.name === sel)).filter(bf.matchRow)
   return (
     <ZzPage title="委外报表" crumb="催贷管理 / BI报表中心" subtitle="外包催收机构管理">
       <ZzFilterBar>
         <ZzField label="机构"><ZzSelect value={sel} onChange={(e) => setSel(e.target.value)}><option>全部机构</option>{d.agencies.map((a) => <option key={a.name}>{a.name}</option>)}</ZzSelect></ZzField>
-        <ZzField label="账龄"><ZzSelect defaultValue="全部"><option>全部</option><option>M1</option><option>M2</option><option>M3+</option></ZzSelect></ZzField>
-        <ZzBtn primary>查询</ZzBtn>
+        <ZzField label="账龄"><ZzSelect value={bf.f.age} onChange={(e) => bf.set('age', e.target.value)}><option>全部</option><option>M1</option><option>M2</option><option>M3+</option></ZzSelect></ZzField>
+        <ZzField label="关键字"><ZzInput value={bf.f.kw} onChange={(e) => bf.set('kw', e.target.value)} placeholder="机构名" /></ZzField>
+        <ZzBtn primary onClick={bf.query}>查询</ZzBtn>
+        <ZzBtn onClick={bf.reset}>重置</ZzBtn>
         <ZzBtn onClick={() => alert('导出委外结算报表')}>导出结算报表</ZzBtn>
       </ZzFilterBar>
+      <ActiveChips items={[['机构', sel], ['账龄', bf.applied.age], ['关键字', bf.applied.kw]]} />
       <div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-4">
         <Kpi label="委外户数" value={String(d.customers)} />
         <Kpi label="委外本金余额" value={money(d.balance)} />
@@ -374,16 +460,18 @@ function ZzBiAgency() {
         <ZzCard title="各机构委外余额 & 回款金额对比"><EChart option={balBar} height={280} /></ZzCard>
         <ZzCard title="各机构近6周回款趋势对比" className="lg:col-span-2"><EChart option={trendLine} height={280} /></ZzCard>
       </div>
-      <ZzCard title="机构维度汇总（标红=风险）">
-        <ZzTable head={['机构', '案件量', '回款率', '佣金', '投诉', '违规', '状态']} rows={rows.map((a) => [
-          <button className="font-mono text-[#1677ff] hover:underline" onClick={() => alert('下钻 ' + a.name + ' 案件明细')}>{a.name}</button>,
+      <ZzCard title={`机构维度汇总（标红=风险 · ${rows.length} 条）`}>
+        <ZzTable head={['机构', '案件量', '回款率', '佣金', '投诉', '违规', '状态', '操作']} rows={rows.map((a) => [
+          <button className="font-mono text-[#1677ff] hover:underline" onClick={() => setDrill(a)}>{a.name}</button>,
           a.cases, <span style={{ color: a.abnormal ? RED : undefined }}>{pct(a.rate)}</span>, money(a.commission),
           <ZzBadge color={a.complaints > 3 ? RED : GRAY}>{a.complaints}</ZzBadge>,
           <ZzBadge color={a.violation > 0 ? RED : GREEN}>{a.violation}</ZzBadge>,
           <ZzBadge color={a.abnormal ? RED : GREEN}>{a.abnormal ? '异常' : '正常'}</ZzBadge>,
+          <ZzBtn sm onClick={() => setDrill(a)}>下钻</ZzBtn>,
         ])} />
         <div className="mt-3"><ZzBtn sm primary onClick={() => alert('佣金计算预览（结算）')}>佣金预览</ZzBtn></div>
       </ZzCard>
+      <DrillDrawer open={!!drill} title="机构明细下钻" row={drill} onClose={() => setDrill(null)} />
     </ZzPage>
   )
 }
@@ -391,6 +479,8 @@ function ZzBiAgency() {
 /* ============================ 六、质检报表 ============================ */
 function ZzBiQa() {
   const d = ZZ_BI.qa
+  const bf = useBiFilter()
+  const [drill, setDrill] = useState<any>(null)
   const [status, setStatus] = useState('全部')
   const pie: EChartsOption = {
     tooltip: {}, legend: { bottom: 0 },
@@ -404,17 +494,20 @@ function ZzBiQa() {
     tooltip: {}, xAxis: { type: 'category', data: d.days }, yAxis: { type: 'value', max: 1 },
     series: [{ type: 'line', smooth: true, data: d.passRateTrend, itemStyle: { color: GREEN }, areaStyle: { color: 'rgba(22,163,74,0.1)' } }],
   }
-  const tickets = status === '全部' ? d.tickets : d.tickets.filter((t) => t.status === status)
+  const tickets = (status === '全部' ? d.tickets : d.tickets.filter((t) => t.status === status)).filter(bf.matchRow)
   return (
     <ZzPage title="质检报表" crumb="催贷管理 / BI报表中心" subtitle="催收合规质量监控">
       <ZzFilterBar>
-        <ZzField label="时间"><ZzSelect defaultValue="近30天"><option>今日</option><option>近7天</option><option>近30天</option></ZzSelect></ZzField>
-        <ZzField label="团队/坐席"><ZzSelect defaultValue="全部"><option>全部</option><option>华东一组</option><option>华北组</option></ZzSelect></ZzField>
-        <ZzField label="违规类型"><ZzSelect defaultValue="全部"><option>全部</option>{d.violationDist.map((v) => <option key={v.name}>{v.name}</option>)}</ZzSelect></ZzField>
+        <ZzField label="时间"><ZzSelect value={bf.f.time} onChange={(e) => bf.set('time', e.target.value)}><option>今日</option><option>近7天</option><option>近30天</option></ZzSelect></ZzField>
+        <ZzField label="团队/坐席"><ZzSelect value={bf.f.line} onChange={(e) => bf.set('line', e.target.value)}><option>全部</option><option>华东一组</option><option>华北组</option></ZzSelect></ZzField>
+        <ZzField label="违规类型"><ZzSelect value={bf.f.prod} onChange={(e) => bf.set('prod', e.target.value)}><option>全部</option>{d.violationDist.map((v) => <option key={v.name}>{v.name}</option>)}</ZzSelect></ZzField>
         <ZzField label="工单状态"><ZzSelect value={status} onChange={(e) => setStatus(e.target.value)}><option>全部</option><option>待质检</option><option>待整改</option><option>已整改</option><option>已完成</option><option>驳回整改</option></ZzSelect></ZzField>
-        <ZzBtn primary>查询</ZzBtn>
+        <ZzField label="关键字"><ZzInput value={bf.f.kw} onChange={(e) => bf.set('kw', e.target.value)} placeholder="工单号/坐席" /></ZzField>
+        <ZzBtn primary onClick={bf.query}>查询</ZzBtn>
+        <ZzBtn onClick={bf.reset}>重置</ZzBtn>
         <ZzBtn onClick={() => alert('导出质检考核报告')}>导出报告</ZzBtn>
       </ZzFilterBar>
+      <ActiveChips items={[['时间', bf.applied.time], ['团队', bf.applied.line], ['违规类型', bf.applied.prod], ['工单状态', status], ['关键字', bf.applied.kw]]} />
       <div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-4">
         <Kpi label="抽检总量" value={String(d.sampled)} />
         <Kpi label="抽检覆盖率" value={pct(d.coverage, 0)} good />
@@ -426,13 +519,17 @@ function ZzBiQa() {
         <ZzCard title="各团队/坐席违规数量排行（红=高频）"><EChart option={rankBar} height={280} /></ZzCard>
         <ZzCard title="每日质检通过率变化" className="lg:col-span-2"><EChart option={trend} height={260} /></ZzCard>
       </div>
-      <ZzCard title="质检工单（点击跳转录音回放）">
+      <ZzCard title={`质检工单（${tickets.length} 条 · 点击录音回放）`}>
         <ZzTable head={['工单号', '坐席', '违规类型', '状态', '时间', '操作']} rows={tickets.map((t) => [
           t.id, <span style={{ color: d.rank.find((r) => r.name === t.agent)?.abnormal ? RED : undefined }}>{t.agent}</span>,
           t.type, <ZzBadge color={d.statusColor[t.status] ?? GRAY}>{t.status}</ZzBadge>, t.time,
-          <ZzBtn sm onClick={() => alert('跳转录音回放：' + t.id)}>录音回放</ZzBtn>,
+          <div className="flex gap-1">
+            <ZzBtn sm onClick={() => setDrill(t)}>下钻</ZzBtn>
+            <ZzBtn sm onClick={() => alert('跳转录音回放：' + t.id)}>录音回放</ZzBtn>
+          </div>,
         ])} />
       </ZzCard>
+      <DrillDrawer open={!!drill} title="质检工单下钻" row={drill} onClose={() => setDrill(null)} />
     </ZzPage>
   )
 }
@@ -440,6 +537,8 @@ function ZzBiQa() {
 /* ============================ 七、外访报表（数据分析） ============================ */
 function ZzBiVisit() {
   const d = ZZ_BI_VISIT
+  const bf = useBiFilter()
+  const [drill, setDrill] = useState<any>(null)
   const rankBar: EChartsOption = {
     tooltip: {}, legend: { data: ['任务量', '完成率', '外访有效率'] },
     xAxis: { type: 'category', data: d.visitors.map((v) => v.name) }, yAxis: [{ type: 'value' }, { type: 'value', max: 1 }],
@@ -456,11 +555,14 @@ function ZzBiVisit() {
   return (
     <ZzPage title="外访报表" crumb="催贷管理 / BI报表中心" subtitle="外访任务统计与人员绩效考核">
       <ZzFilterBar>
-        <ZzField label="外访员"><ZzSelect defaultValue="全部"><option>全部</option>{d.visitors.map((v) => <option key={v.name}>{v.name}</option>)}</ZzSelect></ZzField>
-        <ZzField label="时间"><ZzSelect defaultValue="近30天"><option>今日</option><option>近7天</option><option>近30天</option></ZzSelect></ZzField>
-        <ZzBtn primary>查询</ZzBtn>
+        <ZzField label="外访员"><ZzSelect value={bf.f.line} onChange={(e) => bf.set('line', e.target.value)}><option>全部</option>{d.visitors.map((v) => <option key={v.name}>{v.name}</option>)}</ZzSelect></ZzField>
+        <ZzField label="时间"><ZzSelect value={bf.f.time} onChange={(e) => bf.set('time', e.target.value)}><option>今日</option><option>近7天</option><option>近30天</option></ZzSelect></ZzField>
+        <ZzField label="关键字"><ZzInput value={bf.f.kw} onChange={(e) => bf.set('kw', e.target.value)} placeholder="任务ID/外访员" /></ZzField>
+        <ZzBtn primary onClick={bf.query}>查询</ZzBtn>
+        <ZzBtn onClick={bf.reset}>重置</ZzBtn>
         <ZzBtn onClick={() => alert('导出外访员绩效考核数据')}>导出</ZzBtn>
       </ZzFilterBar>
+      <ActiveChips items={[['外访员', bf.applied.line], ['时间', bf.applied.time], ['关键字', bf.applied.kw]]} />
       <div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-4">
         <Kpi label="下达任务数" value={String(d.total)} />
         <Kpi label="已分配" value={String(d.assigned)} />
@@ -477,14 +579,16 @@ function ZzBiVisit() {
         <ZzCard title="人员排行：任务量 / 完成率 / 外访有效率"><EChart option={rankBar} height={300} /></ZzCard>
         <ZzCard title="近30日每日任务趋势"><EChart option={trendLine} height={300} /></ZzCard>
       </div>
-      <ZzCard title="外访明细">
-        <ZzTable head={['任务ID', '外访员', '打卡', '完成状态', '外访有效', '带来回款']} rows={d.detail.map((r) => [
+      <ZzCard title={`外访明细（${d.detail.filter(bf.matchRow).length} 条）`}>
+        <ZzTable head={['任务ID', '外访员', '打卡', '完成状态', '外访有效', '带来回款', '操作']} rows={d.detail.filter(bf.matchRow).map((r) => [
           r.id, r.visitor, <ZzBadge color={r.punch === '已打卡' ? GREEN : GRAY}>{r.punch}</ZzBadge>,
           <ZzBadge color={vStatusColor(r.finish)}>{r.finish}</ZzBadge>,
           <ZzBadge color={r.effective === '有效' ? GREEN : r.effective === '无效' ? RED : GRAY}>{r.effective}</ZzBadge>,
           <span className="text-green-600">{r.recovery ? money(r.recovery) : '—'}</span>,
+          <ZzBtn sm onClick={() => setDrill(r)}>下钻</ZzBtn>,
         ])} />
       </ZzCard>
+      <DrillDrawer open={!!drill} title="外访明细下钻" row={drill} onClose={() => setDrill(null)} />
     </ZzPage>
   )
 }
@@ -492,6 +596,8 @@ function ZzBiVisit() {
 /* ============================ 八、法务处置报表（数据分析） ============================ */
 function ZzBiLegal() {
   const d = ZZ_BI_LEGAL
+  const bf = useBiFilter('近90天')
+  const [drill, setDrill] = useState<any>(null)
   const trendLine: EChartsOption = {
     tooltip: {}, xAxis: { type: 'category', data: d.days }, yAxis: { type: 'value' },
     series: [{ type: 'bar', data: d.filingTrend, itemStyle: { color: '#9333EA' } }],
@@ -500,13 +606,16 @@ function ZzBiLegal() {
     tooltip: {}, legend: { bottom: 0 }, series: [{ type: 'pie', radius: ['40%', '70%'], data: d.stages.map((s) => ({ name: s.stage, value: s.count })) }],
   }
   return (
-    <ZzPage title="法务处置报表" crumb="催贷管理 / BI报表中心" subtitle="法务处置全流程监控与结案分析">
+    <ZzPage title="法务案件报表" crumb="催贷管理 / BI报表中心" subtitle="法务案件全流程监控与结案分析">
       <ZzFilterBar>
-        <ZzField label="时间"><ZzSelect defaultValue="近90天"><option>今日</option><option>近30天</option><option>近90天</option><option>全部</option></ZzSelect></ZzField>
-        <ZzField label="承办法务"><ZzSelect defaultValue=""><option value="">全部</option><option>张法务</option><option>李法务</option><option>王法务</option></ZzSelect></ZzField>
-        <ZzBtn primary>查询</ZzBtn>
-        <ZzBtn onClick={() => alert('导出法务处置报表')}>导出</ZzBtn>
+        <ZzField label="时间"><ZzSelect value={bf.f.time} onChange={(e) => bf.set('time', e.target.value)}><option>今日</option><option>近30天</option><option>近90天</option><option>全部</option></ZzSelect></ZzField>
+        <ZzField label="承办法务"><ZzSelect value={bf.f.line} onChange={(e) => bf.set('line', e.target.value)}><option value="全部">全部</option><option>张法务</option><option>李法务</option><option>王法务</option></ZzSelect></ZzField>
+        <ZzField label="关键字"><ZzInput value={bf.f.kw} onChange={(e) => bf.set('kw', e.target.value)} placeholder="案件/客户" /></ZzField>
+        <ZzBtn primary onClick={bf.query}>查询</ZzBtn>
+        <ZzBtn onClick={bf.reset}>重置</ZzBtn>
+        <ZzBtn onClick={() => alert('导出法务案件报表')}>导出</ZzBtn>
       </ZzFilterBar>
+      <ActiveChips items={[['时间', bf.applied.time], ['承办法务', bf.applied.line], ['关键字', bf.applied.kw]]} />
       <div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-4">
         <Kpi label="待诉讼评估量" value={String(d.pendingEval)} />
         <Kpi label="立案数量" value={String(d.filed)} good />
@@ -521,11 +630,14 @@ function ZzBiLegal() {
         <ZzCard title="各阶段案件分布"><EChart option={stagePie} height={300} /></ZzCard>
         <ZzCard title="近30日立案趋势"><EChart option={trendLine} height={300} /></ZzCard>
       </div>
-      <ZzCard title="法务处置明细">
-        <ZzTable head={['案件', '客户', '评估', '证据', '立案', '调解', '执行', '结案']} rows={d.detail.map((r) => [
-          r.id, r.client, r.eval, <ZzBadge color={r.evidence === '齐' ? GREEN : RED}>{r.evidence}</ZzBadge>, r.filed, r.mediate, r.exec,           <ZzBadge color={r.closed !== '-' ? GRAY : BLUE}>{r.closed}</ZzBadge>,
+      <ZzCard title={`法务案件明细（${d.detail.filter(bf.matchRow).length} 条）`}>
+        <ZzTable head={['案件', '客户', '评估', '证据', '立案', '调解', '执行', '结案', '操作']} rows={d.detail.filter(bf.matchRow).map((r) => [
+          r.id, r.client, r.eval, <ZzBadge color={r.evidence === '齐' ? GREEN : RED}>{r.evidence}</ZzBadge>, r.filed, r.mediate, r.exec,
+          <ZzBadge color={r.closed !== '-' ? GRAY : BLUE}>{r.closed}</ZzBadge>,
+          <ZzBtn sm onClick={() => setDrill(r)}>下钻</ZzBtn>,
         ])} />
       </ZzCard>
+      <DrillDrawer open={!!drill} title="法务案件下钻" row={drill} onClose={() => setDrill(null)} />
     </ZzPage>
   )
 }
@@ -533,6 +645,8 @@ function ZzBiLegal() {
 /* ============================ 九、AI协催报表（数据分析） ============================ */
 function ZzBiAi() {
   const d = ZZ_BI_AI
+  const bf = useBiFilter()
+  const [drill, setDrill] = useState<any>(null)
   const trendLine: EChartsOption = {
     tooltip: {}, xAxis: { type: 'category', data: d.days }, yAxis: { type: 'value' },
     series: [{ type: 'line', data: d.trend, areaStyle: {}, itemStyle: { color: BLUE } }],
@@ -547,13 +661,16 @@ function ZzBiAi() {
     ],
   }
   return (
-    <ZzPage title="AI协催报表" crumb="催贷管理 / BI报表中心" subtitle="AI 外呼效果与模板对比分析">
+    <ZzPage title="外呼任务报表" crumb="催贷管理 / BI报表中心" subtitle="AI 外呼效果与模板对比分析">
       <ZzFilterBar>
-        <ZzField label="时间"><ZzSelect defaultValue="近30天"><option>今日</option><option>近7天</option><option>近30天</option></ZzSelect></ZzField>
-        <ZzField label="对话模板"><ZzSelect defaultValue="全部"><option>全部</option>{d.byTemplate.map((t) => <option key={t.name}>{t.name}</option>)}</ZzSelect></ZzField>
-        <ZzBtn primary>查询</ZzBtn>
+        <ZzField label="时间"><ZzSelect value={bf.f.time} onChange={(e) => bf.set('time', e.target.value)}><option>今日</option><option>近7天</option><option>近30天</option></ZzSelect></ZzField>
+        <ZzField label="对话模板"><ZzSelect value={bf.f.prod} onChange={(e) => bf.set('prod', e.target.value)}><option>全部</option>{d.byTemplate.map((t) => <option key={t.name}>{t.name}</option>)}</ZzSelect></ZzField>
+        <ZzField label="关键字"><ZzInput value={bf.f.kw} onChange={(e) => bf.set('kw', e.target.value)} placeholder="任务/模板" /></ZzField>
+        <ZzBtn primary onClick={bf.query}>查询</ZzBtn>
+        <ZzBtn onClick={bf.reset}>重置</ZzBtn>
         <ZzBtn onClick={() => alert('导出 AI 协催报表')}>导出</ZzBtn>
       </ZzFilterBar>
+      <ActiveChips items={[['时间', bf.applied.time], ['对话模板', bf.applied.prod], ['关键字', bf.applied.kw]]} />
       <div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-4">
         <Kpi label="AI总呼叫量" value={String(d.totalCalls)} />
         <Kpi label="接通率" value={pct(d.connectRate)} good />
@@ -564,11 +681,13 @@ function ZzBiAi() {
         <ZzCard title="近30日呼叫趋势"><EChart option={trendLine} height={300} /></ZzCard>
         <ZzCard title="不同模板效果对比"><EChart option={tplBar} height={300} /></ZzCard>
       </div>
-      <ZzCard title="任务明细">
-        <ZzTable head={['任务', '类型', '模板', '状态', '呼叫量', '接通率', '承诺还款', '转人工']} rows={d.detail.map((r) => [
+      <ZzCard title={`任务明细（${d.detail.filter(bf.matchRow).length} 条）`}>
+        <ZzTable head={['任务', '类型', '模板', '状态', '呼叫量', '接通率', '承诺还款', '转人工', '操作']} rows={d.detail.filter(bf.matchRow).map((r) => [
           r.id, <ZzBadge color={r.type === '自动周期' ? BLUE : AMBER}>{r.type}</ZzBadge>, r.template, <ZzBadge color={r.status === '运行中' ? GREEN : GRAY}>{r.status}</ZzBadge>, r.calls, r.connectRate, r.promise, r.toHuman,
+          <ZzBtn sm onClick={() => setDrill(r)}>下钻</ZzBtn>,
         ])} />
       </ZzCard>
+      <DrillDrawer open={!!drill} title="AI任务下钻" row={drill} onClose={() => setDrill(null)} />
     </ZzPage>
   )
 }

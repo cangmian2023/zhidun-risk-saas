@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import { ZzPage, ZzCard, ZzBtn, ZzModal, ZzTable, ZzFilterBar, ZzField, ZzInput, ZzSelect, ZzTextarea, ZzBadge, ZzTabs, BLUE } from './zzUi'
 import { ZZ_LEGAL_CASES, ZZ_LEGAL_STAGES, money } from './zzData'
+import { useZzList, updateZzList, ZZ_FILE } from './zzStore'
 
 const GREEN = '#16A34A'; const RED = '#DC2626'; const AMBER = '#D97706'; const GRAY = '#9CA3AF'
 const STAGE_COLOR: any = { '待诉讼评估': GRAY, '证据待整理': BLUE, '已立案': AMBER, '调解中': '#9333EA', '执行中': '#0EA5E9', '已归档': GREEN }
@@ -16,7 +17,9 @@ export function ZzLegalModule({ pageKey }: { pageKey: string }) {
 
 /* ============================ 主页面：法务案件总览 ============================ */
 function ZzLegalOverview() {
-  const [cases, setCases] = useState<any[]>(ZZ_LEGAL_CASES)
+  // 法务案件统一走共享数据层：阶段推进、执行回款即时生效，刷新不丢
+  const cases = useZzList<any>(ZZ_FILE.legal, ZZ_LEGAL_CASES)
+  const setCases = (v: any[] | ((cs: any[]) => any[])) => updateZzList<any>(ZZ_FILE.legal, (cs) => (typeof v === 'function' ? v(cs) : v))
   const [tab, setTab] = useState('全部案件')
   const [detail, setDetail] = useState<any | null>(null)
   const [start, setStart] = useState<any | null>(null)
@@ -25,7 +28,7 @@ function ZzLegalOverview() {
   const startFlow = (c: any) => { setCases((cs) => cs.map((x) => x.id === c.id ? { ...x, stage: '证据待整理', logs: [...x.logs, { at: '2026-08-25 09:00', op: '启动法务流程', by: '张法务' }] } : x)); setStart(null) }
 
   return (
-    <ZzPage title="法务案件总览" crumb="催贷管理 / 法务处置" subtitle="单页聚合：评估→证据→立案→调解→执行→归档，全部在详情页闭环">
+    <ZzPage title="法务案件" crumb="催贷管理 / 法务案件" subtitle="单页聚合：评估→证据→立案→调解→执行→归档，全部在详情页闭环">
       <ZzFilterBar>
         <ZzField label="案件编号"><ZzInput placeholder="LS- / CO-" /></ZzField>
         <ZzField label="客户姓名"><ZzInput placeholder="姓名关键词" /></ZzField>
@@ -56,7 +59,25 @@ function ZzLegalOverview() {
 
 /* ============================ 一体化法务案件详情页 ============================ */
 function ZzLegalDetail({ c, cases, setCases, onClose, onArchived }: { c: any; cases: any[]; setCases: (f: (p: any[]) => any[]) => void; onClose: () => void; onArchived: () => void }) {
-  const update = (id: string, patch: any, log?: any) => setCases((cs) => cs.map((x) => x.id === id ? { ...x, ...patch, logs: log ? [...x.logs, log] : x.logs } : x))
+  const update = (id: string, patch: any, log?: any) => {
+    const cur = cases.find((x) => x.id === id)
+    const caseId = cur?.caseId
+    setCases((cs) => cs.map((x) => x.id === id ? { ...x, ...patch, logs: log ? [...x.logs, log] : x.logs } : x))
+    // 回写催收案件：立案/调解/执行 → 案件打上「诉讼中」；执行回款 → 冲减案件当前待还
+    if (caseId) {
+      const before = Number(cur?.exec?.recovery ?? 0)
+      const after = Number(patch?.exec?.recovery ?? before)
+      const pay = after > before ? after - before : 0
+      updateZzList<any>(ZZ_FILE.cases, (rs) => rs.map((r) => {
+        if (r.id !== caseId) return r
+        const next: any = { ...r }
+        if (patch.stage && ['已立案', '调解中', '执行中'].includes(patch.stage)) next.litigation = true
+        if (patch.stage === '已归档') next.litigation = false
+        if (pay > 0) next.remainTotal = Math.max(0, (next.remainTotal ?? 0) - pay)
+        return next
+      }))
+    }
+  }
   const locked = c.archived
 
   // 阶段依赖：当前阶段 idx

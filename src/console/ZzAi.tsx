@@ -3,6 +3,7 @@ import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ZzPage, ZzCard, ZzBtn, ZzModal, ZzDrawer, ZzTable, ZzFilterBar, ZzField, ZzInput, ZzSelect, ZzTextarea, ZzBadge, ZzStat, BLUE } from './zzUi'
 import { ZZ_AI_TASKS, ZZ_AI_TEMPLATES, ZZ_AI_BOARD } from './zzData'
+import { useZzList, updateZzList, ZZ_FILE } from './zzStore'
 
 const GREEN = '#16A34A'; const RED = '#DC2626'; const AMBER = '#D97706'; const GRAY = '#9CA3AF'
 function tColor(s: string) { return s === '运行中' ? GREEN : s === '已暂停' ? GRAY : AMBER }
@@ -12,10 +13,12 @@ export function ZzAiModule({ pageKey }: { pageKey: string }) {
   return <ZzAiTask />
 }
 
-/* ============================ 外呼任务总览（核心主页面） ============================ */
+/* ============================ AI自动外呼（核心主页面） ============================ */
 function ZzAiTask() {
   const nav = useNavigate()
-  const [tasks, setTasks] = useState<any[]>(ZZ_AI_TASKS)
+  // AI 外呼任务统一走共享数据层：新建/暂停/重启即时生效，刷新不丢
+  const tasks = useZzList<any>(ZZ_FILE.aiTasks, ZZ_AI_TASKS)
+  const setTasks = (v: any[] | ((ts: any[]) => any[])) => updateZzList<any>(ZZ_FILE.aiTasks, (ts) => (typeof v === 'function' ? v(ts) : v))
   const [newManual, setNewManual] = useState(false)
   const [newAuto, setNewAuto] = useState(false)
   const [fName, setFName] = useState('')
@@ -23,7 +26,6 @@ function ZzAiTask() {
   const [fTpl, setFTpl] = useState('')
   const [fStatus, setFStatus] = useState('')
   const [expanded, setExpanded] = useState(true)
-  const [drawerTask, setDrawerTask] = useState<any | null>(null)
   const [drawerMetric, setDrawerMetric] = useState<string | null>(null)
   const b = ZZ_AI_BOARD
 
@@ -60,7 +62,7 @@ function ZzAiTask() {
   const goDetail = (t: any) => nav('/console/zz/ai-task-detail?taskId=' + t.id)
 
   return (
-    <ZzPage title="外呼任务总览" crumb="催贷管理 / AI协催" subtitle="手动临时任务 + 自动周期任务（系统按策略自动外呼，无需每次手动新建）"
+    <ZzPage title="AI自动外呼" crumb="催贷管理" subtitle="手动临时任务 + 自动周期任务（系统按策略自动外呼，无需每次手动新建）"
       actions={<><ZzBtn onClick={() => setNewManual(true)}>新建临时任务</ZzBtn><ZzBtn primary onClick={() => setNewAuto(true)}>新建自动周期任务</ZzBtn></>}>
       <div className="mb-4 flex flex-wrap gap-3">
         {metricDefs.map((m) => (
@@ -97,7 +99,7 @@ function ZzAiTask() {
           t.id, <span className="font-medium">{t.name}</span>, <ZzBadge color={t.type === '自动周期' ? BLUE : AMBER}>{t.type}</ZzBadge>, t.template, <ZzBadge color={statusColor[t.status] ?? GRAY}>{t.status}</ZzBadge>,
           t.schedule, t.kpi.pending, t.kpi.called, t.kpi.connected, (t.kpi.connectRate * 100).toFixed(2) + '%',
           <div className="flex flex-nowrap gap-1">
-            <ZzBtn sm primary onClick={() => setDrawerTask(t)}>详情</ZzBtn>
+            <ZzBtn sm primary onClick={() => goDetail(t)}>详情</ZzBtn>
             {t.status === '运行中'
               ? <ZzBtn sm danger onClick={() => setTasks((ts) => ts.map((x) => x.id === t.id ? { ...x, status: '已暂停' } : x))}>暂停</ZzBtn>
               : <ZzBtn sm onClick={() => setTasks((ts) => ts.map((x) => x.id === t.id ? { ...x, status: '运行中' } : x))}>启动</ZzBtn>}
@@ -106,29 +108,29 @@ function ZzAiTask() {
         ])} />
       </ZzCard>
 
-      {newManual && <NewManualModal onClose={() => setNewManual(false)} onOk={(name) => { setTasks((ts) => [...ts, { id: 'AI-' + (ts.length + 1), name, type: '手动临时', template: '标准开场白', status: '运行中', schedule: '立即执行一次', nextRun: '-', filter: '导入客户池', strategy: '每客户最大呼叫 3 次', kpi: { pending: 100, called: 0, connected: 0, connectRate: 0, noAnswer: 0, busy: 0, promise: 0, toHuman: 0 }, fail: { 关机: 0, 空号: 0, 拒接: 0, 号码错误: 0 }, calls: [] }]); setNewManual(false) }} />}
-      {newAuto && <NewAutoModal onClose={() => setNewAuto(false)} onOk={(name) => { setTasks((ts) => [...ts, { id: 'AI-' + (ts.length + 1), name, type: '自动周期', template: '标准开场白', status: '运行中', schedule: '每日自动执行', nextRun: '2026-08-26 09:00', filter: '逾期 M1-M3；排除已人工/外访/法务/禁止AI', strategy: '每客户最大呼叫 2 次；夜间禁止', kpi: { pending: 800, called: 0, connected: 0, connectRate: 0, noAnswer: 0, busy: 0, promise: 0, toHuman: 0 }, fail: { 关机: 0, 空号: 0, 拒接: 0, 号码错误: 0 }, calls: [] }]); setNewAuto(false) }} />
-
-      {/* req1: 任务点击 → 右侧抽屉概览（替代原跳转/弹窗） */}
-      {drawerTask && (
-        <ZzDrawer open title={`任务概览 · ${drawerTask.name}`} onClose={() => setDrawerTask(null)}
-          footer={<><ZzBtn onClick={() => setDrawerTask(null)}>关闭</ZzBtn><ZzBtn primary onClick={() => { const id = drawerTask.id; setDrawerTask(null); goDetail({ id }) }}>打开完整详情</ZzBtn></>}>
-          <div className="space-y-3 text-sm">
-            <div className="grid grid-cols-2 gap-2">
-              <div className="rounded border px-3 py-2"><div className="text-xs text-gray-400">任务ID</div><div className="font-medium">{drawerTask.id}</div></div>
-              <div className="rounded border px-3 py-2"><div className="text-xs text-gray-400">类型</div><div className="font-medium">{drawerTask.type}</div></div>
-              <div className="rounded border px-3 py-2"><div className="text-xs text-gray-400">状态</div><div className="font-medium">{drawerTask.status}</div></div>
-              <div className="rounded border px-3 py-2"><div className="text-xs text-gray-400">绑定模板</div><div className="font-medium">{drawerTask.template}</div></div>
-            </div>
-            <div className="rounded border px-3 py-2"><div className="text-xs text-gray-400">执行周期/时间</div><div className="font-medium">{drawerTask.schedule}</div></div>
-            <div className="grid grid-cols-3 gap-2">
-              <div className="rounded border px-3 py-2 text-center"><div className="text-xs text-gray-400">总待呼</div><div className="font-medium">{drawerTask.kpi.pending}</div></div>
-              <div className="rounded border px-3 py-2 text-center"><div className="text-xs text-gray-400">已呼叫</div><div className="font-medium">{drawerTask.kpi.called}</div></div>
-              <div className="rounded border px-3 py-2 text-center"><div className="text-xs text-gray-400">接通</div><div className="font-medium">{drawerTask.kpi.connected}</div></div>
-            </div>
-          </div>
-        </ZzDrawer>
-      )}
+      {newManual && <NewManualModal onClose={() => setNewManual(false)} onOk={(cfg) => { setTasks((ts) => [...ts, {
+        id: 'AI-' + (ts.length + 1), name: cfg.name, type: '手动临时', template: cfg.template ?? '标准开场白',
+        status: cfg.enabled === false ? '已暂停' : '运行中',
+        schedule: '立即执行一次', nextRun: '-',
+        filter: `时段 ${cfg.period ?? '不限'}；每客户最大呼叫 ${cfg.maxCalls ?? 3} 次`,
+        strategy: `每客户最大呼叫 ${cfg.maxCalls ?? 3} 次；${cfg.retry ?? ''}`,
+        config: { period: cfg.period, maxCalls: cfg.maxCalls, retry: cfg.retry },
+        kpi: { pending: 100, called: 0, connected: 0, connectRate: 0, noAnswer: 0, busy: 0, promise: 0, toHuman: 0 },
+        fail: { 关机: 0, 空号: 0, 拒接: 0, 号码错误: 0 }, calls: [],
+      }]); setNewManual(false) }} />}
+      {newAuto && <NewAutoModal onClose={() => setNewAuto(false)} onOk={(cfg) => {
+        const ex = (cfg.exclusions ?? []).join('、') || '无排除项'
+        setTasks((ts) => [...ts, {
+          id: 'AI-' + (ts.length + 1), name: cfg.name, type: '自动周期', template: cfg.template ?? '标准开场白',
+          status: cfg.enabled === false ? '已暂停' : '运行中',
+          schedule: cfg.freq === '每周' ? '每周自动执行' : '每日自动执行', nextRun: cfg.enabled === false ? '—' : '待调度',
+          filter: `${cfg.stage ?? ''}；${cfg.overdue ?? ''}；${ex}`,
+          strategy: `每客户最大呼叫 ${cfg.maxCalls ?? 2} 次；失败 ${cfg.retry ?? 4}h 后重呼；时段 ${cfg.period ?? ''}`,
+          config: { period: cfg.period, maxCalls: cfg.maxCalls, retry: cfg.retry, stage: cfg.stage, overdue: cfg.overdue, exclusions: cfg.exclusions, freq: cfg.freq },
+          kpi: { pending: 800, called: 0, connected: 0, connectRate: 0, noAnswer: 0, busy: 0, promise: 0, toHuman: 0 },
+          fail: { 关机: 0, 空号: 0, 拒接: 0, 号码错误: 0 }, calls: [],
+        }]); setNewAuto(false)
+      }} />}
 
       {/* req2: 指标看板卡片点击 → 右侧抽屉展示指标构成明细 */}
       {drawerMetric && (
@@ -142,48 +144,85 @@ function ZzAiTask() {
 }
 
 /* 新建临时任务 */
-function NewManualModal({ onClose, onOk }: { onClose: () => void; onOk: (name: string) => void }) {
+// 新建任务的配置项（此前只取任务名，其余配置全部丢弃）
+type NewTaskCfg = {
+  name: string; template?: string; period?: string; maxCalls?: number; retry?: string | number
+  stage?: string; overdue?: string; exclusions?: string[]; freq?: string; enabled?: boolean
+}
+
+function NewManualModal({ onClose, onOk }: { onClose: () => void; onOk: (cfg: NewTaskCfg) => void }) {
   const [name, setName] = useState('M3协催临时批次')
+  const [template, setTemplate] = useState(ZZ_AI_TEMPLATES[1]?.name ?? ZZ_AI_TEMPLATES[0]?.name ?? '标准开场白')
+  const [period, setPeriod] = useState('09:00-12:00')
+  const [maxCalls, setMaxCalls] = useState(3)
+  const [retry, setRetry] = useState('失败4h后重呼')
   return (
     <ZzModal open title="新建临时任务（一次性专项外呼）" onClose={onClose} width={640}
-      footer={<><ZzBtn onClick={onClose}>取消</ZzBtn><ZzBtn primary onClick={() => onOk(name)}>提交执行</ZzBtn></>}>
+      footer={<><ZzBtn onClick={onClose}>取消</ZzBtn><ZzBtn primary onClick={() => onOk({ name, template, period, maxCalls, retry })}>提交执行</ZzBtn></>}>
       <div className="space-y-3">
         <ZzField label="任务名称"><ZzInput value={name} onChange={(e) => setName(e.target.value)} /></ZzField>
         <ZzField label="客户案件池"><ZzTextarea rows={2} placeholder="条件筛选（逾期阶段/天数）或导入名单" /></ZzField>
-        <ZzField label="绑定对话模板"><ZzSelect defaultValue={ZZ_AI_TEMPLATES[1].name}>{ZZ_AI_TEMPLATES.map((t) => <option key={t.id}>{t.name}</option>)}</ZzSelect></ZzField>
+        <ZzField label="绑定对话模板"><ZzSelect value={template} onChange={(e) => setTemplate(e.target.value)}>{ZZ_AI_TEMPLATES.map((t) => <option key={t.id}>{t.name}</option>)}</ZzSelect></ZzField>
         <div className="grid grid-cols-2 gap-3">
-          <ZzField label="外呼时间窗口"><ZzInput placeholder="09:00-12:00" /></ZzField>
-          <ZzField label="最大呼叫次数"><ZzInput type="number" defaultValue={3} /></ZzField>
+          <ZzField label="外呼时间窗口"><ZzInput value={period} onChange={(e) => setPeriod(e.target.value)} placeholder="09:00-12:00" /></ZzField>
+          <ZzField label="最大呼叫次数"><ZzInput type="number" value={maxCalls} onChange={(e) => setMaxCalls(Number(e.target.value))} /></ZzField>
         </div>
-        <ZzField label="重呼策略"><ZzSelect defaultValue="失败4h后重呼"><option>失败4h后重呼</option><option>失败6h后重呼</option><option>不重呼</option></ZzSelect></ZzField>
+        <ZzField label="重呼策略"><ZzSelect value={retry} onChange={(e) => setRetry(e.target.value)}><option>失败4h后重呼</option><option>失败6h后重呼</option><option>不重呼</option></ZzSelect></ZzField>
       </div>
     </ZzModal>
   )
 }
 
 /* 新建自动周期任务（真正全自动） */
-function NewAutoModal({ onClose, onOk }: { onClose: () => void; onOk: (name: string) => void }) {
+function NewAutoModal({ onClose, onOk }: { onClose: () => void; onOk: (cfg: NewTaskCfg) => void }) {
   const [name, setName] = useState('M1每日自动提醒')
+  const [template, setTemplate] = useState(ZZ_AI_TEMPLATES[0]?.name ?? '标准开场白')
+  const [stage, setStage] = useState('M1-M3')
+  const [overdue, setOverdue] = useState('逾期1-90天')
+  const [exHuman, setExHuman] = useState(true)
+  const [exPtp, setExPtp] = useState(true)
+  const [exAiBan, setExAiBan] = useState(true)
+  const [exField, setExField] = useState(true)
+  const [freq, setFreq] = useState('每日')
+  const [period, setPeriod] = useState('09:00-12:00, 14:00-18:00')
+  const [maxCalls, setMaxCalls] = useState(2)
+  const [retry, setRetry] = useState(4)
+  const [on, setOn] = useState('启用')
   return (
     <ZzModal open title="新建自动周期任务（系统全自动外呼）" onClose={onClose} width={640}
-      footer={<><ZzBtn onClick={onClose}>取消</ZzBtn><ZzBtn primary onClick={() => onOk(name)}>启用自动任务</ZzBtn></>}>
+      footer={<><ZzBtn onClick={onClose}>取消</ZzBtn><ZzBtn primary onClick={() => onOk({
+        name, template, period, maxCalls, retry, stage, overdue, freq, enabled: on === '启用',
+        exclusions: [exHuman && '排除已人工跟进', exPtp && '排除已承诺还款', exAiBan && '排除禁止AI协催', exField && '排除已转外访或法务'].filter(Boolean) as string[],
+      })}>启用自动任务</ZzBtn></>}>
       <div className="mb-3 rounded bg-blue-50 p-2 text-xs text-blue-700">💡 自动周期任务：系统按配置的筛选条件与调度时间，自动扫描逾期案件池生成 AI 外呼，无需每次手动新建；临时任务用于一次性专项批次。</div>
       <div className="space-y-3">
         <ZzField label="任务名称"><ZzInput value={name} onChange={(e) => setName(e.target.value)} /></ZzField>
         <ZzField label="案件筛选条件（核心）">
-          <div className="flex flex-wrap gap-2">
-            <ZzSelect defaultValue="M1-M3"><option>M1</option><option>M1-M3</option><option>全部逾期</option></ZzSelect>
-            <ZzSelect defaultValue="逾期1-90天"><option>逾期1-30天</option><option>逾期1-90天</option><option>全部</option></ZzSelect>
+          <div className="flex flex-wrap gap-3">
+            <ZzSelect value={stage} onChange={(e) => setStage(e.target.value)}><option>M1</option><option>M1-M3</option><option>全部逾期</option></ZzSelect>
+            <ZzSelect value={overdue} onChange={(e) => setOverdue(e.target.value)}><option>逾期1-30天</option><option>逾期1-90天</option><option>全部</option></ZzSelect>
           </div>
-          <ZzTextarea rows={2} className="mt-2" defaultValue="排除已人工跟进/已承诺还款/禁止AI协催/已转外访或法务" />
+          <div className="mt-2 flex flex-wrap gap-2">
+            <label className="inline-flex items-center gap-1 text-xs"><input type="checkbox" checked={exHuman} onChange={(e) => setExHuman(e.target.checked)} />排除已人工跟进</label>
+            <label className="inline-flex items-center gap-1 text-xs"><input type="checkbox" checked={exPtp} onChange={(e) => setExPtp(e.target.checked)} />排除已承诺还款</label>
+            <label className="inline-flex items-center gap-1 text-xs"><input type="checkbox" checked={exAiBan} onChange={(e) => setExAiBan(e.target.checked)} />排除禁止AI协催</label>
+            <label className="inline-flex items-center gap-1 text-xs"><input type="checkbox" checked={exField} onChange={(e) => setExField(e.target.checked)} />排除已转外访或法务</label>
+          </div>
         </ZzField>
-        <ZzField label="绑定对话模板"><ZzSelect defaultValue={ZZ_AI_TEMPLATES[0].name}>{ZZ_AI_TEMPLATES.map((t) => <option key={t.id}>{t.name}</option>)}</ZzSelect></ZzField>
+        <ZzField label="绑定对话模板"><ZzSelect value={template} onChange={(e) => setTemplate(e.target.value)}>{ZZ_AI_TEMPLATES.map((t) => <option key={t.id}>{t.name}</option>)}</ZzSelect></ZzField>
         <div className="grid grid-cols-2 gap-3">
-          <ZzField label="执行频率"><ZzSelect defaultValue="每日"><option>每日</option><option>每周</option></ZzSelect></ZzField>
-          <ZzField label="每日呼叫时段"><ZzInput defaultValue="09:00-12:00, 14:00-18:00" /></ZzField>
+          <ZzField label="执行频率"><ZzSelect value={freq} onChange={(e) => setFreq(e.target.value)}><option>每日</option><option>每周</option></ZzSelect></ZzField>
+          <ZzField label="每日呼叫时段"><ZzInput value={period} onChange={(e) => setPeriod(e.target.value)} /></ZzField>
         </div>
-        <ZzField label="外呼控制策略"><ZzTextarea rows={2} defaultValue="每客户最大呼叫 2 次；失败重呼间隔 4h；接通后不再重呼；夜间禁止外呼" /></ZzField>
-        <ZzField label="开关"><ZzSelect defaultValue="启用"><option>启用</option><option>停用</option></ZzSelect></ZzField>
+        <div className="grid grid-cols-2 gap-3">
+          <ZzField label="每客户最大呼叫次数"><ZzInput type="number" value={maxCalls} onChange={(e) => setMaxCalls(Number(e.target.value))} /></ZzField>
+          <ZzField label="失败重呼间隔(小时)"><ZzInput type="number" value={retry} onChange={(e) => setRetry(Number(e.target.value))} /></ZzField>
+        </div>
+        <div className="flex flex-wrap gap-4 text-xs text-slate-500">
+          <label className="inline-flex items-center gap-1"><input type="checkbox" defaultChecked readOnly />接通后不再重呼</label>
+          <label className="inline-flex items-center gap-1"><input type="checkbox" defaultChecked readOnly />夜间禁止外呼</label>
+        </div>
+        <ZzField label="开关"><ZzSelect value={on} onChange={(e) => setOn(e.target.value)}><option>启用</option><option>停用</option></ZzSelect></ZzField>
       </div>
     </ZzModal>
   )
@@ -196,7 +235,7 @@ function ZzAiTemplate() {
   const [edit, setEdit] = useState<any | null>(null)
   const [sim, setSim] = useState<any | null>(null)
   return (
-    <ZzPage title="对话模板管理" crumb="催贷管理 / AI协催" subtitle="多轮对话话术模板、分支流程与模拟测试">
+    <ZzPage title="对话模板管理" crumb="催贷管理 / 智能策略" subtitle="多轮对话话术模板、分支流程与模拟测试">
       <ZzCard title="话术模板" extra={<ZzBtn sm primary onClick={() => setEdit({ id: 'T-' + (rows.length + 1), name: '新模板', scenario: '', enabled: true, nodeCount: 1, nodes: [{ id: 'n1', role: 'AI', text: '您好', branch: [] }] })}>新增模板</ZzBtn>}>
         <ZzTable head={['模板名称', '适用场景', '节点数', '分支数', '启用', '操作']} rows={rows.map((t) => [
           t.name, t.scenario, t.nodeCount, t.nodes.reduce((a: number, n: any) => a + (n.branch?.length ?? 0), 0), <ZzBadge color={t.enabled ? GREEN : GRAY}>{t.enabled ? '启用' : '停用'}</ZzBadge>,
@@ -208,7 +247,7 @@ function ZzAiTemplate() {
         ])} />
       </ZzCard>
       {preview && <FlowPreview t={preview} onClose={() => setPreview(null)} />}
-      {edit && <TemplateEditor t={edit} onClose={() => setEdit(null)} onSave={(nt) => { setRows((rs) => { const i = rs.findIndex((x) => x.id === nt.id); return i >= 0 ? rs.map((x) => x.id === nt.id ? nt : x) : [...rs, nt] })(); setEdit(null) }} />}
+      {edit && <TemplateEditor t={edit} onClose={() => setEdit(null)} onSave={(nt) => { setRows((rs) => { const i = rs.findIndex((x) => x.id === nt.id); return i >= 0 ? rs.map((x) => x.id === nt.id ? nt : x) : [...rs, nt] }); setEdit(null) }} />}
       {sim && <Simulator t={sim} onClose={() => setSim(null)} />}
     </ZzPage>
   )

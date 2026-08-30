@@ -52,7 +52,6 @@ import { ZzVisitModule } from './ZzVisit'
 import { ZzQaModule } from './ZzQa'
 import { ZzAiModule } from './ZzAi'
 import { ZzAiTaskDetail } from './ZzAiTaskDetail'
-import { ZzScriptLib } from './ZzScriptLib'
 import { ZzSmsTemplate } from './ZzSmsTemplate'
 import { ZzVisitorManage } from './ZzVisitorManage'
 import { ZzLegalModule } from './ZzLegal'
@@ -415,6 +414,13 @@ export default function Console() {
   }
   const menuIcon = (key: string): IconName => MENU_ICON[key] ?? 'dashboard'
 
+  // 各子系统默认首页：评分产品=评分记录｜催贷管理=案件管理｜数据治理=元事件｜管理中心=规则合集｜企业风控=风险预警｜数字营销=AI营销
+  const subHome = (key: string) =>
+    key === 'sc' ? 'score-records' :
+    key === 'zz' ? 'cases' :
+    key === 'dg' ? 'meta-event' :
+    key === 'cm' ? 'rule-hub' : key === 'ep' ? 'fk-risk-warning' : key === 'dm' ? 'ai-marketing' : 'overview'
+
   const menu: MenuGroup[] =
     shellSub === 'cr' ? creditRiskMenu :
     shellSub === 'sc' ? scoringMenu :
@@ -424,7 +430,7 @@ export default function Console() {
     shellSub === 'zz' ? collectionMenu :
     shellSub === 'de' ? decisionEngineMenu :
     shellSub === 'cm' ? cmMenu : []
-  const cur = (loc.pathname.split('/')[3] as string) || 'overview'
+  const cur = (loc.pathname.split('/')[3] as string) || subHome(sub)
   const key = `${sub}:${cur}`
 
   // 详情页高亮回退：详情路由段（如 model-detail / mid-cust-score）不在菜单里，
@@ -451,9 +457,6 @@ export default function Console() {
     logout()
     nav('/login')
   }
-  // 各子系统默认首页：管理中心=规则合集｜企业风控=风险预警｜数字营销=AI营销
-  const subHome = (key: string) =>
-    key === 'cm' ? 'rule-hub' : key === 'ep' ? 'fk-risk-warning' : key === 'dm' ? 'ai-marketing' : 'overview'
   function switchSub(key: string) {
     nav(`/console/${key}/${subHome(key)}`)
   }
@@ -678,8 +681,6 @@ export default function Console() {
               <ZzAiTaskDetail />
             ) : key.startsWith('zz:ai') ? (
               <ZzAiModule pageKey={key} />
-            ) : key.startsWith('zz:script') ? (
-              <ZzScriptLib />
             ) : key.startsWith('zz:sms') ? (
               <ZzSmsTemplate />
             ) : key.startsWith('zz:legal') ? (

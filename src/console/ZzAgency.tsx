@@ -4,9 +4,10 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { ZzPage, ZzCard, ZzBtn, ZzModal, ZzTable, ZzTabs, ZzField, ZzInput, ZzSelect, ZzBadge, ZzStat, ZzDrawer, BLUE } from './zzUi'
 import {
   ZZ_AGENCIES, ZZ_AGENCY_ACCOUNTS, ZZ_ENTRUSTS, ZZ_AGENCY_MONITOR, ZZ_AGENCY_CALLBACKS,
-  ZZ_AGENCY_KPI, ZZ_AGENCY_SETTLE, zzAgencyName, zzAgencyCases, zzAgencyAccounts,
+  ZZ_AGENCY_KPI, ZZ_AGENCY_SETTLE, ZZ_AGENCY_STAFF, zzAgencyName, zzAgencyCases, zzAgencyAccounts,
   zzAgencyKpi, zzAgencySettle, pct, money, type ZzAgency,
 } from './zzData'
+import { useZzList, updateZzList, ZZ_FILE } from './zzStore'
 
 /* 可点击机构名 —— 全局打开机构详情抽屉 */
 function AgencyName({ id, onOpen }: { id: string; onOpen: (id: string) => void }) {
@@ -63,12 +64,37 @@ export function ZzAgencyModule({ pageKey }: { pageKey: string }) {
 /* ============================ 1 委外机构管理 ============================ */
 function AgencyManage({ onAgency, onCase }: { onAgency: (id: string) => void; onCase: (id: string, tab?: string) => void }) {
   const [tab, setTab] = useState('机构档案')
-  const TABS = ['机构档案', '机构账号权限']
+  const TABS = ['机构档案', '机构人员管理', '机构账号权限']
   return (
-    <ZzPage title="委外机构管理" crumb="催贷管理 / 委外监管" subtitle="委外机构档案、资质、账号权限与启用/暂停监管（机构名可点开详情抽屉）">
+    <ZzPage title="委外机构管理" crumb="催贷管理 / 委外监管" subtitle="委外机构档案、资质、人员与账号权限与启用/暂停监管（机构名可点开详情抽屉）">
       <ZzTabs tabs={TABS} active={tab} onChange={setTab} />
-      <div className="mt-3">{tab === '机构档案' ? <AgencyList onAgency={onAgency} /> : <AgencyAccountTab onAgency={onAgency} onCase={onCase} />}</div>
+      <div className="mt-3">
+        {tab === '机构档案' ? <AgencyList onAgency={onAgency} />
+          : tab === '机构人员管理' ? <AgencyStaffTab onAgency={onAgency} onCase={onCase} />
+          : <AgencyAccountTab onAgency={onAgency} onCase={onCase} />}
+      </div>
     </ZzPage>
+  )
+}
+
+/* 机构人员管理：按机构展示外催人员（岗位 / 在委案件 / 当月回款 / 状态） */
+function AgencyStaffTab({ onAgency, onCase }: { onAgency: (id: string) => void; onCase: (id: string, tab?: string) => void }) {
+  const [agency, setAgency] = useState('')
+  const list = ZZ_AGENCY_STAFF.filter((s) => !agency || s.agency === agency)
+  return (
+    <>
+      <ZzCard title="机构人员管理" extra={
+        <ZzSelect value={agency} onChange={(e) => setAgency(e.target.value)}><option value="">全部机构</option>{ZZ_AGENCIES.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}</ZzSelect>
+      }>
+        <ZzTable stickyAction head={['机构', '人员', '岗位', '在委案件', '当月回款', '状态', '操作']} rows={list.map((s) => [
+          <AgencyName id={s.agency} onOpen={onAgency} />, <span className="font-mono">{s.name}</span>, s.role,
+          <span className="font-medium">{s.cases}</span>,
+          <span className="text-right tabular-nums">{money(s.recovery)}</span>,
+          s.status === '在岗' ? <ZzBadge color="#16A34A">在岗</ZzBadge> : <ZzBadge color="#9CA3AF">休假</ZzBadge>,
+          <div className="flex gap-1"><ZzBtn sm onClick={() => onAgency(s.agency)}>所属机构</ZzBtn><ZzBtn sm onClick={() => alert('查看 ' + s.name + ' 的催收轨迹（样例）')}>轨迹</ZzBtn></div>,
+        ])} />
+      </ZzCard>
+    </>
   )
 }
 
@@ -152,20 +178,53 @@ function MonitorPage({ onAgency, onCase }: { onAgency: (id: string) => void; onC
   )
 }
 
-function MonitorTab({ onAgency, onCase, onViewCallback }: { onAgency: (id: string) => void; onCase: (id: string, tab?: string) => void; onViewCallback: (caseId: string) => void }) {
+function MonitorTab({ onAgency, onCase }: { onAgency: (id: string) => void; onCase: (id: string, tab?: string) => void }) {
+  const nav = useNavigate()
   const [status, setStatus] = useState('')
-  const list = ZZ_AGENCY_MONITOR.filter((m) => !status || m.status === status)
+  // 委外监控 = 样例在委案件 + 案件管理页新发起的委托（读共享数据层，实时同步）
+  const entrusts = useZzList<any>(ZZ_FILE.entrusts, ZZ_ENTRUSTS)
+  const monitorRows = (() => {
+    const base: any[] = ZZ_AGENCY_MONITOR.map((m) => ({ ...m }))
+    entrusts.forEach((e) => {
+      const i = base.findIndex((m) => m.id === e.id)
+      if (i >= 0) {
+        base[i] = { ...base[i], agency: e.to, entrustTime: e.entrustTime, due: e.due, status: e.status === '已召回' ? '已召回' : base[i].status }
+      } else if (e.status === '委外中') {
+        base.unshift({ id: e.id, name: e.name, agency: e.to, entrustTime: e.entrustTime, due: e.due, status: '催收中', feedback: '已委托，等待机构首次回传' })
+      }
+    })
+    return base
+  })()
+  const recall = (id: string) => {
+    updateZzList<any>(ZZ_FILE.entrusts, (es) => es.map((x) => (x.id === id ? { ...x, status: '已召回' } : x)))
+    updateZzList<any>(ZZ_FILE.cases, (rs) => rs.map((r) => (r.id === id ? { ...r, status: '催收中', outsource: false } : r)))
+    alert('已召回 ' + id + '，案件已转回内部催收队列')
+  }
+  const list = monitorRows.filter((m) => !status || m.status === status)
+  const total = monitorRows.length
+  const inProgress = monitorRows.filter((m) => m.status === '催收中').length
+  const recalled = monitorRows.filter((m) => m.status === '已召回').length
+  const validCb = ZZ_AGENCY_CALLBACKS.filter((c) => c.result === '有效').length
   return (
-    <ZzCard title={`监控列表（${list.length}）`} extra={
-      <ZzField label="案件状态"><ZzSelect value={status} onChange={(e) => setStatus(e.target.value)}><option value="">全部</option><option>催收中</option><option>协商中</option><option>已召回</option></ZzSelect></ZzField>
-    }>
-      <ZzTable stickyAction head={['案件', '客户', '委外机构', '委托时间', '委托到期', '状态', '最新回传摘要', '操作']} rows={list.map((m) => [
-        <CaseId id={m.id} onOpen={onCase} />, m.name, <AgencyName id={m.agency} onOpen={onAgency} />, m.entrustTime, m.due,
-        <ZzBadge color={m.status === '已召回' ? '#9CA3AF' : BLUE}>{m.status}</ZzBadge>,
-        <span className="block max-w-[200px] truncate" title={m.feedback}>{m.feedback}</span>,
-        <div className="flex flex-nowrap gap-1"><ZzBtn sm primary onClick={() => onViewCallback(m.id)}>查看回传</ZzBtn><ZzBtn sm onClick={() => alert('已召回 ' + m.id)}>召回</ZzBtn></div>,
-      ])} />
-    </ZzCard>
+    <>
+      {/* 顶部 4 指标概览卡 */}
+      <div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-4">
+        <ZzStat label="委外案件总数" value={total} tip="当前委托外部机构处置的全部案件数" />
+        <ZzStat label="催收中" value={inProgress} accent={BLUE} tip="机构正在催收中的案件" />
+        <ZzStat label="已召回" value={recalled} accent="#9CA3AF" tip="已从机构召回的案件" />
+        <ZzStat label="有效回传" value={validCb} accent="#16A34A" tip="判定为有效的机构回传条数" />
+      </div>
+      <ZzCard title={`监控列表（${list.length}）`} extra={
+        <ZzField label="案件状态"><ZzSelect value={status} onChange={(e) => setStatus(e.target.value)}><option value="">全部</option><option>催收中</option><option>协商中</option><option>已召回</option></ZzSelect></ZzField>
+      }>
+        <ZzTable stickyAction head={['案件', '客户', '委外机构', '委托时间', '委托到期', '状态', '最新回传摘要', '操作']} rows={list.map((m) => [
+          <CaseId id={m.id} onOpen={onCase} />, m.name, <AgencyName id={m.agency} onOpen={onAgency} />, m.entrustTime, m.due,
+          <ZzBadge color={ (m.status === '已召回' ? '#9CA3AF' : BLUE)}>{m.status}</ZzBadge>,
+          <span className="block max-w-[200px] truncate" title={m.feedback}>{m.feedback}</span>,
+          <div className="flex flex-nowrap gap-1"><ZzBtn sm primary onClick={() => nav('/console/zz/agency-callback?case=' + m.id)}>查看回传</ZzBtn><ZzBtn sm onClick={() => recall(m.id)}>召回</ZzBtn></div>,
+        ])} />
+      </ZzCard>
+    </>
   )
 }
 
@@ -184,7 +243,7 @@ function CallbackPage({ onAgency, onCase }: { onAgency: (id: string) => void; on
   const nav = useNavigate()
   const caseRec = caseFilter ? ZZ_AGENCY_MONITOR.find((m) => m.id === caseFilter) : null
   return (
-    <ZzPage title="催收回传记录" crumb="催贷管理 / 委外监管" subtitle="委外机构催收回传流水记录，支持按机构 / 结果筛选（机构名/案件号可点开详情抽屉）">
+    <ZzPage title="委外回传记录" crumb="催贷管理 / 委外监管" subtitle="委外机构催收回传流水记录，支持按机构 / 结果筛选（机构名/案件号可点开详情抽屉）">
       <ZzCard title={`催收回传流水（${list.length}）`} extra={
         <div className="flex gap-2">
           <ZzSelect value={agency} onChange={(e) => setAgency(e.target.value)}><option value="">全部机构</option>{ZZ_AGENCIES.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}</ZzSelect>
@@ -197,7 +256,7 @@ function CallbackPage({ onAgency, onCase }: { onAgency: (id: string) => void; on
             <ZzBtn sm onClick={() => (window.history.length > 1 ? window.history.back() : nav('/console/zz/agency-monitor'))}>返回监控</ZzBtn>
           </div>
         )}
-        <ZzTable stickyAction head={['时间', '案件', '委外机构', '客户反馈', '结果', '操作']} rows={list.map((c) => [
+        <ZzTable stickyAction head={['时间', '案件', '委外机构', '委外作业反馈', '结果', '操作']} rows={list.map((c) => [
           c.time, <CaseId id={c.caseId} onOpen={onCase} />, <AgencyName id={c.agency} onOpen={onAgency} />, c.feedback,
           <ZzBadge color={c.result === '有效' ? '#16A34A' : '#DC2626'}>{c.result}</ZzBadge>,
           <ZzBtn sm onClick={() => setDetail(c)}>详情</ZzBtn>,
@@ -208,40 +267,109 @@ function CallbackPage({ onAgency, onCase }: { onAgency: (id: string) => void; on
   )
 }
 
-/* 回传记录详情抽屉：展示单条回传原文 + 同案件其他回传 */
+/* 回传记录详情抽屉：委外作业反馈结构化展示 + 历史轮回传切换 */
 function CallbackDetail({ rec, onClose, onAgency, onCase }: { rec: any; onClose: () => void; onAgency: (id: string) => void; onCase: (id: string, tab?: string) => void }) {
   const sameCase = ZZ_AGENCY_CALLBACKS.filter((c) => c.caseId === rec.caseId)
+  const [view, setView] = useState<any>(rec)
+  // 切换历史回合
+  const switchRec = (c: any) => setView(c)
+
   return (
-    <ZzDrawer open title="回传记录详情" onClose={onClose} width={560}>
-      <div className="grid gap-4">
-        <div className="grid grid-cols-2 gap-3 rounded bg-slate-50 p-3 text-sm">
-          <Field label="案件号" value={<CaseId id={rec.caseId} onOpen={onCase} />} />
-          <Field label="客户" value={rec.client} />
-          <Field label="委外机构" value={<AgencyName id={rec.agency} onOpen={onAgency} />} />
-          <Field label="回传时间" value={rec.time} />
-          <Field label="判定结果" value={<ZzBadge color={rec.result === '有效' ? '#16A34A' : '#DC2626'}>{rec.result}</ZzBadge>} />
+    <ZzDrawer open title="回传记录详情" onClose={onClose} width={620}>
+      {/* ① 基础信息区 */}
+      <div className="grid gap-3 rounded bg-slate-50 p-3 text-sm">
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="案件号（点击跳转详情）" value={<span className="cursor-pointer text-[#1677ff] underline" onClick={() => onCase(view.caseId, 'info')}>{view.caseId}</span>} />
+          <Field label="客户" value={view.client} />
+          <Field label="委外机构" value={<AgencyName id={view.agency} onOpen={onAgency} />} />
+          <Field label="回传时间" value={view.time} />
+          <Field label="回传判定结果" value={<ZzBadge color={view.result === '有效' ? '#16A34A' : '#DC2626'}>{view.result}</ZzBadge>} />
         </div>
-        <div>
-          <div className="mb-1 text-xs font-medium text-gray-500">客户反馈</div>
-          <div className="rounded border p-3 text-sm leading-relaxed">{rec.feedback}</div>
+        <div className="grid grid-cols-2 gap-3 border-t border-slate-200 pt-2">
+          <Field label="平台审核人" value={view.auditBy || '-'} />
+          <Field label="审核时间" value={view.auditTime || '-'} />
         </div>
-        {sameCase.length > 1 && (
-          <div>
-            <div className="mb-1 text-xs font-medium text-gray-500">同一案件的其他回传记录（{sameCase.length - 1}）</div>
-            <div className="space-y-2">
-              {sameCase.filter((c: any) => c !== rec).map((c: any, i: number) => (
-                <div key={i} className="rounded border p-2 text-sm">
-                  <div className="mb-1 flex items-center justify-between text-xs text-gray-500">
-                    <span>{c.time} · <AgencyName id={c.agency} onOpen={onAgency} /></span>
-                    <ZzBadge color={c.result === '有效' ? '#16A34A' : '#DC2626'}>{c.result}</ZzBadge>
-                  </div>
-                  <div className="leading-relaxed">{c.feedback}</div>
-                </div>
-              ))}
-            </div>
+        {view.auditRemark && (
+          <div className="border-t border-slate-200 pt-2">
+            <div className="text-xs text-gray-400">审核备注（判定依据）</div>
+            <div className="mt-0.5 leading-relaxed">{view.auditRemark}</div>
           </div>
         )}
       </div>
+
+      {/* ② 委外结构化作业反馈 */}
+      <div className="mt-4">
+        <div className="mb-2 text-sm font-semibold">委外作业反馈</div>
+        <div className="grid grid-cols-2 gap-3 text-sm">
+          <Field label="客户联系状态" value={view.contactStatus || '-'} />
+          <Field label="作业类型" value={view.workType || '-'} />
+          <Field label="是否产生 PTP" value={view.ptp || '-'} />
+          {view.ptp === '是' && (
+            <Field label="承诺还款" value={`${view.ptpTime || '-'} · ${view.ptpAmount || ''}`} />
+          )}
+          <Field label="客户态度" value={view.attitude || '-'} />
+          <Field label="风险标记" value={<span className="text-[#D97706]">{view.riskTag || '-'}</span>} />
+        </div>
+        <div className="mt-3">
+          <div className="mb-1 text-xs font-medium text-gray-500">委外补充备注</div>
+          <div className="rounded border p-3 text-sm leading-relaxed">{view.feedback}</div>
+        </div>
+      </div>
+
+      {/* ③ 回传附件区域 */}
+      {view.attachments && view.attachments.length > 0 && (
+        <div className="mt-4">
+          <div className="mb-2 text-sm font-semibold">回传附件</div>
+          <div className="flex flex-wrap gap-2">
+            {view.attachments.map((a: any, i: number) => (
+              <div key={i} className="flex items-center gap-2 rounded border px-3 py-2 text-sm">
+                <span className="text-base">{a.type === '录音' ? '🎙️' : a.type === '照片' ? '🖼️' : '📄'}</span>
+                <span>{a.name}</span>
+                <span className="cursor-pointer text-[#1677ff] underline">预览</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ④ 本轮回传衍生业务记录 */}
+      {view.updatedFields && view.updatedFields.length > 0 && (
+        <div className="mt-4">
+          <div className="mb-2 text-sm font-semibold">本轮回传衍生业务记录</div>
+          <div className="rounded border p-3 text-sm">
+            <div className="mb-2 text-xs text-gray-500">该条回传已同步更新案件以下字段：</div>
+            <ul className="space-y-1">
+              {view.updatedFields.map((f: string, i: number) => (
+                <li key={i} className="flex items-center gap-2">
+                  <span className="text-[#1677ff]">●</span>
+                  <span>{f}</span>
+                  {f.includes('PTP') && (
+                    <span className="cursor-pointer text-[#1677ff] underline" onClick={() => onCase(view.caseId, 'info')}>查看 PTP 记录快照</span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      )}
+
+      {/* ⑤ 历史回传记录小列表 */}
+      {sameCase.length > 1 && (
+        <div className="mt-4">
+          <div className="mb-2 text-sm font-semibold">历史回传记录（同一案件 {sameCase.length} 轮回传）</div>
+          <div className="space-y-2">
+            {sameCase.map((c: any, i: number) => (
+              <div key={i} className={`cursor-pointer rounded border p-2 text-sm ${c === view ? 'border-[#1677ff] bg-blue-50' : ''}`} onClick={() => switchRec(c)}>
+                <div className="mb-1 flex items-center justify-between text-xs text-gray-500">
+                  <span>{c.time} · <AgencyName id={c.agency} onOpen={onAgency} /></span>
+                  <ZzBadge color={c.result === '有效' ? '#16A34A' : '#DC2626'}>{c.result}</ZzBadge>
+                </div>
+                <div className="leading-relaxed truncate">{c.feedback}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </ZzDrawer>
   )
 }
@@ -263,17 +391,48 @@ function PerfSettle({ onAgency, onCase }: { onAgency: (id: string) => void; onCa
 }
 
 function KpiTab({ onAgency }: { onAgency: (id: string) => void; onCase: (id: string, tab?: string) => void }) {
+  // KPI 权重走共享配置：改动后得分即时重算（此前权重写死、得分是样例值）
+  const policyRows = useZzList<any>(ZZ_FILE.policy, [])
+  const policy = policyRows[0] ?? {}
+  const wRecovery = Number(policy.kpiWeightRecovery ?? 40)
+  const wHandled = Number(policy.kpiWeightHandled ?? 20)
+  const setWeight = (patch: any) => updateZzList<any>(ZZ_FILE.policy, (rows) => [{ ...(rows[0] ?? {}), ...patch }])
+  // 得分 = 回款率与处理量按权重加权（归一化到 100）− 投诉/违规扣减
+  const calcScore = (k: any) => {
+    const sum = wRecovery + wHandled || 1
+    const handledScore = Math.min(100, (k.handled ?? 0) * 2)
+    const base = ((k.recoveryRate ?? 0) * 100 * wRecovery + handledScore * wHandled) / sum
+    return Math.max(0, Math.round(base - (k.complaints ?? 0) * 2 - (k.violations ?? 0) * 5))
+  }
+  const startReview = (k: any) => {
+    const score = calcScore(k)
+    updateZzList<any>(ZZ_FILE.logs, (l) => [{
+      time: new Date().toLocaleString('zh-CN'), operator: '运营-当前',
+      content: `发起督导复盘：机构 ${k.agency} 得分 ${score}（低于 80），需提交整改与复盘记录`,
+    }, ...l])
+    alert(`已对机构 ${k.agency}（得分 ${score}）发起督导复盘，已记入操作日志`)
+  }
   return (
     <>
       <ZzCard title="KPI报表">
-        <div className="mb-2 flex flex-wrap items-center gap-2 text-xs text-gray-500">
-          <span className="rounded bg-slate-100 px-2 py-1">得分说明：满分 100，综合「回款率(40%) · 处理量(20%) · 投诉量(扣减) · 违规次数(扣减)」加权计算；投诉 / 违规越多扣分越高，得分低于 80 触发督导复盘。</span>
+        <div className="mb-2 flex flex-wrap items-center gap-3 text-xs text-gray-500">
+          <span className="rounded bg-slate-100 px-2 py-1">满分 100，按权重加权后扣减投诉/违规；得分低于 80 可发起督导复盘。</span>
+          <span className="flex items-center gap-1">回款率权重
+            <ZzInput className="w-14" type="number" value={wRecovery} onChange={(e) => setWeight({ kpiWeightRecovery: Number(e.target.value) })} />%
+          </span>
+          <span className="flex items-center gap-1">处理量权重
+            <ZzInput className="w-14" type="number" value={wHandled} onChange={(e) => setWeight({ kpiWeightHandled: Number(e.target.value) })} />%
+          </span>
         </div>
-        <ZzTable head={['机构', '回款率', '处理量', '投诉量', '违规次数', '得分']} rows={ZZ_AGENCY_KPI.map((k) => [
-          <AgencyName id={k.agency} onOpen={onAgency} />, pct(k.recoveryRate), k.handled, k.complaints,
-          <ZzBadge color={k.violations > 2 ? '#DC2626' : '#16A34A'}>{k.violations}</ZzBadge>,
-          <span className="font-medium" style={{ color: k.score >= 90 ? '#16A34A' : k.score >= 80 ? BLUE : '#DC2626' }}>{k.score}</span>,
-        ])} />
+        <ZzTable head={['机构', '回款率', '处理量', '投诉量', '违规次数', '得分', '操作']} rows={ZZ_AGENCY_KPI.map((k) => {
+          const score = calcScore(k)
+          return [
+            <AgencyName id={k.agency} onOpen={onAgency} />, pct(k.recoveryRate), k.handled, k.complaints,
+            <ZzBadge color={k.violations > 2 ? '#DC2626' : '#16A34A'}>{k.violations}</ZzBadge>,
+            <span className="font-medium" style={{ color: score >= 90 ? '#16A34A' : score >= 80 ? BLUE : '#DC2626' }}>{score}</span>,
+            score < 80 ? <ZzBtn sm danger onClick={() => startReview(k)}>发起督导复盘</ZzBtn> : <span className="text-gray-400">-</span>,
+          ]
+        })} />
       </ZzCard>
     </>
   )
@@ -281,19 +440,37 @@ function KpiTab({ onAgency }: { onAgency: (id: string) => void; onCase: (id: str
 
 function SettleTab({ onAgency }: { onAgency: (id: string) => void; onCase: (id: string, tab?: string) => void }) {
   const [rate, setRate] = useState('8')
+  // 结算账单走共享数据层：确认结算与费率调整即时生效，刷新不丢
+  const settles = useZzList<any>(ZZ_FILE.settle, ZZ_AGENCY_SETTLE)
+  const setSettles = (v: any[] | ((rs: any[]) => any[])) => updateZzList<any>(ZZ_FILE.settle, (rs) => (typeof v === 'function' ? v(rs) : v))
+  const applyRate = () => {
+    const r = Number(rate)
+    if (!r || r <= 0 || r > 100) { alert('请输入 1-100 之间的费率'); return }
+    // 费率改动真正应用到所有「待确认」账单并重算佣金（此前只弹提示，费率恒为样例值）
+    setSettles((rs) => rs.map((s) => (s.status === '已结算'
+      ? s
+      : { ...s, rate: r / 100, commission: Math.round((s.recovery ?? 0) * r / 100) })))
+    alert(`佣金费率已更新为 ${r}%，并已应用到 ${settles.filter((s) => s.status !== '已结算').length} 笔待确认账单`)
+  }
+  const confirmSettle = (s: any) => {
+    if (s.status === '已结算') { alert('该账单已于 ' + (s.settledAt ?? '-') + ' 结算完成'); return }
+    setSettles((rs) => rs.map((x) => (x.id === s.id ? { ...x, status: '已结算', settledAt: new Date().toISOString().slice(0, 10) } : x)))
+    alert(`账单 ${s.id} 已确认结算，佣金 ${money(s.commission)}`)
+  }
   return (
     <>
       <ZzCard title="佣金规则">
         <div className="flex flex-wrap items-center gap-3 text-sm">按回款金额比例结算，当前费率
           <ZzInput className="w-16" value={rate} onChange={(e) => setRate(e.target.value)} />%
-          <ZzBtn sm onClick={() => alert('佣金费率已更新为 ' + rate + '%')}>编辑规则</ZzBtn>
+          <ZzBtn sm onClick={applyRate}>应用费率</ZzBtn>
         </div>
+        <div className="mt-2 text-xs text-gray-500">应用后所有「待确认」账单按新费率重算佣金，已结算账单不受影响。</div>
       </ZzCard>
       <ZzCard title="对账账单">
-        <ZzTable stickyAction head={['机构', '回款金额', '费率', '佣金', '状态', '操作']} rows={ZZ_AGENCY_SETTLE.map((s) => [
+        <ZzTable stickyAction head={['机构', '回款金额', '费率', '佣金', '状态', '操作']} rows={settles.map((s) => [
           <AgencyName id={s.agency} onOpen={onAgency} />, money(s.recovery), pct(s.rate, 0), money(s.commission),
           s.status === '已结算' ? <ZzBadge color="#16A34A">已结算</ZzBadge> : <ZzBadge color="#D97706">待确认</ZzBadge>,
-          <ZzBtn sm onClick={() => alert('账单已' + (s.status === '已结算' ? '查看' : '确认结算'))}>{s.status === '已结算' ? '查看' : '确认结算'}</ZzBtn>,
+          <ZzBtn sm primary={s.status !== '已结算'} onClick={() => confirmSettle(s)}>{s.status === '已结算' ? '查看' : '确认结算'}</ZzBtn>,
         ])} />
       </ZzCard>
     </>
@@ -413,14 +590,14 @@ function CaseDrawer({ id, onClose, onAgency, defaultTab = 'info' }: { id: string
           ) : (
 
             outsourced ? (
-            <ZzCard title={`催收回传记录（${callbacks.length}）`}>
-              {callbacks.length ? <ZzTable head={['时间', '机构', '客户反馈', '结果']} rows={callbacks.map((c) => [
+            <ZzCard title={`委外回传记录（${callbacks.length}）`}>
+              {callbacks.length ? <ZzTable head={['时间', '机构', '委外作业反馈', '结果']} rows={callbacks.map((c) => [
                 c.time, <AgencyName id={c.agency} onOpen={onAgency} />, c.feedback,
                 <ZzBadge color={c.result === '有效' ? '#16A34A' : '#DC2626'}>{c.result}</ZzBadge>,
               ])} /> : <div className="text-sm text-gray-400">暂无回传记录</div>}
             </ZzCard>
           ) : (
-            <ZzCard title="催收回传记录">
+            <ZzCard title="委外回传记录">
               <div className="text-sm text-gray-400">当前案件非委外状态，暂无委外机构催收回传记录。</div>
             </ZzCard>
           ))}

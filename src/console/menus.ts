@@ -60,6 +60,7 @@ export const scoringMenu: MenuGroup[] = [
     group: '工作台',
     section: '工作台',
     items: [
+      { label: '评分记录', key: 'sc:score-records', keep: true, desc: '三产品评分流水记录，支持单客分数检索与批量评分导入' },
       { label: '评分总览', key: 'sc:overview', keep: true, desc: '三产品评分总览与对象评分档案：并排展示智察分/智信分/智融分，支持单客分数检索与批量评分入口' },
     ],
   },
@@ -67,7 +68,7 @@ export const scoringMenu: MenuGroup[] = [
     group: '在线评分',
     section: '在线评分',
     items: [
-      { label: '评分记录', key: 'sc:score-records', desc: '三产品评分流水记录，支持单客分数检索与批量评分导入' },
+      { label: '评分记录', key: 'sc:score-records-import', desc: '批量评分导入：上传评分流水文件，触发批量评分任务' },
     ],
   },
   {
@@ -290,58 +291,42 @@ export const collectionMenu: MenuGroup[] = [
   {
     group: '案件管理', section: '催贷管理', items: [
       { label: '案件管理', key: 'zz:cases', desc: '逾期案件队列：筛选、批量处置与处置闭环生命周期；行操查看详情/线下还款登记/减免审批；支持分步向导导入案件' },
-      { label: '历史案件', key: 'zz:cases-history', desc: '已结清/核销/诉讼结案案件归档查询（只读）' },
+      { label: '历史案件', key: 'zz:cases-history', desc: '已结清 / 核销 / 诉讼结案案件的归档查询（只读），含历史案件列表与归档关联关系图谱' },
+      { label: '外呼任务', key: 'zz:agent-pool', desc: '坐席名下外呼任务：一键外呼、催记录入、还款承诺、协商方案、联系人管理' },
+      { label: 'AI自动外呼', key: 'zz:ai-task', desc: '手动临时 + 自动周期外呼任务（系统按策略自动外呼）；任务详情含通话明细与异常统计' },
+      { label: '法务案件', key: 'zz:legal-overview', desc: '单页聚合：评估→证据→立案→调解→执行→归档，全部在一体化详情页闭环' },
     ],
   },
   {
     // 智能策略引擎：4 个平级菜单收拢为唯一入口。画布/版本不再占侧边导航，
     // 改为「策略列表行编辑 → 画布页 → 版本管理子Tab」；监控作为页面内全局 Tab。
-    group: '智能策略引擎', section: '策略编排', items: [
-      { label: '智能策略引擎', key: 'zz:strategy', desc: '催收策略总入口：策略列表（新建/复制/启停/灰度），画布编辑与版本管理在下钻页内' },
-      { label: '策略执行监控', key: 'zz:strategy-monitor', desc: '策略全局执行监控：分流统计、图谱因子与异常日志' },
-    ],
-  },
-  {
-    group: '坐席工作台', section: '坐席作业', items: [
-      { label: '我的案件池', key: 'zz:agent-pool', desc: '坐席名下案件：一键外呼、催记录入、还款承诺、协商方案、联系人管理（含全部案件/今日待办筛选）' },
+    group: '智能策略', section: '策略编排', items: [
+      { label: '智能策略', key: 'zz:strategy', desc: '催收策略总入口：策略列表（新建/复制/启停/灰度），画布编辑与版本管理在下钻页内' },
+      { label: '执行监控', key: 'zz:strategy-monitor', desc: '策略全局执行监控：分流统计、异常日志与受影响案件明细' },
+      { label: '对话模板', key: 'zz:ai-template', desc: '多轮对话话术模板、分支流程可视化与模拟测试' },
+      { label: '短信模板', key: 'zz:sms-template', desc: '短信/企微/5G 消息模板：合规校验、预览、审核状态' },
     ],
   },
   {
     group: '委外机构管理', section: '委外监管', items: [
       { label: '委外机构管理', key: 'zz:agency-list', desc: '机构档案（机构详情抽屉）+ 机构账号权限，两个子 Tab 合并管理' },
       { label: '委外案件监控', key: 'zz:agency-monitor', desc: '委托案件进度实时监控，机构名/案件号可点开详情抽屉' },
-      { label: '催收回传记录', key: 'zz:agency-callback', desc: '委外机构催收回传流水记录，支持按机构/结果筛选（机构名/案件号可点开详情抽屉）' },
+      { label: '委外回传记录', key: 'zz:agency-callback', desc: '委外机构回传流水记录，支持按机构/结果筛选（机构名/案件号可点开详情抽屉）' },
       { label: '绩效与结算', key: 'zz:agency-kpi', desc: '机构 KPI 考核 + 佣金对账结算两个子 Tab，机构名可点开详情抽屉' },
     ],
   },
   {
     group: '外访管理', section: '外访作业', items: [
       { label: '外访任务', key: 'zz:visit-list', desc: '外访任务分配、详情、打卡与报告' },
-      { label: '我的外访', key: 'zz:visit-mine', desc: '外访人员视图：待办、打卡与报告' },
       { label: '外访历史', key: 'zz:visit-history', desc: '历史全部外访任务归档查询' },
-      { label: '外访人员管理', key: 'zz:visitor-manage', desc: '外访人员档案、技能标签、任务负载与区域分布' },
+      { label: '外访人员', key: 'zz:visitor-manage', desc: '外访人员档案、技能标签与人员日历' },
     ],
   },
   {
     group: '智能质检', section: '智能 AI 质检', items: [
-      { label: '通话录音查询', key: 'zz:qa-record', desc: '查询全部催收通话录音，支持语音播放、文本转写与AI质检结果查看' },
-      { label: '敏感词库管理', key: 'zz:qa-words', desc: '维护催收违规敏感词，配置违规分类、告警风险等级与启用状态' },
-      { label: '实时告警处理', key: 'zz:qa-alert', desc: '通话中AI实时识别违规敏感词，完成告警复核、判定处理与误判标记' },
-      { label: '事后抽样质检', key: 'zz:qa-task', desc: '创建抽样任务，对历史催收通话做事后人工复核打分' },
-
-    ],
-  },
-  {
-    group: '智能化', section: 'AI 协催', items: [
-      { label: '外呼任务总览', key: 'zz:ai-task', desc: '手动临时 + 自动周期任务（系统按策略自动外呼）；任务详情含通话明细与异常统计' },
-      { label: '对话模板管理', key: 'zz:ai-template', desc: '多轮对话话术模板、分支流程可视化与模拟测试' },
-      { label: '话术管理', key: 'zz:script-lib', desc: '话术库：分类、版本管理、效果预览、关联催回策略' },
-      { label: '短信模板管理', key: 'zz:sms-template', desc: '短信/企微/5G 消息模板：合规校验、预览、审核状态' },
-    ],
-  },
-  {
-    group: '诉讼调解', section: '法务处置', items: [
-      { label: '法务案件总览', key: 'zz:legal-overview', desc: '单页聚合：评估→证据→立案→调解→执行→归档，全部在一体化详情页闭环' },
+      { label: '通话质检', key: 'zz:qa-record', desc: '查询全部催收通话录音，支持语音播放、文本转写与AI质检结果查看' },
+      { label: '敏感词库', key: 'zz:qa-words', desc: '维护催收违规敏感词，配置违规分类、告警风险等级与启用状态' },
+      { label: '抽样质检', key: 'zz:qa-task', desc: '创建抽样任务，对历史催收通话做事后人工复核打分' },
     ],
   },
   {
@@ -353,8 +338,8 @@ export const collectionMenu: MenuGroup[] = [
       { label: '委外报表', key: 'zz:bi-agency', desc: '各委外机构案件量、回款率、KPI与佣金' },
       { label: '质检报表', key: 'zz:bi-qa', desc: '质检告警、违规坐席与覆盖率' },
       { label: '外访报表', key: 'zz:bi-visit', desc: '外访任务统计、人员绩效与回款效果' },
-      { label: '法务处置报表', key: 'zz:bi-legal', desc: '待诉评估量、立案、调解成功率、执行回款与结案' },
-      { label: 'AI协催报表', key: 'zz:bi-ai', desc: 'AI呼叫量、接通率、承诺还款率、转人工占比与模板效果对比' },
+      { label: '法务案件报表', key: 'zz:bi-legal', desc: '待诉评估量、立案、调解成功率、执行回款与结案' },
+      { label: '外呼任务报表', key: 'zz:bi-ai', desc: 'AI呼叫量、接通率、承诺还款率、转人工占比与模板效果对比' },
     ],
   },
 ]

@@ -1,0 +1,2966 @@
+{
+  "st-alloc-1": {
+    "nodes": [
+      {
+        "id": "n1",
+        "kind": "start",
+        "label": "新案入催",
+        "x": 30,
+        "y": 20,
+        "detail": "策略入口：每日02:00从核心系统同步新逾期案件"
+      },
+      {
+        "id": "n2",
+        "kind": "cond",
+        "label": "合规前置校验",
+        "x": 205,
+        "y": 20,
+        "detail": "禁呼时段22:00-08:00/投诉标记/敏感客户过滤，命中则挂起转人工",
+        "rules": [
+          {
+            "id": "r0001",
+            "field": "complaint_tag",
+            "operator": "neq",
+            "value": "已投诉",
+            "logic": "AND"
+          }
+        ]
+      },
+      {
+        "id": "n3",
+        "kind": "exec",
+        "label": "产品与金额识别",
+        "x": 380,
+        "y": 20,
+        "detail": "按产品线与逾期金额分段：信用卡≤5万/个贷5-50万/大额≥50万",
+        "action": {
+          "type": "system",
+          "params": {
+            "systemAction": "更新案件状态"
+          }
+        }
+      },
+      {
+        "id": "n4",
+        "kind": "exec",
+        "label": "风险画像匹配",
+        "x": 555,
+        "y": 20,
+        "detail": "匹配客户风险标签、历史还款行为、多头借贷标记、还款能力评分",
+        "action": {
+          "type": "system",
+          "params": {
+            "systemAction": "更新案件状态"
+          }
+        }
+      },
+      {
+        "id": "n5",
+        "kind": "cond",
+        "label": "欺诈筛查",
+        "x": 730,
+        "y": 20,
+        "detail": "命中欺诈规则（身份异常/团伙标记/多头拒还）→欺诈专项；否则继续",
+        "rules": [
+          {
+            "id": "r0002",
+            "field": "fraud_tag",
+            "operator": "eq",
+            "value": "确认欺诈",
+            "logic": "AND"
+          }
+        ]
+      },
+      {
+        "id": "n6",
+        "kind": "cond",
+        "label": "失联判断",
+        "x": 905,
+        "y": 20,
+        "detail": "号码有效性校验，连续不可达或空号→失联修复分流",
+        "rules": [
+          {
+            "id": "r0003",
+            "field": "lost_status",
+            "operator": "eq",
+            "value": "确认失联",
+            "logic": "AND"
+          }
+        ]
+      },
+      {
+        "id": "n7",
+        "kind": "cond",
+        "label": "智能分流",
+        "x": 1080,
+        "y": 20,
+        "detail": "按风险等级+账龄+连通性+金额输出6条业务分支",
+        "rules": [
+          {
+            "id": "r1001",
+            "field": "risk_level",
+            "operator": "eq",
+            "value": "高",
+            "logic": "AND"
+          }
+        ]
+      },
+      {
+        "id": "n8",
+        "kind": "exec",
+        "label": "欺诈识别分流",
+        "x": 1255,
+        "y": 20,
+        "detail": "高风险欺诈→流向欺诈识别分流子策略，停止普通催收",
+        "action": {
+          "type": "system",
+          "params": {
+            "systemAction": "更新案件状态"
+          }
+        }
+      },
+      {
+        "id": "n9",
+        "kind": "exec",
+        "label": "失联修复分流",
+        "x": 1255,
+        "y": 106,
+        "detail": "失联号码→流向失联修复分流子策略",
+        "action": {
+          "type": "system",
+          "params": {
+            "systemAction": "标记失联"
+          }
+        }
+      },
+      {
+        "id": "n10",
+        "kind": "exec",
+        "label": "M0还款提醒策略",
+        "x": 1255,
+        "y": 192,
+        "detail": "低风险可触达M0→流向M0还款提醒策略（短信+AI外呼）",
+        "action": {
+          "type": "system",
+          "params": {
+            "systemAction": "更新案件状态"
+          }
+        }
+      },
+      {
+        "id": "n11",
+        "kind": "exec",
+        "label": "M1催收策略",
+        "x": 1255,
+        "y": 278,
+        "detail": "中风险账龄已达M1→流向M1短信+外呼策略",
+        "action": {
+          "type": "system",
+          "params": {
+            "systemAction": "更新案件状态"
+          }
+        }
+      },
+      {
+        "id": "n12",
+        "kind": "exec",
+        "label": "人工坐席分配",
+        "x": 1255,
+        "y": 364,
+        "detail": "高风险/大额≥50万/需协商/投诉客户→分配人工坐席重点催收",
+        "action": {
+          "type": "assign",
+          "params": {
+            "targetType": "人工坐席组",
+            "targetValue": "按负载率分配",
+            "assignRule": "按负载率分配"
+          }
+        }
+      },
+      {
+        "id": "n13",
+        "kind": "exec",
+        "label": "委外候选标记",
+        "x": 1255,
+        "y": 450,
+        "detail": "满足委外准入条件→标记委外候选，待M3后正式移交",
+        "action": {
+          "type": "system",
+          "params": {
+            "systemAction": "标记失联"
+          }
+        }
+      },
+      {
+        "id": "n14",
+        "kind": "start",
+        "label": "记录分案结果",
+        "x": 1430,
+        "y": 20,
+        "detail": "结束：写入案件档案归属信息、分流原因与时间戳"
+      }
+    ],
+    "edges": [
+      {
+        "id": "e1",
+        "from": "n1",
+        "to": "n2"
+      },
+      {
+        "id": "e2",
+        "from": "n2",
+        "to": "n3"
+      },
+      {
+        "id": "e3",
+        "from": "n3",
+        "to": "n4"
+      },
+      {
+        "id": "e4",
+        "from": "n4",
+        "to": "n5"
+      },
+      {
+        "id": "e5",
+        "from": "n5",
+        "to": "n6"
+      },
+      {
+        "id": "e6",
+        "from": "n5",
+        "to": "n8"
+      },
+      {
+        "id": "e7",
+        "from": "n6",
+        "to": "n7"
+      },
+      {
+        "id": "e8",
+        "from": "n6",
+        "to": "n9"
+      },
+      {
+        "id": "e9",
+        "from": "n7",
+        "to": "n10"
+      },
+      {
+        "id": "e10",
+        "from": "n7",
+        "to": "n11"
+      },
+      {
+        "id": "e11",
+        "from": "n7",
+        "to": "n12"
+      },
+      {
+        "id": "e12",
+        "from": "n7",
+        "to": "n13"
+      },
+      {
+        "id": "e13",
+        "from": "n8",
+        "to": "n14"
+      },
+      {
+        "id": "e14",
+        "from": "n9",
+        "to": "n14"
+      },
+      {
+        "id": "e15",
+        "from": "n10",
+        "to": "n14"
+      },
+      {
+        "id": "e16",
+        "from": "n11",
+        "to": "n14"
+      },
+      {
+        "id": "e17",
+        "from": "n12",
+        "to": "n14"
+      },
+      {
+        "id": "e18",
+        "from": "n13",
+        "to": "n14"
+      },
+      {
+        "id": "e19",
+        "from": "n2",
+        "to": "n12"
+      }
+    ],
+    "_w": 1580,
+    "_h": 544
+  },
+  "st-alloc-2": {
+    "nodes": [
+      {
+        "id": "n1",
+        "kind": "start",
+        "label": "待重新分案",
+        "x": 30,
+        "y": 20,
+        "detail": "入口：委外退回/坐席释放/策略回退/PTP失约回退"
+      },
+      {
+        "id": "n2",
+        "kind": "exec",
+        "label": "回收信息读取",
+        "x": 205,
+        "y": 20,
+        "detail": "上一轮处置结果：PTP记录/失联标记/回款金额/投诉标记/委外退回原因",
+        "action": {
+          "type": "system",
+          "params": {
+            "systemAction": "更新案件状态"
+          }
+        }
+      },
+      {
+        "id": "n3",
+        "kind": "cond",
+        "label": "PTP到期检测",
+        "x": 380,
+        "y": 20,
+        "detail": "T+1检测承诺还款是否到账，未到账且未延期→失约复催升级",
+        "rules": [
+          {
+            "id": "r1002",
+            "field": "ptp_status",
+            "operator": "eq",
+            "value": "PTP已失约",
+            "logic": "AND"
+          }
+        ]
+      },
+      {
+        "id": "n4",
+        "kind": "cond",
+        "label": "账龄升级判断",
+        "x": 555,
+        "y": 20,
+        "detail": "当前账龄是否跨阶段（M0→M1→M2→M3+），跨阶段则升级策略",
+        "rules": [
+          {
+            "id": "r0006",
+            "field": "overdue_days",
+            "operator": "gt",
+            "value": "30",
+            "logic": "AND"
+          }
+        ]
+      },
+      {
+        "id": "n5",
+        "kind": "cond",
+        "label": "失联状态判断",
+        "x": 730,
+        "y": 20,
+        "detail": "上一轮是否标记失联或累计≥3次外呼未接通",
+        "rules": [
+          {
+            "id": "r0007",
+            "field": "lost_status",
+            "operator": "eq",
+            "value": "确认失联",
+            "logic": "AND"
+          }
+        ]
+      },
+      {
+        "id": "n6",
+        "kind": "cond",
+        "label": "智能重分流",
+        "x": 905,
+        "y": 20,
+        "detail": "结合历史处置效果、失约次数、当前账龄输出5条分支",
+        "rules": [
+          {
+            "id": "r1003",
+            "field": "risk_level",
+            "operator": "eq",
+            "value": "高",
+            "logic": "AND"
+          }
+        ]
+      },
+      {
+        "id": "n7",
+        "kind": "exec",
+        "label": "PTP失约复催",
+        "x": 1080,
+        "y": 20,
+        "detail": "PTP失约→升级催收强度，失约≥2次直接转人工或委外候选",
+        "action": {
+          "type": "system",
+          "params": {
+            "systemAction": "标记PTP"
+          }
+        }
+      },
+      {
+        "id": "n8",
+        "kind": "exec",
+        "label": "失联修复分流",
+        "x": 1080,
+        "y": 106,
+        "detail": "持续失联→失联修复分流，启动号码修复",
+        "action": {
+          "type": "system",
+          "params": {
+            "systemAction": "标记失联"
+          }
+        }
+      },
+      {
+        "id": "n9",
+        "kind": "exec",
+        "label": "账龄升级策略",
+        "x": 1080,
+        "y": 192,
+        "detail": "账龄跨阶段→流入对应高阶账龄催收策略（M1/M2/M3+）",
+        "action": {
+          "type": "system",
+          "params": {
+            "systemAction": "更新案件状态"
+          }
+        }
+      },
+      {
+        "id": "n10",
+        "kind": "exec",
+        "label": "委外移交流程",
+        "x": 1080,
+        "y": 278,
+        "detail": "多次催收无效且满足准入→委外移交流程",
+        "action": {
+          "type": "assign",
+          "params": {
+            "targetType": "委外机构",
+            "targetValue": "按负载率分配",
+            "assignRule": "按负载率分配"
+          }
+        }
+      },
+      {
+        "id": "n11",
+        "kind": "exec",
+        "label": "内部坐席处理",
+        "x": 1080,
+        "y": 364,
+        "detail": "需人工介入/投诉处理/协商分期/减免审批→分配内部坐席",
+        "action": {
+          "type": "system",
+          "params": {
+            "systemAction": "更新案件状态"
+          }
+        }
+      },
+      {
+        "id": "n12",
+        "kind": "start",
+        "label": "更新处置归属",
+        "x": 1255,
+        "y": 20,
+        "detail": "结束：更新案件当前处置归属与重分流原因"
+      }
+    ],
+    "edges": [
+      {
+        "id": "e1",
+        "from": "n1",
+        "to": "n2"
+      },
+      {
+        "id": "e2",
+        "from": "n2",
+        "to": "n3"
+      },
+      {
+        "id": "e3",
+        "from": "n3",
+        "to": "n4"
+      },
+      {
+        "id": "e4",
+        "from": "n3",
+        "to": "n7"
+      },
+      {
+        "id": "e5",
+        "from": "n4",
+        "to": "n5"
+      },
+      {
+        "id": "e6",
+        "from": "n5",
+        "to": "n6"
+      },
+      {
+        "id": "e7",
+        "from": "n5",
+        "to": "n8"
+      },
+      {
+        "id": "e8",
+        "from": "n6",
+        "to": "n9"
+      },
+      {
+        "id": "e9",
+        "from": "n6",
+        "to": "n10"
+      },
+      {
+        "id": "e10",
+        "from": "n6",
+        "to": "n11"
+      },
+      {
+        "id": "e11",
+        "from": "n7",
+        "to": "n12"
+      },
+      {
+        "id": "e12",
+        "from": "n8",
+        "to": "n12"
+      },
+      {
+        "id": "e13",
+        "from": "n9",
+        "to": "n12"
+      },
+      {
+        "id": "e14",
+        "from": "n10",
+        "to": "n12"
+      },
+      {
+        "id": "e15",
+        "from": "n11",
+        "to": "n12"
+      },
+      {
+        "id": "e16",
+        "from": "n4",
+        "to": "n9"
+      }
+    ],
+    "_w": 1405,
+    "_h": 458
+  },
+  "st-m0": {
+    "nodes": [
+      {
+        "id": "n1",
+        "kind": "start",
+        "label": "M0可联系逾期",
+        "x": 30,
+        "y": 20,
+        "detail": "入口：账龄M0（逾期1-30天）、可联系逾期案件流入"
+      },
+      {
+        "id": "n2",
+        "kind": "cond",
+        "label": "合规校验",
+        "x": 205,
+        "y": 20,
+        "detail": "客户是否退订短信、禁止呼叫时段、投诉标记、敏感客户",
+        "rules": [
+          {
+            "id": "r0009",
+            "field": "complaint_tag",
+            "operator": "neq",
+            "value": "已投诉",
+            "logic": "AND"
+          },
+          {
+            "id": "r0010",
+            "field": "sms_delivered",
+            "operator": "neq",
+            "value": "退订",
+            "logic": "AND"
+          }
+        ]
+      },
+      {
+        "id": "n3",
+        "kind": "exec",
+        "label": "延时等待",
+        "x": 380,
+        "y": 20,
+        "detail": "逾期后24小时再触发，避免首日过度催收引发投诉",
+        "action": {
+          "type": "wait",
+          "params": {
+            "waitDays": 1,
+            "interruptOnRepay": true
+          }
+        }
+      },
+      {
+        "id": "n4",
+        "kind": "exec",
+        "label": "发送还款提醒短信",
+        "x": 555,
+        "y": 20,
+        "detail": "引用M0短信模板，语气友好，附在线还款链接与客服号码",
+        "action": {
+          "type": "sms",
+          "params": {
+            "smsTemplate": "SMS-M0",
+            "sendTiming": "立即发送"
+          }
+        }
+      },
+      {
+        "id": "n5",
+        "kind": "exec",
+        "label": "等待回款观察",
+        "x": 730,
+        "y": 20,
+        "detail": "等待3天，期间全额回款可中断后续动作，部分回款重算金额",
+        "action": {
+          "type": "wait",
+          "params": {
+            "waitDays": 3,
+            "interruptOnRepay": true
+          }
+        }
+      },
+      {
+        "id": "n6",
+        "kind": "cond",
+        "label": "回款状态判断",
+        "x": 905,
+        "y": 20,
+        "detail": "全额回款/部分还款/未回款/短信发送失败",
+        "rules": [
+          {
+            "id": "r0011",
+            "field": "repay_status",
+            "operator": "eq",
+            "value": "全额回款",
+            "logic": "AND"
+          }
+        ]
+      },
+      {
+        "id": "n7",
+        "kind": "exec",
+        "label": "AI外呼提醒",
+        "x": 1080,
+        "y": 20,
+        "detail": "未回款→AI外呼播放还款提醒+智能问答，引用M0话术模板",
+        "action": {
+          "type": "ai_call",
+          "params": {
+            "templateId": "T-01",
+            "dailyMax": 2,
+            "retryInterval": 4,
+            "retryMax": 1,
+            "stopWhenConnected": true
+          }
+        }
+      },
+      {
+        "id": "n8",
+        "kind": "exec",
+        "label": "还款意向识别",
+        "x": 1255,
+        "y": 20,
+        "detail": "NLP识别还款意向/金额/日期，有意向→生成PTP；无意向→转人工",
+        "action": {
+          "type": "system",
+          "params": {
+            "systemAction": "更新案件状态"
+          }
+        }
+      },
+      {
+        "id": "n9",
+        "kind": "exec",
+        "label": "全额回款结案",
+        "x": 1080,
+        "y": 106,
+        "detail": "分支A：全额回款→结案，策略结束",
+        "action": {
+          "type": "system",
+          "params": {
+            "systemAction": "归档结案"
+          }
+        }
+      },
+      {
+        "id": "n10",
+        "kind": "exec",
+        "label": "部分还款续催",
+        "x": 1080,
+        "y": 192,
+        "detail": "分支B：部分还款→重算剩余金额，继续停留M0周期催收",
+        "action": {
+          "type": "system",
+          "params": {
+            "systemAction": "更新案件状态"
+          }
+        }
+      },
+      {
+        "id": "n11",
+        "kind": "exec",
+        "label": "账龄滚动M1",
+        "x": 1080,
+        "y": 278,
+        "detail": "分支C：M0周期结束未回款且无PTP→流转M1短信+外呼策略",
+        "action": {
+          "type": "system",
+          "params": {
+            "systemAction": "更新案件状态"
+          }
+        }
+      },
+      {
+        "id": "n12",
+        "kind": "exec",
+        "label": "失联修复分流",
+        "x": 1080,
+        "y": 364,
+        "detail": "分支D：短信发送失败+AI外呼未接通→失联修复分流",
+        "action": {
+          "type": "system",
+          "params": {
+            "systemAction": "标记失联"
+          }
+        }
+      },
+      {
+        "id": "n13",
+        "kind": "start",
+        "label": "策略结束",
+        "x": 1430,
+        "y": 20,
+        "detail": "结束节点：记录M0处置结果与下一步去向"
+      }
+    ],
+    "edges": [
+      {
+        "id": "e1",
+        "from": "n1",
+        "to": "n2"
+      },
+      {
+        "id": "e2",
+        "from": "n2",
+        "to": "n3"
+      },
+      {
+        "id": "e3",
+        "from": "n3",
+        "to": "n4"
+      },
+      {
+        "id": "e4",
+        "from": "n4",
+        "to": "n5"
+      },
+      {
+        "id": "e5",
+        "from": "n5",
+        "to": "n6"
+      },
+      {
+        "id": "e6",
+        "from": "n6",
+        "to": "n7"
+      },
+      {
+        "id": "e7",
+        "from": "n6",
+        "to": "n9"
+      },
+      {
+        "id": "e8",
+        "from": "n6",
+        "to": "n10"
+      },
+      {
+        "id": "e9",
+        "from": "n6",
+        "to": "n12"
+      },
+      {
+        "id": "e10",
+        "from": "n7",
+        "to": "n8"
+      },
+      {
+        "id": "e11",
+        "from": "n8",
+        "to": "n11"
+      },
+      {
+        "id": "e12",
+        "from": "n8",
+        "to": "n13"
+      },
+      {
+        "id": "e13",
+        "from": "n9",
+        "to": "n13"
+      },
+      {
+        "id": "e14",
+        "from": "n10",
+        "to": "n13"
+      },
+      {
+        "id": "e15",
+        "from": "n11",
+        "to": "n13"
+      },
+      {
+        "id": "e16",
+        "from": "n12",
+        "to": "n13"
+      },
+      {
+        "id": "e17",
+        "from": "n2",
+        "to": "n13"
+      }
+    ],
+    "_w": 1580,
+    "_h": 458
+  },
+  "st-m1": {
+    "nodes": [
+      {
+        "id": "n1",
+        "kind": "start",
+        "label": "M1由M0流转",
+        "x": 30,
+        "y": 20,
+        "detail": "入口：账龄M1（逾期31-60天），由M0策略流转或新案分案流入"
+      },
+      {
+        "id": "n2",
+        "kind": "cond",
+        "label": "合规过滤",
+        "x": 205,
+        "y": 20,
+        "detail": "客户投诉标记、禁呼名单、退订状态、敏感客户过滤",
+        "rules": [
+          {
+            "id": "r0012",
+            "field": "complaint_tag",
+            "operator": "neq",
+            "value": "已投诉",
+            "logic": "AND"
+          },
+          {
+            "id": "r0013",
+            "field": "sms_delivered",
+            "operator": "neq",
+            "value": "退订",
+            "logic": "AND"
+          }
+        ]
+      },
+      {
+        "id": "n3",
+        "kind": "exec",
+        "label": "发送催收短信",
+        "x": 380,
+        "y": 20,
+        "detail": "引用M1催收短信模板，语气较M0升级，附还款链接与逾期后果提示",
+        "action": {
+          "type": "sms",
+          "params": {
+            "smsTemplate": "SMS-M0",
+            "sendTiming": "立即发送"
+          }
+        }
+      },
+      {
+        "id": "n4",
+        "kind": "exec",
+        "label": "延时+AI外呼",
+        "x": 555,
+        "y": 20,
+        "detail": "短信后24小时执行AI外呼，引用M1话术模板，每日≤2次",
+        "action": {
+          "type": "ai_call",
+          "params": {
+            "templateId": "T-01",
+            "dailyMax": 2,
+            "retryInterval": 4,
+            "retryMax": 1,
+            "stopWhenConnected": true
+          }
+        }
+      },
+      {
+        "id": "n5",
+        "kind": "cond",
+        "label": "呼叫结果判断",
+        "x": 730,
+        "y": 20,
+        "detail": "接通/拒接/无人接听/号码失效",
+        "rules": [
+          {
+            "id": "r0014",
+            "field": "connected",
+            "operator": "eq",
+            "value": "是",
+            "logic": "AND"
+          }
+        ]
+      },
+      {
+        "id": "n6",
+        "kind": "exec",
+        "label": "还款意向识别",
+        "x": 905,
+        "y": 20,
+        "detail": "接通后NLP识别还款意愿，协商还款方案与时间",
+        "action": {
+          "type": "system",
+          "params": {
+            "systemAction": "更新案件状态"
+          }
+        }
+      },
+      {
+        "id": "n7",
+        "kind": "cond",
+        "label": "意向与回款分流",
+        "x": 1080,
+        "y": 20,
+        "detail": "达成PTP/要求协商/全额回款/拒绝还款或无意向",
+        "rules": [
+          {
+            "id": "r1004",
+            "field": "ptp_status",
+            "operator": "eq",
+            "value": "PTP进行中",
+            "logic": "AND"
+          }
+        ]
+      },
+      {
+        "id": "n8",
+        "kind": "exec",
+        "label": "生成PTP跟踪",
+        "x": 1255,
+        "y": 20,
+        "detail": "分支A：达成PTP→生成承诺还款计划，进入PTP到期跟踪",
+        "action": {
+          "type": "system",
+          "params": {
+            "systemAction": "标记PTP"
+          }
+        }
+      },
+      {
+        "id": "n9",
+        "kind": "exec",
+        "label": "人工坐席介入",
+        "x": 1255,
+        "y": 106,
+        "detail": "分支B：要求协商分期/减免/大额复杂案件→转人工坐席处理",
+        "action": {
+          "type": "system",
+          "params": {
+            "systemAction": "更新案件状态"
+          }
+        }
+      },
+      {
+        "id": "n10",
+        "kind": "exec",
+        "label": "全额回款结案",
+        "x": 1255,
+        "y": 192,
+        "detail": "分支C：催收期间全额回款→结案，策略结束",
+        "action": {
+          "type": "system",
+          "params": {
+            "systemAction": "归档结案"
+          }
+        }
+      },
+      {
+        "id": "n11",
+        "kind": "exec",
+        "label": "续催循环(限2次)",
+        "x": 1255,
+        "y": 278,
+        "detail": "分支D：拒绝/无意向→本策略循环外呼，最多2次后强制升级",
+        "action": {
+          "type": "system",
+          "params": {
+            "systemAction": "更新案件状态"
+          }
+        }
+      },
+      {
+        "id": "n12",
+        "kind": "cond",
+        "label": "未接通次数判断",
+        "x": 905,
+        "y": 106,
+        "detail": "未接通分支：累计外呼次数<3次还是≥3次",
+        "rules": [
+          {
+            "id": "r1005",
+            "field": "call_count",
+            "operator": "gte",
+            "value": "3",
+            "logic": "AND"
+          }
+        ]
+      },
+      {
+        "id": "n13",
+        "kind": "exec",
+        "label": "失联修复分流",
+        "x": 1080,
+        "y": 364,
+        "detail": "分支E：累计≥3次未接通+短信无响应→失联修复分流",
+        "action": {
+          "type": "system",
+          "params": {
+            "systemAction": "标记失联"
+          }
+        }
+      },
+      {
+        "id": "n14",
+        "kind": "exec",
+        "label": "账龄滚动M2",
+        "x": 1080,
+        "y": 450,
+        "detail": "分支F：M1周期结束未回款或循环耗尽→流转M2外呼+函件策略",
+        "action": {
+          "type": "system",
+          "params": {
+            "systemAction": "更新案件状态"
+          }
+        }
+      },
+      {
+        "id": "n15",
+        "kind": "start",
+        "label": "策略结束",
+        "x": 1430,
+        "y": 20,
+        "detail": "结束节点：记录M1处置结果与下一步去向"
+      }
+    ],
+    "edges": [
+      {
+        "id": "e1",
+        "from": "n1",
+        "to": "n2"
+      },
+      {
+        "id": "e2",
+        "from": "n2",
+        "to": "n3"
+      },
+      {
+        "id": "e3",
+        "from": "n3",
+        "to": "n4"
+      },
+      {
+        "id": "e4",
+        "from": "n4",
+        "to": "n5"
+      },
+      {
+        "id": "e5",
+        "from": "n5",
+        "to": "n6"
+      },
+      {
+        "id": "e6",
+        "from": "n5",
+        "to": "n12"
+      },
+      {
+        "id": "e7",
+        "from": "n6",
+        "to": "n7"
+      },
+      {
+        "id": "e8",
+        "from": "n7",
+        "to": "n8"
+      },
+      {
+        "id": "e9",
+        "from": "n7",
+        "to": "n9"
+      },
+      {
+        "id": "e10",
+        "from": "n7",
+        "to": "n10"
+      },
+      {
+        "id": "e11",
+        "from": "n7",
+        "to": "n11"
+      },
+      {
+        "id": "e12",
+        "from": "n12",
+        "to": "n11"
+      },
+      {
+        "id": "e13",
+        "from": "n12",
+        "to": "n13"
+      },
+      {
+        "id": "e14",
+        "from": "n11",
+        "to": "n14"
+      },
+      {
+        "id": "e15",
+        "from": "n8",
+        "to": "n15"
+      },
+      {
+        "id": "e16",
+        "from": "n9",
+        "to": "n15"
+      },
+      {
+        "id": "e17",
+        "from": "n10",
+        "to": "n15"
+      },
+      {
+        "id": "e18",
+        "from": "n13",
+        "to": "n15"
+      },
+      {
+        "id": "e19",
+        "from": "n14",
+        "to": "n15"
+      },
+      {
+        "id": "e20",
+        "from": "n2",
+        "to": "n15"
+      }
+    ],
+    "_w": 1580,
+    "_h": 544
+  },
+  "st-m2": {
+    "nodes": [
+      {
+        "id": "n1",
+        "kind": "start",
+        "label": "M2由M1升级",
+        "x": 30,
+        "y": 20,
+        "detail": "入口：账龄M2（逾期61-90天），由M1策略流转升级"
+      },
+      {
+        "id": "n2",
+        "kind": "cond",
+        "label": "合规校验",
+        "x": 205,
+        "y": 20,
+        "detail": "投诉标记/禁呼名单/敏感客户过滤，函件发送地址有效性校验",
+        "rules": [
+          {
+            "id": "r0017",
+            "field": "complaint_tag",
+            "operator": "neq",
+            "value": "已投诉",
+            "logic": "AND"
+          }
+        ]
+      },
+      {
+        "id": "n3",
+        "kind": "exec",
+        "label": "人工外呼催收",
+        "x": 380,
+        "y": 20,
+        "detail": "M2升级为人工坐席外呼为主，引用M2话术，每日≤2次，需记录通话摘要",
+        "action": {
+          "type": "system",
+          "params": {
+            "systemAction": "更新案件状态"
+          }
+        }
+      },
+      {
+        "id": "n4",
+        "kind": "cond",
+        "label": "外呼效果判断",
+        "x": 555,
+        "y": 20,
+        "detail": "接通有PTP/接通拒绝/未接通/号码失效",
+        "rules": [
+          {
+            "id": "r1006",
+            "field": "connected",
+            "operator": "eq",
+            "value": "是",
+            "logic": "AND"
+          }
+        ]
+      },
+      {
+        "id": "n5",
+        "kind": "exec",
+        "label": "发送催告函",
+        "x": 730,
+        "y": 20,
+        "detail": "外呼无效或未接通→发送电子/纸质催告函，记录落库与送达状态",
+        "action": {
+          "type": "letter",
+          "params": {
+            "letterType": "催告函",
+            "deliveryMethod": "电子+纸质"
+          }
+        }
+      },
+      {
+        "id": "n6",
+        "kind": "exec",
+        "label": "等待函件反馈",
+        "x": 905,
+        "y": 20,
+        "detail": "函件发送后等待7天，观察回款/主动联系/PTP承诺",
+        "action": {
+          "type": "letter",
+          "params": {
+            "letterType": "催告函",
+            "deliveryMethod": "电子+纸质"
+          }
+        }
+      },
+      {
+        "id": "n7",
+        "kind": "cond",
+        "label": "结果分流",
+        "x": 1080,
+        "y": 20,
+        "detail": "A-G 七条分支：回款/PTP/协商/委外/诉讼/失联/账龄滚动",
+        "rules": [
+          {
+            "id": "r1007",
+            "field": "repay_status",
+            "operator": "eq",
+            "value": "全额回款",
+            "logic": "AND"
+          }
+        ]
+      },
+      {
+        "id": "n8",
+        "kind": "exec",
+        "label": "全额回款结案",
+        "x": 1255,
+        "y": 20,
+        "detail": "A：全额回款→结案，策略结束",
+        "action": {
+          "type": "system",
+          "params": {
+            "systemAction": "归档结案"
+          }
+        }
+      },
+      {
+        "id": "n9",
+        "kind": "exec",
+        "label": "PTP跟踪节点",
+        "x": 1255,
+        "y": 106,
+        "detail": "B：达成PTP→跟踪承诺还款，到期检测回款",
+        "action": {
+          "type": "system",
+          "params": {
+            "systemAction": "标记PTP"
+          }
+        }
+      },
+      {
+        "id": "n10",
+        "kind": "exec",
+        "label": "人工深度催收",
+        "x": 1255,
+        "y": 192,
+        "detail": "C：有还款意愿但困难→人工协商分期/减免方案，上报审批",
+        "action": {
+          "type": "system",
+          "params": {
+            "systemAction": "更新案件状态"
+          }
+        }
+      },
+      {
+        "id": "n11",
+        "kind": "exec",
+        "label": "委外移交流程",
+        "x": 1255,
+        "y": 278,
+        "detail": "D：满足委外条件（M2末期+催收无效）→委外移交流程",
+        "action": {
+          "type": "assign",
+          "params": {
+            "targetType": "委外机构",
+            "targetValue": "按负载率分配",
+            "assignRule": "按负载率分配"
+          }
+        }
+      },
+      {
+        "id": "n12",
+        "kind": "exec",
+        "label": "诉讼立案策略",
+        "x": 1255,
+        "y": 364,
+        "detail": "E：大额≥20万且材料完备→诉讼立案前置评估",
+        "action": {
+          "type": "system",
+          "params": {
+            "systemAction": "更新案件状态"
+          }
+        }
+      },
+      {
+        "id": "n13",
+        "kind": "exec",
+        "label": "失联修复分流",
+        "x": 1255,
+        "y": 450,
+        "detail": "F：持续失联+函件退回→失联修复分流",
+        "action": {
+          "type": "system",
+          "params": {
+            "systemAction": "标记失联"
+          }
+        }
+      },
+      {
+        "id": "n14",
+        "kind": "exec",
+        "label": "账龄滚动M3+",
+        "x": 1255,
+        "y": 536,
+        "detail": "G：M2周期结束未回款→流转M3+委外/诉讼综合评估",
+        "action": {
+          "type": "system",
+          "params": {
+            "systemAction": "更新案件状态"
+          }
+        }
+      },
+      {
+        "id": "n15",
+        "kind": "start",
+        "label": "策略结束",
+        "x": 1430,
+        "y": 20,
+        "detail": "结束节点：记录M2处置结果与下一步去向"
+      }
+    ],
+    "edges": [
+      {
+        "id": "e1",
+        "from": "n1",
+        "to": "n2"
+      },
+      {
+        "id": "e2",
+        "from": "n2",
+        "to": "n3"
+      },
+      {
+        "id": "e3",
+        "from": "n3",
+        "to": "n4"
+      },
+      {
+        "id": "e4",
+        "from": "n4",
+        "to": "n5"
+      },
+      {
+        "id": "e5",
+        "from": "n4",
+        "to": "n7"
+      },
+      {
+        "id": "e6",
+        "from": "n5",
+        "to": "n6"
+      },
+      {
+        "id": "e7",
+        "from": "n6",
+        "to": "n7"
+      },
+      {
+        "id": "e8",
+        "from": "n7",
+        "to": "n8"
+      },
+      {
+        "id": "e9",
+        "from": "n7",
+        "to": "n9"
+      },
+      {
+        "id": "e10",
+        "from": "n7",
+        "to": "n10"
+      },
+      {
+        "id": "e11",
+        "from": "n7",
+        "to": "n11"
+      },
+      {
+        "id": "e12",
+        "from": "n7",
+        "to": "n12"
+      },
+      {
+        "id": "e13",
+        "from": "n7",
+        "to": "n13"
+      },
+      {
+        "id": "e14",
+        "from": "n7",
+        "to": "n14"
+      },
+      {
+        "id": "e15",
+        "from": "n8",
+        "to": "n15"
+      },
+      {
+        "id": "e16",
+        "from": "n9",
+        "to": "n15"
+      },
+      {
+        "id": "e17",
+        "from": "n10",
+        "to": "n15"
+      },
+      {
+        "id": "e18",
+        "from": "n11",
+        "to": "n15"
+      },
+      {
+        "id": "e19",
+        "from": "n12",
+        "to": "n15"
+      },
+      {
+        "id": "e20",
+        "from": "n13",
+        "to": "n15"
+      },
+      {
+        "id": "e21",
+        "from": "n14",
+        "to": "n15"
+      },
+      {
+        "id": "e22",
+        "from": "n2",
+        "to": "n15"
+      }
+    ],
+    "_w": 1580,
+    "_h": 630
+  },
+  "st-outs-1": {
+    "nodes": [
+      {
+        "id": "n1",
+        "kind": "start",
+        "label": "满足委外准入",
+        "x": 30,
+        "y": 20,
+        "detail": "入口：上游策略判断满足委外准入条件"
+      },
+      {
+        "id": "n2",
+        "kind": "cond",
+        "label": "准入条件复核",
+        "x": 205,
+        "y": 20,
+        "detail": "欠款金额≥阈值/账龄M3+/非诉讼中/非黑名单/内部催收已穷尽",
+        "rules": [
+          {
+            "id": "r1008",
+            "field": "overdue_amount",
+            "operator": "gte",
+            "value": "10000",
+            "logic": "AND"
+          },
+          {
+            "id": "r1009",
+            "field": "age_stage",
+            "operator": "eq",
+            "value": "M3+",
+            "logic": "AND"
+          }
+        ]
+      },
+      {
+        "id": "n3",
+        "kind": "exec",
+        "label": "委外机构分配",
+        "x": 380,
+        "y": 20,
+        "detail": "按区域/负载率/历史回收率/佣金费率分配委外机构",
+        "action": {
+          "type": "assign",
+          "params": {
+            "targetType": "委外机构",
+            "targetValue": "按负载率分配",
+            "assignRule": "按负载率分配"
+          }
+        }
+      },
+      {
+        "id": "n4",
+        "kind": "exec",
+        "label": "推送案件给机构",
+        "x": 555,
+        "y": 20,
+        "detail": "下发案件资料快照，签署委托协议，记录移交时间与批次",
+        "action": {
+          "type": "assign",
+          "params": {
+            "targetType": "委外机构",
+            "targetValue": "按负载率分配",
+            "assignRule": "按负载率分配"
+          }
+        }
+      },
+      {
+        "id": "n5",
+        "kind": "exec",
+        "label": "委外作业周期管理",
+        "x": 730,
+        "y": 20,
+        "detail": "30天/60天/90天周期跟踪，定期要求机构回传处置进展",
+        "action": {
+          "type": "wait",
+          "params": {
+            "waitDays": 30,
+            "interruptOnRepay": true
+          }
+        }
+      },
+      {
+        "id": "n6",
+        "kind": "cond",
+        "label": "回传结果判断",
+        "x": 905,
+        "y": 20,
+        "detail": "全额回款/部分回款/PTP承诺/失联无效/超周期无进展",
+        "rules": [
+          {
+            "id": "r1010",
+            "field": "repay_status",
+            "operator": "eq",
+            "value": "未回款",
+            "logic": "AND"
+          }
+        ]
+      },
+      {
+        "id": "n7",
+        "kind": "exec",
+        "label": "委外回款分账",
+        "x": 1080,
+        "y": 20,
+        "detail": "A：全额/部分回款→委外回款分账流程，结案或续催",
+        "action": {
+          "type": "system",
+          "params": {
+            "systemAction": "生成分账记录"
+          }
+        }
+      },
+      {
+        "id": "n8",
+        "kind": "exec",
+        "label": "PTP跟踪节点",
+        "x": 1080,
+        "y": 106,
+        "detail": "B：委外达成PTP→跟踪承诺还款，到期检测回款",
+        "action": {
+          "type": "system",
+          "params": {
+            "systemAction": "标记PTP"
+          }
+        }
+      },
+      {
+        "id": "n9",
+        "kind": "exec",
+        "label": "更换机构续委",
+        "x": 1080,
+        "y": 192,
+        "detail": "C：首周期无效但仍有追偿价值→更换委外机构继续委托",
+        "action": {
+          "type": "assign",
+          "params": {
+            "targetType": "委外机构",
+            "targetValue": "按负载率分配",
+            "assignRule": "按负载率分配"
+          }
+        }
+      },
+      {
+        "id": "n10",
+        "kind": "exec",
+        "label": "回退续案分案",
+        "x": 1080,
+        "y": 278,
+        "detail": "D：委外退回/多轮无效/客户主动联系→回退续案分案评估诉讼",
+        "action": {
+          "type": "assign",
+          "params": {
+            "targetType": "人工坐席组",
+            "targetValue": "按负载率分配",
+            "assignRule": "按负载率分配"
+          }
+        }
+      },
+      {
+        "id": "n11",
+        "kind": "start",
+        "label": "策略结束",
+        "x": 1255,
+        "y": 20,
+        "detail": "结束节点：记录委外处置结果与下一步去向"
+      }
+    ],
+    "edges": [
+      {
+        "id": "e1",
+        "from": "n1",
+        "to": "n2"
+      },
+      {
+        "id": "e2",
+        "from": "n2",
+        "to": "n3"
+      },
+      {
+        "id": "e3",
+        "from": "n3",
+        "to": "n4"
+      },
+      {
+        "id": "e4",
+        "from": "n4",
+        "to": "n5"
+      },
+      {
+        "id": "e5",
+        "from": "n5",
+        "to": "n6"
+      },
+      {
+        "id": "e6",
+        "from": "n6",
+        "to": "n7"
+      },
+      {
+        "id": "e7",
+        "from": "n6",
+        "to": "n8"
+      },
+      {
+        "id": "e8",
+        "from": "n6",
+        "to": "n9"
+      },
+      {
+        "id": "e9",
+        "from": "n6",
+        "to": "n10"
+      },
+      {
+        "id": "e10",
+        "from": "n7",
+        "to": "n11"
+      },
+      {
+        "id": "e11",
+        "from": "n8",
+        "to": "n11"
+      },
+      {
+        "id": "e12",
+        "from": "n9",
+        "to": "n11"
+      },
+      {
+        "id": "e13",
+        "from": "n10",
+        "to": "n11"
+      },
+      {
+        "id": "e14",
+        "from": "n2",
+        "to": "n10"
+      }
+    ],
+    "_w": 1405,
+    "_h": 372
+  },
+  "st-outs-2": {
+    "nodes": [
+      {
+        "id": "n1",
+        "kind": "start",
+        "label": "委外回款发生",
+        "x": 30,
+        "y": 20,
+        "detail": "入口：委外机构回传发生回款（全额或部分）"
+      },
+      {
+        "id": "n2",
+        "kind": "exec",
+        "label": "读取委外协议",
+        "x": 205,
+        "y": 20,
+        "detail": "佣金比例、账期、阶梯费率约定、回款渠道确认",
+        "action": {
+          "type": "system",
+          "params": {
+            "systemAction": "更新案件状态"
+          }
+        }
+      },
+      {
+        "id": "n3",
+        "kind": "exec",
+        "label": "分账计算",
+        "x": 380,
+        "y": 20,
+        "detail": "按协议计算机构佣金与平台实收，部分回款按比例分摊",
+        "action": {
+          "type": "system",
+          "params": {
+            "systemAction": "生成分账记录"
+          }
+        }
+      },
+      {
+        "id": "n4",
+        "kind": "cond",
+        "label": "财务校验",
+        "x": 555,
+        "y": 20,
+        "detail": "金额一致性/回款渠道/到账状态/发票信息校验",
+        "rules": [
+          {
+            "id": "r1011",
+            "field": "overdue_amount",
+            "operator": "gt",
+            "value": "0",
+            "logic": "AND"
+          }
+        ]
+      },
+      {
+        "id": "n5",
+        "kind": "exec",
+        "label": "生成分账记录",
+        "x": 730,
+        "y": 20,
+        "detail": "A：校验通过→同步财务模块，更新回款状态与分账明细",
+        "action": {
+          "type": "system",
+          "params": {
+            "systemAction": "生成分账记录"
+          }
+        }
+      },
+      {
+        "id": "n6",
+        "kind": "exec",
+        "label": "财务人工复核",
+        "x": 730,
+        "y": 106,
+        "detail": "B：校验异常→流入人工复核队列，核实后手动确认",
+        "action": {
+          "type": "system",
+          "params": {
+            "systemAction": "生成分账记录"
+          }
+        }
+      },
+      {
+        "id": "n7",
+        "kind": "cond",
+        "label": "回款完整性判断",
+        "x": 905,
+        "y": 20,
+        "detail": "全额回款结清/部分回款仍有余额",
+        "rules": [
+          {
+            "id": "r0023",
+            "field": "repay_status",
+            "operator": "eq",
+            "value": "全额回款",
+            "logic": "AND"
+          }
+        ]
+      },
+      {
+        "id": "n8",
+        "kind": "exec",
+        "label": "案件结案归档",
+        "x": 1080,
+        "y": 20,
+        "detail": "全额回款→案件结案，归档委外记录与分账凭证",
+        "action": {
+          "type": "system",
+          "params": {
+            "systemAction": "归档结案"
+          }
+        }
+      },
+      {
+        "id": "n9",
+        "kind": "exec",
+        "label": "剩余金额续催",
+        "x": 1080,
+        "y": 106,
+        "detail": "部分回款→重算剩余金额，回续案分案继续催收",
+        "action": {
+          "type": "system",
+          "params": {
+            "systemAction": "更新案件状态"
+          }
+        }
+      },
+      {
+        "id": "n10",
+        "kind": "start",
+        "label": "归档分账记录",
+        "x": 1255,
+        "y": 20,
+        "detail": "结束节点：分账记录归档，案件状态更新"
+      }
+    ],
+    "edges": [
+      {
+        "id": "e1",
+        "from": "n1",
+        "to": "n2"
+      },
+      {
+        "id": "e2",
+        "from": "n2",
+        "to": "n3"
+      },
+      {
+        "id": "e3",
+        "from": "n3",
+        "to": "n4"
+      },
+      {
+        "id": "e4",
+        "from": "n4",
+        "to": "n5"
+      },
+      {
+        "id": "e5",
+        "from": "n4",
+        "to": "n6"
+      },
+      {
+        "id": "e6",
+        "from": "n5",
+        "to": "n7"
+      },
+      {
+        "id": "e7",
+        "from": "n6",
+        "to": "n7"
+      },
+      {
+        "id": "e8",
+        "from": "n7",
+        "to": "n8"
+      },
+      {
+        "id": "e9",
+        "from": "n7",
+        "to": "n9"
+      },
+      {
+        "id": "e10",
+        "from": "n8",
+        "to": "n10"
+      },
+      {
+        "id": "e11",
+        "from": "n9",
+        "to": "n10"
+      }
+    ],
+    "_w": 1405,
+    "_h": 200
+  },
+  "st-legal-1": {
+    "nodes": [
+      {
+        "id": "n1",
+        "kind": "start",
+        "label": "达诉讼准入",
+        "x": 30,
+        "y": 20,
+        "detail": "入口：上游流转达诉讼准入条件（大额+M3+）"
+      },
+      {
+        "id": "n2",
+        "kind": "cond",
+        "label": "诉讼准入判断",
+        "x": 205,
+        "y": 20,
+        "detail": "金额≥20万/账龄M3+/材料完整性，排除破产/死亡/不宜诉讼标签",
+        "rules": [
+          {
+            "id": "r1012",
+            "field": "overdue_amount",
+            "operator": "gte",
+            "value": "20000",
+            "logic": "AND"
+          },
+          {
+            "id": "r1013",
+            "field": "age_stage",
+            "operator": "eq",
+            "value": "M3+",
+            "logic": "AND"
+          }
+        ]
+      },
+      {
+        "id": "n3",
+        "kind": "exec",
+        "label": "整理诉讼材料",
+        "x": 380,
+        "y": 20,
+        "detail": "借款合同/还款记录/催收记录/身份材料/送达地址确认",
+        "action": {
+          "type": "system",
+          "params": {
+            "systemAction": "更新案件状态"
+          }
+        }
+      },
+      {
+        "id": "n4",
+        "kind": "exec",
+        "label": "诉前调解",
+        "x": 555,
+        "y": 20,
+        "detail": "委托调解机构或内部法务发起诉前调解，给予最后还款期限",
+        "action": {
+          "type": "system",
+          "params": {
+            "systemAction": "更新案件状态"
+          }
+        }
+      },
+      {
+        "id": "n5",
+        "kind": "cond",
+        "label": "调解结果判断",
+        "x": 730,
+        "y": 20,
+        "detail": "调解成功/调解失败/客户还款/PTP承诺/材料缺失",
+        "rules": [
+          {
+            "id": "r1014",
+            "field": "repay_status",
+            "operator": "eq",
+            "value": "未回款",
+            "logic": "AND"
+          }
+        ]
+      },
+      {
+        "id": "n6",
+        "kind": "exec",
+        "label": "移交法务立案",
+        "x": 905,
+        "y": 20,
+        "detail": "A：调解失败→进入诉讼工作台，提交法院立案，策略结束",
+        "action": {
+          "type": "assign",
+          "params": {
+            "targetType": "法务团队",
+            "targetValue": "法务处置台",
+            "assignRule": "按负载率分配"
+          }
+        }
+      },
+      {
+        "id": "n7",
+        "kind": "exec",
+        "label": "人工补材料",
+        "x": 905,
+        "y": 106,
+        "detail": "B：材料缺失→人工补材料队列，补齐后重新评估准入",
+        "action": {
+          "type": "system",
+          "params": {
+            "systemAction": "更新案件状态"
+          }
+        }
+      },
+      {
+        "id": "n8",
+        "kind": "exec",
+        "label": "调解方案履行跟踪",
+        "x": 905,
+        "y": 192,
+        "detail": "C：调解成功→跟踪调解协议履行，到期检测回款",
+        "action": {
+          "type": "system",
+          "params": {
+            "systemAction": "更新案件状态"
+          }
+        }
+      },
+      {
+        "id": "n9",
+        "kind": "exec",
+        "label": "终止诉讼回催收",
+        "x": 905,
+        "y": 278,
+        "detail": "D：客户还款/PTP→终止诉讼流程，回催收策略继续跟踪",
+        "action": {
+          "type": "system",
+          "params": {
+            "systemAction": "更新案件状态"
+          }
+        }
+      },
+      {
+        "id": "n10",
+        "kind": "start",
+        "label": "策略结束",
+        "x": 1080,
+        "y": 20,
+        "detail": "结束节点：记录诉讼前置处置结果"
+      }
+    ],
+    "edges": [
+      {
+        "id": "e1",
+        "from": "n1",
+        "to": "n2"
+      },
+      {
+        "id": "e2",
+        "from": "n2",
+        "to": "n3"
+      },
+      {
+        "id": "e3",
+        "from": "n2",
+        "to": "n7"
+      },
+      {
+        "id": "e4",
+        "from": "n3",
+        "to": "n4"
+      },
+      {
+        "id": "e5",
+        "from": "n4",
+        "to": "n5"
+      },
+      {
+        "id": "e6",
+        "from": "n5",
+        "to": "n6"
+      },
+      {
+        "id": "e7",
+        "from": "n5",
+        "to": "n8"
+      },
+      {
+        "id": "e8",
+        "from": "n5",
+        "to": "n9"
+      },
+      {
+        "id": "e9",
+        "from": "n6",
+        "to": "n10"
+      },
+      {
+        "id": "e10",
+        "from": "n7",
+        "to": "n10"
+      },
+      {
+        "id": "e11",
+        "from": "n8",
+        "to": "n10"
+      },
+      {
+        "id": "e12",
+        "from": "n9",
+        "to": "n10"
+      }
+    ],
+    "_w": 1230,
+    "_h": 372
+  },
+  "st-legal-2": {
+    "nodes": [
+      {
+        "id": "n1",
+        "kind": "start",
+        "label": "达核销条件",
+        "x": 30,
+        "y": 20,
+        "detail": "入口：长期失联/诉讼执行终本/账龄≥2年，触发核销评估"
+      },
+      {
+        "id": "n2",
+        "kind": "cond",
+        "label": "核销条件校验",
+        "x": 205,
+        "y": 20,
+        "detail": "账龄≥2年/诉讼执行终本/连续12个月无追偿记录/穷尽处置标记",
+        "rules": [
+          {
+            "id": "r1015",
+            "field": "overdue_days",
+            "operator": "gte",
+            "value": "730",
+            "logic": "AND"
+          }
+        ]
+      },
+      {
+        "id": "n3",
+        "kind": "exec",
+        "label": "核销材料准备",
+        "x": 380,
+        "y": 20,
+        "detail": "催收记录/诉讼文书/执行裁定/失联证明/财产查控无结果等材料归档",
+        "action": {
+          "type": "system",
+          "params": {
+            "systemAction": "更新案件状态"
+          }
+        }
+      },
+      {
+        "id": "n4",
+        "kind": "cond",
+        "label": "多级审批流转",
+        "x": 555,
+        "y": 20,
+        "detail": "业务初审→财务复核→风控终审，按核销金额分级审批",
+        "rules": [
+          {
+            "id": "r1016",
+            "field": "risk_level",
+            "operator": "eq",
+            "value": "高",
+            "logic": "AND"
+          }
+        ]
+      },
+      {
+        "id": "n5",
+        "kind": "exec",
+        "label": "核销账务处理",
+        "x": 730,
+        "y": 20,
+        "detail": "A：审批通过→核销账务处理，归档案件快照与审批记录",
+        "action": {
+          "type": "system",
+          "params": {
+            "systemAction": "更新案件状态"
+          }
+        }
+      },
+      {
+        "id": "n6",
+        "kind": "exec",
+        "label": "账销案存继续追偿",
+        "x": 730,
+        "y": 106,
+        "detail": "核销后保留追偿权，每季度排查财产线索，发现可执行财产恢复追偿",
+        "action": {
+          "type": "system",
+          "params": {
+            "systemAction": "更新案件状态"
+          }
+        }
+      },
+      {
+        "id": "n7",
+        "kind": "exec",
+        "label": "退回催收",
+        "x": 730,
+        "y": 192,
+        "detail": "B：审批驳回→回续案分案继续催收，补充材料后可重新申请",
+        "action": {
+          "type": "system",
+          "params": {
+            "systemAction": "更新案件状态"
+          }
+        }
+      },
+      {
+        "id": "n8",
+        "kind": "start",
+        "label": "策略结束",
+        "x": 905,
+        "y": 20,
+        "detail": "结束节点：核销完成，案件状态更新为已核销"
+      }
+    ],
+    "edges": [
+      {
+        "id": "e1",
+        "from": "n1",
+        "to": "n2"
+      },
+      {
+        "id": "e2",
+        "from": "n2",
+        "to": "n3"
+      },
+      {
+        "id": "e3",
+        "from": "n3",
+        "to": "n4"
+      },
+      {
+        "id": "e4",
+        "from": "n4",
+        "to": "n5"
+      },
+      {
+        "id": "e5",
+        "from": "n4",
+        "to": "n7"
+      },
+      {
+        "id": "e6",
+        "from": "n5",
+        "to": "n6"
+      },
+      {
+        "id": "e7",
+        "from": "n6",
+        "to": "n8"
+      },
+      {
+        "id": "e8",
+        "from": "n7",
+        "to": "n8"
+      },
+      {
+        "id": "e9",
+        "from": "n2",
+        "to": "n7"
+      }
+    ],
+    "_w": 1055,
+    "_h": 286
+  },
+  "st-graph-1": {
+    "nodes": [
+      {
+        "id": "n1",
+        "kind": "start",
+        "label": "标记失联",
+        "x": 30,
+        "y": 20,
+        "detail": "入口：上游策略标记号码失联或累计≥3次外呼未接通"
+      },
+      {
+        "id": "n2",
+        "kind": "exec",
+        "label": "失联状态确认",
+        "x": 205,
+        "y": 20,
+        "detail": "交叉验证：外呼未接通+短信无响应+号码状态查询，确认失联",
+        "action": {
+          "type": "system",
+          "params": {
+            "systemAction": "标记失联"
+          }
+        }
+      },
+      {
+        "id": "n3",
+        "kind": "exec",
+        "label": "运营商号码修复",
+        "x": 380,
+        "y": 20,
+        "detail": "第一层：通过运营商数据查询客户最新在用号码",
+        "action": {
+          "type": "system",
+          "params": {
+            "systemAction": "更新案件状态"
+          }
+        }
+      },
+      {
+        "id": "n4",
+        "kind": "cond",
+        "label": "修复结果判断",
+        "x": 555,
+        "y": 20,
+        "detail": "运营商修复成功出新号/修复失败或无新号",
+        "rules": [
+          {
+            "id": "r0028",
+            "field": "lost_status",
+            "operator": "eq",
+            "value": "可联系",
+            "logic": "AND"
+          }
+        ]
+      },
+      {
+        "id": "n5",
+        "kind": "exec",
+        "label": "第三方数据补充",
+        "x": 730,
+        "y": 20,
+        "detail": "第二层：通过第三方数据源补充联系方式（社交/电商/公共数据）",
+        "action": {
+          "type": "system",
+          "params": {
+            "systemAction": "更新案件状态"
+          }
+        }
+      },
+      {
+        "id": "n6",
+        "kind": "cond",
+        "label": "二次修复判断",
+        "x": 905,
+        "y": 20,
+        "detail": "第三方修复成功/仍失败无有效联系方式",
+        "rules": [
+          {
+            "id": "r0029",
+            "field": "lost_status",
+            "operator": "eq",
+            "value": "可联系",
+            "logic": "AND"
+          }
+        ]
+      },
+      {
+        "id": "n7",
+        "kind": "exec",
+        "label": "更新联系方式回分案",
+        "x": 1080,
+        "y": 20,
+        "detail": "A：修复出新号→更新客户联系方式→回退续案分案继续催收",
+        "action": {
+          "type": "assign",
+          "params": {
+            "targetType": "人工坐席组",
+            "targetValue": "按负载率分配",
+            "assignRule": "按负载率分配"
+          }
+        }
+      },
+      {
+        "id": "n8",
+        "kind": "exec",
+        "label": "紧急联系人触达",
+        "x": 1080,
+        "y": 106,
+        "detail": "B：修复失败→合规触达紧急联系人，请其转告客户联系平台",
+        "action": {
+          "type": "system",
+          "params": {
+            "systemAction": "更新案件状态"
+          }
+        }
+      },
+      {
+        "id": "n9",
+        "kind": "exec",
+        "label": "升级委外/诉讼评估",
+        "x": 1080,
+        "y": 192,
+        "detail": "C：完全失联且金额大→评估委外或诉讼，通过司法途径送达",
+        "action": {
+          "type": "system",
+          "params": {
+            "systemAction": "更新案件状态"
+          }
+        }
+      },
+      {
+        "id": "n10",
+        "kind": "start",
+        "label": "策略结束",
+        "x": 1255,
+        "y": 20,
+        "detail": "结束节点：记录失联修复结果与下一步去向"
+      }
+    ],
+    "edges": [
+      {
+        "id": "e1",
+        "from": "n1",
+        "to": "n2"
+      },
+      {
+        "id": "e2",
+        "from": "n2",
+        "to": "n3"
+      },
+      {
+        "id": "e3",
+        "from": "n3",
+        "to": "n4"
+      },
+      {
+        "id": "e4",
+        "from": "n4",
+        "to": "n7"
+      },
+      {
+        "id": "e5",
+        "from": "n4",
+        "to": "n5"
+      },
+      {
+        "id": "e6",
+        "from": "n5",
+        "to": "n6"
+      },
+      {
+        "id": "e7",
+        "from": "n6",
+        "to": "n7"
+      },
+      {
+        "id": "e8",
+        "from": "n6",
+        "to": "n8"
+      },
+      {
+        "id": "e9",
+        "from": "n8",
+        "to": "n9"
+      },
+      {
+        "id": "e10",
+        "from": "n7",
+        "to": "n10"
+      },
+      {
+        "id": "e11",
+        "from": "n8",
+        "to": "n10"
+      },
+      {
+        "id": "e12",
+        "from": "n9",
+        "to": "n10"
+      }
+    ],
+    "_w": 1405,
+    "_h": 286
+  },
+  "st-graph-2": {
+    "nodes": [
+      {
+        "id": "n1",
+        "kind": "start",
+        "label": "流入/命中欺诈",
+        "x": 30,
+        "y": 20,
+        "detail": "入口：新案分案流入或催收过程中命中欺诈标签"
+      },
+      {
+        "id": "n2",
+        "kind": "cond",
+        "label": "欺诈规则判断",
+        "x": 205,
+        "y": 20,
+        "detail": "图谱因子/历史行为/多头借贷/身份异常/团伙标记/中介代办",
+        "rules": [
+          {
+            "id": "r0030",
+            "field": "fraud_tag",
+            "operator": "eq",
+            "value": "确认欺诈",
+            "logic": "AND"
+          }
+        ]
+      },
+      {
+        "id": "n3",
+        "kind": "cond",
+        "label": "欺诈等级划分",
+        "x": 380,
+        "y": 20,
+        "detail": "高危欺诈（确认）/疑似欺诈（待核实）/排除欺诈（误报）",
+        "rules": [
+          {
+            "id": "r1017",
+            "field": "fraud_tag",
+            "operator": "eq",
+            "value": "疑似欺诈",
+            "logic": "AND"
+          }
+        ]
+      },
+      {
+        "id": "n4",
+        "kind": "exec",
+        "label": "移交风控反欺诈",
+        "x": 555,
+        "y": 20,
+        "detail": "A：高危欺诈→停止普通催收，移交风控反欺诈调查组",
+        "action": {
+          "type": "assign",
+          "params": {
+            "targetType": "欺诈调查组",
+            "targetValue": "反欺诈调查组",
+            "assignRule": "按负载率分配"
+          }
+        }
+      },
+      {
+        "id": "n5",
+        "kind": "exec",
+        "label": "人工复核队列",
+        "x": 555,
+        "y": 106,
+        "detail": "B：疑似欺诈→人工复核确认，期间降低催收频次避免误伤",
+        "action": {
+          "type": "system",
+          "params": {
+            "systemAction": "更新案件状态"
+          }
+        }
+      },
+      {
+        "id": "n6",
+        "kind": "exec",
+        "label": "回正常催收分案",
+        "x": 555,
+        "y": 192,
+        "detail": "C：排除欺诈→回正常催收分案，标记已排查欺诈",
+        "action": {
+          "type": "assign",
+          "params": {
+            "targetType": "人工坐席组",
+            "targetValue": "按负载率分配",
+            "assignRule": "按负载率分配"
+          }
+        }
+      },
+      {
+        "id": "n7",
+        "kind": "cond",
+        "label": "复核结果判断",
+        "x": 730,
+        "y": 106,
+        "detail": "人工复核确认欺诈/排除欺诈",
+        "rules": [
+          {
+            "id": "r0032",
+            "field": "fraud_tag",
+            "operator": "eq",
+            "value": "确认欺诈",
+            "logic": "AND"
+          }
+        ]
+      },
+      {
+        "id": "n8",
+        "kind": "exec",
+        "label": "冻结账户+法务介入",
+        "x": 905,
+        "y": 20,
+        "detail": "确认欺诈→冻结账户额度，法务介入评估报案与资金追索",
+        "action": {
+          "type": "system",
+          "params": {
+            "systemAction": "更新案件状态"
+          }
+        }
+      },
+      {
+        "id": "n9",
+        "kind": "start",
+        "label": "策略结束",
+        "x": 1080,
+        "y": 20,
+        "detail": "结束节点：记录欺诈处置结果"
+      }
+    ],
+    "edges": [
+      {
+        "id": "e1",
+        "from": "n1",
+        "to": "n2"
+      },
+      {
+        "id": "e2",
+        "from": "n2",
+        "to": "n3"
+      },
+      {
+        "id": "e3",
+        "from": "n3",
+        "to": "n4"
+      },
+      {
+        "id": "e4",
+        "from": "n3",
+        "to": "n5"
+      },
+      {
+        "id": "e5",
+        "from": "n3",
+        "to": "n6"
+      },
+      {
+        "id": "e6",
+        "from": "n5",
+        "to": "n7"
+      },
+      {
+        "id": "e7",
+        "from": "n7",
+        "to": "n8"
+      },
+      {
+        "id": "e8",
+        "from": "n7",
+        "to": "n6"
+      },
+      {
+        "id": "e9",
+        "from": "n4",
+        "to": "n8"
+      },
+      {
+        "id": "e10",
+        "from": "n6",
+        "to": "n9"
+      },
+      {
+        "id": "e11",
+        "from": "n8",
+        "to": "n9"
+      },
+      {
+        "id": "e12",
+        "from": "n2",
+        "to": "n6"
+      }
+    ],
+    "_w": 1230,
+    "_h": 286
+  },
+  "st-sms-1": {
+    "nodes": [
+      {
+        "id": "n1",
+        "kind": "start",
+        "label": "触发短信发送",
+        "x": 30,
+        "y": 20,
+        "detail": "逾期首日/承诺日前1天/账龄升级日触发短信发送"
+      },
+      {
+        "id": "n2",
+        "kind": "exec",
+        "label": "模板选择",
+        "x": 205,
+        "y": 20,
+        "detail": "按风险等级+账龄阶段匹配对应短信模板（M0友好/M1提醒/M2催告）",
+        "action": {
+          "type": "system",
+          "params": {
+            "systemAction": "更新案件状态"
+          }
+        }
+      },
+      {
+        "id": "n3",
+        "kind": "cond",
+        "label": "合规过滤",
+        "x": 380,
+        "y": 20,
+        "detail": "脱敏校验/禁催时段过滤/退订用户过滤/敏感词检测",
+        "rules": [
+          {
+            "id": "r0033",
+            "field": "complaint_tag",
+            "operator": "neq",
+            "value": "已投诉",
+            "logic": "AND"
+          },
+          {
+            "id": "r0034",
+            "field": "sms_delivered",
+            "operator": "neq",
+            "value": "退订",
+            "logic": "AND"
+          }
+        ]
+      },
+      {
+        "id": "n4",
+        "kind": "exec",
+        "label": "批量发送",
+        "x": 555,
+        "y": 20,
+        "detail": "通过短信网关批量发送，记录发送批次与目标号码清单",
+        "action": {
+          "type": "system",
+          "params": {
+            "systemAction": "更新案件状态"
+          }
+        }
+      },
+      {
+        "id": "n5",
+        "kind": "exec",
+        "label": "发送结果监测",
+        "x": 730,
+        "y": 20,
+        "detail": "监测送达状态/链接点击/短信回复，发送失败自动重试1次",
+        "action": {
+          "type": "wait",
+          "params": {
+            "waitDays": 3,
+            "interruptOnRepay": true
+          }
+        }
+      },
+      {
+        "id": "n6",
+        "kind": "start",
+        "label": "短信发送完成",
+        "x": 905,
+        "y": 20,
+        "detail": "结束：记录发送结果，回传主策略继续后续动作"
+      }
+    ],
+    "edges": [
+      {
+        "id": "e1",
+        "from": "n1",
+        "to": "n2"
+      },
+      {
+        "id": "e2",
+        "from": "n2",
+        "to": "n3"
+      },
+      {
+        "id": "e3",
+        "from": "n3",
+        "to": "n4"
+      },
+      {
+        "id": "e4",
+        "from": "n4",
+        "to": "n5"
+      },
+      {
+        "id": "e5",
+        "from": "n5",
+        "to": "n6"
+      },
+      {
+        "id": "e6",
+        "from": "n3",
+        "to": "n6"
+      }
+    ],
+    "_w": 1055,
+    "_h": 114
+  },
+  "st-sms-2": {
+    "nodes": [
+      {
+        "id": "n1",
+        "kind": "start",
+        "label": "失联识别触发",
+        "x": 30,
+        "y": 20,
+        "detail": "连续3次外呼未接通，触发失联修复短信"
+      },
+      {
+        "id": "n2",
+        "kind": "exec",
+        "label": "发送失联修复短信",
+        "x": 205,
+        "y": 20,
+        "detail": "附在线还款链接与客服回拨号码，语气缓和，引导客户主动联系",
+        "action": {
+          "type": "sms",
+          "params": {
+            "smsTemplate": "SMS-LOST",
+            "sendTiming": "立即发送"
+          }
+        }
+      },
+      {
+        "id": "n3",
+        "kind": "exec",
+        "label": "响应监测",
+        "x": 380,
+        "y": 20,
+        "detail": "监测7天内链接点击/回拨电话/还款行为",
+        "action": {
+          "type": "wait",
+          "params": {
+            "waitDays": 7,
+            "interruptOnRepay": true
+          }
+        }
+      },
+      {
+        "id": "n4",
+        "kind": "cond",
+        "label": "响应结果判断",
+        "x": 555,
+        "y": 20,
+        "detail": "有点击/回拨/还款响应 vs 7天内无任何响应",
+        "rules": [
+          {
+            "id": "r0035",
+            "field": "connected",
+            "operator": "eq",
+            "value": "是",
+            "logic": "AND"
+          }
+        ]
+      },
+      {
+        "id": "n5",
+        "kind": "exec",
+        "label": "标记恢复可联",
+        "x": 730,
+        "y": 20,
+        "detail": "A：有响应→标记恢复可联系，回主策略继续催收",
+        "action": {
+          "type": "system",
+          "params": {
+            "systemAction": "标记失联"
+          }
+        }
+      },
+      {
+        "id": "n6",
+        "kind": "exec",
+        "label": "确认失联升级",
+        "x": 730,
+        "y": 106,
+        "detail": "B：无响应→确认失联，升级失联修复分流子策略",
+        "action": {
+          "type": "system",
+          "params": {
+            "systemAction": "标记失联"
+          }
+        }
+      },
+      {
+        "id": "n7",
+        "kind": "start",
+        "label": "策略结束",
+        "x": 905,
+        "y": 20,
+        "detail": "结束节点：记录失联短信响应结果"
+      }
+    ],
+    "edges": [
+      {
+        "id": "e1",
+        "from": "n1",
+        "to": "n2"
+      },
+      {
+        "id": "e2",
+        "from": "n2",
+        "to": "n3"
+      },
+      {
+        "id": "e3",
+        "from": "n3",
+        "to": "n4"
+      },
+      {
+        "id": "e4",
+        "from": "n4",
+        "to": "n5"
+      },
+      {
+        "id": "e5",
+        "from": "n4",
+        "to": "n6"
+      },
+      {
+        "id": "e6",
+        "from": "n5",
+        "to": "n7"
+      },
+      {
+        "id": "e7",
+        "from": "n6",
+        "to": "n7"
+      }
+    ],
+    "_w": 1055,
+    "_h": 200
+  }
+}

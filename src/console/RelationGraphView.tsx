@@ -91,7 +91,8 @@ function primaryGroup(nodeId: string, edges: CustGraphEdge[], theme: GraphTheme)
 }
 
 function chipW(name: string) {
-  return Math.min(128, 26 + [...name].length * 11)
+  const s = String(name ?? '')
+  return Math.min(128, 26 + [...s].length * 11)
 }
 
 type GraphSelection = { kind: 'node'; node: CustGraphNode } | { kind: 'edge'; edge: CustGraphEdge }
@@ -359,7 +360,7 @@ export function RelationGraphView({
             const c = TYPE_COLOR[n.type] ?? '#64748B'
             const isSelf = n.type === 'self'
             const seld = sel?.kind === 'node' && sel.node.id === n.id
-            const w = isSelf ? Math.min(150, 34 + [...n.name].length * 13) : chipW(n.name)
+            const w = isSelf ? Math.min(150, 34 + [...String(n.name ?? '')].length * 13) : chipW(n.name)
             const h = isSelf ? 36 : 28
             return (
               <g

@@ -26,15 +26,15 @@ const ZZ_CRUMB_ROUTE: Record<string, string> = {
   历史案件: 'zz:cases-history',
   委外监管: 'zz:agency-list',
   坐席工作台: 'zz:agent-pool',
-  AI协催: 'zz:ai-task',
+  AI自动外呼: 'zz:ai-task',
   BI报表中心: 'zz:bi-overview',
-  智能策略引擎: 'zz:strategy',
+  智能策略: 'zz:strategy',
   策略列表: 'zz:strategy',
-  法务处置: 'zz:legal-overview',
+  法务案件: 'zz:legal-overview',
   智能AI质检: 'zz:qa-record',
   外访管理: 'zz:visit-list',
-  话术管理: 'zz:script-lib',
   短信模板管理: 'zz:sms-template',
+  外呼任务: 'zz:agent-pool',
   外访人员管理: 'zz:visitor-manage',
 }
 
@@ -74,7 +74,7 @@ export function ZzPage({ title, crumb, subtitle, actions, children, max = 1680 }
 
 export function ZzCard({ title, extra, children, bodyClass, onTitleClick, className }: { title?: ReactNode; extra?: ReactNode; children: ReactNode; bodyClass?: string; onTitleClick?: () => void; className?: string }) {
   return (
-    <div className={(className ?? '') + ' mb-4 rounded border bg-white'}>
+    <div className={(className ?? '') + ' mb-4 rounded-lg border border-slate-100 bg-white'}>
       {title !== undefined && (
         <div className="flex items-center justify-between border-b px-4 py-3">
           <span className={'font-medium' + (onTitleClick ? ' cursor-pointer text-[#1677ff] hover:underline' : '')} onClick={onTitleClick}>{title}</span>
@@ -88,10 +88,10 @@ export function ZzCard({ title, extra, children, bodyClass, onTitleClick, classN
 
 export function ZzStat({ label, value, sub, accent, tip }: { label: string; value: ReactNode; sub?: ReactNode; accent?: string; tip?: string }) {
   return (
-    <div className="min-w-[170px] flex-1 rounded border bg-white px-4 py-3" title={tip}>
-      <div className="text-sm text-gray-500">{label}</div>
-      <div className="mt-1 text-2xl font-semibold" style={{ color: accent ?? '#111827' }}>{value}</div>
-      {sub && <div className="mt-1 text-xs text-gray-400">{sub}</div>}
+    <div className="min-w-0 flex-1 rounded-lg border border-slate-100 bg-[#fafbfc] px-4 py-2.5" title={tip}>
+      <div className="text-[26px] font-semibold leading-tight tracking-tight" style={{ color: accent ?? BLUE }}>{value}</div>
+      <div className="mt-0.5 text-xs text-[#8c8c8c]">{label}</div>
+      {sub && <div className="mt-0.5 text-[11px] text-[#8c8c8c]">{sub}</div>}
     </div>
   )
 }
@@ -100,10 +100,10 @@ export function ZzBadge({ color = BLUE, children }: { color?: string; children: 
   return <span className="inline-flex items-center rounded px-2 py-0.5 text-xs" style={{ background: color + '1a', color }}>{children}</span>
 }
 
-export function ZzBtn({ primary, onClick, children, disabled, sm, danger }: {
-  primary?: boolean; onClick?: () => void; children: ReactNode; disabled?: boolean; sm?: boolean; danger?: boolean
+export function ZzBtn({ primary, onClick, children, disabled, sm, danger, className }: {
+  primary?: boolean; onClick?: () => void; children: ReactNode; disabled?: boolean; sm?: boolean; danger?: boolean; className?: string
 }) {
-  const base = `rounded text-sm ${sm ? 'px-2 py-1' : 'px-3 py-1.5'} ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`
+  const base = `rounded text-sm ${sm ? 'px-2 py-1' : 'px-3 py-1.5'} ${disabled ? 'opacity-50 cursor-not-allowed' : ''} ${className ?? ''}`
   if (danger) return <button onClick={onClick} disabled={disabled} className={`${base} border border-red-300 text-red-600`}>{children}</button>
   if (primary) return <button onClick={onClick} disabled={disabled} className={`${base} text-white`} style={{ background: BLUE }}>{children}</button>
   return <button onClick={onClick} disabled={disabled} className={`${base} border border-slate-300 text-gray-700`}>{children}</button>

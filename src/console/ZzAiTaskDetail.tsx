@@ -2,7 +2,7 @@
 // 七大模块：①基础信息 ②配置快照 ③指标看板 ④异常风险 ⑤运营复盘指引 ⑥通话明细 ⑦操作区+日志
 import { useMemo, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { ZzPage, ZzCard, ZzTable, ZzBadge, ZzBtn, ZzTabs, ZzFilterBar, ZzField, ZzSelect, ZzStat } from './zzUi'
+import { ZzPage, ZzCard, ZzTable, ZzBadge, ZzBtn, ZzTabs, ZzFilterBar, ZzField, ZzSelect, ZzStat, ZzInput } from './zzUi'
 import { ZZ_AI_TASKS, ZZ_AI_TASK_CONFIG, ZZ_AI_CALL_DETAILS, ZZ_AI_BATCHES, ZZ_AI_OPLOG } from './zzData'
 
 const GREEN = '#16A34A'; const RED = '#DC2626'; const AMBER = '#D97706'; const BLUE = '#1677ff'; const GRAY = '#9CA3AF'
@@ -50,7 +50,7 @@ export function ZzAiTaskDetail() {
   return (
     <ZzPage
       title={`AI外呼任务详情 · ${t.name}`}
-      crumb="催贷管理 / AI协催 / 外呼任务总览 / 任务详情"
+      crumb="催贷管理 / AI自动外呼 / 任务详情"
       subtitle="任务全生命周期全景复盘与业务闭环（只读查看 + 轻度操作）"
       actions={<ZzBtn kind="text" onClick={() => nav('/console/zz/ai-task')}>← 返回任务总览</ZzBtn>}
     >
@@ -60,7 +60,7 @@ export function ZzAiTaskDetail() {
           {[
             ['任务ID', <span className="flex items-center gap-1 font-medium">{t.id}<ZzBtn sm kind="text" onClick={() => navigator.clipboard?.writeText(t.id)}>复制</ZzBtn></span>],
             ['任务类型', <ZzBadge color={isAuto ? BLUE : GRAY}>{t.type}</ZzBadge>],
-            ['绑定话术模板', <ZzBtn sm kind="text" onClick={() => nav('/console/zz/script-lib')}>{t.template} ↗</ZzBtn>],
+            ['绑定话术模板', <ZzBtn sm kind="text" onClick={() => nav('/console/zz/ai-template')}>{t.template} ↗</ZzBtn>],
             ['当前状态', <ZzBadge color={statusColor[t.status]}>{t.status}</ZzBadge>],
             ['创建人', '话术管理员(7703)'],
             ['创建时间', '2026-08-19 10:00'],
@@ -170,7 +170,7 @@ export function ZzAiTaskDetail() {
             <ZzBtn onClick={() => alert('已导出通话明细')}>导出明细</ZzBtn>
           </ZzFilterBar>
           <ZzTable stickyAction head={['通话ID', '客户', '案件编号', '呼叫时间', '时长', '结果', '客户意图', 'PTP', '录音', '操作']} rows={filteredCalls.map((c) => [
-            c?.callId ?? '-', c?.cust ?? '-', <ZzBtn sm kind="text" onClick={() => nav('/console/zz/case-detail?caseId=' + (c?.caseNo ?? ''))}>{c?.caseNo ?? '-'} ↗</ZzBtn>, c?.time ?? '-', (c?.duration ?? 0) + 's',
+            c?.callId ?? '-', c?.cust ?? '-', <ZzBtn sm kind="text" onClick={() => nav('/console/zz/case-detail?id=' + (c?.caseNo ?? ''))}>{c?.caseNo ?? '-'} ↗</ZzBtn>, c?.time ?? '-', (c?.duration ?? 0) + 's',
             <ZzBadge color={(c?.result ?? '') === '接通' ? GREEN : RED}>{c?.result ?? '-'}</ZzBadge>,
             <ZzBadge color={(c?.intent ?? '') === '有还款意愿' ? GREEN : (c?.intent ?? '') === '情绪激动' ? RED : GRAY}>{c?.intent ?? '-'}</ZzBadge>,
             (c?.ptp) ? <ZzBadge color={GREEN}>是</ZzBadge> : '否',
