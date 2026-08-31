@@ -1,0 +1,1 @@
+import{g as s,j as t,E as i,l as o,b as r}from"./index-CdCXgM2l.js";function u({params:e}){const{back:a}=s(),n=e.get("name")||void 0;return t.jsx(i,{title:"股权穿透",crumb:"受益所有人 / 股权穿透",actions:t.jsx(r,{variant:"ghost",onClick:()=>a("/console/ep/jd-beneficiary-result"),children:"返回"}),children:t.jsx(o,{companyName:n})})}export{u as default};
