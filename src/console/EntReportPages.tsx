@@ -6,7 +6,6 @@
 import { useState } from 'react';
 import { Panel, StatCard, DataTable, Button, Badge } from '../components/ui';
 import type { Column, Row } from '../components/ui';
-import { Sam, Cal } from './SourceTag';
 import { PageShell } from './PageShell';
 import { useQiyeData, type QiyeProfile } from './qiyeData';
 import { useEnterpriseData } from './enterpriseData';
@@ -36,7 +35,7 @@ function PickPanel({ title, crumb, q, setQ, hits, pick }: {
   return (
     <div style={{ padding: 24 }}>
       <PageShell title={title} crumb={crumb} subtitle="输入企业名称 / 统一社会信用代码直达" />
-      <Panel title="直达企业画像" desc={<span>输入关键字检索在档企业 · <Cal label="实时汇总" /></span>}>
+      <Panel title="直达企业画像" desc={<span>输入关键字检索在档企业 · </span>}>
         <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="输入企业名称 / 统一社会信用代码 / 唯一标识"
           style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid #E2E8F0', fontSize: 13, outline: 'none' }} />
       </Panel>
@@ -106,7 +105,7 @@ export function EntGraphDetail() {
     <div style={{ padding: 24, maxWidth: 1360 }}>
       <PageShell title="企业关联图谱" crumb={`${CRUMB} / 企业关联图谱 / ${cur.name}`}
         subtitle="股权、投资与关联网络（一级），关联方风险传导提示"
-        actions={<><Sam value="qiyeData.json" /><Cal label="实时计算" /></>} />
+        actions={<></>} />
       <Panel title={`${cur.name} · 关联网络`} desc={<span>一级关联 {nodes.length} 家 · 高风险关联 {riskHigh} 家</span>}>
         <svg viewBox="0 0 680 360" style={{ width: '100%', height: 340, background: '#FAFBFC', borderRadius: 10 }}>
           {/* 连线 */}
@@ -147,7 +146,7 @@ export function EntGraphDetail() {
           ⚠ 存在 <b>{riskHigh}</b> 家高风险关联方，风险可能向本企业传导（担保 / 投资 / 同人关系），建议关联尽调。
         </div>
       )}
-      <Panel title="关联关系明细" desc={<span>可跳转查看关联企业档案 · <Sam value="enterpriseData.json.monitorList" /></span>}>
+      <Panel title="关联关系明细" desc={<span>可跳转查看关联企业档案 · </span>}>
         <DataTable columns={cols} rows={rows} empty="暂无关联系" pager defaultPageSize={10} exportable exportName="企业关联图谱"
           actions={(r) => <Button size="sm" variant="ghost" onClick={() => { const e = d.enterprises.find((x) => x.name === String(r.name)); if (e) pick(e); }}>查看档案</Button>} />
       </Panel>
@@ -182,7 +181,7 @@ export function EntCreditReport() {
   return (
     <div style={{ padding: 24, maxWidth: 1120 }}>
       <PageShell title="企业信用报告" crumb={`${CRUMB} / 企业信用报告 / ${cur.name}`} subtitle="整合工商、司法、经营、模型与预警的全维度信用评估"
-        actions={<><Sam value="enterpriseData.json" /><Cal label="实时计算" /><Button size="sm" variant="secondary" onClick={() => window.print()}>🖨 打印报告</Button></>} />
+        actions={<><Button size="sm" variant="secondary" onClick={() => window.print()}>🖨 打印报告</Button></>} />
       <Panel title="报告摘要">
         <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
           <div style={{ fontSize: 13 }}>
@@ -264,7 +263,7 @@ export function EntVerifyReport() {
   return (
     <div style={{ padding: 24, maxWidth: 1120 }}>
       <PageShell title="企业核验报告" crumb={`${CRUMB} / 企业核验报告 / ${cur.name}`} subtitle="工商档案一致性核验 + 风险项核验结论（标准化核验报告）"
-        actions={<><Sam value="qiyeData.json" /><Cal label="实时计算" /><Button size="sm" variant="secondary" onClick={() => window.print()}>🖨 打印报告</Button></>} />
+        actions={<><Button size="sm" variant="secondary" onClick={() => window.print()}>🖨 打印报告</Button></>} />
       <Panel title="核验结论">
         <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
           <div style={{ fontSize: 13 }}>

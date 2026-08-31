@@ -1,8 +1,8 @@
 // 企业档案 · 新闻舆情（arc-news）· 1:1 复刻「企业档案 - 新闻舆情」
 // 数据：本地样例 arcNews.json（橘 Sam）
-import { useState } from 'react'
-import { EpPage, EpCard, EpTag, EpBtn, useSample, Sam } from '../../epCommon'
-import type { Row } from '../../../../components/ui'
+import { useState } from 'react';
+import { EpPage, EpCard, EpTag, EpBtn, useSample } from '../../epCommon';
+import type { Row } from '../../../../components/ui';
 
 const seed = {
   total: 901597,
@@ -112,7 +112,7 @@ export default function News({ params }: { params: URLSearchParams }) {
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: 16, alignItems: 'start' }}>
         {/* 舆情列表 */}
-        <EpCard title="舆情动态" desc={<Sam value="arcNews.json" />}>
+        <EpCard title="舆情动态" >
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {rows.map((n) => {
               const sc = sentimentColor[n.sentiment] ?? sentimentColor['中立']

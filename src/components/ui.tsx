@@ -1,8 +1,7 @@
-import { useState, useRef, useEffect, useLayoutEffect } from 'react'
-import type { ReactNode, ButtonHTMLAttributes } from 'react'
-import { createPortal } from 'react-dom'
-import { SourceTag } from '../console/SourceTag'
-import { usePageNav } from '../console/pageNav'
+import { useState, useRef, useEffect, useLayoutEffect } from 'react';
+import type { ReactNode, ButtonHTMLAttributes } from 'react';
+import { createPortal } from 'react-dom';
+import { usePageNav } from '../console/pageNav';
 
 /* ---------- Page header ---------- */
 export function PageHeader({
@@ -336,7 +335,6 @@ export interface Column {
   hint?: string
   render?: (r: Row) => ReactNode  // 需求14：列级自定义渲染（整行传入），优先于 type
   fixed?: 'left' | 'right'  // 需求15：固定列（左/右侧粘住，右侧自动让出操作列宽度）
-  tag?: 'cfg' | 'sample' | 'calc' | { kind: 'cfg' | 'sample' | 'calc'; value: string }
 }
 
 export interface BadgeVal {
@@ -449,7 +447,6 @@ export function DataTable({
                 >
                   <div className="flex items-center gap-1.5">
                     <span>{c.label}</span>
-                    {c.tag && <ColumnTag tag={c.tag} />}
                   </div>
                 </th>
               ))}
@@ -535,13 +532,6 @@ export function DataTable({
       )}
     </div>
   )
-}
-
-// 列级来源标签：渲染在表头（每列一次），避免每个单元格重复堆叠标签
-function ColumnTag({ tag }: { tag: Column['tag'] }) {
-  if (!tag) return null;
-  if (typeof tag === 'string') return <SourceTag kind={tag} />;
-  return <SourceTag kind={tag.kind} value={tag.value} />;
 }
 
 function renderCell(r: Row, c: Column) {

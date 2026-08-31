@@ -1,9 +1,9 @@
 // 风控中心 · 定期体检（fk-health-check）· 1:1 复刻「风控 - 定期体检」
 // 体检事项弹窗：严重 / 异常 / 一般 三组，支持多选（快照「风控 - 定期体检 - 体检事项弹窗」）
 // 数据：本地样例 fkHealth.json（橘 Sam）
-import { useState } from 'react'
-import { EpPage, EpCard, EpStat, EpTag, EpBtn, EpDrawer, DataTable, useSample, Sam } from '../../epCommon'
-import type { Row, Column } from '../../../../components/ui'
+import { useState } from 'react';
+import { EpPage, EpCard, EpStat, EpTag, EpBtn, EpDrawer, DataTable, useSample } from '../../epCommon';
+import type { Row, Column } from '../../../../components/ui';
 import seedJson from '../../../fkHealth.json'
 
 const LEVEL: Record<string, { c: string; b: string }> = {
@@ -118,7 +118,7 @@ export default function FkHealthCheck({ params }: { params: URLSearchParams }) {
         <>
           {/* 企业信息 */}
           <div style={{ marginTop: 14 }}>
-            <EpCard title={data.company.name} desc={<Sam value="fkHealth.json" />}>
+            <EpCard title={data.company.name} >
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '8px 20px', fontSize: 13 }}>
                 {[
                   ['法定代表人:', data.company.legal],
@@ -188,7 +188,6 @@ export default function FkHealthCheck({ params }: { params: URLSearchParams }) {
           <div style={{ marginTop: 14 }}>
             <EpCard
               title="体检事项"
-              desc={<Sam value="fkHealth.json" />}
               actions={<EpBtn variant="default" size="sm">下载列表</EpBtn>}
             >
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8, fontSize: 13, marginBottom: 12 }}>

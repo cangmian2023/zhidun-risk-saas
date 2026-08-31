@@ -1,9 +1,9 @@
 // 企业档案 · 集团信息（arc-group）· 1:1 复刻「企业档案 - 集团信息」
 // 子快照「企业档案 - 集团信息 - 查看图谱」以图谱抽屉（SVG）折叠进本页
 // 数据：本地样例 arcGroup.json（橘 Sam）
-import { useState } from 'react'
-import { EpPage, EpCard, EpStat, EpTag, EpBtn, EpDrawer, DataTable, useSample, Sam } from '../../epCommon'
-import type { Row, Column } from '../../../../components/ui'
+import { useState } from 'react';
+import { EpPage, EpCard, EpStat, EpTag, EpBtn, EpDrawer, DataTable, useSample } from '../../epCommon';
+import type { Row, Column } from '../../../../components/ui';
 
 type Member = { id: number; name: string; legal: string; capital: string; found: string }
 type Row3 = { id: number; name: string; legal: string; capital: string; found: string; ratio?: string }
@@ -118,7 +118,7 @@ export default function ArcGroup({ params }: { params: URLSearchParams }) {
           empty="暂无数据"
         />
         <div style={{ marginTop: 8, fontSize: 12, color: '#94A3B8' }}>
-          共 {tab === 'members' ? 330 : tab === 'invests' ? 96 : 15} 条 · 5/10/20/50/100 条每页 · 来源：<Sam value="arcGroup.json" />
+          共 {tab === 'members' ? 330 : tab === 'invests' ? 96 : 15} 条 · 5/10/20/50/100 条每页 · 来源：
         </div>
       </EpCard>
 

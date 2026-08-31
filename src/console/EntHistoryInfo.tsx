@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { Sam, Cfg } from './SourceTag';
 import hiData from './entHistoryInfo.json';
 
 /* 企业档案 · 历史信息
@@ -161,9 +160,7 @@ export default function EntHistoryInfo({ companyName, menu }: { companyName?: st
         </div>
       )}
 
-      {/* 数据来源标签 */}
       <div style={{ marginTop: 16 }}>
-        <Sam label="历史信息" /> <Cfg label="数据配置" />
       </div>
     </div>
   );

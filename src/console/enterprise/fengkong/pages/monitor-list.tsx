@@ -1,10 +1,9 @@
 // 风控中心 · 监控列表（ep:fk-monitor-list）· 1:1 复刻「企业征信 - 监控列表」截图
 // 布局：顶部标题栏 → 两行筛选条 → 操作条 → 表格 → 分页
-import { useState } from 'react'
-import { EpPage } from '../../epCommon'
-import { Sam } from '../../../SourceTag'
-import { usePageNav } from '../../../pageNav'
-import { AddMonitorDrawer } from '../components/AddMonitorDrawer'
+import { useState } from 'react';
+import { EpPage } from '../../epCommon';
+import { usePageNav } from '../../../pageNav';
+import { AddMonitorDrawer } from '../components/AddMonitorDrawer';
 
 type Avatar =
   | { kind: 'logo' }        // 抖音黑色logo方块
@@ -260,7 +259,6 @@ export default function FkMonitorList(_: { params?: URLSearchParams } = {}) {
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, cursor: 'pointer', border: '1px solid #E5E6EB', borderRadius: 2, padding: '3px 8px', color: '#1D2129', fontSize: 12 }}>
             20条/页 <CaretDown />
           </span>
-          <Sam value="fkMonitor.json" />
         </div>
       </div>
 

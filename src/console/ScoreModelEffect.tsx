@@ -1,8 +1,7 @@
-import { useScore, SCORE_PROD_LABEL, type ScoreProd } from './scoreData'
-import { PageShell } from './PageShell'
-import { Panel, Badge } from '../components/ui'
-import { Cal } from './SourceTag'
-import { LineChart } from '../components/charts'
+import { useScore, SCORE_PROD_LABEL, type ScoreProd } from './scoreData';
+import { PageShell } from './PageShell';
+import { Panel, Badge } from '../components/ui';
+import { LineChart } from '../components/charts';
 
 const MODEL_COLOR: Record<ScoreProd, string> = {
   zhicha: '#ef4444',
@@ -66,16 +65,16 @@ export default function ScoreModelEffectPage() {
 
         {/* 趋势对比：四个面板，每面板三模型 */}
         <div className="grid gap-4 lg:grid-cols-2">
-          <Panel title="评分覆盖率趋势" actions={<Cal />}>
+          <Panel title="评分覆盖率趋势" >
             <LineChart labels={labels} series={series((t) => t.coverage)} unit="%" height={220} />
           </Panel>
-          <Panel title="预警准确率趋势" actions={<Cal />}>
+          <Panel title="预警准确率趋势" >
             <LineChart labels={labels} series={series((t) => t.accuracy)} unit="%" height={220} />
           </Panel>
-          <Panel title="处置及时率趋势" actions={<Cal />}>
+          <Panel title="处置及时率趋势" >
             <LineChart labels={labels} series={series((t) => t.timely)} unit="%" height={220} />
           </Panel>
-          <Panel title="本月调用趋势" actions={<Cal />}>
+          <Panel title="本月调用趋势" >
             <LineChart labels={labels} series={series((t) => t.calls)} height={220} />
           </Panel>
         </div>

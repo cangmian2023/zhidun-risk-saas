@@ -8,7 +8,6 @@ import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Panel, StatCard, DataTable, Button, Badge } from '../components/ui';
 import type { Column, Row } from '../components/ui';
-import { Sam, Cal } from './SourceTag';
 import { PageShell } from './PageShell';
 import { useQiyeData, toggleFollow, type QiyeProfile, type QiyeCountItem } from './qiyeData';
 import { useEnterpriseData } from './enterpriseData';
@@ -58,9 +57,9 @@ export function QiyeSearch() {
   return (
     <div style={{ padding: 24, maxWidth: 1360 }}>
       <PageShell title="企业档案检索" crumb={`${CRUMB} / 检索`} subtitle="按企业名称、行业、法定代表人或唯一标识检索企业工商档案，查看工商信息、股东、司法、经营、知识产权等全维度画像"
-        actions={<><Sam label="企业样例" value="qiyeData.json.enterprises" /><Cal label="实时统计" /></>} />
+        actions={<></>} />
 
-      <Panel title="检索" desc={<span>共 <b>{d.enterprises.length}</b> 家在档企业 · <Cal label="实时汇总" /></span>}>
+      <Panel title="检索" desc={<span>共 <b>{d.enterprises.length}</b> 家在档企业 · </span>}>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
           <input
             value={kw}
@@ -118,7 +117,7 @@ export function QiyeSearch() {
 /* ============ 计数网格（经营风险 / 经营信息 / 企业发展 / 知识产权） ============ */
 function CountGrid({ title, items }: { title: string; items: QiyeCountItem[] }) {
   return (
-    <Panel title={title} desc={<span>子项统计 · <Cal label="实时统计" /></span>}>
+    <Panel title={title} desc={<span>子项统计 · </span>}>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 8 }}>
         {items.map((it) => (
           <div key={it.name} style={{ border: '1px solid #E2E8F0', borderRadius: 8, padding: '8px 10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: it.danger && it.count > 0 ? '#FEF2F2' : '#fff' }}>
@@ -157,7 +156,7 @@ export function QiyeProfile() {
         <PageShell title="企业档案" crumb={CRUMB}
           subtitle="输入企业名称 / 统一社会信用代码直达单企业风险画像"
           actions={<Button size="sm" variant="secondary" onClick={() => back('/console/ep/qiye-search')}>← 返回查询</Button>} />
-        <Panel title="直达企业画像" desc={<span>共 <b>{d.enterprises.length}</b> 家在档企业 · <Cal label="实时汇总" /></span>}>
+        <Panel title="直达企业画像" desc={<span>共 <b>{d.enterprises.length}</b> 家在档企业 · </span>}>
           <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="输入企业名称 / 统一社会信用代码 / 唯一标识"
             style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid #E2E8F0', fontSize: 13, outline: 'none' }} />
         </Panel>
@@ -280,7 +279,6 @@ export function QiyeProfile() {
     <div style={{ padding: 24, maxWidth: 1360 }}>
       <PageShell title="企业档案" crumb={`${CRUMB} / ${cur.name}`} subtitle="企业工商档案：工商信息、股东与主要人员、对外投资与分支、司法与经营风险、经营信息、企业发展与知识产权全维度画像"
         actions={<>
-          <Sam label="企业样例" value="qiyeData.json" /><Cal label="实时统计" />
           <Button size="sm" variant="secondary" onClick={() => nav('/console/ep/ent-graph-detail')}>关联图谱</Button>
           <Button size="sm" variant="secondary" onClick={() => nav('/console/ep/ent-credit-detail')}>信用报告</Button>
           <Button size="sm" variant="secondary" onClick={() => nav('/console/ep/ent-verify-detail')}>核验报告</Button>
@@ -352,14 +350,14 @@ export function QiyeProfile() {
         <>
           {/* 风险概览 */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0,1fr))', gap: 12, marginBottom: 14 }}>
-            <StatCard label="综合风险等级" value={riskLevel} accent={riskLevelKind(riskLevel)} hint={<Cal label="模型+监控名单" />} />
+            <StatCard label="综合风险等级" value={riskLevel} accent={riskLevelKind(riskLevel)}  />
             <StatCard label="累计预警" value={String(mon.alerts)} accent="amber" hint={mon.lastAlert !== '—' ? `最近 ${mon.lastAlert}` : '无预警'} />
             <StatCard label="司法涉诉" value={String(riskCases)} accent={riskCases > 0 ? 'rose' : 'green'} hint="裁判文书 + 立案" />
             <StatCard label="风险命中项" value={String(dangerCount)} accent={dangerCount > 0 ? 'rose' : 'green'} hint="经营风险命中" />
           </div>
 
           {/* 风险模型结果 */}
-          <Panel title="风险模型结果" desc={<span>企业风控模型评分与风险结论 · <Cal label="实时计算" /> · <Sam value="enterpriseData.json.models" /></span>}>
+          <Panel title="风险模型结果" desc={<span>企业风控模型评分与风险结论 ·  · </span>}>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0,1fr))', gap: 12 }}>
               {ent.models.map((m) => {
                 const score = modelScore(m.id);
@@ -388,7 +386,7 @@ export function QiyeProfile() {
           </Panel>
 
           {/* 预警记录 */}
-          <Panel title="预警记录" desc={<span>该企业近期预警 · <Sam value="enterpriseData.json.alerts" /></span>}>
+          <Panel title="预警记录" desc={<span>该企业近期预警 · </span>}>
             <DataTable columns={[
               { key: 'time', label: '预警时间', type: 'text', width: '150px' },
               { key: 'rule', label: '命中规则', type: 'text', width: '180px' },
@@ -400,7 +398,7 @@ export function QiyeProfile() {
           </Panel>
 
           {/* 风险命中维度 */}
-          <Panel title="风险命中维度" desc={<span>经营/司法/舆情等风险维度 · <Sam value="qiyeData.json.riskCounts" /></span>}>
+          <Panel title="风险命中维度" desc={<span>经营/司法/舆情等风险维度 · </span>}>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0,1fr))', gap: 8 }}>
               {cur.riskCounts.map((r) => (
                 <div key={r.name} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid #F1F5F9', borderRadius: 8, padding: '8px 12px', fontSize: 13 }}>
@@ -417,12 +415,12 @@ export function QiyeProfile() {
       {tab === '基本信息' && (
         <>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0,1fr))', gap: 12, marginBottom: 14 }}>
-            <StatCard label="股东人数" value={String(cur.shareholders.length)} accent="brand" hint={<Sam label="样例" />} />
-            <StatCard label="主要人员" value={String(cur.persons.length)} accent="cyan" hint={<Sam label="样例" />} />
-            <StatCard label="对外投资" value={String(cur.invests.length)} accent="violet" hint={<Sam label="样例" />} />
-            <StatCard label="分支机构" value={String(cur.branches.length)} accent="emerald" hint={<Sam label="样例" />} />
+            <StatCard label="股东人数" value={String(cur.shareholders.length)} accent="brand"  />
+            <StatCard label="主要人员" value={String(cur.persons.length)} accent="cyan"  />
+            <StatCard label="对外投资" value={String(cur.invests.length)} accent="violet"  />
+            <StatCard label="分支机构" value={String(cur.branches.length)} accent="emerald"  />
           </div>
-          <Panel title="工商信息" desc={<span>基础登记信息 · <Sam value="qiyeData.json" /></span>}>
+          <Panel title="工商信息" desc={<span>基础登记信息 · </span>}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px 24px', fontSize: 13 }}>
               {([
                 ['统一社会信用代码', cur.creditCode],
@@ -443,20 +441,20 @@ export function QiyeProfile() {
             </div>
             <div style={{ marginTop: 10, fontSize: 12, color: '#64748B' }}>经营范围：{cur.bizScope}</div>
           </Panel>
-          <Panel title="股东信息" desc={<span>股东及出资 · <Sam value="qiyeData.json.shareholders" /></span>}>
+          <Panel title="股东信息" desc={<span>股东及出资 · </span>}>
             <DataTable columns={shCols} rows={shRows} empty="无" pager defaultPageSize={10} />
           </Panel>
-          <Panel title="主要人员" desc={<span>董监高 · <Sam value="qiyeData.json.persons" /></span>}>
+          <Panel title="主要人员" desc={<span>董监高 · </span>}>
             <DataTable columns={psCols} rows={psRows} empty="无" pager defaultPageSize={10} />
           </Panel>
-          <Panel title="对外投资" desc={<span>被投资企业与持股比例 · <Sam value="qiyeData.json.invests" /></span>}>
+          <Panel title="对外投资" desc={<span>被投资企业与持股比例 · </span>}>
             <DataTable columns={invCols} rows={invRows} empty="无" pager defaultPageSize={10} />
           </Panel>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginTop: 12 }}>
-            <Panel title="变更记录" desc={<span>工商变更 · <Sam value="qiyeData.json.changes" /></span>}>
+            <Panel title="变更记录" desc={<span>工商变更 · </span>}>
               <DataTable columns={chCols} rows={chRows} empty="无" pager defaultPageSize={6} />
             </Panel>
-            <Panel title="分支机构" desc={<span>分公司 · <Sam value="qiyeData.json.branches" /></span>}>
+            <Panel title="分支机构" desc={<span>分公司 · </span>}>
               <DataTable columns={brCols} rows={brRows} empty="无" pager defaultPageSize={6} />
             </Panel>
           </div>
@@ -466,12 +464,12 @@ export function QiyeProfile() {
       {tab === '法律诉讼' && (
         <>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0,1fr))', gap: 12, marginBottom: 14 }}>
-            <StatCard label="司法案件" value={String(riskCases)} accent="rose" hint={<Cal label="实时统计" />} />
-            <StatCard label="裁判文书" value={String(cur.legalCases.length)} accent="amber" hint={<Cal label="实时统计" />} />
+            <StatCard label="司法案件" value={String(riskCases)} accent="rose"  />
+            <StatCard label="裁判文书" value={String(cur.legalCases.length)} accent="amber"  />
             <StatCard label="立案信息" value="99" accent="amber" hint="案件量级" />
             <StatCard label="开庭公告" value="119" accent="cyan" hint="案件量级" />
           </div>
-          <Panel title="司法案件" desc={<span>企业涉诉记录（抽样） · <Sam value="qiyeData.json.legalCases" /></span>}>
+          <Panel title="司法案件" desc={<span>企业涉诉记录（抽样） · </span>}>
             <DataTable columns={caseCols} rows={caseRows} empty="无涉诉记录" pager defaultPageSize={10} />
           </Panel>
         </>
@@ -480,7 +478,7 @@ export function QiyeProfile() {
       {tab === '经营风险' && (
         <>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0,1fr))', gap: 12, marginBottom: 14 }}>
-            <StatCard label="风险子项" value={String(cur.riskCounts.length)} accent="brand" hint={<Cal label="实时统计" />} />
+            <StatCard label="风险子项" value={String(cur.riskCounts.length)} accent="brand"  />
             <StatCard label="风险命中" value={String(dangerCount)} accent="rose" hint="需关注项" />
             <StatCard label="行政处罚" value={String(cur.riskCounts.find((r) => r.name === '行政处罚')?.count ?? 0)} accent="emerald" hint="绿色为无" />
             <StatCard label="劳动仲裁" value={String(cur.riskCounts.find((r) => r.name === '劳动仲裁')?.count ?? 0)} accent="amber" hint="争议项" />
@@ -492,10 +490,10 @@ export function QiyeProfile() {
       {tab === '经营信息' && (
         <>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0,1fr))', gap: 12, marginBottom: 14 }}>
-            <StatCard label="资质证书" value={String(cur.bizCounts.find((r) => r.name === '资质证书')?.count ?? 0)} accent="brand" hint={<Cal label="实时统计" />} />
-            <StatCard label="行政许可" value={String(cur.bizCounts.find((r) => r.name === '行政许可')?.count ?? 0)} accent="cyan" hint={<Cal label="实时统计" />} />
-            <StatCard label="招投标" value={String(cur.bizCounts.find((r) => r.name === '招投标')?.count ?? 0)} accent="violet" hint={<Cal label="实时统计" />} />
-            <StatCard label="招聘" value={String(cur.bizCounts.find((r) => r.name === '招聘')?.count ?? 0)} accent="emerald" hint={<Cal label="实时统计" />} />
+            <StatCard label="资质证书" value={String(cur.bizCounts.find((r) => r.name === '资质证书')?.count ?? 0)} accent="brand"  />
+            <StatCard label="行政许可" value={String(cur.bizCounts.find((r) => r.name === '行政许可')?.count ?? 0)} accent="cyan"  />
+            <StatCard label="招投标" value={String(cur.bizCounts.find((r) => r.name === '招投标')?.count ?? 0)} accent="violet"  />
+            <StatCard label="招聘" value={String(cur.bizCounts.find((r) => r.name === '招聘')?.count ?? 0)} accent="emerald"  />
           </div>
           <CountGrid title="经营信息" items={cur.bizCounts} />
         </>
@@ -504,10 +502,10 @@ export function QiyeProfile() {
       {tab === '企业发展' && (
         <>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0,1fr))', gap: 12, marginBottom: 14 }}>
-            <StatCard label="新闻舆情" value={String(cur.newsCount)} accent="brand" hint={<Cal label="实时统计" />} />
-            <StatCard label="上榜榜单" value={String(cur.devCounts.find((r) => r.name === '上榜榜单')?.count ?? 0)} accent="violet" hint={<Cal label="实时统计" />} />
-            <StatCard label="荣誉" value={String(cur.devCounts.find((r) => r.name === '荣誉')?.count ?? 0)} accent="amber" hint={<Cal label="实时统计" />} />
-            <StatCard label="相关公告" value={String(cur.devCounts.find((r) => r.name === '相关公告')?.count ?? 0)} accent="cyan" hint={<Cal label="实时统计" />} />
+            <StatCard label="新闻舆情" value={String(cur.newsCount)} accent="brand"  />
+            <StatCard label="上榜榜单" value={String(cur.devCounts.find((r) => r.name === '上榜榜单')?.count ?? 0)} accent="violet"  />
+            <StatCard label="荣誉" value={String(cur.devCounts.find((r) => r.name === '荣誉')?.count ?? 0)} accent="amber"  />
+            <StatCard label="相关公告" value={String(cur.devCounts.find((r) => r.name === '相关公告')?.count ?? 0)} accent="cyan"  />
           </div>
           <CountGrid title="企业发展" items={cur.devCounts} />
         </>
@@ -516,13 +514,13 @@ export function QiyeProfile() {
       {tab === '知识产权' && (
         <>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0,1fr))', gap: 12, marginBottom: 14 }}>
-            <StatCard label="商标信息" value={String(cur.ipCounts.find((r) => r.name === '商标信息')?.count ?? 0)} accent="brand" hint={<Cal label="实时统计" />} />
-            <StatCard label="专利信息" value={String(cur.ipCounts.find((r) => r.name === '专利信息')?.count ?? 0)} accent="violet" hint={<Cal label="实时统计" />} />
-            <StatCard label="软件著作权" value={String(cur.ipCounts.find((r) => r.name === '软件著作权')?.count ?? 0)} accent="cyan" hint={<Cal label="实时统计" />} />
-            <StatCard label="标准信息" value={String(cur.ipCounts.find((r) => r.name === '标准信息')?.count ?? 0)} accent="emerald" hint={<Cal label="实时统计" />} />
+            <StatCard label="商标信息" value={String(cur.ipCounts.find((r) => r.name === '商标信息')?.count ?? 0)} accent="brand"  />
+            <StatCard label="专利信息" value={String(cur.ipCounts.find((r) => r.name === '专利信息')?.count ?? 0)} accent="violet"  />
+            <StatCard label="软件著作权" value={String(cur.ipCounts.find((r) => r.name === '软件著作权')?.count ?? 0)} accent="cyan"  />
+            <StatCard label="标准信息" value={String(cur.ipCounts.find((r) => r.name === '标准信息')?.count ?? 0)} accent="emerald"  />
           </div>
           <CountGrid title="知识产权" items={cur.ipCounts} />
-          <Panel title="商标 / 专利 / 著作权（抽样）" desc={<span>知识产权明细 · <Sam value="qiyeData.json.ips" /></span>}>
+          <Panel title="商标 / 专利 / 著作权（抽样）" desc={<span>知识产权明细 · </span>}>
             <DataTable columns={ipCols} rows={ipRows} empty="无" pager defaultPageSize={10} />
           </Panel>
         </>

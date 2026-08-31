@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Panel, Button, Badge, InfoCell } from '../components/ui';
-import { Sam, Cal } from './SourceTag';
 import { useMidMetrics, useMidDataSources, useMidStrategy, useMidDashboards, updateMetrics, midNewId } from './midStore';
 import { type MidMetric } from './midData';
 import { ConfigDetailPage } from './ConfigTemplate';
@@ -63,16 +62,15 @@ export default function MidMetricDetail() {
       flowBar={<FlowActionBar flowId={draft.flowKey} state={draft.flowState}
         onStateChange={(s) => setDraft({ ...draft, flowState: s })} onSave={save} />}
       actions={<>
-        <Sam value="midMetrics.json" />
       </>}
       infoCells={
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-          <InfoCell label="类型" value={draft.type === 'base' ? '基础指标' : '派生指标'} tag={<Sam value="midMetrics.json.type" />} />
-          <InfoCell label="状态" value={<Badge kind={(draft.enabled ?? true) ? 'green' : 'red'}>{(draft.enabled ?? true) ? '启用' : '停用'}</Badge>} tag={<Sam value="midMetrics.json.enabled" />} />
-          <InfoCell label="分组" value={draft.group ?? '-'} tag={<Sam value="midMetrics.json.group" />} />
-          <InfoCell label="单位" value={draft.unit ?? '-'} tag={<Sam value="midMetrics.json.unit" />} />
-          <InfoCell label="精度" value={String(draft.precision ?? 0)} tag={<Sam value="midMetrics.json.precision" />} />
-          <InfoCell label="实时值" value={'—'} tag={<Cal />} />
+          <InfoCell label="类型" value={draft.type === 'base' ? '基础指标' : '派生指标'}  />
+          <InfoCell label="状态" value={<Badge kind={(draft.enabled ?? true) ? 'green' : 'red'}>{(draft.enabled ?? true) ? '启用' : '停用'}</Badge>}  />
+          <InfoCell label="分组" value={draft.group ?? '-'}  />
+          <InfoCell label="单位" value={draft.unit ?? '-'}  />
+          <InfoCell label="精度" value={String(draft.precision ?? 0)}  />
+          <InfoCell label="实时值" value={'—'}  />
         </div>
       }
     >

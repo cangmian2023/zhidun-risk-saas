@@ -1,5 +1,4 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { Sam, Cfg } from './SourceTag';
 import { computeCenterFit, Bounds } from './graphFit';
 import topData from './entTopBeneficiary.json';
 
@@ -237,9 +236,7 @@ export default function EntTopBeneficiary({ companyName }: { companyName?: strin
         </button>
       </div>
 
-      {/* 数据来源标签 */}
       <div style={{ marginTop: 16 }}>
-        <Sam label="十大受益人" /> <Cfg label="链路配置" />
       </div>
     </div>
   );

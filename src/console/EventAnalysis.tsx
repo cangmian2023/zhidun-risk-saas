@@ -7,7 +7,7 @@ import type { Column, Row, SelectOption } from '../components/ui';
 import { LineChart, BarChart, DonutChart } from '../components/charts';
 import { MenuIcon, type IconName } from '../components/icons';
 import { PageShell } from './PageShell';
-import { Cfg, Sam, Cal, MidSaveToast } from './SourceTag';
+import { MidSaveToast } from './SourceTag';
 import { crumb, CONFIG_CONTAINER } from './ConfigTemplate';
 import {
   EA_UPDATED_AT, EA_LABELS, EA_GRANULARITY, SEED_EA_ROWS,
@@ -154,13 +154,13 @@ export default function EventAnalysis() {
   /* ---------- 明细表 ---------- */
   const columns: Column[] = useMemo(() => {
     const base: Column[] = [
-      { key: 'country', label: '国家', width: '110px', tag: 'sample' },
-      { key: 'ip', label: 'IP', width: '150px', tag: 'sample' },
-      { key: 'metric', label: '指标', width: '220px', tag: 'cfg' },
-      { key: 'total', label: '总和', align: 'right', width: '100px', tag: 'calc' },
+      { key: 'country', label: '国家', width: '110px' },
+      { key: 'ip', label: 'IP', width: '150px' },
+      { key: 'metric', label: '指标', width: '220px' },
+      { key: 'total', label: '总和', align: 'right', width: '100px' },
     ];
-    labels.forEach((lb, i) => base.push({ key: `t${i}`, label: lb, align: 'right', width: '110px', tag: 'sample' }));
-    if (compare) base.push({ key: 'chain', label: '环比', align: 'right', width: '90px', tag: 'calc', hint: '(末点 − 首点) ÷ 首点，由当前粒度序列实时计算' });
+    labels.forEach((lb, i) => base.push({ key: `t${i}`, label: lb, align: 'right', width: '110px' }));
+    if (compare) base.push({ key: 'chain', label: '环比', align: 'right', width: '90px',  hint: '(末点 − 首点) ÷ 首点，由当前粒度序列实时计算' });
     return base;
   }, [labels, compare]);
 
@@ -241,7 +241,6 @@ export default function EventAnalysis() {
         title="分析条件配置"
         actions={
           <div className="flex items-center gap-2">
-            <Cfg label="查询配置" />
             <Button variant="ghost" size="sm" onClick={() => setCollapsed((c) => !c)}>
               {collapsed ? '展开配置区' : '收起配置区'}
             </Button>
@@ -366,7 +365,6 @@ export default function EventAnalysis() {
         title="图形展示"
         actions={
           <div className="flex flex-wrap items-center gap-2">
-            <Sam label="样例数据" />
             <div className="inline-flex overflow-hidden rounded-lg border border-slate-200">
               {CHART_TYPES.map((t) => (
                 <button key={t.value} type="button" title={t.label}
@@ -404,7 +402,6 @@ export default function EventAnalysis() {
         title="表格展示"
         actions={
           <div className="flex items-center gap-2">
-            <Cal label="总和/环比" />
             <div className="inline-flex overflow-hidden rounded-lg border border-slate-200">
               {([['分层', true], ['平铺', false]] as const).map(([lb, v]) => (
                 <button key={lb} type="button" onClick={() => setLayered(v)}

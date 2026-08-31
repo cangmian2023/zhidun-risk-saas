@@ -14,7 +14,6 @@ const FILES = {
   'mid-dashboards': 'midDashboards.json',
   'mid-customers': 'midCustomers.json',
   'mid-dispose-tasks': 'midDisposeTasks.json',
-  'source-tag': 'sourceTag.json',
 };
 
 function persistPlugin() {
@@ -25,7 +24,7 @@ function persistPlugin() {
       // 白名单限定可访问的本地 JSON 文件；精确匹配 pathname，不干扰下方的 /api/load-<name> 固定路由
       const ALLOWED_FILES = new Set([
         'midDataSources.json', 'midMetrics.json', 'midStrategy.json', 'midDashboards.json',
-        'midAlerts.json', 'midCustomers.json', 'midDisposeTasks.json', 'sourceTag.json',
+        'midAlerts.json', 'midCustomers.json', 'midDisposeTasks.json',
         'midVizSamples.json',
         // 元数据管理（管理中心 · 8 个页面）
         'metaEvents.json', 'metaEventProps.json', 'metaUserProps.json', 'metaDimTables.json',
@@ -187,6 +186,7 @@ function featureRawPlugin() {
 }
 
 export default defineConfig({
+  base: './',
   plugins: [react(), persistPlugin(), qixinRawPlugin(), featureRawPlugin()],
   server: { host: true, port: 5173 },
 });

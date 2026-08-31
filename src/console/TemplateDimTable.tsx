@@ -33,7 +33,6 @@ export function TemplateDimTable({ reportType, templateId, title = '评分维度
   const rows = buildDimRows(tpl)
   if (rows.length === 0) return null
 
-  const tagS: React.CSSProperties = { display: 'inline-block', fontSize: 8, fontFamily: 'monospace', padding: '0 2px', borderRadius: 2, marginLeft: 3, verticalAlign: 'middle', lineHeight: '12px', fontWeight: 400 }
 
   return (
     <>
@@ -42,11 +41,11 @@ export function TemplateDimTable({ reportType, templateId, title = '评分维度
         <table className="w-full text-left text-xs">
           <thead>
             <tr className="bg-slate-50 text-slate-400">
-              <th className="px-3 py-2 font-medium">维度{debug && <span style={{...tagS,background:'#DBEAFE',color:'#1D4ED8'}}>tpl:sections.name</span>}</th>
-              <th className="px-3 py-2 text-right font-medium">得分{debug && <span style={{...tagS,background:'#FFF7ED',color:'#C2410C'}}>JSON:actualScore</span>}</th>
-              <th className="px-3 py-2 text-right font-medium">权重{debug && <span style={{...tagS,background:'#DBEAFE',color:'#1D4ED8'}}>tpl:s.weight</span>}</th>
-              <th className="px-3 py-2 text-center font-medium">等级{debug && <span style={{...tagS,background:'#DBEAFE',color:'#1D4ED8'}}>tpl:dimBands</span>}</th>
-              <th className="px-3 py-2 font-medium">说明{debug && <span style={{...tagS,background:'#DBEAFE',color:'#1D4ED8'}}>tpl:dimNote</span>}</th>
+              <th className="px-3 py-2 font-medium">维度</th>
+              <th className="px-3 py-2 text-right font-medium">得分</th>
+              <th className="px-3 py-2 text-right font-medium">权重</th>
+              <th className="px-3 py-2 text-center font-medium">等级</th>
+              <th className="px-3 py-2 font-medium">说明</th>
             </tr>
           </thead>
           <tbody>
@@ -63,7 +62,6 @@ export function TemplateDimTable({ reportType, templateId, title = '评分维度
                 <td className="px-3 py-2.5 font-medium text-ink-900">{r.name}</td>
                 <td className={cn('px-3 py-2.5 text-right font-semibold tabular-nums', displayScore < 0 ? 'text-rose-600' : 'text-emerald-600')}>
                   {displayScore < 0 ? '−' : '+'}{Math.abs(displayScore)}
-                  {debug && actual != null && actual !== r.score && <span style={{...tagS,background:'#F3F4F6',color:'#6B7280'}}>满分{r.score}</span>}
                 </td>
                 <td className="px-3 py-2.5 text-right text-slate-400 tabular-nums">{r.weight}</td>
                 <td className="px-3 py-2.5 text-center">

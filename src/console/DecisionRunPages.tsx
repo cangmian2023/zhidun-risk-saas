@@ -1,13 +1,12 @@
 // 决策引擎 · 运行管理 + 审批管理模块页面（版本管理 / 流量分配 / 决策回放 / 回放结果 / 批量决策 / 审批管理）
-import { useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
-import { useDecision, updateDecision, TASK_STATUS_TAG, APPROVAL_STATUS_TAG, DECISION_TAG, type DeApprovalStatus } from './decisionData'
-import { PageShell } from './PageShell'
-import { Panel, DataTable, Badge, Button, StatCard, DetailHeader, type Column, type Row } from '../components/ui'
-import { Sam, Cal } from './SourceTag'
-import { CreateReplayDialog, CreateBatchDialog, SnapshotDetailDialog, ApprovalDetailDrawer } from './DecisionDialogs'
-import { useDecisionToast } from './useDecisionToast'
-import { usePageNav } from './pageNav'
+import { useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useDecision, updateDecision, TASK_STATUS_TAG, APPROVAL_STATUS_TAG, DECISION_TAG, type DeApprovalStatus } from './decisionData';
+import { PageShell } from './PageShell';
+import { Panel, DataTable, Badge, Button, StatCard, DetailHeader, type Column, type Row } from '../components/ui';
+import { CreateReplayDialog, CreateBatchDialog, SnapshotDetailDialog, ApprovalDetailDrawer } from './DecisionDialogs';
+import { useDecisionToast } from './useDecisionToast';
+import { usePageNav } from './pageNav';
 import FlowStateCell from './FlowStateCell'
 import FlowActionBar from './FlowActionBar'
 
@@ -51,7 +50,7 @@ export function DecisionVersionPage() {
   return (
     <>
       <PageShell title="版本管理" subtitle="策略与模型版本管理：版本留痕、回滚与灰度上线" crumb="决策引擎 / 运行管理 / 版本管理" />
-      <Panel title="版本列表" desc="模型 / 策略 / 名单的统一版本管理" actions={<Sam value="versions" />}>
+      <Panel title="版本列表" desc="模型 / 策略 / 名单的统一版本管理" >
         <DataTable columns={cols} rows={rows} pager defaultPageSize={10} clickableKey="name"
           onCellClick={(r) => setSnap({ target: r.name, version: r.version })}
           actions={(r) => (
@@ -93,7 +92,7 @@ export function DecisionTrafficPage() {
   return (
     <>
       <PageShell title="流量分配" subtitle="决策流量分拨：按比例在版本/模型间分配线上流量做 A/B 与灰度" crumb="决策引擎 / 运行管理 / 流量分配" actions={<Button onClick={() => toast.show('新建分流功能建设中，后台接入后可用')}>新建分流</Button>} />
-      <Panel title="流量分拨" desc={`已分配流量合计 ${total}%`} actions={<Sam value="trafficSplits" />}>
+      <Panel title="流量分拨" desc={`已分配流量合计 ${total}%`} >
         <DataTable columns={cols} rows={rows} pager defaultPageSize={10}
           actions={(r) => (
             <div className="flex gap-3 text-sm">
@@ -150,7 +149,7 @@ export function DecisionReplayPage() {
   return (
     <>
       <PageShell title="决策回放" subtitle="批量回放历史决策，对比新旧版本差异" crumb="决策引擎 / 运行管理 / 决策回放" actions={<Button onClick={() => setShowCreate(true)}>创建回放任务</Button>} />
-      <Panel title="回放任务" actions={<Sam value="replays" />}>
+      <Panel title="回放任务" >
         <DataTable columns={cols} rows={rows} pager defaultPageSize={10} clickableKey="name"
           onCellClick={(r) => goDetail('/console/de/replay-result?rid=' + r.id)}
           actions={(r) => (
@@ -237,10 +236,10 @@ export function DecisionReplayResultPage({ search }: { search: string }) {
 
       {/* 回放统计概览 */}
       <div className="mt-4 grid grid-cols-2 gap-4 md:grid-cols-4">
-        <StatCard label="总样本数" value={rows0.length} accent="brand" extra={<Cal value="replayResults" />} />
-        <StatCard label="有变化" value={changedCnt} accent="rose" extra={<Cal value="replayResults" />} />
-        <StatCard label="无变化" value={unchangedCnt} accent="emerald" extra={<Cal value="replayResults" />} />
-        <StatCard label="变化率" value={`${changedCnt && rows0.length ? ((changedCnt / rows0.length) * 100).toFixed(1) : '0.0'}%`} accent="amber" extra={<Cal value="replayResults" />} />
+        <StatCard label="总样本数" value={rows0.length} accent="brand"  />
+        <StatCard label="有变化" value={changedCnt} accent="rose"  />
+        <StatCard label="无变化" value={unchangedCnt} accent="emerald"  />
+        <StatCard label="变化率" value={`${changedCnt && rows0.length ? ((changedCnt / rows0.length) * 100).toFixed(1) : '0.0'}%`} accent="amber"  />
       </div>
 
       {/* 回放任务信息 */}
@@ -258,7 +257,7 @@ export function DecisionReplayResultPage({ search }: { search: string }) {
       </Panel>
 
       {/* 新旧决策对比（变更矩阵，从 replayResults 真实计算） */}
-      <Panel title="新旧决策对比" className="mt-4" actions={<Cal value="replayResults" />} desc="统计旧版本 → 新版本的决策结果变化流向">
+      <Panel title="新旧决策对比" className="mt-4"  desc="统计旧版本 → 新版本的决策结果变化流向">
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <div>
             <div className="mb-2 text-xs font-medium text-slate-400">决策变化矩阵</div>
@@ -311,7 +310,7 @@ export function DecisionReplayResultPage({ search }: { search: string }) {
           </button>
         ))}
       </div>
-      <Panel title="回放结果明细" className="mt-4" actions={<Sam value="replayResults" />}>
+      <Panel title="回放结果明细" className="mt-4" >
         <DataTable columns={cols} rows={dataRows} pager defaultPageSize={10} />
       </Panel>
     </>
@@ -357,7 +356,7 @@ export function DecisionBatchPage() {
   return (
     <>
       <PageShell title="批量决策" subtitle="上传 CSV 批量执行决策，下载结果" crumb="决策引擎 / 运行管理 / 批量决策" actions={<Button onClick={() => setShowCreate(true)}>创建批量任务</Button>} />
-      <Panel title="批量任务" actions={<Sam value="batchTasks" />}>
+      <Panel title="批量任务" >
         <DataTable columns={cols} rows={rows} pager defaultPageSize={10} clickableKey="name"
           onCellClick={(r) => goDetail('/console/de/batch-detail?id=' + r.id)}
           actions={(r) => (
@@ -437,10 +436,10 @@ export function DecisionApprovalPage() {
       <PageShell title="审批管理" subtitle="策略与模型上线审批流：提交、审核、发布与操作留痕" crumb="决策引擎 / 审批管理 / 审批管理" />
       <div className="space-y-4">
         <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-          <StatCard label="待审批" value={pending} hint="件" accent="rose" extra={<Cal value="approvals" />} />
-          <StatCard label="本月通过率" value={`${monthTotal ? ((d.approvals.filter((a) => a.status === '已通过').length / monthTotal) * 100).toFixed(1) : '0'}%`} accent="emerald" extra={<Cal value="approvals" />} />
-          <StatCard label="平均审批时长" value="6.5" hint="小时（样例）" accent="brand" extra={<Cal value="approvals" />} />
-          <StatCard label="本月总量" value={monthTotal} accent="violet" extra={<Cal value="approvals" />} />
+          <StatCard label="待审批" value={pending} hint="件" accent="rose"  />
+          <StatCard label="本月通过率" value={`${monthTotal ? ((d.approvals.filter((a) => a.status === '已通过').length / monthTotal) * 100).toFixed(1) : '0'}%`} accent="emerald"  />
+          <StatCard label="平均审批时长" value="6.5" hint="小时（样例）" accent="brand"  />
+          <StatCard label="本月总量" value={monthTotal} accent="violet"  />
         </div>
         <Panel title="审批管理" actions={
           <div className="flex gap-1 rounded-lg bg-slate-100 p-1">

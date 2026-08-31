@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import type { Column, Row } from '../components/ui';
 import { Button } from '../components/ui';
-import { Sam } from './SourceTag';
 import { MetaListPage, MetaField, MetaSection, MiniTable, metaBadge } from './MetaListPage';
 import { useMetaEvents, useMetaEventProps } from './metaStore';
 import type { MetaEvent } from './metaData';
@@ -17,17 +16,17 @@ export default function MetaEventConfig() {
   const [cur, setCur] = useState<MetaEvent | null>(null);
 
   const columns: Column[] = [
-    { key: 'name', label: '事件名', tag: { kind: 'sample', value: `${J}.name` } },
-    { key: 'displayName', label: '事件显示名', tag: { kind: 'sample', value: `${J}.displayName` } },
-    { key: 'hasData', label: '上报数据', type: 'badge', tag: { kind: 'sample', value: `${J}.hasData` } },
-    { key: 'visible', label: '显示状态', type: 'badge', tag: { kind: 'sample', value: `${J}.visible` } },
-    { key: 'receive', label: '是否接收', type: 'badge', tag: { kind: 'sample', value: `${J}.receive` } },
-    { key: 'days30', label: '过去30天入库', align: 'right', tag: { kind: 'sample', value: `${J}.days30` } },
-    { key: 'platform', label: '应埋点平台', tag: { kind: 'sample', value: `${J}.platform` } },
-    { key: 'tags', label: '标签', tag: { kind: 'sample', value: `${J}.tags` } },
-    { key: 'mutable', label: '是否为可变事件', tag: { kind: 'sample', value: `${J}.mutable` } },
-    { key: 'updatedAt', label: '上次修改时间', type: 'datetime', tag: { kind: 'sample', value: `${J}.updatedAt` } },
-    { key: 'creator', label: '创建人', tag: { kind: 'sample', value: `${J}.creator` } },
+    { key: 'name', label: '事件名' },
+    { key: 'displayName', label: '事件显示名' },
+    { key: 'hasData', label: '上报数据', type: 'badge' },
+    { key: 'visible', label: '显示状态', type: 'badge' },
+    { key: 'receive', label: '是否接收', type: 'badge' },
+    { key: 'days30', label: '过去30天入库', align: 'right' },
+    { key: 'platform', label: '应埋点平台' },
+    { key: 'tags', label: '标签' },
+    { key: 'mutable', label: '是否为可变事件' },
+    { key: 'updatedAt', label: '上次修改时间', type: 'datetime' },
+    { key: 'creator', label: '创建人' },
   ];
 
   const rows: Row[] = events.map((e) => ({
@@ -77,7 +76,7 @@ export default function MetaEventConfig() {
       {cur && (
         <>
           <MetaSection title="基本信息">
-            <MetaField label="事件名" value={<code className="font-mono text-brand-700">{cur.name}</code>} tag={<Sam value={`${J}.name`} />} />
+            <MetaField label="事件名" value={<code className="font-mono text-brand-700">{cur.name}</code>}  />
             <MetaField label="事件显示名" value={cur.displayName} />
             <MetaField label="上报数据" value={cur.hasData} />
             <MetaField label="显示状态" value={cur.visible} />

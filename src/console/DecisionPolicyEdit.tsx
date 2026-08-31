@@ -1,12 +1,11 @@
 // 决策引擎 · 策略编辑页（策略管理 tab 点击「编辑」/策略名称进入）
 // 左侧：基本信息（名称/编码/拒绝阈值/审核阈值）
 // 右侧：决策表 - 行条件配置（可折叠行：行名/得分/条件列表，支持复制/删除/添加行/保存）
-import { useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
-import { useDecision, updateDecision, DE_CONDITION_OPS, buildConditionExpr, type DeDecisionRow, type DePolicyCondition, type DeModelFeature } from './decisionData'
-import { DetailHeader, Button, SingleSelect } from '../components/ui'
-import { Sam } from './SourceTag'
-import { useDecisionToast } from './useDecisionToast'
+import { useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useDecision, updateDecision, DE_CONDITION_OPS, buildConditionExpr, type DeDecisionRow, type DePolicyCondition, type DeModelFeature } from './decisionData';
+import { DetailHeader, Button, SingleSelect } from '../components/ui';
+import { useDecisionToast } from './useDecisionToast';
 
 function PolicyRowCard({ row, index, open, onToggle, onChange, onCopy, onDelete, featureList }: {
   row: DeDecisionRow; index: number; open: boolean; onToggle: () => void;
@@ -214,7 +213,7 @@ export default function DecisionPolicyEditPage({ search }: { search: string }) {
             </div>
           </div>
           <div className="mt-3 flex items-center gap-2 text-xs text-slate-400">
-            <Sam value="models.policies.rows" /> 决策表数据样例来自本地 JSON，后台按此契约实现接口后由后台更新。
+             决策表数据样例来自本地 JSON，后台按此契约实现接口后由后台更新。
           </div>
         </div>
       </div>

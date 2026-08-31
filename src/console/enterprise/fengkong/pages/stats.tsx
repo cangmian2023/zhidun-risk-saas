@@ -1,11 +1,11 @@
 // 风控中心 · 统计看板（fk-stats）· 1:1 复刻「统计看板」页面
 // 数据：本地样例 fkStats.json（橘 Sam）
-import { useState, useRef, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { EpPage, EpCard, EpStat, EpTag, EpBtn, EpDrawer, DataTable, useSample, Sam, Cal, Cfg } from '../../epCommon'
-import { LineChart, BarChart, DonutChart } from '../../../../components/charts'
-import type { Row, Column } from '../../../../components/ui'
-import { usePageNav } from '../../../pageNav'
+import { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { EpPage, EpCard, EpStat, EpTag, EpBtn, EpDrawer, DataTable, useSample } from '../../epCommon';
+import { LineChart, BarChart, DonutChart } from '../../../../components/charts';
+import type { Row, Column } from '../../../../components/ui';
+import { usePageNav } from '../../../pageNav';
 import seedJson from '../../../fkStats.json'
 
 type Stats = typeof seedJson
@@ -93,7 +93,6 @@ export default function FkStats({ params }: { params: URLSearchParams }) {
     <EpPage
       title="统计看板"
       desc="贷前风控 · 风险数据可视化看板"
-      actions={<Sam value="fkStats.json" />}
     >
       {/* 吸顶 tab 工具条 + 筛选控件（筛选置于 tab 工具条下方） */}
       <div className="sticky top-[128px] z-30 -mx-6 -mt-[18px] mb-4 border-b border-slate-200 bg-white/95 px-6 pt-3 backdrop-blur">
@@ -227,7 +226,6 @@ export default function FkStats({ params }: { params: URLSearchParams }) {
           <EpCard>
             <div className="mb-2 flex items-center justify-between">
               <h3 className="text-sm font-semibold text-slate-700">风险等级分布</h3>
-              <Sam value="fkStats.json" />
             </div>
             <DonutChart
               data={data.chartGrid.find((c) => c.key === 'risk_level')!.donut.map((d) => ({ label: d.label, value: d.value, color: d.color }))}
@@ -249,7 +247,6 @@ export default function FkStats({ params }: { params: URLSearchParams }) {
           <EpCard>
             <div className="mb-2 flex items-center justify-between">
               <h3 className="text-sm font-semibold text-slate-700">企业标签风险</h3>
-              <Sam value="fkStats.json" />
             </div>
             <BarChart
               labels={data.tagRisk.labels}
@@ -264,7 +261,6 @@ export default function FkStats({ params }: { params: URLSearchParams }) {
           <EpCard>
             <div className="mb-2 flex items-center justify-between">
               <h3 className="text-sm font-semibold text-slate-700">风险跟进分布</h3>
-              <Sam value="fkStats.json" />
             </div>
             <DonutChart
               data={data.followDist.map((d) => ({ label: d.label, value: d.value, color: d.color }))}
@@ -286,7 +282,6 @@ export default function FkStats({ params }: { params: URLSearchParams }) {
           <EpCard>
             <div className="mb-2 flex items-center justify-between">
               <h3 className="text-sm font-semibold text-slate-700">风险跟进趋势</h3>
-              <Sam value="fkStats.json" />
             </div>
             <LineChart labels={data.followTrend.labels} series={data.followTrend.series} unit=" 条" />
           </EpCard>
@@ -303,7 +298,6 @@ export default function FkStats({ params }: { params: URLSearchParams }) {
         <EpCard>
           <div className="mb-2 flex items-center justify-between">
             <h3 className="text-sm font-semibold text-slate-700">港口 / 机场风险</h3>
-            <Sam value="fkStats.json" />
           </div>
           <DataTable rows={data.portRisk.rows as Row[]} columns={fixCols(data.portRisk.cols)} pager defaultPageSize={6} />
         </EpCard>
@@ -318,7 +312,6 @@ export default function FkStats({ params }: { params: URLSearchParams }) {
           <EpCard>
             <div className="mb-2 flex items-center justify-between">
               <h3 className="text-sm font-semibold text-slate-700">区域风险排名</h3>
-              <Sam value="fkStats.json" />
             </div>
             <DataTable rows={data.regionRank.rows as Row[]} columns={fixCols(data.regionRank.cols)} pager defaultPageSize={6} />
           </EpCard>
@@ -333,7 +326,6 @@ export default function FkStats({ params }: { params: URLSearchParams }) {
       <EpDrawer open={!!drill} onClose={() => setDrill(null)} title={drill?.title || '明细'}>
         {drill && (
           <>
-            {drill.tag === 'sam' && <Sam value="fkStats.json" />}
             <div className="mt-2">
               <DataTable rows={drill.rows} columns={fixCols(drill.cols)} pager defaultPageSize={8} />
             </div>
@@ -367,7 +359,6 @@ function ChartCard({
       <div className="mb-2 flex items-center justify-between">
         <h3 className="text-sm font-semibold text-slate-700">{title}</h3>
         <div className="flex items-center gap-3">
-          <Sam value="fkStats.json" />
           {data.drillRows && data.drillCols && (
             <button type="button" className="text-xs text-[#2563EB] hover:underline" onClick={() => onDrill({ title, drillRows: data.drillRows, drillCols: data.drillCols, drillTag: data.drillTag })}>
               明细

@@ -1,13 +1,12 @@
 // 决策引擎 · 决策建模模块页面（特征库 / 特征监控 / 名单库 / 模板市场 / 模板详情）
-import { useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
-import { useDecision, LIST_KIND_TAG, type DeFeature, type DeList } from './decisionData'
-import { PageShell } from './PageShell'
-import { Panel, DataTable, Badge, Button, StatCard, DetailHeader, SingleSelect, type Column, type Row } from '../components/ui'
-import { Sam, Cal } from './SourceTag'
-import { EditFeatureDialog, BindModelDialog, ListRecordDialog, NewListDialog } from './DecisionDialogs'
-import { useDecisionToast } from './useDecisionToast'
-import { usePageNav } from './pageNav'
+import { useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useDecision, LIST_KIND_TAG, type DeFeature, type DeList } from './decisionData';
+import { PageShell } from './PageShell';
+import { Panel, DataTable, Badge, Button, StatCard, DetailHeader, SingleSelect, type Column, type Row } from '../components/ui';
+import { EditFeatureDialog, BindModelDialog, ListRecordDialog, NewListDialog } from './DecisionDialogs';
+import { useDecisionToast } from './useDecisionToast';
+import { usePageNav } from './pageNav';
 import FlowStateCell from './FlowStateCell'
 import FlowActionBar from './FlowActionBar'
 import { updateDecision } from './decisionData'
@@ -49,7 +48,7 @@ export function DecisionFeatureLibPage() {
   return (
     <>
       <PageShell title="特征库" subtitle="决策特征资产管理：特征定义、加工逻辑、口径与血缘，供规则与模型引用" crumb="决策引擎 / 决策建模 / 特征库" actions={<Button onClick={() => toast.show('新建特征功能建设中，后台接入后可用')}>新建特征</Button>} />
-      <Panel title="特征列表" actions={<Sam value="features" />}>
+      <Panel title="特征列表" >
         <DataTable columns={cols} rows={rows} pager defaultPageSize={10} clickableKey="name"
           onCellClick={(r) => setEditFeat(featOf(r.id))}
           actions={(r) => (
@@ -109,7 +108,6 @@ export function DecisionFeatureMonitorPage() {
         </div>
         <Panel title="特征质量明细" actions={
           <div className="flex items-center gap-2">
-            <Sam value="featureMonitor" />
             <Button size="sm" variant="ghost" onClick={() => toast.show('已刷新')}>刷 新</Button>
           </div>
         }>
@@ -152,7 +150,7 @@ export function DecisionListLibPage() {
   return (
     <>
       <PageShell title="名单库" subtitle="黑白灰名单管理：名单接入、版本生效、命中测试与导出" crumb="决策引擎 / 决策建模 / 名单库" actions={<Button onClick={() => setShowNew(true)}>新建名单库</Button>} />
-      <Panel title="名单列表" desc="黑名单直接拒绝 / 灰名单转人工 / 白名单放行" actions={<Sam value="lists" />}>
+      <Panel title="名单列表" desc="黑名单直接拒绝 / 灰名单转人工 / 白名单放行" >
         <DataTable columns={cols} rows={rows} pager defaultPageSize={10} clickableKey="name"
           onCellClick={(r) => setRecList(d.lists.find((l) => l.id === r.id) ?? null)}
           actions={(r) => (

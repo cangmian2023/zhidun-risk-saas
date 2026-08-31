@@ -2,7 +2,6 @@
 // 列、筛选与抽屉字段取自 sensors/2.事件属性.html 及其详情页
 import { useState } from 'react';
 import type { Column, Row } from '../components/ui';
-import { Sam } from './SourceTag';
 import { MetaListPage, MetaField, MetaSection, MiniTable, metaBadge } from './MetaListPage';
 import { useMetaEventProps } from './metaStore';
 import type { MetaProp } from './metaData';
@@ -15,13 +14,13 @@ export default function MetaEventPropConfig() {
   const [cur, setCur] = useState<MetaProp | null>(null);
 
   const columns: Column[] = [
-    { key: 'name', label: '属性名', tag: { kind: 'sample', value: `${J}.name` } },
-    { key: 'displayName', label: '属性显示名', tag: { kind: 'sample', value: `${J}.displayName` } },
-    { key: 'dataType', label: '数据类型', type: 'badge', badgeKind: 'blue', tag: { kind: 'sample', value: `${J}.dataType` } },
-    { key: 'hasData', label: '上报数据', type: 'badge', tag: { kind: 'sample', value: `${J}.hasData` } },
-    { key: 'preset', label: '预置', tag: { kind: 'sample', value: `${J}.preset` } },
-    { key: 'dict', label: '字典', tag: { kind: 'sample', value: `${J}.dict` } },
-    { key: 'visible', label: '显示状态', type: 'badge', tag: { kind: 'sample', value: `${J}.visible` } },
+    { key: 'name', label: '属性名' },
+    { key: 'displayName', label: '属性显示名' },
+    { key: 'dataType', label: '数据类型', type: 'badge', badgeKind: 'blue' },
+    { key: 'hasData', label: '上报数据', type: 'badge' },
+    { key: 'preset', label: '预置' },
+    { key: 'dict', label: '字典' },
+    { key: 'visible', label: '显示状态', type: 'badge' },
   ];
 
   const rows: Row[] = props.map((p) => ({
@@ -62,7 +61,7 @@ export default function MetaEventPropConfig() {
       {cur && (
         <>
           <MetaSection title="属性信息">
-            <MetaField label="属性显示名" value={cur.displayName} tag={<Sam value={`${J}.displayName`} />} />
+            <MetaField label="属性显示名" value={cur.displayName}  />
             <MetaField label="属性名" value={<code className="font-mono text-brand-700">{cur.name}</code>} />
             <MetaField label="显示状态" value={cur.visible === '可见' ? '显示' : cur.visible} />
             <MetaField label="数据类型" value={cur.dataType} />

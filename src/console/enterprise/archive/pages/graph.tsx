@@ -1,9 +1,9 @@
 // 企业档案 · 企业图谱（arc-graph）· 1:1 复刻「企业档案 - 企业图谱」（中心 hub 页）
 // 内部用 tabs 组织 8 个子图，每个子图用 SVG 还原原图的分组 / 层级 / 标注（不简化）
 // 数据：本地样例 arcGraph.json（橘 Sam）
-import { useState, type ReactNode } from 'react'
-import { EpPage, EpCard, EpTag, EpBtn, DataTable, useSample, Sam } from '../../epCommon'
-import type { Row, Column } from '../../../../components/ui'
+import { useState, type ReactNode } from 'react';
+import { EpPage, EpCard, EpTag, EpBtn, DataTable, useSample } from '../../epCommon';
+import type { Row, Column } from '../../../../components/ui';
 
 type GNode = { id: string; name: string; x: number; y: number; type: string; ratio?: string; rel?: string; note?: string; amount?: string }
 type GEdge = { from: string; to: string; label?: string }
@@ -66,7 +66,7 @@ export default function ArcGraph({ params }: { params: URLSearchParams }) {
         ))}
       </div>
 
-      <EpCard title={active.label} desc={<Sam value="arcGraph.json" />} actions={<EpBtn variant="ghost" size="sm">还原</EpBtn>}>
+      <EpCard title={active.label}  actions={<EpBtn variant="ghost" size="sm">还原</EpBtn>}>
         {tab === 'equityStructure' && <EquityStructure data={data.equityStructure} />}
         {tab === 'equityPenetration' && <EquityPenetration data={data.equityPenetration} />}
         {tab === 'beneficialOwner' && <BeneficialOwner data={data.beneficialOwner} />}

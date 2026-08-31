@@ -1,8 +1,8 @@
 // 企业档案 · 司法风险（arc-legal）· 1:1 复刻「企业档案 - 司法风险」
 // 数据：本地样例 arcLegal.json（橘 Sam）
-import { useState } from 'react'
-import { EpPage, EpCard, EpStat, EpTag, EpBtn, DataTable, useSample, Sam } from '../../epCommon'
-import type { Row, Column } from '../../../../components/ui'
+import { useState } from 'react';
+import { EpPage, EpCard, EpStat, EpTag, EpBtn, DataTable, useSample } from '../../epCommon';
+import type { Row, Column } from '../../../../components/ui';
 
 const seed = {
   judgments: [
@@ -142,7 +142,6 @@ export default function Legal({ params }: { params: URLSearchParams }) {
       {/* 多 Tab 表格 */}
       <EpCard
         title="司法风险明细"
-        desc={<Sam value="arcLegal.json" />}
         actions={
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
             {tabs.map((t) => (

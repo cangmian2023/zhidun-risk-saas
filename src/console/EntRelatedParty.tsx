@@ -1,5 +1,4 @@
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { Sam, Cfg } from './SourceTag';
 import { computeCenterFit, Bounds } from './graphFit';
 import rpData from './entRelatedParty.json';
 
@@ -246,9 +245,7 @@ export default function EntRelatedParty({ companyName }: { companyName?: string 
         </button>
       </div>
 
-      {/* 数据来源标签 */}
       <div style={{ marginTop: 16 }}>
-        <Sam label="关联方认定" /> <Cfg label="规则配置" />
       </div>
     </div>
   );

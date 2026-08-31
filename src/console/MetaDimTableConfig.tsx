@@ -2,7 +2,6 @@
 // 表与字段取自 sensors/4.维度表.html（items 表：$is_valid / $receive_time / $update_time）
 import { useState } from 'react';
 import type { Column, Row } from '../components/ui';
-import { Sam } from './SourceTag';
 import { MetaListPage, MetaField, MetaSection, MiniTable } from './MetaListPage';
 import { useMetaDimTables } from './metaStore';
 import type { MetaDimTable } from './metaData';
@@ -14,11 +13,11 @@ export default function MetaDimTableConfig() {
   const [cur, setCur] = useState<MetaDimTable | null>(null);
 
   const columns: Column[] = [
-    { key: 'name', label: '维度表名', tag: { kind: 'sample', value: `${J}.name` } },
-    { key: 'displayName', label: '显示名', tag: { kind: 'sample', value: `${J}.displayName` } },
-    { key: 'fieldCount', label: '字段数', align: 'right', tag: { kind: 'calc' } },
-    { key: 'fieldList', label: '字段预览', tag: { kind: 'sample', value: `${J}.fields` } },
-    { key: 'updatedAt', label: '更新时间', type: 'datetime', tag: { kind: 'sample', value: `${J}.updatedAt` } },
+    { key: 'name', label: '维度表名' },
+    { key: 'displayName', label: '显示名' },
+    { key: 'fieldCount', label: '字段数', align: 'right' },
+    { key: 'fieldList', label: '字段预览' },
+    { key: 'updatedAt', label: '更新时间', type: 'datetime' },
   ];
 
   const rows: Row[] = tables.map((t) => ({
@@ -52,7 +51,7 @@ export default function MetaDimTableConfig() {
       {cur && (
         <>
           <MetaSection title="基本信息">
-            <MetaField label="维度表名" value={<code className="font-mono text-brand-700">{cur.name}</code>} tag={<Sam value={`${J}.name`} />} />
+            <MetaField label="维度表名" value={<code className="font-mono text-brand-700">{cur.name}</code>}  />
             <MetaField label="显示名" value={cur.displayName} />
             <MetaField label="字段数" value={cur.fields.length} />
             <MetaField label="更新时间" value={cur.updatedAt} />

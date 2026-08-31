@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import type { Column, Row } from '../components/ui';
 import { Button } from '../components/ui';
-import { Sam } from './SourceTag';
 import { MetaListPage, MetaField, MetaSection } from './MetaListPage';
 import { useMetaVirtualEvents } from './metaStore';
 import type { MetaVirtualEvent } from './metaData';
@@ -15,12 +14,12 @@ export default function MetaVirtualEventConfig() {
   const [cur, setCur] = useState<MetaVirtualEvent | null>(null);
 
   const columns: Column[] = [
-    { key: 'name', label: '虚拟事件名', tag: { kind: 'sample', value: `${J}.name` } },
-    { key: 'displayName', label: '虚拟事件显示名', tag: { kind: 'sample', value: `${J}.displayName` } },
-    { key: 'tags', label: '标签', tag: { kind: 'sample', value: `${J}.tags` } },
-    { key: 'screenshot', label: '事件截图', tag: { kind: 'sample', value: `${J}.screenshot` } },
-    { key: 'included', label: '包含事件', tag: { kind: 'calc' } },
-    { key: 'remark', label: '备注', tag: { kind: 'sample', value: `${J}.remark` } },
+    { key: 'name', label: '虚拟事件名' },
+    { key: 'displayName', label: '虚拟事件显示名' },
+    { key: 'tags', label: '标签' },
+    { key: 'screenshot', label: '事件截图' },
+    { key: 'included', label: '包含事件' },
+    { key: 'remark', label: '备注' },
   ];
 
   const rows: Row[] = events.map((e) => ({
@@ -60,7 +59,7 @@ export default function MetaVirtualEventConfig() {
           </p>
 
           <MetaSection title="基本信息">
-            <MetaField label="虚拟事件显示名" value={cur.displayName} tag={<Sam value={`${J}.displayName`} />} />
+            <MetaField label="虚拟事件显示名" value={cur.displayName}  />
             <MetaField label="虚拟事件名" value={<code className="font-mono text-brand-700">{cur.name}</code>} />
             <MetaField label="创建人" value={cur.creator} />
             <MetaField label="创建时间" value={cur.createdAt} />

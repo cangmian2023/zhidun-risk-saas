@@ -2,9 +2,9 @@
 // 列表：第一列企业名称，其余维度列用 ✅/❌ 呈现通过/不通过
 // 详情弹窗：参考「企业风控 - 账户年检 - 详情弹窗.md」按维度分组 1:1 复刻
 // 数据：本地样例 fkYearly.json（橘 Sam）
-import { useState } from 'react'
-import { EpPage, EpCard, EpBtn, EpDrawer, DataTable, useSample, Sam } from '../../epCommon'
-import type { Row, Column } from '../../../../components/ui'
+import { useState } from 'react';
+import { EpPage, EpCard, EpBtn, EpDrawer, DataTable, useSample } from '../../epCommon';
+import type { Row, Column } from '../../../../components/ui';
 import seedJson from '../../../fkYearly.json'
 
 // 体检维度（排除"企业名称"，其作为首列）
@@ -150,7 +150,6 @@ export default function FkAccountYearly({ params }: { params: URLSearchParams })
     <EpPage
       title="账户年检"
       desc="按年检查验企业工商、经营、风险维度的一致性"
-      actions={<Sam value="fkYearly.json" />}
     >
       {/* 查询条 */}
       <EpCard>

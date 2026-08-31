@@ -7,7 +7,6 @@
 import { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Panel, Button, Badge, DetailHeader } from '../components/ui';
-import { Sam, Cal } from './SourceTag';
 import { PageShell } from './PageShell';
 import { useMidAlerts, useMidCustomers, useMidDisposeTasks, updateAlerts, updateDisposeTasks } from './midStore';
 import { LEVEL_META, type MidAlert } from './midData';
@@ -78,9 +77,6 @@ export default function MidAlertDetail() {
       <PageShell header={<DetailHeader title={`预警详情 · ${a.alert_id}`} crumb="贷中监控 / 预警工作台" subtitle={`${a.cust_name} · ${a.alert_type}`}
         backLabel="返回队列"
         actions={<>
-          <Sam label="预警样例" value="midAlerts.json" />
-          <Sam label="客户样例" value="midCustomers.json" />
-          <Cal label="实时统计" />
         </>} />} />
 
       {/* 业务流程操作条（需求9/16：按类型+等级匹配具体流程；需求18：点击写操作日志） */}
@@ -94,7 +90,7 @@ export default function MidAlertDetail() {
       </div>
 
       {/* 需求17：客户摘要（按 custId 匹配；「查看单客视图」按钮移入本区块）——第一位 */}
-      <Panel className="mb-4" title="客户摘要" desc={cust ? <span>以客户为中心看全局 · <Sam label="样例" /> 客户号 {cust.custId}</span> : '该客户暂无档案（midCustomers.json）'}
+      <Panel className="mb-4" title="客户摘要" desc={cust ? <span>以客户为中心看全局 ·  客户号 {cust.custId}</span> : '该客户暂无档案（midCustomers.json）'}
         actions={cust ? <Button size="sm" variant="ghost" onClick={() => goDetail(`/console/dm/person-archive-basic?name=${encodeURIComponent(cust.name)}`)}>查看个人档案 →</Button> : undefined}>
         {cust ? (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0,1fr))', gap: '6px 16px', fontSize: 13 }}>
@@ -120,7 +116,7 @@ export default function MidAlertDetail() {
       </Panel>
 
       {/* 预警信息（需求23：仅基本信息，原始数据/规则详情在下方独立区块） */}
-      <Panel className="mb-4" title="预警信息" desc={<>触发场景：<b>{a.scene}</b> · <Cal label="实时" /> 指标值 {a.metric_value} / 阈值 {a.threshold}</>}>
+      <Panel className="mb-4" title="预警信息" desc={<>触发场景：<b>{a.scene}</b> ·  指标值 {a.metric_value} / 阈值 {a.threshold}</>}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0,1fr))', gap: '6px 16px', fontSize: 13 }}>
           {([
             ['预警ID', a.alert_id],
@@ -148,7 +144,7 @@ export default function MidAlertDetail() {
       <RawDataPanel a={a} />
 
       {/* 需求18：处置记录（原「处置工单」改名；含流程操作日志） */}
-      <Panel className="mb-4" title="处置记录" desc={<span><Sam label="读取" value="midDisposeTasks.json" /> 流程按钮操作 + 关联处置工单</span>}>
+      <Panel className="mb-4" title="处置记录" desc={<span> 流程按钮操作 + 关联处置工单</span>}>
         {alertLogs.length || linkedTasks.length ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {/* 操作日志时间线 */}
@@ -186,7 +182,7 @@ function RawDataPanel({ a }: { a: MidAlert }) {
   // 原始数据明细（根据规则构造触发的原始记录样例）
   const rawRows = rawRowsOf(a);
   return (
-    <Panel className="mb-4" title="原始数据与规则详情" desc={<span><Cal label="派生展示" /> 导致本次预警的原始数据与命中规则</span>}>
+    <Panel className="mb-4" title="原始数据与规则详情" desc={<span> 导致本次预警的原始数据与命中规则</span>}>
       {/* 规则详情 */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0,1fr))', gap: '6px 16px', fontSize: 13, marginBottom: 12 }}>
         {([

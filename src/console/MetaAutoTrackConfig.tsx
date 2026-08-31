@@ -2,7 +2,6 @@
 // 列与数据取自 sensors/8.可视化全埋点事件.html
 import { useState } from 'react';
 import type { Column, Row } from '../components/ui';
-import { Sam } from './SourceTag';
 import { MetaListPage, MetaField, MetaSection, metaBadge } from './MetaListPage';
 import { useMetaAutoTrackEvents } from './metaStore';
 import type { MetaAutoTrackEvent } from './metaData';
@@ -15,15 +14,15 @@ export default function MetaAutoTrackConfig() {
   const [cur, setCur] = useState<MetaAutoTrackEvent | null>(null);
 
   const columns: Column[] = [
-    { key: 'displayName', label: '显示名', tag: { kind: 'sample', value: `${J}.displayName` } },
-    { key: 'platform', label: '平台', type: 'badge', badgeKind: 'blue', tag: { kind: 'sample', value: `${J}.platform` } },
-    { key: 'eventType', label: '事件类型', tag: { kind: 'sample', value: `${J}.eventType` } },
-    { key: 'visible', label: '显示状态', type: 'badge', tag: { kind: 'sample', value: `${J}.visible` } },
-    { key: 'match30', label: '过去 30 天匹配事件数', align: 'right', tag: { kind: 'calc' } },
-    { key: 'lastVersion', label: '最后修改版本', tag: { kind: 'sample', value: `${J}.lastVersion` } },
-    { key: 'lastUpdater', label: '最后更新人', tag: { kind: 'sample', value: `${J}.lastUpdater` } },
-    { key: 'updatedAt', label: '更新时间', type: 'datetime', tag: { kind: 'sample', value: `${J}.updatedAt` } },
-    { key: 'createdAt', label: '创建时间', type: 'datetime', tag: { kind: 'sample', value: `${J}.createdAt` } },
+    { key: 'displayName', label: '显示名' },
+    { key: 'platform', label: '平台', type: 'badge', badgeKind: 'blue' },
+    { key: 'eventType', label: '事件类型' },
+    { key: 'visible', label: '显示状态', type: 'badge' },
+    { key: 'match30', label: '过去 30 天匹配事件数', align: 'right' },
+    { key: 'lastVersion', label: '最后修改版本' },
+    { key: 'lastUpdater', label: '最后更新人' },
+    { key: 'updatedAt', label: '更新时间', type: 'datetime' },
+    { key: 'createdAt', label: '创建时间', type: 'datetime' },
   ];
 
   const rows: Row[] = events.map((e) => ({
@@ -66,7 +65,7 @@ export default function MetaAutoTrackConfig() {
       {cur && (
         <>
           <MetaSection title="埋点信息">
-            <MetaField label="显示名" value={cur.displayName} tag={<Sam value={`${J}.displayName`} />} />
+            <MetaField label="显示名" value={cur.displayName}  />
             <MetaField label="平台" value={cur.platform} />
             <MetaField label="事件类型" value={cur.eventType} />
             <MetaField label="显示状态" value={cur.visible} />

@@ -7,7 +7,6 @@
  */
 import { useState } from 'react';
 import { Button, SingleSelect, type Column, type Row } from '../components/ui';
-import { Sam } from './SourceTag';
 import { ConfigListPage } from './ConfigTemplate';
 import { useRuleHub, updateRuleHub, type VerifyItemDef, type CondLibItem, type ActionItem, type VerifyNormalizer, NORM_OP_OPTIONS, APPLY_FIELD_OPTIONS, COND_CATS, COND_CAT_KIND } from './ruleHubData';
 
@@ -119,7 +118,7 @@ export default function VerifyCatalogPage() {
     status: { v: v.status, kind: v.status === '启用' ? 'green' : 'gray' },
   }));
   const itemCols: Column[] = [
-    { key: 'name', label: '核验项', type: 'text', tag: { kind: 'sample', value: 'ruleHub.json.verifyCatalog' } },
+    { key: 'name', label: '核验项', type: 'text' },
     { key: 'cat', label: '渠道', type: 'badge', badgeKind: 'blue', width: '110px' },
     { key: 'source', label: '数据源', type: 'text', width: '140px' },
     { key: 'vendor', label: '供应商', type: 'text', width: '100px' },
@@ -137,7 +136,7 @@ export default function VerifyCatalogPage() {
     used: `${usedCondCount(c.name)} 条规则`,
   }));
   const condCols: Column[] = [
-    { key: 'name', label: '触发条件', type: 'text', tag: { kind: 'sample', value: 'ruleHub.json.condLib' } },
+    { key: 'name', label: '触发条件', type: 'text' },
     { key: 'cat', label: '分类', type: 'badge', badgeKind: 'blue', width: '110px' },
     { key: 'desc', label: '说明', type: 'text' },
     { key: 'used', label: '被引用', type: 'text', width: '100px' },
@@ -154,7 +153,7 @@ export default function VerifyCatalogPage() {
     used: `${usedActionCount(a.name)} 条规则`,
   }));
   const actionCols: Column[] = [
-    { key: 'name', label: '动作名称', type: 'text', tag: { kind: 'sample', value: 'ruleHub.json.actionLib' } },
+    { key: 'name', label: '动作名称', type: 'text' },
     { key: 'target', label: '目标系统', type: 'text', width: '110px' },
     { key: 'notifyTo', label: '通知人', type: 'text', width: '150px' },
     { key: 'approve', label: '审批', type: 'badge', badgeKind: 'amber', width: '80px' },
@@ -172,7 +171,6 @@ export default function VerifyCatalogPage() {
         title="规则组件库"
         crumbPath="规则集合 / 规则组件库"
         subtitle="统一维护规则引擎的三套基础组件：核验项（第三方接口接入与返回值归一化映射）、触发条件（标准枚举、命中判定）、处置动作（命中后的处置模板）。"
-        actions={isItems ? <Sam value="ruleHub.json.verifyCatalog" /> : isConds ? <Sam value="ruleHub.json.condLib" /> : <Sam value="ruleHub.json.actionLib" />}
         stats={
           <div className="flex gap-1 border-b border-slate-200">
             {([

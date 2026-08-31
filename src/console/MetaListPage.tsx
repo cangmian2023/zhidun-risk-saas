@@ -5,7 +5,7 @@ import { useMemo, useState, type ReactNode } from 'react';
 import { Panel, DataTable, Drawer, SingleSelect } from '../components/ui';
 import type { Column, Row, BadgeVal } from '../components/ui';
 import { PageShell } from './PageShell';
-import { Sam, MidSaveToast } from './SourceTag';
+import { MidSaveToast } from './SourceTag';
 import { crumb, CONFIG_CONTAINER } from './ConfigTemplate';
 import { useMetaSaveStatus } from './metaStore';
 
@@ -98,7 +98,6 @@ export function MetaListPage(p: MetaListPageProps) {
         subtitle={p.subtitle}
         actions={
           <>
-            <Sam value={p.jsonFile} />
             {p.headerActions}
           </>
         }

@@ -1,9 +1,9 @@
 // 企业风控 · 监控规则详情（fk-monitor-detail）· 1:1 复刻「风险详情」截图
 // 数据：本地样例 fkMonitorDetail.json（橘 Sam）
-import { useState } from 'react'
-import { EpPage, EpCard, EpTag, EpBtn, DataTable, useSample, Sam } from '../../epCommon'
-import { LineChart, DonutChart } from '../../../../components/charts'
-import type { Row, Column } from '../../../../components/ui'
+import { useState } from 'react';
+import { EpPage, EpCard, EpTag, EpBtn, DataTable, useSample } from '../../epCommon';
+import { LineChart, DonutChart } from '../../../../components/charts';
+import type { Row, Column } from '../../../../components/ui';
 import seedJson from '../../../fkMonitorDetail.json'
 import { usePageNav } from '../../../pageNav'
 import { RiskContentDrawer } from '../components/RiskContentDrawer'
@@ -103,7 +103,6 @@ export default function FkMonitorDetail({ params }: { params: URLSearchParams })
       title="风险详情"
       subtitle={`${data.company} · 监控企业风险详情`}
       crumb="风控中心 / 监控列表 / 风险详情"
-      actions={<Sam value="fkMonitorDetail.json" />}
       onBack={() => back('/console/ep/fk-monitor-list')}
     >
       <div style={{ display: 'grid', gridTemplateColumns: '324px 1fr', gap: 16, alignItems: 'start' }}>

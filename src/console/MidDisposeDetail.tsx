@@ -2,7 +2,6 @@
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Panel, Button, StatusTag, DetailHeader } from '../components/ui';
-import { Sam, Cal } from './SourceTag';
 import { PageShell } from './PageShell';
 import { usePageNav } from './pageNav';
 import { useMidDisposeTasks, updateDisposeTasks } from './midStore';
@@ -56,8 +55,6 @@ export default function MidDisposeDetail() {
       <PageShell header={<DetailHeader title={`工单详情 · ${t.id}`} crumb="贷中监控 / 处置闭环" subtitle={t.custName}
         backLabel="返回队列"
         actions={<>
-          <Sam label="工单样例" value={`${tasks.length} 条`} />
-          <Cal label="实时统计" />
         </>} />} />
 
       <Panel title="工单信息" desc="处置工单基础信息">
@@ -90,7 +87,7 @@ export default function MidDisposeDetail() {
         </div>
       </Panel>
 
-      <Panel title="操作日志" desc={<span><Sam label="样例" /> 工单状态变更与处置记录</span>}>
+      <Panel title="操作日志" desc={<span> 工单状态变更与处置记录</span>}>
         <div style={{ position: 'relative', paddingLeft: 18 }}>
           <div style={{ position: 'absolute', left: 5, top: 4, bottom: 4, width: 2, background: '#E2E8F0' }} />
           {t.logs.map((l, i) => (

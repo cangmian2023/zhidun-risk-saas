@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Panel, DataTable, Button, Badge, InfoCell } from '../components/ui';
 import type { Column, Row } from '../components/ui';
-import { Sam, Cal } from './SourceTag';
 import { PageShell } from './PageShell';
 import { useMidStrategy, useMidMetrics, useMidAlerts, updateStrategy } from './midStore';
 import { LEVEL_META, EVENT_ANALYSIS_CONFIG, type MidTask, type MidRule, type MidDispose } from './midData';
@@ -77,8 +76,8 @@ export default function MidStrategyDetail() {
   };
 
   const confCols: Column[] = [
-    { key: 'k', label: '项目', tag: { kind: 'sample', value: 'midStrategy.json' } },
-    { key: 'v', label: '内容', tag: { kind: 'sample', value: 'midStrategy.json' } },
+    { key: 'k', label: '项目' },
+    { key: 'v', label: '内容' },
   ];
   const confRows: Row[] =
     kind === 'task' ? ([
@@ -131,8 +130,6 @@ export default function MidStrategyDetail() {
       title={kind === 'dispose' ? (editing?.name || '处置策略') : (item as any).name}
       crumbParts={kind === 'dispose' ? ['处置策略'] : ['策略配置', kindLabel]}
       actions={<>
-        <Sam value="midMetrics.json" />
-        <Sam value="midStrategy.json" />
         {kind !== 'dispose' && (
           <Button size="sm" onClick={() => nav(`/console/cm/mid-strategy?edit=${id}&kind=${kind}`)}>编辑</Button>
         )}
@@ -142,10 +139,6 @@ export default function MidStrategyDetail() {
           </Button>
         )}
         <Button size="sm" variant="secondary" onClick={() => nav(listRoute)}>返回列表</Button>
-      </>}
-      source={<>
-        <Sam label="详情数据" value="midStrategy.json" />
-        {kind === 'task' && <Sam label="关联指标" value="midMetrics.json" />}
       </>}
       infoCells={
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
@@ -178,7 +171,7 @@ export default function MidStrategyDetail() {
       }
     >
       {kind === 'dispose' ? (
-        <Panel title="策略编辑" desc={<>详情页直接编辑，保存即写回本地 JSON <Sam value="midStrategy.json" /></>}>
+        <Panel title="策略编辑" desc={<>详情页直接编辑，保存即写回本地 JSON </>}>
           {editing && <DisposeEditor value={editing} onChange={setEditing} onRemove={removeDispose} />}
           <div className="mt-4 flex justify-end gap-2 border-t border-slate-100 pt-3">
             <Button onClick={saveDispose}>保存</Button>
@@ -186,13 +179,13 @@ export default function MidStrategyDetail() {
           </div>
         </Panel>
       ) : (
-        <Panel title="配置详情" desc={<Sam value="midStrategy.json" />}>
+        <Panel title="配置详情" >
           <DataTable columns={confCols} rows={confRows} />
         </Panel>
       )}
 
       {kind === 'task' && (
-        <Panel title="事件分析配置" desc={<Sam value="record/temp/event" />}>
+        <Panel title="事件分析配置" >
           <div className="space-y-4 text-sm">
             <div className="grid grid-cols-3 gap-3">
               <InfoCell label="分析主体" value={EVENT_ANALYSIS_CONFIG.subject} />
@@ -239,7 +232,7 @@ export default function MidStrategyDetail() {
       )}
 
       {kind === 'task' && relatedRules.length > 0 && (
-        <Panel title="预警规则（自定义规则）" desc={<>来自 event 全局筛选条件，替换原占位规则 <Sam value="midStrategy.json" /></>}>
+        <Panel title="预警规则（自定义规则）" desc={<>来自 event 全局筛选条件，替换原占位规则 </>}>
           <div className="space-y-2">
             {relatedRules.map((r) => (
               <div key={r.id} className="flex flex-wrap items-center gap-2 rounded-lg border border-slate-200 px-3 py-2">
@@ -254,7 +247,7 @@ export default function MidStrategyDetail() {
       )}
 
       {metricIds.length > 0 && (
-        <Panel title="关联指标" desc={<>监控内容来自指标库 <Sam value="midMetrics.json" /></>}>
+        <Panel title="关联指标" desc={<>监控内容来自指标库 </>}>
           <div className="flex flex-wrap gap-2">
             {metricIds.map((mid) => (
               <Button key={mid} size="sm" variant="ghost" onClick={() => nav('/console/cm/mid-metric-detail?id=' + mid)}>{metricName(mid)}</Button>
@@ -264,14 +257,14 @@ export default function MidStrategyDetail() {
       )}
 
       {kind === 'rule' && (
-        <Panel title="实时口径" desc={<span><Cal /></span>}>
+        <Panel title="实时口径" desc={<span></span>}>
           <div className="flex items-center gap-2 rounded-lg bg-slate-100 px-3 py-2.5 text-xs text-slate-500">
             当 {ruleTriggerText(item as MidRule)} 时，自动定级为 <Badge kind={LEVEL_META[(item as MidRule).level].badge}>{LEVEL_META[(item as MidRule).level].label}</Badge>
           </div>
         </Panel>
       )}
 
-      <Panel title="联动预警" desc={<span><Sam value={`${linkedAlerts.length} 条`} /> 当前已有预警命中该{ kind === 'rule' ? '规则定级' : '处置触发等级' }</span>}>
+      <Panel title="联动预警" desc={<span> 当前已有预警命中该{ kind === 'rule' ? '规则定级' : '处置触发等级' }</span>}>
         {linkedAlerts.length ? (
           <div className="flex flex-wrap gap-2">
             {linkedAlerts.slice(0, 12).map((a) => (

@@ -4,13 +4,12 @@
  *   数据从本地 JSON 读取，得分/自动审核按模板分段生成；
  *   业务流程状态经统一绑定层（flowBinding）显示「流程状态」列并流转
  * ========================================================================== */
-import { useEffect, useMemo, useState, type CSSProperties } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { PageHeader, Panel, Badge, StatCard, SingleSelect, Button, DecisionTag, type SelectOption } from '../components/ui'
-import type { VerifyRow } from './VerifyOps'
-import { Sam } from './SourceTag'
-import { useTemplate } from './templateStore'
-import { useReportRows, updateReportRows } from './reportListStore'
+import { useEffect, useMemo, useState, type CSSProperties } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { PageHeader, Panel, Badge, StatCard, SingleSelect, Button, DecisionTag, type SelectOption } from '../components/ui';
+import type { VerifyRow } from './VerifyOps';
+import { useTemplate } from './templateStore';
+import { useReportRows, updateReportRows } from './reportListStore';
 // 统一流程绑定层（与预警工作台同一套）：列表页显示「流程状态」列，状态流转写回各自 JSON
 import FlowStateCell from './FlowStateCell'
 import { matchObjOf, flowIdOfRow, nowStamp, usePageFlow } from './flowBinding'
@@ -102,10 +101,6 @@ export const ENT_DECISION_MODULE: ReportModuleCfg = {
 }
 
 /* ── 来源调试标签（蓝=模板配置 / 橙=本地JSON数据 / 灰=实时算法） ── */
-const tagS: CSSProperties = { display: 'inline-block', fontSize: 9, fontFamily: 'monospace', padding: '0 3px', borderRadius: 2, marginLeft: 3, verticalAlign: 'middle', lineHeight: '14px', fontWeight: 400 }
-const Tpl = ({ f, v }: { f: string; v?: any }) => <span style={{ ...tagS, background: '#DBEAFE', color: '#1D4ED8', border: '1px solid #93C5FD' }}>{f}={v ?? 'null'}</span>
-const Dat = ({ f, v }: { f: string; v?: any }) => <span style={{ ...tagS, background: '#FFF7ED', color: '#C2410C', border: '1px solid #FDBA74' }}>{f}={v ?? 'null'}</span>
-const Cal = ({ f, v }: { f: string; v?: any }) => <span style={{ ...tagS, background: '#F3F4F6', color: '#6B7280', border: '1px solid #D1D5DB' }}>{f}={v ?? 'null'}</span>
 
 /* 行增强：按模板分段生成得分与自动审核结果 */
 export interface ModuleRow extends VerifyRow {
@@ -289,7 +284,7 @@ export function ReportModuleList({ cfg }: { cfg: ReportModuleCfg }) {
                   <th style={headStyle(C.score, null)} className="border-b border-slate-200 bg-slate-50 px-3 py-3 text-right font-medium">得分</th>
                   <th style={headStyle(C.sys, null)} className="border-b border-slate-200 bg-slate-50 px-3 py-3 text-center font-medium">自动审核</th>
                   <th style={headStyle(C.time, null)} className="border-b border-slate-200 bg-slate-50 px-3 py-3 text-left font-medium">申请时间</th>
-                  {pageFlow && <th style={headStyle(C.flowState, 'right', C.op)} className="border-b border-slate-200 bg-slate-50 px-3 py-3 text-center font-medium">流程状态<Sam f="流程状态" /></th>}
+                  {pageFlow && <th style={headStyle(C.flowState, 'right', C.op)} className="border-b border-slate-200 bg-slate-50 px-3 py-3 text-center font-medium">流程状态</th>}
                   <th style={headStyle(C.op, 'right', 0)} className="border-b border-slate-200 bg-slate-50 px-3 py-3 pr-[22px] text-left font-medium">操作</th>
                 </tr>
               </thead>
@@ -300,23 +295,21 @@ export function ReportModuleList({ cfg }: { cfg: ReportModuleCfg }) {
                     <tr key={r.id} className="group hover:bg-slate-50/60">
                       <td style={bodyStyle(C.id, 'left', 0)} className="whitespace-nowrap bg-white px-3 py-3 font-mono text-xs text-slate-700 group-hover:bg-slate-50/60">
                         <button onClick={() => goReport(r)} className="font-medium text-brand-600 hover:underline">{r.id}</button>
-                        <Dat f="JSON:id" v={r.id} />
+                        
                       </td>
-                      <td style={bodyStyle(C.name, 'left', C.id)} className="whitespace-nowrap bg-white px-3 py-3 text-slate-800 group-hover:bg-slate-50/60">{r.name}<Dat f="JSON:name" v={r.name} /></td>
-                      <td style={bodyStyle(C.product, null)} className="whitespace-nowrap px-3 py-3 text-slate-600">{r.product}<Dat f="JSON:product" v={r.product} /></td>
-                      <td style={bodyStyle(C.channel, null)} className="whitespace-nowrap px-3 py-3 text-slate-600">{r.channel}<Dat f="JSON:channel" v={r.channel} /></td>
-                      <td style={bodyStyle(C.amount, null)} className="whitespace-nowrap px-3 py-3 text-right tabular-nums text-slate-700">¥{r.amount.toLocaleString()}<Dat f="JSON:amount" v={r.amount} /></td>
+                      <td style={bodyStyle(C.name, 'left', C.id)} className="whitespace-nowrap bg-white px-3 py-3 text-slate-800 group-hover:bg-slate-50/60">{r.name}</td>
+                      <td style={bodyStyle(C.product, null)} className="whitespace-nowrap px-3 py-3 text-slate-600">{r.product}</td>
+                      <td style={bodyStyle(C.channel, null)} className="whitespace-nowrap px-3 py-3 text-slate-600">{r.channel}</td>
+                      <td style={bodyStyle(C.amount, null)} className="whitespace-nowrap px-3 py-3 text-right tabular-nums text-slate-700">¥{r.amount.toLocaleString()}</td>
                       <td style={bodyStyle(C.score, null)} className="whitespace-nowrap px-3 py-3 text-right">
                         {r.segScore != null ? (
                           <span className="tabular-nums font-semibold" style={{ color: seg?.color ?? '#6B7280' }}>{r.segScore}</span>
                         ) : (
                           <span className="text-slate-300">—</span>
                         )}
-                        <Cal f="模板分段生成" v={r.segScore ?? '—'} />
                       </td>
                       <td style={bodyStyle(C.sys, null)} className="whitespace-nowrap px-3 py-3 text-center">
                         <DecisionTag kind={SYS_KIND[r.segResult]} soft={r.segResult === '处理中'}>{r.segResult}</DecisionTag>
-                        <Cal f="matchGrade" v={r.segResult} />
                       </td>
                       <td style={bodyStyle(C.time, null)} className="whitespace-nowrap px-3 py-3 tabular-nums text-slate-500">{r.auditTime}</td>
                       {pageFlow && (

@@ -1,9 +1,9 @@
 // 风控中心 · 风险地图（fk-map）· 1:1 复刻「风控 - 风险地图」
 // SVG 简易中国地图 + 热力点；时间维度切换 今日/最近7天/最近30天；风险预警分布 / 监控企业分布
 // 数据：本地样例 fkMap.json（橘 Sam）
-import { useState } from 'react'
-import { EpPage, EpCard, EpStat, useSample, Sam } from '../../epCommon'
-import type { Row, Column } from '../../../../components/ui'
+import { useState } from 'react';
+import { EpPage, EpCard, EpStat, useSample } from '../../epCommon';
+import type { Row, Column } from '../../../../components/ui';
 
 type MapData = typeof seed
 
@@ -125,7 +125,6 @@ export default function FkMap({ params }: { params: URLSearchParams }) {
       title="风险地图"
       subtitle="风控中心风险地理分布"
       crumb="风控中心 / 风险地图"
-      actions={<Sam value="fkMap.json" />}
     >
       {/* 筛选 */}
       <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', marginBottom: 14 }}>

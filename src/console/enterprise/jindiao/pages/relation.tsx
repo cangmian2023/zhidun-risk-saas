@@ -1,9 +1,9 @@
 // 尽调中心 · 关系尽调（jd-relation）· 集中排查 Tab
 // 数据：本地样例 jdRelation.json（橘 Sam）
-import { useState, useEffect } from 'react'
-import { EpPage, EpBtn, useSample, Sam } from '../../epCommon'
-import { usePageNav } from '../../../pageNav'
-import { Modal } from '../../../../components/ui'
+import { useState, useEffect } from 'react';
+import { EpPage, EpBtn, useSample } from '../../epCommon';
+import { usePageNav } from '../../../pageNav';
+import { Modal } from '../../../../components/ui';
 
 type Target = { id: string; name: string; type: 'company' | 'person' }
 type Filter = { key: string; label: string }
@@ -1581,7 +1581,7 @@ export default function JdRelation() {
   const isCentral = activeTab === 'central'
 
   return (
-    <EpPage title={data.pageTitle} actions={<Sam value={data.source} />}>
+    <EpPage title={data.pageTitle} >
       {/* Tabs */}
       <div style={{ display: 'flex', borderBottom: '1px solid #E2E8F0', marginBottom: 16, position: 'sticky', top: 140, zIndex: 20, background: '#fff' }}>
         {data.tabs.map((t) => (

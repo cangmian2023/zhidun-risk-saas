@@ -1,8 +1,8 @@
 // 风控中心 · 利益排查（fk-interest）· 1:1 复刻「风控 - 利益排查」
 // 数据：本地样例 fkInterest.json（橘 Sam）
-import { useState } from 'react'
-import { EpPage, EpCard, EpBtn, DataTable, useSample, Sam } from '../../epCommon'
-import type { Row } from '../../../../components/ui'
+import { useState } from 'react';
+import { EpPage, EpCard, EpBtn, DataTable, useSample } from '../../epCommon';
+import type { Row } from '../../../../components/ui';
 
 type Card = { name: string; desc: string; limit: string; btn: string }
 type DetailItem = { company: string; content: string }
@@ -684,7 +684,6 @@ export default function FkInterest({ params }: { params: URLSearchParams }) {
               </div>
             ))}
             <div style={{ marginTop: 2 }}>
-              <Sam value="fkInterest.json" />
             </div>
           </div>
         </div>

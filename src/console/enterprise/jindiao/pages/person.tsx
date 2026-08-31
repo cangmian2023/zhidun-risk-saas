@@ -1,9 +1,9 @@
 // 尽调中心 · 人员尽调（jd-person）· 搜索人员 → 结果列表
 // 数据：本地样例 jdPerson.json（橘 Sam）
-import { useState } from 'react'
-import { EpPage, useSample, Sam } from '../../epCommon'
-import { usePageNav } from '../../../pageNav'
-import { useNavigate } from 'react-router-dom'
+import { useState } from 'react';
+import { EpPage, useSample } from '../../epCommon';
+import { usePageNav } from '../../../pageNav';
+import { useNavigate } from 'react-router-dom';
 
 type FilterRow = { title: string; items: string[] }
 type PersonRow = {
@@ -190,7 +190,7 @@ export default function JdPerson({ params }: { params: URLSearchParams }) {
   const showResult = phase !== 'idle'
 
   return (
-    <EpPage title={data.pageTitle} actions={<Sam value={data.source} />}>
+    <EpPage title={data.pageTitle} >
       {/* 顶部搜索区域 */}
       <div style={{ display: 'flex', justifyContent: 'center', marginTop: 4 }}>
         <div style={{ display: 'flex', width: 640, maxWidth: '100%' }}>

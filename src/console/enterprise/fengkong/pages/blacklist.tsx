@@ -1,9 +1,9 @@
 // 风控中心 · 黑名单（fk-blacklist）· 1:1 复刻「黑名单」
 // 数据：本地样例 fkBlacklist.json（橘 Sam）
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { EpPage, EpCard, EpTag, EpBtn, EpDrawer, DataTable, useSample, Sam } from '../../epCommon'
-import type { Row, Column } from '../../../../components/ui'
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { EpPage, EpCard, EpTag, EpBtn, EpDrawer, DataTable, useSample } from '../../epCommon';
+import type { Row, Column } from '../../../../components/ui';
 import seedJson from '../../../fkBlacklist.json'
 
 const OUTER_SOURCES: { lv1: string; lv2: string; desc: string; src: string }[] = [
@@ -85,7 +85,6 @@ export default function FkBlacklist({ params }: { params: URLSearchParams }) {
     <EpPage
       title="黑名单"
       desc="外部黑名单数据检索与排查"
-      actions={<Sam value="fkBlacklist.json" />}
     >
       <EpCard pad={false}>
         {/* 标签 + 操作（与列表同一区域，不分离） */}

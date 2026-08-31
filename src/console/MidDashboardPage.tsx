@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import { Panel, StatCard, DataTable, RightDrawer, SingleSelect, Button } from '../components/ui';
 import type { Column, Row } from '../components/ui';
 import { LineChart, BarChart, DonutChart } from '../components/charts';
-import { Sam, Cal } from './SourceTag';
 import { PageShell } from './PageShell';
 import FlowActionBar from './FlowActionBar';
 import { useMidDashboards, useMidDataSources, useMidMetrics, updateDataSources } from './midStore';
@@ -108,9 +107,6 @@ export default function MidDashboardPage({ pageKey, crumbPrefix }: { pageKey: st
     <div style={{ padding: 24, maxWidth: 1280 }}>
       <PageShell title={page.name} crumb={`${crumbPrefix ?? '零售信贷风控 / 贷中监控'} / ${page.group}`} subtitle={page.desc}
         actions={<>
-          <Sam label="页面配置" value="midDashboards.json" />
-          <Sam label="样例数据" value={`${pageDs.reduce((a, s) => a + (s.rows?.length || 0), 0)} 行`} />
-          <Cal label="实时计算" />
           <span style={{ fontSize: 12, color: '#64748B' }}>{String(pageKey).includes('realtime') ? '30 秒自动刷新' : '5 分钟自动刷新'} · 最后刷新 {lastRefresh}</span>
           <Button size="sm" variant="secondary" onClick={() => setLastRefresh(new Date().toLocaleTimeString('zh-CN', { hour12: false }))}>刷新</Button>
         </>} />

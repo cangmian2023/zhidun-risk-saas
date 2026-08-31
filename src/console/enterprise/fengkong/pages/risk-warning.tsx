@@ -1,11 +1,11 @@
 // 风控中心 · 风险预警（fk-risk-warning）· 1:1 复刻「风险预警」列表页
 // 数据：本地样例 fkRisk.json（橘 Sam）
-import { useState } from 'react'
-import { EpPage, EpCard, EpStat, EpTag, EpBtn, EpDrawer, DataTable, useSample, Sam } from '../../epCommon'
-import { AddMonitorDrawer } from '../components/AddMonitorDrawer'
-import { RiskContentDrawer } from '../components/RiskContentDrawer'
-import type { Row, Column } from '../../../../components/ui'
-import { usePageNav } from '../../../pageNav'
+import { useState } from 'react';
+import { EpPage, EpCard, EpStat, EpTag, EpBtn, EpDrawer, DataTable, useSample } from '../../epCommon';
+import { AddMonitorDrawer } from '../components/AddMonitorDrawer';
+import { RiskContentDrawer } from '../components/RiskContentDrawer';
+import type { Row, Column } from '../../../../components/ui';
+import { usePageNav } from '../../../pageNav';
 import seedJson from '../../../fkRisk.json'
 
 type RiskRow = (typeof seedJson.rows)[number]
@@ -604,7 +604,7 @@ export default function FkRiskWarning({ params }: { params: URLSearchParams }) {
         </span>
       </div>
 
-      <EpCard desc={<Sam value="fkRisk.json" />}>
+      <EpCard >
         <DataTable
           columns={cols}
           rows={rows as unknown as Row[]}

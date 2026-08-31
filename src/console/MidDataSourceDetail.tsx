@@ -3,7 +3,6 @@ import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Panel, DataTable, Button, InfoCell, DetailHeader } from '../components/ui';
 import type { Column, Row } from '../components/ui';
-import { Sam } from './SourceTag';
 import { useMidDataSources, useMidMetrics } from './midStore';
 import type { MidConnConfig } from './midData';
 import { ConfigDetailPage, SRC_TYPE_LABEL } from './ConfigTemplate';
@@ -40,7 +39,7 @@ export default function MidDataSourceDetail() {
 
   const usedBy = metrics.filter((m) => m.dataSourceId === ds.id);
   const previewCols: Column[] = (ds.fields.length ? ds.fields : [{ key: '_', label: '_', kind: 'dim' as const, type: 'string' as const }]).map((f) => ({
-    key: f.key, label: f.label, tag: { kind: 'sample' as const, value: `${ds.id}.${f.key}` },
+    key: f.key, label: f.label, 
   }));
   const previewRows: Row[] = (ds.rows ?? []).slice(0, 50).map((r, i) => ({ id: String(i), ...r } as unknown as Row));
 
@@ -51,20 +50,19 @@ export default function MidDataSourceDetail() {
       subtitle={ds.desc}
       backLabel="返回列表" backTo="/console/cm/mid-data-source"
       actions={<>
-        <Sam label="详情数据" value="midDataSources.json" />
         <Button size="sm" onClick={() => nav('/console/cm/mid-data-source?edit=' + ds.id)}>编辑</Button>
       </>}
       infoCells={
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-        <InfoCell label="类型" value={SRC_TYPE_LABEL[ds.type] ?? '数据库'} tag={<Sam value="midDataSources.json.type" />} />
-        <InfoCell label="状态" value={ds.status ?? 'connected'} tag={<Sam value="midDataSources.json.status" />} />
-        <InfoCell label="字段数" value={String(ds.fields.length)} tag={<Sam value="midDataSources.json.fields" />} />
-        <InfoCell label="样例行" value={String(ds.rows?.length ?? 0)} tag={<Sam value={`${ds.id}.rows`} />} />
-        <InfoCell label="更新时间" value={ds.updatedAt ?? '-'} tag={<Sam value="midDataSources.json.updatedAt" />} />
+        <InfoCell label="类型" value={SRC_TYPE_LABEL[ds.type] ?? '数据库'}  />
+        <InfoCell label="状态" value={ds.status ?? 'connected'}  />
+        <InfoCell label="字段数" value={String(ds.fields.length)}  />
+        <InfoCell label="样例行" value={String(ds.rows?.length ?? 0)}  />
+        <InfoCell label="更新时间" value={ds.updatedAt ?? '-'}  />
       </div>
       }>
 
-      <Panel title="连接信息" desc={<span>数据源连接配置（保存到本地 <Sam value="midDataSources.json.conn" />）</span>}
+      <Panel title="连接信息" desc={<span>数据源连接配置（保存到本地 ）</span>}
         actions={connFields.some((f) => f.mask) ? (
           <Button size="sm" variant="secondary" onClick={() => setShowPwd((p) => !p)}>{showPwd ? '隐藏密码' : '显示密码'}</Button>
         ) : undefined}>
@@ -77,7 +75,6 @@ export default function MidDataSourceDetail() {
                   <span className="text-slate-500">{f.label}</span>
                   <span className="flex items-center gap-2">
                     <span className="font-mono text-slate-700">{f.mask && !showPwd ? '••••••••' : raw}</span>
-                    <Sam value={'midDataSources.json.conn.' + f.key} />
                   </span>
                 </div>
               );
@@ -88,7 +85,7 @@ export default function MidDataSourceDetail() {
         )}
       </Panel>
 
-      <Panel title="字段清单" desc={<span>连接后读取到的字段，保存到本地（<Sam value="midDataSources.json.fields" />）</span>}>
+      <Panel title="字段清单" desc={<span>连接后读取到的字段，保存到本地（）</span>}>
         <div className="overflow-x-auto rounded-xl border border-slate-200">
           <table className="w-full border-collapse text-sm">
             <thead>
@@ -103,7 +100,7 @@ export default function MidDataSourceDetail() {
             <tbody>
               {ds.fields.map((f) => (
                 <tr key={f.key} className="border-b border-slate-100">
-                  <td className="px-3 py-2.5 font-mono text-slate-700">{f.key} <Sam value={'midDataSources.json.fields.' + f.key} /></td>
+                  <td className="px-3 py-2.5 font-mono text-slate-700">{f.key} </td>
                   <td className="px-3 py-2.5 text-slate-700">{f.label}</td>
                   <td className="px-3 py-2.5 text-slate-600">{f.kind === 'measure' ? '度量' : '维度'}</td>
                   <td className="px-3 py-2.5 text-slate-600">{f.type}</td>
@@ -118,13 +115,13 @@ export default function MidDataSourceDetail() {
         </div>
       </Panel>
 
-      <Panel title="数据预览" desc="样例数据（本地 JSON）" actions={<Sam value={`${ds.id} · ${ds.rows?.length ?? 0} 行`} />}>
+      <Panel title="数据预览" desc="样例数据（本地 JSON）" >
         {previewCols.length && previewCols[0].key !== '_'
           ? <DataTable columns={previewCols} rows={previewRows} />
           : <div className="rounded-lg bg-slate-50 px-3 py-6 text-center text-sm text-slate-400">暂无字段，无法预览</div>}
       </Panel>
 
-      <Panel title="被指标库引用" desc={<span>以下指标基于此数据源（引用关系记录于样例数据 <Sam value="midDataSources.json.usedBy" />，指标库引用后更新）</span>}>
+      <Panel title="被指标库引用" desc={<span>以下指标基于此数据源（引用关系记录于样例数据 ，指标库引用后更新）</span>}>
         {usedBy.length ? (
           <div className="flex flex-wrap gap-2">
             {usedBy.map((m) => (

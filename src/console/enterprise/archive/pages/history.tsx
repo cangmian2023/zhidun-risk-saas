@@ -1,8 +1,8 @@
 // 企业档案 · 历史信息（arc-history）· 1:1 复刻「企业档案 - 历史信息」
 // 数据：本地样例 arcHistory.json（橘 Sam）
-import { useState } from 'react'
-import { EpPage, EpCard, EpStat, EpTag, EpBtn, DataTable, useSample, Sam } from '../../epCommon'
-import type { Row, Column } from '../../../../components/ui'
+import { useState } from 'react';
+import { EpPage, EpCard, EpStat, EpTag, EpBtn, DataTable, useSample } from '../../epCommon';
+import type { Row, Column } from '../../../../components/ui';
 
 const seed = {
   histShareholders: [
@@ -153,7 +153,7 @@ export default function History({ params }: { params: URLSearchParams }) {
       </EpCard>
 
       {/* 历史变更记录 */}
-      <EpCard title="历史变更记录" desc={<Sam value="arcHistory.json" />} className="mb-4">
+      <EpCard title="历史变更记录"  className="mb-4">
         <DataTable columns={changeCols} rows={data.histChanges as unknown as Row[]} pager exportable exportName="历史变更记录" empty="暂无数据" />
       </EpCard>
     </EpPage>

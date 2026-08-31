@@ -6,11 +6,10 @@ import {
   type ProbScoreSeg, type ScoreLevelSeg, type RiskTagConfig, type FusionStrategy,
   type LevelDefaultDecision, type RiskLabel, type FusionRule,
 } from './scoreData'
-import { useDecision } from './decisionData'
-import { PageShell } from './PageShell'
-import { SingleSelect, Panel, Button, Badge, DataTable, Modal, RightDrawer, type Column, type Row } from '../components/ui'
-import { Sam, Cfg, Cal } from './SourceTag'
-import { LineChart } from '../components/charts'
+import { useDecision } from './decisionData';
+import { PageShell } from './PageShell';
+import { SingleSelect, Panel, Button, Badge, DataTable, Modal, RightDrawer, type Column, type Row } from '../components/ui';
+import { LineChart } from '../components/charts';
 import ModelDecisionGraph from './ModelDecisionGraph'
 import { PIPELINE_GRAPHS } from './modelGraphData'
 import FlowCanvasEditor from './FlowCanvasEditor'
@@ -465,7 +464,6 @@ export default function ScoreModelDetailPage() {
             <Panel
               title="上线管理"
               desc="模型投产与下线控制；上线时可指定版本与变更内容，自动记入版本日志"
-              actions={<Cfg value="scoreData.json" />}
             >
               <div className="flex flex-wrap items-center gap-3">
                 <Badge kind={m.enabled ? 'green' : 'gray'}>{m.enabled ? '已上线' : '已下线'}</Badge>
@@ -497,7 +495,7 @@ export default function ScoreModelDetailPage() {
             </Panel>
 
             {/* ===== 部署对接（只读） ===== */}
-            <Panel title="部署与对接" desc="模型生产化对接方式（只读）" actions={<Cal />}>
+            <Panel title="部署与对接" desc="模型生产化对接方式（只读）" >
               <dl className="grid grid-cols-1 gap-x-8 gap-y-2 text-sm md:grid-cols-2">
                 <Def k="服务地址" v={`POST /api/score/${m.prod}`} />
                 <Def k="调用方式" v="实时 API / 批量文件" />
@@ -509,7 +507,7 @@ export default function ScoreModelDetailPage() {
             </Panel>
 
             {/* ===== 版本管理（内置） ===== */}
-            <Panel title="版本日志" desc="本模型版本历史，可回滚至历史版本" actions={<Cfg value="scoreData.json" />}>
+            <Panel title="版本日志" desc="本模型版本历史，可回滚至历史版本" >
               <DataTable columns={verCols} rows={verRows} empty="暂无版本" pager defaultPageSize={10} />
             </Panel>
           </>
@@ -566,7 +564,7 @@ export default function ScoreModelDetailPage() {
                 />
               </div>
             )}
-            <div className="mt-3"><Cfg value="scoreData.json" /></div>
+            <div className="mt-3"></div>
           </Panel>
         )}
 
@@ -577,7 +575,7 @@ export default function ScoreModelDetailPage() {
             <Panel
               title="风险标签配置"
               desc="控制整套并行标签支线的运行模式、冲突处理与空命中策略。标签与 Tab2 模型推理完全并行，不参与概率计算、不改变标准分。"
-              actions={<div className="flex items-center gap-2"><Cfg value="scoreData.json" /><Button size="sm" variant="ghost" onClick={() => setTagCfgOpen((v) => !v)}>{tagCfgOpen ? '收起' : '展开配置'}</Button></div>}
+              actions={<div className="flex items-center gap-2"><Button size="sm" variant="ghost" onClick={() => setTagCfgOpen((v) => !v)}>{tagCfgOpen ? '收起' : '展开配置'}</Button></div>}
             >
               {tagCfgOpen ? (
               <div className="grid gap-4 md:grid-cols-2">
@@ -677,7 +675,7 @@ export default function ScoreModelDetailPage() {
         {tab === 'effect' && (
           /* ===== 模型效果（本模型） ===== */
           <>
-            <Panel title="模型效果" desc={`${SCORE_PROD_LABEL[prod] ?? m.name} · 运营效果指标与 6 个月趋势（单模型视角；三模型横向对比见「模型效果」页）`} actions={<div className="flex items-center gap-2"><Cal /><Sam value="scoreData.json" /></div>}>
+            <Panel title="模型效果" desc={`${SCORE_PROD_LABEL[prod] ?? m.name} · 运营效果指标与 6 个月趋势（单模型视角；三模型横向对比见「模型效果」页）`} actions={<div className="flex items-center gap-2"></div>}>
               <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
                 <div><div className="text-xs text-slate-400">评分覆盖率</div><div className="text-2xl font-bold tabular-nums" style={{ color }}>{ops.coverage}%</div></div>
                 <div><div className="text-xs text-slate-400">预警准确率</div><div className="text-2xl font-bold tabular-nums" style={{ color }}>{ops.accuracy}%</div></div>
@@ -693,14 +691,14 @@ export default function ScoreModelDetailPage() {
               </div>
             </Panel>
             <div className="grid gap-4 lg:grid-cols-2">
-              <Panel title="覆盖率 / 准确率趋势" actions={<Cal />}>
+              <Panel title="覆盖率 / 准确率趋势" >
                 <LineChart labels={ops.trend.map((t) => t.month)}
                   series={[
                     { name: '覆盖率', color: MODEL_COLOR[prod], data: ops.trend.map((t) => t.coverage) },
                     { name: '准确率', color: '#3b82f6', data: ops.trend.map((t) => t.accuracy) },
                   ]} unit="%" height={220} />
               </Panel>
-              <Panel title="及时率 / 调用量趋势" actions={<Cal />}>
+              <Panel title="及时率 / 调用量趋势" >
                 <LineChart labels={ops.trend.map((t) => t.month)}
                   series={[
                     { name: '及时率', color: '#8b5cf6', data: ops.trend.map((t) => t.timely) },
@@ -717,7 +715,7 @@ export default function ScoreModelDetailPage() {
             <Panel
               title="处置策略配置"
               desc="融合处置策略全局配置：优先级模式决定「标签」与「分数」谁说了算；兜底处置在模型异常、特征缺失、无法计算时生效。"
-              actions={<div className="flex items-center gap-2"><Cfg value="scoreData.json" /><Button size="sm" variant="ghost" onClick={() => setStratOpen((v) => !v)}>{stratOpen ? '收起' : '展开配置'}</Button></div>}
+              actions={<div className="flex items-center gap-2"><Button size="sm" variant="ghost" onClick={() => setStratOpen((v) => !v)}>{stratOpen ? '收起' : '展开配置'}</Button></div>}
             >
               {stratOpen ? (
               <>
@@ -777,7 +775,7 @@ export default function ScoreModelDetailPage() {
             <Panel
               title="概率映射"
               desc="原生预测概率 predict_prob(0~1) → 对外标准分。两种映射方式二选一，修改映射无需重新训练模型。"
-              actions={<div className="flex items-center gap-2"><Cfg value="scoreData.json" /><Cal /><Button size="sm" variant="ghost" onClick={() => setProbMapOpen((v) => !v)}>{probMapOpen ? '收起' : '展开'}</Button></div>}
+              actions={<div className="flex items-center gap-2"><Button size="sm" variant="ghost" onClick={() => setProbMapOpen((v) => !v)}>{probMapOpen ? '收起' : '展开'}</Button></div>}
             >
               {probMapOpen ? (
               <div className="space-y-3">
@@ -841,7 +839,7 @@ export default function ScoreModelDetailPage() {
             <Panel
               title="风险等级"
               desc="标准分区间 → 风险等级：把模型标准分切成若干风险档（分段与等级一一对应，不丢档）。"
-              actions={<div className="flex items-center gap-2"><Cfg value="scoreData.json" /><Cal /><Button size="sm" variant="ghost" onClick={() => setLevelMapOpen((v) => !v)}>{levelMapOpen ? '收起' : '展开'}</Button></div>}
+              actions={<div className="flex items-center gap-2"><Button size="sm" variant="ghost" onClick={() => setLevelMapOpen((v) => !v)}>{levelMapOpen ? '收起' : '展开'}</Button></div>}
             >
               {levelMapOpen ? (
               <div className="space-y-3">
@@ -880,7 +878,7 @@ export default function ScoreModelDetailPage() {
             <Panel
               title="融合处置规则"
               desc="基础风险等级 + 命中标签 → 最终处置。规则从上至下依次匹配，命中即终止；可调整顺序、启停、编辑或删除。"
-              actions={<div className="flex items-center gap-2"><Cfg value="scoreData.json" /><Button size="sm" variant="secondary" onClick={() => setSimOpen(true)}>全链路模拟调试</Button><Button size="sm" variant="primary" onClick={openFuAdd}>新增融合规则</Button></div>}
+              actions={<div className="flex items-center gap-2"><Button size="sm" variant="secondary" onClick={() => setSimOpen(true)}>全链路模拟调试</Button><Button size="sm" variant="primary" onClick={openFuAdd}>新增融合规则</Button></div>}
             >
               <div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-1 rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-500">
                 <span className="font-medium text-slate-600">配置步骤：</span>

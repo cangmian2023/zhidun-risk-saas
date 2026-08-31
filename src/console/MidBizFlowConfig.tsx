@@ -12,9 +12,8 @@ import { Panel, Button, Modal, DetailHeader } from '../components/ui'
 import type { SearchSelectOption, SearchSelectGroup } from '../components/ui'
 import { PageShell } from './PageShell'
 import FlowCanvasEditor from './FlowCanvasEditor'
-import { CONFIG_CONTAINER, crumb } from './ConfigTemplate'
-import { Sam, Cal } from './SourceTag'
-import { MENU_BY_SUB, subNames } from './menus'
+import { CONFIG_CONTAINER, crumb } from './ConfigTemplate';
+import { MENU_BY_SUB, subNames } from './menus';
 import PagePicker from './PagePicker'
 import { useMidDashboards } from './midStore'
 import { useFlows, addFlowItem, updateFlowItem, removeFlowItem, patchFlowItemGraphs, type FlowItem } from './flowStore'
@@ -152,7 +151,7 @@ export default function MidBizFlowConfig() {
       {view === 'list' ? (
         <PageShell title="业务流程配置" crumb={crumb('业务流程配置')}
           subtitle="独立业务流程库（bizFlows.json）· 每条业务流程关联一个业务页面，配置后挂到页面操作列"
-          actions={<Sam value="bizFlows.json (flows)" />} />
+           />
       ) : (
         <>
           <style>{DASH_EDIT_CSS}</style>
@@ -165,7 +164,7 @@ export default function MidBizFlowConfig() {
               ? <input className="dash-edit-input" value={selItem.desc ?? ''} placeholder="业务流程描述（可选）" onChange={(e) => updateFlowItem(selItem.id, (f) => ({ ...f, desc: e.target.value }))} style={editDescStyle} />
               : undefined}
             backLabel="返回列表" onBack={backToList}
-            actions={<Sam value="bizFlows.json (flows)" />} />} />
+            />} />
         </>
       )}
 
@@ -191,13 +190,12 @@ export default function MidBizFlowConfig() {
                 const refTxt = ref.comps > 0 ? `${ref.comps} 个组件 / ${ref.pages} 个页面` : '—'
                 return (
                   <tr key={it.id} style={{ borderTop: '1px solid #F1F5F9' }}>
-                    <td style={{ padding: '8px', fontWeight: 600, color: '#111827', maxWidth: 180, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={it.name}>{it.name}<Sam f="flows[].name" v={it.name} /></td>
+                    <td style={{ padding: '8px', fontWeight: 600, color: '#111827', maxWidth: 180, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={it.name}>{it.name}</td>
                     <td style={{ padding: '8px', color: '#374151', maxWidth: 220, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={pgNames.join(' / ')}>{pgNames.join(' / ') || '—'}</td>
                     <td style={{ padding: '8px', fontFamily: 'monospace', fontSize: 12, color: '#6B7280', maxWidth: 260, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={pgRoutes.join('；')}>{pgRoutes.join('；') || '—'}</td>
                     <td style={{ padding: '8px', color: '#6B7280', whiteSpace: 'nowrap' }}>{it.flowGraphs?.length ?? 0} 条</td>
                     <td style={{ padding: '8px', color: '#6B7280', whiteSpace: 'nowrap' }}>
                       <span style={{ color: '#6B7280' }}>{refTxt}</span>
-                      <Cal f="dashboards[].widgets[].flowKey" v={refTxt} />
                     </td>
                     <td style={{ padding: '8px', display: 'flex', gap: 6, whiteSpace: 'nowrap' }}>
                       <button onClick={() => openDetail(it)} style={{ ...miniBtn, borderColor: SEL, color: SEL }}>查看</button>

@@ -1,5 +1,4 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { Sam, Cfg } from './SourceTag';
 import { computeCenterFit, Bounds } from './graphFit';
 import ctrlData from './entControllerRelation.json';
 
@@ -256,9 +255,7 @@ export default function EntControllerRelation({ companyName }: { companyName?: s
         </button>
       </div>
 
-      {/* 数据来源标签 */}
       <div style={{ marginTop: 12 }}>
-        <Sam label="控制人关系" /> <Cfg label="切换配置" />
       </div>
     </div>
   );

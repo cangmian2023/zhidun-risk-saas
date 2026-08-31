@@ -11,7 +11,6 @@ import { useNavigate } from 'react-router-dom';
 import { Panel, StatCard, DataTable } from '../components/ui';
 import type { Column, Row } from '../components/ui';
 import { BarChart, DonutChart, LineChart } from '../components/charts';
-import { Sam, Cal } from './SourceTag';
 import { PageShell } from './PageShell';
 import { useMidDashboards, useMidDataSources, useMidMetrics } from './midStore';
 import { resolveMetricsForRows, groupRowsByDim, applyMetricFilters, type MidWidget, type MidDataSource, type MidMetric } from './midData';
@@ -122,7 +121,7 @@ export default function EnterpriseDashboard({ pageKey }: { pageKey: string }) {
   return (
     <div style={{ padding: 24, maxWidth: 1280, background: '#F1F5F9', minHeight: '100vh' }}>
       <PageShell title={page.name} crumb={`企业风控 / ${page.group}`} subtitle={page.desc}
-        actions={<><Sam label="页面配置" value="midDashboards.json" /><Sam label="样例数据" value={`${pageDs.reduce((a, s) => a + (s.rows?.length || 0), 0)} 行`} /><Cal label="实时计算" /></>} />
+        actions={<></>} />
 
       {/* 顶部统计条（metric 类 widget 汇总展示：大数字 + 业务副标题） */}
       {page.widgets.some((w) => w.type === 'metric') && (

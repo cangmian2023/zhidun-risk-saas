@@ -6,15 +6,14 @@
  *         担保与经营 + 贷后风险 + 操作日志尾）收敛为一个主 Tab；央行征信、授信负债与共债、
  *         关系网络各自成 Tab。做到「一眼看全、按需下钻」。
  */
-import { useState, useEffect, useMemo } from 'react'
-import { useSearchParams } from 'react-router-dom'
-import { Panel, DataTable, Button, Badge, Modal, DetailHeader } from '../components/ui'
-import type { Column, Row } from '../components/ui'
-import { Sam, Cal } from './SourceTag'
-import { PageShell } from './PageShell'
-import { usePageNav } from './pageNav'
-import { RelationGraphView } from './RelationGraphView'
-import { ModelScorePanel } from './ModelScorePanel'
+import { useState, useEffect, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { Panel, DataTable, Button, Badge, Modal, DetailHeader } from '../components/ui';
+import type { Column, Row } from '../components/ui';
+import { PageShell } from './PageShell';
+import { usePageNav } from './pageNav';
+import { RelationGraphView } from './RelationGraphView';
+import { ModelScorePanel } from './ModelScorePanel';
 import {
   useCustData,
   toggleFollowCust,
@@ -449,7 +448,7 @@ export function CustProfile({ custId, title = '单客详情' }: { custId?: strin
   // ---- 授信负债与共债（合并：额度 / 台账 / 多头 / 催收） ----
   const limitCols: Column[] = [
     { key: 'product', label: '贷款产品', type: 'text', fixed: 'left', width: '220px' },
-    { key: 'balance', label: '已用额度', type: 'money', width: '140px', tag: 'calc' },
+    { key: 'balance', label: '已用额度', type: 'money', width: '140px' },
     { key: 'rate', label: '年化利率', type: 'percent', width: '120px' },
     { key: 'status', label: '状态', type: 'badge', badgeKind: 'green', width: '110px' },
   ]
@@ -508,8 +507,6 @@ export function CustProfile({ custId, title = '单客详情' }: { custId?: strin
             backTo={isSc ? '/console/sc/score-records' : undefined}
             actions={
               <>
-                <Sam label="单客样例" value="custProfileData.ts" />
-                <Cal label="实时聚合" />
               </>
             }
           />
@@ -576,7 +573,7 @@ export function CustProfile({ custId, title = '单客详情' }: { custId?: strin
         <div style={{ border: '1px solid #E2E8F0', borderRadius: 12, padding: 12, background: '#fff', display: 'flex', flexDirection: 'column' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
             <span style={{ fontSize: 13, fontWeight: 700, color: '#0F172A' }}>模型评分</span>
-            <span style={{ fontSize: 11, color: '#94A3B8' }}>点击卡片查看明细 <Sam label="样例" value="custProfileData.ts" /></span>
+            <span style={{ fontSize: 11, color: '#94A3B8' }}>点击卡片查看明细 </span>
           </div>
           <ModelScorePanel scores={cur.scores} onCardClick={(prod) => goDetail(`/console/cr/mid-cust-score?cust=${cur.custId}&prod=${prod}`)} />
         </div>
@@ -621,7 +618,7 @@ export function CustProfile({ custId, title = '单客详情' }: { custId?: strin
           )}
 
           {/* 基础档案：身份 / 职业 / 联系 */}
-          <Panel title="基础档案" desc={<span>身份 / 职业 / 联系 · 字段级外部核验标记 · <Sam value="custProfileData.ts" /></span>}>
+          <Panel title="基础档案" desc={<span>身份 / 职业 / 联系 · 字段级外部核验标记 · </span>}>
             <div style={{ fontSize: 13, fontWeight: 600, color: '#475569', margin: '2px 0 8px' }}>身份信息</div>
             <div style={{ display: 'grid', gridTemplateColumns: fieldCols === 3 ? '1fr 1fr 1fr' : fieldCols === 2 ? '1fr 1fr' : '1fr', gap: '6px 24px', fontSize: 13, marginBottom: 16 }}>
               {infoDefs.map((def) => {
@@ -706,7 +703,7 @@ export function CustProfile({ custId, title = '单客详情' }: { custId?: strin
           </Panel>
 
           {/* 实名与设备核验 */}
-          <Panel title="实名与设备核验" desc={<span>设备指纹 / 环境反欺诈 · <Sam value="custProfileData.ts" /></span>}>
+          <Panel title="实名与设备核验" desc={<span>设备指纹 / 环境反欺诈 · </span>}>
             <div style={{ display: 'grid', gridTemplateColumns: fieldCols === 3 ? '1fr 1fr 1fr' : fieldCols === 2 ? '1fr 1fr' : '1fr', gap: '6px 24px', fontSize: 13 }}>
               {[
                 ['设备号', cur.device.device],
@@ -725,7 +722,7 @@ export function CustProfile({ custId, title = '单客详情' }: { custId?: strin
             </div>
           </Panel>
           {cur.device.sameDeviceAccounts.length > 0 && (
-            <Panel title="同设备多账号" desc={<span>同设备登录的其他借贷账号 · <Cal label="实时聚合" /></span>}>
+            <Panel title="同设备多账号" desc={<span>同设备登录的其他借贷账号 · </span>}>
               <DataTable
                 columns={[{ key: 'name', label: '姓名', type: 'text', fixed: 'left' }, { key: 'custId', label: '客户标识', type: 'text' }]}
                 rows={sameDevRows}
@@ -737,7 +734,7 @@ export function CustProfile({ custId, title = '单客详情' }: { custId?: strin
           )}
 
           {/* 行为画像：分组 + 说明，让“看不懂在讲什么”变清晰（需求 4） */}
-          <Panel title="行为画像" desc={<span>用信 / 还款 / 查询 / 风险的行为特征 · <Cal label="实时聚合" /></span>}>
+          <Panel title="行为画像" desc={<span>用信 / 还款 / 查询 / 风险的行为特征 · </span>}>
             {dangerBehavior > 0 && (
               <div style={{ marginBottom: 12, borderRadius: 12, border: '1px solid #FECACA', background: '#FEF2F2', padding: '10px 14px', fontSize: 13, color: '#B91C1C' }}>
                 ⚠ 命中 {dangerBehavior} 项风险行为（逾期还款 / 多头借贷 / 夜间用信 / 额度使用率过高），建议结合风险预警联动处置。
@@ -777,7 +774,7 @@ export function CustProfile({ custId, title = '单客详情' }: { custId?: strin
           </Panel>
 
           {/* 操作日志（合并：处置工单 + 自动核验 + 央行征信调取 同一时间线，按时间倒序；每条带类别标签，需求：按详情整合到一起） */}
-          <Panel title="操作日志" desc={<span>处置工单 + 自动核验 + 央行征信调取 · 共 {allLogs.length} 条 · <Sam value="custProfileData.ts" /></span>}>
+          <Panel title="操作日志" desc={<span>处置工单 + 自动核验 + 央行征信调取 · 共 {allLogs.length} 条 · </span>}>
             {/* 类型筛选 */}
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
               {['全部', '处置工单', '历史操作', '自动核验', '征信调取'].map((c) => (
@@ -818,7 +815,7 @@ export function CustProfile({ custId, title = '单客详情' }: { custId?: strin
       {/* ================= 风险预警（风险预警 + 黑名单反欺诈 + 司法涉诉 + 贷后风险，需求） ================= */}
       {tab === '风险预警' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <Panel title="风险预警" desc={<span>贷中监控命中规则 · 优先处置入口 · <Sam value="custProfileData.ts" /></span>}>
+          <Panel title="风险预警" desc={<span>贷中监控命中规则 · 优先处置入口 · </span>}>
             <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 12 }}>
               <span style={{ fontSize: 12, padding: '4px 10px', borderRadius: 999, background: '#FEF2F2', color: '#DC2626' }}>红 {redCount}</span>
               <span style={{ fontSize: 12, padding: '4px 10px', borderRadius: 999, background: '#FFFBEB', color: '#D97706' }}>黄 {yellowCount}</span>
@@ -843,7 +840,7 @@ export function CustProfile({ custId, title = '单客详情' }: { custId?: strin
           </Panel>
 
           {/* 黑名单反欺诈：独立区块（本行黑名单 / 互金协会灰名单 等） */}
-          <Panel title="黑名单反欺诈" desc={<span>本行黑名单 + 互金协会灰名单等反欺诈命中 · <Cal label="实时聚合" /></span>}>
+          <Panel title="黑名单反欺诈" desc={<span>本行黑名单 + 互金协会灰名单等反欺诈命中 · </span>}>
             {cur.postRisk.blacklist.length ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {cur.postRisk.blacklist.map((b, i) => {
@@ -881,7 +878,7 @@ export function CustProfile({ custId, title = '单客详情' }: { custId?: strin
           </Panel>
 
           {/* 贷后风险：资金流向监控 */}
-          <Panel title="贷后风险" desc={<span>资金流向监控 · 与风险预警同属贷中监控 · <Cal label="实时聚合" /></span>}>
+          <Panel title="贷后风险" desc={<span>资金流向监控 · 与风险预警同属贷中监控 · </span>}>
             <DataTable
               columns={[
                 { key: 'date', label: '日期', type: 'text', width: '130px' },
@@ -898,7 +895,7 @@ export function CustProfile({ custId, title = '单客详情' }: { custId?: strin
           </Panel>
 
           {/* 司法涉诉（并入风险预警 Tab：同属风险视角） */}
-          <Panel title="司法涉诉" desc={<span>裁判文书 / 被执行人 / 失信名单等涉诉信息 · 结构化展示 · <Cal label="实时聚合" /></span>}>
+          <Panel title="司法涉诉" desc={<span>裁判文书 / 被执行人 / 失信名单等涉诉信息 · 结构化展示 · </span>}>
             {cur.litigation.length ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {cur.litigation.map((l, i) => {
@@ -944,7 +941,7 @@ export function CustProfile({ custId, title = '单客详情' }: { custId?: strin
               ⚠ 担保预警（{cur.collateralBiz.guaranteeAlert.level}）：{cur.collateralBiz.guaranteeAlert.rule} — {cur.collateralBiz.guaranteeAlert.desc}
             </div>
           )}
-          <Panel title="担保与经营概览" desc={<span>担保覆盖 + 经营健康度 · <Cal label="实时聚合" /></span>}>
+          <Panel title="担保与经营概览" desc={<span>担保覆盖 + 经营健康度 · </span>}>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 12 }}>
               <SummaryCard label="担保物数量" value={cur.collateralBiz.collateral.length} unit="项" />
               <SummaryCard label="经营实体数" value={cur.collateralBiz.business.length} unit="家" />
@@ -966,7 +963,7 @@ export function CustProfile({ custId, title = '单客详情' }: { custId?: strin
             </div>
           </Panel>
 
-          <Panel title="担保抵押物" desc={<span>抵押 / 质押物 · 含第三方核验 · <Sam value="custProfileData.ts" /></span>}>
+          <Panel title="担保抵押物" desc={<span>抵押 / 质押物 · 含第三方核验 · </span>}>
             {cur.collateralBiz.collateral.length ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 {cur.collateralBiz.collateral.map((c, i) => (
@@ -989,7 +986,7 @@ export function CustProfile({ custId, title = '单客详情' }: { custId?: strin
             )}
           </Panel>
 
-          <Panel title="经营实体" desc={<span>名下经营主体 · 含基本信息与风险信息 · <Sam value="custProfileData.ts" /></span>}>
+          <Panel title="经营实体" desc={<span>名下经营主体 · 含基本信息与风险信息 · </span>}>
             {cur.collateralBiz.business.length ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {cur.collateralBiz.business.map((b, i) => {
@@ -1073,7 +1070,7 @@ export function CustProfile({ custId, title = '单客详情' }: { custId?: strin
             <span style={{ marginLeft: 'auto', fontSize: 11, color: '#94A3B8' }}>数据来源：人行征信接口（样例）</span>
           </div>
 
-          <Panel title="标注及声明信息" desc={<span>本人声明 / 异议标注 · <Sam value="custProfileData.ts" /></span>} className="mt-3">
+          <Panel title="标注及声明信息" desc={<span>本人声明 / 异议标注 · </span>} className="mt-3">
             {cur.credit.annotations.length ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {cur.credit.annotations.map((a, i) => (
@@ -1091,7 +1088,7 @@ export function CustProfile({ custId, title = '单客详情' }: { custId?: strin
             )}
           </Panel>
 
-          <Panel title="信息概要" desc={<span>账户数汇总 · 人行征信口径（与他行授信/余额的合并视角）· <Sam value="custProfileData.ts" /></span>} className="mt-3">
+          <Panel title="信息概要" desc={<span>账户数汇总 · 人行征信口径（与他行授信/余额的合并视角）· </span>} className="mt-3">
             <div style={{ fontSize: 12, color: '#94A3B8', marginBottom: 8 }}>① 账户数</div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 12 }}>
               <SummaryCard label="信用卡账户" value={cur.credit.summary.creditCards} unit="个" />
@@ -1112,12 +1109,12 @@ export function CustProfile({ custId, title = '单客详情' }: { custId?: strin
           </Panel>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-            <Panel title="征信逾期" desc={<span>当前征信逾期 · <Cal label="实时聚合" /></span>}>
+            <Panel title="征信逾期" desc={<span>当前征信逾期 · </span>}>
               <div style={{ fontSize: 13, color: '#475569' }}>
                 逾期笔数：<b style={{ color: cur.credit.overdue.count > 0 ? '#DC2626' : '#16A34A' }}>{cur.credit.overdue.count}</b> 笔 ｜ 逾期金额：<b style={{ color: cur.credit.overdue.amount > 0 ? '#DC2626' : '#16A34A' }}>{money(cur.credit.overdue.amount)}</b>
               </div>
             </Panel>
-            <Panel title="对外担保" desc={<span>担保责任 · <Sam value="custProfileData.ts" /></span>}>
+            <Panel title="对外担保" desc={<span>担保责任 · </span>}>
               {cur.credit.guarantee.length ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                   {cur.credit.guarantee.map((g, i) => (
@@ -1133,7 +1130,7 @@ export function CustProfile({ custId, title = '单客详情' }: { custId?: strin
             </Panel>
           </div>
 
-          <Panel title="近 6 月查询记录" desc={<span>征信查询明细 · <Sam value="custProfileData.ts" /></span>} className="mt-3">
+          <Panel title="近 6 月查询记录" desc={<span>征信查询明细 · </span>} className="mt-3">
             <div style={{ fontSize: 12, color: '#94A3B8', marginBottom: 8 }}>机构查询</div>
             <DataTable columns={queryCols} rows={queryRows} empty="无机构查询记录" pager defaultPageSize={8} />
             <div style={{ fontSize: 12, color: '#94A3B8', margin: '16px 0 8px' }}>本人查询</div>
@@ -1144,15 +1141,15 @@ export function CustProfile({ custId, title = '单客详情' }: { custId?: strin
             )}
           </Panel>
 
-          <Panel title="信贷账户明细" desc={<span>人行征信账户 · 人行口径（含他行账户；本行借据见「授信负债与共债」Tab）· <Sam value="custProfileData.ts" /></span>} className="mt-3">
+          <Panel title="信贷账户明细" desc={<span>人行征信账户 · 人行口径（含他行账户；本行借据见「授信负债与共债」Tab）· </span>} className="mt-3">
             <DataTable columns={acctCols} rows={acctRows} empty="无信贷账户" pager defaultPageSize={8} />
           </Panel>
 
-          <Panel title="授信协议信息" desc={<span>循环额度共享协议 · <Sam value="custProfileData.ts" /></span>} className="mt-3">
+          <Panel title="授信协议信息" desc={<span>循环额度共享协议 · </span>} className="mt-3">
             <DataTable columns={agreeCols} rows={agreeRows} empty="无授信协议" pager defaultPageSize={8} />
           </Panel>
 
-          <Panel title="相关还款责任（共同借款）" desc={<span>共同借款 / 连带责任 · 与他行共同承担（区别于「授信负债与共债」Tab 的独立跨机构借贷）· <Sam value="custProfileData.ts" /></span>} className="mt-3">
+          <Panel title="相关还款责任（共同借款）" desc={<span>共同借款 / 连带责任 · 与他行共同承担（区别于「授信负债与共债」Tab 的独立跨机构借贷）· </span>} className="mt-3">
             {cur.credit.relatedRepayList.length ? (
               <DataTable columns={repayCols} rows={repayRows} empty="无相关还款责任" pager defaultPageSize={8} />
             ) : (
@@ -1160,7 +1157,7 @@ export function CustProfile({ custId, title = '单客详情' }: { custId?: strin
             )}
           </Panel>
 
-          <Panel title="公共记录明细" desc={<span>欠税 / 民事判决 / 强制执行 / 行政处罚 · <Sam value="custProfileData.ts" /></span>} className="mt-3">
+          <Panel title="公共记录明细" desc={<span>欠税 / 民事判决 / 强制执行 / 行政处罚 · </span>} className="mt-3">
             {cur.credit.publicRecords.length ? (
               <DataTable columns={pubCols} rows={pubRows} empty="无公共记录" pager defaultPageSize={8} />
             ) : (
@@ -1173,7 +1170,7 @@ export function CustProfile({ custId, title = '单客详情' }: { custId?: strin
       {/* ================= 授信负债与共债（合并：额度 / 台账 / 多头 / 催收，需求 3 & 7） ================= */}
       {tab === '授信负债与共债' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <Panel title="额度与负债概览" desc={<span>本行口径：本行授信与在贷总览（金额与央行征信口径不同，勿混淆）· <Cal label="实时聚合" /></span>}>
+          <Panel title="额度与负债概览" desc={<span>本行口径：本行授信与在贷总览（金额与央行征信口径不同，勿混淆）· </span>}>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 12 }}>
               <SummaryCard label="授信总额" value={cur.creditLimit} unit="元" />
               <SummaryCard label="已用额度" value={cur.usedLimit} unit="元" danger={cur.usedLimit / Math.max(cur.creditLimit, 1) > 0.9} />
@@ -1184,7 +1181,7 @@ export function CustProfile({ custId, title = '单客详情' }: { custId?: strin
             </div>
           </Panel>
 
-          <Panel title="催收案件" desc={<span>逾期催收进展 · <Sam value="custProfileData.ts" /></span>}>
+          <Panel title="催收案件" desc={<span>逾期催收进展 · </span>}>
             {cur.collections.length ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 {cur.collections.map((cs) => (
@@ -1234,15 +1231,15 @@ export function CustProfile({ custId, title = '单客详情' }: { custId?: strin
             )}
           </Panel>
 
-          <Panel title="额度明细" desc={<span>各产品已用额度 · <Cal label="实时聚合" /></span>}>
+          <Panel title="额度明细" desc={<span>各产品已用额度 · </span>}>
             <DataTable columns={limitCols} rows={limitRows} empty="无" pager defaultPageSize={10} />
           </Panel>
 
-          <Panel title="贷款台账" desc={<span>在贷借据明细 · 本行核心系统（本行口径）· <Sam value="custProfileData.ts" /></span>}>
+          <Panel title="贷款台账" desc={<span>在贷借据明细 · 本行核心系统（本行口径）· </span>}>
             <DataTable columns={debtCols} rows={debtRows} empty="无在贷记录" pager defaultPageSize={10} />
           </Panel>
 
-          <Panel title="多头共债" desc={<span>跨机构独立借贷（共同借款 / 连带责任见「央行征信」Tab 相关还款责任）· 近 30 天多头申请 {cur.coDebt.applications30d} 次 · <Cal label="实时聚合" /></span>}>
+          <Panel title="多头共债" desc={<span>跨机构独立借贷（共同借款 / 连带责任见「央行征信」Tab 相关还款责任）· 近 30 天多头申请 {cur.coDebt.applications30d} 次 · </span>}>
             <DataTable columns={coDebtCols} rows={coDebtRows} empty="无共债" pager defaultPageSize={8} />
             {cur.coDebt.chain.length > 0 && (
               <div style={{ marginTop: 12 }}>
@@ -1260,7 +1257,7 @@ export function CustProfile({ custId, title = '单客详情' }: { custId?: strin
 
       {/* ================= 关系网络（升级：布局 / 主题叠加 / 点击属性 / 元数据，需求 1） ================= */}
       {tab === '关系网络' && (
-        <Panel title="关系图谱" desc={<span>融合联系人、共债、资金、担保、设备等多维关系 · 点击节点/关系查看属性 · 右侧清单与图谱联动 · <Sam value="custProfileData.ts" /></span>}>
+        <Panel title="关系图谱" desc={<span>融合联系人、共债、资金、担保、设备等多维关系 · 点击节点/关系查看属性 · 右侧清单与图谱联动 · </span>}>
           <RelationGraphView
             graph={cur.relationGraph}
             theme={relTheme}

@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { Sam, Cfg } from './SourceTag';
 import beneData from './entBeneficialOwner.json';
 
 /* 企业档案 · 企业图谱 · 受益所有人（从上至下流式表格布局）
@@ -225,9 +224,7 @@ export default function EntBeneficialOwner({ companyName }: { companyName?: stri
         )}
       </div>
 
-      {/* 数据来源标签 */}
       <div style={{ marginTop: 16 }}>
-        <Sam label="受益所有人" /> <Cfg label="识别配置" />
       </div>
     </div>
   );

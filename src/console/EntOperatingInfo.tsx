@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { Sam, Cfg } from './SourceTag';
 import oiData from './entOperatingInfo.json';
 
 /* 企业档案 · 经营信息
@@ -182,9 +181,7 @@ export default function EntOperatingInfo({ companyName, menu }: { companyName?: 
         </div>
       )}
 
-      {/* 数据来源标签 */}
       <div style={{ marginTop: 16 }}>
-        <Sam label="经营信息" /> <Cfg label="数据配置" />
       </div>
     </div>
   );

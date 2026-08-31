@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { Sam, Cfg } from './SourceTag';
 import liData from './entListingInfo.json';
 
 /* 企业档案 · 上市信息
@@ -305,9 +304,7 @@ export default function EntListingInfo({ companyName }: { companyName?: string }
         </div>
       )}
 
-      {/* 数据来源标签 */}
       <div style={{ marginTop: 16 }}>
-        <Sam label="上市信息" /> <Cfg label="数据配置" />
       </div>
     </div>
   );

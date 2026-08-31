@@ -1,9 +1,9 @@
 // 企业档案 · 财产信息（arc-property）· 1:1 复刻「企业档案 - 财产信息 也是 风控子系统的 财产线索」
 // 与风控子系统「财产线索」同源：线索信息 / 扩大主体 / 资产状况 三页签
 // 数据：本地样例 arcProperty.json（橘 Sam）
-import { useState, type ReactNode } from 'react'
-import { EpPage, EpCard, EpTag, EpBtn, DataTable, useSample, Sam } from '../../epCommon'
-import type { Row, Column } from '../../../../components/ui'
+import { useState, type ReactNode } from 'react';
+import { EpPage, EpCard, EpTag, EpBtn, DataTable, useSample } from '../../epCommon';
+import type { Row, Column } from '../../../../components/ui';
 
 const seed = {
   title: '财产线索',
@@ -111,7 +111,7 @@ export default function ArcProperty({ params }: { params: URLSearchParams }) {
 
       {/* 筛选区（仅线索信息） */}
       {tab === 'clue' && (
-        <EpCard title="筛选" desc={<Sam value="arcProperty.json" />}>
+        <EpCard title="筛选" >
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', marginBottom: 12 }}>
             <span style={{ fontSize: 13, color: '#475569' }}>资金流向：</span>
             {data.flowFilters.map((f) => (
@@ -147,7 +147,7 @@ export default function ArcProperty({ params }: { params: URLSearchParams }) {
 
       {/* 结果表 */}
       <div style={{ marginTop: 14 }}>
-        <EpCard title={tabs.find((t) => t.key === tab)!.label} desc={<Sam value="arcProperty.json" />}>
+        <EpCard title={tabs.find((t) => t.key === tab)!.label} >
           <DataTable columns={colMap[tab]} rows={rowsMap[tab]} pager exportable exportName={tabs.find((t) => t.key === tab)!.label} empty="暂无数据" />
         </EpCard>
       </div>

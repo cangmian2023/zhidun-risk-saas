@@ -1,6 +1,5 @@
-import { useState, useEffect, useRef } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
-import { Sam, Cal } from './SourceTag'
+import { useState, useEffect, useRef } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import EntChainGraph from './EntChainGraph'
 import EntOperatingRisk from './EntOperatingRisk'
 import EntOperatingInfo from './EntOperatingInfo'

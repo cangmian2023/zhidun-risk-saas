@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
 import { PageShell } from './PageShell';
-import { Sam } from './SourceTag';
 
 /* 地图拓客 · 按截图 1:1 手写 React 复刻
  * 左侧：Tab 条 + 搜索面板；右侧：大地图区 + 右上角结果浮层
@@ -348,7 +347,7 @@ export default function DmMapProspect() {
                 <span className="sr-pager-btn">›</span>
               </div>
               <div className="sr-source">
-                <Sam /> 企业搜索结果样例（功能分解/地图拓客搜索详情弹窗 1:1 复刻）
+                 企业搜索结果样例（功能分解/地图拓客搜索详情弹窗 1:1 复刻）
               </div>
             </div>
           </div>

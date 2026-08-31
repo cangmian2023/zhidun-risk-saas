@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { Sam, Cfg } from './SourceTag';
 import ipData from './entIntellectualProperty.json';
 
 /* 企业档案 · 知识产权
@@ -171,9 +170,7 @@ export default function EntIntellectualProperty({ companyName }: { companyName?:
         </div>
       )}
 
-      {/* 数据来源标签 */}
       <div style={{ marginTop: 16 }}>
-        <Sam label="知识产权" /> <Cfg label="数据配置" />
       </div>
     </div>
   );

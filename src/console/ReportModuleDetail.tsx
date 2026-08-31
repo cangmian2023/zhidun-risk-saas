@@ -20,10 +20,6 @@ const cn = (...c: (string | false | undefined)[]) => c.filter(Boolean).join(' ')
 const V = (v: any) => (v != null ? String(v) : 'null')
 
 /* ─── 调试标签 ─── */
-const tagS: React.CSSProperties = { display: 'inline-block', fontSize: 9, fontFamily: 'monospace', padding: '0 3px', borderRadius: 2, marginLeft: 3, verticalAlign: 'middle', lineHeight: '14px', fontWeight: 400 }
-const Tpl = ({ f, v }: { f: string; v?: any }) => <span style={{ ...tagS, background: '#DBEAFE', color: '#1D4ED8', border: '1px solid #93C5FD' }}>{f}={v ?? 'null'}</span>
-const Dat = ({ f, v }: { f: string; v?: any }) => <span style={{ ...tagS, background: '#FFF7ED', color: '#C2410C', border: '1px solid #FDBA74' }}>{f}={v ?? 'null'}</span>
-const Cal = ({ f, v }: { f: string; v?: any }) => <span style={{ ...tagS, background: '#F3F4F6', color: '#6B7280', border: '1px solid #D1D5DB' }}>{f}={v ?? 'null'}</span>
 
 /* ─── 共享组件 ─── */
 function SectionTable({ head, children }: { head: string[]; children: ReactNode }) {
@@ -59,23 +55,22 @@ function DataSourceSection({ section, data, title, secId, totalScore, reportType
       <div className="mb-4 flex items-center gap-2">
         <span className={cn('text-3xl font-bold tabular-nums', totalScore >= 0 ? 'text-emerald-600' : 'text-rose-600')}>{totalScore >= 0 ? '+' : '−'}{Math.abs(totalScore)}</span>
         <span className={cn('rounded-full px-2.5 py-0.5 text-xs font-semibold', totalScore >= 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700')}>{totalScore >= 0 ? '达标加分' : '命中扣分'}</span>
-        <Cal f={`得分汇总`} v={totalScore} />
       </div>
-      <div className="mb-3 text-xs text-slate-500">本卡得分 · 集合权重 {section?.weight ?? 1} · 本卡满分 {cardMax}<Tpl f="section.weight" v={section?.weight ?? 1} /><Cal f="cardMax" v={cardMax} /></div>
+      <div className="mb-3 text-xs text-slate-500">本卡得分 · 集合权重 {section?.weight ?? 1} · 本卡满分 {cardMax}</div>
 
       {mode === 'list' ? (
         <div className="space-y-4">
           {data.groups.map((g, gi) => (
             <div key={gi}>
-              <div className="mb-2 text-xs font-medium text-slate-500">{g.name}<Tpl f={`fieldGroups[${gi}].name`} v={g.name} /></div>
+              <div className="mb-2 text-xs font-medium text-slate-500">{g.name}</div>
               <SectionTable head={['字段', '内容', '校验', '得分', '总分', ...(hasOps ? ['操作'] : [])]}>
                 {g.rows.map((r: any, ri: number) => (
                   <tr key={ri} className="border-b border-slate-100">
-                    <td className={`px-3 py-2 text-sm text-slate-500 ${freezeF}`}>{r.field}<Tpl f={`fields[${ri}].name`} v={r.field} /></td>
-                    <td className="px-3 py-2 text-sm font-medium text-ink-900">{V(r.value)}<Dat f={`JSON:value`} v={V(r.value)} /></td>
-                    <td className="px-3 py-2">{r.valid ? <span className="text-[11px] text-emerald-500">✓ 正常</span> : <Badge kind="red">异常</Badge>}<Dat f="JSON:valid" v={r.valid} /></td>
-                    <td className="px-3 py-2"><ScoreTag pts={r.score} /><Dat f="JSON:score" v={r.score} /></td>
-                    <td className="px-3 py-2 text-xs text-slate-400">{section?.fields?.[ri]?.scorePoints ?? '-'}<Tpl f="scorePoints" v={section?.fields?.[ri]?.scorePoints} /></td>
+                    <td className={`px-3 py-2 text-sm text-slate-500 ${freezeF}`}>{r.field}</td>
+                    <td className="px-3 py-2 text-sm font-medium text-ink-900">{V(r.value)}</td>
+                    <td className="px-3 py-2">{r.valid ? <span className="text-[11px] text-emerald-500">✓ 正常</span> : <Badge kind="red">异常</Badge>}</td>
+                    <td className="px-3 py-2"><ScoreTag pts={r.score} /></td>
+                    <td className="px-3 py-2 text-xs text-slate-400">{section?.fields?.[ri]?.scorePoints ?? '-'}</td>
                     {hasOps && <td className={`px-3 py-2 ${freezeL}`}>{section?.fields?.[ri]?.hitReject ? <button className="rounded border border-slate-200 px-2 py-0.5 text-[11px] text-slate-600">豁免</button> : null}</td>}
                   </tr>
                 ))}
@@ -87,17 +82,17 @@ function DataSourceSection({ section, data, title, secId, totalScore, reportType
         <div className="space-y-4">
           {data.groups.map((g, gi) => (
             <div key={gi}>
-              <div className="mb-2 text-xs font-medium text-slate-500">{g.name}<Tpl f={`fieldGroups[${gi}].name`} v={g.name} /></div>
+              <div className="mb-2 text-xs font-medium text-slate-500">{g.name}</div>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {g.rows.map((r: any, ri: number) => (
                   <div key={ri} className="rounded-xl border border-slate-200 bg-white p-3">
                     <div className="flex items-center justify-between gap-2">
-                      <span className="truncate text-xs text-slate-500">{r.field}<Tpl f={`fields[${ri}].name`} v={r.field} /></span>
+                      <span className="truncate text-xs text-slate-500">{r.field}</span>
                       {r.valid ? <span className="text-[11px] text-emerald-500">✓</span> : <Badge kind="red">!</Badge>}
                     </div>
                     <div className="mt-1.5 flex items-center justify-between gap-2">
-                      <span className="truncate text-sm font-semibold text-ink-900">{V(r.value)}<Dat f="JSON:value" v={V(r.value)} /></span>
-                      <ScoreTag pts={r.score} max={section?.fields?.[ri]?.scorePoints} /><Dat f="JSON:score" v={r.score} />
+                      <span className="truncate text-sm font-semibold text-ink-900">{V(r.value)}</span>
+                      <ScoreTag pts={r.score} max={section?.fields?.[ri]?.scorePoints} />
                     </div>
                   </div>
                 ))}
@@ -121,7 +116,6 @@ function ApiSection({ section, data, title, secId, totalScore, reportType }: { s
       <div className="mb-4 flex items-center gap-2">
         <span className={cn('text-3xl font-bold tabular-nums', totalScore >= 0 ? 'text-emerald-600' : 'text-rose-600')}>{totalScore >= 0 ? '+' : '−'}{Math.abs(totalScore)}</span>
         <span className={cn('rounded-full px-2.5 py-0.5 text-xs font-semibold', totalScore >= 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700')}>{totalScore >= 0 ? '达标加分' : '命中扣分'}</span>
-        <Cal f="得分汇总" v={totalScore} />
       </div>
       <div className="mb-3 text-xs text-slate-500">本卡得分 · 集合权重 {section?.weight ?? 1} · 本卡满分 {cardMax}</div>
       {mode === 'card' ? (
@@ -136,15 +130,15 @@ function ApiSection({ section, data, title, secId, totalScore, reportType }: { s
               </div>
               <div className="p-2.5">
                 <div className="flex items-center justify-between gap-1.5">
-                  <span className="truncate text-xs font-semibold text-ink-900">{img.name}<Dat f="JSON:name" v={img.name} /></span>
+                  <span className="truncate text-xs font-semibold text-ink-900">{img.name}</span>
                   {img.type === '视频' ? <Badge kind="blue">视频</Badge> : <Badge kind="gray">图片</Badge>}
                 </div>
                 <div className="mt-1 flex items-center justify-between">
-                  <span className="text-[11px] text-slate-500">{V(img.value)}<Dat f="JSON:value" v={V(img.value)} /></span>
+                  <span className="text-[11px] text-slate-500">{V(img.value)}</span>
                   {img.valid ? <span className="text-[11px] text-emerald-500">✓</span> : <Badge kind="red">!</Badge>}
                 </div>
                 <div className="mt-1.5 flex items-center justify-between">
-                  <ScoreTag pts={img.score} max={section?.fields?.[i]?.scorePoints} /><Dat f="JSON:score" v={img.score} />
+                  <ScoreTag pts={img.score} max={section?.fields?.[i]?.scorePoints} />
                 </div>
               </div>
             </div>
@@ -154,12 +148,12 @@ function ApiSection({ section, data, title, secId, totalScore, reportType }: { s
       <SectionTable head={['名称', '类型', '预览', '校验', '得分', '总分', ...(hasOps ? ['操作'] : [])]}>
         {data.map((img: any, i: number) => (
           <tr key={i} className="border-b border-slate-100 align-top">
-            <td className={`px-3 py-2 text-sm font-medium text-ink-900 ${freezeF}`}>{img.name}<Dat f="JSON:name" v={img.name} /></td>
-            <td className="px-3 py-2">{img.type === '视频' ? <Badge kind="blue">视频</Badge> : '图片'}<Dat f="JSON:type" v={img.type} /></td>
+            <td className={`px-3 py-2 text-sm font-medium text-ink-900 ${freezeF}`}>{img.name}</td>
+            <td className="px-3 py-2">{img.type === '视频' ? <Badge kind="blue">视频</Badge> : '图片'}</td>
             <td className="px-3 py-2"><div className="grid h-10 w-14 place-items-center rounded bg-slate-100 text-[10px] text-slate-400">预览</div></td>
-            <td className="px-3 py-2">{img.valid ? <span className="text-[11px] text-emerald-500">✓</span> : <Badge kind="red">!</Badge>}<Dat f="JSON:valid" v={img.valid} /></td>
-            <td className="px-3 py-2"><ScoreTag pts={img.score} /><Dat f="JSON:score" v={img.score} /></td>
-            <td className="px-3 py-2 text-xs text-slate-400">{section?.fields?.[i]?.scorePoints ?? '-'}<Tpl f="scorePoints" v={section?.fields?.[i]?.scorePoints} /></td>
+            <td className="px-3 py-2">{img.valid ? <span className="text-[11px] text-emerald-500">✓</span> : <Badge kind="red">!</Badge>}</td>
+            <td className="px-3 py-2"><ScoreTag pts={img.score} /></td>
+            <td className="px-3 py-2 text-xs text-slate-400">{section?.fields?.[i]?.scorePoints ?? '-'}</td>
             {hasOps && <td className={`px-3 py-2 ${freezeL}`}>{section?.fields?.[i]?.hitReject ? <button className="rounded border border-slate-200 px-2 py-0.5 text-[11px] text-slate-600">豁免</button> : null}</td>}
           </tr>
         ))}
@@ -180,7 +174,6 @@ function RuleSetSection({ section, data, title, secId, totalScore, reportType }:
       <div className="mb-4 flex items-center gap-2">
         <span className={cn('text-3xl font-bold tabular-nums', totalScore >= 0 ? 'text-emerald-600' : 'text-rose-600')}>{totalScore >= 0 ? '+' : '−'}{Math.abs(totalScore)}</span>
         <span className={cn('rounded-full px-2.5 py-0.5 text-xs font-semibold', totalScore >= 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700')}>{totalScore >= 0 ? '达标加分' : '命中扣分'}</span>
-        <Cal f="得分汇总" v={totalScore} />
       </div>
       <div className="mb-3 text-xs text-slate-500">本卡得分 · 集合权重 {section?.weight ?? 1} · 本卡满分 {cardMax}</div>
       {mode === 'card' ? (
@@ -193,15 +186,15 @@ function RuleSetSection({ section, data, title, secId, totalScore, reportType }:
                 <div className="mb-2 flex items-center justify-between gap-2">
                   <div className="flex min-w-0 items-center gap-2">
                     <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-slate-100 text-xs font-bold text-slate-500">{r.name?.slice(0, 2)}</span>
-                    <span className="truncate text-sm font-semibold text-ink-900">{r.name}<Dat f="JSON:name" v={r.name} /></span>
+                    <span className="truncate text-sm font-semibold text-ink-900">{r.name}</span>
                   </div>
                   <div className="flex shrink-0 items-center gap-1.5">
-                    <Badge kind={conclBadge}>{V(r.conclusion)}<Dat f="JSON:conclusion" v={r.conclusion} /></Badge>
-                    <ScoreTag pts={r.score} /><Dat f="JSON:score" v={r.score} />
+                    <Badge kind={conclBadge}>{V(r.conclusion)}</Badge>
+                    <ScoreTag pts={r.score} />
                   </div>
                 </div>
                 {/* 调用信息 */}
-                <div className="mb-2 text-xs text-slate-400">{r.callStatus === 'success' ? '调用成功' : r.callStatus === 'fail' ? '调用失败' : '部分成功'}<Dat f="JSON:callStatus" v={r.callStatus} /> · {r.costMs}ms<Dat f="JSON:costMs" v={r.costMs} /> · {V(r.channel)}<Dat f="JSON:channel" v={r.channel} /></div>
+                <div className="mb-2 text-xs text-slate-400">{r.callStatus === 'success' ? '调用成功' : r.callStatus === 'fail' ? '调用失败' : '部分成功'} · {r.costMs}ms · {V(r.channel)}</div>
                 {/* 关键字段 */}
                 <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
                   {(r.items ?? []).map((it: any, k: number) => (
@@ -219,13 +212,13 @@ function RuleSetSection({ section, data, title, secId, totalScore, reportType }:
       <SectionTable head={['数据源', '结论', '得分', '调用状态', '耗时', '核验时间', '渠道', '关键字段', ...(hasOps ? ['操作'] : [])]}>
         {data.map((r: any, i: number) => (
           <tr key={i} className="border-b border-slate-100 align-top">
-            <td className={`px-3 py-2 text-sm font-medium text-ink-900 ${freezeF}`}>{r.name}<Dat f="JSON:name" v={r.name} /></td>
-            <td className="px-3 py-2"><Badge kind={r.conclusion === '通过' ? 'green' : r.conclusion === '拒绝' ? 'red' : 'amber'}>{V(r.conclusion)}<Dat f="JSON:conclusion" v={r.conclusion} /></Badge></td>
-            <td className="px-3 py-2"><ScoreTag pts={r.score} /><Dat f="JSON:score" v={r.score} /></td>
-            <td className="px-3 py-2 text-sm text-slate-600">{r.callStatus === 'success' ? '成功' : r.callStatus}<Dat f="JSON:callStatus" v={r.callStatus} /></td>
-            <td className="px-3 py-2 text-sm text-slate-600">{r.costMs}ms<Dat f="JSON:costMs" v={r.costMs} /></td>
-            <td className="px-3 py-2 text-sm text-slate-600">{V(r.verifyTime)}<Dat f="JSON:verifyTime" v={r.verifyTime} /></td>
-            <td className="px-3 py-2 text-sm text-slate-600">{V(r.channel)}<Dat f="JSON:channel" v={r.channel} /></td>
+            <td className={`px-3 py-2 text-sm font-medium text-ink-900 ${freezeF}`}>{r.name}</td>
+            <td className="px-3 py-2"><Badge kind={r.conclusion === '通过' ? 'green' : r.conclusion === '拒绝' ? 'red' : 'amber'}>{V(r.conclusion)}</Badge></td>
+            <td className="px-3 py-2"><ScoreTag pts={r.score} /></td>
+            <td className="px-3 py-2 text-sm text-slate-600">{r.callStatus === 'success' ? '成功' : r.callStatus}</td>
+            <td className="px-3 py-2 text-sm text-slate-600">{r.costMs}ms</td>
+            <td className="px-3 py-2 text-sm text-slate-600">{V(r.verifyTime)}</td>
+            <td className="px-3 py-2 text-sm text-slate-600">{V(r.channel)}</td>
             <td className="px-3 py-2 text-xs text-slate-600">{(r.items ?? []).map((it: any) => `${it.label}:${V(it.value)}`).join(' ')}</td>
             {hasOps && <td className={`px-3 py-2 ${freezeL}`}>{section?.fields?.[i]?.hitReject ? <button className="rounded border border-slate-200 px-2 py-0.5 text-[11px] text-slate-600">豁免</button> : <span className="rounded border border-slate-200 px-2 py-0.5 text-[11px] text-slate-600">重新核验</span>}</td>}
           </tr>
@@ -253,9 +246,8 @@ function TplCopySection({ section, data, title, secId, totalScore, reportType }:
       <div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-2">
         <div className="flex items-center gap-2">
           <span className={cn('text-2xl font-bold tabular-nums', totalScore >= 0 ? 'text-emerald-600' : 'text-rose-600')}>{totalScore >= 0 ? '+' : '−'}{Math.abs(totalScore)}</span>
-          <Cal f="得分汇总" v={totalScore} />
         </div>
-        <span className="text-xs text-slate-500">共 {totalItems} 项 · 有效 {validItems} 项 · 正常 {normal} 项 · 异常 {abnormal} 项<Dat f="JSON:items" v={`${totalItems}/${validItems}/${normal}/${abnormal}`} /></span>
+        <span className="text-xs text-slate-500">共 {totalItems} 项 · 有效 {validItems} 项 · 正常 {normal} 项 · 异常 {abnormal} 项</span>
         <button onClick={() => setOpen((o) => !o)} className="rounded border border-slate-200 px-2 py-0.5 text-[11px] text-slate-600">{open ? '收起 ▴' : '展开 ▾'}</button>
       </div>
       {open && (
@@ -264,14 +256,14 @@ function TplCopySection({ section, data, title, secId, totalScore, reportType }:
             const fields = (cs.fields ?? []).filter((f: any) => f.visible !== false)
             return (
               <div key={cs.id ?? i} className="rounded-xl border border-slate-200 bg-white p-3">
-                <div className="mb-2 flex items-center gap-2 text-xs font-medium text-slate-600">{cs.name}<Tpl f={`copySections[${i}].name`} v={cs.name} /><span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] text-slate-500">{cs.sourceType === 'rule_set' ? '规则集' : cs.sourceType === 'data_source' ? '数据源' : '接口'}</span></div>
+                <div className="mb-2 flex items-center gap-2 text-xs font-medium text-slate-600">{cs.name}<span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] text-slate-500">{cs.sourceType === 'rule_set' ? '规则集' : cs.sourceType === 'data_source' ? '数据源' : '接口'}</span></div>
                 <div className="flex flex-wrap gap-1.5">
                   {fields.map((f: any, k: number) => {
                     // 该项实际得分：与总分同源（样例 JSON items 按 name 匹配），不再显示模板满分以免误导
                     const it = items.find((i) => i.name === f.name)
                     const pts = it && typeof it.score === 'number' ? it.score : null
                     return (
-                      <span key={k} className="rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] text-slate-600">{f.name}<b className={`ml-1 ${pts == null ? 'text-slate-300' : pts >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>{pts == null ? '—' : `${pts >= 0 ? '+' : ''}${pts}`}</b><Dat f="JSON:items[].score" v={pts} /></span>
+                      <span key={k} className="rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] text-slate-600">{f.name}<b className={`ml-1 ${pts == null ? 'text-slate-300' : pts >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>{pts == null ? '—' : `${pts >= 0 ? '+' : ''}${pts}`}</b></span>
                     )
                   })}
                   {fields.length === 0 && <span className="text-[11px] text-slate-300">（无展示项）</span>}
@@ -279,7 +271,7 @@ function TplCopySection({ section, data, title, secId, totalScore, reportType }:
               </div>
             )
           })}
-          {copys.length === 0 && <div className="text-xs text-slate-400">无集成维度<Tpl f="copySections" v="[]" /></div>}
+          {copys.length === 0 && <div className="text-xs text-slate-400">无集成维度</div>}
         </div>
       )}
     </Panel>
@@ -318,8 +310,8 @@ export function ReportModuleDetail({ cfg }: { cfg: ReportModuleCfg }) {
 
   // 标题：得分计算的第一个卡片 + 各内容分段
   const navCards: { id: string; label: ReactNode; tone: 'ok' | 'alert' | 'normal' }[] = [
-    { id: 'score', label: <>{tpl.scoreBlock.title || '得分计算'}<Tpl f="scoreBlock.title" v={tpl.scoreBlock.title} /></>, tone: totalScore >= 0 ? 'ok' : 'alert' },
-    ...contentSecs.map((s, idx) => ({ id: s.id, label: <>{s.name || '—'}<Tpl f={`sections[${idx}].name`} v={s.name} /></>, tone: 'ok' as const })),
+    { id: 'score', label: <>{tpl.scoreBlock.title || '得分计算'}</>, tone: totalScore >= 0 ? 'ok' : 'alert' },
+    ...contentSecs.map((s, idx) => ({ id: s.id, label: <>{s.name || '—'}</>, tone: 'ok' as const })),
     ...(tpl.showOpLog ? [{ id: 'oplogs', label: '操作日志', tone: 'normal' as const }] : []),
   ]
 
@@ -342,11 +334,10 @@ export function ReportModuleDetail({ cfg }: { cfg: ReportModuleCfg }) {
           />
 
           {/* 第一个卡片：评分卡 */}
-          <Panel id="score" title={<>{tpl.scoreBlock.title || '得分计算'}<Tpl f="scoreBlock.title" v={tpl.scoreBlock.title} /></>} desc={<>规则版本 {tpl.version}<Tpl f="version" v={tpl.version} /> · 报告ID {reportId}<Dat f={urlId ? 'URL:id' : 'JSON:reportId'} v={reportId} /></>}>
+          <Panel id="score" title={<>{tpl.scoreBlock.title || '得分计算'}</>} desc={<>规则版本 {tpl.version} · 报告ID {reportId}</>}>
             <ScoreVisual sd={tpl.scoreDisplay} rawScore={totalScore} />
             <div className="mt-2 text-xs text-slate-500">
-              <Cal f="evaluateFormula(tpl.scoreFormula)" v={totalScore} />
-              <Tpl f="scoreFormula" v={tpl.scoreFormula ? (tpl.scoreFormula.terms.map(t => `${t.op}${t.varId}×${t.factor}`).join(' ')) : 'null'} />
+              
             </div>
 
             {tpl.showSectionTotals && <div className="mt-4"><TemplateDimTable templateId={tpl.id} actualScores={scoreById} debug /></div>}
@@ -357,11 +348,11 @@ export function ReportModuleDetail({ cfg }: { cfg: ReportModuleCfg }) {
               const hitFlag = hit?.hit === true
               return (
                 <tr key={r.id} className="border-b border-slate-100">
-                  <td className="px-3 py-2"><div className="text-sm font-medium text-ink-900">{r.ruleName}<Tpl f="specialRules.ruleName" v={r.ruleName} /></div><div className="text-[11px] text-slate-400">{r.sectionName}<Tpl f="sectionName" v={r.sectionName} /></div></td>
-                  <td className="px-3 py-2 text-sm text-slate-600">{hitFlag ? '命中' : '未触发'}<Dat f="JSON:specialRules.hit" v={hit?.hit ?? false} /></td>
-                  <td className="px-3 py-2">{hitFlag ? <Badge kind={hit.autoResult === '拒绝' ? 'red' : hit.autoResult === '转人工' ? 'amber' : 'green'}>{hit.autoResult}</Badge> : <span className="text-sm text-slate-300">—</span>}<Dat f="JSON:autoResult" v={hitFlag ? hit.autoResult : '—'} /></td>
-                  <td className="px-3 py-2">{hitFlag ? <span className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${hit.priority === 'decisive' ? 'bg-orange-100 text-orange-700' : 'bg-amber-100 text-amber-700'}`}>{hit.priority === 'decisive' ? '决定' : '预警'}</span> : <span className="text-sm text-slate-300">—</span>}<Dat f="JSON:priority" v={hitFlag ? hit.priority : '—'} /></td>
-                  <td className="px-3 py-2 text-sm text-slate-500">{hitFlag ? (hit.note ?? '—') : <span className="text-slate-300">—</span>}<Dat f="JSON:note" v={hitFlag ? hit.note : '—'} /></td>
+                  <td className="px-3 py-2"><div className="text-sm font-medium text-ink-900">{r.ruleName}</div><div className="text-[11px] text-slate-400">{r.sectionName}</div></td>
+                  <td className="px-3 py-2 text-sm text-slate-600">{hitFlag ? '命中' : '未触发'}</td>
+                  <td className="px-3 py-2">{hitFlag ? <Badge kind={hit.autoResult === '拒绝' ? 'red' : hit.autoResult === '转人工' ? 'amber' : 'green'}>{hit.autoResult}</Badge> : <span className="text-sm text-slate-300">—</span>}</td>
+                  <td className="px-3 py-2">{hitFlag ? <span className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${hit.priority === 'decisive' ? 'bg-orange-100 text-orange-700' : 'bg-amber-100 text-amber-700'}`}>{hit.priority === 'decisive' ? '决定' : '预警'}</span> : <span className="text-sm text-slate-300">—</span>}</td>
+                  <td className="px-3 py-2 text-sm text-slate-500">{hitFlag ? (hit.note ?? '—') : <span className="text-slate-300">—</span>}</td>
                 </tr>
               )
             })}</SectionTable></div>}
@@ -369,7 +360,7 @@ export function ReportModuleDetail({ cfg }: { cfg: ReportModuleCfg }) {
 
           {/* 各内容分段：按模板 sections 遍历，自动匹配 sourceType；数据从 dataBlocks 按 id 取（兼容旧结构顶层 key） */}
           {contentSecs.map((s, idx) => {
-            const title = <>{s.name || `分段 ${idx + 1}`}<Tpl f={`sections[${idx}].name`} v={s.name} /></>
+            const title = <>{s.name || `分段 ${idx + 1}`}</>
             const sid = scoreById[s.id] ?? 0
             const sd = sampleData as any
             const blk = (Array.isArray(sd.dataBlocks) ? sd.dataBlocks.find((b: any) => b.id === s.id) : undefined)
@@ -398,11 +389,11 @@ export function ReportModuleDetail({ cfg }: { cfg: ReportModuleCfg }) {
           })}
 
           {/* 操作日志 */}
-          {tpl.showOpLog && <Panel id="oplogs" title="操作日志"><Tpl f="showOpLog" v={tpl.showOpLog} /><div className="space-y-2">{((sampleData as any).opLogs ?? (sampleData as any).op_logs ?? []).map((l: any, i: number) => <div key={i} className="flex items-start gap-3 rounded-lg border border-slate-100 px-3 py-2 text-sm"><span className="mt-0.5 shrink-0 text-xs text-slate-400">{V(l.time)}</span><span className="mt-0.5 rounded bg-slate-100 px-1.5 py-0.5 text-[10px] text-slate-600">{V(l.actor)}</span><span className="mt-0.5 font-medium text-ink-900">{V(l.action)}</span><span className="mt-0.5 text-slate-500">{V(l.detail)}</span></div>)}</div></Panel>}
+          {tpl.showOpLog && <Panel id="oplogs" title="操作日志"><div className="space-y-2">{((sampleData as any).opLogs ?? (sampleData as any).op_logs ?? []).map((l: any, i: number) => <div key={i} className="flex items-start gap-3 rounded-lg border border-slate-100 px-3 py-2 text-sm"><span className="mt-0.5 shrink-0 text-xs text-slate-400">{V(l.time)}</span><span className="mt-0.5 rounded bg-slate-100 px-1.5 py-0.5 text-[10px] text-slate-600">{V(l.actor)}</span><span className="mt-0.5 font-medium text-ink-900">{V(l.action)}</span><span className="mt-0.5 text-slate-500">{V(l.detail)}</span></div>)}</div></Panel>}
         </div>
 
         {/* 右侧导航 */}
-        <nav className="hidden w-44 shrink-0 lg:block"><div className="sticky top-32 flex flex-col gap-1 pr-5"><p className="px-2 pb-1 text-[11px] font-medium uppercase tracking-wide text-slate-400">页面导航<Tpl f="从页面卡片提取" v={navCards.length + '项'} /></p>{navCards.map(c => { const cls = c.tone === 'alert' ? 'bg-rose-50 font-medium text-rose-600' : c.tone === 'ok' ? 'bg-emerald-50 font-medium text-emerald-600' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700'; const dot = c.tone === 'alert' ? 'bg-rose-500' : c.tone === 'ok' ? 'bg-emerald-500' : ''; return <button key={c.id} onClick={() => document.getElementById(c.id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })} className={`flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-xs transition ${cls}`}>{dot && <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${dot}`} />}<span className={dot ? '' : 'pl-3.5'}>{c.label}</span></button> })}</div></nav>
+        <nav className="hidden w-44 shrink-0 lg:block"><div className="sticky top-32 flex flex-col gap-1 pr-5"><p className="px-2 pb-1 text-[11px] font-medium uppercase tracking-wide text-slate-400">页面导航</p>{navCards.map(c => { const cls = c.tone === 'alert' ? 'bg-rose-50 font-medium text-rose-600' : c.tone === 'ok' ? 'bg-emerald-50 font-medium text-emerald-600' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700'; const dot = c.tone === 'alert' ? 'bg-rose-500' : c.tone === 'ok' ? 'bg-emerald-500' : ''; return <button key={c.id} onClick={() => document.getElementById(c.id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })} className={`flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-xs transition ${cls}`}>{dot && <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${dot}`} />}<span className={dot ? '' : 'pl-3.5'}>{c.label}</span></button> })}</div></nav>
       </div>
 
       {scrollVisible && <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="fixed bottom-8 right-8 z-50 flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white shadow-lg" title="返回顶部"><svg className="h-5 w-5 text-slate-500" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 17a.75.75 0 0 1-.75-.75V5.612L5.29 9.77a.75.75 0 0 1-1.08-1.04l5.25-5.5a.75.75 0 0 1 1.08 0l5.25 5.5a.75.75 0 1 1-1.08 1.04l-3.96-4.158V16.25A.75.75 0 0 1 10 17Z" clipRule="evenodd" /></svg></button>}

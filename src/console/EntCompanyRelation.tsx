@@ -1,5 +1,4 @@
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { Sam, Cfg } from './SourceTag';
 import { computeCenterFit, Bounds } from './graphFit';
 import crData from './entCompanyRelation.json';
 
@@ -265,9 +264,7 @@ export default function EntCompanyRelation({ companyName }: { companyName?: stri
         </button>
       </div>
 
-      {/* 数据来源标签 */}
       <div style={{ marginTop: 16 }}>
-        <Sam label="企业关系" /> <Cfg label="筛选配置" />
       </div>
     </div>
   );

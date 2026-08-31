@@ -2,7 +2,6 @@
 // 数据源/字段为 样例JSON 橘（midDataSources.json · 用户连接中台落本地）；实时计算 灰
 import { useState } from 'react';
 import { Button, Badge, SingleSelect } from '../components/ui';
-import { Sam, Cal } from './SourceTag';
 import {
   type MidMetric, type MetricType, type AggOp, type MidDataSource, type VizSample,
 } from './midData';
@@ -109,23 +108,23 @@ export function MetricEditor({ value, metrics, sources, onChange, onRemove, sour
     <div style={{ display: 'grid', gap: 14 }}>
       {/* 基本信息（每个字段标注来源） */}
       <div style={card}>
-        <div style={cardHead}>基本信息 <span style={hint}>指标的身份与展示</span> <Sam value="midMetrics.json" /></div>
+        <div style={cardHead}>基本信息 <span style={hint}>指标的身份与展示</span> </div>
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-          <label style={lbl}>指标名称 <Sam value="midMetrics.json.name" /><input style={inp} value={value.name} onChange={(e) => set({ name: e.target.value })} placeholder="如 在贷余额" /></label>
+          <label style={lbl}>指标名称 <input style={inp} value={value.name} onChange={(e) => set({ name: e.target.value })} placeholder="如 在贷余额" /></label>
           <GroupSelect value={value.group ?? ''} groups={Array.from(new Set(metrics.map((m) => m.group).filter(Boolean) as string[]))} onChange={(g) => set({ group: g })} />
-          <label style={lbl}>类型 <Sam value="midMetrics.json.type" />
+          <label style={lbl}>类型 
             <SingleSelect label="类型" fullWidth value={value.type} onChange={(v) => set({ type: v as MetricType })}
               options={[{ value: 'base', label: '基础指标（统计字段）' }, { value: 'derived', label: '派生指标（公式）' }]} />
           </label>
-          <label style={lbl}>单位 <Sam value="midMetrics.json.unit" /><input style={inp} value={value.unit ?? ''} onChange={(e) => set({ unit: e.target.value })} placeholder="元 / % / 次" /></label>
-          <label style={lbl}>精度 <Sam value="midMetrics.json.precision" /><input style={inp} type="number" value={value.precision ?? 0} onChange={(e) => set({ precision: Number(e.target.value) })} /></label>
-          <label style={lbl}>描述 <Sam value="midMetrics.json.desc" /><input style={inp} value={value.desc ?? ''} onChange={(e) => set({ desc: e.target.value })} placeholder="指标的口径说明" /></label>
+          <label style={lbl}>单位 <input style={inp} value={value.unit ?? ''} onChange={(e) => set({ unit: e.target.value })} placeholder="元 / % / 次" /></label>
+          <label style={lbl}>精度 <input style={inp} type="number" value={value.precision ?? 0} onChange={(e) => set({ precision: Number(e.target.value) })} /></label>
+          <label style={lbl}>描述 <input style={inp} value={value.desc ?? ''} onChange={(e) => set({ desc: e.target.value })} placeholder="指标的口径说明" /></label>
         </div>
       </div>
 
       {/* 步骤 1：选择数据源（下拉选择 + 分类分组 + 搜索筛选；已选卡片展示详情与字段） */}
       <div style={card}>
-        <div style={cardHead}><span style={stepTag}>步骤 1</span> 选择数据源 <Sam value="midDataSources.json" /> <span style={hint}>可多选，来自数据源管理页配置</span>{sourceViewSlot && <span style={{ marginLeft: 'auto' }}>{sourceViewSlot}</span>}</div>
+        <div style={cardHead}><span style={stepTag}>步骤 1</span> 选择数据源  <span style={hint}>可多选，来自数据源管理页配置</span>{sourceViewSlot && <span style={{ marginLeft: 'auto' }}>{sourceViewSlot}</span>}</div>
 
         <div style={{ position: 'relative', display: 'inline-block' }}>
           <button type="button" onClick={() => { setPickerOpen((v) => !v); setKw(''); }}
@@ -195,7 +194,7 @@ export function MetricEditor({ value, metrics, sources, onChange, onRemove, sour
 
       {/* 步骤 2：取数配置（需求42：双选项卡——第一个「可视化 SQL 编辑器」，第二个「SQL编辑器」） */}
       <div style={card}>
-        <div style={cardHead}><span style={stepTag}>步骤 2</span> 取数配置 <Sam value="midMetrics.json.editorMode" /> <span style={hint}>可视化配置或直接编写 SQL，两者实时同步</span></div>
+        <div style={cardHead}><span style={stepTag}>步骤 2</span> 取数配置  <span style={hint}>可视化配置或直接编写 SQL，两者实时同步</span></div>
 
         {/* 选项卡切换 */}
         <div style={{ display: 'flex', gap: 0, borderBottom: '1px solid #E2E8F0', marginBottom: 12 }}>
@@ -235,7 +234,7 @@ export function MetricEditor({ value, metrics, sources, onChange, onRemove, sour
 
       {/* 步骤 3：可视化预览（08081 3.7：删样例数据集下拉组） */}
       <div style={card}>
-        <div style={cardHead}><span style={stepTag}>步骤 3</span> 可视化预览 <Cal label="实时计算" /> <span style={hint}>选图表类型查看效果</span></div>
+        <div style={cardHead}><span style={stepTag}>步骤 3</span> 可视化预览  <span style={hint}>选图表类型查看效果</span></div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 10 }}>
           {VIZ_ORDER.map((t) => (
             <button key={t} type="button" onClick={() => set({ vizType: t })} style={vizBtn(vizType === t)}>{VIZ_LABEL[t]}</button>
@@ -255,7 +254,7 @@ function GroupSelect({ value, groups, onChange }: { value: string; groups: strin
   const [draft, setDraft] = useState('');
   if (creating) {
     return (
-      <label style={lbl}>分组 <Sam value="midMetrics.json.group" />
+      <label style={lbl}>分组 
         <div style={{ display: 'flex', gap: 6 }}>
           <input style={{ ...inp, flex: 1 }} value={draft} autoFocus placeholder="新分组名称"
             onChange={(e) => setDraft(e.target.value)}
@@ -268,7 +267,7 @@ function GroupSelect({ value, groups, onChange }: { value: string; groups: strin
     );
   }
   return (
-    <label style={lbl}>分组 <Sam value="midMetrics.json.group" />
+    <label style={lbl}>分组 
       <SingleSelect label="分组" fullWidth value={value} onChange={(v) => {
         if (v === '__new__') { setCreating(true); }
         else onChange(v);

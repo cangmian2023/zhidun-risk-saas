@@ -1,8 +1,8 @@
 // 尽调中心 · 受益所有人（jd-beneficiary）· 检索识别 + 识别记录
 // 数据：本地样例 jdBeneficiary.json（橘 Sam）
-import { useState } from 'react'
-import { EpPage, useSample, Sam } from '../../epCommon'
-import { usePageNav } from '../../../pageNav'
+import { useState } from 'react';
+import { EpPage, useSample } from '../../epCommon';
+import { usePageNav } from '../../../pageNav';
 
 type RowItem = { id: number; company: string; method: string; person: string; time: string }
 type Data = {
@@ -46,7 +46,7 @@ export default function JdBeneficiary({ params }: { params: URLSearchParams }) {
   }
 
   return (
-    <EpPage title={data.pageTitle} actions={<Sam value={data.source} />}>
+    <EpPage title={data.pageTitle} >
       {/* 顶部检索区 */}
       <div
         style={{

@@ -1,9 +1,9 @@
 // 尽调中心 · 批量尽调结果页（jd-batch-result）· 查企业 / 查人员 Tab
 // 数据：本地样例 jdBatchResult.json（橘 Sam）
-import { useEffect, useState } from 'react'
-import { EpPage, EpCard, EpBtn, DataTable, useSample, Sam } from '../../epCommon'
-import { Modal } from '../../../../components/ui'
-import { usePageNav } from '../../../pageNav'
+import { useEffect, useState } from 'react';
+import { EpPage, EpCard, EpBtn, DataTable, useSample } from '../../epCommon';
+import { Modal } from '../../../../components/ui';
+import { usePageNav } from '../../../pageNav';
 
 type TreeItem = { key: string; label: string; checked: boolean }
 type FilterGroup = {
@@ -422,7 +422,7 @@ export default function JdBatchResult({ params }: { params: URLSearchParams }) {
   }
 
   return (
-    <EpPage title={data.pageTitle} actions={<Sam value="jdBatchResult.json" />}>
+    <EpPage title={data.pageTitle} >
       {/* 顶部 Tab */}
       <div style={{ display: 'flex', borderBottom: '1px solid #E2E8F0', marginBottom: 16 }}>
         {data.tabs.map((t) => (

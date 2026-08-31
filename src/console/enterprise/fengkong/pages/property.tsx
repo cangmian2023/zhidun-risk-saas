@@ -1,8 +1,8 @@
 // 企业风控 · 财产线索（fk-property）· 1:1 复刻「财产线索」截图
 // 数据：本地样例 fkProperty.json（橘 Sam）
-import { useState, type ReactNode } from 'react'
-import { EpPage, EpCard, EpTag, EpBtn, useSample, Sam } from '../../epCommon'
-import { RiskContentDrawer } from '../components/RiskContentDrawer'
+import { useState, type ReactNode } from 'react';
+import { EpPage, EpCard, EpTag, EpBtn, useSample } from '../../epCommon';
+import { RiskContentDrawer } from '../components/RiskContentDrawer';
 
 const seed = {
   company: {
@@ -188,7 +188,6 @@ export default function FkProperty({ params }: { params: URLSearchParams }) {
       title="财产线索"
       subtitle="查企业线索信息、扩大主体、资产状况"
       crumb="风控中心 / 财产线索"
-      actions={<Sam value="fkProperty.json" />}
     >
       {/* 企业搜索栏 */}
       <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>

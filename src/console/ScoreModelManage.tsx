@@ -1,9 +1,8 @@
-import { useNavigate } from 'react-router-dom'
-import { useScore, updateScore } from './scoreData'
-import { useEnterpriseData, updateEnterpriseData } from './enterpriseData'
-import { PageShell } from './PageShell'
-import { Panel, Button, Badge } from '../components/ui'
-import { Sam } from './SourceTag'
+import { useNavigate } from 'react-router-dom';
+import { useScore, updateScore } from './scoreData';
+import { useEnterpriseData, updateEnterpriseData } from './enterpriseData';
+import { PageShell } from './PageShell';
+import { Panel, Button, Badge } from '../components/ui';
 
 type Domain = 'sc' | 'ep'
 
@@ -28,7 +27,6 @@ export default function ScoreModelManagePage({ domain = 'sc' }: { domain?: Domai
         title={title}
         subtitle={domain === 'ep' ? '企业风控模型：企业违约分 / 欺诈分 / 关联风险分，点击卡片进入模型详情' : '评分产品下所有模型列表，点击卡片进入模型详情（基本信息、算法编辑、版本管理）'}
         crumb={crumb}
-        actions={<Sam value={domain === 'ep' ? 'enterpriseData.json.models' : 'scoreData.json'} />}
       />
       <div className="space-y-4">
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
@@ -74,7 +72,7 @@ export default function ScoreModelManagePage({ domain = 'sc' }: { domain?: Domai
             )
           })}
         </div>
-        <Panel title="说明" actions={<Sam value={domain === 'ep' ? 'enterpriseData.json.models' : 'scoreData.json'} />}>
+        <Panel title="说明" >
           <p className="text-sm text-slate-500">
             {domain === 'ep'
               ? '企业风控模型复用评分产品「模型管理」页面（同一组件，仅加载企业风控数据）：企业违约分 / 企业欺诈分 / 关联风险分。点击卡片进入详情，查看因子权重、评分阈值与运营效果。'

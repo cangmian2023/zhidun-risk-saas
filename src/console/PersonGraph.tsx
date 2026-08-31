@@ -2,8 +2,7 @@
 // 交互：横向树状关系图（中心主体 → 关系分类 → 关联企业）、画布拖拽平移 / 滚轮缩放、
 //        关系分支折叠展开、节点 hover Tooltip、点击跳转、右侧搜索定位、右侧手风琴菜单。
 // 数据：本地样例 personGraph.json（橘 Sam）
-import { useState, useRef, useEffect, useMemo } from 'react'
-import { Sam } from './SourceTag'
+import { useState, useRef, useEffect, useMemo } from 'react';
 
 type Company = { name: string; credit: string; status: string; amount: string }
 type Relation = {
@@ -194,7 +193,6 @@ export default function PersonGraph({ data, loading, error }: { data: GraphData;
     <div style={{ position: 'relative' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
         <div style={{ fontSize: 17, fontWeight: 700, color: C.title }}>个人图谱 <span style={{ fontSize: 13, color: C.aux, fontWeight: 400 }}>中心主体：{data.subject}</span></div>
-        <Sam value="personGraph.json" />
       </div>
 
       <div style={{ display: 'flex', gap: 12, alignItems: 'stretch', minHeight: 560 }}>

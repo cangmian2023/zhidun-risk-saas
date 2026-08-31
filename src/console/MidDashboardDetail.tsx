@@ -5,7 +5,6 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Panel, Button, Modal, DetailHeader, SearchSelect, SingleSelect } from '../components/ui';
 import type { SearchSelectOption, SearchSelectGroup } from '../components/ui';
-import { Sam } from './SourceTag';
 import { PageShell } from './PageShell';
 import { useMidDashboards, updateDashboards, useMidMetrics, useMidDataSources, midNewId } from './midStore';
 import { type MidWidget, type WidgetType } from './midData';
@@ -197,7 +196,7 @@ export default function MidDashboardDetail() {
       backLabel="返回列表" backTo="/console/cm/mid-dashboard-config"
       flowBar={<FlowActionBar flowId={d?.flowKey} state={d?.flowState}
         onStateChange={(s) => updateDashboards((list) => list.map((pg) => pg.id === d.id ? { ...pg, flowState: s } : pg))} onSave={savePage} />}
-      actions={<><Sam value="midMetrics.json" /><Sam value="midDashboards.json" /></>}
+      actions={<></>}
     />
   );
 
@@ -210,11 +209,11 @@ export default function MidDashboardDetail() {
       `}</style>
       <PageShell header={header} />
       <div className="mb-1 flex items-center gap-1 text-xs text-slate-400" style={{ marginTop: -6 }}>
-        数据来源：<Sam label="页面配置" value="midDashboards.json" /><Sam label="指标来源" value="midMetrics.json" />
+        数据来源：
       </div>
 
       {/* 可视化组件预览（默认预览态，每卡片可编辑/删除；标题行可添加组件） */}
-      <Panel title="可视化组件预览" desc={<>详情页默认预览态，每个组件卡片点「编辑」可调整（编辑态字段对应 record/temp/08071 文档第二点） <Sam value="midDashboards.json.widgets" /></>}
+      <Panel title="可视化组件预览" desc={<>详情页默认预览态，每个组件卡片点「编辑」可调整（编辑态字段对应 record/temp/08071 文档第二点） </>}
         actions={<Button size="sm" variant="primary" onClick={openAdd}>添加组件</Button>}>
         {d.widgets.length > 0 ? (
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">

@@ -3,7 +3,6 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { DataTable, Button, SingleSelect } from '../components/ui';
 import type { Column, Row } from '../components/ui';
-import { Sam } from './SourceTag';
 import { useMidDataSources, updateDataSources, midNewId } from './midStore';
 import type { MidDataSource, MidField, MidConnConfig } from './midData';
 import { ConfigListPage, SRC_TYPE_LABEL } from './ConfigTemplate';
@@ -51,12 +50,12 @@ export default function MidDataSourceConfig() {
   const remove = (id: string) => updateDataSources((list) => list.filter((x) => x.id !== id));
 
   const cols: Column[] = [
-    { key: 'name', label: '名称', tag: { kind: 'sample', value: 'midDataSources.json.name' } },
-    { key: 'typeLabel', label: '类型', tag: { kind: 'sample', value: 'midDataSources.json.type' } },
-    { key: 'status', label: '状态', type: 'badge', tag: { kind: 'sample', value: 'midDataSources.json.status' } },
-    { key: 'fieldCnt', label: '字段数', tag: { kind: 'sample', value: 'midDataSources.json.fields' } },
-    { key: 'rowCnt', label: '样例行', tag: { kind: 'sample', value: 'midDataSources.json.rows' } },
-    { key: 'updatedAt', label: '更新时间', tag: { kind: 'sample', value: 'midDataSources.json.updatedAt' } },
+    { key: 'name', label: '名称' },
+    { key: 'typeLabel', label: '类型' },
+    { key: 'status', label: '状态', type: 'badge' },
+    { key: 'fieldCnt', label: '字段数' },
+    { key: 'rowCnt', label: '样例行' },
+    { key: 'updatedAt', label: '更新时间' },
   ];
   const rows: Row[] = sources.map((s) => ({
     id: s.id, name: s.name, typeLabel: SRC_TYPE_LABEL[s.type] ?? '数据库',
@@ -94,8 +93,6 @@ function Editor({ value, onChange, onRemove, isEdit }: { value: MidDataSource; o
   const setField = (i: number, p: Partial<MidField>) => set({ fields: value.fields.map((f, idx) => idx === i ? { ...f, ...p } : f) });
   const addField = () => set({ fields: [...value.fields, { key: '', label: '', kind: 'dim', type: 'string' }] });
   const removeField = (i: number) => set({ fields: value.fields.filter((_, idx) => idx !== i) });
-  // 仅在「编辑已有」时渲染样例JSON来源标签；「新建」不读取数据，不标来源
-  const tag = (v: string) => (isEdit ? <Sam value={v} /> : null);
   const conn: MidConnConfig = value.conn || {};
   const setConn = (p: Partial<MidConnConfig>) => set({ conn: { ...conn, ...p } });
   return (
@@ -107,7 +104,7 @@ function Editor({ value, onChange, onRemove, isEdit }: { value: MidDataSource; o
       </div>
 
       <div>
-        <div style={{ fontSize: 13, fontWeight: 500, marginBottom: 6 }}>连接信息 {tag('midDataSources.json.conn')}
+        <div style={{ fontSize: 13, fontWeight: 500, marginBottom: 6 }}>连接信息
           <span style={{ marginLeft: 6, fontSize: 12, color: '#94A3B8' }}>（对接数据中台，必填）</span>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 10 }}>
@@ -127,7 +124,7 @@ function Editor({ value, onChange, onRemove, isEdit }: { value: MidDataSource; o
 
       <div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-          <span style={{ fontSize: 13, fontWeight: 500 }}>字段清单 {tag('midDataSources.json.fields')}</span>
+          <span style={{ fontSize: 13, fontWeight: 500 }}>字段清单</span>
           <Button size="sm" variant="secondary" onClick={addField}>添加字段</Button>
         </div>
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
@@ -151,7 +148,7 @@ function Editor({ value, onChange, onRemove, isEdit }: { value: MidDataSource; o
         </table>
       </div>
       <div>
-        <div style={{ fontSize: 13, fontWeight: 500, marginBottom: 6 }}>数据预览 {tag(`${value.rows.length} 行`)}</div>
+        <div style={{ fontSize: 13, fontWeight: 500, marginBottom: 6 }}>数据预览</div>
         <div style={{ maxHeight: 180, overflow: 'auto', border: '1px solid #E2E8F0', borderRadius: 8 }}>
           <DataTable columns={(value.fields.length ? value.fields : [{ key: '_', label: '_', kind: 'dim' as const, type: 'string' as const }]).map((f) => ({ key: f.key, label: f.label }))}
             rows={value.rows.slice(0, 10).map((r, i) => ({ id: String(i), ...r } as unknown as Row))} />

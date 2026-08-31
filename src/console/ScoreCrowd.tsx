@@ -1,13 +1,12 @@
-import { useMemo, useState } from 'react'
-import { useScore, updateScore, type CrowdGroup } from './scoreData'
-import { useMidCustomers } from './midStore'
-import { PageShell } from './PageShell'
-import { Button, Badge } from '../components/ui'
-import { Sam } from './SourceTag'
-import { useNavigate } from 'react-router-dom'
-import { usePageNav } from './pageNav'
-import { CrowdDrawer } from './CrowdDrawer'
-import { crowdMembers } from './crowdRule'
+import { useMemo, useState } from 'react';
+import { useScore, updateScore, type CrowdGroup } from './scoreData';
+import { useMidCustomers } from './midStore';
+import { PageShell } from './PageShell';
+import { Button, Badge } from '../components/ui';
+import { useNavigate } from 'react-router-dom';
+import { usePageNav } from './pageNav';
+import { CrowdDrawer } from './CrowdDrawer';
+import { crowdMembers } from './crowdRule';
 
 // 客户风险等级 → 徽标样式（客户主档为「高风险/中风险/低风险」）
 function riskKindOf(level?: string): 'red' | 'amber' | 'green' {
@@ -55,7 +54,6 @@ export default function ScoreCrowdPage() {
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Sam value="scoreData.json" />
             <p className="text-xs text-slate-400">按规则定义客群：成员数由规则实时计算，点击分组进入该分组的客户列表。</p>
           </div>
           <Button size="sm" variant="primary" onClick={openNew}>＋ 新增分组</Button>
@@ -100,7 +98,6 @@ export default function ScoreCrowdPage() {
                   <span className="text-[26px] font-bold leading-none text-ink-900 tabular-nums">{list.length.toLocaleString()}</span>
                   <span className="mb-0.5 text-xs text-slate-400">
                     成员 / {customers.length} 客户
-                    <span className="ml-1 rounded bg-slate-100 px-1.5 py-0.5 text-[10px] text-slate-500">实时计算</span>
                   </span>
                 </div>
 

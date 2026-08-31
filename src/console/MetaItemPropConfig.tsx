@@ -2,7 +2,6 @@
 // 列与数据取自 sensors/5.物品属性.html
 import { useState } from 'react';
 import type { Column, Row } from '../components/ui';
-import { Sam } from './SourceTag';
 import { MetaListPage, MetaField, MetaSection, metaBadge } from './MetaListPage';
 import { useMetaItemProps } from './metaStore';
 import type { MetaItemProp } from './metaData';
@@ -15,13 +14,13 @@ export default function MetaItemPropConfig() {
   const [cur, setCur] = useState<MetaItemProp | null>(null);
 
   const columns: Column[] = [
-    { key: 'name', label: '属性名', tag: { kind: 'sample', value: `${J}.name` } },
-    { key: 'displayName', label: '属性显示名', tag: { kind: 'sample', value: `${J}.displayName` } },
-    { key: 'itemType', label: '物品类型', tag: { kind: 'sample', value: `${J}.itemType` } },
-    { key: 'dataType', label: '数据类型', type: 'badge', badgeKind: 'blue', tag: { kind: 'sample', value: `${J}.dataType` } },
-    { key: 'unit', label: '单位/格式', tag: { kind: 'sample', value: `${J}.unit` } },
-    { key: 'visible', label: '显示状态', type: 'badge', tag: { kind: 'sample', value: `${J}.visible` } },
-    { key: 'preset', label: '预置', tag: { kind: 'sample', value: `${J}.preset` } },
+    { key: 'name', label: '属性名' },
+    { key: 'displayName', label: '属性显示名' },
+    { key: 'itemType', label: '物品类型' },
+    { key: 'dataType', label: '数据类型', type: 'badge', badgeKind: 'blue' },
+    { key: 'unit', label: '单位/格式' },
+    { key: 'visible', label: '显示状态', type: 'badge' },
+    { key: 'preset', label: '预置' },
   ];
 
   const rows: Row[] = props.map((p) => ({
@@ -60,7 +59,7 @@ export default function MetaItemPropConfig() {
     >
       {cur && (
         <MetaSection title="属性信息">
-          <MetaField label="属性显示名" value={cur.displayName} tag={<Sam value={`${J}.displayName`} />} />
+          <MetaField label="属性显示名" value={cur.displayName}  />
           <MetaField label="属性名" value={<code className="font-mono text-brand-700">{cur.name}</code>} />
           <MetaField label="物品类型" value={cur.itemType} />
           <MetaField label="数据类型" value={cur.dataType} />

@@ -3,7 +3,6 @@
 import { useNavigate } from 'react-router-dom';
 import type { Column, Row } from '../components/ui';
 import { Button } from '../components/ui';
-import { Sam, Cal } from './SourceTag';
 import { useMidMetrics, useMidDataSources, updateMetrics } from './midStore';
 import {
   type MidMetric, AGG_LABEL, evalMetricFormula, computeMetricValue, resolveMetricsForRows,
@@ -18,13 +17,13 @@ export default function MidMetricConfig() {
   const srcById = (id: string) => sources.find((s) => s.id === id);
 
   const cols: Column[] = [
-    { key: 'name', label: '指标名称', tag: { kind: 'sample', value: 'midMetrics.json.name' } },
-    { key: 'group', label: '分组', tag: { kind: 'sample', value: 'midMetrics.json.group' } },
-    { key: 'typeLabel', label: '类型', tag: { kind: 'sample', value: 'midMetrics.json.type' } },
-    { key: 'def', label: '口径', type: 'badge', tag: { kind: 'sample', value: 'midMetrics.json.formula' } },
-    { key: 'source', label: '数据源', type: 'badge', tag: { kind: 'sample', value: 'midMetrics.json.dataSourceId' } },
-    { key: 'preview', label: '实时预览', align: 'right', tag: { kind: 'calc' } },
-    { key: 'flowState', label: '流程状态', fixed: 'right', tag: { kind: 'sample', value: 'midMetrics.json.flowState' }, render: (r: Row) => (
+    { key: 'name', label: '指标名称' },
+    { key: 'group', label: '分组' },
+    { key: 'typeLabel', label: '类型' },
+    { key: 'def', label: '口径', type: 'badge' },
+    { key: 'source', label: '数据源', type: 'badge' },
+    { key: 'preview', label: '实时预览', align: 'right' },
+    { key: 'flowState', label: '流程状态', fixed: 'right',  render: (r: Row) => (
       <FlowStateCell flowId={String(r.flowKey ?? '')} state={String(r.flowState ?? '')}
         onChange={(s) => updateMetrics((list) => list.map((x) => x.id === String(r.id) ? { ...x, flowState: s } : x))} />
     ) },
@@ -60,7 +59,7 @@ export default function MidMetricConfig() {
       subtitle="定义可复用指标（选字段→筛选→计算→可视化），被监控策略、看板组件引用"
       addLabel="新建指标"
       onAdd={() => nav('/console/cm/mid-metric-detail?new=1')}
-      actions={<><Sam value="midMetrics.json" /><Cal value="预览=实时计算" /></>}
+      actions={<></>}
       panelTitle="指标列表"
       panelDesc="点击任意行进入编辑页（直接在页面上改，保存即落盘）；基础指标取数据源字段聚合，派生指标用公式引用其它指标"
       columns={cols}

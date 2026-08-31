@@ -4,11 +4,10 @@
  * 本页仅作只读展示 + 跳转入口，不再持有独立流程数据。
  * 运行时消费方（预警处置工作台 / 预警详情 / 模型评分页）均读 f-alert-dispose。
  * ========================================================================== */
-import { useNavigate } from 'react-router-dom'
-import { useFlows, type FlowItem } from './flowStore'
-import { PageShell } from './PageShell'
-import { Panel, Button, Badge } from '../components/ui'
-import { Cfg } from './SourceTag'
+import { useNavigate } from 'react-router-dom';
+import { useFlows, type FlowItem } from './flowStore';
+import { PageShell } from './PageShell';
+import { Panel, Button, Badge } from '../components/ui';
 
 export default function ScoreDisposeFlowPage() {
   const flows = useFlows()
@@ -29,7 +28,7 @@ export default function ScoreDisposeFlowPage() {
         }
       />
       <div className="space-y-4">
-        <Panel title="流程已统一到管理中心" actions={<Cfg value="bizFlows.json" />}>
+        <Panel title="流程已统一到管理中心" >
           <p className="text-sm leading-relaxed text-slate-600">
             评分产品的预警处置流程已统一由「管理中心 → 业务流程」配置（流程 ID：<code className="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-xs">f-alert-dispose</code>），
             与预警处置工作台、预警详情、模型评分页「预警处置」共用同一份配置，改一处全局生效。

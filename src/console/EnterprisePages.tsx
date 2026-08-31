@@ -6,7 +6,6 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Panel, StatCard, DataTable, Button, Badge, Modal, DetailHeader, SingleSelect } from '../components/ui';
 import type { Column, Row } from '../components/ui';
-import { Sam, Cal, Cfg } from './SourceTag';
 import { PageShell } from './PageShell';
 import { LineChart } from '../components/charts';
 import { useEnterpriseData, updateEnterpriseData, appendLog, appendOpLog, nowTime, updateAlertVerify, type MonitorEnt, type DueTask, type EntAlert } from './enterpriseData';
@@ -87,14 +86,14 @@ export function EntBatchDue() {
     <div style={{ padding: 24, maxWidth: 1360 }}>
       <PageShell title="批量尽调任务" crumb={`${CRUMB} / 企业风险尽调中心 / 批量尽调任务`}
         subtitle="上传企业名单批量查询风险，跟踪任务进度与命中结果"
-        actions={<><Sam value="enterpriseData.json.dueTasks" /><Cal label="实时统计" /><Button size="sm" variant="primary" onClick={() => setNewOpen(true)}>＋ 新建尽调任务</Button></>} />
+        actions={<><Button size="sm" variant="primary" onClick={() => setNewOpen(true)}>＋ 新建尽调任务</Button></>} />
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0,1fr))', gap: 12, marginBottom: 16 }}>
         <StatCard label="任务总数" value={String(ent.dueTasks.length)} accent="brand" />
         <StatCard label="进行中" value={String(ent.dueTasks.filter((t) => t.status === '进行中').length)} accent="amber" />
         <StatCard label="已完成" value={String(ent.dueTasks.filter((t) => t.status === '已完成').length)} accent="emerald" />
         <StatCard label="累计命中风险" value={String(ent.dueTasks.reduce((s, t) => s + t.hitRisk, 0))} accent="rose" />
       </div>
-      <Panel title="尽调任务列表" desc={<span>批量尽调任务与进度 · <Sam value="enterpriseData.json" /></span>}
+      <Panel title="尽调任务列表" desc={<span>批量尽调任务与进度 · </span>}
         actions={<FlowStateFilter pageRoute="/console/ep/batch-due" value={fs} onChange={setFs} />}>
         <DataTable columns={cols} rows={rows} empty="暂无任务" pager defaultPageSize={10}
           actions={(r) => (
@@ -217,7 +216,7 @@ export function EntBatchDueDetail() {
     <div style={{ padding: 24, maxWidth: 1360 }}>
       <PageShell title="批量尽调任务详情" crumb={`${CRUMB} / 企业风险尽调中心 / 批量尽调任务 / ${task.name}`}
         subtitle="任务进度监控与任务企业档案、风险数据核验"
-        actions={<><Sam value="enterpriseData.json.dueTasks" /><Cal label="实时计算" /><Button size="sm" variant="secondary" onClick={() => nav('/console/ep/batch-due')}>← 返回任务列表</Button></>} />
+        actions={<><Button size="sm" variant="secondary" onClick={() => nav('/console/ep/batch-due')}>← 返回任务列表</Button></>} />
 
       <div style={{ marginBottom: 16 }}>
         <FlowBar
@@ -236,7 +235,7 @@ export function EntBatchDueDetail() {
       </div>
 
       {/* 任务进度（进行中实时推进） */}
-      <Panel title="任务进度" desc={<span>批量尽调执行进度（进行中实时推进） · <Cal label="实时计算" /></span>}>
+      <Panel title="任务进度" desc={<span>批量尽调执行进度（进行中实时推进） · </span>}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
           <div style={{ flex: 1 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
@@ -266,7 +265,7 @@ export function EntBatchDueDetail() {
       </Panel>
 
       {/* 任务企业档案（全部 / 仅命中风险）+ 查看档案 + 核验 */}
-      <Panel title="任务企业档案" desc={<span>本任务覆盖的企业（可筛选命中风险）；查看档案 / 对预警项做数据核验 · <Sam value="enterpriseData.json.monitorList" /></span>}
+      <Panel title="任务企业档案" desc={<span>本任务覆盖的企业（可筛选命中风险）；查看档案 / 对预警项做数据核验 · </span>}
         actions={
           <div style={{ display: 'flex', gap: 6 }}>
             <button onClick={() => setOnlyRisk(false)} style={{ ...LINK_BTN2, borderColor: !onlyRisk ? '#1D4ED8' : '#E2E8F0', color: !onlyRisk ? '#1D4ED8' : '#475569', background: !onlyRisk ? '#EFF6FF' : '#fff' }}>全部</button>
@@ -290,7 +289,7 @@ export function EntBatchDueDetail() {
       </Panel>
 
       {/* 流程日志 */}
-      <Panel title="流程日志" desc={<span>任务流程操作留痕（不可删除） · <Cal label="实时记录" /></span>}>
+      <Panel title="流程日志" desc={<span>任务流程操作留痕（不可删除） · </span>}>
         <DataTable columns={[
           { key: 'at', label: '操作时间', width: '180px' },
           { key: 'action', label: '操作动作', width: '160px' },
@@ -378,14 +377,14 @@ export function EntMonitorList() {
     <div style={{ padding: 24, maxWidth: 1360 }}>
       <PageShell title="存量企业监控名单" crumb={`${CRUMB} / 企业风险尽调中心 / 存量企业监控名单`}
         subtitle="名单内企业持续监控，风险变化即触发预警"
-        actions={<><Sam value="enterpriseData.json.monitorList" /><Cal label="实时统计" /></>} />
+        actions={<></>} />
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0,1fr))', gap: 12, marginBottom: 16 }}>
         <StatCard label="监控中企业" value={String(ent.monitorList.filter((m) => m.status === '监控中').length)} accent="brand" />
         <StatCard label="高风险" value={String(ent.monitorList.filter((m) => m.riskLevel === '高').length)} accent="rose" />
         <StatCard label="中风险" value={String(ent.monitorList.filter((m) => m.riskLevel === '中').length)} accent="amber" />
         <StatCard label="累计预警" value={String(ent.monitorList.reduce((s, m) => s + m.alerts, 0))} accent="violet" />
       </div>
-      <Panel title="监控名单" desc={<span>存量企业监控 · <Sam value="enterpriseData.json" /></span>}
+      <Panel title="监控名单" desc={<span>存量企业监控 · </span>}
         actions={<div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
           <FlowStateFilter pageRoute="/console/ep/monitor-list" value={fs} onChange={setFs} />
           {selMon.length > 0 && (
@@ -452,14 +451,14 @@ export function EntDecisionEvents() {
     <div style={{ padding: 24, maxWidth: 1360 }}>
       <PageShell title="决策事件列表" crumb={`${CRUMB} / 风险事件管理 / 决策事件列表`}
         subtitle="企业授信 / 尽调 / 名单 / 预警处置等决策事件列表，可追踪决策过程"
-        actions={<><Sam value="enterpriseData.json.decisionEvents" /><Cal label="实时统计" /></>} />
+        actions={<></>} />
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0,1fr))', gap: 12, marginBottom: 16 }}>
         <StatCard label="决策事件" value={String(ent.decisionEvents.length)} accent="brand" />
         <StatCard label="通过" value={String(ent.decisionEvents.filter((d) => d.result === '通过').length)} accent="emerald" />
         <StatCard label="拒绝" value={String(ent.decisionEvents.filter((d) => d.result === '拒绝').length)} accent="rose" />
         <StatCard label="转人工" value={String(ent.decisionEvents.filter((d) => d.result === '转人工').length)} accent="amber" />
       </div>
-      <Panel title="决策事件" desc={<span>决策事件队列 · <Cal label="实时过滤" /></span>}
+      <Panel title="决策事件" desc={<span>决策事件队列 · </span>}
         actions={<div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           <FlowStateFilter pageRoute="/console/ep/decision-events" value={fs} onChange={setFs} />
           <SingleSelect label="全部结果" clearable value={result} onChange={setResult}
@@ -526,7 +525,7 @@ export function EntDecisionTraceDetail() {
         />
       </div>
 
-      <Panel className="mb-4" title="决策摘要" desc={<span><Sam value="enterpriseData.json.decisionEvents" /> 决策事件核心信息</span>}>
+      <Panel className="mb-4" title="决策摘要" desc={<span> 决策事件核心信息</span>}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0,1fr))', gap: '6px 24px', fontSize: 13 }}>
           {summary.map(([k, v]) => (
             <div key={k} style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px dashed #F1F5F9', paddingBottom: 4 }}>
@@ -537,7 +536,7 @@ export function EntDecisionTraceDetail() {
         </div>
       </Panel>
 
-      <Panel className="mb-4" title="关联风险视图" desc={<span>该企业的监控与名单状态 · <Sam value="enterpriseData.json" /></span>}>
+      <Panel className="mb-4" title="关联风险视图" desc={<span>该企业的监控与名单状态 · </span>}>
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', fontSize: 13, alignItems: 'center' }}>
           <span style={{ padding: '4px 12px', borderRadius: 8, background: '#F1F5F9', color: '#475569' }}>监控名单：{mon ? `${mon.riskLevel} · ${mon.status}` : '未监控'}</span>
           <button type="button" onClick={() => { setQiyeSelected(ev.entName, ev.entKeyNo); nav('/console/ep/qiye-search'); }}
@@ -553,7 +552,7 @@ export function EntDecisionTraceDetail() {
         </div>
       </Panel>
 
-      <Panel className="mb-4" title="流程日志" desc={<span>复核流程操作留痕（不可删除） · <Cal label="实时记录" /></span>}>
+      <Panel className="mb-4" title="流程日志" desc={<span>复核流程操作留痕（不可删除） · </span>}>
         <DataTable columns={[
           { key: 'at', label: '操作时间', width: '180px' },
           { key: 'action', label: '操作动作', width: '150px' },
@@ -578,7 +577,7 @@ export function EntModelDetail() {
     <div style={{ padding: 24, maxWidth: 1360 }}>
       <PageShell title={m.name} crumb={`${CRUMB} / 模型管理中心 / 模型列表 / ${m.name}`}
         subtitle={`${m.desc} · ${m.version}`}
-        actions={<><Cfg value="enterpriseData.json.models" /><Button size="sm" variant="secondary" onClick={() => window.history.back()}>← 返回模型列表</Button></>} />
+        actions={<><Button size="sm" variant="secondary" onClick={() => window.history.back()}>← 返回模型列表</Button></>} />
       <div style={{ display: 'flex', gap: 4, borderBottom: '1px solid #E2E8F0', marginBottom: 14 }}>
         {([['base', '基本信息'], ['effect', '模型效果'], ['threshold', '评分阈值']] as const).map(([k, l]) => (
           <button key={k} onClick={() => setTab(k)} style={{ padding: '8px 14px', fontSize: 13, border: 'none', background: 'none', cursor: 'pointer', color: tab === k ? '#0EA5E9' : '#64748B', fontWeight: tab === k ? 700 : 400, borderBottom: tab === k ? '2px solid #0EA5E9' : '2px solid transparent', marginBottom: -1 }}>{l}</button>
@@ -592,7 +591,7 @@ export function EntModelDetail() {
             <StatCard label="版本" value={m.version} accent="violet" />
             <StatCard label="更新时间" value={m.updatedAt} accent="emerald" />
           </div>
-          <Panel title="特征因子权重" desc={<span>模型特征与权重 · <Cfg value="enterpriseData.json" /></span>}>
+          <Panel title="特征因子权重" desc={<span>模型特征与权重 · </span>}>
             <div className="space-y-2">
               {m.factors.map((f) => (
                 <div key={f.name} className="flex items-center gap-3">
@@ -615,7 +614,7 @@ export function EntModelDetail() {
             <StatCard label="及时率" value={`${m.ops.timely}%`} accent="amber" />
             <StatCard label="累计调用" value={m.ops.calls.toLocaleString()} accent="violet" />
           </div>
-          <Panel title="运营趋势" actions={<Cal />}>
+          <Panel title="运营趋势" >
             <LineChart labels={m.ops.trend.map((t) => t.month)} height={240}
               series={[
                 { name: '覆盖率', color: m.color, data: m.ops.trend.map((t) => t.coverage) },
@@ -626,7 +625,7 @@ export function EntModelDetail() {
         </>
       )}
       {tab === 'threshold' && (
-        <Panel title="评分阈值" desc="分数区间 → 等级 → 含义 → 建议动作" actions={<Cfg value="enterpriseData.json" />}>
+        <Panel title="评分阈值" desc="分数区间 → 等级 → 含义 → 建议动作" >
           <DataTable columns={[
             { key: 'range', label: '分数区间', width: '160px' },
             { key: 'level', label: '等级', type: 'badge', badgeKind: 'gray', width: '120px' },

@@ -5,7 +5,6 @@ import type { CSSProperties } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Panel, DataTable, Button } from '../components/ui';
 import type { Column, Row } from '../components/ui';
-import { Sam, Cfg } from './SourceTag';
 import { PageShell } from './PageShell';
 import { useEnterpriseData, updateEnterpriseData } from './enterpriseData';
 import { useScore, updateScore } from './scoreData';
@@ -59,7 +58,7 @@ export default function CmAlertConfig() {
     <div style={{ padding: 24, maxWidth: 1360 }}>
       <PageShell title="统一预警配置" crumb="管理中心 / 预警配置"
         subtitle="跨子系统统一配置预警规则：企业风控 / 评分产品 / 零售信贷 / 数字营销"
-        actions={<><Cfg value="管理中心 · 统一预警配置" /><Sam value="enterpriseData.json / scoreData.json" /></>} />
+        actions={<></>} />
       <div style={{ display: 'flex', gap: 4, borderBottom: '1px solid #E2E8F0', marginBottom: 16 }}>
         {tabs.map((t) => (
           <button key={t.k} onClick={() => setTab(t.k)}
@@ -70,7 +69,7 @@ export default function CmAlertConfig() {
       </div>
 
       {tab === 'ep' && (
-        <Panel title="企业风控预警规则" desc={<span>司法涉诉 / 经营异常 / 舆情负面 / 财务恶化 / 关联风险 · <Sam value="enterpriseData.json.alertRules" /></span>}>
+        <Panel title="企业风控预警规则" desc={<span>司法涉诉 / 经营异常 / 舆情负面 / 财务恶化 / 关联风险 · </span>}>
           <DataTable columns={epCols} rows={epRows} empty="暂无规则" pager defaultPageSize={10} exportable exportName="企业风控预警规则"
             actions={(r) => {
               const rule = ent.alertRules.find((x) => x.id === String(r.id));
@@ -83,7 +82,7 @@ export default function CmAlertConfig() {
         </Panel>
       )}
       {tab === 'sc' && (
-        <Panel title="评分产品预警规则" desc={<span>智察分 / 智信分 / 智融分 命中阈值预警 · <Sam value="scoreData.json.alertRules" /></span>}>
+        <Panel title="评分产品预警规则" desc={<span>智察分 / 智信分 / 智融分 命中阈值预警 · </span>}>
           <DataTable columns={scCols} rows={scRows} empty="暂无规则" pager defaultPageSize={10} exportable exportName="评分产品预警规则"
             actions={(r) => {
               const rule = score.alertRules.find((x) => x.id === String(r.id));

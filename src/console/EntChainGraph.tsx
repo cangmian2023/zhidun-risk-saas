@@ -1,5 +1,4 @@
 import React, { useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { Sam, Cfg } from './SourceTag';
 import { computeCenterFit, Bounds } from './graphFit';
 import chainData from './entChainGraph.json';
 import EntEquityGraph from './EntEquityGraph';
@@ -464,9 +463,7 @@ export default function EntChainGraph({
       </div>
       )}
 
-      {/* 数据来源标签 */}
       <div style={{ marginTop: 12 }}>
-        <Sam label="企业链图" /> <Cfg label="筛选配置" />
       </div>
     </div>
   );

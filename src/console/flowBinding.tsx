@@ -112,7 +112,7 @@ export function flowColumns(opts: FlowColumnsOpts): FlowColumnDef[] {
     label: '流程状态',
     fixed: 'right',
     width: '170px',
-    ...(sampleFile ? { tag: { kind: 'sample', value: `${sampleFile}.flowState` } } : {}),
+    ...(sampleFile ? {  } : {}),
     render: (r: any) => (
       <FlowStateCell
         flowId={flowIdOfRow(r, pageFlow)}

@@ -1,9 +1,9 @@
 // 尽调中心 · 关系尽调 · 关联方识别结果页（jd-relation-result）
 // 数据：本地样例 jdRelationResult.json（橘 Sam）
-import { useState, useRef } from 'react'
-import { EpPage, EpBtn, useSample, Sam } from '../../epCommon'
-import { usePageNav } from '../../../pageNav'
-import { Modal } from '../../../../components/ui'
+import { useState, useRef } from 'react';
+import { EpPage, EpBtn, useSample } from '../../epCommon';
+import { usePageNav } from '../../../pageNav';
+import { Modal } from '../../../../components/ui';
 
 type NavItem = { key: string; label: string; count: number }
 type SectionRow = { id: number; name: string; relation: string; path: string }
@@ -199,7 +199,6 @@ export default function JdRelationResult({ params }: { params: URLSearchParams }
       actions={
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <EpBtn ghost onClick={() => back('/console/ep/jd-relation')}>返回</EpBtn>
-          <Sam value={data.source} />
         </div>
       }
     >

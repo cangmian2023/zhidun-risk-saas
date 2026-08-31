@@ -1,8 +1,8 @@
 // 尽调中心 · 报告中心（jd-report）· 获取尽调报告 / 报告记录
 // 数据：本地样例 jdReport.json（橘 Sam）
-import { useState } from 'react'
-import { EpPage, useSample, Sam } from '../../epCommon'
-import { usePageNav } from '../../../pageNav'
+import { useState } from 'react';
+import { EpPage, useSample } from '../../epCommon';
+import { usePageNav } from '../../../pageNav';
 
 type ReportCard = { key: string; name: string; desc: string }
 type Data = {
@@ -87,7 +87,7 @@ export default function JdReport({ params }: { params: URLSearchParams }) {
   const isGet = tab === 'get'
 
   return (
-    <EpPage title={data.pageTitle} actions={<Sam value={data.source} />}>
+    <EpPage title={data.pageTitle} >
       {/* 顶部 Tab + 右上管理链接 */}
       <div style={{ display: 'flex', alignItems: 'center', borderBottom: '1px solid #E2E8F0', marginBottom: 18 }}>
         {data.tabs.map((t) => (

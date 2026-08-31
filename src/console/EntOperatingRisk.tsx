@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Sam, Cfg } from './SourceTag';
 import riskData from './entOperatingRisk.json';
 
 /* 企业档案 · 经营风险
@@ -262,9 +261,7 @@ export default function EntOperatingRisk({ companyName, menu }: { companyName?: 
         </div>
       )}
 
-      {/* 数据来源标签 */}
       <div style={{ marginTop: 16 }}>
-        <Sam label="经营风险" /> <Cfg label="数据配置" />
       </div>
     </div>
   );

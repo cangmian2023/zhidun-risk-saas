@@ -1,11 +1,10 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { usePageNav } from './pageNav'
-import { useScore, SCORE_PROD_LABEL, updateScore, zhixinGrade, type ScoreProd, type ScoreRecord } from './scoreData'
-import { PageShell } from './PageShell'
-import { Panel, StatCard, Button, Badge, Modal } from '../components/ui'
-import { Sam, Cal } from './SourceTag'
-import { LineChart } from '../components/charts'
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { usePageNav } from './pageNav';
+import { useScore, SCORE_PROD_LABEL, updateScore, zhixinGrade, type ScoreProd, type ScoreRecord } from './scoreData';
+import { PageShell } from './PageShell';
+import { Panel, StatCard, Button, Badge, Modal } from '../components/ui';
+import { LineChart } from '../components/charts';
 
 const PSI_KIND: Record<'稳定' | '临界' | '偏移', 'green' | 'amber' | 'red'> = {
   稳定: 'green',
@@ -108,7 +107,6 @@ export default function ScoreOverviewPage() {
         <Panel
           title="模型健康度"
           desc="各评分产品的覆盖率、准确率、及时率、PSI 与本月调用（系统能力概览）"
-          actions={<Sam value="scoreData.json" />}
         >
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
             {data.models.map((m) => {
@@ -152,7 +150,7 @@ export default function ScoreOverviewPage() {
 
         {/* 调用量趋势 + 风险率 + 本月次数 */}
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-          <Panel title="调用量趋势" className="lg:col-span-2" actions={<Sam value="scoreData.json" />}>
+          <Panel title="调用量趋势" className="lg:col-span-2" >
             <LineChart
               labels={data.callTrend.map((t) => t.month)}
               series={[
@@ -163,7 +161,7 @@ export default function ScoreOverviewPage() {
               height={260}
             />
           </Panel>
-          <Panel title="风险率" actions={<Cal />}>
+          <Panel title="风险率" >
             <RiskGauge rate={data.riskRate} />
           </Panel>
         </div>
@@ -173,7 +171,6 @@ export default function ScoreOverviewPage() {
             label="本月评分次数"
             value={data.monthlyCount.toLocaleString()}
             accent="brand"
-            hint={<Cal />}
           />
           <StatCard label="在跑模型数" value={String(data.models.filter((m) => m.enabled).length)} accent="violet" />
           <StatCard label="评分记录总数" value={data.records.length.toLocaleString()} accent="emerald" />
@@ -190,7 +187,7 @@ export default function ScoreOverviewPage() {
         />
         {importMsg && <p className="mt-2 text-xs text-amber-600">{importMsg}</p>}
         <p className="mt-2 text-[11px] text-slate-400">
-          <Sam value="scoreData.json" /> 解析成功后追加为评分记录（按你输入的 CSV 逐行生成）
+           解析成功后追加为评分记录（按你输入的 CSV 逐行生成）
         </p>
         <div className="mt-4 flex justify-end gap-2">
           <Button size="sm" variant="ghost" onClick={() => setImportOpen(false)}>取消</Button>

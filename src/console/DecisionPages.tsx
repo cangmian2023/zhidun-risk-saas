@@ -1,15 +1,14 @@
 // 决策引擎 · 工作台 + 监控分析模块页面（工作台 / 监控大盘 / 告警管理 / 决策分析 / 规则命中 / 决策日志）
-import { useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
-import { useDecision, updateDecision, ALERT_LEVEL_TAG, ALERT_STATUS_TAG, DECISION_TAG, type DeAlertRule, type DeNotifyChannel } from './decisionData'
-import { useAuth } from '../auth/AuthContext'
-import { PageShell } from './PageShell'
-import { Panel, StatCard, DataTable, Badge, Button, DetailHeader, SingleSelect, type Column, type Row } from '../components/ui'
-import { LineChart, DonutChart, BarChart } from '../components/charts'
-import { Sam, Cal } from './SourceTag'
-import { AlertRuleDialog, NotifyChannelDialog } from './DecisionDialogs'
-import { useDecisionToast } from './useDecisionToast'
-import { usePageNav } from './pageNav'
+import { useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useDecision, updateDecision, ALERT_LEVEL_TAG, ALERT_STATUS_TAG, DECISION_TAG, type DeAlertRule, type DeNotifyChannel } from './decisionData';
+import { useAuth } from '../auth/AuthContext';
+import { PageShell } from './PageShell';
+import { Panel, StatCard, DataTable, Badge, Button, DetailHeader, SingleSelect, type Column, type Row } from '../components/ui';
+import { LineChart, DonutChart, BarChart } from '../components/charts';
+import { AlertRuleDialog, NotifyChannelDialog } from './DecisionDialogs';
+import { useDecisionToast } from './useDecisionToast';
+import { usePageNav } from './pageNav';
 import FlowStateCell from './FlowStateCell'
 import FlowActionBar from './FlowActionBar'
 
@@ -102,7 +101,7 @@ export function DecisionWorkbenchPage() {
           </div>
         </div>
 
-        <Panel title="数据说明" actions={<Sam value="decisionData.json" />}>
+        <Panel title="数据说明" >
           <p className="text-sm text-slate-500">
             决策引擎为「规则 + 模型」双引擎统一平台。工作台数据来自本地样例 <code className="text-brand-600">decisionData.json</code>（模拟金融风控平台），
             后台按此契约实现接口后由后台更新该文件，前端只读渲染。
@@ -142,14 +141,14 @@ export function DecisionMonitorPage() {
           当前仪表盘：{dash} · 实时指标监控{curHealth ? `（${curHealth.model} · 状态 ${curHealth.status}）` : ''}（数据源 <code className="text-brand-600">decisionData.json → monitor</code>）
         </div>
         <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-          <StatCard label="总请求数" value={(curHealth ? curHealth.calls : m.todayCalls).toLocaleString()} accent="brand" extra={<Cal value="monitor" />} />
-          <StatCard label="通过率" value={`${curHealth ? +(100 - curHealth.errorRate * 100 - 18).toFixed(1) : m.todayPassRate}%`} accent="emerald" extra={<Cal value="monitor" />} />
-          <StatCard label="拒绝率" value={`${curHealth ? +(curHealth.errorRate * 100 + 18).toFixed(1) : m.todayRejectRate}%`} accent="rose" extra={<Cal value="monitor" />} />
-          <StatCard label="平均延迟" value={`${curHealth ? curHealth.avgCost : m.avgCostMs}ms`} accent="cyan" extra={<Cal value="monitor" />} />
+          <StatCard label="总请求数" value={(curHealth ? curHealth.calls : m.todayCalls).toLocaleString()} accent="brand"  />
+          <StatCard label="通过率" value={`${curHealth ? +(100 - curHealth.errorRate * 100 - 18).toFixed(1) : m.todayPassRate}%`} accent="emerald"  />
+          <StatCard label="拒绝率" value={`${curHealth ? +(curHealth.errorRate * 100 + 18).toFixed(1) : m.todayRejectRate}%`} accent="rose"  />
+          <StatCard label="平均延迟" value={`${curHealth ? curHealth.avgCost : m.avgCostMs}ms`} accent="cyan"  />
         </div>
       </Panel>
 
-      <Panel title="请求趋势" actions={<Sam value="monitor.callTrend" />}>
+      <Panel title="请求趋势" >
         <LineChart
           labels={m.callTrend.map((t) => t.date)}
           series={[
@@ -162,13 +161,13 @@ export function DecisionMonitorPage() {
       </Panel>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <Panel title="结果分布" actions={<Sam value="monitor.decisionDist" />}>
+        <Panel title="结果分布" >
           <DonutChart
             data={m.decisionDist.map((x) => ({ label: x.label, value: x.value, color: x.label === '通过' ? '#22c55e' : x.label === '拒绝' ? '#ef4444' : '#f59e0b' }))}
             centerLabel="决策结果"
           />
         </Panel>
-        <Panel title="延迟分布" actions={<Sam value="monitor.blockDist" />}>
+        <Panel title="延迟分布" >
           <DonutChart
             data={m.blockDist.map((x, i) => ({ label: x.label, value: x.value, color: ['#6366f1', '#f59e0b', '#22c55e', '#0ea5e9'][i % 4] }))}
             centerLabel="延迟占比"
@@ -231,17 +230,17 @@ export function DecisionAlertPage() {
       <PageShell title="告警管理" subtitle="决策链路告警管理：阈值告警规则配置与告警消息处理" crumb="决策引擎 / 监控分析 / 告警管理" />
       <div className="space-y-4">
         <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-          <StatCard label="待处理" value={String(d.alerts.filter((a) => a.status === '待处理').length)} accent="rose" extra={<Cal value="alerts" />} />
-          <StatCard label="处理中" value={String(d.alerts.filter((a) => a.status === '处理中').length)} accent="amber" extra={<Cal value="alerts" />} />
-          <StatCard label="今日告警" value={String(d.alerts.filter((a) => a.createdAt.includes('2026-08-14')).length)} accent="brand" extra={<Cal value="alerts" />} />
-          <StatCard label="已启用规则" value={String(d.alertRules.filter((r) => r.enabled).length)} accent="emerald" extra={<Cal value="alertRules" />} />
+          <StatCard label="待处理" value={String(d.alerts.filter((a) => a.status === '待处理').length)} accent="rose"  />
+          <StatCard label="处理中" value={String(d.alerts.filter((a) => a.status === '处理中').length)} accent="amber"  />
+          <StatCard label="今日告警" value={String(d.alerts.filter((a) => a.createdAt.includes('2026-08-14')).length)} accent="brand"  />
+          <StatCard label="已启用规则" value={String(d.alertRules.filter((r) => r.enabled).length)} accent="emerald"  />
         </div>
 
-        <Panel title="告警记录" actions={<Sam value="alerts" />}>
+        <Panel title="告警记录" >
           <DataTable columns={alertCols} rows={alertRows} pager defaultPageSize={10} clickableKey="title"
             onCellClick={(r) => goDetail('/console/de/alert-detail?id=' + r.id)} />
         </Panel>
-        <Panel title="告警规则" actions={<div className="flex items-center gap-2"><Sam value="alertRules" /><Button size="sm" onClick={() => setShowRule(true)}>新 建</Button></div>}>
+        <Panel title="告警规则" actions={<div className="flex items-center gap-2"><Button size="sm" onClick={() => setShowRule(true)}>新 建</Button></div>}>
           <DataTable columns={ruleCols} rows={ruleRows} pager defaultPageSize={10}
             actions={(r) => (
               <div className="flex items-center gap-3 text-sm">
@@ -254,7 +253,7 @@ export function DecisionAlertPage() {
             )}
           />
         </Panel>
-        <Panel title="通知渠道" actions={<div className="flex items-center gap-2"><Sam value="notifyChannels" /><Button size="sm" onClick={() => setShowChannel(true)}>新 建</Button></div>}>
+        <Panel title="通知渠道" actions={<div className="flex items-center gap-2"><Button size="sm" onClick={() => setShowChannel(true)}>新 建</Button></div>}>
           <DataTable columns={channelCols} rows={channelRows} pager defaultPageSize={10}
             actions={(r) => (
               <div className="flex items-center gap-3 text-sm">
@@ -359,14 +358,14 @@ export function DecisionAnalysisPage() {
       />
       <div className="space-y-4">
         <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-          <StatCard label="总决策数" value={m.todayCalls.toLocaleString()} accent="brand" extra={<Cal value="monitor" />} />
-          <StatCard label="通过率" value={`${m.todayPassRate}%`} accent="emerald" extra={<Cal value="monitor" />} />
-          <StatCard label="拒绝率" value={`${m.todayRejectRate}%`} accent="rose" extra={<Cal value="monitor" />} />
-          <StatCard label="平均耗时" value={`${m.avgCostMs}`} hint="ms" accent="cyan" extra={<Cal value="monitor" />} />
+          <StatCard label="总决策数" value={m.todayCalls.toLocaleString()} accent="brand"  />
+          <StatCard label="通过率" value={`${m.todayPassRate}%`} accent="emerald"  />
+          <StatCard label="拒绝率" value={`${m.todayRejectRate}%`} accent="rose"  />
+          <StatCard label="平均耗时" value={`${m.avgCostMs}`} hint="ms" accent="cyan"  />
         </div>
 
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-          <Panel title="决策趋势" actions={<Cal value="callTrend" />}>
+          <Panel title="决策趋势" >
             <LineChart
               labels={m.callTrend.map((t) => t.date)}
               series={[
@@ -377,7 +376,7 @@ export function DecisionAnalysisPage() {
               height={260}
             />
           </Panel>
-          <Panel title="Top 命中策略" actions={<Cal value="topRules" />}>
+          <Panel title="Top 命中策略" >
             <BarChart
               labels={m.topRules.map((r) => r.rule)}
               series={[{ name: '命中次数', color: '#8b5cf6', data: m.topRules.map((r) => r.hits) }]}
@@ -386,7 +385,7 @@ export function DecisionAnalysisPage() {
           </Panel>
         </div>
 
-        <Panel title="按模型统计" actions={<Cal value="modelHealth" />}>
+        <Panel title="按模型统计" >
           <DataTable columns={statCols} rows={statRows} pager defaultPageSize={10} />
         </Panel>
       </div>
@@ -423,10 +422,10 @@ export function DecisionRuleHitPage() {
       <PageShell title="规则命中" subtitle="规则命中分析：命中 TOP 规则、命中分布与规则贡献" crumb="决策引擎 / 监控分析 / 规则命中" />
       <div className="space-y-4">
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-          <Panel title="近 7 日命中趋势" actions={<Sam value="ruleHit.hitTrend" />}>
+          <Panel title="近 7 日命中趋势" >
             <LineChart labels={r.hitTrend.map((t) => t.date)} series={[{ name: '命中数', color: '#ef4444', data: r.hitTrend.map((t) => t.hits) }]} height={230} />
           </Panel>
-          <Panel title="命中类型分布" actions={<Sam value="ruleHit.ruleDist" />}>
+          <Panel title="命中类型分布" >
             <DonutChart data={r.ruleDist.map((x, i) => ({ label: x.type, value: x.value, color: ['#6366f1', '#f59e0b', '#22c55e', '#0ea5e9'][i % 4] }))} centerLabel="命中占比" />
           </Panel>
         </div>
@@ -448,13 +447,13 @@ export function DecisionRuleHitPage() {
         </Panel>
 
         <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-          <StatCard label="总决策数" value={d.monitor.todayCalls.toLocaleString()} accent="brand" extra={<Cal value="monitor" />} />
-          <StatCard label="命中次数" value={r.hitDetail.reduce((a, x) => a + x.hits, 0).toLocaleString()} accent="rose" extra={<Cal value="hitDetail" />} />
-          <StatCard label="总命中率" value={`${r.hitDetail.reduce((a, x) => a + x.rate, 0).toFixed(1)}%`} accent="amber" extra={<Cal value="hitDetail" />} />
-          <StatCard label="启用规则" value={String(r.hitDetail.filter((x) => x.status === '启用').length)} accent="emerald" extra={<Cal value="hitDetail" />} />
+          <StatCard label="总决策数" value={d.monitor.todayCalls.toLocaleString()} accent="brand"  />
+          <StatCard label="命中次数" value={r.hitDetail.reduce((a, x) => a + x.hits, 0).toLocaleString()} accent="rose"  />
+          <StatCard label="总命中率" value={`${r.hitDetail.reduce((a, x) => a + x.rate, 0).toFixed(1)}%`} accent="amber"  />
+          <StatCard label="启用规则" value={String(r.hitDetail.filter((x) => x.status === '启用').length)} accent="emerald"  />
         </div>
 
-        <Panel title="规则命中明细" actions={<Sam value="ruleHit.hitDetail" />}>
+        <Panel title="规则命中明细" >
           <div className="mb-3 flex flex-wrap items-center gap-2">
             <SingleSelect label="全部模型" clearable value={modelFilter} onChange={setModelFilter}
               options={[{ value: '全部模型', label: '全部模型' }, ...d.models.map((m) => ({ value: m.code, label: m.name }))]} />
@@ -507,7 +506,7 @@ export function DecisionLogPage() {
   return (
     <>
       <PageShell title="决策日志" subtitle="全量决策日志明细：入参、特征、规则/模型结果与最终结论" crumb="决策引擎 / 监控分析 / 决策日志" />
-      <Panel title="决策日志" actions={<Sam value="decisionLogs" />}>
+      <Panel title="决策日志" >
         <div className="mb-3 flex flex-wrap items-center gap-2">
           <SingleSelect label="全部结果" clearable value={result} onChange={setResult}
             options={[{ value: '全部', label: '全部' }, { value: '通过', label: '通过' }, { value: '拒绝', label: '拒绝' }, { value: '人工复核', label: '人工复核' }]} />

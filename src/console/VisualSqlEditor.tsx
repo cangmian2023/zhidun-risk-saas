@@ -10,7 +10,6 @@
  */
 import { useState, useMemo } from 'react';
 import { SingleSelect } from '../components/ui';
-import { Sam, Cal } from './SourceTag';
 import {
   type MidMetric, type MidDataSource,
   type VisualAggOp, type VisualFilterOp, type VisualCond,
@@ -346,7 +345,7 @@ export function VisualSqlEditor({ value, sources, onChange }: {
       {/* ── 字段选择（3.13：指标/自定义指标 = 字段选择本身的两种模式） ── */}
       <div style={{ border: '1px solid #E2E8F0', borderRadius: 10, padding: 12 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, fontWeight: 600, color: '#0F172A', marginBottom: 10, flexWrap: 'wrap' }}>
-          字段选择 <Sam value="midMetrics.json.visualSql.events" />
+          字段选择 
           {/* 指标 / 自定义指标 切换 */}
           <span style={{ display: 'inline-flex', border: '1px solid #E2E8F0', borderRadius: 6, overflow: 'hidden', marginLeft: 8 }}>
             {([['metric', '指标'], ['custom', '自定义指标']] as const).map(([m, l]) => (
@@ -387,7 +386,6 @@ export function VisualSqlEditor({ value, sources, onChange }: {
                   <div style={{ marginBottom: 8, marginLeft: 8 }}>
                     <CondBuilder
                       title={`字段 ${EVENT_LETTERS[i] ?? i + 1} 筛选`}
-                      sourceTag={<Sam value="midMetrics.json.visualSql.events[].filters" />}
                       value={e.filters}
                       fields={allFields}
                       onChange={(f) => setEvents(events.map((x, k) => k === i ? { ...x, filters: f } : x))} />
@@ -415,7 +413,6 @@ export function VisualSqlEditor({ value, sources, onChange }: {
       {/* ── 全局筛选（嵌套且/或 + 新操作符） ── */}
       <CondBuilder
         title="全局筛选"
-        sourceTag={<Sam value="midMetrics.json.visualSql.globalFilters" />}
         value={vs.globalFilters}
         fields={allFields}
         onChange={(f) => set({ globalFilters: f })} />
@@ -423,7 +420,7 @@ export function VisualSqlEditor({ value, sources, onChange }: {
       {/* ── 分组选择 ── */}
       <div style={{ border: '1px solid #E2E8F0', borderRadius: 10, padding: 12 }}>
         <div style={{ fontSize: 13, fontWeight: 600, color: '#0F172A', marginBottom: 8 }}>
-          分组选择 <Sam value="midMetrics.json.visualSql.groupBy" />
+          分组选择 
           <span style={{ fontSize: 11, fontWeight: 400, color: '#94A3B8', marginLeft: 8 }}>按字段分组（如：省份 / 产品 / 风险等级）</span>
         </div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
@@ -461,14 +458,14 @@ export function VisualSqlEditor({ value, sources, onChange }: {
           )}
         </div>
         <div style={{ marginTop: 6, fontSize: 12, color: '#64748B' }}>
-          已选分组：{(vs.groupBy ?? []).map((k) => labelOf(k)).join(' / ') || '—'} <Cal label="实时配置" />
+          已选分组：{(vs.groupBy ?? []).map((k) => labelOf(k)).join(' / ') || '—'} 
         </div>
       </div>
 
       {/* ── 时间选择（3.5）：粒度 + 时间范围（动态/静态）+ 对比 ── */}
       <div style={{ border: '1px solid #E2E8F0', borderRadius: 10, padding: 12 }}>
         <div style={{ fontSize: 13, fontWeight: 600, color: '#0F172A', marginBottom: 10 }}>
-          时间选择<Sam value="midMetrics.json.visualSql.timeGran" /><span style={{ fontSize: 11, fontWeight: 400, color: '#94A3B8', marginLeft: 8 }}>时间粒度 + 时间范围 + 对比</span>
+          时间选择<span style={{ fontSize: 11, fontWeight: 400, color: '#94A3B8', marginLeft: 8 }}>时间粒度 + 时间范围 + 对比</span>
         </div>
         <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', alignItems: 'flex-end' }}>
           <label style={{ ...lbl, minWidth: 110 }}>粒度
@@ -519,7 +516,7 @@ export function VisualSqlEditor({ value, sources, onChange }: {
       {/* ── SQL 预览 ── */}
       <div style={{ border: '1px solid #E2E8F0', borderRadius: 10, padding: 12, background: '#FAFAFB' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 600, color: '#0F172A', marginBottom: 8 }}>
-          生成的 SQL <Cal label="实时生成" />
+          生成的 SQL 
           <span style={{ fontSize: 11, fontWeight: 400, color: '#94A3B8' }}>保存时自动写入 value.sql（08081 3.6：已移除「应用到 SQL」按钮）</span>
         </div>
         <pre style={{ margin: 0, padding: 10, background: '#0F172A', color: '#A5F3FC', borderRadius: 8, fontSize: 12, lineHeight: 1.6, overflowX: 'auto', fontFamily: 'ui-monospace, monospace', whiteSpace: 'pre' }}>{sql}</pre>

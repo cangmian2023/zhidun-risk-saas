@@ -6,7 +6,6 @@ import { useNavigate } from 'react-router-dom';
 import { usePageNav } from './pageNav';
 import { MenuIcon, type IconName } from '../components/icons';
 import { SingleSelect } from '../components/ui';
-import { Sam, Cal, SourceTagLegend } from './SourceTag';
 import { useMidCustomers, useMidAlerts } from './midStore';
 import { useCollection } from './collectionData';
 import { useFlows } from './flowStore';
@@ -175,10 +174,10 @@ export default function RetailCreditHome() {
 
       {/* 概要数据 */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0,1fr))', gap: 14, margin: '18px 0' }}>
-        {metric('存量客户', String(total), '本地样例客户总数', '#0F172A', <Sam label="客户样例" />)}
-        {metric('红色预警', String(red), `黄色 ${yellow} ｜ 实时红黄灯信号`, '#DC2626', <Cal label="实时统计" />)}
-        {metric('逾期金额', `¥${overdue.toLocaleString()}`, `M3+ 案件 ${m3} 笔`, '#D97706', <Sam label="催收样例" />)}
-        {metric('业务流程', String(onlineFlows), `已上线 / 共 ${flows.length} 条流程`, '#2563EB', <Cal label="配置驱动" />)}
+        {metric('存量客户', String(total), '本地样例客户总数', '#0F172A', )}
+        {metric('红色预警', String(red), `黄色 ${yellow} ｜ 实时红黄灯信号`, '#DC2626', )}
+        {metric('逾期金额', `¥${overdue.toLocaleString()}`, `M3+ 案件 ${m3} 笔`, '#D97706', )}
+        {metric('业务流程', String(onlineFlows), `已上线 / 共 ${flows.length} 条流程`, '#2563EB', )}
       </div>
 
       {/* 快捷入口（需求18.2：占整行、横向铺满；按「贷前审核 / 贷中监控」分组） */}
@@ -281,7 +280,6 @@ export default function RetailCreditHome() {
       )}
 
       <div style={{ marginTop: 16 }}>
-        <SourceTagLegend />
       </div>
     </div>
   );

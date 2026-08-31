@@ -5,7 +5,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Panel, StatCard, DataTable, Modal, SingleSelect } from '../components/ui';
 import type { Column, Row } from '../components/ui';
-import { Sam, Cal } from './SourceTag';
 import { PageShell } from './PageShell';
 import { useMidAlerts, useMidSaveStatus, updateAlerts } from './midStore';
 import { useEnterpriseData, updateEnterpriseData } from './enterpriseData';
@@ -69,7 +68,7 @@ export default function MidAlertWorkbench({ domain = 'cr' }: { domain?: Domain }
     { key: 'rule_name', label: '命中规则', type: 'text', width: '200px' },
     { key: 'metric', label: '指标值/阈值', type: 'text', width: '100px' },
     { key: 'alert_date', label: '预警时间', type: 'text', width: '100px' },
-    { key: 'flowState', label: '流程状态', fixed: 'right', tag: { kind: 'sample', value: domain === 'ep' ? 'enterpriseData.json.flowState' : 'midAlerts.json.flowState' }, render: (r: Row) => (
+    { key: 'flowState', label: '流程状态', fixed: 'right',  render: (r: Row) => (
       <FlowStateCell flowId={String(r.flowKey ?? '')} state={String(r.flowState ?? '')}
         matchObj={{ level: r.levelRaw ?? '', alert_type: r.alertTypeRaw ?? '', scene: r.scene ?? '' }}
         onChange={(s) => {
@@ -108,7 +107,7 @@ export default function MidAlertWorkbench({ domain = 'cr' }: { domain?: Domain }
   return (
     <div style={{ padding: 24, maxWidth: 1360 }}>
       <PageShell title="预警工作台" crumb={crumb} subtitle="预警队列 · 点击任意一条查看详情并处置"
-        actions={<><Sam label="策略配置" value={domain === 'ep' ? 'enterpriseData.json.alertRules' : 'midStrategy.json'} /><Sam label="预警样例" value={`${alerts.length} 条`} /><Cal label="实时统计" /></>} />
+        actions={<></>} />
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0,1fr))', gap: 12, margin: '4px 0 16px' }}>
         <StatCard label="预警总数" value={String(alerts.length)} accent="brand" />
@@ -117,7 +116,7 @@ export default function MidAlertWorkbench({ domain = 'cr' }: { domain?: Domain }
         <StatCard label="机会预警" value={String(levelCounts.OPPORTUNITY)} accent="emerald" />
       </div>
 
-      <Panel title="预警队列" desc={<span>筛选后共 <b>{filtered.length}</b> 条 · <Cal label="实时过滤" /></span>}
+      <Panel title="预警队列" desc={<span>筛选后共 <b>{filtered.length}</b> 条 · </span>}
         actions={
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
             <Sel value={lvl} onChange={setLvl} opts={[{ v: '', l: '全部等级' }, ...['RED', 'YELLOW', 'OPPORTUNITY'].map((x) => ({ v: x, l: LEVEL_META[x].label }))]} />

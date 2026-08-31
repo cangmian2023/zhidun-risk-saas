@@ -1,9 +1,9 @@
 // 企业风控 · 监控规则（fk-monitor-manage）· 1:1 复刻「监控规则」截图
 // 数据：本地样例 fkMonManage.json（橘 Sam）
-import { useState } from 'react'
-import { EpPage, EpCard, EpTag, EpBtn, EpDrawer, DataTable, useSample, Sam } from '../../epCommon'
-import type { Row, Column } from '../../../../components/ui'
-import { usePageNav } from '../../../pageNav'
+import { useState } from 'react';
+import { EpPage, EpCard, EpTag, EpBtn, EpDrawer, DataTable, useSample } from '../../epCommon';
+import type { Row, Column } from '../../../../components/ui';
+import { usePageNav } from '../../../pageNav';
 
 type MonData = typeof seed
 
@@ -134,7 +134,6 @@ export default function FkMonitorManage({ params }: { params: URLSearchParams })
       title="监控规则"
       subtitle="风控中心监控规则与订阅管理"
       crumb="风控中心 / 监控规则"
-      actions={<Sam value="fkMonManage.json" />}
     >
       {/* Tabs */}
       <div style={{ display: 'flex', gap: 6, borderBottom: '1px solid #E2E8F0', marginBottom: 16, position: 'sticky', top: 140, zIndex: 20, background: '#fff' }}>

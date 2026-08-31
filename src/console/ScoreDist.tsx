@@ -1,8 +1,7 @@
-import { useScore, SCORE_PROD_LABEL, type ScoreProd } from './scoreData'
-import { PageShell } from './PageShell'
-import { Panel, Badge } from '../components/ui'
-import { Sam } from './SourceTag'
-import { LineChart, BarChart, DonutChart } from '../components/charts'
+import { useScore, SCORE_PROD_LABEL, type ScoreProd } from './scoreData';
+import { PageShell } from './PageShell';
+import { Panel, Badge } from '../components/ui';
+import { LineChart, BarChart, DonutChart } from '../components/charts';
 
 const MODEL_COLOR: Record<ScoreProd, string> = {
   zhicha: '#ef4444',
@@ -26,7 +25,7 @@ export default function ScoreDist() {
       />
       <div className="space-y-4">
         {/* 分数段分布：一张图内按模型分色对比 */}
-        <Panel title="分数段分布" desc="各评分产品分数段样本数（一张图内按模型分色对比，颜色见下方图例）" actions={<Sam value="scoreData.json" />}>
+        <Panel title="分数段分布" desc="各评分产品分数段样本数（一张图内按模型分色对比，颜色见下方图例）" >
           <BarChart
             labels={distLabels}
             series={prods.map((p) => {
@@ -38,7 +37,7 @@ export default function ScoreDist() {
         </Panel>
 
         {/* 占比：一行三个甜甜圈 */}
-        <Panel title="占比" desc="各评分产品分数段样本占比（一行铺开三个模型）" actions={<Sam value="scoreData.json" />}>
+        <Panel title="占比" desc="各评分产品分数段样本占比（一行铺开三个模型）" >
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             {prods.map((p) => {
               const d = data.dist.find((x) => x.prod === p) ?? { prod: p, labels: [] as string[], data: [] as number[] }
@@ -58,7 +57,7 @@ export default function ScoreDist() {
         </Panel>
 
         {/* 客群对比：单图 */}
-        <Panel title="按客群对比" desc="各客群样本数量对比" actions={<Sam value="scoreData.json" />}>
+        <Panel title="按客群对比" desc="各客群样本数量对比" >
           <BarChart
             labels={data.crowds.map((c) => c.name)}
             series={[{ name: '客群样本数', color: '#3b82f6', data: data.crowds.map((c) => c.count) }]}
@@ -66,7 +65,7 @@ export default function ScoreDist() {
         </Panel>
 
         {/* 调用量趋势：三模型同图 */}
-        <Panel title="调用量趋势" desc="近 6 个月各产品调用量" actions={<Sam value="scoreData.json" />}>
+        <Panel title="调用量趋势" desc="近 6 个月各产品调用量" >
           <LineChart
             labels={data.callTrend.map((c) => c.month)}
             series={[

@@ -1,5 +1,4 @@
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { Sam, Cfg } from './SourceTag';
 import { computeCenterFit, Bounds } from './graphFit';
 import equityData from './entEquityPenetrate.json';
 
@@ -340,9 +339,7 @@ export default function EntEquityGraph({ companyName }: { companyName?: string }
         </button>
       </div>
 
-      {/* 数据来源标签 */}
       <div style={{ marginTop: 12 }}>
-        <Sam label="股权穿透" /> <Cfg label="筛选配置" />
       </div>
 
       {/* 筛选面板弹出层 */}

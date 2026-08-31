@@ -1,5 +1,4 @@
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { Sam, Cfg } from './SourceTag';
 import { computeCenterFit, Bounds } from './graphFit';
 import structData from './entEquityStructure.json';
 
@@ -249,9 +248,7 @@ export default function EntEquityStructure({ companyName }: { companyName?: stri
         </button>
       </div>
 
-      {/* 数据来源标签 */}
       <div style={{ marginTop: 12 }}>
-        <Sam label="股权结构" /> <Cfg label="筛选配置" />
       </div>
     </div>
   );

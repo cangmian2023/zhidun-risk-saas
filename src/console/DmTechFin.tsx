@@ -51,7 +51,7 @@ export default function DmTechFin() {
   const [filterOpen, setFilterOpen] = useState(false)
   return (
     <div style={{ padding: 12 }} className="text-sm text-[#222]">
-      <PageShell title="科创金融" crumb="数字营销 / 产业金融" subtitle="科创企业专属金融服务：科创企业库与资质画像" legend={false} />
+      <PageShell title="科创金融" crumb="数字营销 / 产业金融" subtitle="科创企业专属金融服务：科创企业库与资质画像" />
 
       {/* ============ 顶部搜索 ============ */}
       <div className="mt-4 mb-2 flex items-center justify-center gap-2">

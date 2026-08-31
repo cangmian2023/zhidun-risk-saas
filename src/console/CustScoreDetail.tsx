@@ -12,7 +12,6 @@ import { useSearchParams } from 'react-router-dom';
 import { DetailHeader, Panel, Badge } from '../components/ui';
 import ScoreGauge from '../components/ScoreGauge';
 import { LineChart } from '../components/charts';
-import { Sam } from './SourceTag';
 import { PageShell } from './PageShell';
 import { usePageNav } from './pageNav';
 import { useMidCustomers, useMidAlerts, updateAlerts } from './midStore';
@@ -724,7 +723,7 @@ export default function CustScoreDetail({ defaultCust, defaultProd }: { defaultC
               {cust.name}
             </div>
             <div style={{ fontSize: 12, color: '#64748B', marginTop: 6, lineHeight: 1.7 }}>
-              客户号 {cust.custId} ｜ 产品 {cust.product ?? '—'} ｜ 证件号 {cust.idCard} ｜ 贷款状态 {cust.loanStatus ?? '—'} ｜ 数据来源 <Sam label="样例" value="midCustomers.json" />
+              客户号 {cust.custId} ｜ 产品 {cust.product ?? '—'} ｜ 证件号 {cust.idCard} ｜ 贷款状态 {cust.loanStatus ?? '—'} ｜ 数据来源 
             </div>
           </div>
           <div style={{ flexShrink: 0 }}>

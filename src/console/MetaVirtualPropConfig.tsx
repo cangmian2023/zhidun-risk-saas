@@ -2,7 +2,6 @@
 // 列、抽屉字段与 SQL 表达式取自 sensors/6.虚拟属性 元数据管理.html 及其详情页
 import { useState } from 'react';
 import type { Column, Row } from '../components/ui';
-import { Sam } from './SourceTag';
 import { MetaListPage, MetaField, MetaSection, MiniTable } from './MetaListPage';
 import { useMetaVirtualProps } from './metaStore';
 import type { MetaVirtualProp } from './metaData';
@@ -15,13 +14,13 @@ export default function MetaVirtualPropConfig() {
   const [cur, setCur] = useState<MetaVirtualProp | null>(null);
 
   const columns: Column[] = [
-    { key: 'name', label: '属性名', tag: { kind: 'sample', value: `${J}.name` } },
-    { key: 'displayName', label: '属性显示名', tag: { kind: 'sample', value: `${J}.displayName` } },
-    { key: 'category', label: '属性分类', type: 'badge', badgeKind: 'blue', tag: { kind: 'sample', value: `${J}.category` } },
-    { key: 'dataType', label: '数据类型', tag: { kind: 'sample', value: `${J}.dataType` } },
-    { key: 'dict', label: '字典', tag: { kind: 'sample', value: `${J}.dict` } },
-    { key: 'requirement', label: '可用此属性的事件要求', tag: { kind: 'sample', value: `${J}.requirement` } },
-    { key: 'createdAt', label: '创建时间', type: 'datetime', tag: { kind: 'sample', value: `${J}.createdAt` } },
+    { key: 'name', label: '属性名' },
+    { key: 'displayName', label: '属性显示名' },
+    { key: 'category', label: '属性分类', type: 'badge', badgeKind: 'blue' },
+    { key: 'dataType', label: '数据类型' },
+    { key: 'dict', label: '字典' },
+    { key: 'requirement', label: '可用此属性的事件要求' },
+    { key: 'createdAt', label: '创建时间', type: 'datetime' },
   ];
 
   const rows: Row[] = props.map((p) => ({
@@ -61,7 +60,7 @@ export default function MetaVirtualPropConfig() {
       {cur && (
         <>
           <MetaSection title="属性信息">
-            <MetaField label="属性分类" value={cur.category} tag={<Sam value={`${J}.category`} />} />
+            <MetaField label="属性分类" value={cur.category}  />
             <MetaField label="创建方式" value={cur.createWay} />
             <MetaField label="属性显示名" value={cur.displayName} />
             <MetaField label="属性名" value={<code className="font-mono text-brand-700">{cur.name}</code>} />

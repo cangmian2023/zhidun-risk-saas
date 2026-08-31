@@ -140,7 +140,6 @@ export interface ConfigDetailPageProps {
   crumbParts: string[]; // 面包屑末级片段（不含 CONFIG_CRUMB 前缀）
   subtitle?: string;
   actions?: ReactNode;
-  source?: ReactNode;   // 头条数据来源标签（如 <Sam value="midStrategy.json" />）
   infoCells: ReactNode; // 顶部 InfoCell 网格
   children: ReactNode; // Panels
   backLabel?: string;   // 顶部左侧返回按钮文案（与报告模板详情页一致）
@@ -164,11 +163,6 @@ export function ConfigDetailPage(p: ConfigDetailPageProps) {
   return (
     <div className={CONFIG_CONTAINER}>
       <PageShell title={p.title} crumb={crumb(...p.crumbParts)} subtitle={p.subtitle} actions={p.actions} header={header} />
-      {p.source && (
-        <div className="mb-1 flex items-center gap-1 text-xs text-slate-400" style={{ marginTop: -6 }}>
-          数据来源：{p.source}
-        </div>
-      )}
       {p.infoCells}
       {p.children}
     </div>

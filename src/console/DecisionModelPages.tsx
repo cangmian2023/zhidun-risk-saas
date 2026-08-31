@@ -1,10 +1,9 @@
 // 决策引擎 · 决策建模模块页面（模型管理 / 模型详情 / 决策流编辑 / 模型测试）
-import { useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
-import { useDecision, updateDecision, MODEL_STATUS_TAG, type DeFlowGraph } from './decisionData'
-import { PageShell } from './PageShell'
-import { Panel, DataTable, Badge, Button, DetailHeader, type Column, type Row } from '../components/ui'
-import { Sam } from './SourceTag'
+import { useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useDecision, updateDecision, MODEL_STATUS_TAG, type DeFlowGraph } from './decisionData';
+import { PageShell } from './PageShell';
+import { Panel, DataTable, Badge, Button, DetailHeader, type Column, type Row } from '../components/ui';
 import DecisionFlowGraph from './DecisionFlowGraph'
 import DecisionFlowEditor from './DecisionFlowEditor'
 import { useDecisionToast } from './useDecisionToast'
@@ -72,7 +71,7 @@ export function DecisionModelManagePage() {
           <Button onClick={() => toast.show('新建模型功能建设中，后台接入后可用')}>新建模型</Button>
         </div>
       } />
-      <Panel title="模型列表" actions={<Sam value="models" />}>
+      <Panel title="模型列表" >
         <DataTable columns={cols} rows={rows} pager defaultPageSize={10} clickableKey="name"
           onCellClick={(r) => goDetail('/console/de/model-detail?mid=' + r.id)}
           actions={(r) => (

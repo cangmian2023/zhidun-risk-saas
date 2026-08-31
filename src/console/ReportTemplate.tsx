@@ -38,11 +38,6 @@ import FlowCanvasEditor from './FlowCanvasEditor'
 import { ScoreVisual } from './ScoreVisual'
 import listJson from './reportTemplateList.json'
 
-/* 数据来源标签：蓝=模板配置 | 橙=JSON样例数据 | 灰=实时计算 */
-const tS: React.CSSProperties = { display: 'inline-block', fontSize: 9, fontFamily: 'monospace', padding: '0 3px', borderRadius: 3, marginLeft: 4, verticalAlign: 'middle', lineHeight: '14px', fontWeight: 400 }
-const Tpl = ({ f, v }: { f: string; v?: any }) => <span style={{ ...tS, background: '#DBEAFE', color: '#1D4ED8', border: '1px solid #93C5FD' }} title={`模板配置: ${f}`}>{f}{v != null ? `=${v}` : ''}</span>
-const Dat = ({ f, v }: { f: string; v?: any }) => <span style={{ ...tS, background: '#FFF7ED', color: '#C2410C', border: '1px solid #FDBA74' }} title={`JSON样例: ${f}`}>{f}{v != null ? `=${v}` : ''}</span>
-const Cal = ({ f, v }: { f: string; v?: any }) => <span style={{ ...tS, background: '#F3F4F6', color: '#6B7280', border: '1px solid #D1D5DB' }} title={`实时计算: ${f}`}>{f}{v != null ? `=${v}` : ''}</span>
 
 /* 模板列表元数据（2.1：列表展示数据来自本地 json 模拟数据 reportTemplateList.json，编辑后同步更新） */
 export interface TemplateListMeta {
@@ -716,7 +711,7 @@ export default function ReportTemplateConfig() {
               return (
                 <div key={t.id} style={{ border: '1px solid #E5E7EB', borderRadius: 12, padding: 16, background: '#fff', position: 'relative', display: 'flex', flexDirection: 'column', height: '100%' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    <div style={{ fontWeight: 700, fontSize: 16 }}>{t.name}<span style={{ marginLeft: 6, display: 'inline-block', fontSize: 9, fontFamily: 'monospace', padding: '0 3px', borderRadius: 2, background: '#FFF7ED', color: '#C2410C', border: '1px solid #FDBA74', verticalAlign: 'middle', lineHeight: '14px', fontWeight: 400 }}>JSON:name</span></div>
+                    <div style={{ fontWeight: 700, fontSize: 16 }}>{t.name}</div>
                     {t.isDefault && <Badge kind="blue">默认</Badge>}
                   </div>
                   <div style={{ marginTop: 8, display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
@@ -1187,13 +1182,6 @@ export default function ReportTemplateConfig() {
             {perm.del && active.status !== '已启用' && !active.isDefault && <Button variant="ghost" onClick={() => deleteTpl(active.id)}>删除</Button>}
           </>
         } />
-      {/* 数据来源图例（第 2 条：报告模板详情/预览的数据来源标注，与报告详情页标签一致） */}
-      <div style={{ margin: '10px 0', fontSize: 11, color: '#6B7280', display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-        <span>数据来源：</span>
-        <span style={{ background: '#DBEAFE', color: '#1D4ED8', border: '1px solid #93C5FD', fontFamily: 'monospace', padding: '0 4px', borderRadius: 2 }}>蓝=模板配置</span>
-        <span style={{ background: '#FFF7ED', color: '#C2410C', border: '1px solid #FDBA74', fontFamily: 'monospace', padding: '0 4px', borderRadius: 2 }}>橙=本地JSON样例(samples/sample-{active.id}.json)</span>
-        <span style={{ background: '#F3F4F6', color: '#6B7280', border: '1px solid #D1D5DB', fontFamily: 'monospace', padding: '0 4px', borderRadius: 2 }}>灰=实时算法</span>
-      </div>
       <div>
         <div className="min-w-0">
           {/* 基础信息（默认收起，缩略显示；展开可编辑、可收起） */}
@@ -1208,8 +1196,8 @@ export default function ReportTemplateConfig() {
             {basicExpanded ? (
               <div style={{ padding: '14px 16px' }}>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 14 }}>
-              <Field label="模板名称" ><input disabled={!canEdit} value={active.name} onChange={(e) => patch((t) => ({ ...t, name: e.target.value }))} style={inp} /><Dat f="JSON:name" v={active.name} /></Field>
-              <Field label="报告类型"><input disabled value={REPORT_META[active.reportType].icon + ' ' + REPORT_META[active.reportType].label} style={{ ...inp, background: '#F3F4F6' }} /><Dat f="JSON:reportType" v={active.reportType} /></Field>
+              <Field label="模板名称" ><input disabled={!canEdit} value={active.name} onChange={(e) => patch((t) => ({ ...t, name: e.target.value }))} style={inp} /></Field>
+              <Field label="报告类型"><input disabled value={REPORT_META[active.reportType].icon + ' ' + REPORT_META[active.reportType].label} style={{ ...inp, background: '#F3F4F6' }} /></Field>
               <Field label="适用产品" hint="大平台产品分两级类目，可搜索、按类目整类勾选；「全产品」为互斥项，选中即覆盖其余选择。">
                 <SearchSelect
                   multiple
@@ -1224,30 +1212,30 @@ export default function ReportTemplateConfig() {
                   searchPlaceholder="搜索产品名称…"
                   onChange={(v) => patch((t) => ({ ...t, scope: v as string[] }))}
                 />
-                <Dat f="JSON:scope" v={active.scope.join(',')} />
+                
               </Field>
               <Field label="模板状态">
                 <SingleSelect label="" value={active.status} options={(['草稿', '已启用', '已停用'] as TplStatus[]).map((s) => ({ value: s, label: s }))}
                   onChange={(v) => changeStatus(v as TplStatus)} fullWidth />
-                <Dat f="JSON:status" v={active.status} />
+                
               </Field>
               <Field label="设为默认模板">
                 <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <input type="checkbox" disabled={!perm.setDefault} checked={active.isDefault} onChange={setDefault} />
                   <span style={{ fontSize: 13, color: '#6B7280' }}>{active.isDefault ? '当前为默认模板（新进入件默认使用）' : '设为该报告类型的默认模板'}</span>
                 </label>
-                <Dat f="JSON:isDefault" v={active.isDefault} />
+                
               </Field>
               <Field label="在报告中显示操作日志">
                 <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <input type="checkbox" disabled={!canEdit} checked={active.showOpLog} onChange={(e) => patch((t) => ({ ...t, showOpLog: e.target.checked }))} />
                   <span style={{ fontSize: 13, color: '#6B7280' }}>{active.showOpLog ? '显示' : '不显示'}</span>
-                  <Dat f="JSON:showOpLog" v={active.showOpLog} />
+                  
                 </label>
               </Field>
               <Field label="模板描述" full>
                 <textarea disabled={!canEdit} value={active.description} onChange={(e) => patch((t) => ({ ...t, description: e.target.value }))} rows={2} style={{ ...inp, resize: 'vertical' }} />
-                <Dat f="JSON:description" v={active.description} />
+                
               </Field>
             </div>
               </div>
@@ -1269,7 +1257,7 @@ export default function ReportTemplateConfig() {
             <div className="lg:flex lg:gap-6">
               <div className="min-w-0 flex-1">
                 <Panel title="报告内容配置">
-                  <div style={{ marginBottom: 8 }}><Dat f="JSON:sections" v={`${active.sections.filter(s => (s.homeTab ?? 'content') === 'content' && s.visible).length}个数据区块`} /></div>
+                  <div style={{ marginBottom: 8 }}></div>
                   <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: 10, flexWrap: 'wrap', gap: 8 }}>
                     {canEdit && (
                       <div style={{ display: 'flex', gap: 8 }}>
@@ -1515,7 +1503,7 @@ export default function ReportTemplateConfig() {
                 <input disabled={!canEdit} value={active.scoreBlock.title}
                   onChange={(e) => patch((t) => ({ ...t, scoreBlock: { ...t.scoreBlock, title: e.target.value } }))}
                   placeholder="输入标题（必填）" style={{ ...inp, width: 260, ...(active.scoreBlock.title.trim() === '' ? { borderColor: '#DC2626' } : {}) }} />
-                <Dat f="JSON:scoreBlock.title" v={active.scoreBlock.title} />
+                
                 {active.scoreBlock.title.trim() === '' && <span style={{ fontSize: 12, color: '#DC2626' }}>标题不可为空</span>}
                 <span style={{ flex: 1 }} />
                 <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600, color: '#374151', cursor: canEdit ? 'pointer' : 'default' }}>
@@ -1523,16 +1511,16 @@ export default function ReportTemplateConfig() {
                     onChange={(e) => patch((t) => ({ ...t, scoreBlock: { ...t.scoreBlock, show: e.target.checked } }))} />
                   启用
                 </label>
-                <span style={{ fontSize: 12, color: active.scoreBlock.show ? '#047857' : '#9CA3AF' }}>{active.scoreBlock.show ? '已启用' : '未启用'}<Dat f="JSON:scoreBlock.show" v={active.scoreBlock.show} /></span>
+                <span style={{ fontSize: 12, color: active.scoreBlock.show ? '#047857' : '#9CA3AF' }}>{active.scoreBlock.show ? '已启用' : '未启用'}</span>
               </div>
               {/* 综合总分计算公式 + 分值预测（融合为同一卡片：分值预测置于首行） */}
               <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 12 }}>
                 {/* 分值预测：根据报告内容配置自动计算（不可手动编辑），与内容区块联动 */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '8px 12px', border: '1px solid #DBEAFE', background: '#EFF6FF', borderRadius: 8, flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: '#1E40AF' }}>分值预测<Cal f="computeScoreSummary" v="" /></span>
-                  <span style={{ fontSize: 13, color: '#374151' }}>最小分值 <b style={{ color: '#DC2626' }}>{scoreSummary.min}</b><Cal f="min" v={scoreSummary.min} /></span>
-                  <span style={{ fontSize: 13, color: '#374151' }}>最大分值 <b style={{ color: '#047857' }}>{scoreSummary.max}</b><Cal f="max" v={scoreSummary.max} /></span>
-                  <span style={{ fontSize: 13, color: '#374151' }}>命中即拒 <b style={{ color: '#DC2626' }}>{scoreSummary.rejectTotal}</b> 项<Cal f="rejectTotal" v={scoreSummary.rejectTotal} /></span>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: '#1E40AF' }}>分值预测</span>
+                  <span style={{ fontSize: 13, color: '#374151' }}>最小分值 <b style={{ color: '#DC2626' }}>{scoreSummary.min}</b></span>
+                  <span style={{ fontSize: 13, color: '#374151' }}>最大分值 <b style={{ color: '#047857' }}>{scoreSummary.max}</b></span>
+                  <span style={{ fontSize: 13, color: '#374151' }}>命中即拒 <b style={{ color: '#DC2626' }}>{scoreSummary.rejectTotal}</b> 项</span>
                   <span style={{ fontSize: 11, color: '#9CA3AF', marginLeft: 4 }}>|</span>
                   <label style={{ fontSize: 13, color: '#374151', display: 'flex', alignItems: 'center', gap: 4 }}>
                     基础分
@@ -1540,11 +1528,11 @@ export default function ReportTemplateConfig() {
                       value={active.scoreDisplay.baseScore ?? 0}
                       onChange={(e) => patch((t) => ({ ...t, scoreDisplay: { ...t.scoreDisplay, baseScore: +e.target.value || 0 } }))}
                       style={{ ...numSm, width: 56 }} />
-                    <Dat f="JSON:scoreDisplay.baseScore" v={active.scoreDisplay.baseScore ?? 0} />
+                    
                   </label>
                   <span style={{ fontSize: 11, color: '#6B7280' }}>（由公式计算结果 + 基础分，默认 0）</span>
                 </div>
-                <div style={{ fontSize: 12, marginBottom: 4, color: '#6B7280' }}>综合总分计算公式<Dat f="JSON:scoreFormula" v={`${active.scoreFormula?.terms?.length ?? 0}项·可编辑·保存回JSON`} /><Tpl f="联动" v="权重⇄sections[].weight" /></div>
+                <div style={{ fontSize: 12, marginBottom: 4, color: '#6B7280' }}>综合总分计算公式</div>
                 <FormulaEditor
                   formula={active.scoreFormula ?? buildDefaultScoreFormula(active.sections)}
                   vars={active.reportType === 'decision'
@@ -1576,7 +1564,7 @@ export default function ReportTemplateConfig() {
                 />
               </div>
               <div style={active.scoreBlock.show ? undefined : { opacity: 0.45, pointerEvents: 'none', userSelect: 'none' }}>
-              <Field label={<span>评分卡形态<Dat f="JSON:scoreDisplay.displayComponent" v={active.scoreDisplay.displayComponent} /></span>}>
+              <Field label={<span>评分卡形态</span>}>
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                   {(['大数字', '环形图', '进度条', '仪表盘'] as DisplayComponent[]).map((c) => (
                     <button key={c} disabled={!canEdit} onClick={() => patch((t) => ({ ...t, scoreDisplay: { ...t.scoreDisplay, displayComponent: c } }))}
@@ -1585,7 +1573,7 @@ export default function ReportTemplateConfig() {
                 </div>
               </Field>
               <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', margin: '10px 0' }}>
-                <Dat f="JSON:scoreDisplay" v="保存" />
+                
                 {([['showDescription', '显示风险描述'], ['showRiskTags', '显示风险标签']] as [keyof typeof active.scoreDisplay, string][]).map(([k, label]) => (
                   <label key={label} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13 }}>
                     <input type="checkbox" disabled={!canEdit} checked={active.scoreDisplay[k] as boolean} onChange={(e) => patch((t) => ({ ...t, scoreDisplay: { ...t.scoreDisplay, [k]: e.target.checked } }))} />{label}
@@ -1601,7 +1589,7 @@ export default function ReportTemplateConfig() {
                 return (
                   <div style={{ border: '1px dashed #CBD5E1', borderRadius: 10, background: '#FBFCFE', padding: '14px 16px', margin: '4px 0 14px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-                      <span style={{ fontSize: 12, fontWeight: 600, color: '#6B7280' }}>效果预览 · {active.scoreDisplay.displayComponent}<Cal f="ScoreVisual" v="实时" /></span>
+                      <span style={{ fontSize: 12, fontWeight: 600, color: '#6B7280' }}>效果预览 · {active.scoreDisplay.displayComponent}</span>
                       <span style={{ flex: 1 }} />
                       <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: '#374151', cursor: canEdit ? 'pointer' : 'default' }}>
                         <input type="checkbox" disabled={!canEdit} checked={active.scoreDisplay.showThresholdBar} onChange={(e) => patch((t) => ({ ...t, scoreDisplay: { ...t.scoreDisplay, showThresholdBar: e.target.checked } }))} />启用刻度条
@@ -1611,14 +1599,14 @@ export default function ReportTemplateConfig() {
                       <input type="range" min={pvMin} max={pvMax} value={pvScore} onChange={(e) => setDemoScore(+e.target.value)} style={{ width: 160 }} />
                       <input type="number" value={pvScore} onChange={(e) => setDemoScore(+e.target.value)} style={{ ...numSm, width: 70 }} />
                     </div>
-                    <span style={{ fontSize: 11, color: '#6B7280' }}>评分卡形态预览：<span style={{ background: '#DBEAFE', color: '#1D4ED8', border: '1px solid #93C5FD', fontFamily: 'monospace', padding: '0 3px', borderRadius: 2, fontSize: 9 }}>模板配置</span><span style={{ background: '#F3F4F6', color: '#6B7280', border: '1px solid #D1D5DB', fontFamily: 'monospace', padding: '0 3px', borderRadius: 2, fontSize: 9, marginLeft: 3 }}>示例分={pvScore} 实时算</span></span>
+                    <span style={{ fontSize: 11, color: '#6B7280' }}>评分卡形态预览：示例分 {pvScore}</span>
                     <ScoreCardPreview key={active.scoreDisplay.grades.map(g => g.grade + '|' + (g.tags ?? '')).join(',')} sd={active.scoreDisplay} score={pvScore} />
                   </div>
                 )
               })()}
               {/* 分值预测已上移并融合至上方「综合总分计算公式」卡片首行 */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                <div style={{ fontSize: 13, color: '#374151', fontWeight: 600 }}>分值分段<Dat f="JSON:grades" v={(active.scoreDisplay.grades ?? []).map((g) => `${g.grade}(${g.minScore}~${g.maxScore} ${g.color})`).join(' ')} /></div>
+                <div style={{ fontSize: 13, color: '#374151', fontWeight: 600 }}>分值分段</div>
                 <div style={{ display: 'flex', gap: 8 }}>{canEdit && <button onClick={addGrade} style={miniBtn}>＋ 新增分段</button>}
                 {canEdit && active.scoreDisplay.grades.length > 0 && <button onClick={resetGrades} style={{ ...miniBtn, borderColor: '#BFDBFE', color: '#1D4ED8' }}>重置为默认三等分</button>}</div>
               </div>
@@ -1659,7 +1647,7 @@ export default function ReportTemplateConfig() {
               <div style={{ marginTop: 22, paddingTop: 16, borderTop: '1px dashed #E5E7EB' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6, flexWrap: 'wrap', gap: 8 }}>
                   <div style={{ fontSize: 13, color: '#374151', fontWeight: 600 }}>
-                    特殊命中规则<Dat f="JSON:specialRules" v={(active.specialRules ?? []).map((r) => `${r.ruleName}→${r.autoResult}`).join('；') || '无'} />
+                    特殊命中规则
                   </div>
                   {canEdit && <button onClick={() => setSpecialPick(true)} style={{ ...miniBtn, borderColor: '#FCA5A5', color: '#B91C1C' }}>＋ 添加规则</button>}
                 </div>
@@ -1718,7 +1706,7 @@ export default function ReportTemplateConfig() {
 
                 <div style={active.showSectionTotals ? { padding: 12 } : { padding: 12, opacity: 0.45, pointerEvents: 'none', userSelect: 'none' }}>
                   {/* 逐维度档位配置表：每个维度独立配 一/二/三 分段区间与标签 */}
-                  <div style={{ fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 6 }}>评分维度分布（{dimRows.length} 个集合 · 报告详情首卡按此渲染，每个维度独立配 一/二/三 分段）<Cal f="buildDimRows(sections)" v="" /></div>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 6 }}>评分维度分布（{dimRows.length} 个集合 · 报告详情首卡按此渲染，每个维度独立配 一/二/三 分段）</div>
                   <div style={{ border: '1px solid #E5E7EB', borderRadius: 8, overflow: 'hidden', background: '#fff', overflowX: 'auto' }}>
                     <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12, minWidth: 900 }}>
                       <thead>
@@ -1726,7 +1714,7 @@ export default function ReportTemplateConfig() {
                           <th style={{ ...dimTh, textAlign: 'left' }}>维度</th>
                           <th style={{ ...dimTh, textAlign: 'right', width: 80 }}>分值区间</th>
                           <th style={{ ...dimTh, textAlign: 'right', width: 56 }}>权重</th>
-                          <th style={{ ...dimTh, textAlign: 'center', minWidth: 150 }}>一分段（区间·标签）<Dat f="JSON:dimBands" v="sections[]或模板级，可编辑" /><Cal f="defaultDimBandsForScore" v="未配置时兜底" /></th>
+                          <th style={{ ...dimTh, textAlign: 'center', minWidth: 150 }}>一分段（区间·标签）</th>
                           <th style={{ ...dimTh, textAlign: 'center', minWidth: 150 }}>二分段（区间·标签）</th>
                           <th style={{ ...dimTh, textAlign: 'center', minWidth: 150 }}>三分段（区间·标签）</th>
                         </tr>
@@ -1742,9 +1730,9 @@ export default function ReportTemplateConfig() {
                           const rangeText = r.mode === 'deduct' ? `-${absTotal}～0` : `0～${absTotal}`
                           return (
                             <tr key={r.id} style={{ borderTop: '1px solid #F1F5F9' }}>
-                              <td style={{ ...dimTd, fontWeight: 600, color: '#111827' }}>{r.name}<span style={{ fontSize: 9, fontFamily: 'monospace', padding: '0 3px', borderRadius: 2, marginLeft: 3, background: '#DBEAFE', color: '#1D4ED8', border: '1px solid #93C5FD' }}>sections[{ri}].name</span></td>
-                              <td style={{ ...dimTd, textAlign: 'right', fontWeight: 700, color: '#374151' }}>{rangeText}<span style={{ fontSize: 9, fontFamily: 'monospace', padding: '0 3px', borderRadius: 2, marginLeft: 3, background: '#F3F4F6', color: '#6B7280', border: '1px solid #D1D5DB' }}>computeSectionScore</span></td>
-                              <td style={{ ...dimTd, textAlign: 'right', color: '#9CA3AF' }}>{r.weight}<span style={{ fontSize: 9, fontFamily: 'monospace', padding: '0 3px', borderRadius: 2, marginLeft: 3, background: '#DBEAFE', color: '#1D4ED8', border: '1px solid #93C5FD' }}>weight</span></td>
+                              <td style={{ ...dimTd, fontWeight: 600, color: '#111827' }}>{r.name}</td>
+                              <td style={{ ...dimTd, textAlign: 'right', fontWeight: 700, color: '#374151' }}>{rangeText}</td>
+                              <td style={{ ...dimTd, textAlign: 'right', color: '#9CA3AF' }}>{r.weight}</td>
                               {(['低', '中', '高'] as DimLevel[]).map((lv) => {
                                 const bi = secBands.findIndex((b) => b.level === lv)
                                 const b = secBands[bi]
@@ -1792,7 +1780,7 @@ export default function ReportTemplateConfig() {
                 <input disabled={!canEdit} value={active.flowBlock.title}
                   onChange={(e) => patch((t) => ({ ...t, flowBlock: { ...t.flowBlock, title: e.target.value } }))}
                   placeholder="输入标题（必填）" style={{ ...inp, width: 260, ...(active.flowBlock.title.trim() === '' ? { borderColor: '#DC2626' } : {}) }} />
-                <Dat f="JSON:flowBlock.title" v={active.flowBlock.title} />
+                
                 {active.flowBlock.title.trim() === '' && <span style={{ fontSize: 12, color: '#DC2626' }}>标题不可为空</span>}
                 <span style={{ flex: 1 }} />
                 <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600, color: '#374151', cursor: canEdit ? 'pointer' : 'default' }}>
@@ -1800,15 +1788,15 @@ export default function ReportTemplateConfig() {
                     onChange={(e) => patch((t) => ({ ...t, flowBlock: { ...t.flowBlock, show: e.target.checked } }))} />
                   启用
                 </label>
-                <span style={{ fontSize: 12, color: active.flowBlock.show ? '#047857' : '#9CA3AF' }}>{active.flowBlock.show ? '已启用' : '未启用'}<Dat f="JSON:flowBlock.show" v={active.flowBlock.show} /></span>
+                <span style={{ fontSize: 12, color: active.flowBlock.show ? '#047857' : '#9CA3AF' }}>{active.flowBlock.show ? '已启用' : '未启用'}</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', border: '1px solid #E5E7EB', borderRadius: 10, background: '#F8FAFC', marginBottom: 12 }}>
                 <span style={{ fontSize: 13, color: '#374151', whiteSpace: 'nowrap' }}>状态枚举类<span style={{ color: '#DC2626', marginLeft: 2 }}>*</span></span>
                 <input disabled={!canEdit} value={(active.flowBlock.statusEnum ?? []).join('/')}
                   onChange={(e) => patch((t) => ({ ...t, flowBlock: { ...t.flowBlock, statusEnum: e.target.value.split('/').map((s) => s.trim()).filter(Boolean) } }))}
                   placeholder="用 / 分隔，如 待确认/通过/拒绝/完结/挂起/转人工" style={{ ...inp, flex: 1 }} />
-                <Dat f="JSON:flowBlock.statusEnum" v={active.flowBlock.statusEnum?.join('/')} />
-                <span style={{ fontSize: 12, color: '#9CA3AF', whiteSpace: 'nowrap' }}>共 {(active.flowBlock.statusEnum ?? []).length} 个状态<Dat f="JSON:flowBlock.statusEnum.length" v={(active.flowBlock.statusEnum ?? []).length} /></span>
+                
+                <span style={{ fontSize: 12, color: '#9CA3AF', whiteSpace: 'nowrap' }}>共 {(active.flowBlock.statusEnum ?? []).length} 个状态</span>
               </div>
               <div style={(!active.flowBlock.show || (active.flowBlock as any).flowRefId) ? { opacity: 0.45, pointerEvents: 'none', userSelect: 'none' } : undefined}>
               {syncHint && <div style={{ fontSize: 12, color: '#1D4ED8', background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: 8, padding: '6px 10px', marginBottom: 10 }}>{syncHint}</div>}
@@ -1816,7 +1804,7 @@ export default function ReportTemplateConfig() {
                 <colgroup><col style={{ width: 190 }} /><col style={{ width: 90 }} /><col /></colgroup>
                 <thead><tr style={{ background: '#F8FAFC' }}>
                   {['触发分段（报告状态）', '自动结果', '业务流程配置'].map((h) => (
-                    <th key={h} style={{ padding: '8px', fontSize: 12, fontWeight: 600, color: '#6B7280', textAlign: 'left', borderBottom: '1px solid #E5E7EB' }}>{h === '触发分段（报告状态）' ? <>{h}<Dat f="JSON:businessFlow" v="与分值分段同步" /></> : h}</th>
+                    <th key={h} style={{ padding: '8px', fontSize: 12, fontWeight: 600, color: '#6B7280', textAlign: 'left', borderBottom: '1px solid #E5E7EB' }}>{h === '触发分段（报告状态）' ? <>{h}</> : h}</th>
                   ))}
                 </tr></thead>
                 <tbody>

@@ -9,7 +9,6 @@
 import { useState, useMemo, type ReactNode } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Panel, Button, SingleSelect, StatCard, type Column, type Row } from '../components/ui';
-import { Sam, Cal } from './SourceTag';
 import { ConfigListPage, ConfigDetailPage } from './ConfigTemplate';
 import {
   useRuleHub, updateRuleHub, RULE_TYPES,
@@ -96,17 +95,17 @@ export default function RuleHub() {
   const hi = rules.filter((r) => r.riskLevel === '高').length;
 
   const cols: Column[] = [
-    { key: 'name', label: '规则名称', type: 'text', tag: { kind: 'sample', value: 'ruleHub.json' } },
+    { key: 'name', label: '规则名称', type: 'text' },
     { key: 'ruleType', label: '规则类型', type: 'badge', badgeKind: 'blue', width: '110px' },
     { key: 'riskLevel', label: '风险等级', type: 'badge', badgeKind: 'red', width: '90px' },
     { key: 'hitCond', label: '命中条件', type: 'text', width: '240px' },
-    { key: 'hits', label: '近30天命中', type: 'text', width: '130px', tag: { kind: 'calc' } },
+    { key: 'hits', label: '近30天命中', type: 'text', width: '130px' },
     {
       key: 'flowState',
       label: '流程状态（上线下线审核）',
       fixed: 'right',
       width: '210px',
-      tag: { kind: 'sample', value: 'ruleHub.json.flowState' },
+      
       render: (r: Row) => (
         <FlowStateCell
           flowId={String(r.flowKey ?? '')}
@@ -132,8 +131,6 @@ export default function RuleHub() {
       onAdd={() => nav('/console/cm/rule-hub?new=1')}
       actions={
         <>
-          <Sam value="ruleHub.json" />
-          <Sam value="bizFlows.json" />
         </>
       }
       panelTitle="统一规则列表"
@@ -212,14 +209,6 @@ function RuleForm({ initial, isNew, onBack, onSaved }: {
       subtitle={isNew ? '填写规则属性后点「保存」创建' : `规则编号 ${form.id} · 负责人 ${form.owner} · 更新于 ${form.updatedAt}`}
       backLabel="← 返回规则合集"
       onBack={onBack}
-      source={
-        <>
-          <Sam value="ruleHub.json" />
-          <span>（规则属性，样例JSON，编辑后保存落盘）</span>
-          <Sam value="bizFlows.json" />
-          <span>（上线下线审核流程状态机）</span>
-        </>
-      }
       infoCells={null}
       flowBar={
         <>
@@ -350,7 +339,7 @@ function RuleForm({ initial, isNew, onBack, onSaved }: {
       <TypeSpecificForm rule={form} set={set} />
 
       {/* P2：版本历史（保存自动生成，可回滚） */}
-      <Panel title="版本历史" desc={<span><Cal label="自动记录" /> 每次「保存」生成新版本，可一键回滚</span>}>
+      <Panel title="版本历史" desc={<span> 每次「保存」生成新版本，可一键回滚</span>}>
         {(form.versions ?? []).length ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {(form.versions ?? []).slice().reverse().map((v, i) => (

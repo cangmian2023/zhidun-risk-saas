@@ -1,8 +1,8 @@
 // 企业档案 · 经营信息（arc-operate）· 1:1 复刻「企业档案 - 经营信息」
 // 数据：本地样例 arcOperate.json（橘 Sam）
-import { useState } from 'react'
-import { EpPage, EpCard, EpStat, EpTag, EpBtn, DataTable, useSample, Sam } from '../../epCommon'
-import type { Row, Column } from '../../../../components/ui'
+import { useState } from 'react';
+import { EpPage, EpCard, EpStat, EpTag, EpBtn, DataTable, useSample } from '../../epCommon';
+import type { Row, Column } from '../../../../components/ui';
 
 const seed = {
   quals: [
@@ -150,7 +150,6 @@ export default function Operate({ params }: { params: URLSearchParams }) {
 
       <EpCard
         title="经营信息明细"
-        desc={<Sam value="arcOperate.json" />}
         actions={
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
             {tabs.map((t) => (

@@ -3,7 +3,6 @@ import { useScore, updateScore, type CrowdGroup } from './scoreData';
 import { useMidCustomers } from './midStore';
 import { PageShell } from './PageShell';
 import { DetailHeader, Panel, DataTable, Button, Badge } from '../components/ui';
-import { Sam } from './SourceTag';
 import { useSearchParams } from 'react-router-dom';
 import { CrowdDrawer } from './CrowdDrawer';
 import { crowdMembers } from './crowdRule';
@@ -119,7 +118,6 @@ export default function ScoreCustomerListPage() {
         }
       />
       <div className="space-y-4">
-        <Sam value="midCustomers.json" />
         <Panel>
           <DataTable
             columns={columns}

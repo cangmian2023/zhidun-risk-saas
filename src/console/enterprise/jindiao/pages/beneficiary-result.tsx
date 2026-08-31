@@ -1,10 +1,10 @@
 // 尽调中心 · 受益所有人识别详情（jd-beneficiary-result）
 // 数据：本地样例 jdBeneficiaryResult.json（橘 Sam）
-import { useState } from 'react'
-import type { CSSProperties } from 'react'
-import { createPortal } from 'react-dom'
-import { EpPage, EpBtn, useSample, Sam } from '../../epCommon'
-import { usePageNav } from '../../../pageNav'
+import { useState } from 'react';
+import type { CSSProperties } from 'react';
+import { createPortal } from 'react-dom';
+import { EpPage, EpBtn, useSample } from '../../epCommon';
+import { usePageNav } from '../../../pageNav';
 
 type StdRow1 = { id: number; name: string; benefitType: string; position: string; holdType: string; ratio: string; path: string; date: string }
 type StdRow3 = { id: number; name: string; benefitType: string; position: string; holdType: string; ratio: string; date: string; reason: string }
@@ -353,7 +353,6 @@ export default function JdBeneficiaryResult({ params }: { params: URLSearchParam
       actions={
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <EpBtn variant="ghost" onClick={() => back('/console/ep/jd-beneficiary')}>返回</EpBtn>
-          <Sam value={data.source} />
         </div>
       }
     >

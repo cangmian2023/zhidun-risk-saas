@@ -3,7 +3,6 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button, Modal, SingleSelect } from '../components/ui';
 import type { Column, Row } from '../components/ui';
-import { Sam } from './SourceTag';
 import { useMidDashboards, updateDashboards, useMidMetrics, useMidDataSources, midNewId } from './midStore';
 import { MetricPicker } from './MidMonitorConfig';
 import GroupSelect from './GroupSelect';
@@ -60,11 +59,11 @@ export default function MidDashboardConfig() {
   const remove = (id: string) => updateDashboards((list) => list.filter((x) => x.id !== id));
 
   const cols: Column[] = [
-    { key: 'name', label: '页面名称', tag: { kind: 'sample', value: 'midDashboards.json.name' }, fixed: 'left' },
-    { key: 'group', label: '分组', tag: { kind: 'sample', value: 'midDashboards.json.group' } },
-    { key: 'widgetCnt', label: '组件数', tag: { kind: 'sample', value: 'midDashboards.json.widgets' } },
-    { key: 'desc', label: '说明', tag: { kind: 'sample', value: 'midDashboards.json.desc' }, render: (r: Row) => <span style={{ color: '#64748B' }}>{String(r.desc ?? '—')}</span> },
-    { key: 'flowState', label: '流程状态', tag: { kind: 'sample', value: 'midDashboards.json.flowState' }, fixed: 'right', render: (r: Row) => (
+    { key: 'name', label: '页面名称',  fixed: 'left' },
+    { key: 'group', label: '分组' },
+    { key: 'widgetCnt', label: '组件数' },
+    { key: 'desc', label: '说明',  render: (r: Row) => <span style={{ color: '#64748B' }}>{String(r.desc ?? '—')}</span> },
+    { key: 'flowState', label: '流程状态',  fixed: 'right', render: (r: Row) => (
       <FlowStateCell flowId={String(r.flowKey ?? '')} state={String(r.flowState ?? '')}
         onChange={(s) => updateDashboards((list) => list.map((pg) => pg.id === String(r.id) ? { ...pg, flowState: s } : pg))} />
     ) },
@@ -84,7 +83,6 @@ export default function MidDashboardConfig() {
         subtitle="在此配置监控看板页面与可视化组件，保存为 midDashboards.json 配置文件；贷中监测模块按该配置文件加载并渲染对应的可视化组件"
         addLabel="新建页面"
         onAdd={openAdd}
-        actions={<Sam label="读指标库" value="midMetrics.json" />}
         panelTitle="看板页面"
         panelDesc="看板页面按 midDashboards.json 配置文件加载对应的可视化组件（指标卡 / 折线 / 柱状 / 环形 / 明细表），组件引用指标库与数据源"
         columns={cols}
@@ -160,7 +158,7 @@ export function Editor({ value, metrics, sources, onChange, onRemove }: {
       {/* 组件列表 */}
       <div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-          <span style={{ fontSize: 13, fontWeight: 500 }}>可视化组件 <Sam value="midDashboards.json.widgets" /></span>
+          <span style={{ fontSize: 13, fontWeight: 500 }}>可视化组件 </span>
           <Button size="sm" variant="secondary" onClick={addWidget}>添加组件</Button>
         </div>
         <div style={{ display: 'grid', gap: 10 }}>
@@ -184,7 +182,7 @@ export function Editor({ value, metrics, sources, onChange, onRemove }: {
                     options={sources.map((s) => ({ value: s.id, label: s.name }))} />
                 </label>
                 <label style={lbl}>
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>监控指标 <Sam label="读指标库" value="midMetrics.json" /></span>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>监控指标 </span>
                   <MetricPicker metrics={metrics} value={w.metricIds ?? (w.metricId ? [w.metricId] : [])}
                     onChange={(v) => setWidget(i, { metricIds: v, metricId: v[0] ?? '' })} />
                 </label>

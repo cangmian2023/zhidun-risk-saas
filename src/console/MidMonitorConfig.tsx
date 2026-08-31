@@ -5,7 +5,6 @@ import { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Button, Panel, DataTable, Drawer, SingleSelect, SearchSelect } from '../components/ui';
 import type { Column, Row } from '../components/ui';
-import { Sam } from './SourceTag';
 import FlowStateCell from './FlowStateCell';
 import { useMidStrategy, updateStrategy, useMidMetrics, midNewId } from './midStore';
 import {
@@ -94,7 +93,7 @@ export default function MidMonitorConfig() {
     <div className={CONFIG_CONTAINER}>
       <PageShell title="监控任务" crumb={crumb('监控任务')}
         subtitle="配置监控任务（对谁、何时、算哪些指标）；预警规则与处置策略见同级菜单"
-        actions={<><Sam label="读指标库" value="midMetrics.json" /><Sam value="midStrategy.json" /></>} />
+        actions={<></>} />
 
       <Panel title="监控任务" desc="对谁、何时、算哪些指标（预警规则在任务详情中配置）"
         actions={<Button size="sm" variant="secondary" onClick={() => openDrawer()}>新建任务</Button>}>
@@ -207,14 +206,14 @@ function granText(t: MidTask): string {
 
 function taskCols(): Column[] {
   return [
-    { key: 'name', label: '任务名称', tag: { kind: 'sample', value: 'midStrategy.json.tasks.name' } },
-    { key: 'scene', label: '业务场景', tag: { kind: 'sample', value: 'midStrategy.json.tasks.scene' }, render: (r: Row) => (
+    { key: 'name', label: '任务名称' },
+    { key: 'scene', label: '业务场景',  render: (r: Row) => (
       <span style={{ color: SCENE_COLOR[r.scene as string] ?? '#475569' }}>{String(r.scene ?? '—')}</span>
     ) },
-    { key: 'crowd', label: '客群', tag: { kind: 'sample', value: 'midStrategy.json.tasks.crowd' } },
-    { key: 'freq', label: '监控频率', tag: { kind: 'sample', value: 'midStrategy.json.tasks.granularity+period' } },
-    { key: 'metrics', label: '关联指标', tag: { kind: 'sample', value: 'midMetrics.json' } },
-    { key: 'flowState', label: '流程状态', fixed: 'right', tag: { kind: 'sample', value: 'midStrategy.json.tasks.flowState' }, render: (r: Row) => (
+    { key: 'crowd', label: '客群' },
+    { key: 'freq', label: '监控频率' },
+    { key: 'metrics', label: '关联指标' },
+    { key: 'flowState', label: '流程状态', fixed: 'right',  render: (r: Row) => (
       <FlowStateCell flowId={String(r.flowKey ?? '')} state={String(r.flowState ?? '')}
         onChange={(s) => updateStrategy((st) => ({ ...st, tasks: st.tasks.map((t) => t.id === String(r.id) ? { ...t, flowState: s } : t) }))} />
     ) },

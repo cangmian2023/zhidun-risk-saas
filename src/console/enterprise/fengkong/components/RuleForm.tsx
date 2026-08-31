@@ -1,9 +1,9 @@
 // 企业风控 · 监控规则 创建/查看 共用表单
 // 创建页与查看页共用同一套规则结构（维度树 / 指标 / 分类），仅标题与只读态不同
 // 数据：本地样例 fkMonRuleCreate.json（橘 Sam）
-import { useState } from 'react'
-import { EpPage, EpCard, EpBtn, useSample, Sam } from '../../epCommon'
-import { usePageNav } from '../../../pageNav'
+import { useState } from 'react';
+import { EpPage, EpCard, EpBtn, useSample } from '../../epCommon';
+import { usePageNav } from '../../../pageNav';
 import seedJson from '../../../fkMonRuleCreate.json'
 
 type Data = typeof seedJson
@@ -239,7 +239,6 @@ export function RuleForm({
       crumb="监控规则 / 规则详情"
       actions={
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <Sam value="fkMonRuleCreate.json" />
           {readOnly ? (
             <EpBtn variant="default" size="sm" onClick={() => back(backTo)} style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
               <IconClose /> 关闭

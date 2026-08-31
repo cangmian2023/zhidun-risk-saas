@@ -1,8 +1,8 @@
 // 企业档案 · 基本信息（arc-basic）· 1:1 复刻「企业档案 - 基本信息」
 // 数据：本地样例 arcBasic.json（橘 Sam）
-import { useState } from 'react'
-import { EpPage, EpCard, EpStat, EpTag, EpBtn, DataTable, useSample, Sam } from '../../epCommon'
-import type { Row, Column } from '../../../../components/ui'
+import { useState } from 'react';
+import { EpPage, EpCard, EpStat, EpTag, EpBtn, DataTable, useSample } from '../../epCommon';
+import type { Row, Column } from '../../../../components/ui';
 
 const seed = {
   reg: {
@@ -182,7 +182,7 @@ export default function Basic({ params }: { params: URLSearchParams }) {
       </div>
 
       {/* 工商登记信息 */}
-      <EpCard title="工商登记信息" desc={<Sam value="arcBasic.json" />} className="mb-4">
+      <EpCard title="工商登记信息"  className="mb-4">
         <DataTable columns={regCols} rows={regRows} />
         <div style={{ marginTop: 12, fontSize: 12, color: '#64748B' }}>
           <b>经营范围：</b>{r.scope}

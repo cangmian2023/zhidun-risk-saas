@@ -1,12 +1,10 @@
 // 企业风控子系统（风控中心 / 尽调中心 / 企业档案）· 共享脚手架
-// 统一：① PageShell 外壳 + 三色来源图例 ② 本地样例 JSON 读写（/api/load-mid /api/save-mid）
+// 统一：① PageShell 外壳 ② 本地样例 JSON 读写（/api/load-mid /api/save-mid）
 //       ③ 错误边界（单页崩溃不影响整个子系统）④ 常用卡片 / 统计块 / 标签 / 筛选条
 import React, { useEffect, useRef, useState, type ReactNode } from 'react'
-import { PageShell } from '../PageShell'
-import { Sam, Cfg, Cal, type SourceKind } from '../SourceTag'
-export { Sam, Cfg, Cal }
-import { DataTable, Panel } from '../../components/ui'
-import { entMenu } from '../menus'
+import { PageShell } from '../PageShell';
+import { DataTable, Panel } from '../../components/ui';
+import { entMenu } from '../menus';
 
 export { DataTable, Panel }
 
@@ -86,11 +84,6 @@ export function useSample<T>(file: string, seed: T): [T, (d: T) => void] {
   }
   return [data, save]
 }
-
-/* ---------------- 来源标签便捷封装 ---------------- */
-export const SrcSam = (p: { value?: string }) => <Sam {...p} />
-export const SrcCfg = (p: { value?: string }) => <Cfg {...p} />
-export const SrcCal = (p: { value?: string }) => <Cal {...p} />
 
 /* ---------------- 卡片 ---------------- */
 export function EpCard({
@@ -248,5 +241,3 @@ export function EpPlaceholder({ name }: { name: string }) {
     </EpPage>
   )
 }
-
-export type { SourceKind }

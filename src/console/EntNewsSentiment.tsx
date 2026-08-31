@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { Sam, Cfg } from './SourceTag';
 import nsData from './entNewsSentiment.json';
 
 /* 企业档案 · 新闻舆情（舆情概览 + 可视化图表 + 关联图谱 + 舆情动态列表 + 右侧TOP榜单）
@@ -249,9 +248,7 @@ export default function EntNewsSentiment({ companyName }: { companyName?: string
         </div>
       </>)}
 
-      {/* 数据来源标签 */}
       <div style={{ marginTop: 16 }}>
-        <Sam label="新闻舆情" /> <Cfg label="数据配置" />
       </div>
     </div>
   );

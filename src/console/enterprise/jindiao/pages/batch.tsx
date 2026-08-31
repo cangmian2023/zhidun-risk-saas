@@ -1,9 +1,9 @@
 // 尽调中心 · 批量尽调（jd-batch）· 查企业 / 查人员 Tab
 // 数据：本地样例 jdBatch.json（橘 Sam）
-import { useState } from 'react'
-import { createPortal } from 'react-dom'
-import { EpPage, EpCard, EpBtn, useSample, Sam } from '../../epCommon'
-import { usePageNav } from '../../../pageNav'
+import { useState } from 'react';
+import { createPortal } from 'react-dom';
+import { EpPage, EpCard, EpBtn, useSample } from '../../epCommon';
+import { usePageNav } from '../../../pageNav';
 
 type Option = { label: string; type: string }
 type TreeItem = { key: string; label: string; checked: boolean }
@@ -985,7 +985,7 @@ export default function JdBatch({ params }: { params: URLSearchParams }) {
   }
 
   return (
-    <EpPage title={data.pageTitle} actions={<Sam value="jdBatch.json" />}>
+    <EpPage title={data.pageTitle} >
       {/* 顶部 Tab */}
       <div style={{ display: 'flex', borderBottom: '1px solid #E2E8F0', marginBottom: 16, position: 'sticky', top: 140, zIndex: 20, background: '#fff' }}>
         {data.tabs.map((t) => (

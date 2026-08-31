@@ -1,10 +1,9 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { usePageNav } from './pageNav'
-import { useScore, SCORE_PROD_LABEL, updateScore, resolveRisk, type ScoreProd, type ScoreRecord, type ScoreData } from './scoreData'
-import { PageShell } from './PageShell'
-import { Panel, StatCard, DataTable, Button, Badge, Modal, SingleSelect } from '../components/ui'
-import { Sam } from './SourceTag'
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { usePageNav } from './pageNav';
+import { useScore, SCORE_PROD_LABEL, updateScore, resolveRisk, type ScoreProd, type ScoreRecord, type ScoreData } from './scoreData';
+import { PageShell } from './PageShell';
+import { Panel, StatCard, DataTable, Button, Badge, Modal, SingleSelect } from '../components/ui';
 
 // 等级与风险结论统一从 scoreData 的 resolveRisk 查（单一数据源，与阈值配置一致）
 
@@ -147,7 +146,6 @@ export default function ScoreRecordsPage() {
         {/* 明细表 */}
         <Panel
           title="历史评分调用明细"
-          actions={<Sam value="scoreData.json" />}
         >
           <DataTable
             columns={columns as any}
@@ -175,7 +173,7 @@ export default function ScoreRecordsPage() {
           className="h-40 w-full resize-none rounded-lg border border-slate-200 p-3 text-sm text-ink-900 outline-none focus:border-brand-400"
         />
         <p className="mt-2 text-[11px] text-slate-400">
-          <Sam value="scoreData.json" /> 将生成示例记录（智信分/智融分）
+           将生成示例记录（智信分/智融分）
         </p>
         <div className="mt-4 flex justify-end gap-2">
           <Button size="sm" variant="ghost" onClick={() => setImportOpen(false)}>取消</Button>

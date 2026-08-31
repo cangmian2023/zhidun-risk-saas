@@ -1,8 +1,8 @@
 // 企业尽调 · 常规筛查结果页（jd-company-result）· 1:1 复刻「尽调结果」
 // 数据：本地样例 jdCompanyResult.json（橘 Sam）
-import { useState } from 'react'
-import { EpPage, EpCard, EpTag, EpBtn, DataTable, useSample, Sam } from '../../epCommon'
-import type { Row } from '../../../../components/ui'
+import { useState } from 'react';
+import { EpPage, EpCard, EpTag, EpBtn, DataTable, useSample } from '../../epCommon';
+import type { Row } from '../../../../components/ui';
 
 type Data = {
   company: {
@@ -365,7 +365,6 @@ export default function JdCompanyResult({ params }: { params: URLSearchParams })
       </div>
 
       <div style={{ marginTop: 18, textAlign: 'center' }}>
-        <Sam value="jdCompanyResult.json" />
       </div>
     </EpPage>
   )

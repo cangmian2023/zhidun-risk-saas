@@ -1,8 +1,8 @@
 // 企业档案 · 经营风险（arc-oprisk）· 1:1 复刻「企业档案 - 经营风险」
 // 数据：本地样例 arcOprisk.json（橘 Sam）
-import { useState } from 'react'
-import { EpPage, EpCard, EpStat, EpTag, EpBtn, DataTable, useSample, Sam } from '../../epCommon'
-import type { Row, Column } from '../../../../components/ui'
+import { useState } from 'react';
+import { EpPage, EpCard, EpStat, EpTag, EpBtn, DataTable, useSample } from '../../epCommon';
+import type { Row, Column } from '../../../../components/ui';
 
 const seed = {
   punishes: [
@@ -76,7 +76,6 @@ export default function Oprisk({ params }: { params: URLSearchParams }) {
 
       <EpCard
         title="经营风险明细"
-        desc={<Sam value="arcOprisk.json" />}
         actions={
           <div style={{ display: 'flex', gap: 6 }}>
             {tabs.map((t) => (

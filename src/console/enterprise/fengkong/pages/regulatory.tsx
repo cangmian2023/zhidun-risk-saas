@@ -1,8 +1,8 @@
 // 风控中心 · 监管合规（fk-regulatory）· 1:1 复刻「监管合规」
 // 数据：本地样例 fkRegulatory.json（橘 Sam）
-import { useState } from 'react'
-import { EpPage, EpCard, EpTag, EpBtn, EpDrawer, DataTable, useSample, Sam } from '../../epCommon'
-import type { Row } from '../../../../components/ui'
+import { useState } from 'react';
+import { EpPage, EpCard, EpTag, EpBtn, EpDrawer, DataTable, useSample } from '../../epCommon';
+import type { Row } from '../../../../components/ui';
 
 type Tag = { label: string; color: string; bg: string }
 type RowItem = {
@@ -397,7 +397,6 @@ export default function FkRegulatory({ params }: { params: URLSearchParams }) {
       />
 
       <div style={{ marginTop: 12 }}>
-        <Sam value="fkRegulatory.json" />
       </div>
     </EpPage>
   )

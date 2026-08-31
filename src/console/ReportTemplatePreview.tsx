@@ -32,9 +32,6 @@ const SAMPLE_BY_ID: Record<string, { scoreLabel: string; sections: Record<string
 }
 
 /* 来源调试标签（与报告详情一致）：蓝=模板配置 / 橙=本地JSON模拟数据 / 灰=实时算法 */
-const tagS: React.CSSProperties = { display: 'inline-block', fontSize: 9, fontFamily: 'monospace', padding: '0 3px', borderRadius: 2, marginLeft: 3, verticalAlign: 'middle', lineHeight: '14px', fontWeight: 400 }
-const Dat = ({ f, v }: { f: string; v?: any }) => <span style={{ ...tagS, background: '#FFF7ED', color: '#C2410C', border: '1px solid #FDBA74' }}>{f}={v ?? 'null'}</span>
-const Cal = ({ f, v }: { f: string; v?: any }) => <span style={{ ...tagS, background: '#F3F4F6', color: '#6B7280', border: '1px solid #D1D5DB' }}>{f}={v ?? 'null'}</span>
 
 const SEL = '#3B82F6', SEL_BG = '#EFF6FF'
 
@@ -176,7 +173,7 @@ function Preview({ tpl, stateKey, sample }: { tpl: ReportTemplate; stateKey: str
                   </div>
                   {parts.map((p, i) => (
                     <div key={i} style={{ display: 'grid', gridTemplateColumns: '1.4fr 0.8fr 0.8fr', fontSize: fs - 2, padding: '6px 10px', borderTop: '1px solid #EEF2F7' }}>
-                      <span>{p.name}<Cal f="computeSectionScore" v={p.total} /></span>
+                      <span>{p.name}</span>
                       <span style={{ color: p.mode === 'deduct' ? '#DC2626' : '#047857', fontWeight: 600 }}>{p.mode === 'deduct' ? '−' : '+'}{Math.abs(p.total)}</span>
                       <span>{p.addCount} / {p.deductCount}</span>
                     </div>
@@ -198,7 +195,7 @@ function Preview({ tpl, stateKey, sample }: { tpl: ReportTemplate; stateKey: str
                 {s.name}
                 <span style={{ fontWeight: 400, fontSize: fs - 2, color: '#9CA3AF' }}>（{s.desc}）</span>
                 <span style={{ fontSize: fs - 3, padding: '1px 8px', borderRadius: 999, background: s.sourceType === 'data_source' ? '#ECFDF5' : s.sourceType === 'api' ? '#EFF6FF' : '#F5F3FF', border: `1px solid ${s.sourceType === 'data_source' ? '#A7F3D0' : s.sourceType === 'api' ? '#BFDBFE' : '#DDD6FE'}`, color: s.sourceType === 'data_source' ? '#047857' : s.sourceType === 'api' ? '#1D4ED8' : '#6D28D9' }}>{SECTION_SOURCE_LABEL[s.sourceType]}</span>
-                <Dat f="JSON:样例" v={Object.keys(sSample).length + '字段'} />
+                
               </div>
               <div style={{ padding: 10 }}>
                 {s.sourceType === 'tpl_copy' ? (
@@ -298,7 +295,7 @@ export default function ReportTemplatePreview() {
           </>
         }
       />
-      <Panel title="报告预览（只读样例）" desc={<>用样例数据渲染该模板下报告的实际长相。可切换评分档与预览角色查看不同效果。<span style={{ fontSize: 11, color: '#6B7280' }}>数据来源：<span style={{ background: '#FFF7ED', color: '#C2410C', border: '1px solid #FDBA74', fontFamily: 'monospace', padding: '0 3px', borderRadius: 2, fontSize: 10 }}>橙=本地JSON样例(reportTemplatePreviewSample.json)</span> <span style={{ background: '#F3F4F6', color: '#6B7280', border: '1px solid #D1D5DB', fontFamily: 'monospace', padding: '0 3px', borderRadius: 2, fontSize: 10 }}>灰=实时算法</span> <span style={{ background: '#DBEAFE', color: '#1D4ED8', border: '1px solid #93C5FD', fontFamily: 'monospace', padding: '0 3px', borderRadius: 2, fontSize: 10 }}>蓝=模板配置</span></span></>}>
+      <Panel title="报告预览（只读样例）" desc="用样例数据渲染该模板下报告的实际长相。可切换评分档与预览角色查看不同效果。">
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10, flexWrap: 'wrap', background: '#F8FAFC', border: '1px solid #EEF2F7', borderRadius: 8, padding: '8px 12px' }}>
           <span style={{ fontSize: 13, fontWeight: 600, color: '#374151' }}>以角色预览：</span>
           <div style={{ width: 160 }}>

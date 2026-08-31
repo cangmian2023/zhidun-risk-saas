@@ -1,9 +1,9 @@
 // 尽调中心 · 报告中心 · 自定义报告（jd-report-custom）· 左配置面板 + 右实时预览
 // 数据：本地样例 jdReportCustom.json（橘 Sam）
-import { useState } from 'react'
-import type { CSSProperties } from 'react'
-import { EpPage, EpBtn, useSample, Sam } from '../../epCommon'
-import { usePageNav } from '../../../pageNav'
+import { useState } from 'react';
+import type { CSSProperties } from 'react';
+import { EpPage, EpBtn, useSample } from '../../epCommon';
+import { usePageNav } from '../../../pageNav';
 
 type SubOpt = { key: string; label: string }
 type TreeGroup = {
@@ -235,7 +235,6 @@ export default function JdReportCustom({ params }: { params: URLSearchParams }) 
       actions={
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <EpBtn ghost onClick={() => back('/console/ep/jd-report')}>返回</EpBtn>
-          <Sam value={data.source} />
         </div>
       }
     >

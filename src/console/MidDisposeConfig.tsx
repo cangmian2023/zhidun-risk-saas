@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button, Panel, DataTable, Modal, SingleSelect } from '../components/ui';
 import type { Column, Row } from '../components/ui';
-import { Sam } from './SourceTag';
 import FlowStateCell from './FlowStateCell';
 import { useMidStrategy, updateStrategy, midNewId } from './midStore';
 import { type MidDispose, type AlertLevel, LEVEL_META } from './midData';
@@ -47,7 +46,7 @@ export default function MidDisposeConfig() {
     <div className={CONFIG_CONTAINER}>
       <PageShell title="处置策略" crumb={crumb('处置策略')}
         subtitle="配置自动处置策略（如自动降额、自动冻结），按预警等级路由；跨任务、跨业务域统一响应"
-        actions={<Sam value="midStrategy.json" />} />
+         />
 
       <Panel title="处置策略" desc="按预警等级（红灯 / 黄灯）路由处置动作"
         actions={<Button size="sm" variant="secondary" onClick={() => openEdit()}>新建策略</Button>}>
@@ -77,14 +76,14 @@ export default function MidDisposeConfig() {
 }
 
 const disposeCols: Column[] = [
-  { key: 'name', label: '策略名称', tag: { kind: 'sample', value: 'midStrategy.json.disposes.name' } },
-  { key: 'trigger', label: '触发等级', type: 'badge', tag: { kind: 'sample', value: 'midStrategy.json.disposes.triggerLevel' } },
-  { key: 'action', label: '动作', tag: { kind: 'sample', value: 'midStrategy.json.disposes.action' } },
-  { key: 'system', label: '对接系统', tag: { kind: 'sample', value: 'midStrategy.json.disposes.targetSystem' } },
-  { key: 'assign', label: '分派角色', tag: { kind: 'sample', value: 'midStrategy.json.disposes.assignTo' } },
-  { key: 'approve', label: '审批', tag: { kind: 'sample', value: 'midStrategy.json.disposes.needApprove' } },
-  { key: 'notify', label: '客户触达', tag: { kind: 'sample', value: 'midStrategy.json.disposes.needNotify' } },
-  { key: 'flowState', label: '流程状态', fixed: 'right', tag: { kind: 'sample', value: 'midStrategy.json.disposes.flowState' }, render: (r: Row) => (
+  { key: 'name', label: '策略名称' },
+  { key: 'trigger', label: '触发等级', type: 'badge' },
+  { key: 'action', label: '动作' },
+  { key: 'system', label: '对接系统' },
+  { key: 'assign', label: '分派角色' },
+  { key: 'approve', label: '审批' },
+  { key: 'notify', label: '客户触达' },
+  { key: 'flowState', label: '流程状态', fixed: 'right',  render: (r: Row) => (
     <FlowStateCell flowId={String(r.flowKey ?? '')} state={String(r.flowState ?? '')}
       onChange={(s) => updateStrategy((st) => ({ ...st, disposes: st.disposes.map((d) => d.id === String(r.id) ? { ...d, flowState: s } : d) }))} />
   ) },
